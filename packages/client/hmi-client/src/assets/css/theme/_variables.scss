@@ -35,13 +35,13 @@ $fontBodySmall: 14px;
 $fontBodyMedium: 16px;
 $fontBodyLarge: 18px;
 $fontFamily: Figtree, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif !default;
-$fontSize: $fontBodyMedium;
+$fontSize: $fontBodySmall;
 $fontWeight: 400 !default;
 $fontWeightSemiBold: 600;
 
 //global
 $textColor: rgb(16, 24, 40);
-$textSecondaryColor: $emphasis-medium !default; 
+$textSecondaryColor: $emphasis-medium !default;
 $borderRadius: 4px !default;
 $mediumBorderRadius: 6px !default;
 $bigBorderRadius: 8px !default;
@@ -58,6 +58,7 @@ $disabledOpacity: .38 !default;
 $maskBg: rgba(0, 0, 0, 0.32) !default;
 $loadingIconFontSize: 2rem !default;
 $errorColor: #B00020 !default;
+$padding: .5rem !default;
 
 //selected state
 $highlightBg: #E9FFFC;
@@ -86,7 +87,7 @@ $actionIconHoverColor: $textSecondaryColor !default;
 $actionIconBorderRadius: 50% !default;
 
 //input field (e.g. inputtext, spinner, inputmask)
-$inputPadding: 1rem 1rem !default;
+$inputPadding: $padding $padding !default;
 $inputTextFontSize: $fontSize;
 $inputBg: #ffffff !default;
 $inputTextColor: $emphasis-high !default;
@@ -693,7 +694,7 @@ $overlayMenuBg: $menuBg !default;
 $overlayMenuBorder: 0 none !default;
 $overlayMenuShadow: 0 2px 4px -1px rgba(0, 0, 0, .2), 0 4px 5px 0 rgba(0, 0, 0, .14), 0 1px 10px 0 rgba(0, 0, 0, .12) !default;
 $verticalMenuPadding: .5rem 0 !default;
-$menuSeparatorMargin: .5rem 0 !default; 
+$menuSeparatorMargin: .5rem 0 !default;
 
 $breadcrumbPadding: 1rem !default;
 $breadcrumbBg: #ffffff !default;

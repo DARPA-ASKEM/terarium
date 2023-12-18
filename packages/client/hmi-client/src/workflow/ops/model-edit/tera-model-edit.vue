@@ -1,24 +1,13 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<div :tabName="StratifyTabs.Wizard">
+		<div :tabName="ModelEditTabs.Wizard">
 			<tera-drilldown-section>
-				<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
-				<p>The model will be stratified with the following settings.</p>
-				<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-					Note: Code has been executed which may not be reflected here.
-				</p>
-				<tera-stratification-group-form
-					:modelNodeOptions="modelNodeOptions"
-					:config="node.state.strataGroup"
-					@update-self="updateStratifyGroupForm"
-				/>
 				<template #footer>
-					<Button label="Stratify" @click="stratifyModel" />
 					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
 				</template>
 			</tera-drilldown-section>
 		</div>
-		<div :tabName="StratifyTabs.Notebook">
+		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
 				<v-ace-editor
@@ -31,7 +20,7 @@
 				/>
 
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="runCodeStratify" />
+					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -74,10 +63,9 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref, onUnmounted, onMounted } from 'vue';
+import { watch, ref, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import { Model, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { getModel, createModel } from '@/services/model';
@@ -90,21 +78,15 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-
-/* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
-import {
-	StratifyOperationStateMira,
-	StratifyGroup,
-	blankStratifyGroup
-} from './stratify-mira-operation';
+import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
-	node: WorkflowNode<StratifyOperationStateMira>;
+	node: WorkflowNode<ModelEditOperationState>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 
-enum StratifyTabs {
+enum ModelEditTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }
@@ -117,21 +99,59 @@ interface SaveOptions {
 const kernelManager = new KernelSessionManager();
 
 const amr = ref<Model | null>(null);
-const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-const updateStratifyGroupForm = (config: StratifyGroup) => {
-	const state = _.cloneDeep(props.node.state);
-	state.strataGroup = config;
-	emit('update-state', state);
+// Reset model, then execute the code
+const runFromCodeWrapper = () => {
+	const code = editor?.getValue();
+	if (!code) return;
+
+	// Reset model
+	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
+		runFromCode();
+	});
 };
 
-const stratifyModel = () => {
-	stratifyRequest();
+const runFromCode = () => {
+	const code = editor?.getValue();
+	if (!code) return;
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	let executedCode = '';
+
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('error', (data) => {
+			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			console.log('error', data.content);
+		})
+		.register('model_preview', (data) => {
+			if (!data.content) return;
+
+			handleModelPreview(data);
+
+			if (executedCode) {
+				saveCodeToState(executedCode, true);
+			}
+		});
 };
 
 const resetModel = () => {
@@ -145,7 +165,7 @@ const resetModel = () => {
 
 const handleResetResponse = (data: any) => {
 	if (data.content.success) {
-		updateStratifyGroupForm(blankStratifyGroup);
+		// updateStratifyGroupForm(blankStratifyGroup);
 
 		codeText.value = '';
 		saveCodeToState('', false);
@@ -153,37 +173,6 @@ const handleResetResponse = (data: any) => {
 		logger.info('Model reset');
 	} else {
 		logger.error('Error resetting model');
-	}
-};
-
-const stratifyRequest = () => {
-	if (!amr.value) return;
-
-	const strataOption = props.node.state.strataGroup;
-	const messageContent = {
-		stratify_args: {
-			key: strataOption.name,
-			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
-			concepts_to_stratify: strataOption.selectedVariables,
-			cartesian_control: strataOption.cartesianProduct
-		}
-	};
-
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		kernelManager
-			.sendMessage('stratify_request', messageContent)
-			.register('stratify_response', handleStratifyResponse)
-			.register('model_preview', handleModelPreview);
-	});
-};
-
-const handleStratifyResponse = (data: any) => {
-	const executedCode = data.content.executed_code;
-	if (executedCode) {
-		codeText.value = executedCode;
-
-		// If stratify is run from the wizard, save the code but set `hasCodeBeenRun` to false
-		saveCodeToState(executedCode, false);
 	}
 };
 
@@ -212,15 +201,6 @@ const inputChangeHandler = async () => {
 
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
-
-	const modelColumnNameOptions: string[] = amr.value.model.states.map((state: any) => state.id);
-	// add observables
-	if (amr.value.model.semantics?.ode?.observables) {
-		amr.value.model.semantics.ode.observables.forEach((o) => {
-			modelColumnNameOptions.push(o.id);
-		});
-	}
-	modelNodeOptions.value = modelColumnNameOptions;
 
 	// Create a new session and context based on model
 	try {
@@ -262,58 +242,17 @@ const initialize = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
-const runCodeStratify = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
-	const messageContent = {
-		silent: false,
-		store_history: false,
-		user_expressions: {},
-		allow_stdin: true,
-		stop_on_error: false,
-		code
-	};
-
-	let executedCode = '';
-
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		kernelManager
-			.sendMessage('execute_request', messageContent)
-			.register('execute_input', (data) => {
-				executedCode = data.content.code;
-			})
-			.register('stream', (data) => {
-				console.log('stream', data);
-			})
-			.register('error', (data) => {
-				logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			})
-			.register('model_preview', (data) => {
-				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
-				// currently no matter what kind of code is run we always get a `model_preview` response.
-				// We may want to compare the response model with the existing model to see if the response model
-				// has been stratified - if not then don't save the model or the code.
-				handleModelPreview(data);
-
-				if (executedCode) {
-					saveCodeToState(executedCode, true);
-				}
-			});
-	});
-};
-
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 
 	// for now only save the last code executed, may want to save all code executed in the future
-	const codeHistoryLength = props.node.state.strataCodeHistory.length;
+	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
 	const timestamp = Date.now();
 	if (codeHistoryLength > 0) {
-		state.strataCodeHistory[0] = { code, timestamp };
+		state.modelEditCodeHistory[0] = { code, timestamp };
 	} else {
-		state.strataCodeHistory.push({ code, timestamp });
+		state.modelEditCodeHistory.push({ code, timestamp });
 	}
 
 	emit('update-state', state);
@@ -327,13 +266,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onMounted(() => {
-	const codeHistoryLength = props.node.state.strataCodeHistory.length;
-	if (codeHistoryLength > 0) {
-		codeText.value = props.node.state.strataCodeHistory[codeHistoryLength - 1].code;
-	}
-});
 
 onUnmounted(() => {
 	kernelManager.shutdown();

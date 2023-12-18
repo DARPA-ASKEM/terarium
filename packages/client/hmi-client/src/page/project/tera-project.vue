@@ -101,7 +101,7 @@ const assetName = computed<string>(() => {
 	/**
 	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
 	 *
-	 *   const list = assets[ pageType.value as string] as IdetifiableAsset[]
+	 *   const list = assets[ pageType.value as string] as IdentifiableAsset[]
 	 *   const asset = list.find(...)
 	 */
 	if (assets) {
