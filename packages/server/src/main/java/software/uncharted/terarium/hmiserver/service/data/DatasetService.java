@@ -30,7 +30,7 @@ public class DatasetService {
 
 	public List<Dataset> getDatasets(Integer page, Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
-				.index(elasticConfig.getDocumentIndex())
+				.index(elasticConfig.getDatasetIndex())
 				.from(page)
 				.size(pageSize)
 				.build();
@@ -38,32 +38,32 @@ public class DatasetService {
 	}
 
 	public Dataset getDataset(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getDocumentIndex(), id.toString(), Dataset.class);
+		return elasticService.get(elasticConfig.getDatasetIndex(), id.toString(), Dataset.class);
 	}
 
 	public void deleteDataset(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getDocumentIndex(), id.toString());
+		elasticService.delete(elasticConfig.getDatasetIndex(), id.toString());
 	}
 
 	public Dataset createDataset(Dataset dataset) throws IOException {
 		dataset.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getDocumentIndex(), dataset.setId(UUID.randomUUID()).getId().toString(),
+		elasticService.index(elasticConfig.getDatasetIndex(), dataset.setId(UUID.randomUUID()).getId().toString(),
 				dataset);
 		return dataset;
 	}
 
 	public Optional<Dataset> updateDataset(Dataset dataset) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), dataset.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getDatasetIndex(), dataset.getId().toString())) {
 			return Optional.empty();
 		}
 
 		dataset.setUpdatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId().toString(), dataset);
+		elasticService.index(elasticConfig.getDatasetIndex(), dataset.getId().toString(), dataset);
 		return Optional.of(dataset);
 	}
 
 	private String getPath(UUID documentId, String filename) {
-		return String.join("/", config.getDocumentPath(), documentId.toString(), filename);
+		return String.join("/", config.getDatasetPath(), documentId.toString(), filename);
 	}
 
 	public PresignedURL getUploadUrl(UUID documentId, String filename) {

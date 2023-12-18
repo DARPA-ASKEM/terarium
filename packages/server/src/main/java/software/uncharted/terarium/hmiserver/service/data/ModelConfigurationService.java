@@ -56,7 +56,8 @@ public class ModelConfigurationService {
 
 	public Optional<ModelConfiguration> updateModelConfiguration(ModelConfiguration modelConfiguration)
 			throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), modelConfiguration.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getModelConfigurationIndex(),
+				modelConfiguration.getId().toString())) {
 			return Optional.empty();
 		}
 		modelConfiguration.setUpdatedOn(Timestamp.from(Instant.now()));

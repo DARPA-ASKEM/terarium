@@ -55,7 +55,7 @@ public class DocumentAssetService {
 	}
 
 	public Optional<DocumentAsset> updateDocumentAsset(DocumentAsset document) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), document.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getDocumentIndex(), document.getId().toString())) {
 			return Optional.empty();
 		}
 

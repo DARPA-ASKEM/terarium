@@ -46,7 +46,7 @@ public class WorkflowService {
 	}
 
 	public Optional<Workflow> updateWorkflow(final Workflow workflow) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), workflow.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getWorkflowIndex(), workflow.getId().toString())) {
 			return Optional.empty();
 		}
 		workflow.setUpdatedOn(Timestamp.from(Instant.now()));

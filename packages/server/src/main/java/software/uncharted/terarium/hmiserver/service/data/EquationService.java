@@ -47,7 +47,7 @@ public class EquationService {
 	}
 
 	public Optional<Equation> updateEquation(Equation equation) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), equation.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getEquationIndex(), equation.getId().toString())) {
 			return Optional.empty();
 		}
 

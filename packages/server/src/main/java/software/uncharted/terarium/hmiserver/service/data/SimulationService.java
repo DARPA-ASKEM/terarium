@@ -58,7 +58,7 @@ public class SimulationService {
 	}
 
 	public Optional<Simulation> updateSimulation(final Simulation simulation) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), simulation.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
 			return Optional.empty();
 		}
 		simulation.setUpdatedOn(Timestamp.from(Instant.now()));

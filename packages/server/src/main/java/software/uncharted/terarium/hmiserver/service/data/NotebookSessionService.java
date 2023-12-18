@@ -48,7 +48,7 @@ public class NotebookSessionService {
 	}
 
 	public Optional<NotebookSession> updateNotebookSession(NotebookSession notebookSession) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), notebookSession.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getNotebookSessionIndex(), notebookSession.getId().toString())) {
 			return Optional.empty();
 		}
 		notebookSession.setUpdatedOn(Timestamp.from(Instant.now()));

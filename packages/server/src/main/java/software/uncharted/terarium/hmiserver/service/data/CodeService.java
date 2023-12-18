@@ -87,7 +87,7 @@ public class CodeService {
 	 * @throws IOException if an error occurs while updating the Code object.
 	 */
 	public Optional<Code> updateCode(Code code) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), code.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getCodeIndex(), code.getId().toString())) {
 			return Optional.empty();
 		}
 		code.setUpdatedOn(Timestamp.from(Instant.now()));

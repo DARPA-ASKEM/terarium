@@ -100,7 +100,8 @@ public class ExternalPublicationService {
 	 */
 	public Optional<ExternalPublication> updateExternalPublication(ExternalPublication externalPublication)
 			throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), externalPublication.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getExternalPublicationIndex(),
+				externalPublication.getId().toString())) {
 			return Optional.empty();
 		}
 

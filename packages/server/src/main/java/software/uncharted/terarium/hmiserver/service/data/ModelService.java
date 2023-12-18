@@ -109,7 +109,7 @@ public class ModelService {
 	}
 
 	public Optional<Model> updateModel(Model model) throws IOException {
-		if (!elasticService.contains(elasticConfig.getArtifactIndex(), model.getId().toString())) {
+		if (!elasticService.contains(elasticConfig.getModelIndex(), model.getId().toString())) {
 			return Optional.empty();
 		}
 		model.setUpdatedOn(Timestamp.from(Instant.now()));
