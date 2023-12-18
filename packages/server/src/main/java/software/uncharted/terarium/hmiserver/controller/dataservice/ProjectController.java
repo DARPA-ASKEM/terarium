@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.data.project.Project;
@@ -56,6 +57,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 @Tags(@Tag(name = "Projects", description = "Project related operations"))
 public class ProjectController {
 
@@ -221,10 +223,10 @@ public class ProjectController {
 					.createCreatorRelationship(new RebacProject(project.getId(), reBACService));
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
-			// TODO: Rollback potential?
+			return ResponseEntity.internalServerError().build();
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
-			// TODO: Rollback potential?
+			return ResponseEntity.internalServerError().build();
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 

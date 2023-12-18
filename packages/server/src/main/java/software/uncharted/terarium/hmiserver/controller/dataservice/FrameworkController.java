@@ -22,8 +22,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
@@ -32,7 +32,7 @@ import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
 
 @RequestMapping("/models")
 @RestController
-@Slf4j
+@Transactional
 @RequiredArgsConstructor
 public class FrameworkController {
 
