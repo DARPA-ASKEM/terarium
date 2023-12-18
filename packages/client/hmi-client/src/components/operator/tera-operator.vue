@@ -68,7 +68,8 @@ const emit = defineEmits([
 	'port-mouseleave',
 	'remove-operator',
 	'remove-edges',
-	'drilldown'
+	'drilldown',
+	'resize'
 ]);
 
 const nodeStyle = computed(() => ({
@@ -83,6 +84,8 @@ const operator = ref<HTMLElement>();
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 let tempX = 0;
 let tempY = 0;
+
+let resizeObserver: ResizeObserver | null = null;
 
 const startDrag = (evt: MouseEvent) => {
 	tempX = evt.x;
@@ -107,14 +110,6 @@ const stopDrag = (/* evt: MouseEvent */) => {
 	tempY = 0;
 	interactionStatus.value = removeDrag(interactionStatus.value);
 };
-
-onMounted(() => {
-	if (!operator.value) return;
-
-	operator.value.addEventListener('mousedown', startDrag);
-	document.addEventListener('mousemove', drag);
-	operator.value.addEventListener('mouseup', stopDrag);
-});
 
 function bringToFront() {
 	// TODO: bring to front
@@ -142,9 +137,30 @@ function mouseoverPort(event: MouseEvent, portDirection: PortDirection) {
 	emit('port-mouseover', portPosition);
 }
 
+function resizeHandler() {
+	console.log('resize event');
+	emit('resize', props.node.id);
+}
+
+onMounted(() => {
+	if (!operator.value) return;
+
+	operator.value.addEventListener('mousedown', startDrag);
+	resizeObserver = new ResizeObserver(resizeHandler);
+	resizeObserver.observe(operator.value);
+
+	document.addEventListener('mousemove', drag);
+	operator.value.addEventListener('mouseup', stopDrag);
+});
+
 onBeforeUnmount(() => {
 	if (operator.value) {
 		operator.value.removeEventListener('mousedown', startDrag);
+		if (resizeObserver) {
+			resizeObserver.disconnect();
+			resizeObserver = null;
+		}
+
 		document.removeEventListener('mousemove', drag);
 		operator.value.removeEventListener('mouseup', stopDrag);
 	}

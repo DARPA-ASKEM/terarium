@@ -61,6 +61,7 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
+				@resize="resizeHandler"
 				@port-selected="
 					(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)
 				"
@@ -578,6 +579,10 @@ function onPortMouseover(position: Position) {
 
 function onPortMouseleave() {
 	isMouseOverPort = false;
+}
+
+function resizeHandler(id: string) {
+	console.log('dealing with resize', id);
 }
 
 let prevX = 0;
