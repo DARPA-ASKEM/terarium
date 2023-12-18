@@ -139,7 +139,7 @@ function mouseoverPort(event: MouseEvent, portDirection: PortDirection) {
 
 function resizeHandler() {
 	console.log('resize event');
-	emit('resize', props.node.id);
+	emit('resize', props.node);
 }
 
 onMounted(() => {

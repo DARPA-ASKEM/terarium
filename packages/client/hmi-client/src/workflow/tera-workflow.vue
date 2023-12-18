@@ -584,8 +584,77 @@ function onPortMouseleave() {
 	isMouseOverPort = false;
 }
 
-function resizeHandler(id: string) {
-	console.log('dealing with resize', id);
+function resizeHandler(node: WorkflowNode<any>) {
+	console.log('dealing with resize', node.id);
+	relinkEdges(null);
+}
+
+const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+
+/**
+ * Relink edges that have become detatched
+ *
+ * [output-port](edge source => edge target)[input-port]
+ *
+ * FIXME: not efficient, need cache/map for larger workflows
+ * */
+function relinkEdges(node: WorkflowNode<any> | null) {
+	const nodes = node ? [node] : wf.value.nodes;
+	const edges = wf.value.edges;
+	const threshold = 8.0;
+	const threshold2 = threshold * threshold;
+
+	for (let i = 0; i < nodes.length; i++) {
+		const n = nodes[i];
+		console.log('node', n.id);
+
+		// The input ports connects to the edge's target
+		const inputs = n.inputs;
+		inputs.forEach((port) => {
+			const edge = edges.find((e) => e.targetPortId === port.id);
+			if (!edge) return;
+			const portElem = d3.select(`#${edge.targetPortId}`).select('.port').node() as HTMLElement;
+			const nodePosition: Position = { x: n.x, y: n.y };
+			const totalOffsetX = 0;
+			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
+			const portPos = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
+			console.log('\tinput port = ', portPos);
+			console.log('\tedge = ', edge.points[1]);
+
+			if (dist2(portPos, edge.points[1]) > threshold2) {
+				console.log('\texceed threshold, need adjustment');
+				edge.points[1].x = portPos.x;
+				edge.points[1].y = portPos.y;
+			} else {
+				console.log('\tignore');
+			}
+		});
+
+		// The output ports connects to the edge's source
+		const outputs = n.outputs;
+		outputs.forEach((port) => {
+			const edge = edges.find((e) => e.sourcePortId === port.id);
+			if (!edge) return;
+			const portElem = d3.select(`#${edge.sourcePortId}`).select('.port').node() as HTMLElement;
+			const nodePosition: Position = { x: n.x, y: n.y };
+			const totalOffsetX = 0;
+			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
+			const portPos = {
+				x: nodePosition.x + totalOffsetX + n.width,
+				y: nodePosition.y + totalOffsetY
+			};
+			console.log('\toutput port = ', portPos);
+			console.log('\tedge = ', edge.points[0]);
+
+			if (dist2(portPos, edge.points[0]) > threshold2) {
+				console.log('\texceed threshold, need adjustment');
+				edge.points[0].x = portPos.x;
+				edge.points[0].y = portPos.y;
+			} else {
+				console.log('\tignore');
+			}
+		});
+	}
 }
 
 let prevX = 0;
