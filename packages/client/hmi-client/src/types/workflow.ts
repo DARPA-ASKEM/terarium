@@ -18,6 +18,7 @@ export enum WorkflowOperationTypes {
 	CODE = 'Code',
 	MODEL_CONFIG = 'ModelConfiguraiton',
 	MODEL_OPTIMIZE = 'ModelOptimize',
+	MODEL_COUPLING = 'ModelCoupling',
 	MODEL_EDIT = 'ModelEdit'
 }
 
@@ -78,7 +79,7 @@ export interface WorkflowPort {
 export interface WorkflowOutput<S> extends WorkflowPort {
 	isSelected?: boolean;
 	operatorStatus?: OperatorStatus;
-	state?: S;
+	state?: Partial<S>;
 	timestamp?: Date;
 }
 

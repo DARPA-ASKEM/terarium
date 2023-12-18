@@ -11,7 +11,7 @@
 import { watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const emit = defineEmits(['append-input-port', 'open-drilldown']);

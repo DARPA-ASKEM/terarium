@@ -60,7 +60,7 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleCiemssOperation,

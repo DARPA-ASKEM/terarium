@@ -46,9 +46,9 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
 import SelectButton from 'primevue/selectbutton';
-import TeraOperatorTitle from '@/workflow/operator/tera-operator-title.vue';
+import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import { ModelOperationState } from './model-operation';
 

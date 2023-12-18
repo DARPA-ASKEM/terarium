@@ -167,7 +167,7 @@ import {
 	WorkflowOutput
 } from '@/types/workflow';
 // Operation imports
-import TeraOperator from '@/workflow/tera-operator.vue';
+import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -198,6 +198,7 @@ import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 import * as ModelOptimizeOp from './ops/model-optimize/mod';
+import * as ModelCouplingOp from './ops/model-coupling/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -219,6 +220,7 @@ registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(ModelOptimizeOp);
+registry.registerOp(ModelCouplingOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -293,16 +295,17 @@ function appendOutputPort(
 	if (!node) return;
 
 	const uuid = uuidv4();
+	const timestamp = new Date();
 
 	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
 		type: port.type,
-		label: port.label,
+		label: `${port.label} ${timestamp.toLocaleTimeString()}`,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
-		timestamp: new Date()
+		timestamp
 	};
 
 	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
@@ -379,6 +382,7 @@ const operationContextMenuList = [
 	{ name: ModelTransformerOp.name, category: categories.model },
 	{ name: FunmanOp.name, category: categories.model, separator: true },
 	{ name: ModelOptimizeOp.name, category: categories.model },
+	{ name: ModelCouplingOp.name, category: categories.model },
 	// Code
 	{ name: CodeAssetOp.name, category: categories.code },
 	{ name: ModelFromCodeOp.name, category: categories.code },

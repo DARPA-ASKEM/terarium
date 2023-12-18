@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { WorkflowNode } from '@/types/workflow';
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import { StratifyOperationStateMira } from './stratify-mira-operation';
 
