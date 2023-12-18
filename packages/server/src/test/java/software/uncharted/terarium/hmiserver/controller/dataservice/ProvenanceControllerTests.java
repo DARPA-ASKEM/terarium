@@ -41,7 +41,7 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(provenance)))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 	}
 
 	@Test

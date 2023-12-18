@@ -44,14 +44,14 @@ public class FrameworkController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model framework")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the framework", content = @Content)
 	})
-	ResponseEntity<ResponseId> createFramework(
+	ResponseEntity<ModelFramework> createFramework(
 			@RequestBody final ModelFramework framework) {
 		ModelFramework modelFramework = frameworkService.createFramework(framework);
 
-		return ResponseEntity.ok(new ResponseId(modelFramework.getId()));
+		return ResponseEntity.status(HttpStatus.CREATED).body(modelFramework);
 	}
 
 	@GetMapping("/frameworks/{id}")

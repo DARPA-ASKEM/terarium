@@ -125,7 +125,7 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new document")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> createDocument(
@@ -133,7 +133,7 @@ public class DocumentController {
 
 		try {
 			document = documentAssetService.createDocumentAsset(document);
-			return ResponseEntity.ok(document);
+			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
@@ -430,7 +430,7 @@ public class DocumentController {
 						newDocumentAssetId);
 			}
 
-			return ResponseEntity.ok(response);
+			return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
 		} catch (final IOException | URISyntaxException e) {
 			final String error = "Unable to upload document from github";

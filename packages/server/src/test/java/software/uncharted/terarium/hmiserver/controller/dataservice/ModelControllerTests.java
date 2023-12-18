@@ -60,7 +60,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(model)))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 	}
 
 	@Test

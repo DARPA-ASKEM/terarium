@@ -61,7 +61,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(dataset)))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 	}
 
 	@Test

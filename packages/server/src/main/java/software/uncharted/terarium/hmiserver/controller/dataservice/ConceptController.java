@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -53,7 +54,7 @@ public class ConceptController {
 			@RequestBody final OntologyConcept concept) {
 
 		try {
-			return ResponseEntity.ok(conceptService.createConcept(concept));
+			return ResponseEntity.status(HttpStatus.CREATED).body(conceptService.createConcept(concept));
 		} catch (Exception e) {
 			final String error = "Unable to create concept";
 			log.error(error, e);

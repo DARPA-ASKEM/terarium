@@ -67,12 +67,12 @@ public class SimulationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new simulation")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Simulation created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "201", description = "Simulation created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the simulation", content = @Content)
 	})
 	public ResponseEntity<Simulation> createSimulation(@RequestBody final Simulation simulation) {
 		try {
-			return ResponseEntity.ok(simulationService.createSimulation(simulation));
+			return ResponseEntity.status(HttpStatus.CREATED).body(simulationService.createSimulation(simulation));
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation.";
 			log.error(error, e);
