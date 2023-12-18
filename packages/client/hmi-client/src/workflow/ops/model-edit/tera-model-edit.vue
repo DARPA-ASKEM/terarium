@@ -111,7 +111,7 @@ const runFromCodeWrapper = () => {
 	if (!code) return;
 
 	// Reset model
-	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		runFromCode();
 	});
 };
@@ -119,9 +119,6 @@ const runFromCodeWrapper = () => {
 const runFromCode = () => {
 	const code = editor?.getValue();
 	if (!code) return;
-
-	// reset model
-	kernelManager.sendMessage('reset_request', {});
 
 	const messageContent = {
 		silent: false,
@@ -134,30 +131,28 @@ const runFromCode = () => {
 
 	let executedCode = '';
 
-	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
-		kernelManager
-			.sendMessage('execute_request', messageContent)
-			?.register('execute_input', (data) => {
-				executedCode = data.content.code;
-			})
-			?.register('stream', (data) => {
-				console.log('stream', data);
-			})
-			?.register('error', (data) => {
-				logger.error(`${data.content.ename}: ${data.content.evalue}`);
-				console.log('error', data.content);
-			})
-			?.register('model_preview', (data) => {
-				console.log('!!', data.content);
-				if (!data.content) return;
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('error', (data) => {
+			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			console.log('error', data.content);
+		})
+		.register('model_preview', (data) => {
+			console.log('!!', data.content);
+			if (!data.content) return;
 
-				handleModelPreview(data);
+			handleModelPreview(data);
 
-				if (executedCode) {
-					saveCodeToState(executedCode, true);
-				}
-			});
-	});
+			if (executedCode) {
+				saveCodeToState(executedCode, true);
+			}
+		});
 };
 
 const resetModel = () => {
@@ -165,8 +160,8 @@ const resetModel = () => {
 
 	kernelManager
 		.sendMessage('reset_request', {})
-		?.register('reset_response', handleResetResponse)
-		?.register('model_preview', handleModelPreview);
+		.register('reset_response', handleResetResponse)
+		.register('model_preview', handleModelPreview);
 };
 
 const handleResetResponse = (data: any) => {
