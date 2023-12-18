@@ -20,7 +20,7 @@
 				/>
 
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="runFromCode" />
+					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -80,7 +80,6 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { ModelEditOperationState } from './model-edit-operation';
-/* Jupyter imports */
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -106,7 +105,18 @@ const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-function runFromCode() {
+// Reset model, then execute the code
+const runFromCodeWrapper = () => {
+	const code = editor?.getValue();
+	if (!code) return;
+
+	// Reset model
+	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+		runFromCode();
+	});
+};
+
+const runFromCode = () => {
 	const code = editor?.getValue();
 	if (!code) return;
 
@@ -135,11 +145,12 @@ function runFromCode() {
 			})
 			?.register('error', (data) => {
 				logger.error(`${data.content.ename}: ${data.content.evalue}`);
+				console.log('error', data.content);
 			})
 			?.register('model_preview', (data) => {
-				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
-				// currently no matter what kind of code is run we always get a `model_preview` response.
-				// We may want to compare the response model with the existing model to see if the response model
+				console.log('!!', data.content);
+				if (!data.content) return;
+
 				handleModelPreview(data);
 
 				if (executedCode) {
@@ -147,7 +158,7 @@ function runFromCode() {
 				}
 			});
 	});
-}
+};
 
 const resetModel = () => {
 	if (!amr.value) return;

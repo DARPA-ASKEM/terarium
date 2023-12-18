@@ -10,10 +10,10 @@
 </template>
 
 <script setup lang="ts">
-import TeraOperatorPlaceholder from '@/workflow/operator/tera-operator-placeholder.vue';
+import Button from 'primevue/button';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { ModelEditOperationState } from '@/workflow/ops/model-edit/model-edit-operation';
-import Button from 'primevue/button';
 
 const emit = defineEmits(['open-drilldown']);
 
