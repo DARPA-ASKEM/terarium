@@ -30,12 +30,6 @@
 				</template>
 			</Dialog>
 		</section>
-		<aside class="suggested-terms" v-if="!isEmpty(terms) && isDataExplorer">
-			Suggested terms:
-			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
-			</Chip>
-		</aside>
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
@@ -116,10 +110,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { isEmpty } from 'lodash';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
-import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
@@ -357,11 +349,6 @@ const userInitials = computed(() => auth.userInitials);
 function closeLogoutDialog() {
 	isLogoutDialog.value = false;
 }
-
-/*
- * Search
- */
-const searchBarRef = ref();
 
 watch(
 	() => useProjects().allProjects.value,

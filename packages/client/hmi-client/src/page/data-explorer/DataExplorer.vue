@@ -26,6 +26,12 @@
 						@toggle-search-by-example="searchByExampleModalToggled"
 						:show-suggestions="false"
 					/>
+					<aside class="suggested-terms" v-if="!isEmpty(terms)">
+						Suggested terms:
+						<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
+							<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
+						</Chip>
+					</aside>
 					<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
 				</div>
 				<SelectButton
@@ -94,6 +100,7 @@ import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.v
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
+import Chip from 'primevue/chip';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
 
@@ -524,6 +531,10 @@ onUnmounted(() => {
 	queryStore.reset();
 });
 
+/*
+ * Search
+ */
+const searchBarRef = ref();
 const terms = ref<string[]>([]);
 
 async function updateRelatedTerms(query?: string) {
