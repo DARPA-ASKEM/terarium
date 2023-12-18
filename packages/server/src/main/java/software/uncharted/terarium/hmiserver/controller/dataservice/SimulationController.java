@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -15,27 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.data.project.Project;
 import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.data.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -45,6 +30,12 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/simulations")
 @RestController
@@ -115,7 +106,7 @@ public class SimulationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the simulation", content = @Content)
 	})
 	public ResponseEntity<Simulation> updateSimulation(@PathVariable("id") final UUID id,
-			@RequestBody Simulation simulation) {
+			@RequestBody final Simulation simulation) {
 		try {
 			final Optional<Simulation> updated = simulationService.updateSimulation(simulation.setId(id));
 			if (updated.isEmpty()) {
@@ -197,7 +188,7 @@ public class SimulationController {
 			@RequestParam("datasetName") final String datasetName) {
 
 		try {
-			Simulation sim = simulationService.getSimulation(id);
+			final Simulation sim = simulationService.getSimulation(id);
 
 			// Duplicate the simulation results to a new dataset
 			Dataset dataset = simulationService.copySimulationResultToDataset(sim);
@@ -222,9 +213,9 @@ public class SimulationController {
 			}
 
 			// Add the dataset to the project as an asset
-			Optional<Project> project = projectService.getProject(projectId);
+			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
-				ProjectAsset asset = projectAssetService.createProjectAsset(project.get(), ResourceType.DATASET,
+				final ProjectAsset asset = projectAssetService.createProjectAsset(project.get(), AssetType.DATASET,
 						dataset.getId());
 				return ResponseEntity.status(HttpStatus.CREATED).body(asset);
 			} else {

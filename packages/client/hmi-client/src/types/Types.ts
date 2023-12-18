@@ -78,8 +78,8 @@ export interface Project {
 
 export interface ProjectAsset {
     id: string;
-    resourceId: string;
-    resourceType: ResourceType;
+    assetId: string;
+    assetType: AssetType;
     externalRef?: string;
     createdOn: Date;
     updatedOn: Date;
@@ -827,12 +827,15 @@ export interface Extraction {
 }
 
 export interface Workflow {
-    id: string;
+    id?: string;
     name: string;
     description: string;
     transform: any;
     nodes: any[];
     edges: any[];
+    createdOn: Date;
+    updatedOn: Date;
+    deletedOn?: Date;
 }
 
 export interface ActiveConcept {
@@ -1074,30 +1077,16 @@ export enum RoleType {
     Special = "SPECIAL",
 }
 
-/**
- * @deprecated
- * 
- * Values:
- * - `datasets`
- * - `model_configurations`
- * - `models`
- * - `publications`
- * - `simulations`
- * - `workflows`
- * - `artifacts`
- * - `code`
- * - `documents`
- */
 export enum AssetType {
-    Datasets = "datasets",
-    ModelConfigurations = "model_configurations",
-    Models = "models",
-    Publications = "publications",
-    Simulations = "simulations",
-    Workflows = "workflows",
-    Artifacts = "artifacts",
-    Code = "code",
-    Documents = "documents",
+    Dataset = "DATASET",
+    ModelConfiguration = "MODEL_CONFIGURATION",
+    Model = "MODEL",
+    Publication = "PUBLICATION",
+    Simulation = "SIMULATION",
+    Workflow = "WORKFLOW",
+    Artifact = "ARTIFACT",
+    Code = "CODE",
+    Document = "DOCUMENT",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1128,19 +1117,6 @@ export enum FileCategory {
     Data = "Data",
     Documents = "Documents",
     Other = "Other",
-}
-
-export enum ResourceType {
-    Artifact = "ARTIFACT",
-    Code = "CODE",
-    Dataset = "DATASET",
-    Document = "DOCUMENT",
-    Equation = "EQUATION",
-    Model = "MODEL",
-    ModelConfiguration = "MODEL_CONFIGURATION",
-    Publication = "PUBLICATION",
-    Simulation = "SIMULATION",
-    Workflow = "WORKFLOW",
 }
 
 export enum SimulationType {

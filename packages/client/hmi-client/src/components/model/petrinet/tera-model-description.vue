@@ -36,7 +36,7 @@
 				<template #header>Related publications</template>
 				<tera-related-documents
 					:documents="documents"
-					:asset-type="AssetType.Models"
+					:asset-type="AssetType.Model"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>

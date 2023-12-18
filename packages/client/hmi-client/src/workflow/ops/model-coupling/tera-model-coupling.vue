@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { AssetType } from '@/types/Types';
@@ -171,7 +171,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	if (!modelData) return;
 
 	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
 	}
 
 	if (options.appendOutputPort) {

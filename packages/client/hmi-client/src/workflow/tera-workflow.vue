@@ -152,19 +152,19 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep, isEmpty } from 'lodash';
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { cloneDeep, isArray, isEmpty } from 'lodash';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
 	Position,
 	Workflow,
+	WorkflowDirection,
 	WorkflowEdge,
 	WorkflowNode,
+	WorkflowOutput,
 	WorkflowPort,
-	WorkflowPortStatus,
-	WorkflowDirection,
-	WorkflowOutput
+	WorkflowPortStatus
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -478,11 +478,11 @@ function onDrop(event) {
 		let state: any = null;
 
 		switch (assetType) {
-			case AssetType.Models:
+			case AssetType.Model:
 				operation = ModelOp.operation;
 				state = { modelId: assetId };
 				break;
-			case AssetType.Datasets:
+			case AssetType.Dataset:
 				operation = DatasetOp.operation;
 				state = { datasetId: assetId };
 				break;
