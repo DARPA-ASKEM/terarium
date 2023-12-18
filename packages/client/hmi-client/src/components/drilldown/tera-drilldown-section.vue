@@ -1,7 +1,8 @@
 <template>
 	<section>
 		<main>
-			<slot />
+			<slot v-if="!isLoading" />
+			<tera-progress-spinner v-else :font-size="2" is-centered />
 		</main>
 		<footer v-if="slots.footer">
 			<slot name="footer" />
@@ -11,8 +12,13 @@
 
 <script setup lang="ts">
 import { useSlots } from 'vue';
+import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const slots = useSlots();
+
+defineProps<{
+	isLoading?: boolean;
+}>();
 </script>
 
 <style scoped>
