@@ -19,14 +19,6 @@
 			</div>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
-		<tera-searchbar
-			v-if="active"
-			class="search-bar"
-			ref="searchBarRef"
-			:show-suggestions="showSuggestions"
-			@query-changed="updateRelatedTerms"
-			@toggle-search-by-example="searchByExampleModalToggled"
-		/>
 		<section v-if="active" class="header-right">
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
@@ -38,12 +30,6 @@
 				</template>
 			</Dialog>
 		</section>
-		<aside class="suggested-terms" v-if="!isEmpty(terms) && isDataExplorer">
-			Suggested terms:
-			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
-			</Chip>
-		</aside>
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
@@ -124,17 +110,13 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { isEmpty } from 'lodash';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
-import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
-import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -146,7 +128,6 @@ import { useProjects } from '@/composables/project';
 
 defineProps<{
 	active: boolean;
-	showSuggestions: boolean;
 }>();
 
 /*
@@ -367,30 +348,6 @@ const userInitials = computed(() => auth.userInitials);
 
 function closeLogoutDialog() {
 	isLogoutDialog.value = false;
-}
-
-/*
- * Search
- */
-const searchBarRef = ref();
-const terms = ref<string[]>([]);
-
-async function updateRelatedTerms(query?: string) {
-	if (query || query === '' || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
-}
-
-function searchByExampleModalToggled() {
-	// TODO
-	// toggle the search by example modal represented by the component search-by-example
-	// which may be used as follows
-	/*
-	<search-by-example
-		v-if="searchByExampleModal"
-		:item="searchByExampleItem"
-		@search="onSearchByExample"
-		@hide="searchByExampleModal = false"
-	/>
-	*/
 }
 
 watch(

@@ -469,11 +469,6 @@ section math-editor {
 	justify-content: center;
 }
 
-.edit-button {
-	margin-left: 5px;
-	margin-right: 5px;
-}
-
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
 :deep(.graph-element svg) {
 	width: 100%;
@@ -492,6 +487,14 @@ section math-editor {
 	background-color: var(--surface-secondary);
 	height: 100%;
 }
+
+:deep(.graph-element .p-button) {
+	&,
+	&:hover {
+		background-color: var(--surface-secondary);
+	}
+}
+
 .legend {
 	position: absolute;
 	bottom: 0;
