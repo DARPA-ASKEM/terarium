@@ -1,5 +1,5 @@
 <template>
-	<div class="flex align-items-center pt-2 pb-2 pl-8 pr-8">
+	<div class="flex align-items-center">
 		<p class="p-text-secondary pr-2">Topic Filter</p>
 		<Dropdown
 			class="topic-dropdown"

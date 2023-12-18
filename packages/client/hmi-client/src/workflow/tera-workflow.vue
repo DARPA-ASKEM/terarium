@@ -190,6 +190,7 @@ import * as ModelFromCodeOp from './ops/model-from-code/mod';
 import * as SimulateJuliaOp from './ops/simulate-julia/mod';
 import * as ModelTransformerOp from './ops/model-transformer/mod';
 import * as ModelOp from './ops/model/mod';
+import * as ModelEditOp from './ops/model-edit/mod';
 import * as ModelConfigOp from './ops/model-config/mod';
 import * as CalibrateCiemssOp from './ops/calibrate-ciemss/mod';
 import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod';
@@ -211,6 +212,7 @@ registry.registerOp(DatasetOp);
 registry.registerOp(ModelTransformerOp);
 registry.registerOp(FunmanOp);
 registry.registerOp(ModelOp);
+registry.registerOp(ModelEditOp);
 registry.registerOp(CalibrateEnsembleCiemssOp);
 registry.registerOp(ModelConfigOp);
 registry.registerOp(CalibrateCiemssOp);
@@ -373,6 +375,7 @@ const categories: Record<string, { label: string; icon: string; separator?: bool
 const operationContextMenuList = [
 	// Model
 	{ name: ModelOp.name, category: categories.model },
+	{ name: ModelEditOp.name, category: categories.model },
 	{ name: ModelConfigOp.name, category: categories.model },
 	{ name: StratifyMiraOp.name, category: categories.model },
 	{ name: ModelTransformerOp.name, category: categories.model },

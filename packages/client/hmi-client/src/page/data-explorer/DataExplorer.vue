@@ -1,8 +1,5 @@
 <template>
 	<main class="data-explorer-container flex flex-column">
-		<section class="filter-bar">
-			<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
-		</section>
 		<section class="flex h-full relative overflow-hidden">
 			<tera-slider-panel
 				content-width="240px"
@@ -21,6 +18,22 @@
 				</template>
 			</tera-slider-panel>
 			<div class="results-content">
+				<div class="search-nav">
+					<tera-searchbar
+						class="search-bar"
+						ref="searchBarRef"
+						@query-changed="updateRelatedTerms"
+						@toggle-search-by-example="searchByExampleModalToggled"
+						:show-suggestions="false"
+					/>
+					<aside class="suggested-terms" v-if="!isEmpty(terms)">
+						Suggested terms:
+						<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
+							<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
+						</Chip>
+					</aside>
+					<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+				</div>
 				<SelectButton
 					:model-value="resourceType"
 					@change="if ($event.value) resourceType = $event.value;"
@@ -52,47 +65,6 @@
 				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
-			<tera-slider-panel
-				class="resources-slider"
-				:content-width="sliderWidth"
-				direction="right"
-				header="Selected resources"
-				v-model:is-open="isSliderResourcesOpen"
-				:indicator-value="selectedSearchItems.length"
-			>
-				<template v-slot:header>
-					<tera-selected-resources-header-pane
-						:selected-search-items="selectedSearchItems"
-						@close="isSliderResourcesOpen = false"
-						@clear-selected="clearItemSelected"
-					/>
-				</template>
-				<template v-slot:subHeader>
-					<div v-if="selectedSearchItems.length == 1" class="sub-header-title">
-						{{ selectedSearchItems.length }} item
-					</div>
-					<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
-						{{ selectedSearchItems.length }} items
-					</div>
-					<div v-if="selectedSearchItems.length == 0">
-						<div class="sub-header-title">Empty</div>
-					</div>
-				</template>
-				<template v-slot:content>
-					<div v-if="selectedSearchItems.length == 0" class="empty-cart-image-container">
-						<div class="empty-cart-image">
-							<img src="@/assets/svg/seed.svg" alt="Picture of a seed" />
-						</div>
-						<p>Selected resources will appear here</p>
-					</div>
-					<tera-selected-resources-options-pane
-						:selected-search-items="selectedSearchItems"
-						@toggle-data-item-selected="toggleDataItemSelected"
-						@find-related-content="onFindRelatedContent"
-						@find-similar-content="onFindSimilarContent"
-					/>
-				</template>
-			</tera-slider-panel>
 		</section>
 	</main>
 </template>
@@ -101,7 +73,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
-import { fetchData, getDocumentById } from '@/services/data';
+import { fetchData, getDocumentById, getRelatedTerms } from '@/services/data';
 import {
 	ResourceType,
 	ResultType,
@@ -124,11 +96,11 @@ import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
-import TeraSelectedResourcesOptionsPane from '@/page/data-explorer/components/tera-selected-resources-options-pane.vue';
-import TeraSelectedResourcesHeaderPane from '@/page/data-explorer/components/tera-selected-resources-header-pane.vue';
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { XDDFacetsItemResponse } from '@/types/Types';
+import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
+import Chip from 'primevue/chip';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
 
@@ -417,30 +389,6 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	}
 };
 
-// helper function to bypass the search-by-example modal
-//  by executing a search by example and refreshing the output
-const onFindRelatedContent = (item) => {
-	searchByExampleItem.value = item.item;
-	searchByExampleOptions.value = {
-		similarContent: false,
-		forwardCitation: false,
-		backwardCitation: false,
-		relatedContent: true
-	};
-};
-
-// helper function to bypass the search-by-example modal
-//  by executing a search by example and refreshing the output
-const onFindSimilarContent = (item) => {
-	searchByExampleItem.value = item.item;
-	searchByExampleOptions.value = {
-		similarContent: true,
-		forwardCitation: false,
-		backwardCitation: false,
-		relatedContent: false
-	};
-};
-
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
 	const item = dataItem.item;
@@ -498,17 +446,6 @@ watch(resourceType, async (newResourceType, oldResourceType) => {
 		calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 	}
 });
-
-const clearItemSelected = () => {
-	selectedSearchItems.value = [];
-};
-// const addPreviewItemToCart = () => {
-// 	if (previewItem.value) {
-// 		toggleDataItemSelected( {item: previewItem.value } );
-// 		previewItem.value = null;
-// 		isSliderResourcesOpen.value = true;
-// 	}
-// };
 
 async function executeNewQuery() {
 	if (route.query?.q?.toString() === '' || route.query?.q?.toString()) {
@@ -593,6 +530,30 @@ onMounted(async () => {
 onUnmounted(() => {
 	queryStore.reset();
 });
+
+/*
+ * Search
+ */
+const searchBarRef = ref();
+const terms = ref<string[]>([]);
+
+async function updateRelatedTerms(query?: string) {
+	if (query || query === '') terms.value = await getRelatedTerms(query);
+}
+
+function searchByExampleModalToggled() {
+	// TODO
+	// toggle the search by example modal represented by the component search-by-example
+	// which may be used as follows
+	/*
+	<search-by-example
+		v-if="searchByExampleModal"
+		:item="searchByExampleItem"
+		@search="onSearchByExample"
+		@hide="searchByExampleModal = false"
+	/>
+	*/
+}
 </script>
 
 <style scoped>
@@ -608,38 +569,20 @@ onUnmounted(() => {
 	margin: 0.5rem 0.5rem 0;
 }
 
-.resources-slider {
-	z-index: 1;
-}
-
-.sub-header-title {
-	font-size: var(--font-caption);
-	text-align: center;
-	color: var(--text-color-subdued);
+main > section:first-of-type {
 	display: flex;
+	flex-direction: row;
 }
 
-.empty-cart-image-container {
-	justify-content: center;
+.search-nav {
 	display: flex;
-	flex-direction: column;
-	margin-top: 12rem;
-	align-items: center;
-	gap: 2rem;
-	color: var(--text-color-secondary);
-	font-size: var(--font-body-small);
-}
 
-.empty-cart-image {
-	margin: auto;
-}
+	& > *:first-child {
+		flex-grow: 2;
+	}
 
-.breakdown-pane-container {
-	margin-left: 0.5rem;
-	margin-right: 0.5rem;
-}
-
-.cart-item {
-	list-style-type: none;
+	& > *:last-child {
+		margin-left: auto;
+	}
 }
 </style>
