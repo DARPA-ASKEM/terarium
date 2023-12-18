@@ -606,14 +606,16 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 	for (let i = 0; i < nodes.length; i++) {
 		const n = nodes[i];
-		console.log('node', n.id);
 
 		// The input ports connects to the edge's target
 		const inputs = n.inputs;
 		inputs.forEach((port) => {
 			const edge = edges.find((e) => e.targetPortId === port.id);
 			if (!edge) return;
-			const portElem = d3.select(`#${edge.targetPortId}`).select('.port').node() as HTMLElement;
+			const portElem = d3
+				.select(`[id='${edge.targetPortId}']`)
+				.select('.port')
+				.node() as HTMLElement;
 			const nodePosition: Position = { x: n.x, y: n.y };
 			const totalOffsetX = 0;
 			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
@@ -635,7 +637,10 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 		outputs.forEach((port) => {
 			const edge = edges.find((e) => e.sourcePortId === port.id);
 			if (!edge) return;
-			const portElem = d3.select(`#${edge.sourcePortId}`).select('.port').node() as HTMLElement;
+			const portElem = d3
+				.select(`[id='${edge.sourcePortId}']`)
+				.select('.port')
+				.node() as HTMLElement;
 			const nodePosition: Position = { x: n.x, y: n.y };
 			const totalOffsetX = 0;
 			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
