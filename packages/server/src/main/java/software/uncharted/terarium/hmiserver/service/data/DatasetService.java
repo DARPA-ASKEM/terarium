@@ -33,6 +33,7 @@ public class DatasetService {
 				.index(elasticConfig.getDatasetIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Dataset.class);
 	}
@@ -42,7 +43,10 @@ public class DatasetService {
 	}
 
 	public void deleteDataset(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getDatasetIndex(), id.toString());
+
+		Dataset dataset = getDataset(id);
+		dataset.setDeletedOn(Timestamp.from(Instant.now()));
+		updateDataset(dataset);
 	}
 
 	public Dataset createDataset(Dataset dataset) throws IOException {

@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,7 +42,12 @@ public class FrameworkService {
 	}
 
 	public void deleteFramework(final UUID id) {
-		frameworkRepository.deleteById(id);
+		Optional<ModelFramework> framework = frameworkRepository.findById(id);
+		if(framework.isEmpty()) {
+			return;
+		}
+		framework.get().setDeletedOn(Timestamp.from(Instant.now()));
+		frameworkRepository.save(framework.get());
 	}
 
 }

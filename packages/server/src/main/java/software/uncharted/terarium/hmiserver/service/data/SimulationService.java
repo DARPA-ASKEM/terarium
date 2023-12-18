@@ -39,6 +39,7 @@ public class SimulationService {
 				.index(elasticConfig.getSimulationIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Simulation.class);
 	}
@@ -48,7 +49,10 @@ public class SimulationService {
 	}
 
 	public void deleteSimulation(final UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getSimulationIndex(), id.toString());
+
+		Simulation simulation = getSimulation(id);
+		simulation.setDeletedOn(Timestamp.from(Instant.now()));
+		updateSimulation(simulation);
 	}
 
 	public Simulation createSimulation(final Simulation simulation) throws IOException {
