@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -97,11 +98,16 @@ public class ExternalPublicationService {
 	 * @throws IOException If an I/O error occurs while indexing the
 	 *                     ExternalPublication.
 	 */
-	public ExternalPublication updateExternalPublication(ExternalPublication externalPublication) throws IOException {
+	public Optional<ExternalPublication> updateExternalPublication(ExternalPublication externalPublication)
+			throws IOException {
+		if (!elasticService.contains(elasticConfig.getArtifactIndex(), externalPublication.getId().toString())) {
+			return Optional.empty();
+		}
+
 		externalPublication.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getExternalPublicationIndex(), externalPublication.getId().toString(),
 				externalPublication);
-		return externalPublication;
+		return Optional.of(externalPublication);
 	}
 
 	/**

@@ -89,20 +89,4 @@ public class Project implements Serializable {
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private String userPermission;
-
-	/**
-	 * Helper method to create a new project from an existing one, excluding UUID
-	 * and timestamps. This
-	 * will be useful for creating new projects to save in the database from the
-	 * client for example
-	 *
-	 * @param oldProject project to copy from
-	 * @return new project
-	 */
-	public static Project cloneFrom(Project oldProject) {
-		return new Project()
-				.setName(oldProject.getName())
-				.setDescription(oldProject.getDescription())
-				.setAssets(oldProject.getAssets());
-	}
 }

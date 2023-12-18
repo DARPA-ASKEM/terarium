@@ -189,11 +189,11 @@ public class ProjectController {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
 					.canAdministrate(new RebacProject(id, reBACService))) {
 				final Optional<Project> project = projectService.getProject(id);
-				if (project.isEmpty())
+				if (project.isEmpty()) {
 					return ResponseEntity.notFound().build();
+				}
 
-				project.get().setDeletedOn(Timestamp.from(Instant.now()));
-				projectService.save(project.get());
+				projectService.deleteProject(project.get());
 
 				return ResponseEntity.ok(id);
 			}
@@ -214,7 +214,7 @@ public class ProjectController {
 	public ResponseEntity<Project> createProject(
 			@RequestBody Project project) {
 
-		project = projectService.save(Project.cloneFrom(project));
+		project = projectService.createProject(project);
 
 		try {
 			new RebacUser(currentUserService.getToken().getSubject(), reBACService)
@@ -241,20 +241,16 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProject(
 			@PathVariable("id") final UUID id,
-			@RequestBody final Project project) {
+			@RequestBody Project project) {
 		try {
 			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
 					.canWrite(new RebacProject(id, reBACService))) {
 
-				final Optional<Project> currentProject = projectService.getProject(id);
-				if (currentProject.isEmpty())
+				final Optional<Project> updatedProject = projectService.updateProject(project.setId(id));
+				if (updatedProject.isEmpty()) {
 					return ResponseEntity.notFound().build();
-
-				// Ensure that we retain our current Id and created on date
-				project.setId(currentProject.get().getId());
-				project.setCreatedOn(currentProject.get().getCreatedOn());
-
-				return ResponseEntity.ok(projectService.save(project));
+				}
+				return ResponseEntity.ok(updatedProject.get());
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {

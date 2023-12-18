@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -51,10 +52,14 @@ public class ArtifactService {
 		return artifact;
 	}
 
-	public Artifact updateArtifact(Artifact artifact) throws IOException {
+	public Optional<Artifact> updateArtifact(Artifact artifact) throws IOException {
+		if (!elasticService.contains(elasticConfig.getArtifactIndex(), artifact.getId().toString())) {
+			return Optional.empty();
+		}
+
 		artifact.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getArtifactIndex(), artifact.getId().toString(), artifact);
-		return artifact;
+		return Optional.of(artifact);
 	}
 
 	private String getPath(UUID artifactId, String filename) {

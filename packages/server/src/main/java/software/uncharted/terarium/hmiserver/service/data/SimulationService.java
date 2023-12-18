@@ -1,9 +1,12 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -54,9 +57,13 @@ public class SimulationService {
 		return simulation;
 	}
 
-	public Simulation updateSimulation(final Simulation simulation) throws IOException {
+	public Optional<Simulation> updateSimulation(final Simulation simulation) throws IOException {
+		if (!elasticService.contains(elasticConfig.getArtifactIndex(), simulation.getId().toString())) {
+			return Optional.empty();
+		}
+		simulation.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getSimulationIndex(), simulation.getId().toString(), simulation);
-		return simulation;
+		return Optional.of(simulation);
 	}
 
 	private String getPath(final UUID id, final String filename) {

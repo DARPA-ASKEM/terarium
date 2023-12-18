@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -51,10 +52,14 @@ public class DatasetService {
 		return dataset;
 	}
 
-	public Dataset updateDataset(Dataset dataset) throws IOException {
+	public Optional<Dataset> updateDataset(Dataset dataset) throws IOException {
+		if (!elasticService.contains(elasticConfig.getArtifactIndex(), dataset.getId().toString())) {
+			return Optional.empty();
+		}
+
 		dataset.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId().toString(), dataset);
-		return dataset;
+		return Optional.of(dataset);
 	}
 
 	private String getPath(UUID documentId, String filename) {

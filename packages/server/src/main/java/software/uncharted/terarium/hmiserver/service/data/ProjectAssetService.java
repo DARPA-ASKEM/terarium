@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -48,6 +49,13 @@ public class ProjectAssetService {
 		asset.setResourceId(resourceId);
 
 		return projectAssetRepository.save(asset);
+	}
+
+	public Optional<ProjectAsset> updateProjectAsset(final ProjectAsset asset) {
+		if (!projectAssetRepository.existsById(asset.getId())) {
+			return Optional.empty();
+		}
+		return Optional.of(projectAssetRepository.save(asset));
 	}
 
 }

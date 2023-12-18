@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -36,7 +35,7 @@ public class ElasticsearchInitializationService {
 	private Resource[] resourcePipelines;
 
 	@PostConstruct
-	void init() {
+	void init() throws IOException {
 		pushMissingPipelines();
 		pushMissingIndexTemplates();
 		pushMissingIndices();
@@ -57,7 +56,7 @@ public class ElasticsearchInitializationService {
 	/**
 	 * For each system template resource, add it to the cluster if it doesn't exist
 	 */
-	private void pushMissingIndexTemplates() {
+	private void pushMissingIndexTemplates() throws IOException {
 		for (final Resource resource : resourceIndexTemplates) {
 			final String filename = resource.getFilename();
 			if (filename != null) {
@@ -84,7 +83,7 @@ public class ElasticsearchInitializationService {
 	/**
 	 * For each pipeline resource, add it to the cluster if it doesn't exist
 	 */
-	private void pushMissingPipelines() {
+	private void pushMissingPipelines() throws IOException {
 		for (final Resource resource : resourcePipelines) {
 			final String filename = resource.getFilename();
 			if (filename != null) {
@@ -112,7 +111,7 @@ public class ElasticsearchInitializationService {
 	 * For each index in the ElasticsearchConfiguration, add it to the cluster if it
 	 * doesn't exist
 	 */
-	private void pushMissingIndices() {
+	private void pushMissingIndices() throws IOException {
 		final String[] indices = new String[] {
 				config.getCodeIndex(),
 				config.getDatasetIndex(),
@@ -124,7 +123,7 @@ public class ElasticsearchInitializationService {
 				config.getSimulationIndex(),
 				config.getWorkflowIndex()
 		};
-		Arrays.stream(indices).forEach(index -> {
+		for (String index : indices) {
 			if (!elasticsearchService.containsIndex(index)) {
 				try {
 					elasticsearchService.createIndex(index);
@@ -132,6 +131,6 @@ public class ElasticsearchInitializationService {
 					log.error("Error creating index {}", index, e);
 				}
 			}
-		});
+		}
 	}
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -53,11 +54,15 @@ public class ModelConfigurationService {
 		return modelConfiguration;
 	}
 
-	public ModelConfiguration updateModelConfiguration(ModelConfiguration modelConfiguration) throws IOException {
+	public Optional<ModelConfiguration> updateModelConfiguration(ModelConfiguration modelConfiguration)
+			throws IOException {
+		if (!elasticService.contains(elasticConfig.getArtifactIndex(), modelConfiguration.getId().toString())) {
+			return Optional.empty();
+		}
 		modelConfiguration.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getModelConfigurationIndex(), modelConfiguration.getId().toString(),
 				modelConfiguration);
-		return modelConfiguration;
+		return Optional.of(modelConfiguration);
 	}
 
 }

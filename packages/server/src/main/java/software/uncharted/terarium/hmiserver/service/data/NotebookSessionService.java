@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -46,11 +47,14 @@ public class NotebookSessionService {
 		return notebookSession;
 	}
 
-	public NotebookSession updateNotebookSession(NotebookSession notebookSession) throws IOException {
+	public Optional<NotebookSession> updateNotebookSession(NotebookSession notebookSession) throws IOException {
+		if (!elasticService.contains(elasticConfig.getArtifactIndex(), notebookSession.getId().toString())) {
+			return Optional.empty();
+		}
 		notebookSession.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getNotebookSessionIndex(), notebookSession.getId().toString(),
 				notebookSession);
-		return notebookSession;
+		return Optional.of(notebookSession);
 	}
 
 }

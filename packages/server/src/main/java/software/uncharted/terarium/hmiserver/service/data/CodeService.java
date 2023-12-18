@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -85,10 +86,13 @@ public class CodeService {
 	 * @return A ResponseEntity containing the updated Code object.
 	 * @throws IOException if an error occurs while updating the Code object.
 	 */
-	public Code updateCode(Code code) throws IOException {
+	public Optional<Code> updateCode(Code code) throws IOException {
+		if (!elasticService.contains(elasticConfig.getArtifactIndex(), code.getId().toString())) {
+			return Optional.empty();
+		}
 		code.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getCodeIndex(), code.getId().toString(), code);
-		return code;
+		return Optional.of(code);
 	}
 
 	/**
