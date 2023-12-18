@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -100,11 +102,13 @@ public class ModelService {
 	}
 
 	public Model createModel(Model model) throws IOException {
-		elasticService.index(elasticConfig.getModelIndex(), model.getId().toString(), model);
+		model.setCreatedOn(Timestamp.from(Instant.now()));
+		elasticService.index(elasticConfig.getModelIndex(), model.setId(UUID.randomUUID()).getId().toString(), model);
 		return model;
 	}
 
 	public Model updateModel(Model model) throws IOException {
+		model.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getModelIndex(), model.getId().toString(), model);
 		return model;
 	}

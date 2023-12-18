@@ -35,6 +35,8 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -108,7 +110,7 @@ public class TDSCodeController{
 	public ResponseEntity<Code> createCode(@RequestBody Code code){
 
 		try {
-				codeService.createCode(code);
+			code = codeService.createCode(code);
 		} catch (IOException e) {
 			log.error("Unable to create code resource", e);
 			throw new ResponseStatusException(
@@ -191,9 +193,8 @@ public class TDSCodeController{
 	public ResponseEntity<Code> updateCode(@PathVariable("id") UUID codeId, @RequestBody Code code){
 
 		code.setId(codeId);
-
 		try {
-				codeService.updateCode(code);
+			code = codeService.updateCode(code);
 		} catch (IOException e) {
 			log.error("Unable to update code resource", e);
 			throw new ResponseStatusException(

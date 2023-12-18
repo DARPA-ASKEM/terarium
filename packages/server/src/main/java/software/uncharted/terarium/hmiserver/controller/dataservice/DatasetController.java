@@ -103,11 +103,11 @@ public class DatasetController {
 			@ApiResponse(responseCode = "200", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createDocument(@RequestBody final Dataset dataset) {
+	public ResponseEntity<Dataset> createDataset(@RequestBody Dataset dataset) {
 
 		try {
-			datasetService.createDataset(dataset);
-			return ResponseEntity.ok(new ResponseId(dataset.getId()));
+			dataset = datasetService.createDataset(dataset);
+			return ResponseEntity.ok(dataset);
 		} catch (IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
@@ -168,13 +168,13 @@ public class DatasetController {
 			@ApiResponse(responseCode = "200", description = "Dataset updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 	})
-	ResponseEntity<ResponseId> updateDataset(
+	ResponseEntity<Dataset> updateDataset(
 			@PathVariable("id") UUID id,
-			@RequestBody final Dataset dataset) {
+			@RequestBody Dataset dataset) {
 
 		try {
-			datasetService.updateDataset(dataset);
-			return ResponseEntity.ok(new ResponseId(id));
+			dataset = datasetService.updateDataset(dataset.setId(id));
+			return ResponseEntity.ok(dataset);
 		} catch (IOException e) {
 			final String error = "Unable to delete dataset";
 			log.error(error, e);

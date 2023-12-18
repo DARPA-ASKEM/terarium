@@ -1,10 +1,18 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.notebooksession;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
@@ -13,11 +21,21 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 public class NotebookSession {
 
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp createdOn;
+
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp updatedOn;
+
 	@TSOptional
-	private Instant timestamp;
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp deletedOn;
 
 	private String name;
 

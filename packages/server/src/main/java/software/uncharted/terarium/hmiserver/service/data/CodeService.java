@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,7 +29,8 @@ public class CodeService {
 
 	/**
 	 * Retrieves a list of Code objects from an Elasticsearch index.
-	 * @param page The page number of the search results.
+	 *
+	 * @param page     The page number of the search results.
 	 * @param pageSize The number of results per page.
 	 * @return A ResponseEntity containing a list of Code objects.
 	 * @throws IOException if an error occurs while retrieving the Code objects.
@@ -43,6 +46,7 @@ public class CodeService {
 
 	/**
 	 * Retrieves a Code object from an Elasticsearch index.
+	 *
 	 * @param id The id of the Code object to retrieve.
 	 * @return A ResponseEntity containing a Code object.
 	 * @throws IOException if an error occurs while retrieving the Code object.
@@ -53,6 +57,7 @@ public class CodeService {
 
 	/**
 	 * Deletes a Code object from an Elasticsearch index.
+	 *
 	 * @param id The id of the Code object to delete.
 	 * @throws IOException if an error occurs while deleting the Code object.
 	 */
@@ -62,29 +67,34 @@ public class CodeService {
 
 	/**
 	 * Creates a Code object in an Elasticsearch index.
+	 *
 	 * @param code The Code object to create.
 	 * @return A ResponseEntity containing the created Code object.
 	 * @throws IOException if an error occurs while creating the Code object.
 	 */
 	public Code createCode(Code code) throws IOException {
-		elasticService.index(elasticConfig.getCodeIndex(), code.getId().toString(), code);
+		code.setCreatedOn(Timestamp.from(Instant.now()));
+		elasticService.index(elasticConfig.getCodeIndex(), code.setId(UUID.randomUUID()).getId().toString(), code);
 		return code;
 	}
 
 	/**
 	 * Updates a Code object in an Elasticsearch index.
+	 *
 	 * @param code The Code object to update.
 	 * @return A ResponseEntity containing the updated Code object.
 	 * @throws IOException if an error occurs while updating the Code object.
 	 */
 	public Code updateCode(Code code) throws IOException {
+		code.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getCodeIndex(), code.getId().toString(), code);
 		return code;
 	}
 
 	/**
 	 * Retrieves the path to a file in S3.
-	 * @param codeId The id of the Code object.
+	 *
+	 * @param codeId   The id of the Code object.
 	 * @param filename The name of the file.
 	 * @return The path to the file in S3.
 	 */
@@ -94,7 +104,8 @@ public class CodeService {
 
 	/**
 	 * Retrieves a presigned URL for uploading a file to S3.
-	 * @param codeId The id of the Code object.
+	 *
+	 * @param codeId   The id of the Code object.
 	 * @param filename The name of the file.
 	 * @return A presigned upload URL.
 	 */
@@ -112,7 +123,8 @@ public class CodeService {
 
 	/**
 	 * Retrieves a presigned URL for downloading a file from S3.
-	 * @param codeId The id of the Code object.
+	 *
+	 * @param codeId   The id of the Code object.
 	 * @param filename The name of the file.
 	 * @return A presigned download URL.
 	 */

@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,11 +90,11 @@ public class NotebookSessionController {
 			@ApiResponse(responseCode = "200", description = "NotebookSession created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the session", content = @Content)
 	})
-	ResponseEntity<ResponseId> createNotebookSession(@RequestBody NotebookSession session) {
+	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody NotebookSession session) {
 
 		try {
 			sessionService.createNotebookSession(session);
-			return ResponseEntity.ok(new ResponseId(session.getId()));
+			return ResponseEntity.ok(session);
 		} catch (IOException e) {
 			final String error = "Unable to create session";
 			log.error(error, e);
@@ -143,13 +145,14 @@ public class NotebookSessionController {
 			@ApiResponse(responseCode = "200", description = "NotebookSession updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the session", content = @Content)
 	})
-	ResponseEntity<ResponseId> updateNotebookSession(
+	ResponseEntity<NotebookSession> updateNotebookSession(
 			@PathVariable("session_id") UUID id,
 			@RequestBody NotebookSession session) {
 
 		try {
-			sessionService.updateNotebookSession(session.setId(id));
-			return ResponseEntity.ok(new ResponseId(id));
+
+			session = sessionService.updateNotebookSession(session.setId(id));
+			return ResponseEntity.ok(session);
 		} catch (IOException e) {
 			final String error = "Unable to update session";
 			log.error(error, e);

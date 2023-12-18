@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,11 +45,14 @@ public class DatasetService {
 	}
 
 	public Dataset createDataset(Dataset dataset) throws IOException {
-		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId().toString(), dataset);
+		dataset.setCreatedOn(Timestamp.from(Instant.now()));
+		elasticService.index(elasticConfig.getDocumentIndex(), dataset.setId(UUID.randomUUID()).getId().toString(),
+				dataset);
 		return dataset;
 	}
 
 	public Dataset updateDataset(Dataset dataset) throws IOException {
+		dataset.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getDocumentIndex(), dataset.getId().toString(), dataset);
 		return dataset;
 	}

@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,11 +39,14 @@ public class EquationService {
 	}
 
 	public Equation createEquation(Equation equation) throws IOException {
-		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
+		equation.setCreatedOn(Timestamp.from(Instant.now()));
+		elasticService.index(elasticConfig.getEquationIndex(), equation.setId(UUID.randomUUID()).getId().toString(),
+				equation);
 		return equation;
 	}
 
 	public Equation updateEquation(Equation equation) throws IOException {
+		equation.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
 		return equation;
 	}

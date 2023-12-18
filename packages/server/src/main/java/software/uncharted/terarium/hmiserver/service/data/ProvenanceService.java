@@ -36,7 +36,7 @@ public class ProvenanceService {
 
 	final private Neo4jService neo4jService;
 
-	final ProvenanceRepository provenanceRepository;
+	final private ProvenanceRepository provenanceRepository;
 
 	private Map<String, List<List<String>>> graphValidations;
 

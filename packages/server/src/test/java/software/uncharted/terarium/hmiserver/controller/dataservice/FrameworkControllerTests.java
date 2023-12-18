@@ -48,7 +48,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.setVersion("0.1.2")
 				.setSemantics("test-semantics"));
 
-		mockMvc.perform(MockMvcRequestBuilders.put("/models/frameworks/" + framework.getName())
+		mockMvc.perform(MockMvcRequestBuilders.put("/models/frameworks/" + framework.getId())
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(framework)))
@@ -64,7 +64,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.setVersion("0.1.2")
 				.setSemantics("test-semantics"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/frameworks/" + framework.getName())
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/frameworks/" + framework.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -78,10 +78,10 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.setVersion("0.1.2")
 				.setSemantics("test-semantics"));
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getName())
+		mockMvc.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(frameworkService.getFramework(framework.getId()));
+		Assertions.assertTrue(frameworkService.getFramework(framework.getId()).isEmpty());
 	}
 }
