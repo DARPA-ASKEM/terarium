@@ -19,14 +19,6 @@
 			</div>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
-		<tera-searchbar
-			v-if="active"
-			class="search-bar"
-			ref="searchBarRef"
-			:show-suggestions="showSuggestions"
-			@query-changed="updateRelatedTerms"
-			@toggle-search-by-example="searchByExampleModalToggled"
-		/>
 		<section v-if="active" class="header-right">
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
@@ -131,10 +123,8 @@ import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
-import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -146,7 +136,6 @@ import { useProjects } from '@/composables/project';
 
 defineProps<{
 	active: boolean;
-	showSuggestions: boolean;
 }>();
 
 /*
@@ -373,25 +362,6 @@ function closeLogoutDialog() {
  * Search
  */
 const searchBarRef = ref();
-const terms = ref<string[]>([]);
-
-async function updateRelatedTerms(query?: string) {
-	if (query || query === '' || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
-}
-
-function searchByExampleModalToggled() {
-	// TODO
-	// toggle the search by example modal represented by the component search-by-example
-	// which may be used as follows
-	/*
-	<search-by-example
-		v-if="searchByExampleModal"
-		:item="searchByExampleItem"
-		@search="onSearchByExample"
-		@hide="searchByExampleModal = false"
-	/>
-	*/
-}
 
 watch(
 	() => useProjects().allProjects.value,
