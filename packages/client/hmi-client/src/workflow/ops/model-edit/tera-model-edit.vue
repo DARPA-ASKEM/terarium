@@ -144,7 +144,6 @@ const runFromCode = () => {
 			console.log('error', data.content);
 		})
 		.register('model_preview', (data) => {
-			console.log('!!', data.content);
 			if (!data.content) return;
 
 			handleModelPreview(data);
