@@ -5,15 +5,7 @@
 				<i class="pi pi-search" />
 				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
 			</span>
-			<Button
-				class="new"
-				icon="pi pi-plus"
-				label="New"
-				severity="secondary"
-				size="small"
-				outlined
-				@click="toggleOptionsMenu"
-			/>
+			<Button class="new" label="New" size="small" outlined @click="toggleOptionsMenu" />
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
 				<template #item="slotProps">
 					<a class="p-menuitem-link">
@@ -239,7 +231,15 @@ nav {
 }
 
 header {
-	padding: 0 0.5rem;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	display: flex;
+	flex-direction: row;
+
+	& > * {
+		align-self: stretch;
+		height: 100%;
+	}
 }
 
 .icon {
@@ -336,13 +336,7 @@ header {
 }
 
 .resource-panel-search {
-	padding: 0.51rem 0.5rem;
 	width: 100%;
-	font-size: var(--font-caption);
-}
-
-.new {
-	width: 6rem;
 }
 
 :deep(.p-button-icon-left.icon) {

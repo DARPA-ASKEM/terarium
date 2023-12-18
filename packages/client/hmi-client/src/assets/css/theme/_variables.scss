@@ -58,6 +58,7 @@ $disabledOpacity: .38 !default;
 $maskBg: rgba(0, 0, 0, 0.32) !default;
 $loadingIconFontSize: 2rem !default;
 $errorColor: #B00020 !default;
+$padding: .5rem !default;
 
 //selected state
 $highlightBg: #E9FFFC;
@@ -86,7 +87,7 @@ $actionIconHoverColor: $textSecondaryColor !default;
 $actionIconBorderRadius: 50% !default;
 
 //input field (e.g. inputtext, spinner, inputmask)
-$inputPadding: 1rem 1rem !default;
+$inputPadding: $padding $padding !default;
 $inputTextFontSize: $fontSize;
 $inputBg: #ffffff !default;
 $inputTextColor: $emphasis-high !default;
