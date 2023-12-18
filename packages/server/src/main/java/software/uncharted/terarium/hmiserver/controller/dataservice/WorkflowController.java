@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
@@ -25,7 +26,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.dataservice.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 
@@ -118,7 +119,11 @@ public class WorkflowController {
 			@PathVariable("id") final UUID id,
 			@RequestBody Workflow workflow) {
 		try {
-			return ResponseEntity.ok(workflowService.updateWorkflow(workflow.setId(id)));
+			final Optional<Workflow> updated = workflowService.updateWorkflow(workflow.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (final IOException e) {
 			final String error = "Unable to update workflow";
 			log.error(error, e);

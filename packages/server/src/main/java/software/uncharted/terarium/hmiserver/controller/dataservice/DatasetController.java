@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -173,8 +174,11 @@ public class DatasetController {
 			@RequestBody Dataset dataset) {
 
 		try {
-			dataset = datasetService.updateDataset(dataset.setId(id));
-			return ResponseEntity.ok(dataset);
+			final Optional<Dataset> updated = datasetService.updateDataset(dataset.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (IOException e) {
 			final String error = "Unable to delete dataset";
 			log.error(error, e);

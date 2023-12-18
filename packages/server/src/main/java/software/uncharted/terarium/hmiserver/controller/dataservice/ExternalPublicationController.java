@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -152,8 +153,12 @@ public class ExternalPublicationController {
 			@PathVariable("id") final UUID id,
 			@RequestBody ExternalPublication publication) {
 		try {
-			publication = externalPublicationService.updateExternalPublication(publication.setId(id));
-			return ResponseEntity.ok(publication);
+			final Optional<ExternalPublication> updated = externalPublicationService
+					.updateExternalPublication(publication.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (IOException e) {
 			log.error("Unable to PUT publication", e);
 			throw new ResponseStatusException(

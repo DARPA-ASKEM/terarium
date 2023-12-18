@@ -117,7 +117,11 @@ public class SimulationController {
 	public ResponseEntity<Simulation> updateSimulation(@PathVariable("id") final UUID id,
 			@RequestBody Simulation simulation) {
 		try {
-			return ResponseEntity.ok(simulationService.updateSimulation(simulation).setId(id));
+			final Optional<Simulation> updated = simulationService.updateSimulation(simulation.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to update simulation %s", id);
 			log.error(error, e);

@@ -79,12 +79,15 @@ public class FrameworkController {
 			@ApiResponse(responseCode = "200", description = "Model framework updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the framework", content = @Content)
 	})
-	ResponseEntity<ResponseId> updateFramework(
-			@PathVariable("id") String id,
-			@RequestBody final ModelFramework framework) {
+	ResponseEntity<ModelFramework> updateFramework(
+			@PathVariable("id") UUID id,
+			@RequestBody ModelFramework framework) {
 
-		frameworkService.updateFramework(framework);
-		return ResponseEntity.ok(new ResponseId(id));
+		final Optional<ModelFramework> updated = frameworkService.updateFramework(framework.setId(id));
+		if (updated.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(updated.get());
 	}
 
 	@DeleteMapping("/frameworks/{id}")

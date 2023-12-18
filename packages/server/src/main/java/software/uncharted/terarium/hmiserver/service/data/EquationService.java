@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -45,10 +46,14 @@ public class EquationService {
 		return equation;
 	}
 
-	public Equation updateEquation(Equation equation) throws IOException {
+	public Optional<Equation> updateEquation(Equation equation) throws IOException {
+		if (!elasticService.contains(elasticConfig.getEquationIndex(), equation.getId().toString())) {
+			return Optional.empty();
+		}
+
 		equation.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
-		return equation;
+		return Optional.of(equation);
 	}
 
 }

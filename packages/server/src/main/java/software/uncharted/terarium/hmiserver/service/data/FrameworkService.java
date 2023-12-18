@@ -32,8 +32,11 @@ public class FrameworkService {
 		return frameworkRepository.save(framework);
 	}
 
-	public ModelFramework updateFramework(final ModelFramework framework) {
-		return frameworkRepository.save(framework);
+	public Optional<ModelFramework> updateFramework(final ModelFramework framework) {
+		if (!frameworkRepository.existsById(framework.getId())) {
+			return Optional.empty();
+		}
+		return Optional.of(frameworkRepository.save(framework));
 	}
 
 	public void deleteFramework(final UUID id) {

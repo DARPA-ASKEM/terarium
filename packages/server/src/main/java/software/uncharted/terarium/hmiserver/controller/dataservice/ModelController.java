@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -203,9 +202,11 @@ public class ModelController {
 			@RequestBody Model model) {
 
 		try {
-
-			model = modelService.updateModel(model.setId(id));
-			return ResponseEntity.ok(model);
+			final Optional<Model> updated = modelService.updateModel(model.setId(id));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);

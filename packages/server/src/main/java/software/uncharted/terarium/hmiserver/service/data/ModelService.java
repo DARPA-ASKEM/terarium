@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -107,10 +108,13 @@ public class ModelService {
 		return model;
 	}
 
-	public Model updateModel(Model model) throws IOException {
+	public Optional<Model> updateModel(Model model) throws IOException {
+		if (!elasticService.contains(elasticConfig.getModelIndex(), model.getId().toString())) {
+			return Optional.empty();
+		}
 		model.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getModelIndex(), model.getId().toString(), model);
-		return model;
+		return Optional.of(model);
 	}
 
 }

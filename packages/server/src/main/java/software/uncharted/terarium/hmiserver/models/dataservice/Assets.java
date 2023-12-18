@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 
 @Data
