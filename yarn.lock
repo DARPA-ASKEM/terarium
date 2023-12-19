@@ -3789,10 +3789,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ace-builds@npm:1.32.1":
-  version: 1.32.1
-  resolution: "ace-builds@npm:1.32.1"
-  checksum: ce75a57f71c53073b137017933450d047cafb544bc2253e6eaac971bf6523c5eebfba206f07c721e8ffaa8b3818e0b8314d7b64a7bcd579cdb959b0961e651c8
+"ace-builds@npm:1.32.2":
+  version: 1.32.2
+  resolution: "ace-builds@npm:1.32.2"
+  checksum: 755a71f472032603a2b0920e8cbbd56a00f02e7a1d2a24cf19e00dcea9d3ca1eb03c4aa6ab167f52589e568d5b5bad6913fc8507f39b7927851c65c2274ba313
   languageName: node
   linkType: hard
 
@@ -6818,9 +6818,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-import@npm:2.29.0":
-  version: 2.29.0
-  resolution: "eslint-plugin-import@npm:2.29.0"
+"eslint-plugin-import@npm:2.29.1":
+  version: 2.29.1
+  resolution: "eslint-plugin-import@npm:2.29.1"
   dependencies:
     array-includes: "npm:^3.1.7"
     array.prototype.findlastindex: "npm:^1.2.3"
@@ -6838,10 +6838,10 @@ __metadata:
     object.groupby: "npm:^1.0.1"
     object.values: "npm:^1.1.7"
     semver: "npm:^6.3.1"
-    tsconfig-paths: "npm:^3.14.2"
+    tsconfig-paths: "npm:^3.15.0"
   peerDependencies:
     eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
-  checksum: d6e8d016f38369892c85b866f762c03dee2b337d4f12031756e30d7490879261d1192a3c2f682fd7c4d2b923465f7a1e3d22cfdad5da1b1391c3bd39ea87af1a
+  checksum: 5865f05c38552145423c535326ec9a7113ab2305c7614c8b896ff905cfabc859c8805cac21e979c9f6f742afa333e6f62f812eabf891a7e8f5f0b853a32593c1
   languageName: node
   linkType: hard
 
@@ -8146,7 +8146,7 @@ __metadata:
     esbuild-jest: "npm:0.5.0"
     eslint: "npm:8.55.0"
     eslint-config-esnext: "npm:4.1.0"
-    eslint-plugin-import: "npm:2.29.0"
+    eslint-plugin-import: "npm:2.29.1"
     globby: "npm:13.1.4"
     jest: "npm:29.7.0"
     live-server: "npm:1.2.2"
@@ -8354,7 +8354,7 @@ __metadata:
     "@vitest/coverage-c8": "npm:0.24.5"
     "@vue/runtime-dom": "npm:3.3.11"
     "@vueup/vue-quill": "npm:1.2.0"
-    ace-builds: "npm:1.32.1"
+    ace-builds: "npm:1.32.2"
     axios: "npm:1.6.2"
     chart.js: "npm:4.4.1"
     chartjs-plugin-datalabels: "npm:2.2.0"
@@ -8382,7 +8382,7 @@ __metadata:
     sass: "npm:1.56.1"
     typescript: "npm:5.3.3"
     uuid: "npm:9.0.1"
-    vite: "npm:5.0.7"
+    vite: "npm:5.0.10"
     vite-svg-loader: "npm:4.0.0"
     vitest: "npm:0.24.5"
     vue: "npm:3.3.11"
@@ -13676,6 +13676,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tsconfig-paths@npm:^3.15.0":
+  version: 3.15.0
+  resolution: "tsconfig-paths@npm:3.15.0"
+  dependencies:
+    "@types/json5": "npm:^0.0.29"
+    json5: "npm:^1.0.2"
+    minimist: "npm:^1.2.6"
+    strip-bom: "npm:^3.0.0"
+  checksum: 2041beaedc6c271fc3bedd12e0da0cc553e65d030d4ff26044b771fac5752d0460944c0b5e680f670c2868c95c664a256cec960ae528888db6ded83524e33a14
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^1.8.1, tslib@npm:^1.9.0":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
@@ -14126,9 +14138,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:5.0.7":
-  version: 5.0.7
-  resolution: "vite@npm:5.0.7"
+"vite@npm:5.0.10":
+  version: 5.0.10
+  resolution: "vite@npm:5.0.10"
   dependencies:
     esbuild: "npm:^0.19.3"
     fsevents: "npm:~2.3.3"
@@ -14162,7 +14174,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 27186e5b907484ed17a9cb803bb2127995a1659e1da9eab36bcd7bfac5d11ed41f7136d9913cc27a8c8c49c3fee5c791dee135c5d37653ddfa0153b69dc3f930
+  checksum: 5421e9c7f8cf3152eace9a8b528269141635f367e5dc63c5f1fe2712a766d9757f8197733cf3f28be590afdd520130d38de90c955e6dba6edfa6f9056c1e5ea7
   languageName: node
   linkType: hard
 
