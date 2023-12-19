@@ -466,7 +466,7 @@ nav {
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
 	color: var(--text-color-light);
-	padding: 0.714rem 0.4rem;
+	padding: 0.714rem 0;
 	width: calc(3rem + 1px);
 
 	&:hover {
