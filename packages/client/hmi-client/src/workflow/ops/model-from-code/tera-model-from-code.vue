@@ -315,8 +315,8 @@ async function handleCode() {
 
 		kernelManager
 			.sendMessage('compile_expr_request', messageContent)
-			?.register('compile_expr_response', handleCompileExprResponse)
-			?.register('decapodes_preview', handleDecapodesPreview);
+			.register('compile_expr_response', handleCompileExprResponse)
+			.register('decapodes_preview', handleDecapodesPreview);
 	}
 }
 
