@@ -33,7 +33,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfi
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 
-@RequestMapping("/model_configurations")
+@RequestMapping("/model-configurations")
 @RestController
 @RequiredArgsConstructor
 @Slf4j

@@ -109,7 +109,7 @@ public class EquationController {
 	 * @param id equation id
 	 * @return Equation
 	 */
-	@GetMapping("/{equation_id}")
+	@GetMapping("/{equationId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets equation by ID")
 	@ApiResponses(value = {
@@ -117,7 +117,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "204", description = "There was no equation found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the equation from the data store", content = @Content)
 	})
-	ResponseEntity<Equation> getEquation(@PathVariable("equation_id") UUID id) {
+	ResponseEntity<Equation> getEquation(@PathVariable("equationId") UUID id) {
 
 		try {
 			Optional<Equation> equation = equationService.getEquation(id);
@@ -141,7 +141,7 @@ public class EquationController {
 	 * @param equation equation to update with
 	 * @return ID of updated equation
 	 */
-	@PutMapping("/{equation_id}")
+	@PutMapping("/{equationId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a equation")
 	@ApiResponses(value = {
@@ -149,7 +149,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the equation", content = @Content)
 	})
 	ResponseEntity<Equation> updateEquation(
-			@PathVariable("equation_id") UUID id,
+			@PathVariable("equationId") UUID id,
 			@RequestBody Equation equation) {
 
 		try {
@@ -173,7 +173,7 @@ public class EquationController {
 	 * @param id equation to delete
 	 * @return delete message
 	 */
-	@DeleteMapping("/{equation_id}")
+	@DeleteMapping("/{equationId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an equation")
 	@ApiResponses(value = {
@@ -182,7 +182,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "404", description = "Equation could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
-	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("equation_id") UUID id) {
+	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("equationId") UUID id) {
 
 		try {
 			equationService.deleteEquation(id);

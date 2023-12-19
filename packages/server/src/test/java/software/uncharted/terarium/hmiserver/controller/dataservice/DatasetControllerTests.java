@@ -134,7 +134,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/uploadCSV")
+				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 						.file(file)
 						.queryParam("filename", "filename.csv")
 						.with(csrf())
@@ -155,7 +155,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				.setDescription("my description"));
 
 		mockMvc.perform(
-				MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/uploadCSVFromGithub")
+				MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
 						.with(csrf())
 						.param("repoOwnerAndName", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -184,7 +184,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/uploadCSV")
+				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 						.file(file)
 						.queryParam("filename", "filename.csv")
 						.with(csrf())
@@ -196,7 +196,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/downloadCSV")
+				.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-csv")
 						.queryParam("filename", "filename.csv")
 						.with(csrf()))
 				.andExpect(status().isOk())

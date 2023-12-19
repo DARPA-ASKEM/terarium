@@ -7,8 +7,8 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -43,7 +43,7 @@ public class OntologyConcept implements Serializable {
 
 	private TaggableType type;
 
-	@JsonProperty("object_id")
+	@JsonAlias("object_id")
 	private UUID objectId;
 
 	private OntologicalField status;

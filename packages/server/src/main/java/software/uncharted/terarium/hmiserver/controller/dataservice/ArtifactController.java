@@ -203,7 +203,7 @@ public class ArtifactController {
 
 	}
 
-	@PutMapping(value = "/{artifactId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{artifactId}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("artifactId") final UUID artifactId,
@@ -222,7 +222,7 @@ public class ArtifactController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it
 	 * to the project.
 	 */
-	@PutMapping("/{artifactId}/uploadArtifactFromGithub")
+	@PutMapping("/{artifactId}/upload-artifact-from-github")
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
 			@PathVariable("artifactId") final UUID artifactId,

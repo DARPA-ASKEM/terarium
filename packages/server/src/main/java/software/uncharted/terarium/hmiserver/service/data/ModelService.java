@@ -17,7 +17,6 @@ import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
@@ -46,6 +45,9 @@ public class ModelService {
 				.index(elasticConfig.getModelIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q
+						.bool(b -> b
+								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.source(source)
 				.build();
 
@@ -63,8 +65,20 @@ public class ModelService {
 
 		Query query = null;
 		if (queryJson != null) {
-			query = new Query.Builder().withJson(
-					new ByteArrayInputStream(objectMapper.writeValueAsString(queryJson).getBytes())).build();
+			// if query is provided deserialize it, append the soft delete filter
+			byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
+			query = new Query.Builder()
+					.bool(b -> b
+							.must(new Query.Builder().withJson(
+									new ByteArrayInputStream(bytes))
+									.build())
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn"))))
+					.build();
+		} else {
+			query = new Query.Builder()
+					.bool(b -> b
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn"))))
+					.build();
 		}
 
 		SourceConfig source = new SourceConfig.Builder()
@@ -88,9 +102,10 @@ public class ModelService {
 				.index(elasticConfig.getModelConfigurationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id.toString()).build())
-						.build())
-				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
+				.query(q -> q
+						.bool(b -> b
+								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.must(m -> m.term(e -> e.field("modelId").value(id.toString())))))
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();

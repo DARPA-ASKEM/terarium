@@ -262,7 +262,7 @@ public class TDSCodeController {
 	 *         upload
 	 * @throws IOException if an I/O error occurs while reading the file
 	 */
-	@PutMapping(value = "/{codeId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{codeId}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the specified codeId")
 	@ApiResponses(value = {
@@ -294,7 +294,7 @@ public class TDSCodeController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it
 	 * to the project.
 	 */
-	@PutMapping("/{codeId}/uploadCodeFromGithub")
+	@PutMapping("/{codeId}/upload-code-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(value = {
@@ -323,7 +323,7 @@ public class TDSCodeController {
 	 * @param repoName         The name of the repo to upload from
 	 * @return A response containing the status of the upload
 	 */
-	@PutMapping("/{codeId}/uploadCodeFromGithubRepo")
+	@PutMapping("/{codeId}/upload-code-from-github-repo")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(value = {

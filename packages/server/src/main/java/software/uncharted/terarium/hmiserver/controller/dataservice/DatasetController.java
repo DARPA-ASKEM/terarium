@@ -196,7 +196,7 @@ public class DatasetController {
 		log.info("Returning HTTP 400 Bad Request", e);
 	}
 
-	@GetMapping("/{datasetId}/downloadCSV")
+	@GetMapping("/{datasetId}/download-csv")
 	@Secured(Roles.USER)
 	@Operation(summary = "Download dataset CSV")
 	@ApiResponses(value = {
@@ -251,7 +251,7 @@ public class DatasetController {
 	 * Downloads a CSV file from github given the path and owner name, then uploads
 	 * it to the dataset.
 	 */
-	@PutMapping("/{datasetId}/uploadCSVFromGithub")
+	@PutMapping("/{datasetId}/upload-csv-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file from github to a dataset")
 	@ApiResponses(value = {
@@ -284,7 +284,7 @@ public class DatasetController {
 	 * @param filename  CSV file to upload
 	 * @return Response
 	 */
-	@PutMapping(value = "/{datasetId}/uploadCSV", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{datasetId}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file to a dataset")
 	@ApiResponses(value = {

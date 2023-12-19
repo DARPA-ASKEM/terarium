@@ -130,7 +130,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/uploadFile")
+				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -151,7 +151,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 				.setDescription("my description"));
 
 		mockMvc.perform(
-				MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/uploadArtifactFromGithub")
+				MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
 						.with(csrf())
 						.param("repoOwnerAndName", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -180,7 +180,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/uploadFile")
+				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -223,7 +223,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/uploadFile")
+				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())

@@ -296,12 +296,12 @@ public class ProjectController {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
-	@PostMapping("/{id}/assets/{resource_type}/{resource_id}")
+	@PostMapping("/{id}/assets/{resourceType}/{resourceId}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("resource_type") final ResourceType type,
-			@PathVariable("resource_id") final UUID resourceId) {
+			@PathVariable("resourceType") final ResourceType type,
+			@PathVariable("resourceId") final UUID resourceId) {
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
@@ -327,12 +327,12 @@ public class ProjectController {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
 			@ApiResponse(responseCode = "204", description = "User may not have permission to this project", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
-	@DeleteMapping("/{id}/assets/{resource_type}/{resource_id}")
+	@DeleteMapping("/{id}/assets/{resourceType}/{resourceId}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("resource_type") final ResourceType type,
-			@PathVariable("resource_id") final UUID resourceId) {
+			@PathVariable("resourceType") final ResourceType type,
+			@PathVariable("resourceId") final UUID resourceId) {
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)

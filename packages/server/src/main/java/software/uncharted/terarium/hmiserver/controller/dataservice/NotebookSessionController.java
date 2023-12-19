@@ -109,7 +109,7 @@ public class NotebookSessionController {
 	 * @param id session id
 	 * @return NotebookSession
 	 */
-	@GetMapping("/{session_id}")
+	@GetMapping("/{sessionId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets session by ID")
 	@ApiResponses(value = {
@@ -117,7 +117,7 @@ public class NotebookSessionController {
 			@ApiResponse(responseCode = "204", description = "There was no session found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the session from the data store", content = @Content)
 	})
-	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("session_id") UUID id) {
+	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("sessionId") UUID id) {
 
 		try {
 			Optional<NotebookSession> session = sessionService.getNotebookSession(id);
@@ -141,7 +141,7 @@ public class NotebookSessionController {
 	 * @param session session to update with
 	 * @return ID of updated session
 	 */
-	@PutMapping("/{session_id}")
+	@PutMapping("/{sessionId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a session")
 	@ApiResponses(value = {
@@ -149,7 +149,7 @@ public class NotebookSessionController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the session", content = @Content)
 	})
 	ResponseEntity<NotebookSession> updateNotebookSession(
-			@PathVariable("session_id") UUID id,
+			@PathVariable("sessionId") UUID id,
 			@RequestBody NotebookSession session) {
 
 		try {
@@ -173,7 +173,7 @@ public class NotebookSessionController {
 	 * @param id session to delete
 	 * @return delete message
 	 */
-	@DeleteMapping("/{session_id}")
+	@DeleteMapping("/{sessionId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an session")
 	@ApiResponses(value = {
@@ -182,7 +182,7 @@ public class NotebookSessionController {
 			@ApiResponse(responseCode = "404", description = "NotebookSession could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
-	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("session_id") UUID id) {
+	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("sessionId") UUID id) {
 
 		try {
 			sessionService.deleteNotebookSession(id);

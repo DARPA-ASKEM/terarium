@@ -318,7 +318,7 @@ public class DocumentController {
 	/**
 	 * Uploads a file to the project.
 	 */
-	@PutMapping(value = "/{id}/uploadDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{id}/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document to a project")
 	@ApiResponses(value = {
@@ -347,7 +347,7 @@ public class DocumentController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it
 	 * to the project.
 	 */
-	@PutMapping("/{documentId}/uploadDocumentFromGithub")
+	@PutMapping("/{documentId}/upload-document-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document from github to a project")
 	@ApiResponses(value = {
@@ -368,7 +368,7 @@ public class DocumentController {
 		return uploadDocumentHelper(documentId, filename, fileEntity);
 	}
 
-	@PostMapping(value = "/createDocumentFromXDD")
+	@PostMapping(value = "/create-document-from-xdd")
 	@Secured(Roles.USER)
 	@Operation(summary = "Creates a document from XDD")
 	@ApiResponses(value = {
@@ -439,7 +439,7 @@ public class DocumentController {
 		}
 	}
 
-	@GetMapping(value = "/{id}/downloadDocument", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Downloads a document")
 	@ApiResponses(value = {

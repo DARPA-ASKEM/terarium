@@ -122,7 +122,7 @@ public class ProvenanceController {
 		}
 	}
 
-	@PostMapping("/search/child_nodes")
+	@PostMapping("/search/child-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search child nodes")
 	@ApiResponses(value = {
@@ -136,7 +136,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.childNodes(body));
 	}
 
-	@PostMapping("/search/parent_nodes")
+	@PostMapping("/search/parent-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search parent nodes")
 	@ApiResponses(value = {
@@ -150,7 +150,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.parentNodes(body));
 	}
 
-	@PostMapping("/search/connected_nodes")
+	@PostMapping("/search/connected-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search connected nodes")
 	@ApiResponses(value = {
@@ -164,7 +164,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.connectedNodes(body));
 	}
 
-	@PostMapping("/search/parent_model_revisions")
+	@PostMapping("/search/parent-model-revisions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search model revisions")
 	@ApiResponses(value = {
@@ -178,7 +178,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.parentModelRevisions(body));
 	}
 
-	@PostMapping("/search/parent_models")
+	@PostMapping("/search/parent-models")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search parent models")
 	@ApiResponses(value = {
@@ -206,7 +206,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.concept(body));
 	}
 
-	@PostMapping("/search/artifacts_created_by_user")
+	@PostMapping("/search/artifacts-created-by-user")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search artifacts created by user")
 	@ApiResponses(value = {
@@ -220,7 +220,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.artifactsCreatedByUser(body));
 	}
 
-	@PostMapping("/search/concept_counts")
+	@PostMapping("/search/concept-counts")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get concept counts")
 	@ApiResponses(value = {
@@ -234,7 +234,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.conceptCounts(body));
 	}
 
-	@PostMapping("/search/models_from_code")
+	@PostMapping("/search/models-from-code")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models from code")
 	@ApiResponses(value = {
@@ -248,7 +248,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelsFromCode(body));
 	}
 
-	@PostMapping("/search/models_from_equation")
+	@PostMapping("/search/models-from-equation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models from equations")
 	@ApiResponses(value = {
@@ -262,7 +262,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelsFromEquation(body));
 	}
 
-	@PostMapping("/search/models_from_document")
+	@PostMapping("/search/models-from-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models from documents")
 	@ApiResponses(value = {
@@ -276,7 +276,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelsFromDocument(body));
 	}
 
-	@PostMapping("/search/extracted_models")
+	@PostMapping("/search/extracted-models")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search extracted models")
 	@ApiResponses(value = {
@@ -290,7 +290,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.extractedModels(body));
 	}
 
-	@PostMapping("/search/model_document")
+	@PostMapping("/search/model-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search for a models document")
 	@ApiResponses(value = {
@@ -304,7 +304,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelDocument(body));
 	}
 
-	@DeleteMapping("/hanging_nodes")
+	@DeleteMapping("/hanging-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes all hanging nodes")
 	@ApiResponses(value = {

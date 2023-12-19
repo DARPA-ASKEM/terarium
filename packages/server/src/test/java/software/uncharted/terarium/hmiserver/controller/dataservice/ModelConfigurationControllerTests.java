@@ -58,7 +58,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setDescription("test-desc")
 						.setConfiguration(Map.of("key", "value")));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/model_configurations/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -74,7 +74,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setDescription("test-desc")
 						.setConfiguration(Map.of("key", "value")));
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/model_configurations")
+		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(modelConfiguration)))
@@ -92,7 +92,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setDescription("test-desc")
 						.setConfiguration(Map.of("key", "value")));
 
-		mockMvc.perform(MockMvcRequestBuilders.put("/model_configurations/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(modelConfiguration)))
@@ -110,7 +110,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setDescription("test-desc")
 						.setConfiguration(Map.of("key", "value")));
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/model_configurations/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 	}
