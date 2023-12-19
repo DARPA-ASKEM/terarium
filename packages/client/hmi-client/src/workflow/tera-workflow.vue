@@ -346,31 +346,25 @@ const removeNode = (event) => {
 const largeNode = { width: 420, height: 220 };
 
 // Menu categories and list items are in order of appearance for separators to work
-const categories: Record<string, { label: string; icon: string; separator?: boolean }> = {
+const categories: Record<string, { label: string; icon?: string; separator?: boolean }> = {
 	model: {
-		label: 'Model operators',
-		icon: 'pi pi-share-alt'
+		label: 'Model operators'
 	},
 	code: {
-		label: 'Code operators',
-		icon: 'pi pi-code'
+		label: 'Code operators'
 	},
 	document: {
-		label: 'Document operators',
-		icon: 'pi pi-file'
+		label: 'Document operators'
 	},
 	dataset: {
-		label: 'Dataset operators',
-		icon: 'pi pi-database'
+		label: 'Dataset operators'
 	},
 	simulate: {
 		separator: true,
-		label: 'Simulate',
-		icon: 'pi pi-chart-bar'
+		label: 'Simulate'
 	},
 	llm: {
-		label: "Ask 'em LLM tool",
-		icon: 'pi pi-comment'
+		label: "Ask 'em LLM tool"
 	}
 };
 const operationContextMenuList = [
