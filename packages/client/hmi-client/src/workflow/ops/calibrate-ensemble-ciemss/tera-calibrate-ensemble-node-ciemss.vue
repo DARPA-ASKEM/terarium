@@ -40,7 +40,6 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'; // import { csvParse } from 'd3';
-// import { getRunResult } from '@/services/models/simulation-service';
 import { OperatorStatus, WorkflowNode } from '@/types/workflow'; // import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	CsvAsset,
