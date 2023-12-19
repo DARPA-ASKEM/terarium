@@ -112,28 +112,18 @@ public class DocumentController implements SnakeCaseController {
 				final String url = proxy.getDownloadUrl(id, asset.getFileName()).getBody().getUrl();
 				asset.getMetadata().put("url", url);
 
-				// if the asset os of type equation
-				if (asset.getAssetType().equals("equation") && asset.getMetadata().get("equation") == null) {
-					// Fetch the image from the URL
-					final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
-					// Encode the image in Base 64
-					final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
-
-					// Send it to SKEMA to get the Presentation MathML equation
-					final String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
-
-					log.warn("Equation: {}", equation);
-
-					// Add the equations into the metadata
-					asset.getMetadata().put("equation", equation);
-				}
 			} catch (final Exception e) {
 				log.error("Unable to extract S3 url for assets or extract equations", e);
 			}
 		});
 
+		System.out.println("before update");
+		System.out.println(convertObjectToSnakeCaseJsonNode(document));
+
 		// Update data-service with the updated metadata
 		proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(document));
+
+		System.out.println("after update");
 
 		// Return the updated document
 		return ResponseEntity.ok(document);
@@ -169,7 +159,9 @@ public class DocumentController implements SnakeCaseController {
 			// if the fileEntity is not a PDF, then we need to extract the text and update the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
 				final JsonNode node = this.convertObjectToSnakeCaseJsonNode(proxy.getAsset(documentId).getBody().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8)));
+				System.out.println("before before");
 				final ResponseEntity<JsonNode> updateRes = proxy.updateAsset(documentId, node);
+				System.out.println("after after");
 				if (updateRes.getStatusCode().isError()) {
 					return ResponseEntity.status(updateRes.getStatusCode()).build();
 				}
@@ -345,9 +337,9 @@ public class DocumentController implements SnakeCaseController {
 			documentAsset.setAssets(new ArrayList<>());
 			for(int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
-				if(extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString()) ) {
+				if(extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.figure.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.table.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.equation.toString()) ) {
 					DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
 					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
 					documentExtraction.setFileName("extraction_" + i + ".png");
@@ -378,9 +370,9 @@ public class DocumentController implements SnakeCaseController {
 		if(extractions != null) {
 			for (int i = 0; i < extractions.size(); i++) {
 				Extraction extraction = extractions.get(i);
-				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
-				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
+				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.figure.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.table.toString())
+				|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.equation.toString())) {
 					String filename = "extraction_" + i + ".png";
 
 					try(CloseableHttpClient httpclient = HttpClients.custom()

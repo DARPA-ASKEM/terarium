@@ -75,7 +75,8 @@
 							pageType === AssetType.Workflows &&
 							(assetItem.pageType === AssetType.Models ||
 								assetItem.pageType === AssetType.Datasets ||
-								assetItem.pageType === AssetType.Code)
+								assetItem.pageType === AssetType.Code ||
+								assetItem.pageType === AssetType.Documents)
 						"
 						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
 						@dragend="endDrag"

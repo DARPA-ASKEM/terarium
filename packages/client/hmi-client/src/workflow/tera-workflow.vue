@@ -199,6 +199,7 @@ import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 import * as ModelOptimizeOp from './ops/model-optimize/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
+import * as DocumentOp from './ops/document/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -221,6 +222,7 @@ registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(ModelOptimizeOp);
 registry.registerOp(ModelCouplingOp);
+registry.registerOp(DocumentOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -413,7 +415,9 @@ const operationContextMenuList = [
 		name: SimulateEnsembleCiemssOp.name,
 		category: categories.simulate,
 		options: { size: largeNode }
-	}
+	},
+	// Document
+	{ name: DocumentOp.name, category: categories.document }
 ];
 
 const contextMenuItems = ref<any[]>([]);
@@ -492,6 +496,10 @@ function onDrop(event) {
 			case AssetType.Code:
 				operation = CodeAssetOp.operation;
 				state = { codeAssetId: assetId };
+				break;
+			case AssetType.Documents:
+				operation = DocumentOp.operation;
+				state = { documentId: assetId };
 				break;
 			default:
 				return;

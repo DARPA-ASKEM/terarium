@@ -3,7 +3,7 @@
 		<template #header>
 			<section>
 				<slot name="header" />
-				<Button icon="pi pi-pencil" text rounded />
+				<Button v-if="!hideEdit" icon="pi pi-pencil" text rounded />
 			</section>
 		</template>
 		<template #icons>
@@ -27,8 +27,9 @@ import InputSwitch from 'primevue/inputswitch';
 const emit = defineEmits(['delete', 'edit', 'update:is-included']);
 
 defineProps<{
-	hideDelete: boolean;
+	hideDelete?: boolean;
 	isIncluded?: boolean;
+	hideEdit?: boolean;
 }>();
 </script>
 
