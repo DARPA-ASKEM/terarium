@@ -144,6 +144,11 @@ public class SimulationController {
 
 	@GetMapping("/{id}/result")
 	@Secured(Roles.USER)
+	@Operation(summary = "Get the result of a simulation by ID")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Simulation result found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving simulation results from the data store", content = @Content)
+	})
 	public ResponseEntity<String> getSimulationResults(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename) {
@@ -182,6 +187,11 @@ public class SimulationController {
 	 */
 	@GetMapping("/{id}/add-result-as-dataset-to-project/{projectId}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Dataset created and added to project.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset or adding it to the project", content = @Content)
+	})
 	public ResponseEntity<ProjectAsset> createFromSimulationResult(
 			@PathVariable("id") final UUID id,
 			@PathVariable("projectId") final UUID projectId,
@@ -224,6 +234,12 @@ public class SimulationController {
 	}
 
 	@GetMapping("/subscribe")
+	@Secured(Roles.USER)
+	@Operation(summary = "Subscribe to simulation events")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Subscribed to simulation events", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+			@ApiResponse(responseCode = "500", description = "There was an issue subscribing to simulation events", content = @Content)
+	})
 	public ResponseEntity<Void> subscribe(@RequestParam("simulationIds") final List<String> simulationIds) {
 
 		simulationEventService.subscribe(simulationIds, currentUserService.get());
@@ -231,6 +247,12 @@ public class SimulationController {
 	}
 
 	@GetMapping("/unsubscribe")
+	@Secured(Roles.USER)
+	@Operation(summary = "Unsubscribe from simulation events")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Unsubscribed from simulation events", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+			@ApiResponse(responseCode = "500", description = "There was an issue unsubscribing from simulation events", content = @Content)
+	})
 	public ResponseEntity<Void> unsubscribe(@RequestParam("simulationIds") final List<String> simulationIds) {
 
 		simulationEventService.unsubscribe(simulationIds, currentUserService.get());

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,10 +40,10 @@ import software.uncharted.terarium.hmiserver.service.data.ConceptService;
 @RestController
 @Slf4j
 @Transactional
+@RequiredArgsConstructor
 public class ConceptController {
 
-	@Autowired
-	ConceptService conceptService;
+	final ConceptService conceptService;
 
 	@GetMapping
 	@Secured(Roles.USER)

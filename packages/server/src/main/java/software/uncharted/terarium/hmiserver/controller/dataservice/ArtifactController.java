@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
@@ -63,50 +62,118 @@ public class ArtifactController {
 
 	@GetMapping
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets a list of artifacts")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifacts retrieved.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifacts", content = @Content)
+	})
 	public ResponseEntity<List<Artifact>> getArtifacts(
 			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) throws IOException {
-		return ResponseEntity.ok(artifactService.getArtifacts(pageSize, page));
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page){
+		try {
+			return ResponseEntity.ok(artifactService.getArtifacts(page, pageSize));
+		} catch (Exception e) {
+			final String error = "Unable to get artifacts";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+
+
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<Artifact> createArtifact(@RequestBody Artifact artifact) throws IOException {
-		return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createArtifact(artifact));
+	@Operation(summary = "Creates a new artifact")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Artifact created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the artifact", content = @Content)
+	})
+	public ResponseEntity<Artifact> createArtifact(@RequestBody Artifact artifact){
+		try{
+			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createArtifact(artifact));
+		} catch (Exception e) {
+			final String error = "Unable to create artifact";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+
 	}
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId) throws IOException {
-		Optional<Artifact> artifact = artifactService.getArtifact(artifactId);
-		if (artifact.isEmpty()) {
-			return ResponseEntity.noContent().build();
+	@Operation(summary = "Gets an artifact by ID")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifact retrieved.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
+	})
+	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId){
+		try{
+			Optional<Artifact> artifact = artifactService.getArtifact(artifactId);
+			if (artifact.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(artifact.get());
+		} catch (Exception e) {
+			final String error = "Unable to get artifact";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
-		return ResponseEntity.ok(artifact.get());
 	}
 
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Updates an artifact")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifact updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the artifact", content = @Content)
+	})
 	public ResponseEntity<Artifact> updateArtifact(
 			@PathVariable("id") UUID artifactId,
-			@RequestBody Artifact artifact) throws IOException {
+			@RequestBody Artifact artifact){
 
-		final Optional<Artifact> updated = artifactService.updateArtifact(artifact.setId(artifactId));
-		if (updated.isEmpty()) {
-			return ResponseEntity.notFound().build();
+		try{
+			Optional<Artifact> updated = artifactService.updateArtifact(artifact.setId(artifactId));
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
+		} catch (Exception e) {
+			final String error = "Unable to update artifact";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
-		return ResponseEntity.ok(updated.get());
 	}
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> deleteArtifact(@PathVariable("id") UUID artifactId) throws IOException {
-		artifactService.deleteArtifact(artifactId);
+	@Operation(summary = "Deletes an artifact")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifact deleted.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the artifact", content = @Content)
+	})
+	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") UUID artifactId){
 
-		JsonNode res = objectMapper
-				.valueToTree(Map.of("message", String.format("Artifact successfully deleted: %s", artifactId)));
+		try {
+			artifactService.deleteArtifact(artifactId);
+			return ResponseEntity.ok(new ResponseDeleted("artifact", artifactId));
+		} catch (Exception e) {
+			final String error = "Unable to delete artifact";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 
-		return ResponseEntity.ok(res);
 	}
 
 	@GetMapping("/{id}/upload-url")
@@ -155,6 +222,11 @@ public class ArtifactController {
 
 	@GetMapping("/{id}/download-file-as-text")
 	@Secured(Roles.USER)
+	@Operation(summary = "Downloads a file from the artifact as a string")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File downloaded.", content = @Content(mediaType = "text/plain")),
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
+	})
 	public ResponseEntity<String> downloadFileAsText(@PathVariable("id") UUID artifactId,
 			@RequestParam("filename") String filename) {
 
@@ -171,13 +243,20 @@ public class ArtifactController {
 
 		} catch (Exception e) {
 			log.error("Unable to GET file as string data", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to GET file as string data");
 		}
 
 	}
 
 	@GetMapping("/{id}/download-file")
 	@Secured(Roles.USER)
+	@Operation(summary = "Downloads a file from the artifact")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File downloaded.", content = @Content(mediaType = "application/octet-stream")),
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
+	})
 	public ResponseEntity<byte[]> downloadFile(@PathVariable("id") UUID artifactId,
 			@RequestParam("filename") String filename) {
 
@@ -198,13 +277,20 @@ public class ArtifactController {
 
 		} catch (Exception e) {
 			log.error("Unable to GET artifact data", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to GET artifact data");
 		}
 
 	}
 
 	@PutMapping(value = "/{artifactId}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
+	@Operation(summary = "Uploads a file to the artifact")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("artifactId") final UUID artifactId,
 			@RequestParam("filename") final String filename,
@@ -224,6 +310,11 @@ public class ArtifactController {
 	 */
 	@PutMapping("/{artifactId}/upload-artifact-from-github")
 	@Secured(Roles.USER)
+	@Operation(summary = "Uploads a file from GitHub to the artifact")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
 			@PathVariable("artifactId") final UUID artifactId,
 			@RequestParam("path") final String path,
