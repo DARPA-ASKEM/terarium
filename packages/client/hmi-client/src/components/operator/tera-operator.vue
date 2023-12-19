@@ -17,7 +17,7 @@
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="(event) => mouseoverPort(event)"
+			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="
 				(input: WorkflowPort, direction: WorkflowDirection) =>
@@ -30,7 +30,7 @@
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
-			@port-mouseover="(event) => mouseoverPort(event)"
+			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="
 				(input: WorkflowPort, direction: WorkflowDirection) =>
@@ -66,6 +66,11 @@ const emit = defineEmits([
 	'drilldown',
 	'resize'
 ]);
+
+enum PortDirection {
+	Input,
+	Output
+}
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -120,12 +125,16 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event: MouseEvent) {
+function mouseoverPort(event: MouseEvent, portType: PortDirection) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
-	const portPosition = { x: nodePosition.x, y: nodePosition.y + totalOffsetY };
+	const w = portType === PortDirection.Input ? 0 : props.node.width;
+	const portPosition = {
+		x: nodePosition.x + w + portElement.offsetWidth * 0.5,
+		y: nodePosition.y + totalOffsetY
+	};
 	emit('port-mouseover', portPosition);
 }
 
