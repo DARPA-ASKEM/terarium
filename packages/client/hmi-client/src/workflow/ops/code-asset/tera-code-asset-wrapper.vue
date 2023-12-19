@@ -1,7 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section>
-			<tera-code :asset-id="node.state?.codeAssetId ?? ''" is-preview />
+			<tera-code
+				:asset-id="node.state?.codeAssetId ?? ''"
+				is-preview
+				@apply-changes="onApplyChanges"
+			/>
 		</section>
 	</tera-drilldown>
 </template>
@@ -10,13 +14,24 @@
 import { WorkflowNode } from '@/types/workflow';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import { cloneDeep } from 'lodash';
+import { Code } from '@/types/Types';
+import { getCodeBlocks } from '@/utils/code-asset';
 import { CodeAssetState } from './code-asset-operation';
 
-defineProps<{
+const props = defineProps<{
 	node: WorkflowNode<CodeAssetState>;
 }>();
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'update-output-port']);
+
+async function onApplyChanges(code: Code) {
+	const outputPort = cloneDeep(props.node.outputs[0]);
+	if (!code || !outputPort) return;
+	const blocks = await getCodeBlocks(code);
+	outputPort.label = `${code.name} code blocks (${blocks.length})`;
+	emit('update-output-port', outputPort);
+}
 </script>
 
 <style scoped></style>
