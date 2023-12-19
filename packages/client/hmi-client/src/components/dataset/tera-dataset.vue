@@ -280,7 +280,7 @@ import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isEmpty, isString } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { AssetType, CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
+import type { AssetType, CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
