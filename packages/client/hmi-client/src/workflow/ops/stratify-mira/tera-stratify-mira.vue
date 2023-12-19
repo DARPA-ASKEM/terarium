@@ -139,8 +139,8 @@ const resetModel = () => {
 
 	kernelManager
 		.sendMessage('reset_request', {})
-		?.register('reset_response', handleResetResponse)
-		?.register('model_preview', handleModelPreview);
+		.register('reset_response', handleResetResponse)
+		.register('model_preview', handleModelPreview);
 };
 
 const handleResetResponse = (data: any) => {
@@ -169,11 +169,11 @@ const stratifyRequest = () => {
 		}
 	};
 
-	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
-			?.register('stratify_response', handleStratifyResponse)
-			?.register('model_preview', handleModelPreview);
+			.register('stratify_response', handleStratifyResponse)
+			.register('model_preview', handleModelPreview);
 	});
 };
 
@@ -277,19 +277,19 @@ const runCodeStratify = () => {
 
 	let executedCode = '';
 
-	kernelManager.sendMessage('reset_request', {})?.register('reset_response', () => {
+	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
 			.sendMessage('execute_request', messageContent)
-			?.register('execute_input', (data) => {
+			.register('execute_input', (data) => {
 				executedCode = data.content.code;
 			})
-			?.register('stream', (data) => {
+			.register('stream', (data) => {
 				console.log('stream', data);
 			})
-			?.register('error', (data) => {
+			.register('error', (data) => {
 				logger.error(`${data.content.ename}: ${data.content.evalue}`);
 			})
-			?.register('model_preview', (data) => {
+			.register('model_preview', (data) => {
 				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
 				// currently no matter what kind of code is run we always get a `model_preview` response.
 				// We may want to compare the response model with the existing model to see if the response model
