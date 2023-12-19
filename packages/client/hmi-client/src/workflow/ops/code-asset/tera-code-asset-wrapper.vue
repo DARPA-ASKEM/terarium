@@ -23,7 +23,7 @@ const props = defineProps<{
 	node: WorkflowNode<CodeAssetState>;
 }>();
 
-const emit = defineEmits(['close', 'update-output-port', 'append-output-port']);
+const emit = defineEmits(['close', 'update-output-port']);
 
 async function onApplyChanges(code: Code) {
 	const outputPort = cloneDeep(props.node.outputs[0]);
