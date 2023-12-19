@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -64,15 +65,16 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 @RequestMapping("/datasets")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class DatasetController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;
 
-	@Autowired
-	DatasetService datasetService;
 
-	@Autowired
-	JsDelivrProxy githubProxy;
+	final DatasetService datasetService;
+
+
+	final JsDelivrProxy githubProxy;
 
 	@GetMapping
 	@Secured(Roles.USER)

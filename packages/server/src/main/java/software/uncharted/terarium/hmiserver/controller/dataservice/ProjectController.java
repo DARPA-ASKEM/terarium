@@ -207,7 +207,9 @@ public class ProjectController {
 	@Operation(summary = "Creates a new project")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Project created", content = {
-					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)) }) })
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)), }),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving sessions from the data store", content = @Content)}
+	)
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> createProject(
@@ -220,10 +222,14 @@ public class ProjectController {
 					.createCreatorRelationship(new RebacProject(project.getId(), reBACService));
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error setting user's permissions for project");
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error the user is already the creator of this project");
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 
@@ -266,6 +272,7 @@ public class ProjectController {
 
 	@Operation(summary = "Gets the assets belonging to a specific project, by asset type")
 	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Assets found", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)))),
 			@ApiResponse(responseCode = "204", description = "Currently unimplemented. This is all you'll get for now!", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)))),
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	@GetMapping("/{id}/assets")
@@ -356,6 +363,11 @@ public class ProjectController {
 
 	@GetMapping("/{id}/permissions")
 	@Secured(Roles.USER)
+	@Operation(summary = "Gets the permissions for a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions found", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(
 			@PathVariable("id") final UUID id) {
 		try {
@@ -378,12 +390,19 @@ public class ProjectController {
 			return ResponseEntity.notFound().build();
 		} catch (final Exception e) {
 			log.error("Error getting project permission relationships", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error getting project permission relationships");
 		}
 	}
 
 	@PostMapping("/{id}/permissions/group/{groupId}/{relationship}")
 	@Secured({ Roles.USER, Roles.SERVICE })
+	@Operation(summary = "Sets a group's permissions for a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions set", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> setProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("groupId") final String groupId,
@@ -394,12 +413,19 @@ public class ProjectController {
 			return setProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error setting project group permission relationships", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error setting project group permission relationships");
 		}
 	}
 
 	@PutMapping("/{id}/permissions/group/{groupId}/{oldRelationship}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Updates a group's permissions for a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> updateProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("groupId") final String groupId,
@@ -411,12 +437,19 @@ public class ProjectController {
 			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error deleting project user permission relationships");
 		}
 	}
 
 	@DeleteMapping("/{id}/permissions/group/{groupId}/{relationship}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Deletes a group's permissions for a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions deleted", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> removeProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("groupId") final String groupId,
@@ -430,12 +463,19 @@ public class ProjectController {
 			return removeProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project group permission relationships", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error deleting project group permission relationships");
 		}
 	}
 
 	@PostMapping("/{id}/permissions/user/{userId}/{relationship}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Sets a user's permissions for a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions set", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> setProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("userId") final String userId,
@@ -446,12 +486,19 @@ public class ProjectController {
 			return setProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error setting project user permission relationships", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error setting project user permission relationships");
 		}
 	}
 
 	@PutMapping("/{id}/permissions/user/{userId}/{oldRelationship}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Updates a user's permissions for a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("userId") final String userId,
@@ -463,12 +510,19 @@ public class ProjectController {
 			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error deleting project user permission relationships");
 		}
 	}
 
 	@DeleteMapping("/{id}/permissions/user/{userId}/{relationship}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Deletes a user's permissions for a project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions deleted", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> removeProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("userId") final String userId,
@@ -479,7 +533,9 @@ public class ProjectController {
 			return removeProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error deleting project user permission relationships");
 		}
 	}
 

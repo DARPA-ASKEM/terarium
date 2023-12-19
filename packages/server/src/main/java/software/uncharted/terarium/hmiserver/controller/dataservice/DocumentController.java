@@ -372,7 +372,7 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Creates a document from XDD")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AddDocumentAssetFromXDDResponse.class))),
+			@ApiResponse(responseCode = "201", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AddDocumentAssetFromXDDResponse.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
 	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
@@ -508,7 +508,7 @@ public class DocumentController {
 	 * Creates a document asset from an XDD document
 	 *
 	 * @param document    xdd document
-	 * @param username    current user name
+	 * @param userId    current user name
 	 * @param extractions list of extractions associated with the document
 	 * @return
 	 */
@@ -555,8 +555,8 @@ public class DocumentController {
 	/**
 	 * Uploads the extractions associated with an XDD document
 	 *
-	 * @param docId
-	 * @param extractions
+	 * @param docId 		 document id
+	 * @param extractions list of extractions associated with the document
 	 */
 	private void uploadXDDExtractions(final UUID docId, final List<Extraction> extractions) {
 
@@ -596,10 +596,10 @@ public class DocumentController {
 	 * Uploads a PDF file to a document asset and then fires and forgets the
 	 * extraction
 	 *
-	 * @param doi
-	 * @param filename
-	 * @param docId
-	 * @return
+	 * @param doi 		DOI of the document
+	 * @param filename 	filename of the PDF
+	 * @param docId 	document id
+	 * @return extraction job id
 	 */
 	private String uploadPDFFileToDocumentThenExtract(final String doi, final String filename, final UUID docId) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
