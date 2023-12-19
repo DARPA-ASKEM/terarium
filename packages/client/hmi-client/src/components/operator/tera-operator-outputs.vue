@@ -1,9 +1,9 @@
 <template>
 	<ul>
 		<li
-			v-for="(output, index) in selectedOutputs"
+			v-for="output in selectedOutputs"
 			:id="output.id"
-			:key="index"
+			:key="output.id"
 			:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			@mouseenter="emit('port-mouseover', $event)"
 			@mouseleave="emit('port-mouseleave')"

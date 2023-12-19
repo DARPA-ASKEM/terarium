@@ -1,9 +1,9 @@
 <template>
 	<ul>
 		<li
-			v-for="(input, index) in inputs"
+			v-for="input in inputs"
 			:id="input.id"
-			:key="index"
+			:key="input.id"
 			:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
 			@mouseenter="emit('port-mouseover', $event)"
 			@mouseleave="emit('port-mouseleave')"

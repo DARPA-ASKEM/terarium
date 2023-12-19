@@ -591,13 +591,13 @@ function resizeHandler(node: WorkflowNode<any>) {
 const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 const threshold2 = 5.0 * 5.0;
 
-/**
+/*
  * Relink edges that have become detatched
  *
  * [output-port](edge source => edge target)[input-port]
  *
  * FIXME: not efficient, need cache/map for larger workflows
- * */
+ */
 function relinkEdges(node: WorkflowNode<any> | null) {
 	const nodes = node ? [node] : wf.value.nodes;
 	const edges = wf.value.edges;
