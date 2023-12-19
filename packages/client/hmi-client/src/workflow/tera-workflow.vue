@@ -353,19 +353,19 @@ const categories: Record<string, { label: string; icon?: string; separator?: boo
 	code: {
 		label: 'Code operators'
 	},
-	document: {
-		label: 'Document operators'
-	},
+	// document: {
+	// 	label: 'Document operators'
+	// },
 	dataset: {
 		label: 'Dataset operators'
 	},
 	simulate: {
 		separator: true,
 		label: 'Simulate'
-	},
-	llm: {
-		label: "Ask 'em LLM tool"
 	}
+	// llm: {
+	// 	label: "Ask 'em LLM tool"
+	// }
 };
 const operationContextMenuList = [
 	// Model
