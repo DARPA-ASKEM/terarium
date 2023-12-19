@@ -304,7 +304,7 @@ const watchCompletedRunId = async (runId: string) => {
 
 	emit('append-output-port', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `Output - ${new Date().toLocaleString()}`,
+		label: `Output - ${props.node.outputs.length + 1}`,
 		value: runId,
 		state: {
 			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,

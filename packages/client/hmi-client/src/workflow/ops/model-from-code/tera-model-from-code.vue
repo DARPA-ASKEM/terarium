@@ -280,7 +280,7 @@ async function handleCode() {
 		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
 		clonedState.value.modelId = modelId;
 		emit('append-output-port', {
-			label: 'Output',
+			label: `Output - ${props.node.outputs.length + 1}`,
 			state: cloneDeep(clonedState.value),
 			isSelected: false,
 			type: 'modelId',
@@ -365,7 +365,7 @@ async function handleDecapodesPreview(data: any) {
 		if (m) {
 			clonedState.value.modelId = m.id;
 			emit('append-output-port', {
-				label: 'Output',
+				label: `Output - ${props.node.outputs.length + 1}`,
 				state: cloneDeep(clonedState.value),
 				isSelected: false,
 				type: 'modelId',
