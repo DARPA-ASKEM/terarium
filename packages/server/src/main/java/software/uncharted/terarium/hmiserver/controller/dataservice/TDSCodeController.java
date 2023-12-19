@@ -262,7 +262,7 @@ public class TDSCodeController {
 	 *         upload
 	 * @throws IOException if an I/O error occurs while reading the file
 	 */
-	@PutMapping(value = "/{codeId}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{codeId}/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the specified codeId")
 	@ApiResponses(value = {

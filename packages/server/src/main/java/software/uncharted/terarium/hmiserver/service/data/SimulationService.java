@@ -116,7 +116,7 @@ public class SimulationService {
 		Dataset dataset = new Dataset();
 		dataset.setName(simName + " Result Dataset");
 		dataset.setDescription(simulation.getDescription());
-		dataset.setMetadata(Map.of("simulation_id", simId));
+		dataset.setMetadata(Map.of("simulationId", simId));
 		dataset.setFileNames(
 				simulation.getResultFiles().stream().map(f -> f.getFilename()).toList());
 		dataset.setDataSourceDate(simulation.getCompletedTime());
