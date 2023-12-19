@@ -247,7 +247,7 @@ const props = defineProps<{
 	isPreview?: boolean;
 }>();
 
-const emit = defineEmits(['asset-loaded']);
+const emit = defineEmits(['asset-loaded', 'apply-changes']);
 
 const toast = useToastService();
 
@@ -539,9 +539,10 @@ async function onSaveChanges() {
 		savingAsset.value = false;
 		return;
 	}
-	refreshCodeAsset(updateResponse.id);
+	await refreshCodeAsset(updateResponse.id);
 	toast.success('', 'Changes applied succesfully');
 	savingAsset.value = false;
+	emit('apply-changes', cloneDeep(codeAsset.value));
 }
 
 watch(

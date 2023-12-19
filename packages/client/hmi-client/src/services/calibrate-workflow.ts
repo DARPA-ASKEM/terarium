@@ -1,28 +1,30 @@
 import * as d3 from 'd3';
 
-import { ModelConfiguration, Dataset, CsvAsset } from '@/types/Types';
+import { ModelConfiguration, Dataset, CsvAsset, State } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
+
+export interface CalibrateMap {
+	modelVariable: string;
+	datasetVariable: string;
+}
 
 // Used in the setup of calibration node and drill down
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
 		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-		// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
-		const modelColumnNameOptions: string[] = modelConfiguration.configuration.model.states.map(
-			(state) => state.id.trim()
-		);
+		const modelOptions: State[] = modelConfiguration.configuration.model.states;
 
 		// add observables
 		if (modelConfiguration.configuration.semantics?.ode?.observables) {
 			modelConfiguration.configuration.semantics.ode.observables.forEach((o) => {
-				modelColumnNameOptions.push(o.id.trim());
+				modelOptions.push(o);
 			});
 		}
 
-		modelColumnNameOptions.push('timestamp');
-		return { modelConfiguration, modelColumnNameOptions };
+		modelOptions.push({ id: 'timestamp' });
+		return { modelConfiguration, modelOptions };
 	}
 	return {};
 };
@@ -33,6 +35,11 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 	if (datasetId) {
 		// Get dataset:
 		const dataset: Dataset | null = await getDataset(datasetId);
+		if (dataset === undefined || !dataset) {
+			console.log(`Dataset with id:${datasetId} not found`);
+			return {};
+		}
+		const datasetOptions = dataset.columns;
 		const filename = dataset?.fileNames?.[0] ?? '';
 		// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
 		// This is a temporary fix since the datasets could be very large.
@@ -46,7 +53,7 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 			csv.headers = csv.headers.map((header) => header.trim());
 		}
 
-		return { filename, csv };
+		return { filename, csv, datasetOptions };
 	}
 	return {};
 };
@@ -107,4 +114,29 @@ export const renderLossGraph = (
 		yAxisGroup = svg.append('g').attr('class', 'y-axis');
 	}
 	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
+};
+
+export const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: any[]) => {
+	const result = [] as CalibrateMap[];
+	modelOptions.forEach((modelOption) => {
+		datasetOptions.forEach((datasetOption) => {
+			// Check for direct string match
+			if (modelOption.id.toLowerCase() === datasetOption.name.toLowerCase()) {
+				result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
+			}
+			// No direct string match, check grounding keys (if they exist)
+			else if (
+				modelOption.grounding?.identifiers &&
+				datasetOption?.metadata?.groundings?.identifiers
+			) {
+				const datasetKeys = Object.keys(datasetOption.metadata.groundings.identifiers);
+				Object.keys(modelOption.grounding.identifiers).forEach((modelGrounding) => {
+					if (datasetKeys.includes(modelGrounding)) {
+						result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
+					}
+				}); // End for each grounding key
+			}
+		}); // end for each dataset Option
+	}); // end for each model Option
+	return result as CalibrateMap[];
 };

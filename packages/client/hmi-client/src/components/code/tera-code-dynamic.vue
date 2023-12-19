@@ -75,7 +75,8 @@ watch(
 			block: b,
 			includeInProcess: true
 		}));
-	}
+	},
+	{ deep: true }
 );
 const deleteCodeBlock = (index: number) => {
 	const clonedCodefile = cloneDeep(props.codefile);

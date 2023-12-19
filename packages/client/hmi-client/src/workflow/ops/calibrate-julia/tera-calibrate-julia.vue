@@ -14,7 +14,7 @@
 									class="w-full p-inputtext-sm"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="modelColumnNames"
+									:options="modelStateOptions?.map((ele) => ele.id)"
 								/>
 							</template>
 						</Column>
@@ -27,7 +27,7 @@
 									class="w-full p-inputtext-sm"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="datasetColumnNames"
+									:options="datasetColumns?.map((ele) => ele.name)"
 								/>
 							</template>
 						</Column>
@@ -38,6 +38,12 @@
 							icon="pi pi-plus"
 							label="Add mapping"
 							@click="addMapping"
+						/>
+						<Button
+							class="p-button-sm p-button-text"
+							icon="pi pi-plus"
+							label="Auto map"
+							@click="getAutoMapping"
 						/>
 					</div>
 				</div>
@@ -194,9 +200,16 @@ import {
 	CsvAsset,
 	ModelConfiguration,
 	ProgressState,
-	ScimlStatusUpdate
+	ScimlStatusUpdate,
+	State
 } from '@/types/Types';
-import { renderLossGraph, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
+import {
+	setupModelInput,
+	setupDatasetInput,
+	renderLossGraph,
+	CalibrateMap,
+	autoCalibrationMapping
+} from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
@@ -216,9 +229,9 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import { getTimespan } from '@/workflow/util';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
-	CalibrateMap,
 	CalibrateMethodOptions,
 	CalibrationOperationJulia,
 	CalibrationOperationStateJulia
@@ -234,6 +247,7 @@ const emit = defineEmits([
 	'update-output-port',
 	'close'
 ]);
+const toast = useToastService();
 
 enum CalibrateTabs {
 	Wizard = 'Wizard',
@@ -241,8 +255,8 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelColumnNames = ref<string[] | undefined>();
-const datasetColumnNames = ref<string[]>();
+const modelStateOptions = ref<State[] | undefined>();
+const datasetColumns = ref<any[]>();
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
@@ -463,7 +477,7 @@ const onUpdateOutput = (id) => {
 };
 
 const onUpdateSelection = (id) => {
-	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
@@ -496,6 +510,21 @@ function addMapping() {
 	emit('update-state', state);
 }
 
+async function getAutoMapping() {
+	if (!modelStateOptions.value) {
+		toast.error('', 'No model states to map with');
+		return;
+	}
+	if (!datasetColumns.value) {
+		toast.error('', 'No dataset columns to map with');
+		return;
+	}
+	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+	emit('update-state', state);
+}
+
 watch(
 	() => props.node.active,
 	() => {
@@ -513,11 +542,9 @@ watch(
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
-			modelConfigId.value
-		);
+		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
 		modelConfig.value = modelConfiguration;
-		modelColumnNames.value = modelColumnNameOptions;
+		modelStateOptions.value = modelOptions;
 	},
 	{ immediate: true }
 );
@@ -526,10 +553,10 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers;
+		datasetColumns.value = datasetOptions;
 	},
 	{ immediate: true }
 );
