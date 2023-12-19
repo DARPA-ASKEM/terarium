@@ -181,6 +181,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { logger } from '@/utils/logger';
+import { MenuItem } from 'primevue/menuitem';
 import * as SimulateCiemssOp from './ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from './ops/stratify-mira/mod';
 import * as DatasetOp from './ops/dataset/mod';
@@ -343,108 +344,127 @@ const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
 
-const largeNode = { width: 420, height: 220 };
+const addOperatorToWorkflow: Function = (operator: any) => () => {
+	workflowService.addNode(wf.value, operator.operation, newNodePosition);
+	workflowDirty = true;
+};
+const addLargeOperatorToWorkflow: Function = (operator: any) => () => {
+	workflowService.addNode(wf.value, operator.operation, newNodePosition, {
+		size: { width: 420, height: 220 }
+	});
+	workflowDirty = true;
+};
 
 // Menu categories and list items are in order of appearance for separators to work
-const categories: Record<string, { label: string; icon?: string; separator?: boolean }> = {
-	model: {
-		label: 'Model operators'
-	},
-	code: {
-		label: 'Code operators'
-	},
-	// document: {
-	// 	label: 'Document operators'
-	// },
-	dataset: {
-		label: 'Dataset operators'
-	},
-	simulate: {
-		separator: true,
-		label: 'Simulate'
-	}
-	// llm: {
-	// 	label: "Ask 'em LLM tool"
-	// }
-};
-const operationContextMenuList = [
+const contextMenuItems: MenuItem[] = [
 	// Model
-	{ name: ModelOp.name, category: categories.model },
-	{ name: ModelEditOp.name, category: categories.model },
-	{ name: ModelConfigOp.name, category: categories.model },
-	{ name: StratifyMiraOp.name, category: categories.model },
-	{ name: ModelTransformerOp.name, category: categories.model },
-	{ name: FunmanOp.name, category: categories.model, separator: true },
-	{ name: ModelOptimizeOp.name, category: categories.model },
-	{ name: ModelCouplingOp.name, category: categories.model },
+	{
+		label: 'Model operators',
+		items: [
+			{
+				label: ModelOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelOp)
+			},
+			{
+				label: ModelEditOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelEditOp)
+			},
+			{
+				label: ModelConfigOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelConfigOp)
+			},
+			{
+				label: StratifyMiraOp.operation.displayName,
+				command: addOperatorToWorkflow(StratifyMiraOp)
+			},
+			{
+				label: ModelTransformerOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelTransformerOp)
+			},
+			{
+				label: FunmanOp.operation.displayName,
+				command: addOperatorToWorkflow(FunmanOp)
+			},
+			{ separator: true },
+			{
+				label: ModelOptimizeOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelOptimizeOp)
+			},
+			{
+				label: ModelCouplingOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelCouplingOp)
+			}
+		]
+	},
 	// Code
-	{ name: CodeAssetOp.name, category: categories.code },
-	{ name: ModelFromCodeOp.name, category: categories.code },
+	{
+		label: 'Code operators',
+		items: [
+			{ label: CodeAssetOp.operation.displayName, command: addOperatorToWorkflow(CodeAssetOp) },
+			{
+				label: ModelFromCodeOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelFromCodeOp)
+			}
+		]
+	},
+	// Document
+	{
+		label: 'Document operators',
+		disabled: true
+	},
 	// Dataset
-	{ name: DatasetOp.name, category: categories.dataset },
-	{ name: DatasetTransformerOp.name, category: categories.dataset },
+	{
+		label: 'Dataset operators',
+		items: [
+			{ label: DatasetOp.operation.displayName, command: addOperatorToWorkflow(DatasetOp) },
+			{
+				label: DatasetTransformerOp.operation.displayName,
+				command: addOperatorToWorkflow(DatasetTransformerOp)
+			}
+		]
+	},
+	// —————
+	{
+		separator: true
+	},
 	// Simulate
-	{ name: CalibrateJuliaOp.name, category: categories.simulate, options: { size: largeNode } },
-	{ name: SimulateJuliaOp.name, category: categories.simulate, options: { size: largeNode } },
 	{
-		name: SimulateCiemssOp.name,
-		category: categories.simulate,
-		options: { size: largeNode },
-		separator: true
+		label: 'Simulate',
+		items: [
+			{
+				label: CalibrateJuliaOp.operation.displayName,
+				command: addLargeOperatorToWorkflow(CalibrateJuliaOp)
+			},
+			{
+				label: SimulateJuliaOp.operation.displayName,
+				command: addLargeOperatorToWorkflow(SimulateJuliaOp)
+			},
+			{ separator: true },
+			{
+				label: SimulateCiemssOp.operation.displayName,
+				command: addLargeOperatorToWorkflow(SimulateCiemssOp)
+			},
+			{
+				label: CalibrateCiemssOp.operation.displayName,
+				command: addLargeOperatorToWorkflow(CalibrateCiemssOp)
+			},
+			{ separator: true },
+			{
+				label: CalibrateEnsembleCiemssOp.operation.displayName,
+				command: addLargeOperatorToWorkflow(CalibrateEnsembleCiemssOp)
+			},
+			{
+				label: SimulateEnsembleCiemssOp.operation.displayName,
+				command: addLargeOperatorToWorkflow(SimulateEnsembleCiemssOp)
+			}
+		]
 	},
+	// llm
 	{
-		name: CalibrateCiemssOp.name,
-		category: categories.simulate,
-		options: { size: largeNode }
-	},
-	{
-		name: CalibrateEnsembleCiemssOp.name,
-		category: categories.simulate,
-		options: { size: largeNode },
-		separator: true
-	},
-	{
-		name: SimulateEnsembleCiemssOp.name,
-		category: categories.simulate,
-		options: { size: largeNode }
+		label: "Ask 'em LLM tool",
+		disabled: true
 	}
 ];
-
-const contextMenuItems = ref<any[]>([]);
-
-// Add operator categories to the context menu
-Object.values(categories).forEach(({ label, icon, separator }) => {
-	if (separator) {
-		contextMenuItems.value.push({ separator });
-	}
-	contextMenuItems.value.push({
-		label,
-		icon,
-		items: []
-	});
-});
-
-// Add operators within the proper categories
-operationContextMenuList.forEach((item) => {
-	const op = registry.getOperation(item.name);
-	if (!op) return;
-
-	const categoryIndex = contextMenuItems.value.findIndex(
-		({ label }) => label === item.category.label
-	);
-
-	if (item.separator) {
-		contextMenuItems.value[categoryIndex].items.push({ separator: item.separator });
-	}
-
-	contextMenuItems.value[categoryIndex].items.push({
-		label: op.displayName,
-		command: () => {
-			workflowService.addNode(wf.value, op, newNodePosition, item.options);
-			workflowDirty = true;
-		}
-	});
-});
 
 const addComponentMenu = ref();
 const showAddComponentMenu = () => {
