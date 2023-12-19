@@ -12,6 +12,7 @@
 								class="p-inputtext-sm"
 								v-model="timespan.start"
 								inputId="integeronly"
+								@update:model-value="updateState"
 							/>
 						</div>
 						<div class="label-and-input">
@@ -21,6 +22,7 @@
 								class="p-inputtext-sm"
 								v-model="timespan.end"
 								inputId="integeronly"
+								@update:model-value="updateState"
 							/>
 						</div>
 						<div class="label-and-input">
@@ -31,6 +33,7 @@
 								v-model="numSamples"
 								inputId="integeronly"
 								:min="2"
+								@update:model-value="updateState"
 							/>
 						</div>
 						<div class="label-and-input">
@@ -40,6 +43,7 @@
 								class="p-inputtext-sm"
 								v-model="method"
 								:options="ciemssMethodOptions"
+								@update:model-value="updateState"
 							/>
 						</div>
 					</div>
@@ -242,6 +246,14 @@ onUnmounted(() => {
 	poller.stop();
 });
 
+const updateState = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.currentTimespan = timespan.value;
+	state.numSamples = numSamples.value;
+	state.method = method.value;
+	emit('update-state', state);
+};
+
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
@@ -387,28 +399,12 @@ watch(
 			selectedOutputId.value = props.node.active;
 		}
 
-		// TODO: set operator state (wizard) from selected output state
+		// Update Wizard form fields with current selected output state
+		timespan.value = props.node.state.currentTimespan;
+		numSamples.value = props.node.state.numSamples;
+		method.value = props.node.state.method;
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => numSamples.value,
-	(n) => {
-		const state = _.cloneDeep(props.node.state);
-		state.numSamples = n;
-		emit('update-state', state);
-	}
-);
-
-watch(
-	() => method.value,
-	() => {
-		const state = _.cloneDeep(props.node.state);
-		state.method = method.value;
-
-		emit('update-state', state);
-	}
 );
 </script>
 

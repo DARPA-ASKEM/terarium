@@ -12,6 +12,7 @@
 								class="p-inputtext-sm"
 								v-model="timespan.start"
 								inputId="integeronly"
+								@update:model-value="updateState"
 							/>
 						</div>
 						<div class="label-and-input">
@@ -21,6 +22,7 @@
 								class="p-inputtext-sm"
 								v-model="timespan.end"
 								inputId="integeronly"
+								@update:model-value="updateState"
 							/>
 						</div>
 					</div>
@@ -218,6 +220,12 @@ onMounted(() => {
 onUnmounted(() => {
 	poller.stop();
 });
+
+const updateState = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.currentTimespan = timespan.value;
+	emit('update-state', state);
+};
 
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
