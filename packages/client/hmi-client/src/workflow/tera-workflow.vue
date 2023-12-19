@@ -585,8 +585,7 @@ function onPortMouseleave() {
 }
 
 function resizeHandler(node: WorkflowNode<any>) {
-	console.log('dealing with resize', node.id);
-	relinkEdges(null);
+	relinkEdges(node);
 }
 
 const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
@@ -601,8 +600,21 @@ const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b
 function relinkEdges(node: WorkflowNode<any> | null) {
 	const nodes = node ? [node] : wf.value.nodes;
 	const edges = wf.value.edges;
-	const threshold = 8.0;
+	const threshold = 5.0;
 	const threshold2 = threshold * threshold;
+
+	// Note id can start with numerals, so we need [id=...]
+	const getPortElement = (id: string) =>
+		d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
+
+	// Relink heuristic, this will modify source
+	const relink = (source: Position, target: Position) => {
+		const distance2 = dist2(source, target);
+		if (distance2 > threshold2) {
+			source.x = target.x;
+			source.y = target.y;
+		}
+	};
 
 	for (let i = 0; i < nodes.length; i++) {
 		const n = nodes[i];
@@ -612,24 +624,14 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 		inputs.forEach((port) => {
 			const edge = edges.find((e) => e.targetPortId === port.id);
 			if (!edge) return;
-			const portElem = d3
-				.select(`[id='${edge.targetPortId}']`)
-				.select('.port')
-				.node() as HTMLElement;
+			const portElem = getPortElement(edge.targetPortId as string);
 			const nodePosition: Position = { x: n.x, y: n.y };
-			const totalOffsetX = 0;
 			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
-			const portPos = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
-			console.log('\tinput port = ', portPos);
-			console.log('\tedge = ', edge.points[1]);
-
-			if (dist2(portPos, edge.points[1]) > threshold2) {
-				console.log('\texceed threshold, need adjustment');
-				edge.points[1].x = portPos.x;
-				edge.points[1].y = portPos.y;
-			} else {
-				console.log('\tignore');
-			}
+			const portPos = {
+				x: nodePosition.x,
+				y: nodePosition.y + totalOffsetY
+			};
+			relink(edge.points[1], portPos);
 		});
 
 		// The output ports connects to the edge's source
@@ -637,27 +639,14 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 		outputs.forEach((port) => {
 			const edge = edges.find((e) => e.sourcePortId === port.id);
 			if (!edge) return;
-			const portElem = d3
-				.select(`[id='${edge.sourcePortId}']`)
-				.select('.port')
-				.node() as HTMLElement;
+			const portElem = getPortElement(edge.sourcePortId as string);
 			const nodePosition: Position = { x: n.x, y: n.y };
-			const totalOffsetX = 0;
 			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
 			const portPos = {
-				x: nodePosition.x + totalOffsetX + n.width,
+				x: nodePosition.x + n.width,
 				y: nodePosition.y + totalOffsetY
 			};
-			console.log('\toutput port = ', portPos);
-			console.log('\tedge = ', edge.points[0]);
-
-			if (dist2(portPos, edge.points[0]) > threshold2) {
-				console.log('\texceed threshold, need adjustment');
-				edge.points[0].x = portPos.x;
-				edge.points[0].y = portPos.y;
-			} else {
-				console.log('\tignore');
-			}
+			relink(edge.points[0], portPos);
 		});
 	}
 }

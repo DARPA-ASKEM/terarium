@@ -17,7 +17,7 @@
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
+			@port-mouseover="(event) => mouseoverPort(event)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="
 				(input: WorkflowPort, direction: WorkflowDirection) =>
@@ -30,7 +30,7 @@
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
-			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
+			@port-mouseover="(event) => mouseoverPort(event)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="
 				(input: WorkflowPort, direction: WorkflowDirection) =>
@@ -51,11 +51,6 @@ import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
-
-enum PortDirection {
-	Input,
-	Output
-}
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -78,7 +73,6 @@ const nodeStyle = computed(() => ({
 	left: `${props.node.x}px`
 }));
 
-const portBaseSize: number = 8;
 const operator = ref<HTMLElement>();
 
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
@@ -126,14 +120,12 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event: MouseEvent, portDirection: PortDirection) {
+function mouseoverPort(event: MouseEvent) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const totalOffsetX =
-		portElement.offsetLeft + (portDirection === PortDirection.Input ? 0 : portBaseSize);
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
-	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
+	const portPosition = { x: nodePosition.x, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
 }
 
