@@ -366,10 +366,6 @@ export interface Project {
     updatedOn?: Date;
     deletedOn?: Date;
     projectAssets: ProjectAsset[];
-    /**
-     * @deprecated
-     */
-    assets?: Assets;
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -811,17 +807,6 @@ export interface PetriNetTransition {
     output: string[];
     grounding?: ModelGrounding;
     properties: PetriNetTransitionProperties;
-}
-
-export interface Assets {
-    datasets: Dataset[];
-    extractions: Extraction[];
-    models: Model[];
-    publications: ExternalPublication[];
-    workflows: Workflow[];
-    artifacts: Artifact[];
-    code: Code[];
-    documents: DocumentAsset[];
 }
 
 export interface ModelDistribution {
