@@ -1,12 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,6 +11,11 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+
+import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @TSModel
@@ -35,9 +34,11 @@ public class DocumentAsset {
 	@TSOptional
 	private String description;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp createdOn;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp updatedOn;
 

@@ -154,10 +154,3 @@ export interface Size {
 	width: number;
 	height: number;
 }
-
-export enum ProgressState {
-	RETRIEVING = 'retrieving',
-	QUEUED = 'queued',
-	RUNNING = 'running',
-	COMPLETE = 'complete'
-}

@@ -26,15 +26,14 @@ import {
 async function create(
 	name: Project['name'],
 	description: Project['description'] = '',
-	username: Project['username'] = ''
+	userId: Project['userId'] = ''
 ): Promise<Project | null> {
 	try {
 		const project: Project = {
 			name,
 			description,
-			username,
-			active: true,
-			assets: {} as Project['assets']
+			userId,
+			projectAssets: {} as Project['projectAssets']
 		};
 		const response = await API.post(`/projects`, project);
 		const { status, data } = response;

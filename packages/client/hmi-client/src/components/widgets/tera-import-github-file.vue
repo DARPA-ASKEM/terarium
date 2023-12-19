@@ -364,7 +364,7 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		const newDataset = await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			auth.user?.name ?? '',
+			auth.user?.id ?? '',
 			githubFile.htmlUrl
 		);
 		if (newDataset && newDataset.id) {
@@ -378,7 +378,7 @@ async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string
 		const document: DocumentAsset | null = await createNewDocumentFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			useProjects().activeProject.value?.username ?? ''
+			useAuthStore().user?.id ?? ''
 		);
 		let newAsset;
 		if (document && document.id) {

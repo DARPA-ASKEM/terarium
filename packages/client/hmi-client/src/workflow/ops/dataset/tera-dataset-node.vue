@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -71,7 +71,7 @@ const props = defineProps<{
 const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
 
 const datasets = computed<Dataset[]>(
-	() => useProjects().activeProject.value?.assets?.datasets ?? []
+	() => useProjects().activeProject.value?.assets?.DATASET ?? []
 );
 
 const dataset = ref<Dataset | null>(null);

@@ -38,11 +38,13 @@ public class SimulationResult implements Serializable {
 
 	private String filename;
 
+	@TSOptional
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
+	@TSOptional
 	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")

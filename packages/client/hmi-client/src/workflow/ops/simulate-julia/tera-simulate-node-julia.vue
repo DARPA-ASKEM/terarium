@@ -45,21 +45,21 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { csvParse } from 'd3';
-import { ModelConfiguration, SimulationRequest } from '@/types/Types';
+import { ModelConfiguration, ProgressState, SimulationRequest } from '@/types/Types';
 
 import {
-	makeForecastJob,
 	getRunResult,
-	simulationPollAction,
+	getSimulation,
+	makeForecastJob,
 	querySimulationInProgress,
-	getSimulation
+	simulationPollAction
 } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -67,6 +67,7 @@ import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
+import { useProjects } from '@/composables/project';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
@@ -81,7 +82,7 @@ const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const runList = computed(() =>
 	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
@@ -133,7 +134,8 @@ const runSimulate = async () => {
 			end: state.currentTimespan.end
 		},
 		extra: {},
-		engine: 'sciml'
+		engine: 'sciml',
+		projectId: useProjects().activeProject.value?.id ?? ''
 	};
 	const response = await makeForecastJob(payload);
 	getStatus([response.id]);
@@ -184,7 +186,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	}
 
 	const sim = await getSimulation(runIdList[0]);
-	if (sim) {
+	if (sim && sim.id) {
 		state.simConfigs.runConfigs[sim.id] = {
 			runId: sim.id,
 			active: true,

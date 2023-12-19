@@ -193,19 +193,20 @@ import {
 	ClientEventType,
 	CsvAsset,
 	ModelConfiguration,
+	ProgressState,
 	ScimlStatusUpdate
 } from '@/types/Types';
-import { setupModelInput, setupDatasetInput, renderLossGraph } from '@/services/calibrate-workflow';
+import { renderLossGraph, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
 import {
 	getRunResultJulia,
 	makeCalibrateJobJulia,
+	querySimulationInProgress,
 	simulationPollAction,
 	subscribeToUpdateMessages,
-	querySimulationInProgress,
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
 import { csvParse } from 'd3';
@@ -277,7 +278,7 @@ let lossValues: { [key: string]: number }[] = [];
 const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
 const parameterResult = ref<{ [index: string]: any }>();
 
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 const runInProgress = ref<string>();
 
 const completedRunIdList = ref<string[]>([]);

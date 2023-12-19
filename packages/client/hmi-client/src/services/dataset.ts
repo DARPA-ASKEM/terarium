@@ -102,7 +102,7 @@ async function createDataset(dataset: Dataset): Promise<Dataset | null> {
 async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string,
+	userId: string,
 	url: string
 ) {
 	// Find the file name by removing the path portion
@@ -119,7 +119,7 @@ async function createNewDatasetFromGithubFile(
 		datasetUrl: url,
 		description: path,
 		fileNames: [fileName],
-		username: userName
+		userId
 	};
 
 	const newDataset: Dataset | null = await createDataset(dataset);
@@ -151,7 +151,7 @@ async function createNewDatasetFromGithubFile(
 async function createNewDatasetFromCSV(
 	progress: Ref<number>,
 	file: File,
-	userName: string,
+	userId: string,
 	description?: string
 ): Promise<Dataset | null> {
 	// Remove the file extension from the name, if any
@@ -162,7 +162,7 @@ async function createNewDatasetFromCSV(
 		name,
 		description: description || file.name,
 		fileNames: [file.name],
-		username: userName
+		userId
 	};
 
 	const newDataset: Dataset | null = await createDataset(dataset);

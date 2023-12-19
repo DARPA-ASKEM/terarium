@@ -13,7 +13,7 @@ import { logger } from '@/utils/logger';
 async function createNewArtifactFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string
+	userId: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -25,7 +25,7 @@ async function createNewArtifactFromGithubFile(
 		name: fileName,
 		description: path,
 		fileNames: [fileName],
-		username: userName
+		userId
 	};
 
 	const newArtifact: Artifact | null = await createNewArtifact(artifact);
@@ -56,7 +56,7 @@ async function createNewArtifactFromGithubFile(
  */
 async function uploadArtifactToProject(
 	file: File,
-	userName: string,
+	userId: string,
 	description?: string,
 	progress?: Ref<number>
 ): Promise<Artifact | null> {
@@ -65,7 +65,7 @@ async function uploadArtifactToProject(
 		name: file.name,
 		description: description || file.name,
 		fileNames: [file.name],
-		username: userName
+		userId
 	};
 
 	const newArtifact: Artifact | null = await createNewArtifact(artifact);

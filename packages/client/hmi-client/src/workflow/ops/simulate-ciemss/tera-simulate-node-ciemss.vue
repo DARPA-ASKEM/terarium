@@ -59,27 +59,28 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import {
-	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
-	simulationPollAction,
+	getSimulation,
+	makeForecastJobCiemss as makeForecastJob,
 	querySimulationInProgress,
-	getSimulation
+	simulationPollAction
 } from '@/services/models/simulation-service';
 import InputNumber from 'primevue/inputnumber';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
-import { SimulationRequest } from '@/types/Types';
+import { ProgressState, SimulationRequest } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { useProjects } from '@/composables/project';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -95,7 +96,7 @@ const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
 const completedRunIdList = ref<string[]>([]);
 const runResults = ref<{ [runId: string]: RunResults }>({});
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const runList = computed(() =>
 	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
@@ -126,7 +127,8 @@ const runSimulate = async () => {
 			num_samples: state.numSamples,
 			method: state.method
 		},
-		engine: 'ciemss'
+		engine: 'ciemss',
+		projectId: useProjects().activeProject.value?.id ?? ''
 	};
 	const response = await makeForecastJob(payload);
 	getStatus([response.id]);
@@ -190,7 +192,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	}
 
 	const sim = await getSimulation(runIdList[0]);
-	if (sim) {
+	if (sim && sim.id) {
 		state.simConfigs.runConfigs[sim.id] = {
 			runId: sim.id,
 			active: true,

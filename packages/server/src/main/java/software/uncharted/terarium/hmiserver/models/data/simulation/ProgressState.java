@@ -1,11 +1,12 @@
  package software.uncharted.terarium.hmiserver.models.data.simulation;
 
 
- public enum SimulationStatus {
+ public enum ProgressState {
 	 CANCELLED,
 	 COMPLETE,
 	 ERROR,
+	 FAILED,
 	 QUEUED,
-	 RUNNING,
-	 FAILED
+	 RETRIEVING,
+	 RUNNING
  }

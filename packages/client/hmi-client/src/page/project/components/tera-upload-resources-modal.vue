@@ -119,7 +119,7 @@ async function processDocument(file: File) {
 	// This is pdf, txt, md files
 	const document: DocumentAsset | null = await uploadDocumentAssetToProject(
 		file,
-		useProjects().activeProject.value?.username ?? '',
+		useAuthStore().user?.id ?? '',
 		'',
 		progress
 	);
@@ -135,7 +135,7 @@ async function processDataset(file: File, description: string) {
 	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
 		progress,
 		file,
-		useAuthStore().user?.name ?? '',
+		useAuthStore().user?.id ?? '',
 		description
 	);
 	return { id: addedDataset?.id ?? '', assetType: AssetType.Dataset };

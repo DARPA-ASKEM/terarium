@@ -49,12 +49,12 @@
 				<section>
 					<header>Date uploaded</header>
 					<section>
-						{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') || '-' }}
+						{{ new Date(dataset?.createdOn as Date).toLocaleString('en-US') || '-' }}
 					</section>
 				</section>
 				<section>
 					<header>Uploaded by</header>
-					<section>{{ dataset?.username || '-' }}</section>
+					<section>{{ dataset?.userId || '-' }}</section>
 				</section>
 			</section>
 			<section class="metadata data-row">
@@ -314,7 +314,7 @@ const props = defineProps({
 const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
+			.activeProject.value?.assets?.DOCUMENT?.filter((document: DocumentAsset) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
 					(extension) => {
 						if (document.fileNames && !isEmpty(document.fileNames)) {

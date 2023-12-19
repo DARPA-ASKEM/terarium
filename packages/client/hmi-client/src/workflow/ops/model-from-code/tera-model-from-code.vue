@@ -197,7 +197,7 @@ const clonedState = ref<ModelFromCodeState>({
 });
 
 const outputs = computed(() => {
-	const activeProjectModelIds = useProjects().activeProject.value?.assets?.models?.map(
+	const activeProjectModelIds = useProjects().activeProject.value?.assets?.MODEL?.map(
 		(model) => model.id
 	);
 

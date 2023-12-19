@@ -1,24 +1,20 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
+
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Represents a generic artifact that can be stored in the data service. For
@@ -39,9 +35,11 @@ public class Artifact {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp createdOn;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp updatedOn;
 

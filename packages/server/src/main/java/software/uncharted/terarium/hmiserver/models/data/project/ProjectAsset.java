@@ -47,11 +47,13 @@ public class ProjectAsset implements Serializable {
 	@TSOptional
 	private String externalRef;
 
+	@TSOptional
 	@CreationTimestamp
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp createdOn;
 
+	@TSOptional
 	@UpdateTimestamp
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)

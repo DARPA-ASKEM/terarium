@@ -190,7 +190,7 @@ const openNewAsset = (assetType: AssetType) => {
 // So delete this when we choose to delete tera-external-publication.vue
 const getXDDuri = (docAssetId: string): string =>
 	useProjects().activeProject.value?.assets?.[AssetType.Publication]?.find(
-		(document) => document?.id === Number.parseInt(docAssetId ?? '', 10)
+		(document) => document?.id === docAssetId
 	)?.xdd_uri ?? '';
 
 async function openCode() {

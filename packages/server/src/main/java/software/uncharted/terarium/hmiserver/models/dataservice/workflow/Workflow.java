@@ -1,17 +1,19 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.UUID;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * The workflow data structure is not very well defined. It is also meant to
@@ -22,11 +24,14 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
  */
 @Data
 @Accessors(chain = true)
+@TSModel
 public class Workflow implements Serializable {
+
+	@Serial
+	private static final long serialVersionUID = -1565930053830366145L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
@@ -40,9 +45,11 @@ public class Workflow implements Serializable {
 
 	private List<Object> edges;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp createdOn;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp updatedOn;
 
