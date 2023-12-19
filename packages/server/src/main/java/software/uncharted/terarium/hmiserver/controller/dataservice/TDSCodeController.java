@@ -105,21 +105,20 @@ public class TDSCodeController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new code resource")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Code resource created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "201", description = "Code resource created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the code resource", content = @Content)
 	})
 	public ResponseEntity<Code> createCode(@RequestBody Code code) {
 
 		try {
 			code = codeService.createCode(code);
+			return ResponseEntity.status(HttpStatus.CREATED).body(code);
 		} catch (IOException e) {
 			log.error("Unable to create code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to create code resource");
 		}
-
-		return ResponseEntity.ok(code);
 	}
 
 	/**
@@ -135,26 +134,22 @@ public class TDSCodeController {
 	@Operation(summary = "Gets code resource by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Code resource found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
-			@ApiResponse(responseCode = "404", description = "There was no code resource found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the code resource from the data store", content = @Content)
 	})
 	public ResponseEntity<Code> getCode(@PathVariable("id") UUID id) {
-
-		final Code code;
 		try {
-			code = codeService.getCode(id);
+			Optional<Code> code = codeService.getCode(id);
+			if (code.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(code.get());
 		} catch (IOException e) {
 			log.error("Unable to get code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to get code resource");
 		}
-		if (code == null) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Code %s not found", id));
-		}
-
-		// Return the updated document
-		return ResponseEntity.ok(code);
 	}
 
 	/**
@@ -267,7 +262,7 @@ public class TDSCodeController {
 	 *         upload
 	 * @throws IOException if an I/O error occurs while reading the file
 	 */
-	@PutMapping(value = "/{codeId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{codeId}/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the specified codeId")
 	@ApiResponses(value = {
@@ -299,7 +294,7 @@ public class TDSCodeController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it
 	 * to the project.
 	 */
-	@PutMapping("/{codeId}/uploadCodeFromGithub")
+	@PutMapping("/{codeId}/upload-code-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(value = {
@@ -328,7 +323,7 @@ public class TDSCodeController {
 	 * @param repoName         The name of the repo to upload from
 	 * @return A response containing the status of the upload
 	 */
-	@PutMapping("/{codeId}/uploadCodeFromGithubRepo")
+	@PutMapping("/{codeId}/upload-code-from-github-repo")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(value = {

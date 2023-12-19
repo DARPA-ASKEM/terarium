@@ -61,7 +61,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(documentAsset)))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 	}
 
 	@Test
@@ -111,7 +111,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(documentAssetService.getDocumentAsset(documentAsset.getId()));
+		Assertions.assertTrue(documentAssetService.getDocumentAsset(documentAsset.getId()).isEmpty());
 	}
 
 	@Test
@@ -132,7 +132,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/uploadDocument")
+				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -153,7 +153,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				.setDescription("my description"));
 
 		mockMvc.perform(
-				MockMvcRequestBuilders.put("/document-asset/" + documentAsset.getId() + "/uploadDocumentFromGithub")
+				MockMvcRequestBuilders.put("/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
 						.with(csrf())
 						.param("repoOwnerAndName", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -182,7 +182,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/uploadDocument")
+				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -194,7 +194,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId() + "/downloadDocument")
+				.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId() + "/download-document")
 						.queryParam("filename", "filename.txt")
 						.with(csrf()))
 				.andExpect(status().isOk())
@@ -225,7 +225,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/uploadDocument")
+				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())

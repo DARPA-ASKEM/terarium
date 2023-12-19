@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +38,7 @@ public class ProvenanceService {
 
 	final private Neo4jService neo4jService;
 
-	final private ProvenanceRepository provenanceRepository;
+	final ProvenanceRepository provenanceRepository;
 
 	private Map<String, List<List<String>>> graphValidations;
 
@@ -115,27 +117,30 @@ public class ProvenanceService {
 
 	public void deleteProvenance(UUID id) {
 
-		Provenance provenance = provenanceRepository.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Provenance not found"));
+		final Optional<Provenance> provenance = getProvenance(id);
+		if (provenance.isEmpty()) {
+			return;
+		}
 
-		provenanceRepository.deleteById(provenance.getId());
+		provenance.get().setDeletedOn(Timestamp.from(Instant.now()));
+		provenanceRepository.save(provenance.get());
 
 		try (Session session = neo4jService.getSession()) {
 			String query = String.format(
 					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MATCH (n1)-[r:%s]->(n2) DELETE r",
-					provenance.getLeftType(),
-					provenance.getRightType(),
-					provenance.getRelationType());
+					provenance.get().getLeftType(),
+					provenance.get().getRightType(),
+					provenance.get().getRelationType());
 			session.run(
 					query,
 					Values.parameters(
-							"left_id", provenance.getLeft(),
-							"right_id", provenance.getRight()));
+							"left_id", provenance.get().getLeft(),
+							"right_id", provenance.get().getRight()));
 		}
 	}
 
 	public Optional<Provenance> getProvenance(UUID id) {
-		return provenanceRepository.findById(id);
+		return provenanceRepository.getByIdAndDeletedOnIsNull(id);
 	}
 
 	public void deleteHangingNodes() {

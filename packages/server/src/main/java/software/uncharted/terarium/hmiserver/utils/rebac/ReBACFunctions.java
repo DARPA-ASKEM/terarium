@@ -12,6 +12,7 @@ import com.authzed.api.v1.PermissionService.RelationshipFilter;
 import com.authzed.api.v1.PermissionsServiceGrpc;
 import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
@@ -20,28 +21,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 public class ReBACFunctions {
 	private static final String HAS_PERMISSION = "PERMISSIONSHIP_HAS_PERMISSION";
 	private static final String ALREADY_EXISTS_CREATE_RELATIONSHIP = "ALREADY_EXISTS: could not CREATE relationship";
+
 	final PermissionsServiceGrpc.PermissionsServiceBlockingStub permissionsService;
 
 	public ReBACFunctions(final ManagedChannel channel, final BearerToken bearerToken) {
 		this.permissionsService = PermissionsServiceGrpc
-			.newBlockingStub(channel)
-			.withCallCredentials(bearerToken);
+				.newBlockingStub(channel)
+				.withCallCredentials(bearerToken);
 	}
 
 	private static ObjectReference createObject(final String type, final String id) {
 		return ObjectReference.newBuilder()
-			.setObjectType(type)
-			.setObjectId(id)
-			.build();
+				.setObjectType(type)
+				.setObjectId(id)
+				.build();
 	}
 
 	private static SubjectReference createSubject(final String type, final String id) {
 		return SubjectReference.newBuilder()
-			.setObject(createObject(type, id))
-			.build();
+				.setObject(createObject(type, id))
+				.build();
 	}
 
 	public boolean checkPermission(final SchemaObject subject, final Schema.Permission permission, final SchemaObject resource, final Consistency consistency) throws Exception {
@@ -180,8 +183,8 @@ public class ReBACFunctions {
 				try {
 					final UUID uuid = UUID.fromString(response.getResourceObjectId());
 					results.add(uuid);
-				} catch (final IllegalArgumentException ex) {
-					//TODO dvince: swallow this for now its an int id
+				} catch (final IllegalArgumentException e) {
+					log.warn("Unable to parse resource object id as UUID", e);
 				}
 			}
 		}

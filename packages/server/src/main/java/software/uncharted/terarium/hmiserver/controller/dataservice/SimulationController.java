@@ -17,12 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
-import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.data.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.SimulationEventService;
@@ -58,12 +58,12 @@ public class SimulationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new simulation")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Simulation created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "201", description = "Simulation created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the simulation", content = @Content)
 	})
 	public ResponseEntity<Simulation> createSimulation(@RequestBody final Simulation simulation) {
 		try {
-			return ResponseEntity.ok(simulationService.createSimulation(simulation));
+			return ResponseEntity.status(HttpStatus.CREATED).body(simulationService.createSimulation(simulation));
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation.";
 			log.error(error, e);
@@ -84,11 +84,11 @@ public class SimulationController {
 	public ResponseEntity<Simulation> getSimulation(
 			@PathVariable("id") final UUID id) {
 		try {
-			final Simulation simulation = simulationService.getSimulation(id);
-			if (simulation == null) {
+			final Optional<Simulation> simulation = simulationService.getSimulation(id);
+			if (simulation.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
-			return ResponseEntity.ok(simulation);
+			return ResponseEntity.ok(simulation.get());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get simulation %s", id);
 			log.error(error, e);
@@ -188,29 +188,20 @@ public class SimulationController {
 			@RequestParam("datasetName") final String datasetName) {
 
 		try {
-			final Simulation sim = simulationService.getSimulation(id);
+			final Optional<Simulation> sim = simulationService.getSimulation(id);
+			if (sim.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
 
 			// Duplicate the simulation results to a new dataset
-			Dataset dataset = simulationService.copySimulationResultToDataset(sim);
-			datasetService.createDataset(dataset);
-
+			final Dataset dataset = simulationService.copySimulationResultToDataset(sim.get());
 			if (dataset == null) {
 				log.error("Failed to create dataset from simulation {} result", id);
 				return ResponseEntity.internalServerError().build();
 			}
 
-			if (datasetName != null) {
-				try {
-					// updateAsset actually makes a PUT request, hence why we have to fetch the
-					// whole dataset
-					dataset = datasetService.getDataset(dataset.getId());
-					dataset.setName(datasetName);
-					datasetService.updateDataset(dataset);
-				} catch (final Exception e) {
-					log.error("Failed to update dataset {} name", dataset.getId(), e);
-					return ResponseEntity.internalServerError().build();
-				}
-			}
+			dataset.setName(datasetName);
+			datasetService.createDataset(dataset);
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);

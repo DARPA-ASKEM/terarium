@@ -13,11 +13,11 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import software.uncharted.terarium.hmiserver.models.data.concept.ConceptFacetSearchResponse;
-import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
-import software.uncharted.terarium.hmiserver.models.data.concept.QActiveConcept;
-import software.uncharted.terarium.hmiserver.models.data.concept.QOntologyConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.QActiveConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.QOntologyConcept;
 
 @Component
 public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryCustom {

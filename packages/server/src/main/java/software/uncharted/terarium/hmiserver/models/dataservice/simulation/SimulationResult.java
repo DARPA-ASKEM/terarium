@@ -1,7 +1,9 @@
-package software.uncharted.terarium.hmiserver.models.data.concept;
+package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,24 +16,28 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.UUID;
 
-@Entity
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ActiveConcept implements Serializable {
+@Entity
+public class SimulationResult implements Serializable {
 
 	@Serial
-	private static final long serialVersionUID = 3747098342861343228L;
+	private static final long serialVersionUID = 4211271157196613944L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
-	@Column(unique = true)
-	private String curie;
+	@ManyToOne
+	@JoinColumn(name = "simulation_id", nullable = false)
+	@JsonBackReference
+	@NotNull
+	private Simulation simulation;
 
-	private String name;
+	private String filename;
 
 	@TSOptional
 	@CreationTimestamp

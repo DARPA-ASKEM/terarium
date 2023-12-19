@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -11,20 +11,20 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 public class ModelHeader {
 	private String name;
 
-	@JsonProperty("schema")
+	@JsonAlias("model_schema")
 	private String modelSchema;
 
 	@TSOptional
-	@JsonProperty("schema_name")
+	@JsonAlias("schema_name")
 	private String schemaName;
 
 	private String description;
 
 	@TSOptional
-	@JsonProperty("model_version")
+	@JsonAlias("model_version")
 	private String modelVersion;
 
 	@TSOptional
-	@JsonProperty("extracted_from")
+	@JsonAlias("extracted_from")
 	private String extractedFrom;
 }

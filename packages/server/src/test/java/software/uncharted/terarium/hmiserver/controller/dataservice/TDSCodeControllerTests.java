@@ -21,17 +21,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
-public class DatasetControllerTests extends TerariumApplicationTests {
+public class TDSCodeControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	private DatasetService datasetService;
+	private CodeService codeAssetService;
 
 	@Autowired
 	private ElasticsearchService elasticService;
@@ -41,59 +41,59 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDatasetIndex());
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getCodeIndex());
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDatasetIndex());
+		elasticService.deleteIndex(elasticConfig.getCodeIndex());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanCreateDataset() throws Exception {
+	public void testItCanCreateCode() throws Exception {
 
-		Dataset dataset = datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name")
-				.setDescription("my description"));
+		final Code codeAsset = new Code()
+				.setName("test-code-name")
+				.setDescription("my description");
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/datasets")
+		mockMvc.perform(MockMvcRequestBuilders.post("/code-asset")
 				.with(csrf())
 				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(dataset)))
+				.content(objectMapper.writeValueAsString(codeAsset)))
 				.andExpect(status().isCreated());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetDataset() throws Exception {
+	public void testItCanGetCode() throws Exception {
 
-		Dataset dataset = datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name")
+		final Code codeAsset = codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset/" + codeAsset.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetDatasets() throws Exception {
+	public void testItCanGetCodes() throws Exception {
 
-		datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name0")
+		codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
 
-		datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name1")
+		codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
 
-		datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name2")
+		codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/datasets")
+		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset")
 				.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
@@ -101,42 +101,40 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanDeleteDataset() throws Exception {
+	public void testItCanDeleteCode() throws Exception {
 
-		Dataset dataset = datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name")
+		final Code codeAsset = codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/datasets/" + dataset.getId())
+		mockMvc.perform(MockMvcRequestBuilders.delete("/code-asset/" + codeAsset.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(datasetService.getDataset(dataset.getId()).isEmpty());
+		Assertions.assertTrue(codeAssetService.getCode(codeAsset.getId()).isEmpty());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanUploadDataset() throws Exception {
+	public void testItCanUploadCode() throws Exception {
 
-		Dataset dataset = datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name")
+		final Code codeAsset = codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
-
-		String content = "col0,col1,col2,col3\na,b,c,d\n";
 
 		// Create a MockMultipartFile object
 		MockMultipartFile file = new MockMultipartFile(
 				"file", // name of the file as expected in the request
-				"filename.csv", // original filename
-				"text/csv", // content type
-				content.getBytes() // content of the file
+				"filename.txt", // original filename
+				"text/plain", // content type
+				"file content".getBytes() // content of the file
 		);
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
+				MockMvcRequestBuilders.multipart("/code-asset/" + codeAsset.getId() + "/upload-code")
 						.file(file)
-						.queryParam("filename", "filename.csv")
+						.queryParam("filename", "filename.txt")
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
 						.with(request -> {
@@ -148,14 +146,14 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanUploadDatasetFromGithub() throws Exception {
+	public void testItCanUploadCodeFromGithub() throws Exception {
 
-		Dataset dataset = datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name")
+		final Code codeAsset = codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
 
 		mockMvc.perform(
-				MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
+				MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github")
 						.with(csrf())
 						.param("repoOwnerAndName", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -166,27 +164,44 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanDownloadDataset() throws Exception {
+	public void testItCanUploadCodeFromGithubRepo() throws Exception {
 
-		Dataset dataset = datasetService.createDataset(new Dataset()
-				.setName("test-dataset-name")
+		final Code codeAsset = codeAssetService.createCode(new Code()
+				.setName("test-code-name")
 				.setDescription("my description"));
 
-		String content = "col0,col1,col2,col3\na,b,c,d\n";
+		mockMvc.perform(
+				MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo")
+						.with(csrf())
+						.param("repoOwnerAndName", "unchartedsoftware/torflow")
+						.param("repoName", "torflow.zip")
+						.contentType("application/json"))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanDownloadCodeAsText() throws Exception {
+
+		final Code codeAsset = codeAssetService.createCode(new Code()
+				.setName("test-code-name")
+				.setDescription("my description"));
+
+		String content = "this is the file content for the testItCanDownloadCode test";
 
 		// Create a MockMultipartFile object
 		MockMultipartFile file = new MockMultipartFile(
 				"file", // name of the file as expected in the request
-				"filename.csv", // original filename
-				"text/csv", // content type
+				"filename.txt", // original filename
+				"text/plain", // content type
 				content.getBytes() // content of the file
 		);
 
 		// Perform the multipart file upload request
 		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
+				MockMvcRequestBuilders.multipart("/code-asset/" + codeAsset.getId() + "/upload-code")
 						.file(file)
-						.queryParam("filename", "filename.csv")
+						.queryParam("filename", "filename.txt")
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
 						.with(request -> {
@@ -196,14 +211,15 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-csv")
-						.queryParam("filename", "filename.csv")
+				.perform(MockMvcRequestBuilders
+						.get("/code-asset/" + codeAsset.getId() + "/download-code-as-text")
+						.queryParam("filename", "filename.txt")
 						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
 		String resultContent = res.getResponse().getContentAsString();
 
-		Assertions.assertTrue(resultContent.length() > 0);
+		Assertions.assertEquals(content, resultContent);
 	}
 }

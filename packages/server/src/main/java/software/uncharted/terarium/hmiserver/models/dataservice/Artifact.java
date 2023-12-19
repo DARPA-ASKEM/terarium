@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 
 import java.sql.Timestamp;
 import java.util.List;

@@ -53,7 +53,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
@@ -101,14 +100,13 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 	})
 	public ResponseEntity<Dataset> createDataset(@RequestBody Dataset dataset) {
 
 		try {
-			dataset = datasetService.createDataset(dataset);
-			return ResponseEntity.ok(dataset);
+			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createDataset(dataset));
 		} catch (IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
@@ -123,14 +121,18 @@ public class DatasetController {
 	@Operation(summary = "Gets dataset by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dataset found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no dataset found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no dataset found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
 		try {
-			return ResponseEntity.ok(datasetService.getDataset(id));
+			Optional<Dataset> dataset = datasetService.getDataset(id);
+			if (dataset.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(dataset.get());
 		} catch (IOException e) {
-			final String error = "Unable to create dataset";
+			final String error = "Unable to get dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -166,7 +168,7 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a dataset")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dataset updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "Dataset updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 	})
 	ResponseEntity<Dataset> updateDataset(
@@ -194,7 +196,7 @@ public class DatasetController {
 		log.info("Returning HTTP 400 Bad Request", e);
 	}
 
-	@GetMapping("/{datasetId}/downloadCSV")
+	@GetMapping("/{datasetId}/download-csv")
 	@Secured(Roles.USER)
 	@Operation(summary = "Download dataset CSV")
 	@ApiResponses(value = {
@@ -249,7 +251,7 @@ public class DatasetController {
 	 * Downloads a CSV file from github given the path and owner name, then uploads
 	 * it to the dataset.
 	 */
-	@PutMapping("/{datasetId}/uploadCSVFromGithub")
+	@PutMapping("/{datasetId}/upload-csv-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file from github to a dataset")
 	@ApiResponses(value = {
@@ -282,7 +284,7 @@ public class DatasetController {
 	 * @param filename  CSV file to upload
 	 * @return Response
 	 */
-	@PutMapping(value = "/{datasetId}/uploadCSV", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{datasetId}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file to a dataset")
 	@ApiResponses(value = {
@@ -350,14 +352,14 @@ public class DatasetController {
 				for (final String header : headers) {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
-				final Dataset updatedDataset = datasetService.getDataset(datasetId);
-				if (updatedDataset == null) {
+				final Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
+				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
 				}
-				updatedDataset.setColumns(columns);
+				updatedDataset.get().setColumns(columns);
 
-				datasetService.updateDataset(updatedDataset);
+				datasetService.updateDataset(updatedDataset.get());
 			}
 
 			return ResponseEntity.ok(new ResponseStatus(status));

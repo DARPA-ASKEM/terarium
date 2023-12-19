@@ -2,8 +2,8 @@ package software.uncharted.terarium.hmiserver.repository.data;
 
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Repository;
-import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 import java.util.Collection;

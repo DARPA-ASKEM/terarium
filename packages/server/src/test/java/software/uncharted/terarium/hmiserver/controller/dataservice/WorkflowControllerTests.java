@@ -52,6 +52,21 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCreateWorkflow() throws Exception {
+
+		final Workflow workflow = new Workflow()
+				.setName("test-workflow-name0")
+				.setDescription("test-workflow-description");
+
+		mockMvc.perform(MockMvcRequestBuilders.post("/workflows")
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(workflow)))
+				.andExpect(status().isCreated());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflows() throws Exception {
 
 		workflowService.createWorkflow(new Workflow()
@@ -85,21 +100,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanCreateWorkflow() throws Exception {
-
-		final Workflow workflow = new Workflow()
-				.setName("test-workflow-name0")
-				.setDescription("test-workflow-description");
-
-		mockMvc.perform(MockMvcRequestBuilders.post("/workflows")
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(workflow)))
-				.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateWorkflow() throws Exception {
 
 		final Workflow workflow = workflowService.createWorkflow(new Workflow()
@@ -125,6 +125,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(workflowService.getWorkflow(workflow.getId()));
+		Assertions.assertTrue(workflowService.getWorkflow(workflow.getId()).isEmpty());
 	}
 }

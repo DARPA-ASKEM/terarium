@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.data.concept.OntologyConcept;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.service.data.ConceptService;
 
 public class ConceptControllerTests extends TerariumApplicationTests {
@@ -35,7 +35,7 @@ public class ConceptControllerTests extends TerariumApplicationTests {
 				.with(csrf())
 				.contentType("application/json")
 				.content(objectMapper.writeValueAsString(concept)))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 	}
 
 	@Test

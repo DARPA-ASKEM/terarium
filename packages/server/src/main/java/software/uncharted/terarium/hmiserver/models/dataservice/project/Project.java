@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.data.project;
+package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;

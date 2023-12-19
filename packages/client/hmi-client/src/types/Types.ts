@@ -58,84 +58,6 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
-export interface ActiveConcept {
-    id: string;
-    curie: string;
-    name: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-}
-
-export interface OntologyConcept {
-    id: string;
-    curie: string;
-    type: TaggableType;
-    status: OntologicalField;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    object_id: string;
-    activeConcept: ActiveConcept;
-}
-
-export interface Project {
-    id?: string;
-    name: string;
-    userId: string;
-    description?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    projectAssets: ProjectAsset[];
-    /**
-     * @deprecated
-     */
-    assets?: Assets;
-    metadata?: { [index: string]: string };
-    publicProject?: boolean;
-    userPermission?: string;
-}
-
-export interface ProjectAsset {
-    id: string;
-    assetId: string;
-    assetType: AssetType;
-    externalRef?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    project: Project;
-}
-
-export interface Simulation {
-    id?: string;
-    executionPayload: any;
-    name?: string;
-    description?: string;
-    resultFiles?: SimulationResult[];
-    type: SimulationType;
-    status: ProgressState;
-    startTime?: Date;
-    completedTime?: Date;
-    engine: SimulationEngine;
-    workflowId: string;
-    userId?: string;
-    projectId?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-}
-
-export interface SimulationResult {
-    id?: string;
-    filename: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    simulation: Simulation;
-}
-
 export interface Artifact {
     id?: string;
     createdOn?: Date;
@@ -175,10 +97,6 @@ export interface ResponseDeleted {
     message: string;
 }
 
-export interface ResponseId {
-    id: string;
-}
-
 export interface ResponseStatus {
     status: number;
 }
@@ -208,6 +126,27 @@ export interface Dynamics {
     name: string;
     description: string;
     block: string[];
+}
+
+export interface ActiveConcept {
+    id: string;
+    curie: string;
+    name: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+}
+
+export interface OntologyConcept {
+    id?: string;
+    curie: string;
+    type: TaggableType;
+    objectId: string;
+    status: OntologicalField;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    activeConcept: ActiveConcept;
 }
 
 export interface Dataset {
@@ -418,18 +357,47 @@ export interface PetriNetModel {
     transitions: PetriNetTransition[];
 }
 
+export interface Project {
+    id?: string;
+    name: string;
+    userId: string;
+    description?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    projectAssets: ProjectAsset[];
+    /**
+     * @deprecated
+     */
+    assets?: Assets;
+    metadata?: { [index: string]: string };
+    publicProject?: boolean;
+    userPermission?: string;
+}
+
+export interface ProjectAsset {
+    id: string;
+    assetId: string;
+    assetType: AssetType;
+    externalRef?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    project: Project;
+}
+
 export interface Provenance {
     id: string;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
     concept: string;
+    relationType: ProvenanceRelationType;
     left: string;
+    leftType: ProvenanceType;
     right: string;
-    relation_type: ProvenanceRelationType;
-    left_type: ProvenanceType;
-    right_type: ProvenanceType;
-    user_id: string;
+    rightType: ProvenanceType;
+    userId: string;
 }
 
 export interface ProvenanceQueryParam {
@@ -480,6 +448,34 @@ export interface RegNetVertex {
     initial?: any;
     rate_constant?: any;
     grounding?: ModelGrounding;
+}
+
+export interface Simulation {
+    id?: string;
+    executionPayload: any;
+    name?: string;
+    description?: string;
+    resultFiles?: SimulationResult[];
+    type: SimulationType;
+    status: ProgressState;
+    startTime?: Date;
+    completedTime?: Date;
+    engine: SimulationEngine;
+    workflowId: string;
+    userId?: string;
+    projectId?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+}
+
+export interface SimulationResult {
+    id?: string;
+    filename: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    simulation: Simulation;
 }
 
 export interface Workflow {
@@ -725,17 +721,6 @@ export interface Links {
     self: string;
 }
 
-export interface Assets {
-    datasets: Dataset[];
-    extractions: Extraction[];
-    models: Model[];
-    publications: ExternalPublication[];
-    workflows: Workflow[];
-    artifacts: Artifact[];
-    code: Code[];
-    documents: DocumentAsset[];
-}
-
 export interface Document {
     gddId: string;
     title: string;
@@ -769,11 +754,11 @@ export interface DocumentExtraction {
 
 export interface ModelHeader {
     name: string;
+    modelSchema: string;
+    schemaName?: string;
     description: string;
-    schema: string;
-    schema_name?: string;
-    model_version?: string;
-    extracted_from?: string;
+    modelVersion?: string;
+    extractedFrom?: string;
 }
 
 export interface ModelSemantics {
@@ -786,9 +771,9 @@ export interface ModelSemantics {
  * @deprecated
  */
 export interface ModelMetadata {
-    processed_at?: number;
-    processed_by?: string;
-    variable_statements?: VariableStatement[];
+    processedAt?: number;
+    processedBy?: string;
+    variableStatements?: VariableStatement[];
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
@@ -826,6 +811,17 @@ export interface PetriNetTransition {
     output: string[];
     grounding?: ModelGrounding;
     properties: PetriNetTransitionProperties;
+}
+
+export interface Assets {
+    datasets: Dataset[];
+    extractions: Extraction[];
+    models: Model[];
+    publications: ExternalPublication[];
+    workflows: Workflow[];
+    artifacts: Artifact[];
+    code: Code[];
+    documents: DocumentAsset[];
 }
 
 export interface ModelDistribution {
@@ -1143,6 +1139,13 @@ export enum FileCategory {
     Other = "Other",
 }
 
+export enum ProgrammingLanguage {
+    Python = "python",
+    R = "r",
+    Julia = "julia",
+    Zip = "zip",
+}
+
 export enum TaggableType {
     Datasets = "DATASETS",
     Features = "FEATURES",
@@ -1160,34 +1163,6 @@ export enum TaggableType {
 export enum OntologicalField {
     Object = "OBJECT",
     Unit = "UNIT",
-}
-
-export enum SimulationType {
-    Ensemble = "ENSEMBLE",
-    Simulation = "SIMULATION",
-    Calibration = "CALIBRATION",
-}
-
-export enum ProgressState {
-    Cancelled = "CANCELLED",
-    Complete = "COMPLETE",
-    Error = "ERROR",
-    Failed = "FAILED",
-    Queued = "QUEUED",
-    Retrieving = "RETRIEVING",
-    Running = "RUNNING",
-}
-
-export enum SimulationEngine {
-    Sciml = "SCIML",
-    Ciemss = "CIEMSS",
-}
-
-export enum ProgrammingLanguage {
-    Python = "python",
-    R = "r",
-    Julia = "julia",
-    Zip = "zip",
 }
 
 export enum ColumnType {
@@ -1246,6 +1221,27 @@ export enum ProvenanceType {
     Document = "Document",
     Workflow = "Workflow",
     Equation = "Equation",
+}
+
+export enum SimulationType {
+    Ensemble = "ENSEMBLE",
+    Simulation = "SIMULATION",
+    Calibration = "CALIBRATION",
+}
+
+export enum ProgressState {
+    Cancelled = "CANCELLED",
+    Complete = "COMPLETE",
+    Error = "ERROR",
+    Failed = "FAILED",
+    Queued = "QUEUED",
+    Retrieving = "RETRIEVING",
+    Running = "RUNNING",
+}
+
+export enum SimulationEngine {
+    Sciml = "SCIML",
+    Ciemss = "CIEMSS",
 }
 
 export enum ExtractionAssetType {

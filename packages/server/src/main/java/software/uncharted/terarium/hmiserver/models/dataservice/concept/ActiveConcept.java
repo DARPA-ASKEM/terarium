@@ -1,7 +1,5 @@
-package software.uncharted.terarium.hmiserver.models.data.concept;
+package software.uncharted.terarium.hmiserver.models.dataservice.concept;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -10,7 +8,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -21,29 +18,20 @@ import java.util.UUID;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class OntologyConcept implements Serializable {
+public class ActiveConcept implements Serializable {
 
 	@Serial
-	private static final long serialVersionUID = 5877193452400957711L;
+	private static final long serialVersionUID = 3747098342861343228L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
+	@Column(unique = true)
 	private String curie;
 
-	@ManyToOne
-	@JoinColumn(name = "activeConceptId", nullable = true)
-	@JsonBackReference
-	private ActiveConcept activeConcept;
-
-	private TaggableType type;
-
-	@JsonProperty("object_id")
-	private UUID objectId;
-
-	private OntologicalField status;
+	private String name;
 
 	@TSOptional
 	@CreationTimestamp

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,10 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
-import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -29,14 +30,13 @@ import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExist
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.*;
 
 @RequestMapping("/projects")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 @Tags(@Tag(name = "Projects", description = "Project related operations"))
 public class ProjectController {
 
@@ -61,7 +61,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions", content = @Content) })
 	public ResponseEntity<List<Project>> getProjects(
 			@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive) {
-		final RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		List<UUID> projectIds = null;
 		try {
 			projectIds = rebacUser.lookupProjects();
@@ -75,40 +75,38 @@ public class ProjectController {
 
 		// Get projects from the project repository associated with the list of ids.
 		// Filter the list of projects to only include active projects.
-		List<Project> projects = projectService.getProjects(projectIds);
-
-		if (!includeInactive) {
-			// Remove non-active (soft-deleted) projects
-			projects = projects
-					.stream()
-					.filter(project -> project.getDeletedOn() == null)
-					.toList();
-		}
+		final List<Project> projects = includeInactive ? projectService.getProjects(projectIds)
+				: projectService.getActiveProjects(projectIds);
 
 		projects.forEach(project -> {
 			try {
-				final List<AssetType> assetTypes = Arrays.asList(AssetType.DATASET, AssetType.MODEL,
+				final List<AssetType> assetTypes = Arrays.asList(
+						AssetType.DATASET,
+						AssetType.MODEL,
+						AssetType.DOCUMENT,
+						AssetType.WORKFLOW,
 						AssetType.PUBLICATION);
 
 				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 				project.setPublicProject(rebacProject.isPublic());
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 
-				final Assets assets = new Assets();// TODO dvince: proxy.getAssets(project.getId(),
-													// assetTypes).getBody();
+				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
+						assetTypes);
+
 				final Map<String, String> metadata = new HashMap<>();
-				metadata.put("datasets-count",
-						assets.getDatasets() == null ? "0" : String.valueOf(assets.getDatasets().size()));
-				metadata.put("extractions-count",
-						assets.getExtractions() == null ? "0" : String.valueOf(assets.getExtractions().size()));
-				metadata.put("models-count",
-						assets.getModels() == null ? "0" : String.valueOf(assets.getModels().size()));
-				metadata.put("publications-count",
-						assets.getPublications() == null ? "0" : String.valueOf(assets.getPublications().size()));
-				metadata.put("workflows-count",
-						assets.getWorkflows() == null ? "0" : String.valueOf(assets.getWorkflows().size()));
-				metadata.put("artifacts-count",
-						assets.getArtifacts() == null ? "0" : String.valueOf(assets.getArtifacts().size()));
+
+				final Map<AssetType, Integer> counts = new HashMap<>();
+				for (final ProjectAsset asset : assets) {
+					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
+				}
+
+				metadata.put("datasets-count", counts.getOrDefault(AssetType.DATASET, 0).toString());
+				metadata.put("document-count", counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
+				metadata.put("models-count", counts.getOrDefault(AssetType.MODEL, 0).toString());
+				metadata.put("workflows-count", counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
+				metadata.put("publications-count", counts.getOrDefault(AssetType.PUBLICATION, 0).toString());
+
 				project.setMetadata(metadata);
 			} catch (final Exception e) {
 				log.error("Cannot get Datasets, Models, and Publications assets from data-service for project_id {}",
@@ -137,7 +135,7 @@ public class ProjectController {
 	public ResponseEntity<Project> getProject(
 			@PathVariable("id") final UUID id) {
 		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
 			if (rebacUser.canRead(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(id);
@@ -163,25 +161,26 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<UUID> deleteProject(
+	public ResponseEntity<ResponseDeleted> deleteProject(
 			@PathVariable("id") final UUID id) {
 
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canAdministrate(new RebacProject(id, reBACService))) {
-				final Optional<Project> project = projectService.getProject(id);
-				if (project.isEmpty()) {
-					return ResponseEntity.notFound().build();
-				}
-
-				projectService.deleteProject(project.get());
-
-				return ResponseEntity.ok(id);
+				final boolean deleted = projectService.delete(id);
+				if (deleted)
+					return ResponseEntity.ok(new ResponseDeleted("project", id));
 			}
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.NOT_MODIFIED,
+					"Failed to delete project");
+
 		} catch (final Exception e) {
 			log.error("Error deleting project", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to delete project");
 		}
 
 	}
@@ -198,14 +197,14 @@ public class ProjectController {
 		project = projectService.createProject(project);
 
 		try {
-			new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			new RebacUser(currentUserService.get().getId(), reBACService)
 					.createCreatorRelationship(new RebacProject(project.getId(), reBACService));
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
-			// TODO: Rollback potential?
+			return ResponseEntity.internalServerError().build();
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
-			// TODO: Rollback potential?
+			return ResponseEntity.internalServerError().build();
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 
@@ -224,7 +223,7 @@ public class ProjectController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final Project project) {
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(id, reBACService))) {
 
 				final Optional<Project> updatedProject = projectService.updateProject(project.setId(id));
@@ -236,7 +235,9 @@ public class ProjectController {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to update project");
 		}
 	}
 
@@ -254,19 +255,19 @@ public class ProjectController {
 			@PathVariable("id") final UUID projectId,
 			@RequestParam("types") final List<AssetType> types) {
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canRead(new RebacProject(projectId, reBACService))) {
 
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
 
-				// TODO we have our Assets. Now we need to actually get them from...?
-
-				return ResponseEntity.noContent().build();
+				return ResponseEntity.ok(assets);
 			}
 			return ResponseEntity.notFound().build();
 		} catch (final Exception e) {
 			log.error("Error getting project assets", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to get project assets");
 		}
 
 	}
@@ -284,7 +285,7 @@ public class ProjectController {
 			@PathVariable("asset_id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
 				if (project.isPresent()) {
@@ -295,7 +296,9 @@ public class ProjectController {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
 			log.error("Error creating project assets", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to create project asset");
 		}
 	}
 
@@ -307,25 +310,24 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
 	@DeleteMapping("/{id}/assets/{asset_type}/{asset_id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<UUID> deleteAsset(
+	public ResponseEntity<ResponseDeleted> deleteAsset(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("asset_type") final AssetType type,
 			@PathVariable("asset_id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService)
+			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
-				final ProjectAsset asset = projectAssetService.findByProjectIdAndAssetIdAndAssetType(projectId,
-						assetId, type);
-				asset.setDeletedOn(Timestamp.from(Instant.now()));
-				projectAssetService.save(asset);
-
-				return ResponseEntity.ok(asset.getId());
+				final boolean deleted = projectAssetService.delete(assetId);
+				if (deleted)
+					return ResponseEntity.ok(new ResponseDeleted("asset-" + type, assetId));
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
 			log.error("Error deleting project assets", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to delete project asset");
 		}
 	}
 
@@ -339,7 +341,7 @@ public class ProjectController {
 			@PathVariable("id") final UUID id) {
 		try {
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canRead(rebacProject)) {
+			if (new RebacUser(currentUserService.get().getId(), reBACService).canRead(rebacProject)) {
 				final PermissionRelationships permissions = new PermissionRelationships();
 				for (final RebacPermissionRelationship permissionRelationship : rebacProject
 						.getPermissionRelationships()) {
@@ -464,7 +466,7 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> setProjectPermissions(final RebacProject what, final RebacObject who,
 			final String relationship) throws Exception {
-		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
 			try {
 				what.setPermissionRelationships(who, relationship);
 				return ResponseEntity.ok().build();
@@ -477,7 +479,7 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> updateProjectPermissions(final RebacProject what, final RebacObject who,
 			final String oldRelationship, final String newRelationship) throws Exception {
-		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
 			try {
 				what.removePermissionRelationships(who, oldRelationship);
 				what.setPermissionRelationships(who, newRelationship);
@@ -491,7 +493,7 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> removeProjectPermissions(final RebacProject what, final RebacObject who,
 			final String relationship) throws Exception {
-		if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
 			try {
 				what.removePermissionRelationships(who, relationship);
 				return ResponseEntity.ok().build();

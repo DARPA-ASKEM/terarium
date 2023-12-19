@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,7 +33,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
@@ -86,14 +86,18 @@ public class ModelController {
 	@Operation(summary = "Gets a model description by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model description found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class))),
-			@ApiResponse(responseCode = "204", description = "There was no description found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no description found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the description from the data store", content = @Content)
 	})
 	ResponseEntity<ModelDescription> getDescription(
 			@PathVariable("id") UUID id) {
 
 		try {
-			return ResponseEntity.ok(modelService.getDescription(id));
+			Optional<ModelDescription> model = modelService.getDescription(id);
+			if (model.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(model.get());
 		} catch (IOException e) {
 			final String error = "Unable to get model description";
 			log.error(error, e);
@@ -108,7 +112,7 @@ public class ModelController {
 	@Operation(summary = "Gets a model by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-			@ApiResponse(responseCode = "204", description = "There was no model found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no model found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the model from the data store", content = @Content)
 	})
 	ResponseEntity<Model> getModel(@PathVariable("id") UUID id) {
@@ -116,8 +120,8 @@ public class ModelController {
 		try {
 
 			// Fetch the model from the data-service
-			Model model = modelService.getModel(id);
-			if (model == null) {
+			Optional<Model> model = modelService.getModel(id);
+			if (model.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
 
@@ -129,23 +133,24 @@ public class ModelController {
 			final Set<String> documentIds = provenanceSearchService.modelsFromDocument(body);
 			if (!documentIds.isEmpty()) {
 				// Make sure we have an attributes list
-				if (model.getMetadata().getAttributes() == null)
-					model.getMetadata().setAttributes(new ArrayList<>());
+				if (model.get().getMetadata().getAttributes() == null)
+					model.get().getMetadata().setAttributes(new ArrayList<>());
 
 				documentIds.forEach(documentId -> {
 					try {
 						// Fetch the Document extractions
-						final DocumentAsset document = documentAssetService
+						final Optional<DocumentAsset> document = documentAssetService
 								.getDocumentAsset(UUID.fromString(documentId));
-						if (document != null) {
+						if (document.isPresent()) {
 							final List<JsonNode> extractions = objectMapper.convertValue(
-									document.getMetadata().get("attributes"), new TypeReference<List<JsonNode>>() {
+									document.get().getMetadata().get("attributes"),
+									new TypeReference<List<JsonNode>>() {
 									});
 
 							// Append the Document extractions to the Model extractions, just for the
 							// front-end.
 							// Those are NOT to be saved back to the data-service.
-							model.getMetadata().getAttributes().addAll(extractions);
+							model.get().getMetadata().getAttributes().addAll(extractions);
 						}
 					} catch (Exception e) {
 						log.error("Unable to get the document " + documentId, e);
@@ -156,7 +161,7 @@ public class ModelController {
 			}
 
 			// Return the model
-			return ResponseEntity.ok(model);
+			return ResponseEntity.ok(model.get());
 		} catch (IOException e) {
 			final String error = "Unable to get model";
 			log.error(error, e);
@@ -194,7 +199,7 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a model")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "Model updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
 	})
 	ResponseEntity<Model> updateModel(
@@ -244,16 +249,15 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
 	})
 	ResponseEntity<Model> createModel(
 			@RequestBody Model model) {
 
 		try {
-
 			model = modelService.createModel(model);
-			return ResponseEntity.ok(model);
+			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);

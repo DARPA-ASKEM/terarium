@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.data.simulation;
+package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -11,6 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.data.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 import java.io.Serial;

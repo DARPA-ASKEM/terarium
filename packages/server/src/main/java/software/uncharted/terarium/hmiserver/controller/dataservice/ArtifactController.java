@@ -17,6 +17,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -70,19 +71,18 @@ public class ArtifactController {
 
 	@PostMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> createArtifact(@RequestBody Artifact artifact) throws IOException {
-
-		artifactService.createArtifact(artifact);
-
-		JsonNode res = objectMapper.valueToTree(Map.of("id", artifact.getId()));
-
-		return ResponseEntity.ok(res);
+	public ResponseEntity<Artifact> createArtifact(@RequestBody Artifact artifact) throws IOException {
+		return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createArtifact(artifact));
 	}
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId) throws IOException {
-		return ResponseEntity.ok(artifactService.getArtifact(artifactId));
+		Optional<Artifact> artifact = artifactService.getArtifact(artifactId);
+		if (artifact.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(artifact.get());
 	}
 
 	@PutMapping("/{id}")
@@ -203,7 +203,7 @@ public class ArtifactController {
 
 	}
 
-	@PutMapping(value = "/{artifactId}/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{artifactId}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("artifactId") final UUID artifactId,
@@ -222,7 +222,7 @@ public class ArtifactController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it
 	 * to the project.
 	 */
-	@PutMapping("/{artifactId}/uploadArtifactFromGithub")
+	@PutMapping("/{artifactId}/upload-artifact-from-github")
 	@Secured(Roles.USER)
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
 			@PathVariable("artifactId") final UUID artifactId,

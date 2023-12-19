@@ -29,8 +29,8 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseSuccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
@@ -41,6 +41,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @RequestMapping("/provenance")
 @RestController
+@Transactional
 public class ProvenanceController {
 
 	@Autowired
@@ -54,7 +55,7 @@ public class ProvenanceController {
 	@Operation(summary = "Gets a provenance entry by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Provenance found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class))),
-			@ApiResponse(responseCode = "204", description = "There was no provenance found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no provenance found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the provenance from the data store", content = @Content)
 	})
 	public ResponseEntity<Provenance> getProvenance(@PathVariable("id") UUID id) {
@@ -70,13 +71,13 @@ public class ProvenanceController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the provenance", content = @Content)
 	})
-	public ResponseEntity<ResponseId> createProvenance(
-			@RequestBody final Provenance provenance) {
-		Provenance createdProvenance = provenanceService.createProvenance(provenance);
-		return ResponseEntity.ok(new ResponseId(createdProvenance.getId()));
+	public ResponseEntity<Provenance> createProvenance(
+			@RequestBody Provenance provenance) {
+		provenance = provenanceService.createProvenance(provenance);
+		return ResponseEntity.status(HttpStatus.CREATED).body(provenance);
 	}
 
 	private String snakeToCamel(String s) {
@@ -121,7 +122,7 @@ public class ProvenanceController {
 		}
 	}
 
-	@PostMapping("/search/child_nodes")
+	@PostMapping("/search/child-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search child nodes")
 	@ApiResponses(value = {
@@ -135,7 +136,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.childNodes(body));
 	}
 
-	@PostMapping("/search/parent_nodes")
+	@PostMapping("/search/parent-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search parent nodes")
 	@ApiResponses(value = {
@@ -149,7 +150,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.parentNodes(body));
 	}
 
-	@PostMapping("/search/connected_nodes")
+	@PostMapping("/search/connected-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search connected nodes")
 	@ApiResponses(value = {
@@ -163,7 +164,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.connectedNodes(body));
 	}
 
-	@PostMapping("/search/parent_model_revisions")
+	@PostMapping("/search/parent-model-revisions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search model revisions")
 	@ApiResponses(value = {
@@ -177,7 +178,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.parentModelRevisions(body));
 	}
 
-	@PostMapping("/search/parent_models")
+	@PostMapping("/search/parent-models")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search parent models")
 	@ApiResponses(value = {
@@ -205,7 +206,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.concept(body));
 	}
 
-	@PostMapping("/search/artifacts_created_by_user")
+	@PostMapping("/search/artifacts-created-by-user")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search artifacts created by user")
 	@ApiResponses(value = {
@@ -219,7 +220,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.artifactsCreatedByUser(body));
 	}
 
-	@PostMapping("/search/concept_counts")
+	@PostMapping("/search/concept-counts")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get concept counts")
 	@ApiResponses(value = {
@@ -233,7 +234,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.conceptCounts(body));
 	}
 
-	@PostMapping("/search/models_from_code")
+	@PostMapping("/search/models-from-code")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models from code")
 	@ApiResponses(value = {
@@ -247,7 +248,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelsFromCode(body));
 	}
 
-	@PostMapping("/search/models_from_equation")
+	@PostMapping("/search/models-from-equation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models from equations")
 	@ApiResponses(value = {
@@ -261,7 +262,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelsFromEquation(body));
 	}
 
-	@PostMapping("/search/models_from_document")
+	@PostMapping("/search/models-from-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models from documents")
 	@ApiResponses(value = {
@@ -275,7 +276,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelsFromDocument(body));
 	}
 
-	@PostMapping("/search/extracted_models")
+	@PostMapping("/search/extracted-models")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search extracted models")
 	@ApiResponses(value = {
@@ -289,7 +290,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.extractedModels(body));
 	}
 
-	@PostMapping("/search/model_document")
+	@PostMapping("/search/model-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search for a models document")
 	@ApiResponses(value = {
@@ -303,7 +304,7 @@ public class ProvenanceController {
 		return ResponseEntity.ok(provenanceSearchService.modelDocument(body));
 	}
 
-	@DeleteMapping("/hanging_nodes")
+	@DeleteMapping("/hanging-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes all hanging nodes")
 	@ApiResponses(value = {

@@ -22,8 +22,13 @@ public class NotebookSessionService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
-	public NotebookSession getNotebookSession(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getNotebookSessionIndex(), id.toString(), NotebookSession.class);
+	public Optional<NotebookSession> getNotebookSession(UUID id) throws IOException {
+		NotebookSession doc = elasticService.get(elasticConfig.getNotebookSessionIndex(), id.toString(),
+				NotebookSession.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public List<NotebookSession> getNotebookSessions(Integer page, Integer pageSize) throws IOException {
@@ -31,12 +36,19 @@ public class NotebookSessionService {
 				.index(elasticConfig.getNotebookSessionIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, NotebookSession.class);
 	}
 
 	public void deleteNotebookSession(UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getNotebookSessionIndex(), id.toString());
+
+		Optional<NotebookSession> notebookSession = getNotebookSession(id);
+		if (notebookSession.isEmpty()) {
+			return;
+		}
+		notebookSession.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateNotebookSession(notebookSession.get());
 	}
 
 	public NotebookSession createNotebookSession(NotebookSession notebookSession) throws IOException {

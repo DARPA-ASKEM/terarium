@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -48,22 +48,22 @@ public class Provenance implements Serializable {
 
 	private String concept;
 
-	@JsonProperty("relation_type")
+	@JsonAlias("relation_type")
 	private ProvenanceRelationType relationType;
 
 	@Column(name = "left_node")
 	private String left;
 
-	@JsonProperty("left_type")
+	@JsonAlias("left_type")
 	private ProvenanceType leftType;
 
 	@Column(name = "right_node")
 	private String right;
 
-	@JsonProperty("right_type")
+	@JsonAlias("right_type")
 	private ProvenanceType rightType;
 
-	@JsonProperty("user_id")
+	@JsonAlias("user_id")
 	private String userId;
 
 	public Provenance() {

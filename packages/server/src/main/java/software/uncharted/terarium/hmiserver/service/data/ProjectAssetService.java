@@ -4,9 +4,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
-import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
 
 import java.util.Collection;
@@ -32,6 +32,14 @@ public class ProjectAssetService {
 
 	public ProjectAsset save(final ProjectAsset asset) {
 		return projectAssetRepository.save(asset);
+	}
+
+	public boolean delete(final UUID id) {
+		final ProjectAsset asset = projectAssetRepository.findById(id).orElse(null);
+		if (asset == null)
+			return false;
+		asset.setDeletedOn(null);
+		return (save(asset) != null);
 	}
 
 	public ProjectAsset findByProjectIdAndAssetIdAndAssetType(@NotNull final UUID projectId, @NotNull final UUID assetId,

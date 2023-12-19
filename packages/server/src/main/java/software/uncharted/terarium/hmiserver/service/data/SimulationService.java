@@ -15,10 +15,10 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.data.simulation.Simulation;
-import software.uncharted.terarium.hmiserver.models.data.simulation.SimulationResult;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationResult;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
@@ -39,16 +39,27 @@ public class SimulationService {
 				.index(elasticConfig.getSimulationIndex())
 				.from(page)
 				.size(pageSize)
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Simulation.class);
 	}
 
-	public Simulation getSimulation(final UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
+	public Optional<Simulation> getSimulation(final UUID id) throws IOException {
+		Simulation doc = elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public void deleteSimulation(final UUID id) throws IOException {
-		elasticService.delete(elasticConfig.getSimulationIndex(), id.toString());
+
+		Optional<Simulation> simulation = getSimulation(id);
+		if (simulation.isEmpty()) {
+			return;
+		}
+		simulation.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateSimulation(simulation.get());
 	}
 
 	public Simulation createSimulation(final Simulation simulation) throws IOException {
@@ -105,7 +116,7 @@ public class SimulationService {
 		Dataset dataset = new Dataset();
 		dataset.setName(simName + " Result Dataset");
 		dataset.setDescription(simulation.getDescription());
-		dataset.setMetadata(Map.of("simulation_id", simId));
+		dataset.setMetadata(Map.of("simulationId", simId));
 		dataset.setFileNames(
 				simulation.getResultFiles().stream().map(f -> f.getFilename()).toList());
 		dataset.setDataSourceDate(simulation.getCompletedTime());

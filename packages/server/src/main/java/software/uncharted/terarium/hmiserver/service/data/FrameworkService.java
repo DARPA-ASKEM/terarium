@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,15 +19,15 @@ public class FrameworkService {
 	final FrameworkRepository frameworkRepository;
 
 	public List<ModelFramework> getFrameworks() {
-		return frameworkRepository.findAll();
+		return frameworkRepository.findAllByDeletedOnIsNull();
 	}
 
 	public List<ModelFramework> getFrameworks(final List<UUID> ids) {
-		return frameworkRepository.findAllById(ids);
+		return frameworkRepository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 
 	public Optional<ModelFramework> getFramework(final UUID id) {
-		return frameworkRepository.findById(id);
+		return frameworkRepository.getByIdAndDeletedOnIsNull(id);
 	}
 
 	public ModelFramework createFramework(final ModelFramework framework) {
@@ -40,7 +42,12 @@ public class FrameworkService {
 	}
 
 	public void deleteFramework(final UUID id) {
-		frameworkRepository.deleteById(id);
+		Optional<ModelFramework> framework = frameworkRepository.findById(id);
+		if (framework.isEmpty()) {
+			return;
+		}
+		framework.get().setDeletedOn(Timestamp.from(Instant.now()));
+		frameworkRepository.save(framework.get());
 	}
 
 }
