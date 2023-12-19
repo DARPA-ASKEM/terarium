@@ -10,7 +10,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -68,14 +67,7 @@ public class Project implements Serializable {
 
 	@TSOptional
 	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Deprecated
-	private Assets assets;
-
-	@TSOptional
-	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	// Metadata that can be useful for the UI
 	private Map<String, String> metadata;
 
 	@TSOptional

@@ -1,5 +1,5 @@
-/* 
-	Use `activeProject` to get the active project in your component. It is read only and should not be directly modified. 
+/*
+	Use `activeProject` to get the active project in your component. It is read only and should not be directly modified.
 	`activeProject` can be refreshed by calling `getProject`
 	Use the functions in this composable to make modifications to the project and to add/remove assets from it.
 	Using these functions guarantees that such changes propogate to all components using `activeProject`.
@@ -106,11 +106,11 @@ export function useProjects() {
 	 *
 	 * @param {string} name Name of the project.
 	 * @param {string} description Short description.
-	 * @param {string} username Username of the owner of the project.
+	 * @param {string} userId ID of the owner of the project.
 	 * @returns {Promise<Project|null>} The created project, or null if none returned by the API.
 	 */
-	async function create(name: string, description: string, username: string) {
-		const created = await ProjectService.create(name, description, username);
+	async function create(name: string, description: string, userId: string) {
+		const created = await ProjectService.create(name, description, userId);
 		setTimeout(async () => {
 			getAll();
 		}, TIMEOUT_MS);
@@ -190,8 +190,8 @@ export function useProjects() {
 	}
 
 	async function clone(projectId: IProject['id']) {
-		const username = useAuthStore().user?.name;
-		if (!username) {
+		const userId = useAuthStore().user?.id;
+		if (!userId) {
 			return null;
 		}
 		const projectToClone = await ProjectService.get(projectId, true);
@@ -201,7 +201,7 @@ export function useProjects() {
 		const created = await ProjectService.create(
 			`Copy of ${projectToClone.name}`,
 			projectToClone.description,
-			username
+			userId
 		);
 		if (!created || !created.id) {
 			return null;

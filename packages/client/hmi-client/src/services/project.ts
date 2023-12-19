@@ -13,7 +13,8 @@ import {
 	EventType,
 	ExternalPublication,
 	PermissionRelationships,
-	Project
+	Project,
+	ProjectAsset
 } from '@/types/Types';
 
 /**
@@ -33,7 +34,7 @@ async function create(
 			name,
 			description,
 			userId,
-			projectAssets: {} as Project['projectAssets']
+			projectAssets: [] as ProjectAsset[]
 		};
 		const response = await API.post(`/projects`, project);
 		const { status, data } = response;
