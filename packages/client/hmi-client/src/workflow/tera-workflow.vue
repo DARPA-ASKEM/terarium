@@ -296,17 +296,16 @@ function appendOutputPort(
 	if (!node) return;
 
 	const uuid = uuidv4();
-	const timestamp = new Date();
 
 	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
 		type: port.type,
-		label: `${port.label} ${timestamp.toLocaleTimeString()}`,
+		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
-		timestamp
+		timestamp: new Date()
 	};
 
 	if ('isSelected' in port) outputPort.isSelected = port.isSelected;

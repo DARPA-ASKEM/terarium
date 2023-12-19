@@ -1,9 +1,11 @@
 import { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { SimulationConfig } from '@/types/SimulateConfig';
 
 export interface SimulateCiemssOperationState {
-	simConfigs: SimulationConfig;
+	// state shared across all runs
+	chartConfigs: string[][];
+
+	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	method: string;
@@ -20,7 +22,7 @@ export const SimulateCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: SimulateCiemssOperationState = {
-			simConfigs: { runConfigs: {}, chartConfigs: [] },
+			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',
