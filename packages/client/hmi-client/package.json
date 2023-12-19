@@ -39,7 +39,7 @@
 		"@uncharted.software/facets-plugins": "3.2.5",
 		"@vue/runtime-dom": "3.3.11",
 		"@vueup/vue-quill": "1.2.0",
-		"ace-builds": "1.32.1",
+		"ace-builds": "1.32.2",
 		"axios": "1.6.2",
 		"chart.js": "4.4.1",
 		"chartjs-plugin-datalabels": "2.2.0",
