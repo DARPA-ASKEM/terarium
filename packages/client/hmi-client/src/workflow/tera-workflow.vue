@@ -588,7 +588,9 @@ function resizeHandler(node: WorkflowNode<any>) {
 	relinkEdges(node);
 }
 
+// For relinking
 const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+const threshold2 = 5.0 * 5.0;
 
 /**
  * Relink edges that have become detatched
@@ -600,8 +602,6 @@ const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b
 function relinkEdges(node: WorkflowNode<any> | null) {
 	const nodes = node ? [node] : wf.value.nodes;
 	const edges = wf.value.edges;
-	const threshold = 5.0;
-	const threshold2 = threshold * threshold;
 
 	// Note id can start with numerals, so we need [id=...]
 	const getPortElement = (id: string) =>
@@ -609,8 +609,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 	// Relink heuristic, this will modify source
 	const relink = (source: Position, target: Position) => {
-		const distance2 = dist2(source, target);
-		if (distance2 > threshold2) {
+		if (dist2(source, target) > threshold2) {
 			source.x = target.x;
 			source.y = target.y;
 		}
