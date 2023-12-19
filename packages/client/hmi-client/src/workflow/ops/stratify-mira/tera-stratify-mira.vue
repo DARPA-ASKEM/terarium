@@ -38,12 +38,10 @@
 		<template #preview>
 			<tera-drilldown-preview>
 				<div>
-					<tera-model-diagram
-						v-if="amr"
-						ref="teraModelDiagramRef"
-						:model="amr"
-						:is-editable="false"
-					/>
+					<template v-if="amr">
+						<tera-model-diagram ref="teraModelDiagramRef" :model="amr" :is-editable="false" />
+						<TeraModelSemanticTables :model="amr" :is-editable="false" />
+					</template>
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 						<h4>No Model Provided</h4>
@@ -80,7 +78,8 @@ import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import { Model, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModel, createModel } from '@/services/model';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import { getModel, createModel, getModelConfigurations } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -242,6 +241,9 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	const projectId = projectResource.activeProject.value?.id;
 
 	if (!modelData) return;
+
+	const modelConfiguration = await getModelConfigurations(modelData.id);
+	console.log(modelConfiguration);
 
 	if (options.addToProject) {
 		await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
