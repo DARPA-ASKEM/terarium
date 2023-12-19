@@ -1,4 +1,5 @@
-import { ProgrammingLanguage } from '@/types/Types';
+import { getCodeFileAsText } from '@/services/code';
+import { Code, ProgrammingLanguage } from '@/types/Types';
 
 export enum CodeBlockType {
 	INPUT = 'input'
@@ -31,4 +32,38 @@ export const extractCodeLines = (code: string, start: number, end: number) => {
 	const extractedCode = lines.slice(start, end + 1).join('\n');
 
 	return extractedCode;
+};
+
+export const getCodeBlocks = async (code: Code): Promise<CodeBlock[]> => {
+	if (!code.id || !code.files) return [];
+
+	const filteredFiles = Object.entries(code.files).filter(
+		(fileEntry) => fileEntry[1].dynamics?.block?.length > 0
+	);
+
+	const promises = filteredFiles.map(async (fileEntry) => {
+		const codeContent = (await getCodeFileAsText(code.id!, fileEntry[0])) ?? '';
+
+		// Assuming fileEntry[1].dynamics.block is an array
+		const inputCodeBlocksForFile = fileEntry[1].dynamics.block.map((block) => {
+			const { startRow, endRow } = extractDynamicRows(block);
+			const codeSnippet = extractCodeLines(codeContent, startRow, endRow);
+
+			return {
+				filename: fileEntry[0],
+				block,
+				codeLanguage: fileEntry[1].language,
+				codeContent: codeSnippet ?? '',
+				name: 'Code Block',
+				includeInProcess: true,
+				type: CodeBlockType.INPUT
+			};
+		});
+
+		return inputCodeBlocksForFile;
+	});
+	const inputCodeBlocksArrays = await Promise.all(promises);
+
+	// Flatten the arrays since map returns an array of arrays
+	return inputCodeBlocksArrays.flat();
 };
