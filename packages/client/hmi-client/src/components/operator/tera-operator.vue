@@ -52,11 +52,6 @@ import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 
-enum PortDirection {
-	Input,
-	Output
-}
-
 const props = defineProps<{
 	node: WorkflowNode<any>;
 }>();
@@ -68,8 +63,14 @@ const emit = defineEmits([
 	'port-mouseleave',
 	'remove-operator',
 	'remove-edges',
-	'drilldown'
+	'drilldown',
+	'resize'
 ]);
+
+enum PortDirection {
+	Input,
+	Output
+}
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -77,12 +78,13 @@ const nodeStyle = computed(() => ({
 	left: `${props.node.x}px`
 }));
 
-const portBaseSize: number = 8;
 const operator = ref<HTMLElement>();
 
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 let tempX = 0;
 let tempY = 0;
+
+let resizeObserver: ResizeObserver | null = null;
 
 const startDrag = (evt: MouseEvent) => {
 	tempX = evt.x;
@@ -108,14 +110,6 @@ const stopDrag = (/* evt: MouseEvent */) => {
 	interactionStatus.value = removeDrag(interactionStatus.value);
 };
 
-onMounted(() => {
-	if (!operator.value) return;
-
-	operator.value.addEventListener('mousedown', startDrag);
-	document.addEventListener('mousemove', drag);
-	operator.value.addEventListener('mouseup', stopDrag);
-});
-
 function bringToFront() {
 	// TODO: bring to front
 	// maybe there can be a z-index variable in the parent component
@@ -131,20 +125,42 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event: MouseEvent, portDirection: PortDirection) {
+function mouseoverPort(event: MouseEvent, portType: PortDirection) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const totalOffsetX =
-		portElement.offsetLeft + (portDirection === PortDirection.Input ? 0 : portBaseSize);
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
-	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
+	const w = portType === PortDirection.Input ? 0 : props.node.width;
+	const portPosition = {
+		x: nodePosition.x + w + portElement.offsetWidth * 0.5,
+		y: nodePosition.y + totalOffsetY
+	};
 	emit('port-mouseover', portPosition);
 }
+
+function resizeHandler() {
+	emit('resize', props.node);
+}
+
+onMounted(() => {
+	if (!operator.value) return;
+
+	operator.value.addEventListener('mousedown', startDrag);
+	resizeObserver = new ResizeObserver(resizeHandler);
+	resizeObserver.observe(operator.value);
+
+	document.addEventListener('mousemove', drag);
+	operator.value.addEventListener('mouseup', stopDrag);
+});
 
 onBeforeUnmount(() => {
 	if (operator.value) {
 		operator.value.removeEventListener('mousedown', startDrag);
+		if (resizeObserver) {
+			resizeObserver.disconnect();
+			resizeObserver = null;
+		}
+
 		document.removeEventListener('mousemove', drag);
 		operator.value.removeEventListener('mouseup', stopDrag);
 	}
