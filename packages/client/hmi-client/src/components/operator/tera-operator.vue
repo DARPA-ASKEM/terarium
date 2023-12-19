@@ -130,7 +130,6 @@ function mouseoverPort(event: MouseEvent) {
 }
 
 function resizeHandler() {
-	console.log('resize event');
 	emit('resize', props.node);
 }
 

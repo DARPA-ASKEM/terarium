@@ -642,7 +642,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 			const nodePosition: Position = { x: n.x, y: n.y };
 			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
 			const portPos = {
-				x: nodePosition.x + n.width,
+				x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
 				y: nodePosition.y + totalOffsetY
 			};
 			relink(edge.points[0], portPos);
@@ -669,7 +669,6 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-// TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 	wf.value.edges.forEach((edge) => {
 		if (edge.source === node.id) {
