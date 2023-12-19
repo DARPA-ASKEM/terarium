@@ -459,7 +459,7 @@ const contextMenuItems: MenuItem[] = [
 			}
 		]
 	},
-	// llm
+	// Agent LLM
 	{
 		label: "Ask 'em LLM tool",
 		disabled: true
