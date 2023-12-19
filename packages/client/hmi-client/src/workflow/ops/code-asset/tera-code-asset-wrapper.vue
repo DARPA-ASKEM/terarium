@@ -23,17 +23,13 @@ const props = defineProps<{
 	node: WorkflowNode<CodeAssetState>;
 }>();
 
-const emit = defineEmits(['close', 'update-output-port']);
+const emit = defineEmits(['close', 'update-output-port', 'append-output-port']);
 
 async function onApplyChanges(code: Code) {
 	const outputPort = cloneDeep(props.node.outputs[0]);
-
 	if (!code || !outputPort) return;
-
 	const blocks = await getCodeBlocks(code);
-
 	outputPort.label = `${code.name} code blocks (${blocks.length})`;
-
 	emit('update-output-port', outputPort);
 }
 </script>

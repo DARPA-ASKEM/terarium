@@ -286,7 +286,12 @@ async function handleCode() {
 	isProcessing.value = true;
 
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
+		const modelId = await codeToAMR(
+			props.node.inputs[0].value?.[0],
+			'temp model',
+			'temp model description',
+			true
+		);
 		clonedState.value.modelId = modelId;
 		emit('append-output-port', {
 			label: 'Output',

@@ -60,14 +60,11 @@ watch(
 
 			if (_.isEmpty(props.node.outputs)) {
 				const blocks = await getCodeBlocks(code.value);
-
-				if (blocks.length > 0) {
-					emit('append-output-port', {
-						type: 'codeAssetId',
-						label: `${code.value.name} code blocks (${blocks.length})`,
-						value: [code.value.id]
-					});
-				}
+				emit('append-output-port', {
+					type: 'codeAssetId',
+					label: `${code.value.name} code blocks (${blocks.length})`,
+					value: [code.value.id]
+				});
 			}
 		}
 	}
