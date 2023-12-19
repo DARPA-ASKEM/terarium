@@ -35,20 +35,26 @@ public class DocumentAssetService {
 				.index(elasticConfig.getDocumentIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, DocumentAsset.class);
 	}
 
-	public DocumentAsset getDocumentAsset(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getDocumentIndex(), id.toString(), DocumentAsset.class);
+	public Optional<DocumentAsset> getDocumentAsset(UUID id) throws IOException {
+		DocumentAsset doc = elasticService.get(elasticConfig.getDocumentIndex(), id.toString(), DocumentAsset.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public void deleteDocumentAsset(UUID id) throws IOException {
-
-		DocumentAsset document = getDocumentAsset(id);
-		document.setDeletedOn(Timestamp.from(Instant.now()));
-		updateDocumentAsset(document);
+		Optional<DocumentAsset> document = getDocumentAsset(id);
+		if (document.isEmpty()) {
+			return;
+		}
+		document.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateDocumentAsset(document.get());
 	}
 
 	public DocumentAsset createDocumentAsset(DocumentAsset document) throws IOException {

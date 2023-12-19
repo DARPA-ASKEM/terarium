@@ -19,15 +19,15 @@ public class FrameworkService {
 	final FrameworkRepository frameworkRepository;
 
 	public List<ModelFramework> getFrameworks() {
-		return frameworkRepository.findAll();
+		return frameworkRepository.findAllByDeletedOnIsNull();
 	}
 
 	public List<ModelFramework> getFrameworks(final List<UUID> ids) {
-		return frameworkRepository.findAllById(ids);
+		return frameworkRepository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 
 	public Optional<ModelFramework> getFramework(final UUID id) {
-		return frameworkRepository.findById(id);
+		return frameworkRepository.getByIdAndDeletedOnIsNull(id);
 	}
 
 	public ModelFramework createFramework(final ModelFramework framework) {
@@ -43,7 +43,7 @@ public class FrameworkService {
 
 	public void deleteFramework(final UUID id) {
 		Optional<ModelFramework> framework = frameworkRepository.findById(id);
-		if(framework.isEmpty()) {
+		if (framework.isEmpty()) {
 			return;
 		}
 		framework.get().setDeletedOn(Timestamp.from(Instant.now()));

@@ -100,7 +100,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(notebookSessionService.getNotebookSession(notebookSession.getId()));
+		Assertions.assertTrue(notebookSessionService.getNotebookSession(notebookSession.getId()).isEmpty());
 	}
 
 }

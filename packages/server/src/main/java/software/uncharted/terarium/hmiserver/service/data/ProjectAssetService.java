@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
-import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ResourceType;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
 
 @RequiredArgsConstructor

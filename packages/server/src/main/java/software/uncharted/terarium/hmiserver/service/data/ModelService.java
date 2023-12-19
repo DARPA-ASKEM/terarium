@@ -52,9 +52,11 @@ public class ModelService {
 		return elasticService.search(req, Model.class).stream().map(m -> ModelDescription.fromModel(m)).toList();
 	}
 
-	public ModelDescription getDescription(UUID id) throws IOException {
-		return ModelDescription
+	public Optional<ModelDescription> getDescription(UUID id) throws IOException {
+		ModelDescription md = ModelDescription
 				.fromModel(elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class));
+
+		return Optional.of(md);
 	}
 
 	public List<Model> searchModels(Integer page, Integer pageSize, JsonNode queryJson) throws IOException {
@@ -88,7 +90,7 @@ public class ModelService {
 				.size(pageSize)
 				.query(new Query.Builder().term(new TermQuery.Builder().field("model_id").value(id.toString()).build())
 						.build())
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
 				.build();
@@ -96,14 +98,21 @@ public class ModelService {
 		return elasticService.search(req, ModelConfiguration.class);
 	}
 
-	public Model getModel(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class);
+	public Optional<Model> getModel(UUID id) throws IOException {
+		Model doc = elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public void deleteModel(UUID id) throws IOException {
-		Model model = getModel(id);
-		model.setDeletedOn(Timestamp.from(Instant.now()));
-		updateModel(model);
+		Optional<Model> model = getModel(id);
+		if (model.isEmpty()) {
+			return;
+		}
+		model.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateModel(model.get());
 	}
 
 	public Model createModel(Model model) throws IOException {

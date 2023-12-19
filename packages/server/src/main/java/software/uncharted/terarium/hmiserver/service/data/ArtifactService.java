@@ -28,8 +28,12 @@ public class ArtifactService {
 	private final Config config;
 	private final S3ClientService s3ClientService;
 
-	public Artifact getArtifact(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getArtifactIndex(), id.toString(), Artifact.class);
+	public Optional<Artifact> getArtifact(UUID id) throws IOException {
+		Artifact doc = elasticService.get(elasticConfig.getArtifactIndex(), id.toString(), Artifact.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	public List<Artifact> getArtifacts(Integer page, Integer pageSize) throws IOException {
@@ -37,16 +41,18 @@ public class ArtifactService {
 				.index(elasticConfig.getArtifactIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Artifact.class);
 	}
 
 	public void deleteArtifact(UUID id) throws IOException {
-
-		Artifact artifact = getArtifact(id);
-		artifact.setDeletedOn(Timestamp.from(Instant.now()));
-		updateArtifact(artifact);
+		Optional<Artifact> artifact = getArtifact(id);
+		if (artifact.isEmpty()) {
+			return;
+		}
+		artifact.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateArtifact(artifact.get());
 
 	}
 

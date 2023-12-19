@@ -49,17 +49,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
-import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction.ExtractionAssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
@@ -125,7 +124,7 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new document")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Document created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> createDocument(
@@ -148,30 +147,30 @@ public class DocumentController {
 	@Operation(summary = "Gets document by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Document found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no document found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no document found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the document from the data store", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> getDocument(
 			@PathVariable("id") final UUID id) {
 
 		try {
-			final DocumentAsset document = documentAssetService.getDocumentAsset(id);
-			if (document == null) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
+			final Optional<DocumentAsset> document = documentAssetService.getDocumentAsset(id);
+			if (document.isEmpty()) {
+				return ResponseEntity.notFound().build();
 			}
 
 			// Test if the document as any assets
-			if (document.getAssets() == null) {
-				return ResponseEntity.ok(document);
+			if (document.get().getAssets() == null) {
+				return ResponseEntity.ok(document.get());
 			}
 
-			document.getAssets().forEach(asset -> {
+			document.get().getAssets().forEach(asset -> {
 				try {
 					// Add the S3 bucket url to each asset metadata
 					final String url = documentAssetService.getDownloadUrl(id, asset.getFileName()).getUrl();
 					asset.getMetadata().put("url", url);
 
-					// if the asset os of type equation
+					// if the asset is of type equation
 					if (asset.getAssetType().equals(ExtractionAssetType.EQUATION)
 							&& asset.getMetadata().get("equation") == null) {
 						// Fetch the image from the URL
@@ -193,10 +192,10 @@ public class DocumentController {
 			});
 
 			// Update data-service with the updated metadata
-			documentAssetService.updateDocumentAsset(document);
+			documentAssetService.updateDocumentAsset(document.get());
 
 			// Return the updated document
-			return ResponseEntity.ok(document);
+			return ResponseEntity.ok(document.get());
 		} catch (final IOException e) {
 			final String error = "Unable to get document";
 			log.error(error, e);
@@ -297,15 +296,14 @@ public class DocumentController {
 			// if the fileEntity is not a PDF, then we need to extract the text and update
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				final DocumentAsset document = documentAssetService.getDocumentAsset(documentId);
-				if (document == null) {
-					throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-							String.format("Document %s not found", documentId));
+				final Optional<DocumentAsset> document = documentAssetService.getDocumentAsset(documentId);
+				if (document.isEmpty()) {
+					return ResponseEntity.notFound().build();
 				}
 
-				document.setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
+				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
 
-				documentAssetService.updateDocumentAsset(document);
+				documentAssetService.updateDocumentAsset(document.get());
 			}
 			return ResponseEntity.ok(new ResponseStatus(response.getStatusLine().getStatusCode()));
 

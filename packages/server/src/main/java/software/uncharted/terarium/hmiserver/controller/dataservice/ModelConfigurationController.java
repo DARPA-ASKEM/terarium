@@ -29,7 +29,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -70,7 +69,7 @@ public class ModelConfigurationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Model configuration created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Model configuration created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the configuration", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> createModelConfiguration(@RequestBody ModelConfiguration config) {
@@ -92,14 +91,19 @@ public class ModelConfigurationController {
 	@Operation(summary = "Gets a model configuration by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model configuration found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class))),
-			@ApiResponse(responseCode = "204", description = "There was no configuration found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no configuration found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the configuration from the data store", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
 			@PathVariable("id") UUID id) {
 
 		try {
-			return ResponseEntity.ok(modelConfigurationService.getModelConfiguration(id));
+			Optional<ModelConfiguration> modelConfiguration = modelConfigurationService
+					.getModelConfiguration(id);
+			if (modelConfiguration.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(modelConfiguration.get());
 		} catch (IOException e) {
 			final String error = "Unable to get model configuration";
 			log.error(error, e);
@@ -113,7 +117,7 @@ public class ModelConfigurationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a model configuration")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model configuration updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "Model configuration updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the configuration", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> updateModelConfiguration(

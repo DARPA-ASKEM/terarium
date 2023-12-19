@@ -13,7 +13,6 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -42,7 +41,7 @@ public class CodeService {
 				.index(elasticConfig.getCodeIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn-> mn.exists(e->e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 				.build();
 		return elasticService.search(req, Code.class);
 	}
@@ -54,8 +53,12 @@ public class CodeService {
 	 * @return A ResponseEntity containing a Code object.
 	 * @throws IOException if an error occurs while retrieving the Code object.
 	 */
-	public Code getCode(UUID id) throws IOException {
-		return elasticService.get(elasticConfig.getCodeIndex(), id.toString(), Code.class);
+	public Optional<Code> getCode(UUID id) throws IOException {
+		Code doc = elasticService.get(elasticConfig.getCodeIndex(), id.toString(), Code.class);
+		if (doc != null && doc.getDeletedOn() == null) {
+			return Optional.of(doc);
+		}
+		return Optional.empty();
 	}
 
 	/**
@@ -65,9 +68,12 @@ public class CodeService {
 	 * @throws IOException if an error occurs while deleting the Code object.
 	 */
 	public void deleteCode(UUID id) throws IOException {
-		Code code = getCode(id);
-		code.setDeletedOn(Timestamp.from(Instant.now()));
-		updateCode(code);
+		Optional<Code> code = getCode(id);
+		if (code.isEmpty()) {
+			return;
+		}
+		code.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateCode(code.get());
 	}
 
 	/**

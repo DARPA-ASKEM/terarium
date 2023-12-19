@@ -70,17 +70,17 @@ public class WorkflowController {
 	@Operation(summary = "Gets workflow by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Workflow found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))),
-			@ApiResponse(responseCode = "204", description = "There was no workflow found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no workflow found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the workflow from the data store", content = @Content)
 	})
 	public ResponseEntity<Workflow> getWorkflow(
 			@PathVariable("id") final UUID id) {
 		try {
-			final Workflow workflow = workflowService.getWorkflow(id);
-			if (workflow == null) {
+			final Optional<Workflow> workflow = workflowService.getWorkflow(id);
+			if (workflow.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
-			return ResponseEntity.ok(workflow);
+			return ResponseEntity.ok(workflow.get());
 		} catch (final IOException e) {
 			final String error = "Unable to retrieve workflow from the data store";
 			log.error(error, e);

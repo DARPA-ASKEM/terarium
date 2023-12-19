@@ -23,12 +23,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
-import software.uncharted.terarium.hmiserver.models.data.simulation.Simulation;
-import software.uncharted.terarium.hmiserver.models.data.simulation.SimulationEngine;
-import software.uncharted.terarium.hmiserver.models.data.simulation.SimulationStatus;
-import software.uncharted.terarium.hmiserver.models.data.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationStatus;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleCalibrationCiemssRequest;
@@ -72,7 +72,11 @@ public class SimulationRequestController implements SnakeCaseController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			return ResponseEntity.ok(simulationService.getSimulation(id));
+			Optional<Simulation> sim = simulationService.getSimulation(id);
+			if (sim.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(sim.get());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
@@ -201,8 +205,8 @@ public class SimulationRequestController implements SnakeCaseController {
 		final List<Intervention> interventionList = new ArrayList<>();
 		try {
 			final ObjectMapper mapper = new ObjectMapper();
-			final ModelConfiguration modelConfig = modelConfigService.getModelConfiguration(modelConfigId);
-			final JsonNode configuration = mapper.convertValue(modelConfig.getConfiguration(), JsonNode.class);
+			final Optional<ModelConfiguration> modelConfig = modelConfigService.getModelConfiguration(modelConfigId);
+			final JsonNode configuration = mapper.convertValue(modelConfig.get().getConfiguration(), JsonNode.class);
 			// Parse the values found under the following path:
 			// AMR -> configuration -> metadata -> timeseries -> parameter name -> value
 			// EG) "timeseries": {

@@ -134,26 +134,22 @@ public class TDSCodeController {
 	@Operation(summary = "Gets code resource by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Code resource found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
-			@ApiResponse(responseCode = "404", description = "There was no code resource found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the code resource from the data store", content = @Content)
 	})
 	public ResponseEntity<Code> getCode(@PathVariable("id") UUID id) {
-
-		final Code code;
 		try {
-			code = codeService.getCode(id);
+			Optional<Code> code = codeService.getCode(id);
+			if (code.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(code.get());
 		} catch (IOException e) {
 			log.error("Unable to get code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to get code resource");
 		}
-		if (code == null) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Code %s not found", id));
-		}
-
-		// Return the updated document
-		return ResponseEntity.ok(code);
 	}
 
 	/**

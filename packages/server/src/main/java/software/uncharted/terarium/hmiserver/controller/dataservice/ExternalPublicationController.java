@@ -26,10 +26,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ResourceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ExternalPublicationService;
 
@@ -91,7 +90,7 @@ public class ExternalPublicationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new publication")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Publication created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Publication created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExternalPublication.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the publication", content = @Content)
 	})
 	public ResponseEntity<ExternalPublication> createPublication(
@@ -124,7 +123,11 @@ public class ExternalPublicationController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			return ResponseEntity.ok(externalPublicationService.getExternalPublication(id));
+			Optional<ExternalPublication> externalPublication = externalPublicationService.getExternalPublication(id);
+			if (externalPublication.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(externalPublication.get());
 		} catch (IOException e) {
 			log.error("Unable to GET publication", e);
 			throw new ResponseStatusException(
@@ -139,14 +142,13 @@ public class ExternalPublicationController {
 	 *
 	 * @param id          The ID of the publication to update.
 	 * @param publication The updated publication data.
-	 * @return A ResponseEntity with a ResponseId object containing the updated
-	 *         publication ID.
+	 * @return A ResponseEntity containing the updated publication.
 	 */
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "updates an external publication by object id")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "publication updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "publication updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExternalPublication.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the publication", content = @Content)
 	})
 	public ResponseEntity<ExternalPublication> updatePublication(

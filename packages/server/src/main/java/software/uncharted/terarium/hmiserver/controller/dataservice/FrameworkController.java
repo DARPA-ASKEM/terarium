@@ -25,7 +25,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
@@ -44,7 +43,7 @@ public class FrameworkController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model framework")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the framework", content = @Content)
 	})
 	ResponseEntity<ModelFramework> createFramework(
@@ -59,7 +58,7 @@ public class FrameworkController {
 	@Operation(summary = "Gets a model framework by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model framework found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
-			@ApiResponse(responseCode = "204", description = "There was no framework found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no framework found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the framework from the data store", content = @Content)
 	})
 	ResponseEntity<ModelFramework> getFramework(
@@ -76,7 +75,7 @@ public class FrameworkController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a model framework")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model framework updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "200", description = "Model framework updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the framework", content = @Content)
 	})
 	ResponseEntity<ModelFramework> updateFramework(

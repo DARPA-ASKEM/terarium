@@ -100,7 +100,7 @@ public class EquationControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(equationService.getEquation(equation.getId()));
+		Assertions.assertTrue(equationService.getEquation(equation.getId()).isEmpty());
 	}
 
 }

@@ -7,8 +7,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 import jakarta.validation.constraints.NotNull;
-import software.uncharted.terarium.hmiserver.models.data.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.data.project.ResourceType;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ResourceType;
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository

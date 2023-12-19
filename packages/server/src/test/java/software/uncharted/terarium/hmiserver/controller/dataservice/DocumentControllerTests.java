@@ -111,7 +111,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertNull(documentAssetService.getDocumentAsset(documentAsset.getId()));
+		Assertions.assertTrue(documentAssetService.getDocumentAsset(documentAsset.getId()).isEmpty());
 	}
 
 	@Test

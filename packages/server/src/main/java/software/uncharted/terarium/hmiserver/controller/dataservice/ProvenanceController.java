@@ -31,7 +31,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseId;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseSuccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
@@ -56,7 +55,7 @@ public class ProvenanceController {
 	@Operation(summary = "Gets a provenance entry by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Provenance found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class))),
-			@ApiResponse(responseCode = "204", description = "There was no provenance found but no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "204", description = "There was no provenance found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the provenance from the data store", content = @Content)
 	})
 	public ResponseEntity<Provenance> getProvenance(@PathVariable("id") UUID id) {
@@ -72,7 +71,7 @@ public class ProvenanceController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseId.class))),
+			@ApiResponse(responseCode = "201", description = "Provenance entry created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the provenance", content = @Content)
 	})
 	public ResponseEntity<Provenance> createProvenance(

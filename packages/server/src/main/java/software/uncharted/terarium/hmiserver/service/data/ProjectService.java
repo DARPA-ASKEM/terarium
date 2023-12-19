@@ -10,15 +10,8 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.data.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.sql.Timestamp;
-import java.time.Instant;
 
 @RequiredArgsConstructor
 @Service
@@ -35,8 +28,8 @@ public class ProjectService {
 		return projectRepository.findAllById(ids);
 	}
 
-	public List<Project> getActiveProjects(final List<UUID> ids){
-		return projectRepository.findAllByIdAndDeletedOnIsNull(ids);
+	public List<Project> getActiveProjects(final List<UUID> ids) {
+		return projectRepository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 
 	public Optional<Project> getProject(final UUID id) {
@@ -54,7 +47,7 @@ public class ProjectService {
 		return Optional.of(projectRepository.save(project));
 	}
 
-	public boolean delete(final UUID id){
+	public boolean delete(final UUID id) {
 		final Optional<Project> project = getProject(id);
 		if (project.isEmpty())
 			return false;

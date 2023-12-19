@@ -78,7 +78,11 @@ public class ArtifactController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId) throws IOException {
-		return ResponseEntity.ok(artifactService.getArtifact(artifactId));
+		Optional<Artifact> artifact = artifactService.getArtifact(artifactId);
+		if (artifact.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(artifact.get());
 	}
 
 	@PutMapping("/{id}")
