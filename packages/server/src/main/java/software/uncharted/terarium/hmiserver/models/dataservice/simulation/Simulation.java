@@ -66,7 +66,7 @@ public class Simulation implements Serializable {
 	private SimulationType type;
 
 	@Enumerated(EnumType.STRING)
-	private SimulationStatus status;
+	private ProgressState status;
 
 	@JsonAlias("start_time")
 	@TSOptional
@@ -92,11 +92,13 @@ public class Simulation implements Serializable {
 	@TSOptional
 	private UUID projectId;
 
+	@TSOptional
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
+	@TSOptional
 	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")

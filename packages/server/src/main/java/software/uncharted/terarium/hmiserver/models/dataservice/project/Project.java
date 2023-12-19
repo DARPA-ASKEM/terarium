@@ -1,36 +1,31 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Transient;
-import lombok.Data;
-import lombok.ToString;
-import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
 public class Project implements Serializable {
+
+	@Serial
+	private static final long serialVersionUID = -241733670076432802L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -47,11 +42,13 @@ public class Project implements Serializable {
 	@Schema(defaultValue = "My Project Description")
 	private String description;
 
+	@TSOptional
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
+	@TSOptional
 	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
@@ -70,14 +67,7 @@ public class Project implements Serializable {
 
 	@TSOptional
 	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Deprecated
-	private Assets assets;
-
-	@TSOptional
-	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	// Metadata that can be useful for the UI
 	private Map<String, String> metadata;
 
 	@TSOptional

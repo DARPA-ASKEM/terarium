@@ -46,13 +46,13 @@
 					icon="pi pi-share-alt"
 					severity="secondary"
 					outlined
-					@click="emit('open-new-asset', AssetType.Models)"
+					@click="emit('open-new-asset', AssetType.Model)"
 				/>
 				<Button
 					size="large"
 					severity="secondary"
 					outlined
-					@click="emit('open-new-asset', AssetType.Workflows)"
+					@click="emit('open-new-asset', AssetType.Workflow)"
 				>
 					<vue-feather
 						class="p-button-icon-left"

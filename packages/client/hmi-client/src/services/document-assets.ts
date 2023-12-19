@@ -6,6 +6,7 @@ import API from '@/api/api';
 import { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
+
 /**
  * Get all documents
  * @return Array<DocumentAsset>|null - the list of all document assets, or null if none returned by API
@@ -40,7 +41,7 @@ async function getDocumentAsset(documentId: string): Promise<DocumentAsset | nul
  */
 async function uploadDocumentAssetToProject(
 	file: File,
-	userName: string,
+	userId: string,
 	description?: string,
 	progress?: Ref<number>
 ): Promise<DocumentAsset | null> {
@@ -49,7 +50,7 @@ async function uploadDocumentAssetToProject(
 		name: file.name,
 		description: description || file.name,
 		fileNames: [file.name],
-		username: userName
+		userId
 	};
 
 	const newDocumentAsset: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
@@ -64,7 +65,7 @@ async function uploadDocumentAssetToProject(
 async function createNewDocumentFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string,
+	userId: string,
 	description?: string
 ) {
 	// Find the file name by removing the path portion
@@ -77,7 +78,7 @@ async function createNewDocumentFromGithubFile(
 		name: fileName,
 		description: description || fileName,
 		fileNames: [fileName],
-		username: userName
+		userId
 	};
 
 	const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);

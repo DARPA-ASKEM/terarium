@@ -141,6 +141,7 @@ import {
 	ClientEventType,
 	CsvAsset,
 	ModelConfiguration,
+	ProgressState,
 	State
 } from '@/types/Types';
 import InputNumber from 'primevue/inputnumber';
@@ -151,7 +152,7 @@ import {
 	autoCalibrationMapping
 } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -192,7 +193,7 @@ const runResults = ref<RunResults>({});
 const completedRunId = ref<string>();
 
 const showSpinner = ref(false);
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 

@@ -1,12 +1,12 @@
 import {
-	DocumentAsset,
-	Document,
-	Dataset,
-	Model,
 	Artifact,
 	AssetType,
 	Code,
-	ExternalPublication
+	Dataset,
+	Document,
+	DocumentAsset,
+	ExternalPublication,
+	Model
 } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
 
@@ -24,13 +24,13 @@ export const isProjectAssetTypes = (type: AssetType | string): boolean =>
 // Workflows class referenced here is only implemented on the front end and not
 // driven by the TypeScrypt generation on the backend. This should be fixed.
 export type ProjectAssets = {
-	[AssetType.Publications]: ExternalPublication[];
-	[AssetType.Models]: Model[];
-	[AssetType.Datasets]: Dataset[];
+	[AssetType.Publication]: ExternalPublication[];
+	[AssetType.Model]: Model[];
+	[AssetType.Dataset]: Dataset[];
 	[AssetType.Code]: Code[];
-	[AssetType.Artifacts]: Artifact[];
-	[AssetType.Workflows]: Workflow[];
-	[AssetType.Documents]: DocumentAsset[];
+	[AssetType.Artifact]: Artifact[];
+	[AssetType.Workflow]: Workflow[];
+	[AssetType.Document]: DocumentAsset[];
 };
 
 // TODO this is essentially the same as Project from Types.ts, however it references

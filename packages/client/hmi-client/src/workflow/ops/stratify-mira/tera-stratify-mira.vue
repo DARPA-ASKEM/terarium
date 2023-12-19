@@ -74,13 +74,13 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref, onUnmounted, onMounted } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
-import { Model, AssetType } from '@/types/Types';
+import { AssetType, Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { getModel, createModel } from '@/services/model';
+import { createModel, getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -94,9 +94,9 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
 import {
-	StratifyOperationStateMira,
+	blankStratifyGroup,
 	StratifyGroup,
-	blankStratifyGroup
+	StratifyOperationStateMira
 } from './stratify-mira-operation';
 
 const props = defineProps<{
@@ -244,7 +244,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	if (!modelData) return;
 
 	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
 	}
 
 	if (options.appendOutputPort) {

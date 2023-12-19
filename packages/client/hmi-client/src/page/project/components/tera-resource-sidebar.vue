@@ -50,8 +50,8 @@
 		>
 			<AccordionTab v-for="[type, assetItems] in assetItemsMap" :key="type">
 				<template #header>
-					<template v-if="type === AssetType.Publications">External Publications</template>
-					<template v-else-if="type === AssetType.Documents">Documents</template>
+					<template v-if="type === AssetType.Publication">External Publications</template>
+					<template v-else-if="type === AssetType.Document">Documents</template>
 					<template v-else>{{ capitalize(type) }}</template>
 					<aside>({{ assetItems.size }})</aside>
 				</template>
@@ -72,9 +72,9 @@
 				>
 					<span
 						:draggable="
-							pageType === AssetType.Workflows &&
-							(assetItem.pageType === AssetType.Models ||
-								assetItem.pageType === AssetType.Datasets ||
+							pageType === AssetType.Workflow &&
+							(assetItem.pageType === AssetType.Model ||
+								assetItem.pageType === AssetType.Dataset ||
 								assetItem.pageType === AssetType.Code)
 						"
 						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
@@ -203,17 +203,17 @@ const optionsMenuItems = ref([
 		}
 	},
 	{
-		key: AssetType.Models,
+		key: AssetType.Model,
 		label: 'New Model',
 		command() {
-			emit('open-new-asset', AssetType.Models);
+			emit('open-new-asset', AssetType.Model);
 		}
 	},
 	{
-		key: AssetType.Workflows,
+		key: AssetType.Workflow,
 		label: 'New Workflow',
 		command() {
-			emit('open-new-asset', AssetType.Workflows);
+			emit('open-new-asset', AssetType.Workflow);
 		}
 	}
 ]);

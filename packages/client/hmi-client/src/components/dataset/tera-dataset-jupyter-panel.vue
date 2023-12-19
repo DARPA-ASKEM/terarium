@@ -100,7 +100,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, Ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
@@ -110,11 +110,11 @@ import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
-	newSession,
-	JupyterMessage,
+	createMessageId,
 	getServerSettings,
 	getSessionManager,
-	createMessageId
+	JupyterMessage,
+	newSession
 } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -374,7 +374,7 @@ const onNewDatasetSaved = async (payload) => {
 		return;
 	}
 	const datasetId = payload.dataset_id;
-	await useProjects().addAsset(AssetType.Datasets, datasetId);
+	await useProjects().addAsset(AssetType.Dataset, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
 	toast.success(
 		'Dataset saved successfully',

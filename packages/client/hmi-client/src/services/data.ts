@@ -1,4 +1,4 @@
-import { cloneDeep, uniq, uniqBy, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, uniq, uniqBy } from 'lodash';
 import {
 	Facets,
 	FullSearchResults,
@@ -9,29 +9,29 @@ import {
 } from '@/types/common';
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
-import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-util';
-import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
+import { applyFacetFilters, isDataset, isDocument, isModel } from '@/utils/data-util';
+import { CONCEPT_FACETS_FIELD, ConceptFacets } from '@/types/Concept';
 import { Clause, ClauseValue } from '@/types/Filter';
-import { DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
+import { DATASET_FILTER_FIELDS, DatasetSearchParams } from '@/types/Dataset';
 import {
-	DocumentsResponseOK,
-	Document,
-	ProvenanceType,
-	XDDFacetsItemResponse,
-	Extraction,
-	Dataset,
 	AssetType,
-	Model
+	Dataset,
+	Document,
+	DocumentsResponseOK,
+	Extraction,
+	Model,
+	ProvenanceType,
+	XDDFacetsItemResponse
 } from '@/types/Types';
 import {
+	XDD_RESULT_DEFAULT_PAGE_SIZE,
 	XDDDictionary,
-	XDDResult,
-	XDDSearchParams,
 	XDDExtractionType,
-	XDD_RESULT_DEFAULT_PAGE_SIZE
+	XDDResult,
+	XDDSearchParams
 } from '@/types/XDD';
 import { logger } from '@/utils/logger';
-import { ID, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
+import { ID, MODEL_FILTER_FIELDS, ModelSearchParams } from '../types/Model';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
 import { getAllModelDescriptions } from './model';
@@ -262,11 +262,11 @@ const getAssets = async (params: GetAssetsParams) => {
 	switch (resourceType) {
 		case ResourceType.MODEL:
 			assetList = (await getAllModelDescriptions()) ?? ([] as Model[]);
-			projectAssetType = AssetType.Models;
+			projectAssetType = AssetType.Model;
 			break;
 		case ResourceType.DATASET:
 			assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
-			projectAssetType = AssetType.Datasets;
+			projectAssetType = AssetType.Dataset;
 			break;
 		case ResourceType.XDD:
 			xddResults = await searchXDDDocuments(term, searchParam);
@@ -274,7 +274,7 @@ const getAssets = async (params: GetAssetsParams) => {
 				assetList = xddResults.data;
 				hits = xddResults.hits;
 			}
-			projectAssetType = AssetType.Publications;
+			projectAssetType = AssetType.Publication;
 			break;
 		default:
 			return results; // error or make new resource type compatible

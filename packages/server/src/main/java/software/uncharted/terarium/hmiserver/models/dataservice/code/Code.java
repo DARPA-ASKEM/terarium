@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
@@ -17,7 +16,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.sql.Timestamp;
 import java.util.Map;
-import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -32,11 +30,13 @@ public class Code {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
+	@TSOptional
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
+	@TSOptional
 	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")

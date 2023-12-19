@@ -58,10 +58,10 @@
 <script setup lang="ts">
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
-import { AcceptedTypes, AcceptedExtensions } from '@/types/common';
+import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import { useProjects } from '@/composables/project';
-import { DocumentAsset, AssetType, Dataset } from '@/types/Types';
+import { AssetType, Dataset, DocumentAsset } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
@@ -119,11 +119,11 @@ async function processDocument(file: File) {
 	// This is pdf, txt, md files
 	const document: DocumentAsset | null = await uploadDocumentAssetToProject(
 		file,
-		useProjects().activeProject.value?.username ?? '',
+		useAuthStore().user?.id ?? '',
 		'',
 		progress
 	);
-	return { id: document?.id ?? '', assetType: AssetType.Documents, name: file.name };
+	return { id: document?.id ?? '', assetType: AssetType.Document, name: file.name };
 }
 
 /**
@@ -135,10 +135,10 @@ async function processDataset(file: File, description: string) {
 	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
 		progress,
 		file,
-		useAuthStore().user?.name ?? '',
+		useAuthStore().user?.id ?? '',
 		description
 	);
-	return { id: addedDataset?.id ?? '', assetType: AssetType.Datasets };
+	return { id: addedDataset?.id ?? '', assetType: AssetType.Dataset };
 }
 
 function importCompleted(newResults: { id: string; name: string; assetType: AssetType }[] | null) {

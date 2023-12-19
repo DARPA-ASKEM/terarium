@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, onMounted, computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
@@ -57,7 +57,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
-const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
+const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.MODEL ?? []);
 
 enum ModelNodeView {
 	Diagram = 'Diagram',

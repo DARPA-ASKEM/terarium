@@ -49,12 +49,12 @@
 				<section>
 					<header>Date uploaded</header>
 					<section>
-						{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') || '-' }}
+						{{ new Date(dataset?.createdOn as Date).toLocaleString('en-US') || '-' }}
 					</section>
 				</section>
 				<section>
 					<header>Uploaded by</header>
-					<section>{{ dataset?.username || '-' }}</section>
+					<section>{{ dataset?.userId || '-' }}</section>
 				</section>
 			</section>
 			<section class="metadata data-row">
@@ -76,7 +76,7 @@
 				<AccordionTab>
 					<template #header>Related publications</template>
 					<tera-related-documents
-						:asset-type="AssetType.Datasets"
+						:asset-type="AssetType.Dataset"
 						:documents="documents"
 						:assetId="assetId"
 						@enriched="fetchDataset"
@@ -272,15 +272,15 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
+import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import InputText from 'primevue/inputtext';
 import * as textUtil from '@/utils/text';
-import { isString, cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, isString } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { AssetType, CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
+import type { AssetType, CsvAsset, Dataset, DatasetColumn, DocumentAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -314,7 +314,7 @@ const props = defineProps({
 const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
+			.activeProject.value?.assets?.DOCUMENT?.filter((document: DocumentAsset) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
 					(extension) => {
 						if (document.fileNames && !isEmpty(document.fileNames)) {

@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
 import { getCodeAsset } from '@/services/code';
-import { onMounted, ref, computed, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
@@ -42,7 +42,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
 
 const code = ref<Code | null>(null);
-const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.code ?? []);
+const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.CODE ?? []);
 
 onMounted(async () => {
 	if (props.node.state.codeAssetId) {

@@ -169,7 +169,7 @@
 					text
 					@click="
 						emit('open-asset', {
-							pageType: AssetType.Models,
+							pageType: AssetType.Model,
 							assetId: stratifiedModel?.id ?? ''
 						})
 					"

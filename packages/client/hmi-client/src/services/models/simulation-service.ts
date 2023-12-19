@@ -1,22 +1,23 @@
+import { cloneDeep, isEmpty, isEqual } from 'lodash';
+import { Ref } from 'vue';
 import { csvParse } from 'd3';
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
-	Simulation,
-	SimulationRequest,
-	CalibrationRequestJulia,
 	CalibrationRequestCiemss,
-	EventType,
-	EnsembleSimulationCiemssRequest,
-	EnsembleCalibrationCiemssRequest,
+	CalibrationRequestJulia,
+	ClientEvent,
 	ClientEventType,
-	ClientEvent
+	EnsembleCalibrationCiemssRequest,
+	EnsembleSimulationCiemssRequest,
+	EventType,
+	ProgressState,
+	Simulation,
+	SimulationRequest
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
-import { cloneDeep, isEqual } from 'lodash';
-import { Ref } from 'vue';
+import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
@@ -275,23 +276,33 @@ export async function simulationPollAction(
 	simulationIds.forEach((id) => {
 		requestList.push(getSimulation(id));
 	});
-	const response = await Promise.all(requestList);
 
-	const completedSimulationIds = response
-		.filter((simulation) => simulation?.status === ProgressState.COMPLETE)
-		.map((simulation) => simulation!.id);
-	const inProgressSimulationIds = response
-		.filter(
-			(simulation) =>
-				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
-		)
-		.map((simulation) => simulation!.id);
+	const response = await Promise.all(requestList).then(
+		(list) => list.filter((item) => !!item) as Simulation[]
+	);
+
+	const completedSimulationIds = isEmpty(response)
+		? ([] as string[])
+		: (response
+				.filter((simulation) => simulation?.status === ProgressState.Complete)
+				.map((simulation) => simulation!.id) as string[]);
+
+	const inProgressSimulationIds = isEmpty(response)
+		? ([] as string[])
+		: (response
+				.filter(
+					(simulation) =>
+						simulation?.status === ProgressState.Queued ||
+						simulation?.status === ProgressState.Running
+				)
+				.map((simulation) => simulation!.id) as string[]);
+
 	const unhandledStateSimulationIds = response
 		.filter(
 			(simulation) =>
-				simulation?.status !== ProgressState.QUEUED &&
-				simulation?.status !== ProgressState.RUNNING &&
-				simulation?.status !== ProgressState.COMPLETE
+				simulation?.status !== ProgressState.Queued &&
+				simulation?.status !== ProgressState.Running &&
+				simulation?.status !== ProgressState.Complete
 		)
 		.map((simulation) => simulation!.id);
 
@@ -335,7 +346,7 @@ export async function simulationPollAction(
 		if (!isEqual(node.state, newState)) {
 			emitFn('update-state', newState);
 		}
-		progress.value.status = ProgressState.RUNNING;
+		progress.value.status = ProgressState.Running;
 		// keep polling
 		return {
 			data: null,

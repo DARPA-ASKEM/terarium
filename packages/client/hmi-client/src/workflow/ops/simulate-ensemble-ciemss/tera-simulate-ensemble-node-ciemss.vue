@@ -52,18 +52,23 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
+import { computed, ComputedRef, onMounted, onUnmounted, ref, watch } from 'vue';
 // import { csvParse } from 'd3';
 // import { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
-import { EnsembleSimulationCiemssRequest, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
 import {
-	makeEnsembleCiemssSimulation,
+	EnsembleModelConfigs,
+	EnsembleSimulationCiemssRequest,
+	ProgressState,
+	TimeSpan
+} from '@/types/Types';
+import {
 	getRunResultCiemss,
-	simulationPollAction,
-	querySimulationInProgress
+	makeEnsembleCiemssSimulation,
+	querySimulationInProgress,
+	simulationPollAction
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -73,8 +78,8 @@ import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
-	SimulateEnsembleCiemssOperationState,
-	SimulateEnsembleCiemssOperation
+	SimulateEnsembleCiemssOperation,
+	SimulateEnsembleCiemssOperationState
 } from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{
@@ -93,7 +98,7 @@ const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const poller = new Poller();
 

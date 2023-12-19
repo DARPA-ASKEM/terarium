@@ -16,8 +16,7 @@ export const createNotebookSession = async (notebookSession: NotebookSession) =>
 		id: notebookSession.id,
 		name: notebookSession.name,
 		description: notebookSession.description,
-		data: notebookSession.data,
-		timestamp: notebookSession.timestamp
+		data: notebookSession.data
 	} as NotebookSession);
 	return response?.data ?? null;
 };
@@ -27,8 +26,7 @@ export const updateNotebookSession = async (notebookSession: NotebookSession) =>
 		id: notebookSession.id,
 		name: notebookSession.name,
 		description: notebookSession.description,
-		data: notebookSession.data,
-		timestamp: notebookSession.timestamp
+		data: notebookSession.data
 	});
 
 	return response?.data ?? null;

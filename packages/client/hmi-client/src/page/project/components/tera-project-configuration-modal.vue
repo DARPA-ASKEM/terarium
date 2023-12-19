@@ -26,7 +26,7 @@
 					</div>
 					<div>
 						<!--
-							TODO: Disabled until there is a domain property for IProject. 
+							TODO: Disabled until there is a domain property for IProject.
 							This section might have similarities to tera-filter-bar.vue.
 						-->
 						<label>Domain</label>
@@ -96,7 +96,7 @@ const emit = defineEmits(['close-modal']);
 
 const auth = useAuthStore();
 const router = useRouter();
-const author = auth.user?.name ?? '';
+const userId = auth.user?.id ?? '';
 
 const title = ref(props.project?.name ?? '');
 const description = ref(props.project?.description ?? '');
@@ -105,7 +105,7 @@ const isApplyingConfiguration = ref(false);
 
 async function createProject() {
 	isApplyingConfiguration.value = true;
-	const project = await useProjects().create(title.value, description.value, author);
+	const project = await useProjects().create(title.value, description.value, userId);
 	if (project?.id) {
 		router.push({ name: RouteName.Project, params: { projectId: project.id } });
 		emit('close-modal');
@@ -173,7 +173,7 @@ img {
 	display: flex;
 }
 
-/* 
+/*
 Doesn't rely on the margin-bottom: 1rem rule in tera-modal.vue
 Should probably switch everything to use gap (like here) at some point
 */

@@ -1,24 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,11 +7,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.ResourceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ExternalPublicationService;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Controller class for handling external publications.
@@ -66,7 +57,7 @@ public class ExternalPublicationController {
 		List<ExternalPublication> publications = null;
 		try {
 			publications = externalPublicationService.getExternalPublications(page, pageSize);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to get publications", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -97,7 +88,7 @@ public class ExternalPublicationController {
 			@RequestBody final ExternalPublication publication) {
 		try {
 			externalPublicationService.createExternalPublication(publication);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to POST publication", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -123,12 +114,12 @@ public class ExternalPublicationController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			Optional<ExternalPublication> externalPublication = externalPublicationService.getExternalPublication(id);
+			final Optional<ExternalPublication> externalPublication = externalPublicationService.getExternalPublication(id);
 			if (externalPublication.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
 			return ResponseEntity.ok(externalPublication.get());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to GET publication", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -153,7 +144,7 @@ public class ExternalPublicationController {
 	})
 	public ResponseEntity<ExternalPublication> updatePublication(
 			@PathVariable("id") final UUID id,
-			@RequestBody ExternalPublication publication) {
+			@RequestBody final ExternalPublication publication) {
 		try {
 			final Optional<ExternalPublication> updated = externalPublicationService
 					.updateExternalPublication(publication.setId(id));
@@ -161,7 +152,7 @@ public class ExternalPublicationController {
 				return ResponseEntity.notFound().build();
 			}
 			return ResponseEntity.ok(updated.get());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to PUT publication", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -188,13 +179,13 @@ public class ExternalPublicationController {
 
 		try {
 			externalPublicationService.deleteExternalPublication(id);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to DELETE publication", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Unable to delete publication");
 		}
-		return ResponseEntity.ok(new ResponseDeleted(ResourceType.PUBLICATION.toString(), id.toString()));
+		return ResponseEntity.ok(new ResponseDeleted(AssetType.PUBLICATION.toString(), id.toString()));
 	}
 
 }

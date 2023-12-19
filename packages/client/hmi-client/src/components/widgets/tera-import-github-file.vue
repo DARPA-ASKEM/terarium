@@ -195,7 +195,7 @@ import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { DocumentAsset, AssetType, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import { AssetType, DocumentAsset, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
@@ -364,11 +364,11 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		const newDataset = await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			auth.user?.name ?? '',
+			auth.user?.id ?? '',
 			githubFile.htmlUrl
 		);
 		if (newDataset && newDataset.id) {
-			await useProjects().addAsset(AssetType.Datasets, newDataset.id);
+			await useProjects().addAsset(AssetType.Dataset, newDataset.id);
 		}
 	});
 }
@@ -378,11 +378,11 @@ async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string
 		const document: DocumentAsset | null = await createNewDocumentFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			useProjects().activeProject.value?.username ?? ''
+			useAuthStore().user?.id ?? ''
 		);
 		let newAsset;
 		if (document && document.id) {
-			newAsset = await useProjects().addAsset(AssetType.Documents, document.id, projectId);
+			newAsset = await useProjects().addAsset(AssetType.Document, document.id, projectId);
 		}
 		if (document?.id && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
 			extractPDF(document.id);

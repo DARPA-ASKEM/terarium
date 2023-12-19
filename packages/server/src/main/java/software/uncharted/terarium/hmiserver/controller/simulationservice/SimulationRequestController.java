@@ -25,9 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
@@ -72,7 +72,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			Optional<Simulation> sim = simulationService.getSimulation(id);
+			final Optional<Simulation> sim = simulationService.getSimulation(id);
 			if (sim.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -101,10 +101,10 @@ public class SimulationRequestController implements SnakeCaseController {
 		request.setEngine(SimulationEngine.SCIML.toString());
 
 		sim.setExecutionPayload(request);
-		sim.setStatus(SimulationStatus.QUEUED);
+		sim.setStatus(ProgressState.QUEUED);
 
 		// FIXME: These fiels are arguable unnecessary
-		Optional<Project> project = projectService.getProject(request.getProjectId());
+		final Optional<Project> project = projectService.getProject(request.getProjectId());
 		if (project.isPresent()) {
 			sim.setProjectId(project.get().getId());
 			sim.setUserId(project.get().getUserId());
@@ -114,7 +114,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		try {
 			return ResponseEntity.ok(simulationService.createSimulation(sim));
 		} catch (final Exception e) {
-			final String error = String.format("Failed to get create simulation");
+			final String error = "Failed to create simulation";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -143,9 +143,9 @@ public class SimulationRequestController implements SnakeCaseController {
 		request.setEngine(SimulationEngine.CIEMSS.toString());
 
 		sim.setExecutionPayload(request);
-		sim.setStatus(SimulationStatus.QUEUED);
+		sim.setStatus(ProgressState.QUEUED);
 
-		Optional<Project> project = projectService.getProject(request.getProjectId());
+		final Optional<Project> project = projectService.getProject(request.getProjectId());
 		if (project.isPresent()) {
 			sim.setProjectId(project.get().getId());
 			sim.setUserId(project.get().getUserId());
@@ -156,7 +156,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		try {
 			return ResponseEntity.ok(simulationService.createSimulation(sim));
 		} catch (final Exception e) {
-			final String error = String.format("Failed to get create simulation");
+			final String error = "Failed to create simulation";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,

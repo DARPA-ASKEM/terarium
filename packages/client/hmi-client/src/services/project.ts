@@ -9,11 +9,12 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
 import {
-	EventType,
-	Project,
 	AssetType,
+	EventType,
 	ExternalPublication,
-	PermissionRelationships
+	PermissionRelationships,
+	Project,
+	ProjectAsset
 } from '@/types/Types';
 
 /**
@@ -26,15 +27,14 @@ import {
 async function create(
 	name: Project['name'],
 	description: Project['description'] = '',
-	username: Project['username'] = ''
+	userId: Project['userId'] = ''
 ): Promise<Project | null> {
 	try {
 		const project: Project = {
 			name,
 			description,
-			username,
-			active: true,
-			assets: {} as Project['assets']
+			userId,
+			projectAssets: [] as ProjectAsset[]
 		};
 		const response = await API.post(`/projects`, project);
 		const { status, data } = response;
@@ -135,11 +135,11 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
  */
 async function getPublicationAssets(projectId: string): Promise<ExternalPublication[]> {
 	try {
-		const url = `/projects/${projectId}/assets?types=${AssetType.Publications}`;
+		const url = `/projects/${projectId}/assets?types=${AssetType.Publication}`;
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status === 200) {
-			return data?.[AssetType.Publications] ?? ([] as ExternalPublication[]);
+			return data?.[AssetType.Publication] ?? ([] as ExternalPublication[]);
 		}
 	} catch (error) {
 		logger.error(error);
@@ -288,12 +288,12 @@ async function updatePermissions(
  * Get the icon associated with an Asset
  */
 const icons = new Map<string | AssetType, string | Component>([
-	[AssetType.Documents, 'file'],
-	[AssetType.Models, 'share-2'],
-	[AssetType.Datasets, DatasetIcon],
-	[AssetType.Simulations, 'settings'],
+	[AssetType.Document, 'file'],
+	[AssetType.Model, 'share-2'],
+	[AssetType.Dataset, DatasetIcon],
+	[AssetType.Simulation, 'settings'],
 	[AssetType.Code, 'code'],
-	[AssetType.Workflows, 'git-merge'],
+	[AssetType.Workflow, 'git-merge'],
 	['overview', 'layout']
 ]);
 

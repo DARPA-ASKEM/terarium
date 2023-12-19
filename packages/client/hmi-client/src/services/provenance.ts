@@ -224,23 +224,23 @@ async function getProvenance(id: string) {
  */
 export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceType {
 	switch (assetType) {
-		case AssetType.Models:
+		case AssetType.Model:
 			return ProvenanceType.Model;
-		case AssetType.Datasets:
+		case AssetType.Dataset:
 			return ProvenanceType.Dataset;
-		case AssetType.ModelConfigurations:
+		case AssetType.ModelConfiguration:
 			return ProvenanceType.ModelConfiguration;
-		case AssetType.Publications:
+		case AssetType.Publication:
 			return ProvenanceType.Publication;
-		case AssetType.Simulations:
+		case AssetType.Simulation:
 			return ProvenanceType.Simulation;
-		case AssetType.Artifacts:
+		case AssetType.Artifact:
 			return ProvenanceType.Artifact;
 		case AssetType.Code:
 			return ProvenanceType.Code;
-		case AssetType.Workflows:
+		case AssetType.Workflow:
 			return ProvenanceType.Workflow;
-		case AssetType.Documents:
+		case AssetType.Document:
 		default:
 			return ProvenanceType.Document;
 	}

@@ -36,7 +36,7 @@
 				<template #header>Related publications</template>
 				<tera-related-documents
 					:documents="documents"
-					:asset-type="AssetType.Models"
+					:asset-type="AssetType.Model"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>
@@ -75,7 +75,7 @@ import { isEmpty } from 'lodash';
 import { computed } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AssetType, DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
+import type { AssetType, DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { AcceptedExtensions } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -119,7 +119,7 @@ const schema = computed(() => card.value?.schema ?? '');
 const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
+			.activeProject.value?.assets?.DOCUMENT?.filter((document: DocumentAsset) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
 					(extension) => {
 						if (document.fileNames && !isEmpty(document.fileNames)) {

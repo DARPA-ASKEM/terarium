@@ -1,10 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.Map;
-import java.util.UUID;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,11 +12,20 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.Map;
+import java.util.UUID;
+
 @Data
 @Accessors(chain = true)
 @TSModel
 public class Model implements Serializable {
 
+	@Serial
+	private static final long serialVersionUID = 398195277271188277L;
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -29,9 +33,11 @@ public class Model implements Serializable {
 
 	private ModelHeader header;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp createdOn;
 
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Timestamp updatedOn;
 

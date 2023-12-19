@@ -128,7 +128,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import { ProgrammingLanguage, Model, AssetType } from '@/types/Types';
+import { AssetType, Model, ProgrammingLanguage } from '@/types/Types';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -195,7 +195,7 @@ const clonedState = ref<ModelFromCodeState>({
 });
 
 const outputs = computed(() => {
-	const activeProjectModelIds = useProjects().activeProject.value?.assets?.models?.map(
+	const activeProjectModelIds = useProjects().activeProject.value?.assets?.MODEL?.map(
 		(model) => model.id
 	);
 
@@ -338,7 +338,7 @@ async function saveAsNewModel() {
 	// 2. Save asset to project
 	const projectId = useProjects().activeProject.value?.id;
 	if (!projectId || !selectedModel.value) return;
-	const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+	const response = await addAsset(projectId, AssetType.Model, selectedModel.value.id);
 	savingAsset.value = false;
 	await useProjects().refresh();
 

@@ -1,28 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,23 +11,26 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.ResourceType;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
+
+import java.util.*;
 
 @RequestMapping("/projects")
 @RestController
@@ -94,37 +75,37 @@ public class ProjectController {
 
 		// Get projects from the project repository associated with the list of ids.
 		// Filter the list of projects to only include active projects.
-		List<Project> projects = includeInactive ? projectService.getProjects(projectIds)
+		final List<Project> projects = includeInactive ? projectService.getProjects(projectIds)
 				: projectService.getActiveProjects(projectIds);
 
 		projects.forEach(project -> {
 			try {
-				final List<ResourceType> resourceTypes = Arrays.asList(
-						ResourceType.DATASET,
-						ResourceType.MODEL,
-						ResourceType.DOCUMENT,
-						ResourceType.WORKFLOW,
-						ResourceType.PUBLICATION);
+				final List<AssetType> assetTypes = Arrays.asList(
+						AssetType.DATASET,
+						AssetType.MODEL,
+						AssetType.DOCUMENT,
+						AssetType.WORKFLOW,
+						AssetType.PUBLICATION);
 
 				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 				project.setPublicProject(rebacProject.isPublic());
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 
-				List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
-						resourceTypes);
+				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
+						assetTypes);
 
 				final Map<String, String> metadata = new HashMap<>();
 
-				Map<ResourceType, Integer> counts = new HashMap<>();
-				for (ProjectAsset asset : assets) {
-					counts.put(asset.getResourceType(), counts.getOrDefault(asset.getResourceType(), 0) + 1);
+				final Map<AssetType, Integer> counts = new HashMap<>();
+				for (final ProjectAsset asset : assets) {
+					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
 				}
 
-				metadata.put("datasets-count", counts.getOrDefault(ResourceType.DATASET, 0).toString());
-				metadata.put("document-count", counts.getOrDefault(ResourceType.DOCUMENT, 0).toString());
-				metadata.put("models-count", counts.getOrDefault(ResourceType.MODEL, 0).toString());
-				metadata.put("workflows-count", counts.getOrDefault(ResourceType.WORKFLOW, 0).toString());
-				metadata.put("publications-count", counts.getOrDefault(ResourceType.PUBLICATION, 0).toString());
+				metadata.put("datasets-count", counts.getOrDefault(AssetType.DATASET, 0).toString());
+				metadata.put("document-count", counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
+				metadata.put("models-count", counts.getOrDefault(AssetType.MODEL, 0).toString());
+				metadata.put("workflows-count", counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
+				metadata.put("publications-count", counts.getOrDefault(AssetType.PUBLICATION, 0).toString());
 
 				project.setMetadata(metadata);
 			} catch (final Exception e) {
@@ -186,7 +167,7 @@ public class ProjectController {
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canAdministrate(new RebacProject(id, reBACService))) {
-				boolean deleted = projectService.delete(id);
+				final boolean deleted = projectService.delete(id);
 				if (deleted)
 					return ResponseEntity.ok(new ResponseDeleted("project", id));
 			}
@@ -246,7 +227,7 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProject(
 			@PathVariable("id") final UUID id,
-			@RequestBody Project project) {
+			@RequestBody final Project project) {
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(id, reBACService))) {
@@ -279,7 +260,7 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<List<ProjectAsset>> getAssets(
 			@PathVariable("id") final UUID projectId,
-			@RequestParam("types") final List<ResourceType> types) {
+			@RequestParam("types") final List<AssetType> types) {
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canRead(new RebacProject(projectId, reBACService))) {
@@ -303,19 +284,19 @@ public class ProjectController {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
-	@PostMapping("/{id}/assets/{resourceType}/{resourceId}")
+	@PostMapping("/{id}/assets/{asset_type}/{asset_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("resourceType") final ResourceType type,
-			@PathVariable("resourceId") final UUID resourceId) {
+			@PathVariable("asset_type") final AssetType type,
+			@PathVariable("asset_id") final UUID assetId) {
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
 				if (project.isPresent()) {
-					ProjectAsset asset = projectAssetService.createProjectAsset(project.get(), type, resourceId);
+					final ProjectAsset asset = projectAssetService.createProjectAsset(project.get(), type, assetId);
 					return ResponseEntity.status(HttpStatus.CREATED).body(asset);
 				}
 			}
@@ -334,19 +315,19 @@ public class ProjectController {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
 			@ApiResponse(responseCode = "204", description = "User may not have permission to this project", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
-	@DeleteMapping("/{id}/assets/{resourceType}/{resourceId}")
+	@DeleteMapping("/{id}/assets/{asset_type}/{asset_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("resourceType") final ResourceType type,
-			@PathVariable("resourceId") final UUID resourceId) {
+			@PathVariable("asset_type") final AssetType type,
+			@PathVariable("asset_id") final UUID assetId) {
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
-				boolean deleted = projectAssetService.delete(resourceId);
+				final boolean deleted = projectAssetService.delete(assetId);
 				if (deleted)
-					return ResponseEntity.ok(new ResponseDeleted("asset-" + type, resourceId));
+					return ResponseEntity.ok(new ResponseDeleted("asset-" + type, assetId));
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {

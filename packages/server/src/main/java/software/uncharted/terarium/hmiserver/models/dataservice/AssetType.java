@@ -5,22 +5,17 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 import java.util.Arrays;
 
-
-/**
- * This will be removed in favour of ResourceType
- */
-@Deprecated
 @TSModel
 public enum AssetType {
-	datasets("datasets"),
-	model_configurations("model_configurations"),
-	models("models"),
-	publications("publications"),
-	simulations("simulations"),
-	workflows("workflows"),
-	artifacts("artifacts"),
-	code("code"),
-	documents("documents");
+	DATASET("dataset"),
+	MODEL_CONFIGURATION("model_configuration"),
+	MODEL("model"),
+	PUBLICATION("publication"),
+	SIMULATION("simulation"),
+	WORKFLOW("workflow"),
+	ARTIFACT("artifact"),
+	CODE("code"),
+	DOCUMENT("document");
 
 
 	public final String type;

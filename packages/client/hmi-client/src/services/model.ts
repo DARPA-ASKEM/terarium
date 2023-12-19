@@ -99,7 +99,7 @@ export function isModelEmpty(model: Model) {
 // A helper function to check if a model name already exists
 export function validateModelName(name: string): boolean {
 	const existingModelNames: string[] = [];
-	useProjects().activeProject.value?.assets?.models.forEach((item) => {
+	useProjects().activeProject.value?.assets?.MODEL.forEach((item) => {
 		existingModelNames.push(item.header.name);
 	});
 
