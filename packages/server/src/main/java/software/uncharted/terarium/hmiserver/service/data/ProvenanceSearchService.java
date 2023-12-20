@@ -37,6 +37,13 @@ public class ProvenanceSearchService {
 
 	// Search methods
 
+	/**
+	 *
+	 * Return all connected nodes to the provided node.
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public ProvenanceSearchResult connectedNodes(ProvenanceQueryParam payload) {
 		try (Session session = neo4jService.getSession()) {
 
@@ -81,14 +88,36 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Return all child nodes.
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public ProvenanceSearchResult childNodes(ProvenanceQueryParam payload) {
 		return connectedNodesByDirection(payload, "child");
 	}
 
+	/**
+	 *
+	 * Return all parent nodes.
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public ProvenanceSearchResult parentNodes(ProvenanceQueryParam payload) {
 		return connectedNodesByDirection(payload, "parent");
 	}
 
+	/**
+	 *
+	 * Identifies which model revisions help create the latest model which was used
+	 * to create the artifact.
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public ProvenanceSearchResult parentModelRevisions(ProvenanceQueryParam payload) {
 		if (!Arrays
 				.asList(ProvenanceType.MODEL, ProvenanceType.SIMULATION_RUN, ProvenanceType.PLAN,
@@ -114,6 +143,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Identifies which models help create the latest model
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public ProvenanceSearchResult parentModels(ProvenanceQueryParam payload) {
 		if (!Arrays.asList(ProvenanceType.MODEL, ProvenanceType.SIMULATION_RUN, ProvenanceType.PLAN,
 				ProvenanceType.DATASET).contains(payload.getRootType())) {
@@ -144,6 +180,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Identifies which nodes were created by user.
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public ProvenanceSearchResult artifactsCreatedByUser(ProvenanceQueryParam payload) {
 		try (Session session = neo4jService.getSession()) {
 			String matchNode = matchNodeBuilder();
@@ -158,6 +201,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Identifies which nodes are associated with a concept
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public ProvenanceSearchResult concept(ProvenanceQueryParam payload) {
 		try (Session session = neo4jService.getSession()) {
 			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
@@ -172,6 +222,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Identifies the code from which a model was extracted
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public Set<String> modelsFromCode(ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
 			throw new IllegalArgumentException("Code used for model extraction can only be found by providing a Model");
@@ -193,6 +250,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Identifies the equation from which a model was extracted
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public Set<String> modelsFromEquation(ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
 			throw new IllegalArgumentException(
@@ -216,6 +280,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Identifies the document from which a model was extracted
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public Set<String> modelsFromDocument(ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
 			throw new IllegalArgumentException(
@@ -239,6 +310,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Counts of which nodes are associated with a concept
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public Map<String, Integer> conceptCounts(ProvenanceQueryParam payload) {
 		try (Session session = neo4jService.getSession()) {
 			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
@@ -260,6 +338,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
+	/**
+	 *
+	 * Return models extracted from a document, code, or equation.
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
 	public Set<String> extractedModels(ProvenanceQueryParam payload) {
 		ProvenanceType rootType = payload.getRootType();
 		if (rootType != ProvenanceType.DOCUMENT && rootType != ProvenanceType.CODE
