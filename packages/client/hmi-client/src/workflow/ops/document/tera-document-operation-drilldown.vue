@@ -116,28 +116,28 @@ function onUpdateInclude(asset: SelectableAsset<DocumentExtraction>) {
 
 	let outputPort: WorkflowOutput<DocumentOperationState> | null = null;
 
-	if (asset.asset.assetType === ExtractionAssetType.Equation) {
-		outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === 'equations')) || null;
-		if (!outputPort) return;
-		const selected = clonedState.value.equations?.filter((eq) => eq.includeInProcess) ?? [];
-		outputPort.label = `Equations (${selected?.length}/${clonedState.value.equations?.length})`;
-	}
+	const portType = assetTypeToPortType(asset.asset.assetType);
+	if (!portType) return;
 
-	if (asset.asset.assetType === ExtractionAssetType.Figure) {
-		outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === 'figures')) || null;
-		if (!outputPort) return;
-		const selected = clonedState.value.figures?.filter((eq) => eq.includeInProcess) ?? [];
-		outputPort.label = `Figures (${selected?.length}/${clonedState.value.figures?.length})`;
-	}
-
-	if (asset.asset.assetType === ExtractionAssetType.Table) {
-		outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === 'tables')) || null;
-		if (!outputPort) return;
-		const selected = clonedState.value.tables?.filter((eq) => eq.includeInProcess) ?? [];
-		outputPort.label = `Tables (${selected?.length}/${clonedState.value.tables?.length})`;
-	}
+	outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === portType)) || null;
+	if (!outputPort) return;
+	const selected = clonedState.value[portType]?.filter((a) => a.includeInProcess) ?? [];
+	outputPort.label = `${portType} (${selected?.length}/${clonedState.value[portType]?.length})`;
 
 	emit('update-output-port', outputPort);
+}
+
+function assetTypeToPortType(assetType: ExtractionAssetType) {
+	switch (assetType) {
+		case ExtractionAssetType.Equation:
+			return 'equations';
+		case ExtractionAssetType.Figure:
+			return 'figures';
+		case ExtractionAssetType.Table:
+			return 'tables';
+		default:
+			return null;
+	}
 }
 
 watch(
