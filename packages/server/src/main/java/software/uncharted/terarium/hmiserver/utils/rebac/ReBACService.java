@@ -97,7 +97,7 @@ public class ReBACService {
 					.build();
 			return;
 		} else {
-			ManagedChannelBuilder builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
+			ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
 			if (SPICEDB_LAUNCHMODE.equals("TLS")) {
 				builder.useTransportSecurity();
 			} else {

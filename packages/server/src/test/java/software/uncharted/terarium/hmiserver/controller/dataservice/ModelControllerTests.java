@@ -133,7 +133,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelDescriptions() throws Exception {
 
-		final Model model = modelService.createModel(new Model()
+		modelService.createModel(new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
