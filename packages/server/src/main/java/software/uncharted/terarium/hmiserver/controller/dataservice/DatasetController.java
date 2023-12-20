@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -22,7 +21,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +47,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
@@ -70,9 +69,7 @@ public class DatasetController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;
 
-
 	final DatasetService datasetService;
-
 
 	final JsDelivrProxy githubProxy;
 
@@ -85,7 +82,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving datasets from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Dataset>> getDatasets(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(datasetService.getDatasets(page, pageSize));
@@ -198,7 +195,7 @@ public class DatasetController {
 		log.info("Returning HTTP 400 Bad Request", e);
 	}
 
-	@GetMapping("/{datasetId}/download-csv")
+	@GetMapping("/{id}/download-csv")
 	@Secured(Roles.USER)
 	@Operation(summary = "Download dataset CSV")
 	@ApiResponses(value = {
@@ -206,7 +203,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<CsvAsset> getCsv(
-			@PathVariable("datasetId") final UUID datasetId,
+			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestParam(name = "limit", defaultValue = "-1", required = false) final Integer limit // -1 means no
 																										// limit
@@ -253,7 +250,7 @@ public class DatasetController {
 	 * Downloads a CSV file from github given the path and owner name, then uploads
 	 * it to the dataset.
 	 */
-	@PutMapping("/{datasetId}/upload-csv-from-github")
+	@PutMapping("/{id}/upload-csv-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file from github to a dataset")
 	@ApiResponses(value = {
@@ -261,9 +258,9 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
 	})
 	public ResponseEntity<ResponseStatus> uploadCsvFromGithub(
-			@PathVariable("datasetId") final UUID datasetId,
+			@PathVariable("id") final UUID datasetId,
 			@RequestParam("path") final String path,
-			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
 
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
@@ -286,7 +283,7 @@ public class DatasetController {
 	 * @param filename  CSV file to upload
 	 * @return Response
 	 */
-	@PutMapping(value = "/{datasetId}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{id}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file to a dataset")
 	@ApiResponses(value = {
@@ -294,7 +291,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
 	})
 	public ResponseEntity<ResponseStatus> uploadCsv(
-			@PathVariable("datasetId") final UUID datasetId,
+			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input) {
 

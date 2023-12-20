@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.controller.knowledge;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -154,14 +155,15 @@ public class KnowledgeController {
 	@PostMapping("/profile-model/{model_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileModel(
-			@PathVariable("model_id") String modelId,
-			@RequestParam("document_id") String documentId) {
+			@PathVariable("model_id") UUID modelId,
+			@RequestParam("document_id") UUID documentId) {
 
 		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
 				ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
 		try {
 			provenanceService.createProvenance(provenancePayload);
-			return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileModel(modelId, documentId).getBody());
+			return ResponseEntity
+					.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
 		} catch (Exception e) {
 			final String error = "Unable to create provenance";
 			log.error(error, e);
@@ -183,15 +185,16 @@ public class KnowledgeController {
 	@PostMapping("/profile-dataset/{dataset_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileDataset(
-			@PathVariable("dataset_id") String datasetId,
-			@RequestParam(name = "document_id", required = false) String documentId) {
+			@PathVariable("dataset_id") UUID datasetId,
+			@RequestParam(name = "document_id", required = false) UUID documentId) {
 
 		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
 				ProvenanceType.DATASET, documentId, ProvenanceType.DOCUMENT);
 
 		try {
 			provenanceService.createProvenance(provenancePayload);
-			return ResponseEntity.ok(knowledgeMiddlewareProxy.postProfileDataset(datasetId, documentId).getBody());
+			return ResponseEntity.ok(
+					knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), documentId.toString()).getBody());
 		} catch (Exception e) {
 			final String error = "Unable to create provenance";
 			log.error(error, e);

@@ -68,8 +68,8 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifacts", content = @Content)
 	})
 	public ResponseEntity<List<Artifact>> getArtifacts(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page){
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(artifactService.getArtifacts(page, pageSize));
 		} catch (Exception e) {
@@ -80,7 +80,6 @@ public class ArtifactController {
 					error);
 		}
 
-
 	}
 
 	@PostMapping
@@ -90,8 +89,8 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "201", description = "Artifact created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the artifact", content = @Content)
 	})
-	public ResponseEntity<Artifact> createArtifact(@RequestBody Artifact artifact){
-		try{
+	public ResponseEntity<Artifact> createArtifact(@RequestBody Artifact artifact) {
+		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createArtifact(artifact));
 		} catch (Exception e) {
 			final String error = "Unable to create artifact";
@@ -111,8 +110,8 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
 	})
-	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId){
-		try{
+	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId) {
+		try {
 			Optional<Artifact> artifact = artifactService.getArtifact(artifactId);
 			if (artifact.isEmpty()) {
 				return ResponseEntity.noContent().build();
@@ -137,9 +136,9 @@ public class ArtifactController {
 	})
 	public ResponseEntity<Artifact> updateArtifact(
 			@PathVariable("id") UUID artifactId,
-			@RequestBody Artifact artifact){
+			@RequestBody Artifact artifact) {
 
-		try{
+		try {
 			Optional<Artifact> updated = artifactService.updateArtifact(artifact.setId(artifactId));
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
@@ -161,7 +160,7 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "200", description = "Artifact deleted.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the artifact", content = @Content)
 	})
-	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") UUID artifactId){
+	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") UUID artifactId) {
 
 		try {
 			artifactService.deleteArtifact(artifactId);
@@ -244,8 +243,8 @@ public class ArtifactController {
 		} catch (Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to GET file as string data");
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to GET file as string data");
 		}
 
 	}
@@ -278,13 +277,13 @@ public class ArtifactController {
 		} catch (Exception e) {
 			log.error("Unable to GET artifact data", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to GET artifact data");
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to GET artifact data");
 		}
 
 	}
 
-	@PutMapping(value = "/{artifactId}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{id}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the artifact")
 	@ApiResponses(value = {
@@ -292,7 +291,7 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 	})
 	public ResponseEntity<Integer> uploadFile(
-			@PathVariable("artifactId") final UUID artifactId,
+			@PathVariable("id") final UUID artifactId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") MultipartFile input) throws IOException {
 
@@ -308,7 +307,7 @@ public class ArtifactController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it
 	 * to the project.
 	 */
-	@PutMapping("/{artifactId}/upload-artifact-from-github")
+	@PutMapping("/{id}/upload-artifact-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub to the artifact")
 	@ApiResponses(value = {
@@ -316,9 +315,9 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 	})
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
-			@PathVariable("artifactId") final UUID artifactId,
+			@PathVariable("id") final UUID artifactId,
 			@RequestParam("path") final String path,
-			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
 		log.debug("Uploading artifact file from github to dataset {}", artifactId);
 

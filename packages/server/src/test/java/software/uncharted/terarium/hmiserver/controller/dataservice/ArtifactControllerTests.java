@@ -153,7 +153,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(
 				MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
 						.with(csrf())
-						.param("repoOwnerAndName", "unchartedsoftware/torflow")
+						.param("repo-owner-and-name", "unchartedsoftware/torflow")
 						.param("path", "README.md")
 						.param("filename", "torflow-readme.md")
 						.contentType("application/json"))

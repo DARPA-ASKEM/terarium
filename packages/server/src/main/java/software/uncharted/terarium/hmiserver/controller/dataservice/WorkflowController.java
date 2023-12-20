@@ -48,7 +48,7 @@ public class WorkflowController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving workflows from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Workflow>> getWorkflows(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			final List<Workflow> workflows = workflowService.getWorkflows(page, pageSize);

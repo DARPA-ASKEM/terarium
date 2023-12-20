@@ -51,7 +51,7 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving configuration from the data store", content = @Content)
 	})
 	public ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
-			@RequestParam(name = "page_size", defaultValue = "500") final Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "500") final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
 
 		try {

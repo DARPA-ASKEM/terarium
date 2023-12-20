@@ -67,7 +67,7 @@ public class ModelController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving descriptions from the data store", content = @Content)
 	})
 	public ResponseEntity<List<ModelDescription>> listModels(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
 		try {
@@ -181,7 +181,7 @@ public class ModelController {
 	})
 	public ResponseEntity<List<Model>> searchModels(
 			@RequestBody JsonNode query,
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
 		try {
@@ -278,7 +278,7 @@ public class ModelController {
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
 			@PathVariable("id") UUID id,
 			@RequestParam(value = "page", required = false, defaultValue = "0") int page,
-			@RequestParam(value = "page_size", required = false, defaultValue = "100") int pageSize) {
+			@RequestParam(value = "page-size", required = false, defaultValue = "100") int pageSize) {
 
 		try {
 			return ResponseEntity.ok(modelService.getModelConfigurationsByModelId(id, page, pageSize));

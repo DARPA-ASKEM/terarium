@@ -324,10 +324,14 @@ public class ProvenanceSearchService {
 				}
 				result.setEdges(filterRelationshipTypes(edges, types));
 			}
+		} else {
+			result.setEdges(new ArrayList<>());
 		}
 
 		if (includeNodes) {
 			result.setNodes(filterNodeTypes(formattedNodes(graph), types));
+		} else {
+			result.setEdges(new ArrayList<>());
 		}
 
 		return result;
@@ -359,6 +363,9 @@ public class ProvenanceSearchService {
 
 	public List<ProvenanceEdge> filterRelationshipTypes(List<ProvenanceEdge> relationships,
 			List<ProvenanceType> includedTypes) {
+		if (includedTypes.size() == 0) {
+			return relationships;
+		}
 		List<ProvenanceEdge> clipped = new ArrayList<>();
 		for (ProvenanceEdge relation : relationships) {
 			ProvenanceNode left = relation.getLeft();
@@ -373,6 +380,9 @@ public class ProvenanceSearchService {
 	}
 
 	public List<ProvenanceNode> filterNodeTypes(List<ProvenanceNode> nodes, List<ProvenanceType> includedTypes) {
+		if (includedTypes.size() == 0) {
+			return nodes;
+		}
 		List<ProvenanceNode> res = new ArrayList<>();
 		for (ProvenanceNode node : nodes) {
 			if (includedTypes.contains(node.getType())) {
@@ -389,7 +399,7 @@ public class ProvenanceSearchService {
 				String label = node.labels().iterator().next();
 
 				ProvenanceNode formatted = new ProvenanceNode();
-				formatted.setId(UUID.fromString(node.elementId()));
+				formatted.setId(UUID.fromString(node.get("id").asString()));
 				formatted.setType(ProvenanceType.findByType(label));
 
 				nodes.add(formatted);
@@ -453,7 +463,7 @@ public class ProvenanceSearchService {
 
 	public String matchNodeBuilder(ProvenanceType nodeType) {
 		String nodeTypeCharacter = returnNodeAbbr(nodeType);
-		return String.format("MATCH ('%s':'%s')", nodeTypeCharacter, nodeType);
+		return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
 	}
 
 	public String matchNodeBuilder(ProvenanceType nodeType, UUID nodeId) {
@@ -462,9 +472,9 @@ public class ProvenanceSearchService {
 		}
 		String nodeTypeCharacter = returnNodeAbbr(nodeType);
 		if (nodeId == null) {
-			return String.format("MATCH ('%s':'%s')", nodeTypeCharacter, nodeType);
+			return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
 		}
-		return String.format("MATCH ('%s':'%s' {id: '%s'}) ", nodeTypeCharacter, nodeType, nodeId);
+		return String.format("MATCH (%s:%s {id: '%s'}) ", nodeTypeCharacter, nodeType, nodeId);
 	}
 
 	public String returnNodeAbbr(ProvenanceType nodeType) {
@@ -531,20 +541,21 @@ public class ProvenanceSearchService {
 				String endId = relationship.endNodeElementId();
 				Node startNode = graph.getNodesById().get(startId);
 				Node endNode = graph.getNodesById().get(endId);
+
 				String startLabel = startNode.labels().iterator().next();
 				String endLabel = endNode.labels().iterator().next();
 
 				ProvenanceNode left = new ProvenanceNode();
-				left.setId(UUID.fromString(startId));
+				left.setId(UUID.fromString(startNode.get("id").asString()));
 				left.setType(ProvenanceType.findByType(startLabel));
 
 				ProvenanceNode right = new ProvenanceNode();
-				right.setId(UUID.fromString(endId));
+				right.setId(UUID.fromString(endNode.get("id").asString()));
 				right.setType(ProvenanceType.findByType(endLabel));
 
 				ProvenanceEdge edge = new ProvenanceEdge();
 				edge.setRelationType(ProvenanceRelationType.findByType(relationship.type()));
-				edge.setId(UUID.fromString(relationship.elementId()));
+				edge.setId(UUID.fromString(relationship.get("provenance_id").asString()));
 				edge.setLeft(left);
 				edge.setRight(right);
 

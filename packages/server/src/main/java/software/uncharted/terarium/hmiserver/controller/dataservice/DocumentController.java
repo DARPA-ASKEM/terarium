@@ -1,13 +1,16 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -23,9 +26,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -49,12 +71,6 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -91,7 +107,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving documents from the data store", content = @Content)
 	})
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
@@ -341,7 +357,7 @@ public class DocumentController {
 	public ResponseEntity<ResponseStatus> uploadDocumentFromGithub(
 			@PathVariable("documentId") final UUID documentId,
 			@RequestParam("path") final String path,
-			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
 
 		log.debug("Uploading Document file from github to dataset {}", documentId);
@@ -492,7 +508,7 @@ public class DocumentController {
 	 * Creates a document asset from an XDD document
 	 *
 	 * @param document    xdd document
-	 * @param userId    current user name
+	 * @param userId      current user name
 	 * @param extractions list of extractions associated with the document
 	 * @return
 	 */
@@ -539,7 +555,7 @@ public class DocumentController {
 	/**
 	 * Uploads the extractions associated with an XDD document
 	 *
-	 * @param docId 		 document id
+	 * @param docId       document id
 	 * @param extractions list of extractions associated with the document
 	 */
 	private void uploadXDDExtractions(final UUID docId, final List<Extraction> extractions) {
@@ -580,9 +596,9 @@ public class DocumentController {
 	 * Uploads a PDF file to a document asset and then fires and forgets the
 	 * extraction
 	 *
-	 * @param doi 		DOI of the document
-	 * @param filename 	filename of the PDF
-	 * @param docId 	document id
+	 * @param doi      DOI of the document
+	 * @param filename filename of the PDF
+	 * @param docId    document id
 	 * @return extraction job id
 	 */
 	private String uploadPDFFileToDocumentThenExtract(final String doi, final String filename, final UUID docId) {

@@ -1,6 +1,28 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,11 +33,6 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -26,11 +43,13 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
-
-import java.util.*;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 @RequestMapping("/projects")
 @RestController
@@ -60,7 +79,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "204", description = "There are no errors, but also no projects for this user", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions", content = @Content) })
 	public ResponseEntity<List<Project>> getProjects(
-			@RequestParam(name = "include_inactive", defaultValue = "false") final Boolean includeInactive) {
+			@RequestParam(name = "include-inactive", defaultValue = "false") final Boolean includeInactive) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		List<UUID> projectIds = null;
 		try {
@@ -189,8 +208,7 @@ public class ProjectController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Project created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)), }),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving sessions from the data store", content = @Content)}
-	)
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving sessions from the data store", content = @Content) })
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> createProject(
@@ -204,13 +222,13 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error setting user's permissions for project");
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error setting user's permissions for project");
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error the user is already the creator of this project");
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error the user is already the creator of this project");
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 
@@ -284,12 +302,12 @@ public class ProjectController {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
-	@PostMapping("/{id}/assets/{asset_type}/{asset_id}")
+	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("asset_type") final AssetType type,
-			@PathVariable("asset_id") final UUID assetId) {
+			@PathVariable("asset-type") final AssetType type,
+			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
@@ -315,12 +333,12 @@ public class ProjectController {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
 			@ApiResponse(responseCode = "204", description = "User may not have permission to this project", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
-	@DeleteMapping("/{id}/assets/{asset_type}/{asset_id}")
+	@DeleteMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("asset_type") final AssetType type,
-			@PathVariable("asset_id") final UUID assetId) {
+			@PathVariable("asset-type") final AssetType type,
+			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
@@ -372,12 +390,12 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error getting project permission relationships", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error getting project permission relationships");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error getting project permission relationships");
 		}
 	}
 
-	@PostMapping("/{id}/permissions/group/{groupId}/{relationship}")
+	@PostMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured({ Roles.USER, Roles.SERVICE })
 	@Operation(summary = "Sets a group's permissions for a project")
 	@ApiResponses(value = {
@@ -386,7 +404,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> setProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("groupId") final String groupId,
+			@PathVariable("group-id") final String groupId,
 			@PathVariable("relationship") final String relationship) {
 		try {
 			final RebacProject what = new RebacProject(projectId, reBACService);
@@ -395,8 +413,8 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error setting project group permission relationships", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error setting project group permission relationships");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error setting project group permission relationships");
 		}
 	}
 
@@ -419,12 +437,12 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error deleting project user permission relationships");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error deleting project user permission relationships");
 		}
 	}
 
-	@DeleteMapping("/{id}/permissions/group/{groupId}/{relationship}")
+	@DeleteMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a group's permissions for a project")
 	@ApiResponses(value = {
@@ -433,7 +451,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> removeProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("groupId") final String groupId,
+			@PathVariable("group-id") final String groupId,
 			@PathVariable("relationship") final String relationship) {
 		if (relationship.equalsIgnoreCase(Schema.Relationship.CREATOR.toString())) {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -445,12 +463,12 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error deleting project group permission relationships", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error deleting project group permission relationships");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error deleting project group permission relationships");
 		}
 	}
 
-	@PostMapping("/{id}/permissions/user/{userId}/{relationship}")
+	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
 	@ApiResponses(value = {
@@ -459,7 +477,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> setProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("userId") final String userId,
+			@PathVariable("user-id") final String userId,
 			@PathVariable("relationship") final String relationship) {
 		try {
 			final RebacProject what = new RebacProject(projectId, reBACService);
@@ -468,12 +486,12 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error setting project user permission relationships", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error setting project user permission relationships");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error setting project user permission relationships");
 		}
 	}
 
-	@PutMapping("/{id}/permissions/user/{userId}/{oldRelationship}")
+	@PutMapping("/{id}/permissions/user/{user-id}/{old-relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a user's permissions for a project")
 	@ApiResponses(value = {
@@ -482,8 +500,8 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("userId") final String userId,
-			@PathVariable("oldRelationship") final String oldRelationship,
+			@PathVariable("user-d") final String userId,
+			@PathVariable("old-relationship") final String oldRelationship,
 			@RequestParam("to") final String newRelationship) {
 		try {
 			final RebacProject what = new RebacProject(projectId, reBACService);
@@ -492,12 +510,12 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error deleting project user permission relationships");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error deleting project user permission relationships");
 		}
 	}
 
-	@DeleteMapping("/{id}/permissions/user/{userId}/{relationship}")
+	@DeleteMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a user's permissions for a project")
 	@ApiResponses(value = {
@@ -506,7 +524,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> removeProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("userId") final String userId,
+			@PathVariable("user-id") final String userId,
 			@PathVariable("relationship") final String relationship) {
 		try {
 			final RebacProject what = new RebacProject(projectId, reBACService);
@@ -515,8 +533,8 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error deleting project user permission relationships");
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error deleting project user permission relationships");
 		}
 	}
 

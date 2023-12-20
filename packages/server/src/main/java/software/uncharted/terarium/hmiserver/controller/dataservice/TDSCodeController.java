@@ -83,7 +83,7 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving publications from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Code>> getCodes(
-			@RequestParam(name = "page_size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(codeService.getCode(pageSize, page));
@@ -262,7 +262,7 @@ public class TDSCodeController {
 	 *         upload
 	 * @throws IOException if an I/O error occurs while reading the file
 	 */
-	@PutMapping(value = "/{codeId}/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(value = "/{id}/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the specified codeId")
 	@ApiResponses(value = {
@@ -270,7 +270,7 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 	})
 	public ResponseEntity<Integer> uploadFile(
-			@PathVariable("codeId") final UUID codeId,
+			@PathVariable("id") final UUID codeId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") MultipartFile input) {
 
@@ -294,16 +294,16 @@ public class TDSCodeController {
 	 * Downloads a file from GitHub given the path and owner name, then uploads it
 	 * to the project.
 	 */
-	@PutMapping("/{codeId}/upload-code-from-github")
+	@PutMapping("/{id}/upload-code-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class)))
 	})
 	public ResponseEntity<Integer> uploadCodeFromGithub(
-			@PathVariable("codeId") final UUID codeId,
+			@PathVariable("id") final UUID codeId,
 			@RequestParam("path") final String path,
-			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
+			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
 
@@ -323,7 +323,7 @@ public class TDSCodeController {
 	 * @param repoName         The name of the repo to upload from
 	 * @return A response containing the status of the upload
 	 */
-	@PutMapping("/{codeId}/upload-code-from-github-repo")
+	@PutMapping("/{id}/upload-code-from-github-repo")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(value = {
@@ -331,9 +331,9 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 	})
 	public ResponseEntity<Integer> uploadCodeFromGithub(
-			@PathVariable("codeId") final UUID codeId,
-			@RequestParam("repoOwnerAndName") final String repoOwnerAndName,
-			@RequestParam("repoName") final String repoName) {
+			@PathVariable("id") final UUID codeId,
+			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
+			@RequestParam("repo-name") final String repoName) {
 		try (final CloseableHttpClient httpClient = HttpClients.custom()
 				.build()) {
 

@@ -1,10 +1,10 @@
 import API from '@/api/api';
-import { EventType, Model, ModelConfiguration } from '@/types/Types';
-import * as EventService from '@/services/event';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { useProjects } from '@/composables/project';
-import { isEmpty } from 'lodash';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import * as EventService from '@/services/event';
+import { EventType, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -44,7 +44,7 @@ export async function getBulkModels(modelIDs: string[]) {
  * @return Array<Model>|null - the list of all models, or null if none returned by API
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions?page_size=500');
+	const response = await API.get('/models/descriptions?page-size=500');
 	return response?.data ?? null;
 }
 

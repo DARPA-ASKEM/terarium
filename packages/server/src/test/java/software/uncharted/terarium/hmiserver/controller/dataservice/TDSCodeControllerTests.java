@@ -155,7 +155,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(
 				MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github")
 						.with(csrf())
-						.param("repoOwnerAndName", "unchartedsoftware/torflow")
+						.param("repo-owner-and-name", "unchartedsoftware/torflow")
 						.param("path", "README.md")
 						.param("filename", "torflow-readme.md")
 						.contentType("application/json"))
@@ -173,8 +173,8 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(
 				MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo")
 						.with(csrf())
-						.param("repoOwnerAndName", "unchartedsoftware/torflow")
-						.param("repoName", "torflow.zip")
+						.param("repo-owner-and-name", "unchartedsoftware/torflow")
+						.param("repo-name", "torflow.zip")
 						.contentType("application/json"))
 				.andExpect(status().isOk());
 	}

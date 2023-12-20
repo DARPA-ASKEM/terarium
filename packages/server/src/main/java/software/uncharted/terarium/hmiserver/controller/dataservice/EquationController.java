@@ -62,7 +62,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving equations from the data store", content = @Content)
 	})
 	ResponseEntity<List<Equation>> getEquations(
-			@RequestParam(name = "page_size", defaultValue = "100") Integer pageSize,
+			@RequestParam(name = "page-size", defaultValue = "100") Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0") Integer page) {
 
 		try {
@@ -109,7 +109,7 @@ public class EquationController {
 	 * @param id equation id
 	 * @return Equation
 	 */
-	@GetMapping("/{equationId}")
+	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets equation by ID")
 	@ApiResponses(value = {
@@ -117,7 +117,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "204", description = "There was no equation found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the equation from the data store", content = @Content)
 	})
-	ResponseEntity<Equation> getEquation(@PathVariable("equationId") UUID id) {
+	ResponseEntity<Equation> getEquation(@PathVariable("id") UUID id) {
 
 		try {
 			Optional<Equation> equation = equationService.getEquation(id);
@@ -141,7 +141,7 @@ public class EquationController {
 	 * @param equation equation to update with
 	 * @return ID of updated equation
 	 */
-	@PutMapping("/{equationId}")
+	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a equation")
 	@ApiResponses(value = {
@@ -149,7 +149,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the equation", content = @Content)
 	})
 	ResponseEntity<Equation> updateEquation(
-			@PathVariable("equationId") UUID id,
+			@PathVariable("id") UUID id,
 			@RequestBody Equation equation) {
 
 		try {
@@ -173,7 +173,7 @@ public class EquationController {
 	 * @param id equation to delete
 	 * @return delete message
 	 */
-	@DeleteMapping("/{equationId}")
+	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an equation")
 	@ApiResponses(value = {
@@ -182,7 +182,7 @@ public class EquationController {
 			@ApiResponse(responseCode = "404", description = "Equation could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
-	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("equationId") UUID id) {
+	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("id") UUID id) {
 
 		try {
 			equationService.deleteEquation(id);

@@ -155,7 +155,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(
 				MockMvcRequestBuilders.put("/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
 						.with(csrf())
-						.param("repoOwnerAndName", "unchartedsoftware/torflow")
+						.param("repo-owner-and-name", "unchartedsoftware/torflow")
 						.param("path", "README.md")
 						.param("filename", "torflow-readme.md")
 						.contentType("application/json"))
