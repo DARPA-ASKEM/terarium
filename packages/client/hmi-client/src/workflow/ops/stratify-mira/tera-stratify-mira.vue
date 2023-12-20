@@ -2,18 +2,20 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section>
-				<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
-				<p>The model will be stratified with the following settings.</p>
-				<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-					Note: Code has been executed which may not be reflected here.
-				</p>
-				<tera-stratification-group-form
-					:modelNodeOptions="modelNodeOptions"
-					:config="node.state.strataGroup"
-					@update-self="updateStratifyGroupForm"
-				/>
+				<div class="form-section">
+					<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
+					<p>The model will be stratified with the following settings.</p>
+					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+						Note: Code has been executed which may not be reflected here.
+					</p>
+					<tera-stratification-group-form
+						:modelNodeOptions="modelNodeOptions"
+						:config="node.state.strataGroup"
+						@update-self="updateStratifyGroupForm"
+					/>
+				</div>
 				<template #footer>
-					<Button label="Stratify" @click="stratifyModel" />
+					<Button outlined label="Stratify" icon="pi pi-play" @click="stratifyModel" />
 					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
 				</template>
 			</tera-drilldown-section>
@@ -31,7 +33,13 @@
 				/>
 
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="runCodeStratify" />
+					<Button
+						outlined
+						style="margin-right: auto"
+						label="Run"
+						icon="pi pi-play"
+						@click="runCodeStratify"
+					/>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -39,7 +47,12 @@
 			<tera-drilldown-preview>
 				<div>
 					<template v-if="amr">
-						<tera-model-diagram ref="teraModelDiagramRef" :model="amr" :is-editable="false" />
+						<tera-model-diagram
+							ref="teraModelDiagramRef"
+							:model="amr"
+							:is-editable="false"
+							:model-configuration="modelConfig"
+						/>
 						<TeraModelSemanticTables :model="amr" :is-editable="false" />
 					</template>
 					<div v-else>
@@ -48,26 +61,38 @@
 					</div>
 				</div>
 				<template #footer>
-					<InputText
-						v-model="newModelName"
-						placeholder="model name"
-						type="text"
-						class="input-small"
-					/>
 					<Button
 						:disabled="!amr"
 						outlined
-						style="margin-right: auto"
 						label="Save as new Model"
-						@click="
-							() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-						"
+						@click="isNewModelModalVisible = true"
 					/>
 					<Button label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
+	<tera-modal v-if="isNewModelModalVisible">
+		<template #header>
+			<h4>Save as a new model</h4>
+		</template>
+		<form @submit.prevent>
+			<label for="new-model">Model name</label>
+			<InputText
+				id="new-model"
+				type="text"
+				v-model="newModelName"
+				placeholder="Enter a unique name for your model"
+			/>
+		</form>
+		<template #footer>
+			<Button
+				label="Save"
+				@click="() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })"
+			/>
+			<Button class="p-button-secondary" label="Cancel" @click="isNewModelModalVisible = false" />
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -76,7 +101,7 @@ import { watch, ref, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
-import { Model, AssetType } from '@/types/Types';
+import { Model, ModelConfiguration, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { getModel, createModel, getModelConfigurations } from '@/services/model';
@@ -89,6 +114,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -118,7 +144,11 @@ const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 const modelNodeOptions = ref<string[]>([]);
 const teraModelDiagramRef = ref();
+
+const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
+
+const modelConfig = ref<ModelConfiguration>();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
@@ -242,9 +272,6 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 
 	if (!modelData) return;
 
-	const modelConfiguration = await getModelConfigurations(modelData.id);
-	console.log(modelConfiguration);
-
 	if (options.addToProject) {
 		await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
 	}
@@ -258,6 +285,8 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 		});
 		emit('close');
 	}
+
+	isNewModelModalVisible.value = false;
 };
 
 const initialize = (editorInstance: any) => {
@@ -330,6 +359,32 @@ watch(
 	{ immediate: true }
 );
 
+// Set model config if it exists, if not create a temporary one
+watch(
+	() => amr.value,
+	async () => {
+		if (amr.value) {
+			const configs = await getModelConfigurations(amr.value.id);
+			if (configs.length > 0) {
+				modelConfig.value = configs[0];
+			} else {
+				modelConfig.value = {
+					id: 'temporary config',
+					name: 'temporary config',
+					modelId: amr.value.id,
+					configuration: {
+						header: _.cloneDeep(amr.value.header),
+						model: _.cloneDeep(amr.value.model),
+						semantics: _.cloneDeep(amr.value.semantics),
+						metadata: _.cloneDeep(amr.value.metadata)
+					}
+				};
+			}
+		}
+	},
+	{ immediate: true }
+);
+
 onMounted(() => {
 	const codeHistoryLength = props.node.state.strataCodeHistory.length;
 	if (codeHistoryLength > 0) {
@@ -343,19 +398,16 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.code-container {
-	display: flex;
-	flex-direction: column;
-}
-
-.input-small {
-	padding: 0.5rem;
-}
-
 .code-executed-warning {
 	background-color: #ffe6e6;
 	color: #cc0000;
 	padding: 10px;
 	border-radius: 4px;
+}
+
+.form-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 </style>

@@ -4,8 +4,8 @@
 			<label for="strata-name">Cartesian product</label>
 			<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
 		</div>
-		<div class="first-row">
-			<div class="age-group">
+		<div class="input-row">
+			<div class="label-and-input">
 				<label for="strata-name">Name of strata</label>
 				<InputText
 					v-model="strataName"
@@ -13,7 +13,7 @@
 					@focusout="emit('update-self', updatedConfig)"
 				/>
 			</div>
-			<div class="select-variables">
+			<div class="label-and-input">
 				<label for="variables-select">Select variables and parameters to stratify</label>
 				<MultiSelect
 					v-model="selectedVariables"
@@ -24,16 +24,18 @@
 				></MultiSelect>
 			</div>
 		</div>
-		<div class="flex flex-column">
-			<label for="group-labels"
-				>Enter a comma separated list of labels for each group.
-				<span class="subdued-text">(Max 100)</span></label
-			>
-			<InputText
-				v-model="labels"
-				placeholder="Young, Old"
-				@focusout="emit('update-self', updatedConfig)"
-			/>
+		<div class="input-row">
+			<div class="label-and-input">
+				<label for="group-labels"
+					>Enter a comma separated list of labels for each group.
+					<span class="subdued-text">(Max 100)</span></label
+				>
+				<InputText
+					v-model="labels"
+					placeholder="Young, Old"
+					@focusout="emit('update-self', updatedConfig)"
+				/>
+			</div>
 		</div>
 	</div>
 </template>
@@ -78,14 +80,15 @@ watch(
 
 <style scoped>
 .strata-group {
-	margin: 1rem;
 	display: flex;
-	padding: 1rem 1rem 1rem 1.5rem;
+	padding: 1rem 1.5rem;
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
+	gap: 0.5rem;
 	border-radius: 0.375rem;
 	background: #fff;
+	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
 	box-shadow:
 		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
@@ -101,22 +104,26 @@ watch(
 	align-self: stretch;
 }
 
-.first-row {
-	display: flex;
-}
-.age-group {
-	display: flex;
-	flex-direction: column;
-	padding-right: 2rem;
-	padding-bottom: 1rem;
-}
-
-.select-variables {
-	display: flex;
-	flex-direction: column;
-}
-
 .subdued-text {
 	color: var(--text-color-subdued);
+}
+
+.input-row {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+
+	& > * {
+		flex: 1;
+	}
+}
+
+.label-and-input {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 </style>
