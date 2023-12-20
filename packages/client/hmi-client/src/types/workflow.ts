@@ -163,3 +163,9 @@ export enum ProgressState {
 	RUNNING = 'running',
 	COMPLETE = 'complete'
 }
+
+export interface SelectableAsset<T> {
+	name: string;
+	includeInProcess: boolean;
+	asset: T;
+}
