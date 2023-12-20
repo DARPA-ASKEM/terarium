@@ -1,8 +1,9 @@
 <template>
 	<ul>
 		<li
-			v-for="(output, index) in selectedOutputs"
-			:key="index"
+			v-for="output in selectedOutputs"
+			:id="output.id"
+			:key="output.id"
 			:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			@mouseenter="emit('port-mouseover', $event)"
 			@mouseleave="emit('port-mouseleave')"
@@ -54,12 +55,11 @@ const props = defineProps({
 	}
 });
 
-const selectedOutputs = computed(
-	() =>
-		props.outputs?.filter((output) => {
-			if (!('isSelected' in output)) return true;
-			return output.isSelected;
-		})
+const selectedOutputs = computed(() =>
+	props.outputs?.filter((output) => {
+		if (!('isSelected' in output)) return true;
+		return output.isSelected;
+	})
 );
 </script>
 

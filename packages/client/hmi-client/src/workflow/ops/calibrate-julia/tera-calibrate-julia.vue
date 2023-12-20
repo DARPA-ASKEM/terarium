@@ -457,7 +457,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 	emit('append-output-port', {
 		type: CalibrationOperationJulia.outputs[0].type,
-		label: 'Output',
+		label: `Output - ${props.node.outputs.length + 1}`,
 		value: runIdList,
 		isSelected: false,
 		state: {
