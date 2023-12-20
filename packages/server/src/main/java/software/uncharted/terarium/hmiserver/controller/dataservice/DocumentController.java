@@ -117,14 +117,8 @@ public class DocumentController implements SnakeCaseController {
 			}
 		});
 
-		System.out.println("before update");
-		System.out.println(convertObjectToSnakeCaseJsonNode(document));
-
 		// Update data-service with the updated metadata
 		proxy.updateAsset(id, convertObjectToSnakeCaseJsonNode(document));
-
-		System.out.println("after update");
-
 		// Return the updated document
 		return ResponseEntity.ok(document);
 	}
@@ -159,9 +153,7 @@ public class DocumentController implements SnakeCaseController {
 			// if the fileEntity is not a PDF, then we need to extract the text and update the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
 				final JsonNode node = this.convertObjectToSnakeCaseJsonNode(proxy.getAsset(documentId).getBody().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8)));
-				System.out.println("before before");
 				final ResponseEntity<JsonNode> updateRes = proxy.updateAsset(documentId, node);
-				System.out.println("after after");
 				if (updateRes.getStatusCode().isError()) {
 					return ResponseEntity.status(updateRes.getStatusCode()).build();
 				}
