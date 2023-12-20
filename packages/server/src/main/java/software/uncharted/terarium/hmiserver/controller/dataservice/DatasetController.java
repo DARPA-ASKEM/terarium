@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -11,6 +11,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -227,7 +230,17 @@ public class DatasetController {
 					error);
 		}
 
-		final List<List<String>> csv = csvToRecords(rawCSV);
+		List<List<String>> csv;
+		try {
+			csv = csvToRecords(rawCSV);
+		} catch (IOException e) {
+			final String error = "Unable to parse CSV";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+
 		final List<String> headers = csv.get(0);
 		final List<CsvColumnStats> csvColumnStats = new ArrayList<>();
 		for (int i = 0; i < csv.get(0).size(); i++) {
@@ -369,17 +382,16 @@ public class DatasetController {
 		}
 	}
 
-	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
-	// warning this is not sufficient for the long term. Should likely use a library
-	// for this conversion formatting may break this.
-	private static List<List<String>> csvToRecords(final String rawCsvString) {
-		final String[] csvRows = rawCsvString.split("\n");
-		final String[] headers = csvRows[0].split(",");
-		final List<List<String>> csv = new ArrayList<>();
-		for (final String csvRow : csvRows) {
-			csv.add(Arrays.asList(csvRow.split(",")));
+	private static List<List<String>> csvToRecords(final String rawCsvString) throws IOException {
+		List<List<String>> records = new ArrayList<>();
+		try (CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
+			for (CSVRecord record : parser) {
+				List<String> values = new ArrayList<>();
+				record.forEach(cell -> values.add(cell));
+				records.add(values);
+			}
 		}
-		return csv;
+		return records;
 	}
 
 	private static List<String> getColumn(final List<List<String>> matrix, final int columnNumber) {
