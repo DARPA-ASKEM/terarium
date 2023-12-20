@@ -1,233 +1,303 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section>
-			<section class="tera-simulate">
-				<div class="simulate-header">
-					<SelectButton
-						:model-value="view"
-						@change="if ($event.value) view = $event.value;"
-						:options="viewOptions"
-						option-value="value"
-					>
-						<template #option="{ option }">
-							<i :class="`${option.icon} p-button-icon-left`" />
-							<span class="p-button-label">{{ option.value }}</span>
-						</template>
-					</SelectButton>
+		<section :tabName="SimulateTabs.Wizard">
+			<tera-drilldown-section>
+				<div class="form-section">
+					<h4>Set simulation parameters</h4>
+					<div class="input-row">
+						<div class="label-and-input">
+							<label for="2">Start time</label>
+							<InputNumber
+								id="2"
+								class="p-inputtext-sm"
+								v-model="timespan.start"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
+						</div>
+						<div class="label-and-input">
+							<label for="3">End time</label>
+							<InputNumber
+								id="3"
+								class="p-inputtext-sm"
+								v-model="timespan.end"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
+						</div>
+					</div>
 				</div>
-				<div v-if="view === SimulateView.Output && node?.outputs.length" class="simulate-container">
-					<Dropdown
-						v-if="runList.length > 0"
-						:options="runList"
-						v-model="selectedRun"
-						option-label="label"
-						placeholder="Select a simulation run"
-						@update:model-value="handleSelectedRunChange"
-					/>
-					<template v-if="runResults[selectedRun?.runId]">
-						<ul class="metadata-container">
-							<li><span>Run ID:</span> {{ selectedRun.runId }}</li>
-							<li>
-								<span>Configuration name:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].configName }}
-							</li>
-							<li>
-								<span>Start step:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.start }}
-								<span>End step:</span>
-								{{ node.state.simConfigs.runConfigs[selectedRun.runId].timeSpan?.end }}
-							</li>
-						</ul>
+			</tera-drilldown-section>
+		</section>
+		<section :tabName="SimulateTabs.Notebook">
+			<h4>Notebook</h4>
+		</section>
+		<template #preview>
+			<tera-drilldown-preview
+				title="Simulation output"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:is-loading="showSpinner"
+				is-selectable
+			>
+				<SelectButton
+					:model-value="view"
+					@change="if ($event.value) view = $event.value;"
+					:options="viewOptions"
+					option-value="value"
+				>
+					<template #option="{ option }">
+						<i :class="`${option.icon} p-button-icon-left`" />
+						<span class="p-button-label">{{ option.value }}</span>
+					</template>
+				</SelectButton>
+				<template v-if="runResults[selectedRunId]">
+					<div v-if="view === OutputView.Charts">
 						<tera-simulate-chart
-							v-for="(cfg, idx) in node.state.simConfigs.chartConfigs"
+							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
-							:run-results="{ [selectedRun.runId]: runResults[selectedRun.runId] }"
-							:chartConfig="{ selectedRun: selectedRun.runId, selectedVariable: cfg }"
+							:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
+							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							@configuration-change="configurationChange(idx, $event)"
 							color-by-run
 						/>
 						<Button
-							class="add-chart"
-							text
-							:outlined="true"
+							class="p-button-sm p-button-text"
 							@click="addChart"
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
-						<tera-dataset-datatable
-							v-if="rawContent[selectedRun?.runId]"
-							:rows="10"
-							:raw-content="rawContent[selectedRun.runId]"
-						/>
-						<Button
-							class="add-chart"
-							title="Saves the current version of the model as a new Terarium asset"
-							@click="showSaveInput = !showSaveInput"
-						>
-							<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-							<span class="p-button-text">Save as</span>
-						</Button>
-						<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-							<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-							<i
-								class="pi pi-times i"
-								:class="{ clear: hasValidDatasetName }"
-								@click="saveAsName = ''"
-							></i>
-							<i
-								v-if="useProjects().activeProject.value?.id"
-								class="pi pi-check i"
-								:class="{ save: hasValidDatasetName }"
-								@click="saveDatasetToProject"
-							></i>
-						</span>
-					</template>
-				</div>
-				<div v-else-if="view === SimulateView.Input && node" class="simulate-container">
-					<div class="simulate-model">
-						<Accordion :multiple="true" :active-index="[0, 1, 2]">
-							<AccordionTab>
-								<template #header>
-									{{ modelConfigurations[selectedRun?.runId]?.configuration.name }}
-								</template>
-								<model-diagram
-									v-if="model[selectedRun?.runId]"
-									:model="model[selectedRun.runId]!"
-									:is-editable="false"
-								/>
-							</AccordionTab>
-							<AccordionTab>
-								<template #header> Simulation time range </template>
-								<div class="sim-tspan-container">
-									<div class="sim-tspan-group">
-										<label for="2">Start date</label>
-										<InputNumber
-											id="2"
-											class="p-inputtext-sm"
-											v-model="timespan.start"
-											inputId="integeronly"
-										/>
-									</div>
-									<div class="sim-tspan-group">
-										<label for="3">End date</label>
-										<InputNumber
-											id="3"
-											class="p-inputtext-sm"
-											v-model="timespan.end"
-											inputId="integeronly"
-										/>
-									</div>
-								</div>
-							</AccordionTab>
-						</Accordion>
 					</div>
-				</div>
-			</section>
-		</section>
+					<div v-else-if="view === OutputView.Data">
+						<tera-dataset-datatable
+							v-if="rawContent[selectedRunId]"
+							:rows="10"
+							:raw-content="rawContent[selectedRunId]"
+						/>
+					</div>
+				</template>
+			</tera-drilldown-preview>
+		</template>
+		<template #footer>
+			<Button
+				outlined
+				:style="{ marginRight: 'auto' }"
+				label="Run"
+				icon="pi pi-play"
+				@click="runSimulate"
+				:disabled="showSpinner"
+			/>
+			<Button
+				outlined
+				title="Saves the current version of the model as a new Terarium asset"
+				@click="showSaveInput = !showSaveInput"
+			>
+				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Save as new dataset</span>
+			</Button>
+			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
+				<InputText v-model="saveAsName" placeholder="New dataset name" />
+				<i
+					class="pi pi-times i"
+					:class="{ clear: hasValidDatasetName }"
+					@click="saveAsName = ''"
+				></i>
+				<i
+					v-if="useProjects().activeProject.value?.id"
+					class="pi pi-check i"
+					:class="{ save: hasValidDatasetName }"
+					@click="saveDatasetToProject"
+				></i>
+			</span>
+			<Button label="Close" @click="emit('close')" />
+		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, onMounted, computed } from 'vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import { ModelConfiguration, Model, TimeSpan, CsvAsset } from '@/types/Types';
+import { CsvAsset, Model, ModelConfiguration, SimulationRequest, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
-import ModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import { Poller, PollerState } from '@/api/api';
 
-import { getRunResult } from '@/services/models/simulation-service';
+import {
+	getRunResult,
+	getSimulation,
+	makeForecastJob,
+	simulationPollAction,
+	querySimulationInProgress
+} from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { WorkflowNode } from '@/types/workflow';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { SimulateJuliaOperationState } from './simulate-julia-operation';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import { logger } from '@/utils/logger';
+import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits([
+	'append-output-port',
+	'update-state',
+	'select-output',
+	'update-output-port',
+	'close'
+]);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 
-enum SimulateView {
-	Input = 'Input',
-	Output = 'Output'
+enum SimulateTabs {
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 
-const view = ref(SimulateView.Input);
+enum OutputView {
+	Charts = 'Charts',
+	Data = 'Data'
+}
+
+const view = ref(OutputView.Charts);
 const viewOptions = ref([
-	{ value: SimulateView.Input, icon: 'pi pi-sign-in' },
-	{ value: SimulateView.Output, icon: 'pi pi-sign-out' }
+	{ value: OutputView.Charts, icon: 'pi pi-image' },
+	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
 const model = ref<{ [runId: string]: Model | null }>({});
-const runResults = ref<RunResults>({});
 const modelConfigurations = ref<{ [runId: string]: ModelConfiguration | null }>({});
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
+
+const showSpinner = ref(false);
+const completedRunId = ref<string>('');
+const runResults = ref<RunResults>({});
+const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
-const runList = computed(() =>
-	Object.keys(props.node.state.simConfigs.runConfigs).map((runId: string, idx: number) => ({
-		label: `Output ${idx + 1} - ${runId}`,
-		runId
-	}))
-);
-const selectedRun = ref();
-
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.simConfigs.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const handleSelectedRunChange = () => {
-	if (!selectedRun.value) return;
-
-	lazyLoadSimulationData(selectedRun.value.runId);
-
-	const state = _.cloneDeep(props.node.state);
-	// set the active status for the selected run in the run configs
-	Object.keys(state.simConfigs.runConfigs).forEach((runId) => {
-		state.simConfigs.runConfigs[runId].active = runId === selectedRun.value?.runId;
-	});
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.simConfigs.chartConfigs.push([]);
-
-	emit('update-state', state);
-};
-
-async function saveDatasetToProject() {
-	const { activeProject, refresh } = useProjects();
-	if (activeProject.value?.id) {
-		if (await saveDataset(activeProject.value.id, selectedRun.value.runId, saveAsName.value)) {
-			refresh();
-		}
-		showSaveInput.value = false;
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
 	}
-}
+	return [];
+});
+const selectedOutputId = ref<string>();
+const selectedRunId = computed(
+	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
+);
+
+const poller = new Poller();
+
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length === 1) {
+		// there should only be one run happening at a time
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
+
+const updateState = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.currentTimespan = timespan.value;
+	emit('update-state', state);
+};
+
+const runSimulate = async () => {
+	const modelConfigurationList = props.node.inputs[0].value;
+	if (!modelConfigurationList?.length) return;
+
+	// Since we've disabled multiple configs to a simulation node, we can assume only one config
+	const configId = modelConfigurationList[0];
+
+	const state = props.node.state;
+
+	const payload: SimulationRequest = {
+		modelConfigId: configId,
+		timespan: {
+			start: state.currentTimespan.start,
+			end: state.currentTimespan.end
+		},
+		extra: {},
+		engine: 'sciml'
+	};
+	const response = await makeForecastJob(payload);
+	getStatus(response.id);
+};
+
+const getStatus = async (runId: string) => {
+	showSpinner.value = true;
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction([runId], props.node, progress, emit));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		showSpinner.value = false;
+		return;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		showSpinner.value = false;
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Julia'
+		});
+		throw Error('Failed Runs');
+	}
+
+	completedRunId.value = runId;
+	showSpinner.value = false;
+};
+
+const watchCompletedRunId = async (runId: string) => {
+	if (!runId) return;
+
+	const state = _.cloneDeep(props.node.state);
+	if (state.chartConfigs.length === 0) {
+		addChart();
+	}
+
+	const sim = await getSimulation(runId);
+
+	emit('append-output-port', {
+		type: SimulateJuliaOperation.outputs[0].type,
+		label: `Output - ${props.node.outputs.length + 1}`,
+		value: runId,
+		state: {
+			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
+			simulationsInProgress: state.simulationsInProgress
+		},
+		isSelected: false
+	});
+};
 
 const lazyLoadSimulationData = async (runId: string) => {
-	if (runResults.value[runId]) return;
+	if (runResults.value[runId] && rawContent.value[runId]) return;
 
 	// there's only a single input config
 	const modelConfigId = props.node.inputs[0].value?.[0];
@@ -252,82 +322,93 @@ const lazyLoadSimulationData = async (runId: string) => {
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);
 };
 
-onMounted(() => {
-	const runId = Object.values(props.node.state.simConfigs.runConfigs).find(
-		(metadata) => metadata.active
-	)?.runId;
-	if (runId) {
-		selectedRun.value = runList.value.find((run) => run.runId === runId);
-	} else {
-		selectedRun.value = runList.value.length > 0 ? runList.value[0] : undefined;
-	}
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
+};
 
-	if (selectedRun.value?.runId) {
-		lazyLoadSimulationData(selectedRun.value.runId);
+const onUpdateSelection = (id) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+};
+
+const configurationChange = (index: number, config: ChartConfig) => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config.selectedVariable;
+
+	emit('update-state', state);
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs.push([]);
+
+	emit('update-state', state);
+};
+
+async function saveDatasetToProject() {
+	const { activeProject, refresh } = useProjects();
+	if (activeProject.value?.id) {
+		if (await saveDataset(activeProject.value.id, selectedRunId.value, saveAsName.value)) {
+			refresh();
+		}
+		showSaveInput.value = false;
 	}
-});
+}
+
+watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
+
+watch(
+	() => selectedRunId.value,
+	() => {
+		lazyLoadSimulationData(selectedRunId.value);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+
+		// Update Wizard form fields with current selected output state timespan
+		timespan.value = props.node.state.currentTimespan;
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
-.add-chart {
-	width: 9em;
-	margin: 0em 1em;
-	margin-bottom: 1em;
-}
-
-.tera-simulate {
-	background: white;
-	z-index: 1;
-}
-
-.simulate-header {
-	display: flex;
-	margin: 0.5rem;
-}
-
-.simulate-header-label {
-	display: flex;
-	align-items: center;
-	font-weight: var(--font-weight-semibold);
-	font-size: 20px;
-	margin-right: 1rem;
-}
-
-.simulate-container {
-	height: calc(100vh - 150px);
-	overflow-y: scroll;
-}
-
 .simulate-chart {
-	margin: 2em 1em;
+	margin: 2em 1.5em;
 }
 
-.sim-tspan-container {
-	display: flex;
-	gap: 1em;
-}
-
-.sim-tspan-group {
+.form-section {
 	display: flex;
 	flex-direction: column;
-	flex-grow: 1;
-	flex-basis: 0;
+	gap: 0.5rem;
 }
 
-::v-deep .p-inputnumber-input,
-.p-inputwrapper {
+.label-and-input {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.input-row {
 	width: 100%;
-}
-
-.metadata-container {
-	padding: 1rem;
 	display: flex;
-	flex-direction: column;
-	gap: 1em;
-	list-style: none;
-}
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
 
-li > span {
-	font-weight: bold;
+	& > * {
+		flex: 1;
+	}
 }
 </style>

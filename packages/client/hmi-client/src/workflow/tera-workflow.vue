@@ -61,6 +61,7 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
+				@resize="resizeHandler"
 				@port-selected="
 					(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)
 				"
@@ -297,17 +298,16 @@ function appendOutputPort(
 	if (!node) return;
 
 	const uuid = uuidv4();
-	const timestamp = new Date();
 
 	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
 		type: port.type,
-		label: `${port.label} ${timestamp.toLocaleTimeString()}`,
+		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
-		timestamp
+		timestamp: new Date()
 	};
 
 	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
@@ -591,6 +591,72 @@ function onPortMouseleave() {
 	isMouseOverPort = false;
 }
 
+function resizeHandler(node: WorkflowNode<any>) {
+	relinkEdges(node);
+}
+
+// For relinking
+const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+const threshold2 = 5.0 * 5.0;
+
+/*
+ * Relink edges that have become detatched
+ *
+ * [output-port](edge source => edge target)[input-port]
+ *
+ * FIXME: not efficient, need cache/map for larger workflows
+ */
+function relinkEdges(node: WorkflowNode<any> | null) {
+	const nodes = node ? [node] : wf.value.nodes;
+	const edges = wf.value.edges;
+
+	// Note id can start with numerals, so we need [id=...]
+	const getPortElement = (id: string) =>
+		d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
+
+	// Relink heuristic, this will modify source
+	const relink = (source: Position, target: Position) => {
+		if (dist2(source, target) > threshold2) {
+			source.x = target.x;
+			source.y = target.y;
+		}
+	};
+
+	for (let i = 0; i < nodes.length; i++) {
+		const n = nodes[i];
+
+		// The input ports connects to the edge's target
+		const inputs = n.inputs;
+		inputs.forEach((port) => {
+			const edge = edges.find((e) => e.targetPortId === port.id);
+			if (!edge) return;
+			const portElem = getPortElement(edge.targetPortId as string);
+			const nodePosition: Position = { x: n.x, y: n.y };
+			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
+			const portPos = {
+				x: nodePosition.x,
+				y: nodePosition.y + totalOffsetY
+			};
+			relink(edge.points[1], portPos);
+		});
+
+		// The output ports connects to the edge's source
+		const outputs = n.outputs;
+		outputs.forEach((port) => {
+			const edge = edges.find((e) => e.sourcePortId === port.id);
+			if (!edge) return;
+			const portElem = getPortElement(edge.sourcePortId as string);
+			const nodePosition: Position = { x: n.x, y: n.y };
+			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
+			const portPos = {
+				x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
+				y: nodePosition.y + totalOffsetY
+			};
+			relink(edge.points[0], portPos);
+		});
+	}
+}
+
 let prevX = 0;
 let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
@@ -610,7 +676,6 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-// TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 	wf.value.edges.forEach((edge) => {
 		if (edge.source === node.id) {
