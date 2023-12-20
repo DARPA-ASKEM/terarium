@@ -26,10 +26,10 @@
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">
-				<label for="group-labels"
-					>Enter a comma separated list of labels for each group.
-					<span class="subdued-text">(Max 100)</span></label
-				>
+				<label for="group-labels">
+					Enter a comma separated list of labels for each group.
+					<span class="subdued-text">(Max 100)</span>
+				</label>
 				<InputText
 					v-model="labels"
 					placeholder="Young, Old"

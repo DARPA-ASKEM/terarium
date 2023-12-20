@@ -51,7 +51,7 @@
 							ref="teraModelDiagramRef"
 							:model="amr"
 							:is-editable="false"
-							:model-configuration="modelConfig"
+							:model-configuration="modelConfig!"
 						/>
 						<TeraModelSemanticTables :model="amr" :is-editable="false" />
 					</template>
@@ -97,14 +97,14 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, ref, onUnmounted, onMounted } from 'vue';
+import { computed, watch, ref, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import { Model, ModelConfiguration, AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import { getModel, createModel, getModelConfigurations } from '@/services/model';
+import { getModel, createModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -148,7 +148,20 @@ const teraModelDiagramRef = ref();
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
 
-const modelConfig = ref<ModelConfiguration>();
+const modelConfig = computed<ModelConfiguration | null>(() => {
+	if (!amr.value) return null;
+	return {
+		id: 'temporary config',
+		name: 'temporary config',
+		modelId: amr.value.id,
+		configuration: {
+			header: _.cloneDeep(amr.value.header),
+			model: _.cloneDeep(amr.value.model),
+			semantics: _.cloneDeep(amr.value.semantics),
+			metadata: _.cloneDeep(amr.value.metadata)
+		}
+	};
+});
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
@@ -355,32 +368,6 @@ watch(
 	() => props.node.inputs[0],
 	async () => {
 		await inputChangeHandler();
-	},
-	{ immediate: true }
-);
-
-// Set model config if it exists, if not create a temporary one
-watch(
-	() => amr.value,
-	async () => {
-		if (amr.value) {
-			const configs = await getModelConfigurations(amr.value.id);
-			if (configs.length > 0) {
-				modelConfig.value = configs[0];
-			} else {
-				modelConfig.value = {
-					id: 'temporary config',
-					name: 'temporary config',
-					modelId: amr.value.id,
-					configuration: {
-						header: _.cloneDeep(amr.value.header),
-						model: _.cloneDeep(amr.value.model),
-						semantics: _.cloneDeep(amr.value.semantics),
-						metadata: _.cloneDeep(amr.value.metadata)
-					}
-				};
-			}
-		}
 	},
 	{ immediate: true }
 );
