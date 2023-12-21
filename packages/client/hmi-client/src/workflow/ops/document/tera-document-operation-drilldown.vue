@@ -25,7 +25,7 @@
 							<template #header>
 								<h5>{{ equation.name }}</h5>
 							</template>
-							<Image id="img" :src="equation.asset?.metadata?.url" :alt="''" preview />
+							<Image id="img" :src="getAssetUrl(equation)" :alt="''" preview />
 						</tera-expandable-panel>
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.figures)">
@@ -43,7 +43,7 @@
 							<template #header>
 								<h5>{{ figure.name }}</h5>
 							</template>
-							<Image id="img" :src="figure.asset?.metadata?.url" :alt="''" preview />
+							<Image id="img" :src="getAssetUrl(figure)" :alt="''" preview />
 						</tera-expandable-panel>
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.tables)">
@@ -61,7 +61,7 @@
 							<template #header>
 								<h5>{{ table.name }}</h5>
 							</template>
-							<Image id="img" :src="table.asset?.metadata?.url" :alt="''" preview />
+							<Image id="img" :src="getAssetUrl(table)" :alt="''" preview />
 						</tera-expandable-panel>
 					</AccordionTab>
 				</Accordion>
@@ -138,6 +138,16 @@ function assetTypeToPortType(assetType: ExtractionAssetType) {
 		default:
 			return null;
 	}
+}
+// since aws link expire we need a function to refresh the links when we load the asset
+function getAssetUrl(asset: SelectableAsset<DocumentExtraction>): string {
+	let url = '';
+	const foundAsset = document.value?.assets?.find((a) => a.fileName === asset.asset.fileName);
+	if (!foundAsset) return url;
+
+	url = foundAsset.metadata?.url;
+
+	return url;
 }
 
 watch(
