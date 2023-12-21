@@ -32,7 +32,7 @@ public class ConceptFacetSearchResponse implements Serializable {
 	@Data
 	@Accessors(chain = true)
 	static public class Facets {
-		private Map<TaggableType, Integer> types;
+		private Map<TaggableType, Long> types;
 		private Map<String, Concept> concepts;
 	}
 

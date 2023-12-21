@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.repository.data;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,16 +41,21 @@ public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryC
 		QOntologyConcept ontologyConcept = QOntologyConcept.ontologyConcept;
 		QActiveConcept activeConcept = QActiveConcept.activeConcept;
 
-		JPAQuery<OntologyConcept> query = queryFactory.selectFrom(ontologyConcept)
-				.where(ontologyConcept.type.in(types));
+		JPAQuery<OntologyConcept> query = queryFactory.selectFrom(ontologyConcept);
 
-		if (curies.size() > 0) {
+		if (types != null && types.size() > 0) {
+			query = query.where(ontologyConcept.type.in(types));
+		}
+
+		if (curies != null && curies.size() > 0) {
 			query = query.where(ontologyConcept.curie.in(curies));
 		}
 
 		ConceptFacetSearchResponse response = new ConceptFacetSearchResponse();
 
 		ConceptFacetSearchResponse.Facets facets = new ConceptFacetSearchResponse.Facets();
+		facets.setConcepts(new HashMap<String, ConceptFacetSearchResponse.Concept>());
+		facets.setTypes(new HashMap<TaggableType, Long>());
 
 		/*
 		 * SELECT type, COUNT(DISTINCT type, object_id)
@@ -63,7 +70,7 @@ public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryC
 		for (Tuple row : typeCounts) {
 
 			TaggableType type = row.get(0, TaggableType.class);
-			Integer count = row.get(1, Integer.class);
+			Long count = row.get(1, Long.class);
 
 			facets.getTypes().put(type, count);
 		}
@@ -99,12 +106,15 @@ public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryC
 		 * JOIN active_concept ac ON oc.curie = ac.curie
 		 * WHERE oc.type IN (%s)
 		 */
-		List<Tuple> results = query.select(ontologyConcept, activeConcept.name)
+		List<Tuple> activeConceptResults = query.select(ontologyConcept, activeConcept.name)
 				.leftJoin(activeConcept).on(ontologyConcept.curie.eq(activeConcept.curie))
+				.groupBy(ontologyConcept.id)
 				.fetch();
 
+		List<ConceptFacetSearchResponse.Result> results = new ArrayList<>();
+
 		// convert results to ConceptFacetSearchResponse and return it
-		for (Tuple row : results) {
+		for (Tuple row : activeConceptResults) {
 
 			OntologyConcept concept = row.get(0, OntologyConcept.class);
 			String name = row.get(1, String.class);
@@ -115,8 +125,10 @@ public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryC
 			result.setCurie(concept.getCurie());
 			result.setName(name);
 
-			response.getResults().add(result);
+			results.add(result);
 		}
+
+		response.setResults(results);
 
 		return response;
 	}
