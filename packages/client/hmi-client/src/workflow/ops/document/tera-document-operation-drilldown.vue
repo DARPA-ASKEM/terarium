@@ -3,7 +3,7 @@
 		<div>
 			<tera-drilldown-section :is-loading="isFetchingPDF">
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
-				<!-- <tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" /> -->
+				<tera-text-editor v-else-if="docText" :initial-text="docText" />
 			</tera-drilldown-section>
 			<tera-drilldown-preview hide-header>
 				<h5>{{ document?.name }}</h5>
@@ -75,12 +75,17 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { onMounted, ref, watch } from 'vue';
 import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
-import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
+import {
+	downloadDocumentAsset,
+	getDocumentAsset,
+	getDocumentFileAsText
+} from '@/services/document-assets';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import Image from 'primevue/image';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['close', 'update-state', 'update-output-port']);
@@ -90,6 +95,7 @@ const props = defineProps<{
 
 const document = ref<DocumentAsset | null>();
 const pdfLink = ref<string | null>();
+const docText = ref<string | null>();
 const isFetchingPDF = ref(false);
 const clonedState = ref(cloneDeep(props.node.state));
 
@@ -98,8 +104,13 @@ onMounted(async () => {
 		isFetchingPDF.value = true;
 		document.value = await getDocumentAsset(props.node.state.documentId);
 		const filename = document.value?.fileNames?.[0];
+		const isPdf = document.value?.fileNames?.[0]?.endsWith('.pdf');
 		if (document.value?.id && filename)
-			pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
+			if (isPdf) {
+				pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
+			} else {
+				docText.value = await getDocumentFileAsText(document.value.id, filename);
+			}
 		isFetchingPDF.value = false;
 	}
 });
