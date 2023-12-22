@@ -34,7 +34,12 @@
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
 					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
-					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
+					<Button
+						label="Clean up layout"
+						severity="secondary"
+						outlined
+						@click="cleanUpLayout"
+					/>
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
@@ -99,7 +104,10 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					style="fill: var(--primary-color); fill-opacity: 1"
+				></path>
 			</marker>
 			<marker
 				id="smallArrow"
@@ -112,7 +120,10 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					style="fill: var(--primary-color); fill-opacity: 1"
+				></path>
 			</marker>
 		</template>
 		<template #background>
@@ -200,6 +211,7 @@ import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 import * as ModelOptimizeOp from './ops/model-optimize/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
+import * as DocumentOp from './ops/document/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -222,6 +234,7 @@ registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(ModelOptimizeOp);
 registry.registerOp(ModelCouplingOp);
+registry.registerOp(DocumentOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -413,7 +426,9 @@ const operationContextMenuList = [
 		name: SimulateEnsembleCiemssOp.name,
 		category: categories.simulate,
 		options: { size: largeNode }
-	}
+	},
+	// Document
+	{ name: DocumentOp.name, category: categories.document }
 ];
 
 const contextMenuItems = ref<any[]>([]);
@@ -492,6 +507,10 @@ function onDrop(event) {
 			case AssetType.Code:
 				operation = CodeAssetOp.operation;
 				state = { codeAssetId: assetId };
+				break;
+			case AssetType.Documents:
+				operation = DocumentOp.operation;
+				state = { documentId: assetId };
 				break;
 			default:
 				return;

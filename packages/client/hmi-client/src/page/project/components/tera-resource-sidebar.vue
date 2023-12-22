@@ -64,7 +64,12 @@
 					plain
 					text
 					size="small"
-					@click="emit('open-asset', { assetId: assetItem.assetId, pageType: assetItem.pageType })"
+					@click="
+						emit('open-asset', {
+							assetId: assetItem.assetId,
+							pageType: assetItem.pageType
+						})
+					"
 					@mouseover="activeAssetId = assetItem.assetId"
 					@mouseleave="activeAssetId = undefined"
 					@focus="activeAssetId = assetItem.assetId"
@@ -75,9 +80,12 @@
 							pageType === AssetType.Workflow &&
 							(assetItem.pageType === AssetType.Model ||
 								assetItem.pageType === AssetType.Dataset ||
-								assetItem.pageType === AssetType.Code)
+								assetItem.pageType === AssetType.Code ||
+								assetItem.pageType === AssetType.Document)
 						"
-						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
+						@dragstart="
+							startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })
+						"
 						@dragend="endDrag"
 						:class="isEqual(draggedAsset, assetItem) ? 'dragged-asset' : ''"
 						fallback-class="original-asset"
@@ -115,13 +123,18 @@
 				</template>
 				<template #default>
 					<p>
-						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ useProjects().activeProject.value?.name }}.
+						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it
+						from {{ useProjects().activeProject.value?.name }}.
 					</p>
 				</template>
 				<template #footer>
 					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
-					<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
+					<Button
+						label="Cancel"
+						severity="secondary"
+						outlined
+						@click="isRemovalModal = false"
+					/>
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -129,22 +142,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { capitalize, isEmpty, isEqual } from 'lodash';
-import { AssetItem, AssetRoute } from '@/types/common';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useProjects } from '@/composables/project';
+import { useDragEvent } from '@/services/drag-drop';
+import { ProjectPages } from '@/types/Project';
+import { AssetType } from '@/types/Types';
+import { AssetItem, AssetRoute } from '@/types/common';
+import { generateProjectAssetsMap } from '@/utils/map-project-assets';
+import { capitalize, isEmpty, isEqual } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { ProjectPages } from '@/types/Project';
-import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
-import { AssetType } from '@/types/Types';
-import { useProjects } from '@/composables/project';
-import { generateProjectAssetsMap } from '@/utils/map-project-assets';
-import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import Skeleton from 'primevue/skeleton';
+import { computed, ref } from 'vue';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -162,7 +175,9 @@ const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
 const activeAccordionTabs = ref(
 	new Set(
-		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
+		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [
+			0, 1, 2, 3, 4, 5, 6
+		]
 	)
 );
 
@@ -283,7 +298,8 @@ header {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
-	border-radius: 0; /* Remove the border-radius to end nitely with the border of the sidebar */
+	border-radius: 0;
+	/* Remove the border-radius to end nitely with the border of the sidebar */
 }
 
 ::v-deep(.asset-button.p-button > span) {

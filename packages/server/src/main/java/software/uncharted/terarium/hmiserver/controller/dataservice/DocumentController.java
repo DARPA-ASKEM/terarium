@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -57,7 +56,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocu
 import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction.ExtractionAssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
@@ -170,22 +169,6 @@ public class DocumentController {
 					final String url = documentAssetService.getDownloadUrl(id, asset.getFileName()).getUrl();
 					asset.getMetadata().put("url", url);
 
-					// if the asset is of type equation
-					if (asset.getAssetType().equals(ExtractionAssetType.EQUATION)
-							&& asset.getMetadata().get("equation") == null) {
-						// Fetch the image from the URL
-						final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
-						// Encode the image in Base 64
-						final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
-
-						// Send it to SKEMA to get the Presentation MathML equation
-						final String equation = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
-
-						log.warn("Equation: {}", equation);
-
-						// Add the equations into the metadata
-						asset.getMetadata().put("equation", equation);
-					}
 				} catch (final Exception e) {
 					log.error("Unable to extract S3 url for assets or extract equations", e);
 				}

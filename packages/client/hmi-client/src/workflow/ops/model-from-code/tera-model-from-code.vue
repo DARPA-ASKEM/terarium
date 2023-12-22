@@ -10,7 +10,13 @@
 						:options="programmingLanguages"
 						@change="setKernelContext"
 					/>
-					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" disabled />
+					<Button
+						label="Add code block"
+						icon="pi pi-plus"
+						text
+						@click="addCodeBlock"
+						disabled
+					/>
 				</header>
 				<tera-operator-placeholder
 					v-if="allCodeBlocks.length === 0"
@@ -20,10 +26,11 @@
 					Please attach a code asset.
 				</tera-operator-placeholder>
 				<template v-else>
-					<tera-expandable-panel
+					<tera-asset-block
 						v-for="({ name, codeLanguage, type }, i) in allCodeBlocks"
 						:key="i"
-						:hide-delete="type === CodeBlockType.INPUT"
+						:is-editable="type !== CodeBlockType.INPUT"
+						:is-deletable="type !== CodeBlockType.INPUT"
 						@delete="removeCodeBlock(i)"
 						:is-included="allCodeBlocks[i].includeInProcess"
 						@update:is-included="
@@ -41,7 +48,7 @@
 							class="ace-editor"
 							:readonly="type === CodeBlockType.INPUT"
 						/>
-					</tera-expandable-panel>
+					</tera-asset-block>
 				</template>
 				<template #footer>
 					<span style="margin-right: auto"
@@ -76,11 +83,18 @@
 				is-selectable
 			>
 				<section v-if="selectedModel">
-					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
-						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
+					<template
+						v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet"
+					>
+						<tera-model-diagram
+							:model="selectedModel"
+							:is-editable="false"
+						></tera-model-diagram>
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
-					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
+					<template
+						v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes"
+					>
 						<span>Decapodes created: {{ selectedModel.id }}</span>
 					</template>
 				</section>
@@ -114,7 +128,9 @@
 		</form>
 		<template #footer>
 			<Button @click="saveAsNewModel">Create model</Button>
-			<Button class="p-button-secondary" @click="isNewModelModalVisible = false">Cancel</Button>
+			<Button class="p-button-secondary" @click="isNewModelModalVisible = false"
+				>Cancel</Button
+			>
 		</template>
 	</tera-modal>
 </template>
@@ -147,7 +163,7 @@ import InputText from 'primevue/inputtext';
 import { getCodeAsset } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
-import TeraExpandablePanel from '@/components/widgets/tera-expandable-panel.vue';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
