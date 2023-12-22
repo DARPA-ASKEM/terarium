@@ -321,10 +321,11 @@ public class DocumentController implements SnakeCaseController {
 	 *  	- equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
 	 * @return (ExtractionResponse): The response from the extraction service
 	 */
-	@GetMapping("/image-to-equation")
+	@GetMapping("/{id}/image-to-equation")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> postImageToEquation(@RequestParam("url") final String url) {
+	public ResponseEntity<String> postImageToEquation(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
 		try{
+			final String url = proxy.getDownloadUrl(documentId, filename).getBody().getUrl();
 			final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
 			// Encode the image in Base 64
 			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);

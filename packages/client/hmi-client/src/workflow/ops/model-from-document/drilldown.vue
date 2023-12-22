@@ -33,13 +33,12 @@ onMounted(async () => {
 	const documentId = props.node.inputs?.[0]?.value?.[0];
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
-
 		const equations = document.value?.assets?.filter(
 			(a) => a.assetType === ExtractionAssetType.Equation
 		);
 
 		const promises = equations?.map(async (e) => {
-			const res = await getEquationFromImageUrl(e.metadata.url);
+			const res = await getEquationFromImageUrl(documentId, e.fileName);
 			return res;
 		});
 
