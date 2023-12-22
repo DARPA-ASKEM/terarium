@@ -100,7 +100,7 @@ watch(
 	padding-bottom: 0px;
 	justify-content: flex-end;
 	align-items: center;
-	gap: 1rem;
+	gap: var(--gap);
 	align-self: stretch;
 }
 
@@ -114,7 +114,7 @@ watch(
 	flex-direction: row;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 
 	& > * {
 		flex: 1;
@@ -124,6 +124,6 @@ watch(
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 </style>

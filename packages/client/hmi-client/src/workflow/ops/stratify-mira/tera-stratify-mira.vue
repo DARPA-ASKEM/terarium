@@ -395,6 +395,6 @@ onUnmounted(() => {
 .form-section {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 </style>
