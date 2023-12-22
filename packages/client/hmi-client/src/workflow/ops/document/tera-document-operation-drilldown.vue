@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div>
-			<tera-drilldown-section :is-loading="fetchingPDF">
+			<tera-drilldown-section :is-loading="isFetchingPDF">
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<!-- <tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" /> -->
 			</tera-drilldown-section>
@@ -14,11 +14,9 @@
 						<template #header>
 							<header>Equation Images</header>
 						</template>
-						<tera-expandable-panel
+						<tera-asset-block
 							v-for="(equation, i) in clonedState.equations"
 							:key="i"
-							hide-delete
-							hide-edit
 							:is-included="equation.includeInProcess"
 							@update:is-included="onUpdateInclude(equation)"
 						>
@@ -26,17 +24,15 @@
 								<h5>{{ equation.name }}</h5>
 							</template>
 							<Image id="img" :src="getAssetUrl(equation)" :alt="''" preview />
-						</tera-expandable-panel>
+						</tera-asset-block>
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.figures)">
 						<template #header>
 							<header>Figure Images</header>
 						</template>
-						<tera-expandable-panel
+						<tera-asset-block
 							v-for="(figure, i) in clonedState.figures"
 							:key="i"
-							hide-delete
-							hide-edit
 							:is-included="figure.includeInProcess"
 							@update:is-included="onUpdateInclude(figure)"
 						>
@@ -44,17 +40,15 @@
 								<h5>{{ figure.name }}</h5>
 							</template>
 							<Image id="img" :src="getAssetUrl(figure)" :alt="''" preview />
-						</tera-expandable-panel>
+						</tera-asset-block>
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.tables)">
 						<template #header>
 							<header>Table Images</header>
 						</template>
-						<tera-expandable-panel
+						<tera-asset-block
 							v-for="(table, i) in clonedState.tables"
 							:key="i"
-							hide-delete
-							hide-edit
 							:is-included="table.includeInProcess"
 							@update:is-included="onUpdateInclude(table)"
 						>
@@ -62,7 +56,7 @@
 								<h5>{{ table.name }}</h5>
 							</template>
 							<Image id="img" :src="getAssetUrl(table)" :alt="''" preview />
-						</tera-expandable-panel>
+						</tera-asset-block>
 					</AccordionTab>
 				</Accordion>
 				<template #footer?>
@@ -75,7 +69,7 @@
 
 <script setup lang="ts">
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { SelectableAsset, WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
@@ -83,7 +77,7 @@ import { onMounted, ref, watch } from 'vue';
 import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
 import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
 import { cloneDeep, isEmpty } from 'lodash';
-import TeraExpandablePanel from '@/components/widgets/tera-expandable-panel.vue';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import Image from 'primevue/image';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -96,21 +90,21 @@ const props = defineProps<{
 
 const document = ref<DocumentAsset | null>();
 const pdfLink = ref<string | null>();
-const fetchingPDF = ref(false);
+const isFetchingPDF = ref(false);
 const clonedState = ref(cloneDeep(props.node.state));
 
 onMounted(async () => {
 	if (props.node.state.documentId) {
-		fetchingPDF.value = true;
+		isFetchingPDF.value = true;
 		document.value = await getDocumentAsset(props.node.state.documentId);
 		const filename = document.value?.fileNames?.[0];
 		if (document.value?.id && filename)
 			pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
-		fetchingPDF.value = false;
+		isFetchingPDF.value = false;
 	}
 });
 
-function onUpdateInclude(asset: SelectableAsset<DocumentExtraction>) {
+function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 	asset.includeInProcess = !asset.includeInProcess;
 	emit('update-state', clonedState.value);
 
@@ -139,15 +133,11 @@ function assetTypeToPortType(assetType: ExtractionAssetType) {
 			return null;
 	}
 }
-// since aws link expire we need a function to refresh the links when we load the asset
-function getAssetUrl(asset: SelectableAsset<DocumentExtraction>): string {
-	let url = '';
+// since AWS links expire we need to use the refetched document image urls to display the images
+function getAssetUrl(asset: AssetBlock<DocumentExtraction>): string {
 	const foundAsset = document.value?.assets?.find((a) => a.fileName === asset.asset.fileName);
-	if (!foundAsset) return url;
-
-	url = foundAsset.metadata?.url;
-
-	return url;
+	if (!foundAsset) return '';
+	return foundAsset.metadata?.url;
 }
 
 watch(

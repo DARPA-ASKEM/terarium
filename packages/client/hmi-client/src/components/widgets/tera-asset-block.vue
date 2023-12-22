@@ -3,14 +3,14 @@
 		<template #header>
 			<section>
 				<slot name="header" />
-				<Button v-if="!hideEdit" icon="pi pi-pencil" text rounded />
+				<Button v-if="isEditable" icon="pi pi-pencil" text rounded />
 			</section>
 		</template>
 		<template #icons>
 			<label>Include in process</label>
 			<InputSwitch :model-value="isIncluded" @update:model-value="emit('update:is-included')" />
 
-			<Button v-if="!hideDelete" icon="pi pi-trash" text rounded @click="emit('delete')" />
+			<Button v-if="isDeletable" icon="pi pi-trash" text rounded @click="emit('delete')" />
 		</template>
 		<template #togglericon="{ collapsed }">
 			<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
@@ -27,9 +27,9 @@ import InputSwitch from 'primevue/inputswitch';
 const emit = defineEmits(['delete', 'edit', 'update:is-included']);
 
 defineProps<{
-	hideDelete?: boolean;
+	isDeletable?: boolean;
 	isIncluded?: boolean;
-	hideEdit?: boolean;
+	isEditable?: boolean;
 }>();
 </script>
 

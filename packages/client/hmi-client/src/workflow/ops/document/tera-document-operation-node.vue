@@ -1,7 +1,10 @@
 <template>
 	<main v-if="!fetchingDocument">
 		<template v-if="document">
-			<div>{{ document?.name }}</div>
+			<h5>
+				<strong>{{ document?.name }}</strong>
+			</h5>
+			<tera-operator-placeholder :operation-type="node.operationType" />
 			<Button label="Open document" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -21,7 +24,7 @@
 
 <script setup lang="ts">
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { SelectableAsset, WorkflowNode } from '@/types/workflow';
+import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
@@ -64,23 +67,23 @@ watch(
 	() => document.value,
 	async () => {
 		if (document.value?.id) {
-			const figures: SelectableAsset<DocumentExtraction>[] =
+			const figures: AssetBlock<DocumentExtraction>[] =
 				document.value?.assets
 					?.filter((asset) => asset.assetType === ExtractionAssetType.Figure)
 					.map((asset, i) => ({
 						name: `Figure ${i + 1}`,
-						includeInProcess: true,
+						includeInProcess: false,
 						asset
 					})) || [];
-			const tables: SelectableAsset<DocumentExtraction>[] =
+			const tables: AssetBlock<DocumentExtraction>[] =
 				document.value?.assets
 					?.filter((asset) => asset.assetType === ExtractionAssetType.Table)
 					.map((asset, i) => ({
 						name: `Table ${i + 1}`,
-						includeInProcess: true,
+						includeInProcess: false,
 						asset
 					})) || [];
-			const equations: SelectableAsset<DocumentExtraction>[] =
+			const equations: AssetBlock<DocumentExtraction>[] =
 				document.value?.assets
 					?.filter((asset) => asset.assetType === ExtractionAssetType.Equation)
 					.map((asset, i) => ({
@@ -105,25 +108,28 @@ watch(
 			}
 
 			if (!props.node.outputs.find((port) => port.type === 'equations') && !isEmpty(equations)) {
+				const selected = equations.filter((e) => e.includeInProcess);
 				emit('append-output-port', {
 					type: 'equations',
-					label: `Equations (${equations.length}/${equations.length})`,
+					label: `equations (${selected.length}/${equations.length})`,
 					value: equations
 				});
 			}
 
 			if (!props.node.outputs.find((port) => port.type === 'figures') && !isEmpty(figures)) {
+				const selected = figures.filter((f) => f.includeInProcess);
 				emit('append-output-port', {
 					type: 'figures',
-					label: `Figures (${figures.length}/${figures.length})`,
+					label: `figures (${selected.length}/${figures.length})`,
 					value: figures
 				});
 			}
 
 			if (!props.node.outputs.find((port) => port.type === 'tables') && !isEmpty(tables)) {
+				const selected = tables.filter((t) => t.includeInProcess);
 				emit('append-output-port', {
 					type: 'tables',
-					label: `Tables (${tables.length}/${tables.length})`,
+					label: `tables (${selected.length}/${tables.length})`,
 					value: tables
 				});
 			}
