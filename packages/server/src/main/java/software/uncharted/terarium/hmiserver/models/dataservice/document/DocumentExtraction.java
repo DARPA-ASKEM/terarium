@@ -24,11 +24,11 @@ public class DocumentExtraction implements Serializable {
 
 	public enum ExtractionAssetType {
 		@JsonAlias({"figure", "Figure"})
-		FIGURE,
+		figure,
 		@JsonAlias({"table", "Table"})
-		TABLE,
+		table,
 		@JsonAlias({"equation", "Equation"})
-		EQUATION;	
+		equation;	
 
 		public static ExtractionAssetType fromString(String type) {
 			for (ExtractionAssetType assetType : ExtractionAssetType.values()) {
