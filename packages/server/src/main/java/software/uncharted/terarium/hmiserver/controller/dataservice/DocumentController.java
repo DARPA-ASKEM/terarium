@@ -34,6 +34,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
@@ -48,8 +49,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -309,6 +312,33 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	/**
+	 * Post Images to Equations Unified service to get an AMR
+	 *
+	 * @param requestMap (Map<String, Object>) JSON request body containing the following fields:
+	 *  	- format		(String) the format of the equations. Options: "latex", "mathml".
+	 *  	- framework (String) the type of AMR to return. Options: "regnet", "petrinet".
+	 *  	- modelId   (String): the id of the model (to update) based on the set of equations
+	 *  	- equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @return (ExtractionResponse): The response from the extraction service
+	 */
+	@GetMapping("/image-to-equation")
+	@Secured(Roles.USER)
+	public ResponseEntity<String> postImageToEquation(@RequestParam("url") final String url) {
+		try{
+			final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
+			// Encode the image in Base 64
+			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+			// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
+			return ResponseEntity.ok(skemaUnifiedProxy.postImageToEquations(imageB64).getBody());
+		} catch (final Exception e) {
+			log.error("Unable to GET equation", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+
+	/**
 	 * Creates a document asset from an XDD document
 	 * @param document xdd document
 	 * @param username current user name
@@ -427,6 +457,5 @@ public class DocumentController implements SnakeCaseController {
 		}
 
 	}
-
 
 }

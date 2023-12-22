@@ -201,6 +201,7 @@ import * as CodeAssetOp from './ops/code-asset/mod';
 import * as ModelOptimizeOp from './ops/model-optimize/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
+import * as ModelFromDocumentOp from './ops/model-from-document/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -224,6 +225,7 @@ registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(ModelOptimizeOp);
 registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
+registry.registerOp(ModelFromDocumentOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -417,7 +419,8 @@ const operationContextMenuList = [
 		options: { size: largeNode }
 	},
 	// Document
-	{ name: DocumentOp.name, category: categories.document }
+	{ name: DocumentOp.name, category: categories.document },
+	{ name: ModelFromDocumentOp.name, category: categories.document }
 ];
 
 const contextMenuItems = ref<any[]>([]);
