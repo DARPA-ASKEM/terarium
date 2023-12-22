@@ -20,10 +20,11 @@
 					Please attach a code asset.
 				</tera-operator-placeholder>
 				<template v-else>
-					<tera-expandable-panel
+					<tera-asset-block
 						v-for="({ name, codeLanguage, type }, i) in allCodeBlocks"
 						:key="i"
-						:hide-delete="type === CodeBlockType.INPUT"
+						:is-editable="type !== CodeBlockType.INPUT"
+						:is-deletable="type !== CodeBlockType.INPUT"
 						@delete="removeCodeBlock(i)"
 						:is-included="allCodeBlocks[i].includeInProcess"
 						@update:is-included="
@@ -41,7 +42,7 @@
 							class="ace-editor"
 							:readonly="type === CodeBlockType.INPUT"
 						/>
-					</tera-expandable-panel>
+					</tera-asset-block>
 				</template>
 				<template #footer>
 					<span style="margin-right: auto"
@@ -147,7 +148,7 @@ import InputText from 'primevue/inputtext';
 import { getCodeAsset } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
-import TeraExpandablePanel from '@/components/widgets/tera-expandable-panel.vue';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
