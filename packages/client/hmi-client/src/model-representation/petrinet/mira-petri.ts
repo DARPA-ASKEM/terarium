@@ -21,6 +21,7 @@ export const getStates = (amr: Model) => {
 
 		const obj: any = {};
 		obj.id = state.id;
+		obj.name = state.name;
 
 		if (grounding && grounding.modifiers) {
 			const modifierKeys = Object.keys(grounding.modifiers);
@@ -174,6 +175,21 @@ export const getUnstratifiedParameters = (amr: Model) => {
 			map.get(rootName)?.push(p.id);
 		} else {
 			map.set(rootName, [p.id]);
+		}
+	});
+	return map;
+};
+
+export const getUnstratifiedParameters2 = (amr: Model) => {
+	const parameters = amr.semantics?.ode.parameters || [];
+	const map = new Map<string, string[]>();
+	parameters.forEach((p) => {
+		const rootName = _.first(p.id.split('_')) as string;
+		const name = p.name ? p.name : rootName;
+		if (map.has(name)) {
+			map.get(name)?.push(p.id);
+		} else {
+			map.set(name, [p.id]);
 		}
 	});
 	return map;
