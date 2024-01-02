@@ -119,10 +119,6 @@ h5 {
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
-}
-
-h5,
-header {
 	font-weight: var(--font-weight);
 }
 

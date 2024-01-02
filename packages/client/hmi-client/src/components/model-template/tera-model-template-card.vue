@@ -46,10 +46,6 @@ const fakeVariables = ['X', 'Y', 'p'];
 		flex-direction: column;
 		gap: 1rem;
 
-		& > header {
-			font-weight: var(--font-weight);
-		}
-
 		& > * {
 			margin: 0 auto;
 		}
