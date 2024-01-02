@@ -160,7 +160,7 @@ const sortOptions = [
 
 const view = ref(ProjectsView.Cards);
 const viewOptions = ref([
-	{ value: ProjectsView.Cards, icon: 'pi pi-image' },
+	{ value: ProjectsView.Cards, icon: 'pi pi-credit-card' },
 	{ value: ProjectsView.Table, icon: 'pi pi-list' }
 ]);
 

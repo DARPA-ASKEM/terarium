@@ -18,7 +18,9 @@ export enum WorkflowOperationTypes {
 	CODE = 'Code',
 	MODEL_CONFIG = 'ModelConfiguraiton',
 	MODEL_OPTIMIZE = 'ModelOptimize',
-	MODEL_COUPLING = 'ModelCoupling'
+	MODEL_COUPLING = 'ModelCoupling',
+	MODEL_EDIT = 'ModelEdit',
+	DOCUMENT = 'Document'
 }
 
 export enum OperatorStatus {
@@ -160,4 +162,10 @@ export enum ProgressState {
 	QUEUED = 'queued',
 	RUNNING = 'running',
 	COMPLETE = 'complete'
+}
+
+export interface AssetBlock<T> {
+	name: string;
+	includeInProcess: boolean;
+	asset: T;
 }

@@ -1059,7 +1059,7 @@ export enum OntologicalField {
 }
 
 export enum ExtractionAssetType {
-    Figure = "FIGURE",
-    Table = "TABLE",
-    Equation = "EQUATION",
+    Figure = "figure",
+    Table = "table",
+    Equation = "equation",
 }

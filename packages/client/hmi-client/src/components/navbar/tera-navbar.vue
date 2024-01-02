@@ -1,33 +1,20 @@
 <template>
 	<nav>
-		<section class="header-left">
-			<router-link :to="RoutePath.Home">
-				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
-			</router-link>
-			<div class="navigation-dropdown" @click="showNavigationMenu">
-				<h1 v-if="useProjects().activeProject.value?.id || isDataExplorer">
-					{{ useProjects().activeProject.value?.name ?? 'Explorer' }}
-				</h1>
-				<img
-					v-else
-					src="@assets/svg/terarium-wordmark.svg"
-					height="16"
-					alt="Terarium icon with name"
-					class="terariumLogo"
-				/>
-				<i class="pi pi-angle-down" />
-			</div>
-			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
-		</section>
-		<tera-searchbar
+		<router-link :to="RoutePath.Home">
+			<img src="@assets/svg/terarium-logo.svg" height="30" alt="Terarium logo" />
+		</router-link>
+		<SplitButton
 			v-if="active"
-			class="search-bar"
-			ref="searchBarRef"
-			:show-suggestions="showSuggestions"
-			@query-changed="updateRelatedTerms"
-			@toggle-search-by-example="searchByExampleModalToggled"
+			:label="menuLabel"
+			class="layout-project-selection"
+			:model="navMenuItems"
+			severity="secondary"
+			outlined
+			rounded
 		/>
-		<section v-if="active" class="header-right">
+		<template v-if="active">
+			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
+			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
 			<Dialog header="Logout" v-model:visible="isLogoutDialog">
@@ -37,13 +24,7 @@
 					<Button label="Ok" @click="auth.logout" />
 				</template>
 			</Dialog>
-		</section>
-		<aside class="suggested-terms" v-if="!isEmpty(terms) && isDataExplorer">
-			Suggested terms:
-			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
-			</Chip>
-		</aside>
+		</template>
 		<Teleport to="body">
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
@@ -118,25 +99,62 @@
 				</template>
 			</tera-modal>
 		</Teleport>
+		<Teleport to="body">
+			<tera-modal
+				v-if="isAboutModalVisible"
+				@modal-mask-clicked="isAboutModalVisible = false"
+				@modal-enter-press="isAboutModalVisible = false"
+			>
+				<template #header>
+					<h4>About Terarium</h4>
+				</template>
+				<article>
+					<img
+						src="@/assets/svg/terarium-logo.svg"
+						alt="Terarium logo"
+						class="about-terarium-logo"
+					/>
+					<p>
+						Terarium is a comprehensive modeling and simulation platform designed to help
+						researchers and analysts find models in academic literature, parameterize and calibrate
+						them, run simulations to test a variety of scenarios, and analyze the results.
+					</p>
+				</article>
+				<article>
+					<img
+						src="@/assets/svg/uncharted-logo-official.svg"
+						alt="Uncharted Software logo"
+						class="about-uncharted-logo"
+					/>
+					<p>
+						Uncharted Software provides design, development and consulting services related to data
+						visualization and analysis software.
+					</p>
+				</article>
+				<template #footer>
+					<div class="modal-footer">
+						<p>&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
+						<Button class="p-button" @click="isAboutModalVisible = false">Close</Button>
+					</div>
+				</template>
+			</tera-modal>
+		</Teleport>
 	</nav>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { isEmpty } from 'lodash';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
-import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
-import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import InputText from 'primevue/inputtext';
+import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
@@ -146,14 +164,24 @@ import { useProjects } from '@/composables/project';
 
 defineProps<{
 	active: boolean;
-	showSuggestions: boolean;
 }>();
+
+const isAboutModalVisible = ref(false);
 
 /*
  * Navigation Menu
  */
 const router = useRouter();
-const navigationMenu = ref();
+
+const menuLabel = computed(() => {
+	if (isDataExplorer.value) {
+		return 'Explorer';
+	}
+	if (useProjects().activeProject.value) {
+		return useProjects().activeProject.value?.name;
+	}
+	return 'Home';
+});
 
 /**
  * Evaluation scenario code
@@ -320,9 +348,6 @@ const explorerItem: MenuItem = {
 	command: () => router.push(RoutePath.DataExplorer)
 };
 const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
-const showNavigationMenu = (event) => {
-	navigationMenu.value.toggle(event);
-};
 const currentRoute = useCurrentRoute();
 const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
 
@@ -369,30 +394,6 @@ function closeLogoutDialog() {
 	isLogoutDialog.value = false;
 }
 
-/*
- * Search
- */
-const searchBarRef = ref();
-const terms = ref<string[]>([]);
-
-async function updateRelatedTerms(query?: string) {
-	if (query || query === '' || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
-}
-
-function searchByExampleModalToggled() {
-	// TODO
-	// toggle the search by example modal represented by the component search-by-example
-	// which may be used as follows
-	/*
-	<search-by-example
-		v-if="searchByExampleModal"
-		:item="searchByExampleItem"
-		@search="onSearchByExample"
-		@hide="searchByExampleModal = false"
-	/>
-	*/
-}
-
 watch(
 	() => useProjects().allProjects.value,
 	() => {
@@ -404,61 +405,38 @@ watch(
 				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
 			});
 		});
-		navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
+		navMenuItems.value = [homeItem, explorerItem, ...items];
 	},
 	{ immediate: true }
 );
+
+const documentation = computed(() => {
+	const host = window.location.hostname ?? 'localhost';
+	if (host === 'localhost') {
+		return '//localhost:8000';
+	}
+	const url = host.replace(/\bapp\b/g, 'documentation');
+	return `https://${url}`;
+});
 </script>
 
 <style scoped>
 nav {
+	align-items: center;
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
-	display: grid;
-	column-gap: 0.5rem;
-	grid-template-areas:
-		'header-left search-bar header-right'
-		'suggested-terms suggested-terms suggested-terms';
-	grid-template-columns: minMax(max-content, 25%) auto minMax(min-content, 25%);
+	display: flex;
+	gap: var(--gap-large);
+
+	a,
+	a:hover {
+		text-decoration: none;
+	}
 }
 
-.navigation-dropdown {
-	border-color: transparent;
-	border-style: solid;
-	border-radius: var(--border-radius);
-	border-width: 1px;
-	cursor: pointer;
-	font-size: var(--font-body-medium);
-	font-weight: var(--font-weight-semibold);
-	padding: 0.5rem;
-}
-
-.navigation-dropdown:hover,
-.navigation-dropdown:focus {
-	background-color: var(--surface-ground);
-}
-
-.terariumLogo {
-	cursor: pointer;
-}
-
-/* Search Bar */
-
-.search-bar {
-	grid-area: search-bar;
-	margin-left: auto;
+.layout-project-selection {
 	margin-right: auto;
-	min-width: 25vw;
-	max-width: 60rem;
-	width: 100%;
-}
-
-/* Header Right */
-
-.header-right {
-	grid-area: header-right;
-	margin-left: auto;
 }
 
 .avatar {
@@ -472,64 +450,53 @@ nav {
 	background-color: var(--surface-hover);
 }
 
-/* Header Left */
-.header-left {
-	align-items: center;
+/* Split button
+ * This needs to be into its own component
+ */
+
+:deep(.layout-project-selection.p-splitbutton .p-button:first-of-type) {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-right: 0 none;
+	color: var(--text-color);
+}
+
+:deep(.layout-project-selection.p-splitbutton .p-button:last-of-type) {
+	background-color: var(--surface-200);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	color: var(--text-color-light);
+	padding: 0.714rem 0;
+	width: calc(3rem + 1px);
+
+	&:hover {
+		background-color: var(--surface-50);
+		color: var(--text-color);
+	}
+}
+
+.modal-footer {
 	display: flex;
-	gap: 0.15rem;
-	grid-area: header-left;
-	height: 100%;
-}
-
-.header-left:deep(.p-dropdown-label.p-inputtext) {
-	padding-right: 0;
-}
-
-.header-left > div {
+	flex-direction: row;
 	align-items: center;
-	cursor: pointer;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.about-terarium-logo {
+	width: 20rem;
+}
+
+.about-uncharted-logo {
+	width: 10rem;
+	margin-top: 3rem;
+}
+
+.modal-footer {
 	display: flex;
-}
-
-.p-dropdown {
-	border: 0;
-}
-
-.p-dropdown-label {
-	color: var(--text-color-secondary);
-}
-
-i {
-	color: var(--text-color-subdued);
-	margin-left: 0.5rem;
-	vertical-align: bottom;
-}
-
-/* Suggested terms */
-.suggested-terms {
+	flex-direction: row;
 	align-items: center;
-	color: var(--text-color-subdued);
-	display: flex;
-	column-gap: 0.5rem;
-	font-size: var(--font-caption);
-	grid-area: suggested-terms;
-	justify-content: center;
-	margin-top: 0.5rem;
-	white-space: nowrap;
-}
-
-.clear-search-terms:enabled {
-	color: var(--text-color-secondary);
-	background-color: transparent;
-}
-
-.clear-search-terms:enabled:hover {
-	background-color: var(--surface-hover);
-	color: var(--text-color-secondary);
-}
-
-.navigation-menu {
-	margin-top: 0.25rem;
-	min-width: fit-content !important;
+	justify-content: space-between;
+	width: 100%;
 }
 </style>

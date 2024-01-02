@@ -14,7 +14,7 @@
 									class="w-full"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="modelColumnNames"
+									:options="modelStateOptions?.map((ele) => ele.id)"
 								/>
 							</template>
 						</Column>
@@ -27,7 +27,7 @@
 									class="w-full"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="datasetColumnNames"
+									:options="datasetColumns?.map((ele) => ele.name)"
 								/>
 							</template>
 						</Column>
@@ -38,6 +38,12 @@
 							icon="pi pi-plus"
 							label="Add mapping"
 							@click="addMapping"
+						/>
+						<Button
+							class="p-button-sm p-button-text"
+							icon="pi pi-plus"
+							label="Auto map"
+							@click="getAutoMapping"
 						/>
 					</div>
 				</div>
@@ -134,10 +140,16 @@ import {
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
-	ModelConfiguration
+	ModelConfiguration,
+	State
 } from '@/types/Types';
 import InputNumber from 'primevue/inputnumber';
-import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
+import {
+	setupModelInput,
+	setupDatasetInput,
+	CalibrateMap,
+	autoCalibrationMapping
+} from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { ProgressState, WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
@@ -149,16 +161,14 @@ import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { Poller, PollerState } from '@/api/api';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
-import {
-	CalibrationOperationCiemss,
-	CalibrationOperationStateCiemss,
-	CalibrateMap
-} from './calibrate-operation';
+import { useToastService } from '@/services/toast';
+import { CalibrationOperationCiemss, CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const toast = useToastService();
 
 enum CalibrateTabs {
 	Wizard = 'Wizard',
@@ -166,9 +176,9 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelColumnNames = ref<string[] | undefined>();
+const modelStateOptions = ref<State[] | undefined>();
 
-const datasetColumnNames = ref<string[]>();
+const datasetColumns = ref<any[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
@@ -345,16 +355,30 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
+async function getAutoMapping() {
+	if (!modelStateOptions.value) {
+		toast.error('', 'No model states to map with');
+		return;
+	}
+	if (!datasetColumns.value) {
+		toast.error('', 'No dataset columns to map with');
+		return;
+	}
+	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+	emit('update-state', state);
+}
+
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
 watch(
 	() => modelConfigId.value,
 	async () => {
-		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
-			modelConfigId.value
-		);
+		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
 		modelConfig.value = modelConfiguration;
-		modelColumnNames.value = modelColumnNameOptions;
+		modelStateOptions.value = modelOptions;
 	},
 	{ immediate: true }
 );
@@ -364,10 +388,10 @@ watch(
 watch(
 	() => datasetId.value,
 	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
 		currentDatasetFileName.value = filename;
 		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers;
+		datasetColumns.value = datasetOptions;
 	},
 	{ immediate: true }
 );

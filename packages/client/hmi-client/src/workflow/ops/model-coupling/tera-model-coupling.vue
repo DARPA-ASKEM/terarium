@@ -208,16 +208,16 @@ const runCodeModelCoupling = () => {
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
-		?.register('execute_input', (data) => {
+		.register('execute_input', (data) => {
 			console.log('execute_input', data.content);
 		})
-		?.register('stream', (data) => {
+		.register('stream', (data) => {
 			console.log('stream', data.content);
 		})
-		?.register('error', (data) => {
+		.register('error', (data) => {
 			console.log('error', data.content.evalue);
 		})
-		?.register('decapodes_preview', (data) => {
+		.register('decapodes_preview', (data) => {
 			console.log('decapodes_preview', data.content);
 			modelCouplingResult.value = data.content['application/json'];
 		});

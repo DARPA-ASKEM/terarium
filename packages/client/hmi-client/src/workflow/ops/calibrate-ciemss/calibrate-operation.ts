@@ -3,11 +3,7 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { ChartConfig } from '@/types/SimulateConfig';
-
-export interface CalibrateMap {
-	modelVariable: string;
-	datasetVariable: string;
-}
+import { CalibrateMap } from '@/services/calibrate-workflow';
 
 export interface CalibrationOperationStateCiemss {
 	chartConfigs: ChartConfig[];
