@@ -1,9 +1,10 @@
 <template>
 	<main
-		:style="nodeStyle"
 		ref="operator"
 		@mouseenter="interactionStatus = addHover(interactionStatus)"
 		@mouseleave="interactionStatus = removeHover(interactionStatus)"
+		@mousedown="interactionStatus = addDrag(interactionStatus)"
+		@mouseup="interactionStatus = removeDrag(interactionStatus)"
 		@focus="() => {}"
 		@focusout="() => {}"
 	>
@@ -43,8 +44,8 @@
 
 <script setup lang="ts">
 import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
-import { addHover, removeHover, addDrag, removeDrag, isDrag } from '@/services/operator-bitmask';
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { addHover, removeHover, addDrag, removeDrag } from '@/services/operator-bitmask';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
@@ -57,13 +58,11 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits([
-	'dragging',
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
 	'remove-operator',
 	'remove-edges',
-	'drilldown',
 	'resize'
 ]);
 
@@ -72,43 +71,10 @@ enum PortDirection {
 	Output
 }
 
-const nodeStyle = computed(() => ({
-	minWidth: `${props.node.width}px`,
-	top: `${props.node.y}px`,
-	left: `${props.node.x}px`
-}));
-
 const operator = ref<HTMLElement>();
-
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
-let tempX = 0;
-let tempY = 0;
 
 let resizeObserver: ResizeObserver | null = null;
-
-const startDrag = (evt: MouseEvent) => {
-	tempX = evt.x;
-	tempY = evt.y;
-	interactionStatus.value = addDrag(interactionStatus.value);
-};
-
-const drag = (evt: MouseEvent) => {
-	if (!isDrag(interactionStatus.value)) return;
-
-	const dx = evt.x - tempX;
-	const dy = evt.y - tempY;
-
-	emit('dragging', { x: dx, y: dy });
-
-	tempX = evt.x;
-	tempY = evt.y;
-};
-
-const stopDrag = (/* evt: MouseEvent */) => {
-	tempX = 0;
-	tempY = 0;
-	interactionStatus.value = removeDrag(interactionStatus.value);
-};
 
 function bringToFront() {
 	// TODO: bring to front
@@ -143,26 +109,16 @@ function resizeHandler() {
 }
 
 onMounted(() => {
-	if (!operator.value) return;
-
-	operator.value.addEventListener('mousedown', startDrag);
-	resizeObserver = new ResizeObserver(resizeHandler);
-	resizeObserver.observe(operator.value);
-
-	document.addEventListener('mousemove', drag);
-	operator.value.addEventListener('mouseup', stopDrag);
+	if (operator.value) {
+		resizeObserver = new ResizeObserver(resizeHandler);
+		resizeObserver.observe(operator.value);
+	}
 });
 
 onBeforeUnmount(() => {
-	if (operator.value) {
-		operator.value.removeEventListener('mousedown', startDrag);
-		if (resizeObserver) {
-			resizeObserver.disconnect();
-			resizeObserver = null;
-		}
-
-		document.removeEventListener('mousemove', drag);
-		operator.value.removeEventListener('mouseup', stopDrag);
+	if (operator.value && resizeObserver) {
+		resizeObserver.disconnect();
+		resizeObserver = null;
 	}
 });
 </script>
@@ -172,9 +128,6 @@ main {
 	background-color: var(--surface-section);
 	outline: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
-	position: absolute;
-	width: 15rem;
-	user-select: none;
 	box-shadow: var(--overlayMenuShadow);
 
 	&:hover {
@@ -183,7 +136,7 @@ main {
 	}
 
 	& > .content {
-		margin: 0.5rem;
+		padding: 0.5rem;
 	}
 
 	& > ul,
@@ -197,7 +150,7 @@ main {
 
 	/* Shared styles between tera-operator-inputs and tera-operator-outputs */
 	& > ul {
-		margin: 0.5rem 0;
+		padding: 0.5rem 0;
 		list-style: none;
 		font-size: var(--font-caption);
 		color: var(--text-color-secondary);

@@ -30,12 +30,18 @@
 			</aside>
 		</template>
 		<template #data>
-			<tera-model-template-card
+			<tera-canvas-item
 				v-for="(card, index) in cards"
 				:key="index"
-				:card="card"
+				:style="{
+					minWidth: '106px',
+					top: `${card.y}px`,
+					left: `${card.x}px`
+				}"
 				@dragging="(event) => updatePosition(card, event)"
-			/>
+			>
+				<tera-model-template-card :card="card" />
+			</tera-canvas-item>
 		</template>
 	</tera-infinite-canvas>
 </template>
@@ -46,6 +52,7 @@ import { cloneDeep } from 'lodash';
 import { Model } from '@/types/Types';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplateCard from './tera-model-template-card.vue';
+import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 
 defineProps<{
 	model?: Model;
