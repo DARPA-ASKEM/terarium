@@ -104,6 +104,7 @@ const vFocus = {
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
+		if (!matrix.value) return;
 		const output: string[][] = [];
 		await Promise.all(
 			matrix.value

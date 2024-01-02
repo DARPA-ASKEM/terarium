@@ -456,7 +456,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 
 	emit('append-output-port', {
 		type: CalibrationOperationJulia.outputs[0].type,
-		label: 'Output',
+		label: `Output - ${props.node.outputs.length + 1}`,
 		value: runIdList,
 		isSelected: false,
 		state: {
@@ -476,7 +476,7 @@ const onUpdateOutput = (id) => {
 };
 
 const onUpdateSelection = (id) => {
-	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);

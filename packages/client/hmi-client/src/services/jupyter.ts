@@ -293,7 +293,7 @@ export class KernelSessionManager {
 			sessionKernel.sendJupyterMessage(contextMessage);
 			return kernelMessage;
 		}
-		return null;
+		throw new Error(`Unable to send message ${msgType}: ${messageBody}`);
 	}
 
 	disposeMessage(msgId: string) {

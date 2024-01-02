@@ -334,7 +334,5 @@ export function selectOutput(
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
 	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
 	if (!outputPort) return;
-	outputPort = {
-		...updatedOutputPort
-	};
+	outputPort = Object.assign(outputPort, updatedOutputPort);
 }

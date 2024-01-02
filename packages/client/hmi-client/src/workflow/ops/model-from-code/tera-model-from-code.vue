@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div tabName="Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section :isLoading="fetchingInputBlocks">
 				<header>
 					<h5>Code</h5>
 					<Dropdown
@@ -10,39 +10,40 @@
 						:options="programmingLanguages"
 						@change="setKernelContext"
 					/>
-					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
+					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" disabled />
 				</header>
-				<ul>
-					<li v-for="({ name, codeLanguage }, i) in codeBlocks" :key="i">
-						<Panel toggleable>
-							<template #header>
-								<section>
-									<h5>{{ name }}</h5>
-									<Button icon="pi pi-pencil" text rounded />
-								</section>
-							</template>
-							<template #icons>
-								<span>
-									<label>Include in process</label>
-									<InputSwitch v-model="codeBlocks[i].includeInProcess" />
-								</span>
-								<Button icon="pi pi-trash" text rounded @click="removeCodeBlock(i)" />
-							</template>
-							<!--FIXME: togglericon slot isn't recognized for some reason maybe update prime vue?
-						<template #togglericon="{ collapsed }">
-							<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
-						</template> -->
-							<v-ace-editor
-								v-model:value="codeBlocks[i].codeContent"
-								@init="initialize"
-								:lang="codeLanguage"
-								theme="chrome"
-								style="height: 10rem; width: 100%"
-								class="ace-editor"
-							/>
-						</Panel>
-					</li>
-				</ul>
+				<tera-operator-placeholder
+					v-if="allCodeBlocks.length === 0"
+					:operation-type="node.operationType"
+					style="height: 100%"
+				>
+					Please attach a code asset.
+				</tera-operator-placeholder>
+				<template v-else>
+					<tera-asset-block
+						v-for="({ name, codeLanguage, type }, i) in allCodeBlocks"
+						:key="i"
+						:is-editable="type !== CodeBlockType.INPUT"
+						:is-deletable="type !== CodeBlockType.INPUT"
+						@delete="removeCodeBlock(i)"
+						:is-included="allCodeBlocks[i].includeInProcess"
+						@update:is-included="
+							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
+						"
+					>
+						<template #header>
+							<h5>{{ name }}</h5>
+						</template>
+						<v-ace-editor
+							v-model:value="allCodeBlocks[i].codeContent"
+							:lang="codeLanguage"
+							theme="chrome"
+							style="height: 10rem; width: 100%"
+							class="ace-editor"
+							:readonly="type === CodeBlockType.INPUT"
+						/>
+					</tera-asset-block>
+				</template>
 				<template #footer>
 					<span style="margin-right: auto"
 						><label>Model framework:</label
@@ -53,7 +54,7 @@
 							@change="setKernelContext"
 					/></span>
 					<Button
-						:disabled="isProcessing"
+						:disabled="isProcessing || allCodeBlocks.length === 0"
 						label="Run"
 						icon="pi pi-play"
 						severity="secondary"
@@ -75,24 +76,24 @@
 				:is-loading="isProcessing"
 				is-selectable
 			>
-				<tera-operator-placeholder
-					v-if="!selectedModel && !previewHTML"
-					:operation-type="node.operationType"
-					style="height: 100%"
-				/>
-				<section>
-					<template v-if="clonedState.modelFramework === ModelFramework.Petrinet && selectedModel">
+				<section v-if="selectedModel">
+					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
-					<template v-if="clonedState.modelFramework === ModelFramework.Decapodes && previewHTML">
-						<div :innerHTML="previewHTML" />
+					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
+						<span>Decapodes created: {{ selectedModel.id }}</span>
 					</template>
 				</section>
+				<tera-operator-placeholder
+					v-else
+					:operation-type="node.operationType"
+					style="height: 100%"
+				/>
 				<template #footer>
 					<Button
 						:loading="savingAsset"
-						:disabled="!isModelValid()"
+						:disabled="isSaveModelDisabled()"
 						label="Save as new model"
 						severity="secondary"
 						outlined
@@ -123,11 +124,8 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
-import Panel from 'primevue/panel';
 import Button from 'primevue/button';
-import InputSwitch from 'primevue/inputswitch';
 import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
@@ -147,8 +145,10 @@ import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-sema
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
-import { getCodeAsset, getCodeFileAsText } from '@/services/code';
+import { getCodeAsset } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
+import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -170,29 +170,28 @@ enum ModelFramework {
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
 const isProcessing = ref(false);
+const fetchingInputBlocks = ref(false);
 
-const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const modelFrameworks = Object.values(ModelFramework);
 const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
-const previewHTML = ref('');
 
 const selectedModel = ref<Model | null>(null);
-const codeBlock = {
-	...props.node.state,
-	name: 'Code block 1',
-	includeInProcess: true
-};
+
+const inputCodeBlocks = ref<CodeBlock[]>([]);
+
+const allCodeBlocks = computed<CodeBlock[]>(() => [
+	...inputCodeBlocks.value,
+	...clonedState.value.codeBlocks
+]);
 
 const savingAsset = ref(false);
-
-const codeBlocks = ref([codeBlock]);
 
 const clonedState = ref<ModelFromCodeState>({
 	codeLanguage: ProgrammingLanguage.Python,
 	modelFramework: ModelFramework.Petrinet,
-	codeContent: '',
+	codeBlocks: [],
 	modelId: ''
 });
 
@@ -234,6 +233,9 @@ const outputs = computed(() => {
 	return groupedOutputs;
 });
 const selectedOutputId = ref<string>();
+const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
+	() => props.node.outputs?.find((output) => selectedOutputId.value === output.id)
+);
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
@@ -241,16 +243,10 @@ onMounted(async () => {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
-	if (props.node.inputs[0].value?.[0]) {
-		const codeAsset = await getCodeAsset(props.node.inputs[0].value[0]);
+	fetchingInputBlocks.value = true;
+	await getInputCodeBlocks();
+	fetchingInputBlocks.value = false;
 
-		// for now get the first file's source code
-		if (codeAsset?.id && codeAsset?.files) {
-			const filename = Object.keys(codeAsset.files)[0];
-			const codeContent = await getCodeFileAsText(codeAsset.id, filename);
-			codeBlocks.value[0].codeContent = codeContent ?? '';
-		}
-	}
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
@@ -291,18 +287,27 @@ async function handleCode() {
 	isProcessing.value = true;
 
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		const modelId = await codeToAMR(props.node.inputs[0].value?.[0]);
+		const modelId = await codeToAMR(
+			props.node.inputs[0].value?.[0],
+			'temp model',
+			'temp model description',
+			true
+		);
 		clonedState.value.modelId = modelId;
 		emit('append-output-port', {
-			label: `Output ${(props.node.outputs?.length ?? 0) + 1}`,
+			label: `Output - ${props.node.outputs.length + 1}`,
 			state: cloneDeep(clonedState.value),
-			isSelected: false
+			isSelected: false,
+			type: 'modelId',
+			value: [clonedState.value.modelId]
 		});
 		isProcessing.value = false;
 	}
 
 	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
-		const code = editor.value?.getValue();
+		if (isEmpty(allCodeBlocks.value)) return;
+		// we only use one code block for decapodes at the moment
+		const code = allCodeBlocks.value[0].codeContent;
 		const messageContent = {
 			declaration: code
 		};
@@ -311,8 +316,8 @@ async function handleCode() {
 
 		kernelManager
 			.sendMessage('compile_expr_request', messageContent)
-			?.register('compile_expr_response', handleCompileExprResponse)
-			?.register('decapodes_preview', handleDecapodesPreview);
+			.register('compile_expr_response', handleCompileExprResponse)
+			.register('decapodes_preview', handleDecapodesPreview);
 	}
 }
 
@@ -321,35 +326,31 @@ function openModal() {
 }
 
 async function saveAsNewModel() {
-	if (!validateModelName(newModelName.value)) return;
-	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		savingAsset.value = true;
-		// 1. Update model name
-		const model = selectedModel.value;
-		if (!model) return;
-		model.header.name = newModelName.value;
-		const updateResponse = await updateModel(model);
-		if (!updateResponse) return;
+	if (!validateModelName(newModelName.value) || !selectedOutputId.value) return;
 
-		// 2. Save asset to project
-		const projectId = useProjects().activeProject.value?.id;
-		if (!projectId || !selectedModel.value) return;
-		const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
-		savingAsset.value = false;
+	savingAsset.value = true;
+	// 1. Update model name
+	const model = selectedModel.value;
+	if (!model) return;
+	model.header.name = newModelName.value;
+	const updateResponse = await updateModel(model);
+	if (!updateResponse) return;
 
-		if (!response) {
-			logger.error('Could not save asset to project');
-			return;
-		}
+	// 2. Save asset to project
+	const projectId = useProjects().activeProject.value?.id;
+	if (!projectId || !selectedModel.value) return;
+	const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+	savingAsset.value = false;
+	await useProjects().refresh();
 
-		// 3. Append Model to output port
-		emit('append-output-port', {
-			label: selectedModel.value.header?.name,
-			state: cloneDeep(clonedState.value),
-			isSelected: false
-		});
-		useToastService().success('', 'Model saved successfully.');
+	if (!response) {
+		logger.error('Could not save asset to project');
+		return;
 	}
+	updateNodeLabel(selectedOutputId.value, newModelName.value);
+
+	isNewModelModalVisible.value = false;
+	useToastService().success('', 'Model saved successfully.');
 }
 
 function handleCompileExprResponse() {
@@ -377,39 +378,40 @@ async function handleDecapodesPreview(data: any) {
 	if (response) {
 		const m = await getModel(response.id);
 		if (m) {
-			selectedModel.value = m;
-			previewHTML.value = `Decapode created ${m.id}`;
+			clonedState.value.modelId = m.id;
+			emit('append-output-port', {
+				label: `Output - ${props.node.outputs.length + 1}`,
+				state: cloneDeep(clonedState.value),
+				isSelected: false,
+				type: 'modelId',
+				value: [clonedState.value.modelId]
+			});
 		}
 		isProcessing.value = false;
 	}
 }
 
-/**
- * Editor initialization function
- * @param editorInstance	the Ace editor instance
- */
-async function initialize(editorInstance) {
-	editor.value = editorInstance;
+// The format of code blocks is a real pain to work with...
+async function getInputCodeBlocks() {
+	const codeAssetId: string = props.node.inputs?.[0]?.value?.[0];
+	if (!codeAssetId) return;
+	const codeAsset = await getCodeAsset(codeAssetId);
+	if (!codeAsset) return;
+	inputCodeBlocks.value = await getCodeBlocks(codeAsset);
 }
 
 function addCodeBlock() {
-	codeBlocks.value.push(cloneDeep(codeBlock));
+	const codeBlock: CodeBlock = {
+		includeInProcess: false,
+		codeContent: '',
+		name: 'Code Block',
+		codeLanguage: clonedState.value.codeLanguage
+	};
+	clonedState.value.codeBlocks.push(codeBlock);
 }
 
 function removeCodeBlock(index: number) {
-	codeBlocks.value.splice(index, 1);
-}
-
-function isModelValid() {
-	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		return !!selectedModel.value;
-	}
-
-	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
-		return decapodesModelValid.value;
-	}
-
-	return false;
+	clonedState.value.codeBlocks.splice(index, 1);
 }
 
 async function fetchModel() {
@@ -421,6 +423,14 @@ async function fetchModel() {
 	const model = await getModel(clonedState.value.modelId);
 	selectedModel.value = model;
 	isProcessing.value = false;
+}
+
+function isSaveModelDisabled(): boolean {
+	const activeProjectModelIds = useProjects().activeProject.value?.assets?.models?.map(
+		(model) => model.id
+	);
+
+	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }
 
 watch(
@@ -446,15 +456,23 @@ watch(
 	() => props.node.state,
 	() => {
 		clonedState.value = cloneDeep(props.node.state);
-	}
+	},
+	{ deep: true }
 );
 
 function onUpdateOutput(id) {
 	emit('select-output', id);
 }
 
+function updateNodeLabel(id: string, label: string) {
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.label = label;
+	emit('update-output-port', outputPort);
+}
+
 function onUpdateSelection(id) {
-	const outputPort = props.node.outputs?.find((port) => port.id === id);
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
@@ -478,32 +496,6 @@ ul {
 	flex-direction: column;
 	gap: 0.5rem;
 	flex: 1;
-}
-.p-panel {
-	border: 1px solid var(--surface-border-light);
-}
-
-.p-panel:deep(section) {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-.p-panel:deep(.p-panel-icons) {
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-}
-
-li > header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-li > header > section {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
 }
 
 .ace-editor {

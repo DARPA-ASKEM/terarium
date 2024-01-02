@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown-section>
 		<div class="content-container">
-			<header>
+			<header v-if="!hideHeader">
 				<h5>{{ title ?? 'Preview' }}</h5>
 				<Dropdown
 					v-if="options"
@@ -64,6 +64,7 @@ defineProps<{
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
 	isSelectable?: boolean;
+	hideHeader?: boolean;
 }>();
 
 const slots = useSlots();
