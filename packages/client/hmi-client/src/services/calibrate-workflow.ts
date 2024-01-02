@@ -133,7 +133,7 @@ export const autoCalibrationMapping = async (modelOptions: State[], datasetOptio
 				const modelTemp = Object.entries(modelOption.grounding.identifiers);
 				const datasetTemp = Object.entries(datasetOption?.metadata?.groundings?.identifiers);
 				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
-				const dataGroundingList = datasetTemp.map((ele) => ele.join(':'));
+				const dataGroundingList = datasetTemp.map((ele) => ele.at(0) as string);
 				console.log(modelGroundingList);
 				console.log(dataGroundingList);
 				console.log(getEntitySimilarity(modelGroundingList, dataGroundingList));
