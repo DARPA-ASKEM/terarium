@@ -1,13 +1,16 @@
 import { DocumentExtraction } from '@/types/Types';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 
+export interface EquationFromImageBlock extends DocumentExtraction {
+	text: string;
+}
 export interface ModelFromDocumentState {
-	equations: AssetBlock<DocumentExtraction>[];
+	equations: AssetBlock<EquationFromImageBlock>[];
 	text: string;
 }
 
 export const ModelFromDocumentOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_FROM_CODE,
+	name: WorkflowOperationTypes.MODEL_FROM_DOCUMENT,
 	description: 'Create model from document',
 	displayName: 'Create model from document',
 	isRunnable: true,

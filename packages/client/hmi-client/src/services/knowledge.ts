@@ -43,7 +43,8 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @param modelId string= - the model id to use for the extraction
  * @return {Promise<Boolean>}
  */
-export const latexToAMR = async (
+export const equationsToAMR = async (
+	format: string,
 	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
@@ -51,7 +52,7 @@ export const latexToAMR = async (
 	try {
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
 			`/knowledge/equations-to-model`,
-			{ format: 'latex', framework, modelId, equations }
+			{ format, framework, modelId, equations }
 		);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
@@ -65,7 +66,7 @@ export const latexToAMR = async (
 				return true;
 			}
 		}
-		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
+		logger.error(`Equations to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
 	}
