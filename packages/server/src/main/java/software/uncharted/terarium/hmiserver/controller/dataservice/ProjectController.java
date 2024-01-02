@@ -33,6 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -57,7 +58,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @RequiredArgsConstructor
 @Transactional
 @Tags(@Tag(name = "Projects", description = "Project related operations"))
-public class ProjectController {
+public class ProjectController implements TrustedController {
 
 	final ReBACService reBACService;
 

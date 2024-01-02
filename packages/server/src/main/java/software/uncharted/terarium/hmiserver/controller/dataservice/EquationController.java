@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -41,7 +42,7 @@ import software.uncharted.terarium.hmiserver.service.data.EquationService;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class EquationController {
+public class EquationController implements TrustedController {
 
 	final EquationService equationService;
 	final ObjectMapper objectMapper;

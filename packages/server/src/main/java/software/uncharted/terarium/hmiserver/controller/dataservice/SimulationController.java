@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -50,7 +51,7 @@ import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class SimulationController {
+public class SimulationController implements TrustedController {
 
 	private final SimulationService simulationService;
 

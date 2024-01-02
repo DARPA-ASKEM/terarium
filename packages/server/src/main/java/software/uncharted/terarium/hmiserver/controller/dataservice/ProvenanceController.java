@@ -30,6 +30,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
+import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseSuccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -42,7 +43,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @RequestMapping("/provenance")
 @RestController
 @Transactional
-public class ProvenanceController {
+public class ProvenanceController implements TrustedController {
 
 	@Autowired
 	ProvenanceService provenanceService;

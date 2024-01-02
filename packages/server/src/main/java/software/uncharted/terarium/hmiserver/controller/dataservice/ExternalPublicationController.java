@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
@@ -39,7 +40,7 @@ import software.uncharted.terarium.hmiserver.service.data.ExternalPublicationSer
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class ExternalPublicationController {
+public class ExternalPublicationController implements TrustedController {
 
 	final ExternalPublicationService externalPublicationService;
 

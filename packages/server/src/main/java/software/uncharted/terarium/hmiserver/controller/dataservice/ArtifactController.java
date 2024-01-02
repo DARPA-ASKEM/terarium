@@ -41,6 +41,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
@@ -52,7 +53,7 @@ import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class ArtifactController {
+public class ArtifactController implements TrustedController {
 
 	final ArtifactService artifactService;
 
