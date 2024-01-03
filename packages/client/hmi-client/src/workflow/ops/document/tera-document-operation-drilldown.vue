@@ -8,7 +8,7 @@
 			<tera-drilldown-preview hide-header>
 				<h5>{{ document?.name }}</h5>
 
-				<h7 class="clamp-text">{{ document?.text }}</h7>
+				<p class="clamp-text">{{ document?.text }}</p>
 				<Accordion multiple :active-index="[0, 1, 2]">
 					<AccordionTab v-if="!isEmpty(clonedState.equations)">
 						<template #header>
@@ -162,6 +162,8 @@ watch(
 
 <style scoped>
 .clamp-text {
+	font-size: var(--font-caption);
+	font-weight: var(--font-weight-semibold);
 	max-height: 2em;
 	color: var(--gray-700);
 	display: -webkit-box;
