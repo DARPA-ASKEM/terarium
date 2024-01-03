@@ -192,7 +192,7 @@ async function createDocumentFromXDD(
 	projectId: string
 ): Promise<AddDocumentAssetFromXDDResponse | null> {
 	if (!document || !projectId) return null;
-	const response = await API.post(`/document-asset/createDocumentFromXDD`, {
+	const response = await API.post(`/document-asset/create-document-from-xdd`, {
 		document,
 		projectId
 	});
