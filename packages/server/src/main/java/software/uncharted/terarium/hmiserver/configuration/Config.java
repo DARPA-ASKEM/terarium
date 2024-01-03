@@ -1,34 +1,17 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ArtifactController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ConceptController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.DatasetController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.DocumentController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.EquationController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ExternalPublicationController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.FrameworkController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ModelConfigurationController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ModelController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.NotebookSessionController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ProjectController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ProvenanceController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.SimulationController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.TDSCodeController;
-import software.uncharted.terarium.hmiserver.controller.dataservice.WorkflowController;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium")
@@ -43,38 +26,12 @@ public class Config {
 	String baseUrl;
 
 	/**
-	 * The private internal API port of the application, will bypass keycloak
-	 * authentication (if within the selected controllers).
+	 * A list of (ant-style) patterns for service requests that can be used via
+	 * basic auth
+	 * Eg/ /projects/**, /user/me, ...
 	 */
-	Integer trustedPort = 3001;
-
-	/**
-	 * The list of trusted controller endpoints that are available on the trusted
-	 * port.
-	 */
-	public List<String> getTrustedEndpoints() {
-		final List<Class<?>> TRUSTED_CONTROLLERS = Arrays.asList(
-				ArtifactController.class,
-				ConceptController.class,
-				DatasetController.class,
-				DocumentController.class,
-				EquationController.class,
-				ExternalPublicationController.class,
-				FrameworkController.class,
-				ModelConfigurationController.class,
-				ModelController.class,
-				NotebookSessionController.class,
-				ProjectController.class,
-				ProvenanceController.class,
-				SimulationController.class,
-				TDSCodeController.class,
-				WorkflowController.class);
-
-		return TRUSTED_CONTROLLERS.stream()
-				.map(c -> c.getAnnotation(RequestMapping.class).path())
-				.flatMap(Arrays::stream)
-				.collect(Collectors.toList());
-	}
+	@Value("#{'${pantera.serviceRequestPatterns:}'.split(',')}")
+	List<String> serviceRequestPatterns;
 
 	/**
 	 * A list of unauthenticated {@link org.springframework.util.AntPathMatcher}

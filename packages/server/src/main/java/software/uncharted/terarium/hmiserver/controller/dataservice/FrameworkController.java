@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -34,7 +33,7 @@ import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
 @RestController
 @Transactional
 @RequiredArgsConstructor
-public class FrameworkController implements TrustedController {
+public class FrameworkController {
 
 	final FrameworkService frameworkService;
 

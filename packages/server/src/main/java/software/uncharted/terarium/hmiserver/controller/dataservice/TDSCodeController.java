@@ -42,7 +42,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -55,7 +54,7 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class TDSCodeController implements TrustedController {
+public class TDSCodeController {
 
 	final JsDelivrProxy jsdelivrProxy;
 

@@ -28,7 +28,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -42,7 +41,7 @@ import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class NotebookSessionController implements TrustedController {
+public class NotebookSessionController {
 
 	final NotebookSessionService sessionService;
 	final ObjectMapper objectMapper;

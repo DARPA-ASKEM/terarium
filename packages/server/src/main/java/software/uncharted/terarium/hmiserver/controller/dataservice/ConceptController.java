@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.controller.TrustedController;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
@@ -41,7 +40,7 @@ import software.uncharted.terarium.hmiserver.service.data.ConceptService;
 @Slf4j
 @Transactional
 @RequiredArgsConstructor
-public class ConceptController implements TrustedController {
+public class ConceptController {
 
 	final ConceptService conceptService;
 
