@@ -57,31 +57,40 @@
 				:model="contextMenuItems"
 				style="white-space: nowrap; width: auto"
 			/>
-			<tera-operator
+			<tera-canvas-item
 				v-for="(node, index) in wf.nodes"
 				:key="index"
-				:node="node"
-				@resize="resizeHandler"
-				@port-selected="
-					(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)
-				"
-				@port-mouseover="onPortMouseover"
-				@port-mouseleave="onPortMouseleave"
+				:style="{
+					width: `${node.width}px`,
+					top: `${node.y}px`,
+					left: `${node.x}px`
+				}"
 				@dragging="(event) => updatePosition(node, event)"
-				@remove-operator="(event) => removeNode(event)"
-				@remove-edges="removeEdges"
 			>
-				<template #body>
-					<component
-						:is="registry.getNode(node.operationType)"
-						:node="node"
-						@append-output-port="(event: any) => appendOutputPort(node, event)"
-						@append-input-port="(event: any) => appendInputPort(node, event)"
-						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-						@open-drilldown="openDrilldown(node)"
-					/>
-				</template>
-			</tera-operator>
+				<tera-operator
+					:node="node"
+					@resize="resizeHandler"
+					@port-selected="
+						(port: WorkflowPort, direction: WorkflowDirection) =>
+							createNewEdge(node, port, direction)
+					"
+					@port-mouseover="onPortMouseover"
+					@port-mouseleave="onPortMouseleave"
+					@remove-operator="(event) => removeNode(event)"
+					@remove-edges="removeEdges"
+				>
+					<template #body>
+						<component
+							:is="registry.getNode(node.operationType)"
+							:node="node"
+							@append-output-port="(event: any) => appendOutputPort(node, event)"
+							@append-input-port="(event: any) => appendInputPort(node, event)"
+							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+							@open-drilldown="openDrilldown(node)"
+						/>
+					</template>
+				</tera-operator>
+			</tera-canvas-item>
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
@@ -156,6 +165,8 @@
 import { isArray, cloneDeep, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
+import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
+
 import {
 	Operation,
 	Position,
