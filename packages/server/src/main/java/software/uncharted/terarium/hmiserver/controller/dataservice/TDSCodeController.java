@@ -330,7 +330,7 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 	})
-	public ResponseEntity<Integer> uploadCodeFromGithub(
+	public ResponseEntity<Integer> uploadCodeFromGithubRepo(
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("repo-name") final String repoName) {
