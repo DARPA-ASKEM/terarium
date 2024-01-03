@@ -1,12 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,7 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -78,48 +74,6 @@ public class ProvenanceController {
 			@RequestBody Provenance provenance) {
 		provenance = provenanceService.createProvenance(provenance);
 		return ResponseEntity.status(HttpStatus.CREATED).body(provenance);
-	}
-
-	private String snakeToCamel(String s) {
-		Pattern p = Pattern.compile("_(.)");
-		Matcher m = p.matcher(s.replaceAll("^_|_$", "").replaceAll("_+", "_"));
-		StringBuffer sb = new StringBuffer();
-		while (m.find()) {
-			m.appendReplacement(sb, m.group(1).toUpperCase());
-		}
-		m.appendTail(sb);
-		return sb.toString();
-	}
-
-	// I have deprecated this endpoint. The dynamic nature of it isn't ideal because
-	// the different search types have different response types. Below I have
-	// implemented the individual search methods explicitly instead.
-	@PostMapping("/search")
-	@Secured(Roles.USER)
-	@Operation(summary = "Search provenance by name")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
-			@ApiResponse(responseCode = "204", description = "There are no provenance entries found and no errors occurred", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving provenance entries from the data store", content = @Content)
-	})
-	@Deprecated
-	public ResponseEntity<JsonNode> searchProvenance(
-			@RequestParam final String searchType,
-			@RequestBody final ProvenanceQueryParam body) {
-
-		Method method;
-		try {
-			method = ProvenanceSearchService.class.getMethod(snakeToCamel(searchType));
-		} catch (NoSuchMethodException e) {
-			throw new IllegalArgumentException("Invalid search type: " + searchType);
-		}
-
-		try {
-			JsonNode response = (JsonNode) method.invoke(provenanceSearchService, body);
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			throw new RuntimeException("Error executing search method: " + searchType);
-		}
 	}
 
 	@PostMapping("/search/child-nodes")

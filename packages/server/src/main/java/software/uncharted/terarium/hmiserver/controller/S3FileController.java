@@ -50,7 +50,7 @@ public class S3FileController {
 	private final CurrentUserService currentUserService;
 	private final Config config;
 
-	@Value("${terarium.file-storage-s3-bucket-name:pantera-file-storage}")
+	@Value("${terarium.file-storage-s3-bucket-name:terarium-file-storage}")
 	String FILE_STORAGE_DEFAULT_BUCKET_NAME;
 
 	@Value("${terarium.file-storage-s3-client-name:default}")
@@ -67,7 +67,7 @@ public class S3FileController {
 
 	/**
 	 * Get the default bucket name
-	 * 
+	 *
 	 * @return The default bucket name
 	 */
 	@GetMapping("/buckets/default")
@@ -77,7 +77,7 @@ public class S3FileController {
 
 	/**
 	 * List buckets in S3
-	 * 
+	 *
 	 * @param s3Id The ID of the S3 client to use
 	 * @return A {@link ResponseEntity} containing a list of bucket names on success
 	 */
@@ -105,7 +105,7 @@ public class S3FileController {
 	 */
 	@GetMapping("/sign")
 	public ResponseEntity<String> getDownloadSignature(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:pantera-file-storage}") String bucket,
+			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
 			@RequestParam("key") String key,
 			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id) {
 		return ResponseEntity.ok(S3Service.getSignature(bucket, key, s3Id, config.getPresignedUrlEncryptionKey()));
@@ -113,7 +113,7 @@ public class S3FileController {
 
 	/**
 	 * Get a file from S3
-	 * 
+	 *
 	 * @param bucket The bucket to get the file from
 	 * @param key    The key of the file to get
 	 * @param s3Id   The ID of the S3 client to use
@@ -122,7 +122,7 @@ public class S3FileController {
 	 */
 	@GetMapping
 	public ResponseEntity<StreamingResponseBody> getFile(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:pantera-file-storage}") String bucket,
+			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
 			@RequestParam("key") String key,
 			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id,
 			@RequestParam(value = "signature", required = false) String signature) {
@@ -158,7 +158,7 @@ public class S3FileController {
 
 	/**
 	 * Delete a file from S3
-	 * 
+	 *
 	 * @param bucket The bucket to delete the file from
 	 * @param key    The key of the file to delete
 	 * @param s3Id   The ID of the S3 client to use
@@ -166,7 +166,7 @@ public class S3FileController {
 	 */
 	@DeleteMapping
 	public ResponseEntity<Void> deleteFile(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:pantera-file-storage}") String bucket,
+			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
 			@RequestParam("key") String key,
 			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id) {
 		final S3Service s3Service = s3ClientService.getS3Service(s3Id);
@@ -184,7 +184,7 @@ public class S3FileController {
 	 * and
 	 * {@link #putMultipartFile(HttpServletRequest, String, String, String, String)}
 	 * This is a required method for the S3 client to work with the AWS SDK.
-	 * 
+	 *
 	 * @param bucket The bucket to put the file in
 	 * @param key    The key to put the file at
 	 * @param s3Id   The ID of the S3 client to use
@@ -194,7 +194,7 @@ public class S3FileController {
 	 */
 	@PutMapping(consumes = "application/octet-stream")
 	public ResponseEntity<Void> putFile(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:pantera-file-storage}") String bucket,
+			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
 			@RequestParam("key") String key,
 			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id,
 			@RequestBody byte[] bytes) {
@@ -208,7 +208,7 @@ public class S3FileController {
 
 	/**
 	 * List files in a bucket
-	 * 
+	 *
 	 * @param bucket The bucket to list files from
 	 * @param prefix The prefix to filter files by
 	 * @param s3Id   The ID of the S3 client to use
@@ -218,7 +218,7 @@ public class S3FileController {
 	 */
 	@GetMapping("/list")
 	public ResponseEntity<S3ObjectListing> listFiles(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:pantera-file-storage}") String bucket,
+			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
 			@RequestParam(value = "prefix", required = false, defaultValue = "") String prefix,
 			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id)
 			throws IOException {
@@ -228,7 +228,7 @@ public class S3FileController {
 
 	/**
 	 * Create a multipart upload
-	 * 
+	 *
 	 * @param bucket The bucket to upload to
 	 * @param key    The key to upload to
 	 * @param s3Id   The ID of the S3 client to use
@@ -237,7 +237,7 @@ public class S3FileController {
 	 */
 	@PutMapping("/upload")
 	public ResponseEntity<String> createMultipartUpload(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:pantera-file-storage}") String bucket,
+			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
 			@RequestParam("key") String key,
 			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id)
 			throws IOException {
@@ -249,7 +249,7 @@ public class S3FileController {
 
 	/**
 	 * Upload a file to S3
-	 * 
+	 *
 	 * @param request  The request containing the file to upload
 	 * @param uploadId The ID of the upload to add the file to
 	 * @param bucket   The bucket to upload to
@@ -261,7 +261,7 @@ public class S3FileController {
 	@PutMapping(value = "upload/{uploadId}", consumes = "multipart/form-data")
 	public ResponseEntity<Void> putMultipartFile(HttpServletRequest request,
 			@PathVariable("uploadId") String uploadId,
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:pantera-file-storage}") String bucket,
+			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
 			@RequestParam(value = "prefix", required = false, defaultValue = "") String prefix,
 			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id)
 			throws IOException {

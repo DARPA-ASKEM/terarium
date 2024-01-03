@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,11 +25,9 @@ public class Config {
 	String baseUrl;
 
 	/**
-	 * A list of (ant-style) patterns for service requests that can be used via
+	 * A list of patterns for service requests that can be used via
 	 * basic auth
-	 * Eg/ /projects/**, /user/me, ...
 	 */
-	@Value("#{'${pantera.serviceRequestPatterns:}'.split(',')}")
 	List<String> serviceRequestPatterns;
 
 	/**
