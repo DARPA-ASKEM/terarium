@@ -5,6 +5,11 @@
 				<div class="form-section">
 					<h4>Mapping</h4>
 					<DataTable class="mapping-table" :value="mapping">
+						<Button
+							class="p-button-sm p-button-text"
+							label="Delete All Mapping"
+							@click="deleteMapping"
+						/>
 						<Column field="modelVariable">
 							<template #header>
 								<span class="column-header">Model variable</span>
@@ -28,6 +33,18 @@
 									placeholder="Select a variable"
 									v-model="data[field]"
 									:options="datasetColumns?.map((ele) => ele.name)"
+								/>
+							</template>
+						</Column>
+						<Column field="deleteRow">
+							<template #header>
+								<span class="column-header"></span>
+							</template>
+							<template #body="{ index }">
+								<Button
+									class="p-button-sm p-button-text"
+									label="Delete Row"
+									@click="deleteMapRow(index)"
 								/>
 							</template>
 						</Column>
@@ -350,6 +367,23 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	emit('update-state', state);
+}
+
+function deleteMapping() {
+	mapping.value = [{ modelVariable: '', datasetVariable: '' }];
+
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	emit('update-state', state);
+}
+
+function deleteMapRow(index) {
+	mapping.value.splice(index, 1);
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
