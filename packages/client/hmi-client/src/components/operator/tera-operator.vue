@@ -129,6 +129,7 @@ main {
 	outline: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
 	box-shadow: var(--overlayMenuShadow);
+	min-width: 15rem;
 
 	&:hover {
 		box-shadow: var(--overlayMenuShadowHover);

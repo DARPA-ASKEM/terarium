@@ -61,7 +61,7 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:style="{
-					minWidth: `${node.width}px`,
+					width: `${node.width}px`,
 					top: `${node.y}px`,
 					left: `${node.x}px`
 				}"

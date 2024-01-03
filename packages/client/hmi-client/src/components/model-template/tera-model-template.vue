@@ -34,7 +34,7 @@
 				v-for="(card, index) in cards"
 				:key="index"
 				:style="{
-					minWidth: 'fit-content',
+					width: 'fit-content',
 					top: `${card.y}px`,
 					left: `${card.x}px`
 				}"
