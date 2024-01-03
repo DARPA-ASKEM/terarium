@@ -7,6 +7,8 @@ export interface EquationFromImageBlock extends DocumentExtraction {
 export interface ModelFromDocumentState {
 	equations: AssetBlock<EquationFromImageBlock>[];
 	text: string;
+	modelFramework: string;
+	modelId: string | null;
 }
 
 export const ModelFromDocumentOperation: Operation = {
@@ -21,7 +23,9 @@ export const ModelFromDocumentOperation: Operation = {
 	initState: () => {
 		const init: ModelFromDocumentState = {
 			equations: [],
-			text: ''
+			text: '',
+			modelFramework: 'petrinet',
+			modelId: null
 		};
 		return init;
 	}
