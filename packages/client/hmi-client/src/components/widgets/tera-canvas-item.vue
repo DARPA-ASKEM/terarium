@@ -8,7 +8,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
 defineProps<{
-	style: { minWidth: string; top: string; left: string };
+	style: { width: string; top: string; left: string };
 }>();
 
 const emit = defineEmits(['dragging']);
