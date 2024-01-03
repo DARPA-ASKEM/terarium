@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
+import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
 
 import java.util.List;
@@ -39,7 +40,7 @@ public interface MIRAProxy {
 	);
 
 	@PostMapping("/entity_similarity")
-	ResponseEntity<JsonNode> entitySimilarity(
+	ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(
 		@RequestBody Curies obj
 	);
 

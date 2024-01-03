@@ -468,6 +468,12 @@ export interface DKG {
     link: string;
 }
 
+export interface EntitySimilarityResult {
+    source: string;
+    target: string;
+    distance: number;
+}
+
 export interface PermissionGroup {
     id: string;
     name: string;
