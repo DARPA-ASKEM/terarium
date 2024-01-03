@@ -36,25 +36,25 @@
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
 		</template>
-		<tera-model-description
-			v-if="view === ModelView.DESCRIPTION && model"
-			:model="model"
-			:model-configurations="modelConfigurations"
-			:highlight="highlight"
-			@update-model="updateModelContent"
-			@fetch-model="fetchModel"
-			:key="model?.id"
-		/>
-		<tera-model-editor
-			v-else-if="view === ModelView.MODEL && model"
-			:model="model"
-			:model-configurations="modelConfigurations"
-			:feature-config="featureConfig"
-			@model-updated="getModelWithConfigurations"
-			@update-model="updateModelContent"
-			@update-configuration="updateConfiguration"
-			@add-configuration="addConfiguration"
-		/>
+		<template v-if="model">
+			<tera-model-editor
+				:model="model"
+				:model-configurations="modelConfigurations"
+				:feature-config="featureConfig"
+				@model-updated="getModelWithConfigurations"
+				@update-model="updateModelContent"
+				@update-configuration="updateConfiguration"
+				@add-configuration="addConfiguration"
+			/>
+			<tera-model-description
+				:model="model"
+				:model-configurations="modelConfigurations"
+				:highlight="highlight"
+				@update-model="updateModelContent"
+				@fetch-model="fetchModel"
+				:key="model?.id"
+			/>
+		</template>
 	</tera-asset>
 </template>
 
