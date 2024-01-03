@@ -6,7 +6,6 @@
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
 				<h4>Code Editor - Julia</h4>
-				{{ modelMap }}
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -56,11 +55,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { AssetType } from '@/types/Types';
-import { createModel } from '@/services/model';
+import { createModel, getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -95,38 +94,33 @@ const kernelManager = new KernelSessionManager();
 
 const newModelName = ref('');
 
-// Generates name-id pairings for beaker kernel context_info
-const modelMap = computed(() => {
-	const map: { [key: string]: string } = {};
-	const inputs = props.node.inputs;
-	for (let i = 0; i < inputs.length; i++) {
-		if (inputs[i].value) {
-			map[`model_${i}`] = inputs[i].value?.[0];
-		}
-	}
-	return map;
-});
-
-let editor: VAceEditorInstance['_editor'] | null;
+const modelMap = ref<{ [key: string]: string }>({});
 const codeText = ref('');
 
 /**
+ * Scrub model name string to be compatible with Julia variable names and transporting
+ * across JSON.
+ * */
+const scrubVariableName = (v: string) => v.replace(/[^\w\s]/gi, '');
+
+let editor: VAceEditorInstance['_editor'] | null;
+
+/** working example Jan 2024
+# halfar: 'cde2b856-114e-4008-8493-b0d93361fa72',
+# glen: '97eb6e11-05cb-4ffe-9556-980a8d287c36'
+
 ice_dynamics_composition_diagram = @relation () begin
   dynamics(Γ,n)
   stress(Γ,n)
 end
 ice_dynamics_cospan = oapply(ice_dynamics_composition_diagram,
   [
-		Open(halfar_eq2, [:Γ,:n]),
-		Open(glens_law, [:Γ,:n])
+		Open(halfar, [:Γ,:n]),
+		Open(glen, [:Γ,:n])
 	]
 )
 
 decapode = apex(ice_dynamics_cospan)
-
-
-# halfar: 'cde2b856-114e-4008-8493-b0d93361fa72',
-# glen: '97eb6e11-05cb-4ffe-9556-980a8d287c36'
 * */
 
 const buildJupyterContext = () => ({
@@ -136,15 +130,13 @@ const buildJupyterContext = () => ({
 });
 
 const initialize = async () => {
-	const modelId = props.node.inputs[0].value?.[0];
-	if (!modelId) return;
+	if (kernelManager) {
+		kernelManager.shutdown();
+	}
 
 	// Create a new session and context based on model
 	try {
-		const jupyterContext = buildJupyterContext();
-		if (jupyterContext) {
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
-		}
+		await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
@@ -223,13 +215,34 @@ const runCodeModelCoupling = () => {
 		});
 };
 
-onMounted(() => {
-	initialize();
-});
-
 onUnmounted(() => {
 	kernelManager.shutdown();
 });
+
+watch(
+	() => props.node.inputs,
+	async () => {
+		const inputs = props.node.inputs;
+
+		// reset
+		modelMap.value = {};
+		codeText.value = '# The following <variable>: <model> mappings are available\n';
+		for (let i = 0; i < inputs.length; i++) {
+			if (inputs[i].value) {
+				// eslint-disable-next-line no-await-in-loop
+				const model = await getModel(inputs[i].value?.[0]);
+				if (!model) continue;
+
+				// Save name:id mapping for context and comment message
+				const safeName = scrubVariableName(model.header.name);
+				modelMap.value[safeName] = model.id;
+				codeText.value += `# - ${safeName}: ${model.header.name}\n`;
+			}
+		}
+		initialize();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
