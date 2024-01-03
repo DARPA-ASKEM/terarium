@@ -1,16 +1,25 @@
 <template>
-	<tera-infinite-canvas>
+	<tera-infinite-canvas
+		@save-transform="saveTransform"
+		@mouseenter="setMouseOverCanvas(true)"
+		@mouseleave="setMouseOverCanvas(false)"
+		@drop="onDrop"
+		@dragover.prevent
+		@dragenter.prevent
+		@focus="() => {}"
+		@blur="() => {}"
+	>
 		<template #foreground>
 			<aside>
 				<section v-if="model?.header?.schema_name">
-					<h7>Model framework</h7>
+					<header>Model framework</header>
 					<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
 				</section>
 				<section>
-					<h7>Model templates</h7>
+					<header>Model templates</header>
 					<ul>
 						<li v-for="(_, index) in 5" :key="index">
-							<tera-model-template-card />
+							<tera-model-template-card :card="newCard" draggable="true" />
 						</li>
 					</ul>
 				</section>
@@ -21,19 +30,69 @@
 			</aside>
 		</template>
 		<template #data>
-			<tera-model-template-card />
+			<tera-canvas-item
+				v-for="(card, index) in cards"
+				:key="index"
+				:style="{
+					width: 'fit-content',
+					top: `${card.y}px`,
+					left: `${card.x}px`
+				}"
+				@dragging="(event) => updatePosition(card, event)"
+			>
+				<tera-model-template-card :card="card" />
+			</tera-canvas-item>
 		</template>
 	</tera-infinite-canvas>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+import { cloneDeep } from 'lodash';
 import { Model } from '@/types/Types';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplateCard from './tera-model-template-card.vue';
+import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 
 defineProps<{
 	model?: Model;
 }>();
+
+interface ModelTemplateCard {
+	// Position on canvas
+	x: number;
+	y: number;
+}
+
+const newCard: ModelTemplateCard = { x: 0, y: 0 };
+let isMouseOverCanvas: boolean = false;
+let canvasTransform = { x: 0, y: 0, k: 1 };
+
+const cards = ref<ModelTemplateCard[]>([{ x: 300, y: 40 }]);
+
+const setMouseOverCanvas = (val: boolean) => {
+	isMouseOverCanvas = val;
+};
+
+function saveTransform(newTransform: { k: number; x: number; y: number }) {
+	canvasTransform = newTransform;
+}
+
+function updateNewCardPosition(event) {
+	newCard.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
+	newCard.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
+}
+
+function onDrop(event) {
+	updateNewCardPosition(event);
+	cards.value.push(cloneDeep(newCard));
+}
+
+const updatePosition = (card: ModelTemplateCard, { x, y }) => {
+	if (!isMouseOverCanvas) return;
+	card.x += x / canvasTransform.k;
+	card.y += y / canvasTransform.k;
+};
 </script>
 
 <style scoped>
@@ -60,15 +119,12 @@ h5 {
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
-}
-
-h5,
-h7 {
 	font-weight: var(--font-weight);
 }
 
-h7 {
+header {
 	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
 
 .pi-info-circle {
