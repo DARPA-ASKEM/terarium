@@ -71,10 +71,7 @@ async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<Docum
 	const documentAssets: DocumentAsset[] = [];
 
 	try {
-		const response = await API.post(
-			'/provenance/connected-nodes?search_type=models_from_document',
-			query
-		);
+		const response = await API.post('/provenance/search/models-from-document', query);
 
 		// If we get an error returns an empty array
 		if (response.status !== 200) {

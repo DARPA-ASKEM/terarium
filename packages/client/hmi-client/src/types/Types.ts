@@ -357,6 +357,20 @@ export interface PetriNetModel {
     transitions: PetriNetTransition[];
 }
 
+/**
+ * @deprecated
+ */
+export interface Assets {
+    datasets: Dataset[];
+    extractions: Extraction[];
+    models: Model[];
+    publications: ExternalPublication[];
+    workflows: Workflow[];
+    artifacts: Artifact[];
+    code: Code[];
+    documents: DocumentAsset[];
+}
+
 export interface Project {
     id?: string;
     name: string;
@@ -399,7 +413,6 @@ export interface Provenance {
 export interface ProvenanceQueryParam {
     rootId: string;
     rootType: ProvenanceType;
-    userId: string;
     nodes?: boolean;
     edges?: boolean;
     versions?: boolean;
@@ -864,6 +877,16 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
+export interface Extraction {
+    id: number;
+    askemClass: string;
+    properties: ExtractionProperties;
+    askemId: string;
+    xddCreated: Date;
+    xddRegistrant: number;
+    highlight: string[];
+}
+
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
@@ -895,16 +918,6 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
-}
-
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
 }
 
 export interface KnownEntities {
@@ -973,17 +986,6 @@ export interface PetriNetTransitionProperties {
     grounding?: ModelGrounding;
 }
 
-export interface XDDFacetBucket {
-    key: string;
-    docCount: string;
-}
-
-export interface Authority {
-    id: number;
-    name: string;
-    description: string;
-}
-
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
@@ -1001,6 +1003,17 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
+}
+
+export interface XDDFacetBucket {
+    key: string;
+    docCount: string;
+}
+
+export interface Authority {
+    id: number;
+    name: string;
+    description: string;
 }
 
 export interface XDDUrlExtraction {

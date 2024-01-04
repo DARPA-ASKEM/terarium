@@ -70,7 +70,7 @@ async function downloadRawFile(
 	filename: string,
 	limit: number = 100
 ): Promise<CsvAsset | null> {
-	const URL = `/datasets/${datasetId}/downloadCSV?filename=${filename}&limit=${limit}`;
+	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
@@ -126,7 +126,7 @@ async function createNewDatasetFromGithubFile(
 	if (!newDataset || !newDataset.id) return null;
 
 	const urlResponse = await API.put(
-		`/datasets/${newDataset.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/datasets/${newDataset.id}/upload-csv-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -171,7 +171,7 @@ async function createNewDatasetFromCSV(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const urlResponse = await API.put(`/datasets/${newDataset.id}/uploadCSV`, formData, {
+	const urlResponse = await API.put(`/datasets/${newDataset.id}/upload-csv`, formData, {
 		params: {
 			filename: file.name
 		},
@@ -201,7 +201,7 @@ async function createDatasetFromSimulationResult(
 ): Promise<boolean> {
 	try {
 		const response: AxiosResponse<Response> = await API.get(
-			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?datasetName=${datasetName}`
+			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?dataset-name=${datasetName}`
 		);
 		if (response && response.status === 201) {
 			return true;

@@ -1,12 +1,13 @@
 import {
 	Artifact,
+	Assets,
 	AssetType,
 	Code,
 	Dataset,
-	Document,
 	DocumentAsset,
 	ExternalPublication,
-	Model
+	Model,
+	Project
 } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
 
@@ -35,17 +36,6 @@ export type ProjectAssets = {
 
 // TODO this is essentially the same as Project from Types.ts, however it references
 // the above ProjectAssets type instead of the Assets type. This should be fixed.
-export interface IProject {
-	id: string;
-	name: string;
-	description: string;
-	timestamp: string;
-	active: boolean;
-	concept: string | null;
-	assets: ProjectAssets | null;
-	relatedDocuments: Document[];
-	username: string;
-	metadata?: { [index: string]: string };
-	publicProject?: boolean;
-	userPermission?: string;
+export interface IProject extends Project {
+	assets: Assets | null;
 }
