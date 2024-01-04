@@ -134,7 +134,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { Poller } from '@/api/api';
+import { Poller, PollerState } from '@/api/api';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 const props = defineProps<{
@@ -188,7 +188,9 @@ const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
 const outputId = computed(() => {
-	if (props.node.outputs[0]?.value) return String(props.node.outputs[0].value);
+	// FIXME: temporary test
+	const last = props.node.outputs.length - 1;
+	if (props.node.outputs[last]?.value) return String(props.node.outputs[last].value);
 	return undefined;
 });
 
@@ -234,17 +236,15 @@ const runMakeQuery = async () => {
 const getStatus = async (runId: string) => {
 	showSpinner.value = true;
 
-	/*
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => {
-		  const response = await getQueries(runId);
+			const response = await getQueries(runId);
 			if (response.done && response.done === true) {
 				return { data: response } as any;
-			} else {
-				return { data: null } as any;
 			}
+			return { data: null } as any;
 		});
 	const pollerResults = await poller.start();
 
@@ -255,26 +255,11 @@ const getStatus = async (runId: string) => {
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		console.error( `Simulate: ${runId} has failed`);
+		console.error(`Simulate: ${runId} has failed`);
 		throw Error('Failed Runs');
 	}
 	showSpinner.value = false;
 	updateOutputPorts(runId);
-	*/
-
-	const response = await getQueries(runId);
-	if (response?.error === true) {
-		showSpinner.value = false;
-		toast.error('', 'An error occured Funman');
-		console.log(response);
-	} else if (response?.done === true) {
-		showSpinner.value = false;
-		updateOutputPorts(runId);
-	} else {
-		setTimeout(async () => {
-			getStatus(runId);
-		}, 2000);
-	}
 };
 
 const updateOutputPorts = async (runId: string) => {
