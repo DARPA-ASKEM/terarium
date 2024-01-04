@@ -215,6 +215,7 @@ import {
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
+	DatasetColumn,
 	ModelConfiguration,
 	ScimlStatusUpdate,
 	State
@@ -272,7 +273,7 @@ enum CalibrateTabs {
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<State[] | undefined>();
-const datasetColumns = ref<any[]>();
+const datasetColumns = ref<DatasetColumn[]>();
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const extra = ref<CalibrateExtraJulia>(props.node.state.extra);
@@ -552,7 +553,10 @@ async function getAutoMapping() {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
-	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+	mapping.value = (await autoCalibrationMapping(
+		modelStateOptions.value,
+		datasetColumns.value
+	)) as CalibrateMap[];
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);

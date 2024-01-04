@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-import { ModelConfiguration, Dataset, CsvAsset, State } from '@/types/Types';
+import { ModelConfiguration, Dataset, CsvAsset, State, DatasetColumn } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { getEntitySimilarity } from './concept';
@@ -117,28 +117,42 @@ export const renderLossGraph = (
 	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
 };
 
-export const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: any[]) => {
+export const autoCalibrationMapping = async (
+	modelOptions: State[],
+	datasetOptions: DatasetColumn[]
+) => {
 	const result = [] as CalibrateMap[];
-	modelOptions.forEach((modelOption) => {
-		datasetOptions.forEach((datasetOption) => {
+	const acceptableDistance = 0.7;
+	for (let i = 0; i < modelOptions.length; i++) {
+		for (let j = 0; j < datasetOptions.length; j++) {
 			// Check for direct string match
-			if (modelOption.id.toLowerCase() === datasetOption.name.toLowerCase()) {
-				result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
+			if (modelOptions[i].id.toLowerCase() === datasetOptions[j].name.toLowerCase()) {
+				result.push({ modelVariable: modelOptions[i].id, datasetVariable: datasetOptions[j].name });
 			}
 			// No direct string match, check grounding keys (if they exist)
 			else if (
-				modelOption.grounding?.identifiers &&
-				datasetOption?.metadata?.groundings?.identifiers
+				modelOptions[i].grounding?.identifiers &&
+				datasetOptions[j]?.metadata?.groundings?.identifiers
 			) {
-				const modelTemp = Object.entries(modelOption.grounding.identifiers);
-				const datasetTemp = Object.entries(datasetOption?.metadata?.groundings?.identifiers);
+				const modelTemp = Object.entries(modelOptions[i].grounding?.identifiers);
+				const datasetTemp = Object.entries(datasetOptions[j].metadata?.groundings?.identifiers);
 				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
 				const dataGroundingList = datasetTemp.map((ele) => ele.at(0) as string);
-				console.log(modelGroundingList);
-				console.log(dataGroundingList);
-				console.log(getEntitySimilarity(modelGroundingList, dataGroundingList));
+				// eslint-disable-next-line no-await-in-loop
+				const entitySimilarity = await getEntitySimilarity(modelGroundingList, dataGroundingList);
+				if (!entitySimilarity) return result;
+				for (let k = 0; k < entitySimilarity.length; k++) {
+					if (entitySimilarity[k].distance < acceptableDistance) {
+						// acceptable match found for identifiers in modelOptions[i].id and datasetOptions[j].name
+						result.push({
+							modelVariable: modelOptions[i].id,
+							datasetVariable: datasetOptions[j].name
+						});
+						break;
+					}
+				}
 			}
-		}); // end for each dataset Option
-	}); // end for each model Option
-	return result as CalibrateMap[];
+		} // end for each dataset Option
+	} // end for each model Option
+	return result;
 };
