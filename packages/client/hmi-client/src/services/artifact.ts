@@ -32,7 +32,7 @@ async function createNewArtifactFromGithubFile(
 	if (!newArtifact || !newArtifact.id) return null;
 
 	const urlResponse = await API.put(
-		`/artifacts/${newArtifact.id}/uploadArtifactFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/artifacts/${newArtifact.id}/upload-artifact-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -100,7 +100,7 @@ async function addFileToArtifact(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.put(`/artifacts/${artifactId}/uploadFile`, formData, {
+	const response = await API.put(`/artifacts/${artifactId}/upload-file`, formData, {
 		params: {
 			filename: file.name
 		},
