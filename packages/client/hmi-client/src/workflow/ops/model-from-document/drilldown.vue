@@ -97,7 +97,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-assets';
-import { DocumentAsset, ExtractionAssetType, Model } from '@/types/Types';
+import { DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, isEmpty, unionBy } from 'lodash';
 import Image from 'primevue/image';
 import { equationsToAMR } from '@/services/knowledge';
@@ -201,19 +201,18 @@ onMounted(async () => {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
-	const documentId = props.node.inputs?.[0]?.value?.[0];
+	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
+	const equations: AssetBlock<DocumentExtraction>[] =
+		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
 	assetLoading.value = true;
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
-		const equations = document.value?.assets?.filter(
-			(a) => a.assetType === ExtractionAssetType.Equation
-		);
 
 		const state = cloneDeep(props.node.state);
 
 		// equations that not been run in image -> equation
 		const nonRunEquations = equations?.filter((e) => {
-			const foundEquation = state.equations.find((eq) => eq.asset.fileName === e.fileName);
+			const foundEquation = state.equations.find((eq) => eq.asset.fileName === e.asset.fileName);
 			return !foundEquation;
 		});
 
@@ -221,17 +220,17 @@ onMounted(async () => {
 			assetLoading.value = false;
 			return;
 		}
-		const promises = nonRunEquations?.map(async (e, i) => {
-			const equationText = await getEquationFromImageUrl(documentId, e.fileName);
+		const promises = nonRunEquations?.map(async (e) => {
+			const equationText = await getEquationFromImageUrl(documentId, e.asset.fileName);
 			const equationBlock: EquationFromImageBlock = {
-				...e,
+				...e.asset,
 				text: equationText ?? '',
 				extractionError: !equationText
 			};
 
 			const assetBlock: AssetBlock<EquationFromImageBlock> = {
-				name: `Equation ${i + 1}`,
-				includeInProcess: true,
+				name: e.name,
+				includeInProcess: e.includeInProcess,
 				asset: equationBlock
 			};
 
