@@ -135,9 +135,8 @@ export const autoCalibrationMapping = async (
 				datasetOptions[j]?.metadata?.groundings?.identifiers
 			) {
 				const modelTemp = Object.entries(modelOptions[i].grounding?.identifiers);
-				const datasetTemp = Object.entries(datasetOptions[j].metadata?.groundings?.identifiers);
 				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
-				const dataGroundingList = datasetTemp.map((ele) => ele.at(0) as string);
+				const dataGroundingList = Object.keys(datasetOptions[j].metadata?.groundings?.identifiers);
 				// eslint-disable-next-line no-await-in-loop
 				const entitySimilarity = await getEntitySimilarity(modelGroundingList, dataGroundingList);
 				if (!entitySimilarity) return result;
