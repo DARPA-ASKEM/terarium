@@ -57,31 +57,40 @@
 				:model="contextMenuItems"
 				style="white-space: nowrap; width: auto"
 			/>
-			<tera-operator
+			<tera-canvas-item
 				v-for="(node, index) in wf.nodes"
 				:key="index"
-				:node="node"
-				@resize="resizeHandler"
-				@port-selected="
-					(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)
-				"
-				@port-mouseover="onPortMouseover"
-				@port-mouseleave="onPortMouseleave"
+				:style="{
+					width: `${node.width}px`,
+					top: `${node.y}px`,
+					left: `${node.x}px`
+				}"
 				@dragging="(event) => updatePosition(node, event)"
-				@remove-operator="(event) => removeNode(event)"
-				@remove-edges="removeEdges"
 			>
-				<template #body>
-					<component
-						:is="registry.getNode(node.operationType)"
-						:node="node"
-						@append-output-port="(event: any) => appendOutputPort(node, event)"
-						@append-input-port="(event: any) => appendInputPort(node, event)"
-						@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-						@open-drilldown="openDrilldown(node)"
-					/>
-				</template>
-			</tera-operator>
+				<tera-operator
+					:node="node"
+					@resize="resizeHandler"
+					@port-selected="
+						(port: WorkflowPort, direction: WorkflowDirection) =>
+							createNewEdge(node, port, direction)
+					"
+					@port-mouseover="onPortMouseover"
+					@port-mouseleave="onPortMouseleave"
+					@remove-operator="(event) => removeNode(event)"
+					@remove-edges="removeEdges"
+				>
+					<template #body>
+						<component
+							:is="registry.getNode(node.operationType)"
+							:node="node"
+							@append-output-port="(event: any) => appendOutputPort(node, event)"
+							@append-input-port="(event: any) => appendInputPort(node, event)"
+							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
+							@open-drilldown="openDrilldown(node)"
+						/>
+					</template>
+				</tera-operator>
+			</tera-canvas-item>
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
@@ -156,6 +165,8 @@
 import { isArray, cloneDeep, isEmpty } from 'lodash';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
+import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
+
 import {
 	Operation,
 	Position,
@@ -608,7 +619,7 @@ const threshold2 = 5.0 * 5.0;
  */
 function relinkEdges(node: WorkflowNode<any> | null) {
 	const nodes = node ? [node] : wf.value.nodes;
-	const edges = wf.value.edges;
+	const allEdges = wf.value.edges;
 
 	// Note id can start with numerals, so we need [id=...]
 	const getPortElement = (id: string) =>
@@ -624,35 +635,41 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 	for (let i = 0; i < nodes.length; i++) {
 		const n = nodes[i];
+		const nodePosition: Position = { x: n.x, y: n.y };
 
 		// The input ports connects to the edge's target
 		const inputs = n.inputs;
 		inputs.forEach((port) => {
-			const edge = edges.find((e) => e.targetPortId === port.id);
-			if (!edge) return;
-			const portElem = getPortElement(edge.targetPortId as string);
-			const nodePosition: Position = { x: n.x, y: n.y };
-			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
-			const portPos = {
-				x: nodePosition.x,
-				y: nodePosition.y + totalOffsetY
-			};
-			relink(edge.points[1], portPos);
+			const edges = allEdges.filter((e) => e.targetPortId === port.id);
+			if (!edges || edges.length === 0) return;
+
+			edges.forEach((edge) => {
+				const portElem = getPortElement(edge.targetPortId as string);
+				const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
+
+				const portPos = {
+					x: nodePosition.x,
+					y: nodePosition.y + totalOffsetY
+				};
+				relink(edge.points[1], portPos);
+			});
 		});
 
 		// The output ports connects to the edge's source
 		const outputs = n.outputs;
 		outputs.forEach((port) => {
-			const edge = edges.find((e) => e.sourcePortId === port.id);
-			if (!edge) return;
-			const portElem = getPortElement(edge.sourcePortId as string);
-			const nodePosition: Position = { x: n.x, y: n.y };
-			const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
-			const portPos = {
-				x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
-				y: nodePosition.y + totalOffsetY
-			};
-			relink(edge.points[0], portPos);
+			const edges = allEdges.filter((e) => e.sourcePortId === port.id);
+			if (!edges || edges.length === 0) return;
+
+			edges.forEach((edge) => {
+				const portElem = getPortElement(edge.sourcePortId as string);
+				const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
+				const portPos = {
+					x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
+					y: nodePosition.y + totalOffsetY
+				};
+				relink(edge.points[0], portPos);
+			});
 		});
 	}
 }
