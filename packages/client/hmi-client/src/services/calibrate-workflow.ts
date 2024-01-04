@@ -140,15 +140,11 @@ export const autoCalibrationMapping = async (
 				// eslint-disable-next-line no-await-in-loop
 				const entitySimilarity = await getEntitySimilarity(modelGroundingList, dataGroundingList);
 				if (!entitySimilarity) return result;
-				for (let k = 0; k < entitySimilarity.length; k++) {
-					if (entitySimilarity[k].distance < acceptableDistance) {
-						// acceptable match found for identifiers in modelOptions[i].id and datasetOptions[j].name
-						result.push({
-							modelVariable: modelOptions[i].id,
-							datasetVariable: datasetOptions[j].name
-						});
-						break;
-					}
+				if (entitySimilarity.filter((ele) => ele.distance < acceptableDistance).length > 0) {
+					result.push({
+						modelVariable: modelOptions[i].id,
+						datasetVariable: datasetOptions[j].name
+					});
 				}
 			}
 		} // end for each dataset Option
