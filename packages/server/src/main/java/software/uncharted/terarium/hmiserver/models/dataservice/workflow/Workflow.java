@@ -39,11 +39,11 @@ public class Workflow implements Serializable {
 
 	private String description;
 
-	private Object transform;
+	private Transform transform;
 
-	private List<Object> nodes;
+	private List<WorkflowNode<?>> nodes;
 
-	private List<Object> edges;
+	private List<WorkflowEdge> edges;
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
