@@ -19,17 +19,6 @@ public class ProvenanceNode implements Serializable {
 
 	private ProvenanceType type;
 
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		ProvenanceNode node = (ProvenanceNode) obj;
-		return id.equals(node.id) && type == node.type;
-	}
-
 	@JsonProperty("uuid")
 	String getUuid() {
 		String label = type.toString().toLowerCase();

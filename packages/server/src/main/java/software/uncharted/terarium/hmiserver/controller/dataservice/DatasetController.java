@@ -151,7 +151,7 @@ public class DatasetController {
 			@ApiResponse(responseCode = "404", description = "Dataset could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
-	public ResponseEntity<ResponseDeleted> deleteDocument(
+	public ResponseEntity<ResponseDeleted> deleteDataset(
 			@PathVariable("id") final UUID id) {
 
 		try {

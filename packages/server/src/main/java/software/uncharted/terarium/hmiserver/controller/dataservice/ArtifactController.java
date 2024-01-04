@@ -177,7 +177,7 @@ public class ArtifactController {
 
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets a presigned url to download the document")
+	@Operation(summary = "Gets a presigned url to upload the document")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
@@ -199,7 +199,7 @@ public class ArtifactController {
 
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets a presigned url to upload the document")
+	@Operation(summary = "Gets a presigned url to download the document")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)

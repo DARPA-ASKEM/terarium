@@ -25,6 +25,12 @@ public class Config {
 	String baseUrl;
 
 	/**
+	 * A list of patterns for service requests that can be used via
+	 * basic auth
+	 */
+	List<String> serviceRequestPatterns;
+
+	/**
 	 * A list of unauthenticated {@link org.springframework.util.AntPathMatcher}
 	 * patterns for urls that should not be
 	 * authenticated via Spring Security

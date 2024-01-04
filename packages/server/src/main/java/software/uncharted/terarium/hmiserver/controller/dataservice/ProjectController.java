@@ -500,7 +500,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("user-d") final String userId,
+			@PathVariable("user-id") final String userId,
 			@PathVariable("old-relationship") final String oldRelationship,
 			@RequestParam("to") final String newRelationship) {
 		try {
