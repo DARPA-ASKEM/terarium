@@ -3,6 +3,7 @@ import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow'
 
 export interface EquationFromImageBlock extends DocumentExtraction {
 	text: string;
+	extractionError?: boolean;
 }
 export interface ModelFromDocumentState {
 	equations: AssetBlock<EquationFromImageBlock>[];

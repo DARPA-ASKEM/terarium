@@ -2,18 +2,42 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div>
 			<tera-drilldown-section :is-loading="assetLoading">
-				<tera-asset-block
-					v-for="(equation, i) in clonedState.equations"
-					:key="i"
-					:is-included="equation.includeInProcess"
-					@update:is-included="onUpdateInclude(equation)"
-				>
-					<template #header>
-						<h5>{{ equation.name }}</h5>
-					</template>
-					<Image id="img" :src="equation.asset.metadata?.url" :alt="''" preview />
-					<span>{{ equation.asset.text }}</span>
-				</tera-asset-block>
+				<Steps
+					:model="formSteps"
+					:readonly="false"
+					@update:active-step="activeStepperIndex = $event"
+				/>
+
+				<div class="equation-view" v-if="activeStepperIndex === 0">
+					<div class="header-group">
+						<p>These equations will be used to create your model.</p>
+						<Button label="Add an equation" icon="pi pi-plus" text />
+					</div>
+					<tera-asset-block
+						v-for="(equation, i) in clonedState.equations"
+						:key="i"
+						:is-included="equation.includeInProcess"
+						@update:is-included="onUpdateInclude(equation)"
+					>
+						<template #header>
+							<h5>{{ equation.name }}</h5>
+						</template>
+						<div class="block-container">
+							<label>Extracted Image:</label>
+							<Image id="img" :src="getAssetUrl(equation)" :alt="''" preview />
+							<template v-if="equation.asset.text">
+								<label>Interpreted As:</label>
+								<tera-math-editor :latex-equation="equation.asset.text"> </tera-math-editor>
+
+								<InputText v-model="equation.asset.text" />
+							</template>
+							<span v-else>Could not extract LaTeX for image</span>
+						</div>
+					</tera-asset-block>
+				</div>
+				<div v-if="activeStepperIndex === 1">
+					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
+				</div>
 				<template #footer>
 					<span style="margin-right: auto"
 						><label>Model framework:</label
@@ -85,6 +109,10 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { useProjects } from '@/composables/project';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import InputText from 'primevue/inputtext';
+import Steps from 'primevue/steps';
+import Textarea from 'primevue/textarea';
 import { EquationFromImageBlock, ModelFromDocumentState } from './model-from-document-operation';
 
 const emit = defineEmits([
@@ -156,6 +184,17 @@ const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 
+const formSteps = ref([
+	{
+		label: 'Equations'
+	},
+	{
+		label: 'Text'
+	}
+]);
+
+const activeStepperIndex = ref<number>(0);
+
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
@@ -175,9 +214,7 @@ onMounted(async () => {
 		// equations that not been run in image -> equation
 		const nonRunEquations = equations?.filter((e) => {
 			const foundEquation = state.equations.find((eq) => eq.asset.fileName === e.fileName);
-			if (!foundEquation) return true;
-
-			return !foundEquation.asset.text;
+			return !foundEquation;
 		});
 
 		if (isEmpty(nonRunEquations)) {
@@ -185,10 +222,11 @@ onMounted(async () => {
 			return;
 		}
 		const promises = nonRunEquations?.map(async (e, i) => {
-			const equationText = (await getEquationFromImageUrl(documentId, e.fileName)) ?? '';
+			const equationText = await getEquationFromImageUrl(documentId, e.fileName);
 			const equationBlock: EquationFromImageBlock = {
 				...e,
-				text: equationText
+				text: equationText ?? '',
+				extractionError: !equationText
 			};
 
 			const assetBlock: AssetBlock<EquationFromImageBlock> = {
@@ -205,6 +243,7 @@ onMounted(async () => {
 		const newEquations = await Promise.all(promises);
 
 		state.equations = unionBy(newEquations, state.equations, 'asset.fileName');
+		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
 	assetLoading.value = false;
@@ -275,6 +314,13 @@ async function fetchModel() {
 	loadingModel.value = false;
 }
 
+// since AWS links expire we need to use the refetched document image urls to display the images
+function getAssetUrl(asset: AssetBlock<EquationFromImageBlock>): string {
+	const foundAsset = document.value?.assets?.find((a) => a.fileName === asset.asset.fileName);
+	if (!foundAsset) return '';
+	return foundAsset.metadata?.url;
+}
+
 watch(
 	() => props.node.state,
 	() => {
@@ -302,4 +348,32 @@ watch(
 );
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.p-panel section) {
+	display: flex;
+	align-items: flex-start;
+}
+
+.block-container {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.header-group {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.equation-view {
+	display: flex;
+	gap: 0.5rem;
+	flex-direction: column;
+}
+
+:deep(.math-editor) {
+	background-color: var(--surface-disabled);
+}
+</style>

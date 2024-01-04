@@ -15,9 +15,13 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -40,6 +44,7 @@ import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
@@ -65,6 +70,8 @@ public class DocumentController implements SnakeCaseController {
 	final ExtractionProxy extractionProxy;
 
 	final SkemaUnifiedProxy skemaUnifiedProxy;
+
+	final SkemaRustProxy skemaRustProxy;
 
 	final JsDelivrProxy gitHubProxy;
 
@@ -331,7 +338,12 @@ public class DocumentController implements SnakeCaseController {
 			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
 
 			// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
-			return ResponseEntity.ok(skemaUnifiedProxy.postImageToEquations(imageB64).getBody());
+
+			final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+			System.out.println(mathML);
+
+			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
+			return ResponseEntity.ok(latex);
 		} catch (final Exception e) {
 			log.error("Unable to GET equation", e);
 			return ResponseEntity.internalServerError().build();
