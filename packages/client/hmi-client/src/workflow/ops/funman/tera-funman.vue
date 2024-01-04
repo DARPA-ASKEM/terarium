@@ -90,7 +90,7 @@
 		</div>
 
 		<template #preview>
-			<tera-drilldown-preview title="Validation results">
+			<tera-drilldown-preview title="Validation results" :options="props.node.outputs">
 				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -379,7 +379,6 @@ watch(
 );
 
 onUnmounted(() => {
-	console.log('unmounted.........');
 	poller.stop();
 });
 </script>
