@@ -267,7 +267,7 @@ public class ModelController {
 		}
 	}
 
-	@GetMapping("/{id}/model_configurations")
+	@GetMapping("/{id}/model-configurations")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model configurations for a model")
 	@ApiResponses(value = {
