@@ -138,16 +138,15 @@ export const autoCalibrationMapping = async (
 				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
 				const dataGroundingList = Object.keys(datasetOptions[j].metadata?.groundings?.identifiers);
 				// eslint-disable-next-line no-await-in-loop
-				const entitySimilarity = await getEntitySimilarity(modelGroundingList, dataGroundingList);
-				if (
-					entitySimilarity &&
-					entitySimilarity.filter((ele) => ele.distance < acceptableDistance).length > 0
-				) {
-					result.push({
-						modelVariable: modelOptions[i].id,
-						datasetVariable: datasetOptions[j].name
-					});
-				}
+				const entitySimilarity = getEntitySimilarity(modelGroundingList, dataGroundingList);
+				entitySimilarity.then((ele) => {
+					if (ele && ele.filter((e) => e.distance < acceptableDistance).length > 0) {
+						result.push({
+							modelVariable: modelOptions[i].id,
+							datasetVariable: datasetOptions[j].name
+						});
+					}
+				});
 			}
 		} // end for each dataset Option
 	} // end for each model Option
