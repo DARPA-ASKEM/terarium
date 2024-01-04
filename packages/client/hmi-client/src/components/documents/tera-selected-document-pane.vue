@@ -22,13 +22,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, PropType, ref } from 'vue';
-import { Document, DocumentAsset } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import * as ProjectService from '@/services/project';
+import { computed, PropType } from 'vue';
+import { AssetType, Document, ExternalPublication } from '@/types/Types';
 import { addDocuments } from '@/services/external';
 import dropdown from 'primevue/dropdown';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps({
 	selectedDocument: {
@@ -38,14 +36,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
-const resources = useResourcesStore();
 
-const projectsList = ref<IProject[]>([]);
-const projectsNames = computed(() => projectsList.value.map((p) => p.name));
+const projectsNames = computed(() => useProjects().allProjects?.value?.map((p) => p.name));
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
-	const body: DocumentAsset = {
+	const body: ExternalPublication = {
 		xdd_uri: props.selectedDocument.gddId,
 		title: props.selectedDocument.title
 	};
@@ -54,16 +50,12 @@ const addResourcesToProject = async (projectId: string) => {
 
 	// first, insert into the proper table/collection
 	const res = await addDocuments(body);
-	if (res && resources.activeProject) {
+	if (res && useProjects().activeProject.value) {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
-		const assetsType = ProjectAssetTypes.DOCUMENTS;
-		await ProjectService.addAsset(projectId, assetsType, documentId);
-
-		// update local copy of project assets
-		// @ts-ignore
-		resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId, body);
+		const assetType = AssetType.Publications;
+		await useProjects().addAsset(assetType, documentId, projectId);
 	}
 };
 
@@ -73,24 +65,17 @@ const formatAbstract = (item: Document) =>
 const addAssetsToProject = async (projectName) => {
 	let projectId = '';
 	if (projectName !== undefined && typeof projectName.value === 'string') {
-		const project = projectsList.value.find((p) => p.name === projectName.value);
+		const project = useProjects().allProjects?.value?.find((p) => p.name === projectName.value);
 		projectId = project?.id as string;
 	} else {
-		if (!resources.activeProject) return;
-		projectId = resources.activeProject.id;
+		if (useProjects().activeProject.value) return;
+		projectId = useProjects().activeProject.value!.id;
 	}
 
 	addResourcesToProject(projectId);
 
 	emit('close');
 };
-
-onMounted(async () => {
-	const all = await ProjectService.getAll();
-	if (all !== null) {
-		projectsList.value = all;
-	}
-});
 </script>
 
 <style scoped>
@@ -145,14 +130,5 @@ subheader {
 
 :deep .p-dropdown .p-dropdown-trigger {
 	color: white;
-}
-
-.p-button.p-button-secondary {
-	border: 1px solid var(--surface-border);
-	box-shadow: none;
-	font-weight: 600;
-	font-size: 14px;
-	padding-right: 10px;
-	padding-left: 10px;
 }
 </style>

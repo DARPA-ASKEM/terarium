@@ -6,15 +6,15 @@ export interface PivotMatrixCell {
 	col: number;
 	rowCriteria: any;
 	colCriteria: any;
-	value: any;
+	content: any;
 }
 
 // Helper function to expand the row and column terms into "lookup" axes
 //
 // For example: given a data array:
-//   [ { a:1, b: 1}, { a: 2, b: 2 } ]
+//   [ { a:[1], b: [1]}, { a: [2], b: [2] } ]
 //
-// If both row = [a, b] and col = [a]
+// If rowDimension = [a, b] and colDimension = [a]
 //
 //   rowAxis = [ { a: 1, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 1 }, { a: 2, b: 2} ]
 //   colAxis = [ { a: 1 }, { a: 2 } ]
@@ -25,6 +25,8 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 		const keys = Object.keys(data[i]);
 
 		keys.forEach((key) => {
+			if (!_.isArray(data[i][key])) return;
+
 			let terms: any[] = [];
 			if (cardinality.has(key)) {
 				terms = cardinality.get(key);
@@ -32,14 +34,17 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 				terms = [];
 			}
 
-			if (!terms.includes(data[i][key])) {
-				terms.push(data[i][key]);
-			}
+			data[i][key].forEach((term: any) => {
+				if (!terms.includes(term)) {
+					terms.push(term);
+				}
+			});
+
 			cardinality.set(key, terms);
 		});
 	}
 
-	// Expansion, basica this is a certesian product across the terms of the specified dimensions
+	// Expansion, basically this is a cartesian product across the terms of the specified dimensions
 	let rowAxis: any[] = [];
 	rowDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
@@ -58,7 +63,7 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 		}
 	});
 
-	// Expansion, basica this is a certesian product across the terms of the specified dimensions
+	// Expansion, basically this is a cartesian product across the terms of the specified dimensions
 	let colAxis: any[] = [];
 	colDimensions.forEach((key) => {
 		const terms = cardinality.get(key);
@@ -76,13 +81,34 @@ const pivotAxes = (data: any[], rowDimensions: string[], colDimensions: string[]
 			}
 		}
 	});
-	return { colAxis, rowAxis };
+	return { colAxis, rowAxis, termsMap: cardinality };
+};
+
+// Creates a M x 1 matrix where
+// M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
+export const createMatrix1D = (data: any[]) => {
+	const rows: any[] = [];
+
+	// Construct 1D matrix for state data
+	for (let rowIdx = 0; rowIdx < data.length; rowIdx++) {
+		const row: PivotMatrixCell[] = [];
+		row.push({
+			row: rowIdx,
+			col: 0,
+			rowCriteria: data[rowIdx],
+			colCriteria: null,
+			content: data[rowIdx]
+		});
+		rows.push(row);
+	}
+
+	return { matrix: rows };
 };
 
 // Creates a M x N matrix where
 // M =  cardinality(rowDimensions[0]) * cardinality(rowDimensions[1]) * ... * cardinality(rowDimensions[m])
 // N =  cardinality(colDimensions[0]) * cardinality(colDimensions[1]) * ... * cardinality(colDimensions[n])
-export const createMatrix = (data: any[], rowDimensions: string[], colDimensions: string[]) => {
+export const createMatrix2D = (data: any[], rowDimensions: string[], colDimensions: string[]) => {
 	const axes = pivotAxes(data, colDimensions, rowDimensions);
 	const rows: any[] = [];
 
@@ -95,14 +121,14 @@ export const createMatrix = (data: any[], rowDimensions: string[], colDimensions
 				col: colIdx,
 				rowCriteria: axes.rowAxis[rowIdx],
 				colCriteria: axes.colAxis[colIdx],
-				value: null
+				content: null
 			});
 		}
 		rows.push(row);
 	}
 
 	// Populate matrix
-	// A cell has a non-null value if the row and col criteria matches
+	// A cell has a non-null content if the row and col criteria matches
 	// with an element in the data array
 	for (let rowIdx = 0; rowIdx < axes.rowAxis.length; rowIdx++) {
 		for (let colIdx = 0; colIdx < axes.colAxis.length; colIdx++) {
@@ -116,7 +142,7 @@ export const createMatrix = (data: any[], rowDimensions: string[], colDimensions
 				const colKeys = Object.keys(colCriteria);
 
 				for (let i = 0; i < rowKeys.length; i++) {
-					if (d[rowKeys[i]] !== rowCriteria[rowKeys[i]]) {
+					if (_.first(d[rowKeys[i]]) !== rowCriteria[rowKeys[i]]) {
 						found = false;
 						break;
 					}
@@ -124,19 +150,20 @@ export const createMatrix = (data: any[], rowDimensions: string[], colDimensions
 				if (found === false) return found;
 
 				for (let i = 0; i < colKeys.length; i++) {
-					if (d[colKeys[i]] !== colCriteria[colKeys[i]]) {
+					if (_.last(d[colKeys[i]]) !== colCriteria[colKeys[i]]) {
 						found = false;
 						break;
 					}
 				}
 				return found;
 			});
-			rows[rowIdx][colIdx].value = dataObj;
+			rows[rowIdx][colIdx].content = dataObj;
 		}
 	}
 
 	return {
 		matrix: rows,
+		termsMap: axes.termsMap,
 		colDimensions,
 		rowDimensions
 	};

@@ -3,6 +3,7 @@
 # Container Registry using HCL Bake file.
 
 name: Build and Publish
+
 # yamllint disable-line rule:truthy
 on:
   push:
@@ -26,6 +27,10 @@ jobs:
   # Run Client Tests
   test-client:
     uses: ./.github/workflows/test-client.yaml
+
+  # Run Server Tests
+  test-server:
+    uses: ./.github/workflows/test-server.yaml
 
   # Generate a matrix based on all the targets defined in the
   # bake file.
@@ -72,6 +77,7 @@ jobs:
       - lint
       - lint-client
       - test-client
+      - test-server
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
@@ -87,16 +93,16 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
 
       # 2.2 - Install the appropriate tool based on target
-      - name: Setup Node v18.8.0
+      - name: Setup Node 20.10.0 LTS
         if: matrix.target == 'hmi-client'
         uses: actions/setup-node@v3
         with:
-          node-version: 18.8.0
+          node-version: 20.10.0
           cache: 'yarn'
 
       - name: Validate GradleW JAR
         if: matrix.target != 'hmi-client'
-        uses: gradle/wrapper-validation-action@064a97fb0b4cef86a65f09898c572382f3af10e0
+        uses: gradle/wrapper-validation-action@342dbebe7272035434f9baccc29a816ec6dd2c7b
 
       - name: Setup Java v17
         if: matrix.target != 'hmi-client'

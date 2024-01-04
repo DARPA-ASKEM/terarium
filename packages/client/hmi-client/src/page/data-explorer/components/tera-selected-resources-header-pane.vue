@@ -3,18 +3,17 @@
 		<div class="add-selected-buttons">
 			<Button
 				v-if="selectedSearchItems.length > 0"
-				class="p-button-secondary spacer"
+				severity="secondary"
 				@click="emit('clear-selected')"
-			>
-				Remove all
-			</Button>
-
-			<dropdown
+				label="Remove all"
+			/>
+			<Dropdown
 				v-if="selectedSearchItems.length > 0"
 				placeholder="Add to project"
 				class="p-button dropdown-button"
 				:is-dropdown-left-aligned="false"
-				:options="projectsNames"
+				:options="projectOptions"
+				option-label="name"
 				v-on:change="addAssetsToProject"
 			/>
 		</div>
@@ -22,17 +21,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, PropType, ref } from 'vue';
+import { computed, PropType } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { Document, DocumentAsset } from '@/types/Types';
-import useResourcesStore from '@/stores/resources';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import dropdown from 'primevue/dropdown';
+import { AssetType, Document } from '@/types/Types';
+import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import * as ProjectService from '@/services/project';
-import { addDocuments } from '@/services/external';
 import { useRouter } from 'vue-router';
+import { useProjects } from '@/composables/project';
+import { createDocumentFromXDD } from '@/services/document-assets';
 
 const router = useRouter();
 
@@ -44,85 +41,48 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'clear-selected']);
-const resources = useResourcesStore();
 
-const projectsList = ref<IProject[]>([]);
-const projectsNames = computed(() => projectsList.value.map((p) => p.name));
+const projectOptions = computed(
+	() => useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
+);
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isDocument(selectedItem)) {
-			const body: DocumentAsset = {
-				xdd_uri: (selectedItem as Document).gddId,
-				title: (selectedItem as Document).title
-			};
-
-			// FIXME: handle cases where assets is already added to the project
-
-			// first, insert into the proper table/collection
-			const res = await addDocuments(body);
-			if (res && resources) {
-				const documentId = res.id;
-
-				// then, link and store in the project assets
-				const assetsType = ProjectAssetTypes.DOCUMENTS;
-				await ProjectService.addAsset(projectId, assetsType, documentId);
-
-				// update local copy of project assets
-				// @ts-ignore
-				resources.activeProject?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId, body);
-			}
+			const document = selectedItem as Document;
+			await createDocumentFromXDD(document, projectId);
+			// finally add asset to project
+			await useProjects().get(projectId);
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.MODELS;
-			await ProjectService.addAsset(projectId, assetsType, modelId);
-
-			// update local copy of project assets
-			// @ts-ignore
-			resources.activeProject?.assets?.[ProjectAssetTypes.MODELS].push(modelId, selectedItem);
+			const assetsType = AssetType.Models;
+			await useProjects().addAsset(assetsType, modelId, projectId);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.DATASETS;
-			await ProjectService.addAsset(projectId, assetsType, datasetId);
-
-			// update local copy of project assets
-			// @ts-ignore
-			resources.activeProject?.assets?.[ProjectAssetTypes.DATASETS].push(datasetId, selectedItem);
+			const assetsType = AssetType.Datasets;
+			if (datasetId) {
+				await useProjects().addAsset(assetsType, datasetId, projectId);
+			}
 		}
 	});
 };
 
-const addAssetsToProject = async (projectName) => {
+const addAssetsToProject = async (projectOption) => {
 	if (props.selectedSearchItems.length === 0) return;
 
-	let projectId = '';
-	if (projectName !== undefined && typeof projectName.value === 'string') {
-		const project = projectsList.value.find((p) => p.name === projectName.value);
-		projectId = project?.id as string;
-	} else {
-		if (!resources.activeProject) return;
-		projectId = resources.activeProject.id;
-	}
-
+	const projectId = projectOption.value.id ?? useProjects().activeProject.value?.id;
 	addResourcesToProject(projectId);
 
 	emit('close');
 	router.push(`/projects/${projectId}`);
 };
-
-onMounted(async () => {
-	const projects = await ProjectService.getAll();
-	if (projects !== null) {
-		projectsList.value = projects;
-	}
-});
 </script>
 
 <style scoped>
@@ -142,24 +102,9 @@ onMounted(async () => {
 }
 
 .p-button.p-button-secondary {
-	box-shadow: none;
-	color: var(--text-color-subdued);
-	background-color: var(--surface-0);
-	font-weight: 400;
-	font-size: 14px;
-	padding-right: 16px;
-	padding-left: 16px;
 	height: 3rem;
-}
-
-.p-button.p-button-secondary:hover {
-	background-color: var(--surface-highlight) !important;
-}
-
-.spacer {
 	margin-right: 16px;
 }
-
 .dropdown-button {
 	width: 156px;
 	height: 3rem;
@@ -190,11 +135,6 @@ onMounted(async () => {
 
 .cart-item {
 	border-bottom: 1px solid var(--surface-ground);
-}
-
-button {
-	height: min-content;
-	padding: 0;
 }
 
 i {

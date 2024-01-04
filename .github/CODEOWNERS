@@ -13,7 +13,7 @@
 /packages/client/ @YohannParis @mwdchang
 
 # Backend services owners
-/packages/services/ @dgauldie @dvince2
+/packages/server/ @dgauldie @dvince2
 
 # Documentation owners
 docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2

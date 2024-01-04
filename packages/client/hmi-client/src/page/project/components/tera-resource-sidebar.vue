@@ -1,32 +1,29 @@
 <template>
 	<nav>
-		<header>
-			<Button
-				icon="pi pi-code"
-				v-tooltip="`New code file`"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="
-					emit('open-asset', {
-						assetName: 'New file',
-						pageType: ProjectAssetTypes.CODE,
-						assetId: undefined
-					})
-				"
-			/>
+		<header class="resource-panel-toolbar">
+			<span class="p-input-icon-left">
+				<i class="pi pi-search" />
+				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
+			</span>
+			<Button class="new" label="New" size="small" outlined @click="toggleOptionsMenu" />
+			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
+				<template #item="slotProps">
+					<a class="p-menuitem-link">
+						<tera-asset-icon :asset-type="slotProps.item.key as AssetType" />
+						<span class="p-menuitem-text">
+							{{ slotProps.item.label }}
+						</span>
+					</a>
+				</template>
+			</Menu>
 		</header>
 		<Button
 			class="asset-button"
-			:active="activeTab.pageType === ProjectPages.OVERVIEW"
+			:active="pageType === ProjectPages.OVERVIEW"
 			plain
 			text
 			size="small"
-			@click="
-				emit('open-asset', {
-					assetName: 'Overview',
-					pageType: ProjectPages.OVERVIEW,
-					assetId: undefined
-				})
-			"
+			@click="emit('open-asset', overview)"
 		>
 			<span>
 				<vue-feather
@@ -38,71 +35,81 @@
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
-		<Accordion v-if="!isEmpty(assets)" :multiple="true" :active-index="[0, 1, 2, 3, 4]">
-			<AccordionTab v-for="[type, tabs] in assets" :key="type">
+		<Accordion
+			v-if="!isEmpty(assetItemsMap) && !useProjects().projectLoading.value"
+			:multiple="true"
+			:active-index="Array.from(activeAccordionTabs)"
+			@tab-open="
+				activeAccordionTabs.add($event.index);
+				saveAccordionTabsState();
+			"
+			@tab-close="
+				activeAccordionTabs.delete($event.index);
+				saveAccordionTabsState();
+			"
+		>
+			<AccordionTab v-for="[type, assetItems] in assetItemsMap" :key="type">
 				<template #header>
-					<template v-if="type === ProjectAssetTypes.DOCUMENTS">Publications & Documents</template>
+					<template v-if="type === AssetType.Publications">External Publications</template>
+					<template v-else-if="type === AssetType.Documents">Documents</template>
 					<template v-else>{{ capitalize(type) }}</template>
-					<aside>({{ tabs.size }})</aside>
+					<aside>({{ assetItems.size }})</aside>
 				</template>
 				<Button
-					v-for="tab in tabs"
-					:key="tab.assetId"
-					:active="isEqual(tab, activeTab)"
-					:title="tab.assetName"
+					v-for="assetItem in assetItems"
+					:key="assetItem.assetId"
+					:active="assetItem.assetId === assetId && assetItem.pageType === pageType"
+					:title="assetItem.assetName"
 					class="asset-button"
 					plain
 					text
 					size="small"
-					@click="emit('open-asset', tab)"
-					@mouseover="activeAssetId = tab.assetId"
+					@click="emit('open-asset', { assetId: assetItem.assetId, pageType: assetItem.pageType })"
+					@mouseover="activeAssetId = assetItem.assetId"
 					@mouseleave="activeAssetId = undefined"
-					@focus="activeAssetId = tab.assetId"
+					@focus="activeAssetId = assetItem.assetId"
 					@focusout="activeAssetId = undefined"
 				>
 					<span
 						:draggable="
-							activeTab.pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
-							(tab.pageType === ProjectAssetTypes.MODELS ||
-								tab.pageType === ProjectAssetTypes.DATASETS)
+							pageType === AssetType.Workflows &&
+							(assetItem.pageType === AssetType.Models ||
+								assetItem.pageType === AssetType.Datasets ||
+								assetItem.pageType === AssetType.Code ||
+								assetItem.pageType === AssetType.Documents)
 						"
-						@dragstart="startDrag(tab)"
+						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
 						@dragend="endDrag"
-						:class="isEqual(draggedAsset, tab) ? 'dragged-asset' : ''"
+						:class="isEqual(draggedAsset, assetItem) ? 'dragged-asset' : ''"
 						fallback-class="original-asset"
 						:force-fallback="true"
 					>
-						<vue-feather
-							v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
-							class="p-button-icon-left icon"
-							:type="getAssetIcon(tab.pageType ?? null)"
-							size="1rem"
-							:stroke="isEqual(draggedAsset, tab) ? 'var(--text-color-primary)' : 'rgb(16, 24, 40)'"
-						/>
-						<component
-							v-else
-							:is="getAssetIcon(tab.pageType ?? null)"
-							class="p-button-icon-left icon"
-						/>
-						<span class="p-button-label">{{ tab.assetName }}</span>
+						<tera-asset-icon :asset-type="assetItem.pageType as AssetType" />
+						<span class="p-button-label">{{ assetItem.assetName }}</span>
 					</span>
 					<!-- This 'x' only shows while hovering over the row -->
 					<i
-						v-if="activeAssetId && activeAssetId === tab.assetId"
+						v-if="activeAssetId && activeAssetId === assetItem.assetId"
 						class="pi pi-times removeResourceButton"
 						@click.stop="
-							assetToDelete = tab;
+							assetToDelete = assetItem;
 							isRemovalModal = true;
 						"
 					/>
 				</Button>
 			</AccordionTab>
 		</Accordion>
+
+		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
+			<Skeleton v-for="i in 10" :key="i" width="85%" />
+		</div>
+
 		<Teleport to="body">
 			<tera-modal
 				v-if="isRemovalModal"
 				@modal-mask-clicked="isRemovalModal = false"
 				class="remove-modal"
+				@modal-enter-press="removeAsset"
 			>
 				<template #header>
 					<h4>Confirm remove</h4>
@@ -110,12 +117,12 @@
 				<template #default>
 					<p>
 						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ project.name }}.
+						{{ useProjects().activeProject.value?.name }}.
 					</p>
 				</template>
 				<template #footer>
 					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
-					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
+					<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -125,71 +132,96 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
-import { Tab } from '@/types/common';
+import { AssetItem, AssetRoute } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { ProjectPages } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
+import InputText from 'primevue/inputtext';
+import Menu from 'primevue/menu';
+import { AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
+import { generateProjectAssetsMap } from '@/utils/map-project-assets';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
+import Skeleton from 'primevue/skeleton';
 
-type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
-
-const props = defineProps<{
-	project: IProject;
-	activeTab: Tab;
-	tabs: Tab[];
+defineProps<{
+	pageType: ProjectPages | AssetType;
+	assetId: string;
 }>();
 
-const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset']);
+const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
+
+const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
 
 const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
-const draggedAsset = ref<Tab | null>(null);
-const assetToDelete = ref<Tab | null>(null);
+const draggedAsset = ref<AssetRoute | null>(null);
+const assetToDelete = ref<AssetItem | null>(null);
+const searchAsset = ref<string>('');
+const activeAccordionTabs = ref(
+	new Set(
+		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
+	)
+);
 
-const assets = computed((): IProjectAssetTabs => {
-	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
-
-	const projectAssets = props.project?.assets;
-	if (!projectAssets) return tabs;
-
-	// Run through all the assets type within the project
-	Object.keys(projectAssets).forEach((type) => {
-		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType = type as ProjectAssetTypes;
-			const typeAssets = projectAssets[projectAssetType].map((asset) => {
-				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const pageType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id?.toString();
-				return { assetName, pageType, assetId };
-			}) as Tab[];
-			tabs.set(projectAssetType, new Set(typeAssets));
-		}
-	});
-	return tabs;
-});
+const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 
 function removeAsset() {
-	emit('remove-asset', assetToDelete.value);
-	isRemovalModal.value = false;
+	if (assetToDelete.value) {
+		const { assetId, pageType } = assetToDelete.value;
+		emit('remove-asset', { assetId, pageType } as AssetRoute); // Pass as AssetRoute
+		isRemovalModal.value = false;
+	}
+}
+
+function saveAccordionTabsState() {
+	localStorage.setItem('activeResourceBarTabs', Array.from(activeAccordionTabs.value).join());
 }
 
 const { setDragData, deleteDragData } = useDragEvent();
 
-function startDrag(tab: Tab) {
-	const { assetId, pageType } = tab;
-	if (assetId && pageType) {
-		setDragData('initAssetNode', { assetId, assetType: pageType });
-		draggedAsset.value = tab;
-	}
+function startDrag(assetRoute: AssetRoute) {
+	const { assetId, pageType } = assetRoute;
+	setDragData('initAssetNode', { assetId, assetType: pageType });
+	draggedAsset.value = assetRoute;
 }
 
 function endDrag() {
 	deleteDragData('assetNode');
 	draggedAsset.value = null;
 }
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		key: AssetType.Code,
+		label: 'New code',
+		command() {
+			emit('open-new-asset', AssetType.Code);
+		}
+	},
+	{
+		key: AssetType.Models,
+		label: 'New Model',
+		command() {
+			emit('open-new-asset', AssetType.Models);
+		}
+	},
+	{
+		key: AssetType.Workflows,
+		label: 'New Workflow',
+		command() {
+			emit('open-new-asset', AssetType.Workflows);
+		}
+	}
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
 </script>
 
 <style scoped>
@@ -200,7 +232,15 @@ nav {
 }
 
 header {
-	padding: 0 0.5rem;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	display: flex;
+	flex-direction: row;
+
+	& > * {
+		align-self: stretch;
+		height: 100%;
+	}
 }
 
 .icon {
@@ -244,6 +284,7 @@ header {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
+	border-radius: 0; /* Remove the border-radius to end nitely with the border of the sidebar */
 }
 
 ::v-deep(.asset-button.p-button > span) {
@@ -255,6 +296,13 @@ header {
 
 ::v-deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
+
+	&::after {
+		position: absolute;
+		content: ' ';
+		border-left: 4px solid var(--primary-color);
+		height: 100%;
+	}
 }
 
 ::v-deep(.asset-button.p-button .p-button-label) {
@@ -287,5 +335,27 @@ header {
 
 .remove-modal em {
 	font-weight: var(--font-weight-semibold);
+}
+
+.resource-panel-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.resource-panel-search {
+	width: 100%;
+}
+
+:deep(.p-button-icon-left.icon) {
+	margin-right: 0.5rem;
+}
+
+.skeleton-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	row-gap: 0.5rem;
 }
 </style>

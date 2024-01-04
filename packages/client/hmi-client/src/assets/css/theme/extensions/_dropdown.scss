@@ -38,3 +38,9 @@
         box-shadow: inset 0 0 0 1px $inputErrorBorderColor,inset 0 0 0 1px $inputErrorBorderColor,inset 0 0 0 1px $inputErrorBorderColor,inset 0 0 0 1px $inputErrorBorderColor;
     }
 }
+
+.p-dropdown-sm {
+    .p-dropdown-label {
+        padding: 0.5rem;
+    }
+}

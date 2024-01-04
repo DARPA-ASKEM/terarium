@@ -24,6 +24,12 @@ export type ModelSearchParams = {
 	related_search_enabled?: boolean; // if true, then perform a search by example by finding related models
 };
 
+export enum StratifiedMatrix {
+	Initials = 'initials',
+	Parameters = 'parameters',
+	Rates = 'rates'
+}
+
 //
 // Model Field names
 //

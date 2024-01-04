@@ -7,17 +7,31 @@ export enum WorkflowOperationTypes {
 	MODEL = 'ModelOperation',
 	SIMULATE_JULIA = 'SimulateJuliaOperation',
 	SIMULATE_CIEMSS = 'SimulateCiemssOperation',
-	STRATIFY = 'Stratify',
+	STRATIFY_JULIA = 'StratifyJulia',
+	STRATIFY_MIRA = 'StratifyMira',
 	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
-	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms'
+	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms',
+	DATASET_TRANSFORMER = 'DatasetTransformer',
+	MODEL_TRANSFORMER = 'ModelTransformer',
+	MODEL_FROM_CODE = 'ModelFromCode',
+	FUNMAN = 'Funman',
+	CODE = 'Code',
+	MODEL_CONFIG = 'ModelConfiguraiton',
+	MODEL_OPTIMIZE = 'ModelOptimize',
+	MODEL_COUPLING = 'ModelCoupling',
+	MODEL_EDIT = 'ModelEdit',
+	DOCUMENT = 'Document'
 }
 
-export enum WorkflowStatus {
-	INVALID = 'invalid',
-	FAILED = 'failed',
-	COMPLETED = 'completed',
+export enum OperatorStatus {
+	DEFAULT = 'default',
 	IN_PROGRESS = 'in progress',
-	ERROR = 'error'
+	SUCCESS = 'success',
+	INVALID = 'invalid',
+	WARNING = 'warning', // Probably won't be used - would there be potential crossover with INVALID?
+	FAILED = 'failed',
+	ERROR = 'error',
+	DISABLED = 'disabled'
 }
 
 export enum WorkflowPortStatus {
@@ -36,7 +50,7 @@ export interface OperationData {
 export interface Operation {
 	name: WorkflowOperationTypes;
 	description: string;
-	displayName: string; // Human readable name for each node.
+	displayName: string; // Human-readable name for each node.
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -58,32 +72,43 @@ export interface WorkflowPort {
 	status: WorkflowPortStatus;
 	label?: string;
 	value?: any[] | null;
+	isOptional: boolean;
 	acceptMultiple?: boolean;
+}
+
+// Operator Output needs more information than a standard operator port.
+export interface WorkflowOutput<S> extends WorkflowPort {
+	isSelected?: boolean;
+	operatorStatus?: OperatorStatus;
+	state?: Partial<S>;
+	timestamp?: Date;
 }
 
 // Node definition in the workflow
 // This is the graphical operation of the operation defined in operationType
-export interface WorkflowNode {
+export interface WorkflowNode<S> {
+	// Information
 	id: string;
 	displayName: string;
 	workflowId: string;
-	operationType: string;
+	operationType: WorkflowOperationTypes;
 
 	// Position on canvas
 	x: number;
 	y: number;
 	width: number;
 	height: number;
+
+	// Current operator state
+	state: S; // Internal state. For example chosen model, display color ... etc
+	active?: WorkflowOutput<S>['id'] | null;
+
+	// I/O
 	inputs: WorkflowPort[];
-	outputs: WorkflowPort[];
+	outputs: WorkflowOutput<S>[];
 
-	// Internal state. For example chosen model, display color ... etc
-	state: any;
-
-	// FIXME: The section below is slated to be further spec'ed out later.
-	// State and progress, tracking of intermediate results
-	statusCode: WorkflowStatus;
-	intermediateIds?: WorkflowPort[];
+	// Behaviour
+	status: OperatorStatus;
 }
 
 export interface WorkflowEdge {
@@ -91,10 +116,10 @@ export interface WorkflowEdge {
 	workflowId: string;
 	points: Position[];
 
-	source?: WorkflowNode['id'];
+	source?: WorkflowNode<any>['id'];
 	sourcePortId?: string;
 
-	target?: WorkflowNode['id'];
+	target?: WorkflowNode<any>['id'];
 	targetPortId?: string;
 
 	// is this edge being started from an input or output?
@@ -118,7 +143,7 @@ export interface Workflow {
 		y: number;
 		k: number;
 	};
-	nodes: WorkflowNode[];
+	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
 }
 
@@ -130,4 +155,17 @@ export interface Position {
 export interface Size {
 	width: number;
 	height: number;
+}
+
+export enum ProgressState {
+	RETRIEVING = 'retrieving',
+	QUEUED = 'queued',
+	RUNNING = 'running',
+	COMPLETE = 'complete'
+}
+
+export interface AssetBlock<T> {
+	name: string;
+	includeInProcess: boolean;
+	asset: T;
 }

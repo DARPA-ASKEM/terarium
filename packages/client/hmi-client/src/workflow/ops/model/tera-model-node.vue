@@ -1,0 +1,124 @@
+<template>
+	<main>
+		<template v-if="model">
+			<tera-operator-title>{{ model.header.name }}</tera-operator-title>
+			<SelectButton
+				class="p-button-sm"
+				:model-value="view"
+				@change="if ($event.value) view = $event.value;"
+				:options="viewOptions"
+			/>
+			<div class="container">
+				<tera-model-diagram
+					v-if="view === ModelNodeView.Diagram"
+					:model="model"
+					:is-editable="false"
+					nodePreview
+				/>
+				<tera-model-equation
+					v-else-if="view === ModelNodeView.Equation"
+					:model="model"
+					:is-editable="false"
+				/>
+			</div>
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+		</template>
+		<template v-else>
+			<Dropdown
+				class="w-full p-dropdown-sm"
+				v-model="selectedModel"
+				:options="models"
+				option-label="header.name"
+				placeholder="Select a model"
+			/>
+			<tera-operator-placeholder :operation-type="node.operationType" />
+		</template>
+	</main>
+</template>
+
+<script setup lang="ts">
+import _ from 'lodash';
+import { ref, watch, onMounted, computed } from 'vue';
+import { getModel } from '@/services/model';
+import Dropdown from 'primevue/dropdown';
+import { Model } from '@/types/Types';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
+import { WorkflowNode } from '@/types/workflow';
+import SelectButton from 'primevue/selectbutton';
+import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
+import { useProjects } from '@/composables/project';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import Button from 'primevue/button';
+import { ModelOperationState } from './model-operation';
+
+const props = defineProps<{
+	node: WorkflowNode<ModelOperationState>;
+}>();
+
+const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
+const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.models ?? []);
+
+enum ModelNodeView {
+	Diagram = 'Diagram',
+	Equation = 'Equation'
+}
+
+const model = ref<Model | null>();
+const selectedModel = ref<Model>();
+const view = ref(ModelNodeView.Diagram);
+const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
+
+async function getModelById(modelId: string) {
+	model.value = await getModel(modelId);
+
+	if (model.value) {
+		const state = _.cloneDeep(props.node.state);
+		state.modelId = model.value?.id;
+		emit('update-state', state);
+		emit('append-output-port', {
+			type: 'modelId',
+			label: model.value.header.name,
+			value: [model.value.id]
+		});
+	}
+}
+
+watch(
+	() => selectedModel.value,
+	async () => {
+		if (selectedModel.value) {
+			await getModelById(selectedModel.value.id.toString());
+		}
+	}
+);
+
+onMounted(async () => {
+	const state = props.node.state;
+	if (state.modelId) {
+		model.value = await getModel(state.modelId);
+
+		if (props.node.outputs.length === 0 && model.value) {
+			emit('append-output-port', {
+				type: 'modelId',
+				label: model.value.header.name,
+				value: [model.value.id]
+			});
+		}
+	}
+});
+</script>
+
+<style scoped>
+main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: hidden;
+}
+</style>

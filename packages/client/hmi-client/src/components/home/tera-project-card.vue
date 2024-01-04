@@ -1,128 +1,118 @@
 <template>
 	<Card v-if="project">
 		<template #content>
-			<header class="project-stats">
-				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span>
-				<span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
+			<header>
+				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span
+				><span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
 				<span title="Datasets"
 					><dataset-icon fill="var(--text-color-secondary)" /> {{ stats?.datasets }}</span
-				>
-				<span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
+				><span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
 			</header>
-			<div class="project-img">
+			<div class="img">
 				<img :src="image" alt="Artistic representation of the Project statistics" />
 			</div>
-			<div class="project-title">{{ project.name }}</div>
-			<div class="project-description">{{ project.description }}</div>
-			<div class="project-footer">
-				<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click.stop="showProjectMenu"
-				/>
-			</div>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-			<Dialog :header="`Remove ${project.name}`" v-model:visible="isRemoveDialog">
-				<p>
-					You are about to remove project <em>{{ project.name }}</em
-					>.
-				</p>
-				<p>Are you sure?</p>
-				<template #footer>
-					<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
-					<Button label="Remove project" @click="removeProject" />
-				</template>
-			</Dialog>
+			<section>
+				<div class="title" ref="titleRef">
+					{{ project.name }}
+				</div>
+				<section class="details">
+					<div>
+						<div class="author">{{ project.username }}</div>
+						<div class="creation-date">{{ formatDdMmmYyyy(project.timestamp) }}</div>
+					</div>
+					<div class="description">
+						{{ project.description }}
+					</div>
+				</section>
+			</section>
+		</template>
+		<template #footer>
+			<!--FIXME: There is no 'last updated' property in project yet-->
+			<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
+			<tera-project-menu
+				:project="project"
+				@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
+			/>
 		</template>
 	</Card>
 	<Card v-else>
 		<template #content>
-			<header class="project-stats skeleton">
+			<header class="skeleton">
 				<Skeleton height="100%" />
 				<Skeleton height="100%" />
 				<Skeleton height="100%" />
 				<Skeleton height="100%" />
 			</header>
-			<div class="project-img skeleton">
+			<div class="img skeleton">
 				<Skeleton height="100%" />
 			</div>
-			<div class="project-description skeleton">
+			<div class="description skeleton">
 				<Skeleton />
 				<Skeleton />
 				<Skeleton width="60%" />
 			</div>
-			<div class="project-footer skeleton">
-				<Skeleton />
-			</div>
+		</template>
+		<template #footer>
+			<Skeleton />
 		</template>
 	</Card>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import Button from 'primevue/button';
+import { ref, computed } from 'vue';
 import Card from 'primevue/card';
-import Dialog from 'primevue/dialog';
-import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
-import { logger } from '@/utils/logger';
-import * as ProjectService from '@/services/project';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { IProject } from '@/types/Project';
+import TeraProjectMenu from './tera-project-menu.vue';
 
-const props = defineProps<{ project?: IProject }>();
-const emit = defineEmits<{
-	(e: 'removed', projectId: IProject['id']): void;
+const props = defineProps<{
+	project?: IProject;
 }>();
+const emit = defineEmits(['forked-project']);
 
-const stats = !props.project
-	? null
-	: {
-			contributors: 1,
-			models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
-			datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
-			papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
-	  };
-
-const image = stats ? placeholder(stats) : undefined;
-
-/*
- * User Menu
- */
-const isRemoveDialog = ref(false);
-const openRemoveDialog = () => {
-	isRemoveDialog.value = true;
-};
-const closeRemoveDialog = () => {
-	isRemoveDialog.value = false;
-};
-const projectMenu = ref();
-const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
-const showProjectMenu = (event) => projectMenu.value.toggle(event);
-
-const removeProject = async () => {
-	if (!props.project) return;
-	const isDeleted = await ProjectService.remove(props.project?.id);
-	closeRemoveDialog();
-	if (isDeleted) {
-		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
-		emit('removed', props.project.id);
-	} else {
-		logger.error(`Unable to delete the project ${props.project?.name}`, { showToast: true });
+const titleRef = ref();
+const descriptionLines = computed(() => {
+	const titleHeight = titleRef.value?.clientHeight;
+	for (let i = 1; i < 3; i++) {
+		if (titleHeight === 17 * i) {
+			return 10 - i;
+		}
 	}
-};
+	return 7;
+});
+
+const stats = computed(() =>
+	!props.project
+		? null
+		: {
+				contributors: 1,
+				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10),
+				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
+				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10)
+			}
+);
+
+const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
 </script>
 
 <style scoped>
 .p-card {
-	width: 17rem;
 	height: 20rem;
 }
 
-.project-stats {
+.p-card:deep(.p-card-body) {
+	height: 100%;
+	overflow: hidden;
+	justify-content: space-between;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+header {
 	color: var(--text-color-secondary);
 	display: flex;
 	justify-content: space-between;
@@ -130,90 +120,139 @@ const removeProject = async () => {
 	vertical-align: bottom;
 }
 
-.project-stats span {
+header span {
 	display: flex;
 	gap: 0.1rem;
 	align-items: center;
+}
+
+header.skeleton {
+	gap: 1rem;
+	height: 17px;
+}
+
+section {
+	display: flex;
+	gap: 0.5rem;
+	flex-direction: column;
 }
 
 .pi {
 	vertical-align: bottom;
 }
 
-.project-stats.skeleton {
-	gap: 1rem;
-	height: 17px;
-}
-
-.project-img {
+.img {
 	height: 8.75rem;
 	background-color: var(--surface-ground);
 	border-radius: var(--border-radius-big);
-	transition: opacity 0.3s ease, height 0.3s ease;
+	transition:
+		opacity 0.3s ease,
+		height 0.3s ease;
 	position: relative;
 	margin: 0.5rem 0 0.5rem 0;
 }
 
-.project-img img {
+.img img {
 	height: 100%;
 	width: 100%;
 	border-radius: var(--border-radius-big);
 }
 
-.project-img.skeleton {
+.img.skeleton {
 	background-color: transparent;
 }
 
-.p-card:hover .project-img:not(.skeleton) {
+.p-card:hover .img:not(.skeleton) {
 	opacity: 0;
 	height: 0;
 }
 
-.project-title {
-	display: inline-block;
-	height: 3.75rem;
+.title,
+.description {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	text-overflow: ellipsis;
 	overflow: hidden;
-	font-weight: var(--font-weight-semibold);
 }
 
-.project-title.skeleton {
+.title {
+	font-weight: var(--font-weight-semibold);
+	-webkit-line-clamp: 3;
+}
+
+.description {
+	-webkit-line-clamp: v-bind('descriptionLines');
+}
+
+.p-card-footer.skeleton,
+.title.skeleton {
 	height: 100%;
 }
 
-.project-description:not(.skeleton) {
+.details:not(.skeleton) {
 	overflow: hidden;
 	opacity: 0;
 	height: 0;
-	transition: opacity 0.3s ease, height 0.3s ease;
+	transition:
+		opacity 0.5s ease,
+		height 0.3s ease;
 	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
 }
 
-.p-card:hover .project-description:not(.skeleton) {
+.p-card:hover .details:not(.skeleton) {
 	opacity: 100;
-	height: 8.75rem;
+	height: auto;
 }
 
-.project-description.skeleton {
+.author {
+	color: var(--text-color-primary);
+	font-weight: var(--font-weight-semibold);
+}
+
+.description.skeleton {
 	display: flex;
 	flex-direction: column;
 	row-gap: 0.5rem;
 }
 
-.project-footer {
-	height: 3rem;
+.p-card:deep(.p-card-footer) {
 	align-items: center;
+	padding: 0 0 0.5rem 0;
+	height: 3rem;
+	background-color: rgba(255, 255, 255, 0.85);
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
-	padding-top: 0.5rem;
 	font-size: var(--font-caption);
+	position: absolute;
+	bottom: 0;
+	width: calc(100% - 2rem);
+}
+.p-card .p-card-footer .p-button-icon-only {
+	visibility: hidden;
 }
 
-.project-footer.skeleton {
+.p-card:hover .p-card-footer .p-button-icon-only {
+	visibility: visible;
+}
+
+.p-card-footer.skeleton {
 	align-items: flex-end;
 }
 
 .p-dialog em {
 	font-weight: var(--font-weight-semibold);
+}
+
+.project-menu-item {
+	display: flex;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem 0.5rem 1rem;
+	color: var(--text-color-secondary);
+}
+
+.project-menu-item:hover {
+	background-color: var(--surface-highlight);
 }
 </style>

@@ -27,10 +27,10 @@ jobs:
       # Debugging purposes to verify branch being worked on
       - run: git branch
 
-      - name: Use Node.js 18.8.0
+      - name: Use Node.js 20.10.0 LTS
         uses: actions/setup-node@v3
         with:
-          node-version: 18.8.0
+          node-version: 20.10.0
           cache: 'yarn'
 
       - name: Setup Java v17
@@ -55,6 +55,7 @@ jobs:
       - name: Check Generated Types
         run: |
           ./gradlew generateTypeScript
+
           MODIFIED_FILES=`git status -s | grep "Types.ts" | wc -l`
           if (( MODIFIED_FILES > 0 )); then
             echo "Error! Generated file Types.ts must be generated and committed"

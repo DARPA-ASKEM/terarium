@@ -1,5 +1,4 @@
 import { csvParse } from 'd3';
-
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
@@ -9,18 +8,24 @@ import {
 	CalibrationRequestCiemss,
 	EventType,
 	EnsembleSimulationCiemssRequest,
-	EnsembleCalibrationCiemssRequest
+	EnsembleCalibrationCiemssRequest,
+	ClientEventType,
+	ClientEvent
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
+import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { cloneDeep, isEqual } from 'lodash';
+import { Ref } from 'vue';
+import { useProjects } from '@/composables/project';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
 		const resp = await API.post('simulation-request/forecast', simulationParam);
 		EventService.create(
 			EventType.TransformPrompt,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				type: 'julia',
 				params: simulationParam
@@ -36,10 +41,10 @@ export async function makeForecastJob(simulationParam: SimulationRequest) {
 
 export async function makeForecastJobCiemss(simulationParam: SimulationRequest) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/forecast/', simulationParam);
+		const resp = await API.post('simulation-request/ciemss/forecast', simulationParam);
 		EventService.create(
 			EventType.TransformPrompt,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				type: 'ciemss',
 				params: simulationParam
@@ -47,6 +52,36 @@ export async function makeForecastJobCiemss(simulationParam: SimulationRequest) 
 		);
 		const output = resp.data;
 		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+// TODO: Add typing to julia's output: https://github.com/DARPA-ASKEM/Terarium/issues/1655
+export async function getRunResultJulia(runId: string, filename = 'result.json') {
+	try {
+		const resp = await API.get(`simulations/${runId}/result`, {
+			params: { filename }
+		});
+		const output = resp.data;
+		const [states, params] = output;
+
+		const columnNames = (states.colindex.names as string[]).join(',');
+		let csvData: string = columnNames as string;
+		for (let j = 0; j < states.columns[0].length; j++) {
+			csvData += '\n';
+			for (let i = 0; i < states.columns.length; i++) {
+				csvData += `${states.columns[i][j]},`;
+			}
+		}
+
+		const paramVals = {};
+		Object.entries(params.colindex.lookup).forEach(([key, value]) => {
+			paramVals[key] = params.columns[(value as number) - 1][0];
+		});
+
+		return { csvData, paramVals };
 	} catch (err) {
 		logger.error(err);
 		return null;
@@ -94,7 +129,7 @@ export async function getRunResultCiemss(runId: string, filename = 'result.csv')
 			const keySuffix = keyArr.pop();
 			const keyName = keyArr.join('_');
 
-			if (keySuffix === 'param') {
+			if (keySuffix === 'param' || keySuffix === 'state') {
 				outputRowRunResults[keyName] = inputRow[key];
 				if (!runConfigs[keyName]) {
 					runConfigs[keyName] = [];
@@ -130,7 +165,7 @@ export async function makeCalibrateJobJulia(calibrationParams: CalibrationReques
 	try {
 		EventService.create(
 			EventType.RunCalibrate,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify(calibrationParams)
 		);
 		const resp = await API.post('simulation-request/calibrate', calibrationParams);
@@ -173,4 +208,151 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 		logger.error(err);
 		return null;
 	}
+}
+
+// add a simulation in progress if it does not exist
+const addSimulationInProgress = (state: any, runIds: string[]) => {
+	if (!state.simulationsInProgress) {
+		state.simulationsInProgress = [];
+	}
+	runIds.forEach((runId) => {
+		if (!state.simulationsInProgress.includes(runId)) {
+			state.simulationsInProgress.push(runId);
+		}
+	});
+};
+
+// delete a simulation in progress if it exists
+const deleteSimulationInProgress = (state: any, runIds: string[]) => {
+	if (state.simulationsInProgress) {
+		runIds.forEach((runId) => {
+			const index = state.simulationsInProgress.indexOf(runId);
+			if (index !== -1) {
+				state.simulationsInProgress.splice(index, 1);
+			}
+		});
+	}
+};
+
+// This function returns a string array of run ids.
+export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => {
+	const state = node.state;
+	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
+		// return all run ids on the node
+		return state.simulationsInProgress;
+	}
+
+	// return an empty array if no run ids are present
+	return [];
+};
+
+export async function subscribeToUpdateMessages(
+	simulationIds: string[],
+	eventType: ClientEventType,
+	messageHandler: (data: ClientEvent<any>) => void
+) {
+	await API.get(`/simulations/subscribe?simulationIds=${simulationIds}`);
+	await subscribe(eventType, messageHandler);
+}
+
+export async function unsubscribeToUpdateMessages(
+	simulationIds: string[],
+	eventType: ClientEventType,
+	messageHandler: (data: ClientEvent<any>) => void
+) {
+	await API.get(`/simulations/unsubscribe?simulationIds=${simulationIds}`);
+	await unsubscribe(eventType, messageHandler);
+}
+
+export async function simulationPollAction(
+	simulationIds: string[],
+	node: WorkflowNode<any>,
+	progress: Ref<{ status: ProgressState; value: number }>,
+	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
+) {
+	const requestList: Promise<Simulation | null>[] = [];
+
+	simulationIds.forEach((id) => {
+		requestList.push(getSimulation(id));
+	});
+	const response = await Promise.all(requestList);
+
+	const completedSimulationIds = response
+		.filter((simulation) => simulation?.status === ProgressState.COMPLETE)
+		.map((simulation) => simulation!.id);
+	const inProgressSimulationIds = response
+		.filter(
+			(simulation) =>
+				simulation?.status === ProgressState.QUEUED || simulation?.status === ProgressState.RUNNING
+		)
+		.map((simulation) => simulation!.id);
+	const unhandledStateSimulationIds = response
+		.filter(
+			(simulation) =>
+				simulation?.status !== ProgressState.QUEUED &&
+				simulation?.status !== ProgressState.RUNNING &&
+				simulation?.status !== ProgressState.COMPLETE
+		)
+		.map((simulation) => simulation!.id);
+
+	// there are unhandled states - we will return an error and remove all simulation Ids
+	if (unhandledStateSimulationIds.length > 0) {
+		const newState = cloneDeep(node.state);
+		deleteSimulationInProgress(newState, simulationIds);
+		if (!isEqual(node.state, newState)) {
+			emitFn('update-state', newState);
+		}
+
+		return {
+			data: response,
+			progress: null,
+			error: true
+		};
+	}
+
+	// all simulations complete
+	if (inProgressSimulationIds.length === 0 && completedSimulationIds.length > 0) {
+		const newState = cloneDeep(node.state);
+		deleteSimulationInProgress(newState, completedSimulationIds);
+		// only update state if it is different from the current one
+		if (!isEqual(node.state, newState)) {
+			emitFn('update-state', newState);
+		}
+		return {
+			data: response,
+			progress: null,
+			error: null
+		};
+	}
+
+	// handle any in progress simulations
+	if (inProgressSimulationIds.length > 0) {
+		const newState = cloneDeep(node.state);
+		addSimulationInProgress(newState, inProgressSimulationIds);
+		deleteSimulationInProgress(newState, completedSimulationIds);
+
+		// only update state if it is different from the current one
+		if (!isEqual(node.state, newState)) {
+			emitFn('update-state', newState);
+		}
+		progress.value.status = ProgressState.RUNNING;
+		// keep polling
+		return {
+			data: null,
+			progress: null,
+			error: null
+		};
+	}
+
+	// remove all simulations for now if there is an unhandled state
+	const newState = deleteSimulationInProgress(node, simulationIds);
+	if (!isEqual(node.state, newState)) {
+		emitFn('update-state', newState);
+	}
+
+	return {
+		data: response,
+		progress: null,
+		error: true
+	};
 }

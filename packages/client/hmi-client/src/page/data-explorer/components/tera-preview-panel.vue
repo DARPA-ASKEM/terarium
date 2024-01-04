@@ -6,27 +6,26 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<tera-document
+			<tera-external-publication
 				v-if="previewItemResourceType === ResourceType.XDD"
 				:xdd-uri="previewItemId"
 				:previewLineLimit="3"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
 			<tera-dataset
 				v-else-if="previewItemResourceType === ResourceType.DATASET"
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
 			<tera-model
 				v-else-if="previewItemResourceType === ResourceType.MODEL"
 				:asset-id="previewItemId"
-				:project="(resources.activeProject as IProject)"
 				:highlight="searchTerm"
-				:is-editable="false"
+				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
 		</template>
@@ -50,16 +49,12 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import { PropType, computed, ref, watch } from 'vue';
-import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
-import TeraModel from '@/components/models/tera-model.vue';
+import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
-import TeraDocument from '@/components/documents/tera-document.vue';
-import { IProject } from '@/types/Project';
-
-const resources = useResourcesStore();
+import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 
 const props = defineProps({
 	// slider props

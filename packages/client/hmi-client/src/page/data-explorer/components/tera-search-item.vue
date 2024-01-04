@@ -6,50 +6,35 @@
 		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
-		<Button
-			:icon="`pi ${statusIcon}`"
-			class="p-button-icon-only p-button-text p-button-rounded"
-			@click.stop="emit('toggle-selected-asset')"
-		/>
+		<Button @click.stop="toggle" icon="pi pi-plus" text rounded :loading="isAddingAsset" />
+		<Menu class="search-item-menu" ref="menu" :model="projectOptions" :popup="true" />
 	</tera-asset-card>
 </template>
 
 <script setup lang="ts">
-import { Document, Dataset, Model } from '@/types/Types';
-import { computed } from 'vue';
+import { ref } from 'vue';
 import Button from 'primevue/button';
-import { isDocument, isDataset, isModel } from '@/utils/data-util';
+import Menu from 'primevue/menu';
 import { ResultType, ResourceType } from '@/types/common';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
+import { MenuItem } from 'primevue/menuitem';
 
-const props = defineProps<{
-	asset: Document & Model & Dataset;
+defineProps<{
+	asset: ResultType;
+	projectOptions: { label: string; items: MenuItem[] }[];
+	isAddingAsset: boolean;
 	isPreviewed: boolean;
 	resourceType: ResourceType;
-	selectedSearchItems: ResultType[];
 	searchTerm?: string;
 }>();
 
-const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
+const emit = defineEmits(['select-asset', 'toggle-asset-preview']);
 
-const isSelected = () =>
-	props.selectedSearchItems.find((item) => {
-		if (isDocument(item)) {
-			const itemAsDocument = item as Document;
-			return itemAsDocument.title === props.asset.title;
-		}
-		if (isDataset(item)) {
-			const itemAsDataset = item as Dataset;
-			return itemAsDataset.id === props.asset.id;
-		}
-		if (isModel(item)) {
-			const itemAsModel = item as Model;
-			return itemAsModel.id === props.asset.id;
-		}
-		return false;
-	});
-
-const statusIcon = computed(() => (isSelected() ? 'pi-check' : 'pi-plus'));
+const menu = ref();
+const toggle = (event: Event) => {
+	menu.value.toggle(event);
+	emit('select-asset');
+};
 </script>
 
 <style scoped>

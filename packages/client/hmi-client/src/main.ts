@@ -1,10 +1,10 @@
 import { logger } from '@/utils/logger';
 import { createApp } from 'vue';
+import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
-import axios from 'axios';
 import ConfirmationService from 'primevue/confirmationservice';
-import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
+import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
 import VueFeather from 'vue-feather';
 import VueGtag from 'vue-gtag';
@@ -12,54 +12,81 @@ import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
 import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
-import useAuthStore from './stores/auth';
-import router from './router';
+import API from '@/api/api';
+import useAuthStore from '@/stores/auth';
+import router from '@/router';
 import '@node_modules/katex/dist/katex.min.css';
-import App from './App.vue';
+import App from '@/App.vue';
+import { useProjects } from '@/composables/project';
+import '@/assets/css/style.scss';
+import Keycloak from 'keycloak-js';
+import { init } from '@/services/ClientEventService';
 
-import './assets/css/style.scss';
+// Extend the window object to include the Keycloak object
+declare global {
+	interface Window {
+		keycloak_init: Promise<boolean>;
+		keycloak: Keycloak;
+	}
+}
 
-export const app = createApp(App);
-app.use(ToastService);
+// if keycloak has not been initialized, reload the page
+const initialized = await window.keycloak_init;
+if (!initialized) {
+	logger.error('Authentication Failed, reloading a the page');
+	window.location.assign('/');
+}
+
+// Create the Vue application
+const app = createApp(App);
+// Set up the pinia store to be able to use for useAuthStore()
 app.use(createPinia());
-app.use(router);
-app.use(ConfirmationService);
-app.use(PrimeVue, { ripple: true });
-app.directive('tooltip', Tooltip);
+
+// Set up the Keycloak authentication
+const authStore = useAuthStore();
+authStore.setKeycloak(window.keycloak);
+
+// Initialize user
+await authStore.init();
+logger.info('Authenticated');
+init();
+// Token Refresh
+setInterval(async () => {
+	await window.keycloak.updateToken(70);
+}, 6000);
+
+// Set the hash value of the window.location to null
+// This is to prevent the Keycloak from redirecting to the hash value
+// after the authentication
+window.location.hash = '';
+
+app
+	.use(router)
+	.use(ToastService)
+	.use(ConfirmationService)
+	.use(PrimeVue, { ripple: true })
+	.use(VueKatex)
+	.directive('tooltip', Tooltip);
 
 // Configure Google Analytics
-const GTAG = await axios.get('/configuration/ga');
-app.use(
-	VueGtag,
-	{
-		config: {
-			id: GTAG.data
-		}
-	},
-	router
-);
+const GTAG = await API.get('/configuration/ga');
+if (GTAG.data) {
+	app.use(VueGtag, { config: { id: GTAG.data } });
+}
 
 app.component('math-field', MathfieldElement);
 app.component(VueFeather.name, VueFeather);
-app.use(VueKatex);
-
-const auth = useAuthStore();
-await auth.fetchSSO();
-
 app.mount('body');
-logger.info('Application Mounted', { showToast: false, silent: true });
 
-let previousRoute;
+let previousRoute: RouteLocationNormalized | null = null;
 let routeStartedMillis = Date.now();
-const resources = useResourcesStore();
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
 	if (previousRoute) {
 		const nowMillis = Date.now();
 		const timeSpent = nowMillis - routeStartedMillis;
-		EventService.create(
+		await EventService.create(
 			EventType.RouteTiming,
-			resources.activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({
 				name: previousRoute.name,
 				path: previousRoute.path,

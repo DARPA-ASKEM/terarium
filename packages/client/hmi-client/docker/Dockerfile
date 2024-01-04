@@ -1,15 +1,14 @@
 FROM nginx:1.23-alpine
 
 # update packages and add some basics
-RUN apk update
-RUN apk add --no-cache curl && apk add --no-cache bash && apk add --no-cache vim
+RUN apk update && \
+    apk add --no-cache curl=8.5.0-r0 && \
+    apk add --no-cache bash=5.2.15-r0 && \
+    apk add --no-cache vim=9.0.0999-r0
 
 # remove default and add configuration
 COPY default.conf /etc/nginx/conf.d/
+COPY api-proxy.conf timeouts.conf upstream.conf /etc/nginx/
 
 # copy the web assets
-COPY ./dist /var/www/app
-
-# install wait-for-it
-ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/81b1373f17855a4dc21156cfe1694c31d7d1792e/wait-for-it.sh /usr/local/bin/wait-for-it.sh
-RUN chmod +x /usr/local/bin/wait-for-it.sh
+COPY ./dist /var/www

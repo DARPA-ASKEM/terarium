@@ -9,3 +9,15 @@
         }
     }
 }
+
+.p-menuitem-separator {
+    border-bottom: 1px solid var(--surface-border);    
+    margin: $menuitemSeparatorMargin;
+}
+
+.search-item-menu {
+    .p-submenu-header {
+        font-style: italic;
+        font-size: $fontBodySmall;
+    }
+}

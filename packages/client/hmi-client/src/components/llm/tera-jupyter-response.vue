@@ -27,7 +27,10 @@
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_response type -->
 					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
-						<div class="llm-response">{{ m.content['chatty_response'] }}</div>
+						<div style="padding-top: 1rem">
+							<h5>Agent's response:</h5>
+							<div class="llm-response">{{ m.content['text'] }}</div>
+						</div>
 					</div>
 					<!-- Handle stream type for stderr -->
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stderr'">
@@ -42,7 +45,8 @@
 					</div>
 					<!-- Handle code_cell type -->
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
-						<tera-chatty-code-cell
+						<tera-beaker-code-cell
+							ref="codeCell"
 							:jupyter-session="jupyterSession"
 							:language="m.content['language']"
 							:code="m.content['code']"
@@ -62,12 +66,20 @@
 						"
 					>
 						<AccordionTab header="Preview (click to collapse/expand)">
+							<div>
+								Dataset to preview:
+								<Dropdown
+									v-model="selectedPreviewDataset"
+									:options="Object.keys(m.content).map(String)"
+									@change="previewSelected"
+								/>
+							</div>
 							<tera-dataset-datatable
 								v-if="m.header.msg_type === 'dataset'"
 								class="tera-dataset-datatable"
 								paginatorPosition="bottom"
 								:rows="10"
-								:raw-content="(m.content as CsvAsset)"
+								:raw-content="m.content[selectedPreviewDataset || 'df'] as CsvAsset"
 								:preview-mode="true"
 								:showGridlines="true"
 								table-style="width: 100%; font-size: small;"
@@ -91,15 +103,16 @@ import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import TeraChattyCodeCell from '@/components/llm/tera-chatty-response-code-cell.vue';
-import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-thought.vue';
+import Dropdown from 'primevue/dropdown';
+import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.vue';
+import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { ref, computed, onMounted, watch } from 'vue';
 import { CsvAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
-const emit = defineEmits(['cell-updated']);
+const emit = defineEmits(['cell-updated', 'preview-selected', 'update-kernel-state']);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
@@ -114,9 +127,12 @@ const props = defineProps<{
 	isExecutingCode: boolean;
 	assetId?: string;
 	autoExpandPreview?: boolean;
+	defaultPreview?: string;
 }>();
 
+const codeCell = ref(null);
 const resp = ref(<HTMLElement | null>null);
+const selectedPreviewDataset = ref(props.defaultPreview);
 // Reference for showThought, initially set to false
 const showThought = ref(false);
 
@@ -144,6 +160,10 @@ const chatWindowMenuItems = ref([
 	},
 	{ label: 'Delete', icon: 'pi pi-fw pi-trash', command: () => console.log('Delete prompt') }
 ]);
+
+const previewSelected = () => {
+	emit('preview-selected', selectedPreviewDataset.value);
+};
 
 // show the chat window menu
 const showChatWindowMenu = (event: Event) => chatWindowMenu.value.toggle(event);
@@ -184,6 +204,10 @@ watch(
 		emit('cell-updated', resp.value, props.msg);
 	}
 );
+
+defineExpose({
+	codeCell
+});
 </script>
 
 <style scoped>
@@ -208,7 +232,9 @@ watch(
 	font-family: var(--font-family);
 	border-radius: 3px;
 	margin-top: 10px;
-	transition: background-color 0.3s, border 0.3s;
+	transition:
+		background-color 0.3s,
+		border 0.3s;
 	border: 1px solid rgba(0, 0, 0, 0);
 }
 
@@ -232,7 +258,9 @@ watch(
 }
 
 .llm-response {
-	color: green;
+	padding-top: 0.7rem;
+	white-space: pre-wrap;
+	color: black;
 }
 
 .date {

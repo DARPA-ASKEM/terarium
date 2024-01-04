@@ -1,50 +1,29 @@
 /// <reference types="vitest" />
-import * as path from 'path';
 import config from './vite.config';
 
-/**
- * Vite Configuration
- *
- * Please update any changes in `playwright-ct.config.ts` under `config.use.ctViteConfig`.
- */
-
-// See: https://vitejs.dev/config/
-// See: https://vitejs.dev/config/server-options.html#server-proxy
-
-// Configuration overrides for running inside docker-compose
-config.resolve.alias['@node_modules'] = path.resolve(__dirname, './node_modules');
-config.server.fs = {
-	allow: ['.', '/graph-scaffolder']
-};
+// Configuration overrides for running local services via docker-compose
+const localhost = process.env.local_host_name || 'localhost';
+config.preview.port = 8080;
+config.server.port = 80;
+config.server.hmr.port = 80;
+config.server.hmr.clientPort = 8080;
 config.server.proxy = {
-	'/configuration': {
-		target: `http://${process.env.hmi_server_host || 'hmi-server'}:${
-			process.env.hmi_server_port || 3000
-		}`,
+	'^/api': {
+		target: `http://${localhost}:3000`,
+		rewrite: (path_str) => path_str.replace(/^\/api/, ''),
 		changeOrigin: true
 	},
-	'/api': {
-		target: `http://${process.env.hmi_server_host || 'hmi-server'}:${
-			process.env.hmi_server_port || 3000
-		}`,
+	'^/beaker_ws': {
+		target: `ws://${localhost}:3050`,
+		rewrite: (path_str) => path_str.replace(/^\/beaker_ws/, ''),
+		changeOrigin: true,
+		ws: true
+	},
+	'^/beaker': {
+		target: `http://${localhost}:3050`,
+		rewrite: (path_str) => path_str.replace(/^\/beaker/, ''),
 		changeOrigin: true
-	},
-	'/chatty_ws': {
-		target: `ws://${process.env.jupyter_host || 'jupyter'}:${process.env.jupyter_port || 8888}`,
-		changeOrigin: true,
-		rewrite: (path_str) => path_str.replace(/^\/chatty_ws/, ''),
-		ws: true
-	},
-	'/chatty': {
-		target: `http://${process.env.jupyter_host || 'jupyter'}:${process.env.jupyter_port || 8888}`,
-		changeOrigin: true,
-		rewrite: (path_str) => path_str.replace(/^\/chatty/, ''),
-		ws: true
 	}
-};
-// Fix HMR port to match port set in docker compose. https://vitejs.dev/config/server-options.html#server-hmr
-config.server.hmr = {
-	clientPort: 8078
 };
 
 export default config;

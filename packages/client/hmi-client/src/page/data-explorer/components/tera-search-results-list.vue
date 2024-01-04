@@ -2,13 +2,13 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else-if="props.searchTerm">
+			<template v-else-if="props.searchTerm || searchByExampleOptionsStr">
 				{{ resultsText }}
 				<span v-if="searchByExampleOptionsStr.length === 0"> "{{ props.searchTerm }}" </span>
 				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
 					<tera-asset-card
-						:asset="searchByExampleAssetCardProp"
-						:resource-type="(resultType as ResourceType)"
+						:asset="searchByExampleItem!"
+						:resource-type="resultType as ResourceType"
 					/>
 				</div>
 			</template>
@@ -40,12 +40,13 @@
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<tera-search-item
-				:asset="(asset as Document & Model & Dataset)"
-				:selectedSearchItems="selectedSearchItems"
-				:isPreviewed="previewedAsset === asset"
-				:resourceType="(resultType as ResourceType)"
-				:searchTerm="searchTerm"
-				@toggle-selected-asset="updateSelection(asset)"
+				:asset="asset as Document & Model & Dataset"
+				:is-previewed="previewedAsset === asset"
+				:is-adding-asset="isAdding && selectedAsset === asset"
+				:resource-type="resultType as ResourceType"
+				:search-term="searchTerm"
+				:project-options="projectOptions"
+				@select-asset="updateSelection(asset)"
 				@toggle-asset-preview="togglePreview(asset)"
 			/>
 		</li>
@@ -53,8 +54,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType, onUnmounted } from 'vue';
-import { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
+import { ref, computed, PropType } from 'vue';
+import { Document, XDDFacetsItemResponse, Dataset, Model, AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
@@ -64,9 +65,15 @@ import {
 	useSearchByExampleOptions,
 	getSearchByExampleOptionsString
 } from '@/page/data-explorer/search-by-example';
+import { useProjects } from '@/composables/project';
+import { createDocumentFromXDD } from '@/services/document-assets';
+import { isDataset, isModel, isDocument } from '@/utils/data-util';
+import { logger } from '@/utils/logger';
 import TeraSearchItem from './tera-search-item.vue';
 
-const { searchByExampleAssetCardProp } = useSearchByExampleOptions();
+const { searchByExampleItem } = useSearchByExampleOptions();
+
+const emit = defineEmits(['toggle-data-item-selected']);
 
 const props = defineProps({
 	dataItems: {
@@ -75,10 +82,6 @@ const props = defineProps({
 	},
 	facets: {
 		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
-		required: true
-	},
-	selectedSearchItems: {
-		type: Array as PropType<ResultType[]>,
 		required: true
 	},
 	resultType: {
@@ -99,9 +102,66 @@ const props = defineProps({
 	}
 });
 
-const previewedAsset = ref<ResultType | null>(null);
+const selectedAsset = ref();
+const isAdding = ref(false);
 
-const emit = defineEmits(['toggle-data-item-selected']);
+const projectOptions = computed(() => [
+	{
+		label: 'Add to which project?',
+		items:
+			useProjects().allProjects.value?.map((project) => ({
+				label: project.name,
+				command: async () => {
+					let response: any = null;
+					let assetName = '';
+					isAdding.value = true;
+
+					if (isDocument(selectedAsset.value)) {
+						const document = selectedAsset.value as Document;
+						await createDocumentFromXDD(document, project.id);
+						// finally add asset to project
+						response = await useProjects().get(project.id);
+						assetName = selectedAsset.value.title;
+					}
+					if (isModel(selectedAsset.value)) {
+						// FIXME: handle cases where assets is already added to the project
+						const modelId = selectedAsset.value.id;
+						// then, link and store in the project assets
+						const assetType = AssetType.Models;
+						response = await useProjects().addAsset(assetType, modelId, project.id);
+						assetName = selectedAsset.value.header.name;
+					}
+					if (isDataset(selectedAsset.value)) {
+						// FIXME: handle cases where assets is already added to the project
+						const datasetId = selectedAsset.value.id;
+						// then, link and store in the project assets
+						const assetType = AssetType.Datasets;
+						if (datasetId) {
+							response = await useProjects().addAsset(assetType, datasetId, project.id);
+							assetName = selectedAsset.value.name;
+						}
+					}
+
+					if (response) logger.info(`Added ${assetName} to ${project.name}`);
+					else logger.error(`Failed adding ${assetName} to ${project.name}`);
+
+					isAdding.value = false;
+				}
+			})) ?? []
+	}
+]);
+
+// onMounted(() => {
+// 	// To preview if the asset is already in a project we need to grab the assets of all projects...
+// 	const projs =
+// 		useProjects().allProjects.value?.forEach(async (project) => {
+// 			const assets = await useProjects().get(project.id);
+// 		    console.log(project, props.resultType, assets);
+// 		}) ?? [];
+// 	console.log(projs);
+// });
+
+const previewedAsset = ref<ResultType | null>(null);
 
 const chosenFacets = computed(() => useQueryStore().clientFilters.clauses);
 
@@ -112,7 +172,7 @@ const removeFacetValue = (field: string, values: ClauseValue[], valueToRemove: C
 };
 
 const updateSelection = (asset: ResultType) => {
-	emit('toggle-data-item-selected', { item: asset, type: 'selected' });
+	selectedAsset.value = asset;
 };
 
 const togglePreview = (asset: ResultType) => {
@@ -181,10 +241,6 @@ const itemsText = computed(() => {
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
 	return `Showing ${resultsCount.value} ${truncated}item${s}.`;
-});
-
-onUnmounted(() => {
-	searchByExampleAssetCardProp.value = null;
 });
 </script>
 

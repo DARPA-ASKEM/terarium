@@ -1,146 +1,177 @@
-[![Build and Publish](https://github.com/DARPA-ASKEM/Terarium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
 
 # Terarium
 
 Terarium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish
 machine extracted models.
 
-## Install and dependencies
+[app.terarium.ai](https://app.terarium.ai/)
 
-The Terarium client is built with Typescript and Vue3. The Terarium server is built with Java and Quarkus. To run and
+## Table of Contents
+
+1. [Project Status](#project-status)
+1. [Getting Started](#getting-started)
+  1. [Dependencies](#dependencies)
+  1. [Running and Debugging](#running-and-debugging)
+     1. [Running the Client](#running-the-client)
+     1. [Running the Server](#running-the-server)
+  1. [Testing](#testing)
+     1. [Running the Client Tests](#running-the-client-tests)
+     1. [Running the Server Tests](#running-the-server-tests)
+1. [Contributing](#conventional-commits)
+1. [Conventional Commits](#conventional-commits)
+1. [License](#license)
+
+## Project Status
+[![Build and Publish](https://github.com/DARPA-ASKEM/Terarium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
+
+[![Client E2E Tests](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client-e2e.yaml/badge.svg)](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client-e2e.yaml)
+[![Client Tests](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client.yaml/badge.svg)](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-client.yaml)
+[![Server Tests](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-server.yaml/badge.svg)](https://github.com/DARPA-ASKEM/terarium/actions/workflows/test-server.yaml)
+
+## Getting Started
+
+### Dependencies
+
+The Terarium client is built with Typescript and Vue3. The Terarium server is built with Java and Spring Boot. To run and
 develop Terarium, you will need these as a prerequisite:
 
-- [Yarn 2](https://yarnpkg.com/getting-started/install)
-- [NodeJS 18](https://nodejs.org/en/download/current/)
-- [JDK 17](https://openjdk.org/projects/jdk/17/)
-- [Quarkus CLI](https://quarkus.io/guides/cli-tooling)
+- [Yarn 4](https://yarnpkg.com/getting-started/install)
+- [NodeJS 20](https://nodejs.org/en/download/current/)
+- [JDK 17](https://adoptium.net/temurin)
+- [Gradle 7](https://gradle.org/install/)
+- [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
-> NOTE: You **must** enable Kubernetes support in Docker. Go to your Docker dashboard -> Settings (Gear icon) ->
-> Kubernetes -> Enable Kubernetes
-> NOTE: The latest jdk version (i.e., 19) is not supportted and hence the reference to the usage of an earlier version (
-> e.g., openjdk17)
-
-### macOS
-
-Installing/Using [Homebrew](https://brew.sh/) to install the following:
-
-* [Temurin](https://adoptium.net/temurin) OR OpenJDK
-* [Gradle](https://gradle.org)
-* [Quarkus](https://quarkus.io/guides/cli-tooling).
+There are many ways/package managers to install these dependencies. We recommend using [Homebrew](https://brew.sh/) on MacOS.
 
 ```bash
 brew tap homebrew/cask-versions
-brew install --cask temurin17 # OR brew install openjdk@17 
+brew install --cask temurin17 # OR brew install openjdk@17
 brew install gradle
-brew install quarkusio/tap/quarkus
+brew install yarn
 ```
 
-## Running the server in dev mode
+### Ansible Vault Password File
 
-First, launch the authentication service before running the server (see
-documentation [here](https://github.com/DARPA-ASKEM/orchestration)).
+You will need to have the ansible askem vault password in your home directory in a file named `askem-vault-id.txt`. You can find this file in the ASKEM TERArium (Shared External) drive on Google Drive. **This file is not included in the repository for security reasons. Please contact the team for access to this file.**
 
-Then, before your first launch of the server you will need to decrypt the local secrets file. This command is assuming
-you have the password located in your home directory in a file named `askem-vault-id.txt`.
-This command should be run from inside of the `resources` directory of the hmi-server
+## Running and Debugging
+There is a companion project to Terarium which handles spinning up the required external services. Depending on what you're doing this can be configured to run all or some of the related services. If this is necessary, you will need to start the orchestration project up before continuing (see documentation [here](https://github.com/DARPA-ASKEM/orchestration)).
+
+### Running the Client
+To install client package dependencies, run the following command in the root directory:
 
 ```shell
-ansible-vault decrypt --vault-password-file ~/askem-vault-id.txt --output application-secrets.properties application-secrets.properties.encrypted   
-```
-
-Then, you can run your application in dev mode that enables live coding using:
-
-```
-./gradlew quarkusDev
-```
-
-or, if you have the Quarkus CLI
-
-```
-quarkus dev
-```
-
-When running in dev mode, you will need to run both the HMI server _and_ the Document service explicitly
-> NOTE: Quarkus has a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
-
-## Running the client in dev mode
-
-To install package dependencies, run the command in the root directory
-
-```
 yarn install
 ```
 
-## Dev UI
+Running the client in dev mode requires running two processes: the local client dev server and the [typescript model generation](docs/Typescript_Model_Generation.md).
 
-Once your application is running locally, you can hit the dev UI at localhost:3000/q/dev. From here you can access lots
-of different tools and views, including our Swagger UI located http://localhost:3000/q/swagger-ui/
+To run both processes with a single command:
+
+```shell
+yarn dev
+```
+
+To run as individual processes:
+
+```shell
+yarn workspace hmi-client run dev                       # client development server
+yarn workspace @uncharted/server-type-generator run dev # typescript model generator
+```
+
+To generate the typescript models as a single command:
+
+```shell
+yarn workspace @uncharted/server-type-generator run generateTypes
+```
+
+<details>
+<summary><b>Debugging the Client in IntelliJ</b></summary>
+
+Create a new IntelliJ run configuration with the following settings:
+* Type: JavaScript Debug
+* Name: `Terarium Client` (or whatever you want)
+* URL: `http://localhost:8080`
+* Browser: `Chrome` (or whatever you want)
+* Check "Ensure breakpoints are detected when loading scripts"
+
+Save your configuration, and choose Debug from the Run menu. You will now hit breakpoints set in your front end code. Note that prior to running this config you'll need to have run `yarn dev` separately
+
+  ![debug Front End](docs/debugFrontEnd.png)
+
+</details>
+
+### Running the Server
+
+If you don't intend to run the backend with a debugger, you can simply kick off the back end process via the `hmiServerDev.sh` script located in the root of this directory. It will handle decrypting secrets, starting the server, and re-encrypting secrets once you shut the server down. *If you do intend to debug the back end, skip this step and see the below debug instructions*
+
+```shell
+./hmiServerDev.sh start remote run
+```
+
+If you are going to run the server using the Intellij / VSCode debugger, the first step is to decrypt the `application-secrets.properties.encrypted` file:
+
+```shell
+./hmiServerDev.sh decrypt
+```
+
+There should now be a `application-secrets.properties` file in the `packages/server/src/main/resources` dir.
+
+<details>
+<summary><b>Debugging the Server in IntelliJ</b></summary>
+
+1) Create a new run Spring Boot Run/Debug configuration adding the `default`, `secrets`, and `local` profiles:
+   ![server-intellij-config.png](docs/server-intellij-config.png)
+</details>
+
+<details>
+<summary><b>Debugging the Server in VSCode</b></summary>
+
+1) Ensure you have the `Extension Pack for Java` extension pack installed.
+2) If you have the `Gradle for Java` extension installed, disable the gradle build server: [it causes problems with building and live reload](https://github.com/redhat-developer/vscode-java/issues/2338).
+3) Ensure the following configuration is in the `.vscode/launch.json` directory:
+
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "TerariumApplication",
+            "request": "launch",
+            "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
+            "projectName": "server",
+            "args": [
+              "--spring.profiles.active=default,secrets,local"
+            ]
+        }
+    ]
+}
+```
+</details>
 
 ## Testing
 
-Start local dev server for Vue webapp, with Hot Module Replacement.
+### Running the Client Tests
 
-```
-yarn dev
-# equivalent to: yarn workspace hmi-client run dev
-```
-
-## Packaging and running the server
-
-The application can be packaged using:
-
-```
-./gradlew build
+```shell
+yarn workspace hmi-client run test
 ```
 
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
+### Running the Server Tests
 
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```
-./gradlew build -Dquarkus.package.type=uber-jar
+```shell
+./gradlew test
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
+## Contributing
 
-## Creating a native executable
+Please see further documentation in the [Terarium Contributing Guide](.github/CONTRIBUTING.md)
 
-You can create a native executable using:
-
-```
-./gradlew build -Dquarkus.package.type=native
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```
-./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSHOT-runner`
-
-## Services and Ports
-
-* HMI Server - 3000
-* Model Service - 3010
-* Data Service - 3020
-
-## Packaging and running the client
-
-## Working with Docker
-
-```
-# Docker build
-docker build . -t <image_name>
-
-# Run, make Terarium available on http://localhost:3000
-docker run -p 3000:3000 -ti <image_name>
-```
-
-# Conventional Commits
+## Conventional Commits
 
 This repository follows the [Conventional Commits Specification](https://conventionalcommits.org/)
 using [CommitLint](https://github.com/conventional-changelog/commitlint) to validate the commit message on the PR. If

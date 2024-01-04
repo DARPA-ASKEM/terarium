@@ -1,10 +1,11 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import { logger } from '@/utils/logger';
 import { ToastSummaries } from '@/services/toast';
 import useAuthStore from '../stores/auth';
 
 const API = axios.create({
-	baseURL: '/api'
+	baseURL: '/api',
+	headers: new AxiosHeaders()
 });
 
 // Hook in bearer tokens
@@ -13,12 +14,7 @@ const API = axios.create({
 API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
-
-		if (config.headers) {
-			config.headers.Authorization = `Bearer ${auth.token}`;
-		} else {
-			config.headers = { Authorization: `Bearer ${auth.token}` };
-		}
+		config.headers.setAuthorization(`Bearer ${auth.token}`);
 		return config;
 	},
 	(error) => {
@@ -43,6 +39,13 @@ API.interceptors.response.use(
 					showToast: false,
 					toastTitle: `${ToastSummaries.NETWORK_ERROR} (${status})`
 				});
+		}
+		if (status === 401) {
+			// redirect to login
+			const auth = useAuthStore();
+			auth.keycloak?.login({
+				redirectUri: window.location.href
+			});
 		}
 		return null;
 	}

@@ -132,6 +132,8 @@ import {
 	useSearchByExampleOptions,
 	extractResourceName
 } from '@/page/data-explorer/search-by-example';
+import { getResourceID } from '@/utils/data-util';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	showSuggestions: boolean;
@@ -157,8 +159,7 @@ const selectedSearchByExampleOptions = ref<SearchByExampleOptions>({
 	backwardCitation: false,
 	relatedContent: false
 });
-const { searchByExampleOptions, searchByExampleItem, searchByExampleAssetCardProp } =
-	useSearchByExampleOptions();
+const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
 
 function clearQuery() {
 	query.value = '';
@@ -167,20 +168,21 @@ function clearQuery() {
 
 const initiateSearch = () => {
 	emit('query-changed', query.value);
-	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value, byExample: 'false' } });
-	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
+	router.push({ name: RouteName.DataExplorer, query: { q: query.value } });
+	EventService.create(EventType.Search, useProjects().activeProject.value?.id, query.value);
 };
 
 function initiateSearchByExample() {
+	searchByExampleItem.value = searchByExampleSelectedAsset.value;
 	searchByExampleOptions.value = { ...selectedSearchByExampleOptions.value };
 	searchByExampleToggle.value = false;
 
-	// used in order to update the "showing x of y results with ... to <Asset Card>"
-	// section after a search by example is initiated
-	searchByExampleAssetCardProp.value = { ...searchByExampleItem.value };
 	// used to update the search bar text with the name of the search by example asset
 	query.value = extractResourceName(searchByExampleItem.value);
-	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value, byExample: 'true' } });
+	router.push({
+		name: RouteName.DataExplorer,
+		query: { resourceId: getResourceID(searchByExampleItem.value!) }
+	});
 }
 
 function addToQuery(term: string) {
@@ -230,7 +232,6 @@ function onDrop() {
 	searchByExampleToggle.value = true; // Maintains open search by example popup once an asset is successfully dropped
 	searchByExampleSelectedAsset.value = getDragData('asset');
 	searchByExampleSelectedResourceType.value = getDragData('resourceType');
-	searchByExampleItem.value = searchByExampleSelectedAsset.value;
 	isDraggedOver.value = false;
 }
 
@@ -253,7 +254,7 @@ watch(
 // Clear the query if not on the data explorer view
 watch(
 	() => route.name,
-	(name) => name !== RouteName.DataExplorerRoute && clearQuery()
+	(name) => name !== RouteName.DataExplorer && clearQuery()
 );
 </script>
 
@@ -365,7 +366,9 @@ i {
 	row-gap: 1rem;
 	padding: 0 1.5rem 2rem 1.5rem;
 	margin-right: 3rem;
-	box-shadow: 0px 4px 6px -1px rgb(0 0 0 / 8%), 0px 2px 4px -1px rgb(0 0 0 / 6%);
+	box-shadow:
+		0px 4px 6px -1px rgb(0 0 0 / 8%),
+		0px 2px 4px -1px rgb(0 0 0 / 6%);
 }
 
 .search-by-example header {

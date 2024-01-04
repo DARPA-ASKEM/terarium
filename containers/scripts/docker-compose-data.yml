@@ -1,0 +1,112 @@
+---
+version: "3.8"
+
+services:
+  seaweedfs:
+    container_name: seaweedfs
+    image: chrislusf/seaweedfs:latest
+    ports:
+      - "4566:8333"
+    networks:
+      terarium:
+    command: server -s3
+    volumes:
+      - "seaweedfs-data:/data"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.7.0
+    networks:
+      - terarium
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD", "curl", "--head", "0.0.0.0:9200/_cluster/health?wait_for_status=yellow"]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    environment:
+      - cluster.name=elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  neo4j:
+    container_name: neo4j
+    image: neo4j:5.12-community
+    networks:
+      - terarium
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_PLUGINS=["apoc"]
+      - apoc.import.file.enabled=true
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_dbms_memory_pagecache_size=512M
+      - PG_HOST=postgres
+      - PG_PORT=5432
+    depends_on:
+      - postgres
+
+  message-queue:
+    container_name: message-queue
+    image: rabbitmq:3-management-alpine
+    networks:
+      - terarium
+    ports:
+      - "5672:5672"
+      - "15671:15671"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "terarium"
+      RABBITMQ_DEFAULT_PASS: "terarium123"
+      RABBITMQ_MANAGEMENT_ENABLED: "true"
+
+  spicedb:
+    container_name: spicedb
+    image: authzed/spicedb:v1.24.0
+    networks:
+      - terarium
+    ports:
+      - "50051:50051"
+    command: ["serve"]
+    environment:
+      SPICEDB_GRPC_PRESHARED_KEY: "dev"
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_HTTP_ENABLED: "true"
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    depends_on:
+      migrate-spicedb:
+        condition: service_completed_successfully
+
+  migrate-spicedb:
+    image: authzed/spicedb:v1.24.0
+    networks:
+      - terarium
+    command: ["migrate", "head"]
+    restart: "on-failure"
+    environment:
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  elasticsearch-data:
+  seaweedfs-data:

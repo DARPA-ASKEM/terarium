@@ -44,6 +44,12 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 		});
 	}
 
+	// If the "default" config is updated we want to update the model as well
+	// because the model as a copy of the data
+	if (config.name === 'Default config') {
+		API.put(`/models/${config.configuration.id}`, config.configuration);
+	}
+
 	const response = await API.put(`/model_configurations/${config.id}`, config);
 	return response?.data ?? null;
 };

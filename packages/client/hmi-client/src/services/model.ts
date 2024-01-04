@@ -1,13 +1,10 @@
 import API from '@/api/api';
 import { EventType, Model, ModelConfiguration } from '@/types/Types';
-import { logger } from '@/utils/logger';
-import * as ProjectService from '@/services/project';
-import { ProjectAssetTypes } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
-
-// TODO - to be removed after July 2023 Hackathon
-import { MATHMLMODEL } from '@/temp/models/mathml';
 import * as EventService from '@/services/event';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import { useProjects } from '@/composables/project';
+import { isEmpty } from 'lodash';
+import { logger } from '@/utils/logger';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -19,9 +16,6 @@ export async function createModel(model): Promise<Model | null> {
  * @return Model|null - the model, or null if none returned by API
  */
 export async function getModel(modelId: string): Promise<Model | null> {
-	// TODO - to be removed after July 2023 Hackathon
-	if (modelId === 'mathml-model') return MATHMLMODEL;
-
 	const response = await API.get(`/models/${modelId}`);
 	return response?.data ?? null;
 }
@@ -50,7 +44,7 @@ export async function getBulkModels(modelIDs: string[]) {
  * @return Array<Model>|null - the list of all models, or null if none returned by API
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions');
+	const response = await API.get('/models/descriptions?page_size=500');
 	return response?.data ?? null;
 }
 
@@ -58,27 +52,12 @@ export async function updateModel(model: Model) {
 	const response = await API.put(`/models/${model.id}`, model);
 	EventService.create(
 		EventType.PersistModel,
-		useResourcesStore().activeProject?.id,
+		useProjects().activeProject.value?.id,
 		JSON.stringify({
 			id: model.id
 		})
 	);
 	return response?.data ?? null;
-}
-
-export async function addModelToProject(projectId: string, assetId: string) {
-	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
-
-	if (resp) {
-		const model = await getModel(assetId);
-		if (model) {
-			useResourcesStore().activeProject?.assets?.[ProjectAssetTypes.MODELS].push(model);
-		} else {
-			logger.warn(`Unable to find model id: ${assetId}`);
-		}
-	} else {
-		logger.warn('Could not add new model to project.');
-	}
 }
 
 export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[]> {
@@ -88,8 +67,50 @@ export async function getModelConfigurations(modelId: string): Promise<ModelConf
 
 /**
  * Reconstruct an petrinet AMR's ode semantics
+ *
+ * @deprecated moving to mira-stratify
  */
 export async function reconstructAMR(amr: any) {
 	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
 	return response?.data;
+}
+
+// function adds model to project, returns modelId if successful otherwise null
+export async function addNewModelToProject(modelName: string): Promise<string | null> {
+	// 1. Load an empty AMR
+	const amr = newAMR(modelName);
+	(amr as any).id = undefined; // FIXME: id hack
+
+	const response = await createModel(amr);
+	const modelId = response?.id;
+
+	return modelId ?? null;
+}
+
+// A helper function to check if a model is empty.
+export function isModelEmpty(model: Model) {
+	if (model.header.schema_name === 'petrinet') {
+		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
+	}
+	// TODO: support different frameworks' version of empty
+	return false;
+}
+
+// A helper function to check if a model name already exists
+export function validateModelName(name: string): boolean {
+	const existingModelNames: string[] = [];
+	useProjects().activeProject.value?.assets?.models.forEach((item) => {
+		existingModelNames.push(item.header.name);
+	});
+
+	if (name.trim().length === 0) {
+		logger.info('Model name cannot be empty - please enter a different name');
+		return false;
+	}
+	if (existingModelNames.includes(name.trim())) {
+		logger.info('Duplicate model name - please enter a different name');
+		return false;
+	}
+
+	return true;
 }

@@ -10,7 +10,9 @@
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects"
+					v-if="
+						resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects
+					"
 				>
 					<template
 						v-for="icon in [
@@ -28,20 +30,36 @@
 						/>
 					</template>
 				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.schema_name }}</div>
+				<div v-else-if="resourceType === ResourceType.MODEL">
+					{{ (asset as Model).header.schema_name }}
+				</div>
+				<ul>
+					<li v-for="(project, index) in foundInProjects" :key="index">
+						<a>{{ project }}</a>
+					</li>
+				</ul>
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
 			<ul class="snippets" v-if="snippets">
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
-			<div class="description" v-html="highlightSearchTerms(asset.description)" />
+			<div
+				class="description"
+				v-if="resourceType === ResourceType.MODEL"
+				v-html="highlightSearchTerms((asset as Model).header.description)"
+			/>
+			<div
+				class="description"
+				v-else-if="resourceType === ResourceType.DATASET"
+				v-html="highlightSearchTerms((asset as Dataset).description)"
+			/>
 			<div
 				class="parameters"
-				v-if="resourceType === ResourceType.MODEL && asset?.semantics?.ode?.parameters"
+				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
 			>
 				PARAMETERS:
-				{{ asset.semantics.ode.parameters }}
+				{{ (asset as Model).semantics?.ode.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
 			</div>
 			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
@@ -50,51 +68,50 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
-		<aside class="preview-and-options">
-			<figure v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects">
-				<template v-if="relatedAsset">
+		<aside>
+			<tera-carousel
+				v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)"
+				is-numeric
+				height="6rem"
+				width="8rem"
+			>
+				<template v-for="(extraction, index) in extractions">
 					<img
-						v-if="relatedAsset.properties.image"
-						:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
+						v-if="extraction.properties.image"
+						:src="`data:image/jpeg;base64,${extraction.properties.image}`"
 						class="extracted-assets"
 						alt="asset"
+						:key="index"
 					/>
-					<div class="link" v-else-if="relatedAsset.properties.doi">
-						<a
-							v-if="relatedAsset.properties.documentBibjson?.link"
-							:href="relatedAsset.properties.documentBibjson.link[0].url"
-							@click.stop
-							rel="noreferrer noopener"
-						>
-							{{ relatedAsset.properties.documentBibjson.link[0].url }}
-						</a>
-						<a
-							v-else
-							:href="`https://doi.org/${relatedAsset.properties.doi}`"
-							@click.stop
-							rel="noreferrer noopener"
-						>
-							{{ `https://doi.org/${relatedAsset.properties.doi}` }}
-						</a>
-					</div>
-					<div class="link" v-else-if="relatedAsset.urlExtraction">
-						<a :href="relatedAsset.urlExtraction.url" @click.stop rel="noreferrer noopener">
-							{{ relatedAsset.urlExtraction.resourceTitle }}
-						</a>
-					</div>
+					<a
+						v-else-if="extraction.properties.doi && extraction.properties.documentBibjson?.link"
+						:href="extraction.properties.documentBibjson.link[0].url"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}a`"
+					>
+						{{ extraction.properties.documentBibjson.link[0].url }}
+					</a>
+					<a
+						v-else-if="extraction.properties.doi"
+						:href="`https://doi.org/${extraction.properties.doi}`"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}b`"
+					>
+						{{ `https://doi.org/${extraction.properties.doi}` }}
+					</a>
+					<a
+						v-else-if="extraction.urlExtraction"
+						:href="extraction.urlExtraction.url"
+						@click.stop
+						rel="noreferrer noopener"
+						:key="`${index}c`"
+					>
+						{{ extraction.urlExtraction.resourceTitle }}
+					</a>
 				</template>
-				<div class="asset-nav-arrows">
-					<span class="asset-pages" v-if="!isEmpty(extractions)">
-						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-						<span class="asset-count">
-							{{ chosenExtractionFilter }}
-							<span class="asset-count-text">{{ relatedAssetPage + 1 }}</span> of
-							<span class="asset-count-text">{{ extractions.length }}</span>
-						</span>
-						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
-					</span>
-				</div>
-			</figure>
+			</tera-carousel>
 			<slot name="default"></slot>
 		</aside>
 	</div>
@@ -105,9 +122,10 @@ import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
 import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
-import { ResourceType } from '@/types/common';
+import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
+import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -116,7 +134,7 @@ type UrlExtraction = {
 };
 
 const props = defineProps<{
-	asset: Document & Model & Dataset;
+	asset: ResultType;
 	resourceType: ResourceType;
 	highlight?: string;
 }>();
@@ -129,16 +147,16 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-// const emit = defineEmits(['toggle-asset-preview']);
-
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
+
+const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
 
-	if (props.asset.knownEntities.askemObjects) {
-		const documentsWithUrls = props.asset.knownEntities.askemObjects.filter(
+	if ((props.asset as Document).knownEntities.askemObjects) {
+		const documentsWithUrls = (props.asset as Document).knownEntities.askemObjects.filter(
 			(ex) =>
 				ex.askemClass === XDDExtractionType.Doc &&
 				ex.properties.documentBibjson?.knownEntities &&
@@ -162,9 +180,9 @@ const urlExtractions = computed(() => {
 });
 
 const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
-	if (props.asset.knownEntities.askemObjects) {
+	if ((props.asset as Document).knownEntities.askemObjects) {
 		const allExtractions = [
-			...(props.asset.knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
+			...((props.asset as Document).knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
 			...(urlExtractions.value as UrlExtraction[] & Extraction[])
 		];
 
@@ -175,12 +193,20 @@ const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => 
 	return [];
 });
 
-const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() =>
-	props.asset.highlight ? Array.from(props.asset.highlight).splice(0, 3) : null
+	(props.asset as Document).highlight
+		? Array.from((props.asset as Document).highlight).splice(0, 3)
+		: null
 );
 const title = computed(() => {
-	const value = props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name;
+	let value = '';
+	if (props.resourceType === ResourceType.XDD) {
+		value = (props.asset as Document).title;
+	} else if (props.resourceType === ResourceType.MODEL) {
+		value = (props.asset as Model).header.name;
+	} else if (props.resourceType === ResourceType.DATASET) {
+		value = (props.asset as Dataset).name;
+	}
 	return highlightSearchTerms(value);
 });
 
@@ -191,14 +217,6 @@ watch(
 		relatedAssetPage.value = 0;
 	}
 );
-
-function previewMovement(movement: number) {
-	const newPage = relatedAssetPage.value + movement;
-	if (newPage > -1 && newPage < extractions.value.length) {
-		relatedAssetPage.value = newPage;
-	}
-	// console.log(relatedAsset.value);
-}
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
@@ -224,14 +242,14 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
 	if (props.resourceType === ResourceType.XDD) {
-		const details = `${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
-			props.asset.journal
-		}`;
+		const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
+			(props.asset as Document).year
+		}) ${(props.asset as Document).journal}`;
 		return highlightSearchTerms(details);
 	}
 
 	if (props.resourceType === ResourceType.DATASET) {
-		return props.asset?.url;
+		return (props.asset as Dataset).datasetUrl;
 	}
 
 	return null;
@@ -276,6 +294,10 @@ function endDrag() {
 	margin: 1px;
 	min-height: 5rem;
 	padding: 0.5rem 0.625rem 0.625rem;
+
+	& > main {
+		width: 100%;
+	}
 }
 
 .asset-card:hover {
@@ -292,68 +314,23 @@ function endDrag() {
 	align-items: center;
 	gap: 2rem;
 	font-size: 0.75rem;
+
+	& > ul {
+		margin-left: auto;
+		list-style: none;
+		display: flex;
+		margin-right: 0.5rem;
+		gap: 0.5rem;
+
+		/* & > li:not(:last-child)::after {
+			content: '-';
+		} */
+	}
 }
 
-.preview-and-options {
+aside {
 	display: flex;
 	gap: 0.5rem;
-}
-
-.preview-and-options figure {
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	width: 8rem;
-	height: 7rem;
-}
-
-.preview-and-options figure img {
-	margin: auto 0;
-	object-fit: contain;
-	max-height: 5rem;
-}
-
-.preview-and-options .link {
-	overflow: auto;
-	overflow-wrap: break-word;
-	margin: auto 0;
-	min-height: 0;
-	font-size: 10px;
-}
-
-.preview-and-options .link a {
-	color: var(--primary-color);
-}
-
-.preview-and-options figure img,
-.preview-and-options .link {
-	border: 1px solid var(--surface-ground);
-	border-radius: 3px;
-	padding: 4px;
-}
-
-.asset-nav-arrows {
-	text-align: center;
-}
-
-.pi-arrow-left,
-.pi-arrow-right {
-	border-radius: 24px;
-	font-size: 10px;
-}
-
-.asset-nav-arrows .asset-pages {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.asset-nav-arrows .asset-count {
-	white-space: nowrap;
-}
-
-.asset-nav-arrows .asset-count-text {
-	color: var(--text-color-subdued);
 }
 
 .title,

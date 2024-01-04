@@ -37,26 +37,33 @@
 				>Reconnect</Button
 			>
 		</div>
-		<div class="gpt-header">
+		<div class="gpt-header flex">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 			<span><header id="GPT">TGPT</header></span>
 			<span style="margin-left: 2rem">
 				<label>Auto expand previews:</label><input v-model="autoExpandPreview" type="checkbox" />
 			</span>
+			<span class="flex-auto"></span>
+			<Button label="Reset" class="p-button p-button-sm" @click="confirmReset">
+				<span class="pi pi-replay p-button-icon p-button-icon-left"></span>
+				<span class="p-button-text">Reset</span>
+			</Button>
 		</div>
 		<tera-jupyter-chat
-			:project="props.project"
-			:asset-id="props.assetId"
+			ref="chat"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
 			:auto-expand-preview="autoExpandPreview"
+			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
+			:notebook-session="props.notebookSession"
 		/>
-		<div>
+		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
+			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
 			<Button
 				class="save-button p-button p-button-secondary p-button-sm"
 				title="Saves the current version of df as a new Terarium asset"
@@ -98,10 +105,8 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
-import { addAsset } from '@/services/project';
-import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
@@ -117,27 +122,30 @@ import Dropdown from 'primevue/dropdown';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
+import { useProjects } from '@/composables/project';
 
 // import { createNewDataset } from '@/services/dataset';
 
-// const jupyterSession = ref(<SessionContext>newSession('llmkernel', 'ChattyNode'));
-const jupyterSession: SessionContext = await newSession('llmkernel', 'ChattyNode');
+// const jupyterSession = ref(<SessionContext>newSession('beaker_kernel', 'Beaker Kernel'));
+const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assetId: string;
-	project?: IProject;
-	dataset: Dataset;
+	assetIds: string[];
 	showKernels: boolean;
 	showChatThoughts: boolean;
+	notebookSession?: NotebookSession;
 }>();
+const emit = defineEmits(['new-dataset-saved']);
 
+const chat = ref();
 const kernelStatus = ref(<string>'');
-const showKernels = ref(<boolean>false);
+const kernelState = ref(null);
 const autoExpandPreview = ref(<boolean>true);
+const actionTarget = ref('df');
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
@@ -171,7 +179,7 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 		channel: 'shell',
 		content: context_info,
 		msgType: 'context_setup_request',
-		msgId: createMessageId('context_setup_request')
+		msgId: 'tgpt-context_setup_request'
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
@@ -179,10 +187,16 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
-	if (kernel?.name === 'llmkernel') {
+
+	const contextInfo = {};
+	props.assetIds.forEach((assetId, i) => {
+		const key = `d${i + 1}`;
+		contextInfo[key] = assetId;
+	});
+	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
-			context_info: { id: props.assetId }
+			context_info: contextInfo
 		});
 	}
 });
@@ -224,6 +238,10 @@ onUnmounted(() => {
 	jupyterSession.shutdown();
 });
 
+const updateKernelState = (newKernelState) => {
+	kernelState.value = newKernelState;
+};
+
 // Save file function
 const saveAsNewDataset = async () => {
 	if (!hasValidDatasetName.value || saveAsName.value === null) {
@@ -250,14 +268,23 @@ const saveAsNewDataset = async () => {
 		session: session?.name || '',
 		channel: 'shell',
 		content: {
-			parent_dataset_id: String(props.assetId),
-			name: datasetName
+			parent_dataset_id: String(props.assetIds[0]),
+			name: datasetName,
+			var_name: actionTarget.value
 		},
 		msgType: 'save_dataset_request',
 		msgId: createMessageId('save_dataset_request')
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
+};
+
+const resetKernel = async () => {
+	const session = jupyterSession.session;
+	const kernel = session?.kernel as IKernelConnection;
+
+	chat.value.clearOutputs();
+	await session?.changeKernel({ name: kernel.name });
 };
 
 const killKernel = () => {
@@ -270,6 +297,20 @@ const deleteAllKernels = () => {
 		shutdownKernel(k.kernelId, getServerSettings());
 	});
 	updateKernelList();
+};
+
+const confirmReset = () => {
+	confirm.require({
+		message: `Are you sure you want to reset the kernel?
+
+This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
+The code cells will need to be rerun.`,
+		header: 'Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			resetKernel();
+		}
+	});
 };
 
 // Kernel Confirmation dialogs
@@ -328,12 +369,13 @@ const updateKernelList = () => {
 };
 
 const onNewDatasetSaved = async (payload) => {
-	if (!props.project) {
+	if (!useProjects().activeProject.value) {
 		toast.error('Unable to save dataset', "Can't find active an project");
 		return;
 	}
 	const datasetId = payload.dataset_id;
-	await addAsset(props.project.id, ProjectAssetTypes.DATASETS, datasetId);
+	await useProjects().addAsset(AssetType.Datasets, datasetId);
+	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
 	toast.success(
 		'Dataset saved successfully',
 		'Refresh to see the dataset in the resource explorer'
@@ -346,7 +388,9 @@ const downloadDataset = () => {
 	const messageBody = {
 		session: session?.name || '',
 		channel: 'shell',
-		content: {},
+		content: {
+			var_name: actionTarget.value
+		},
 		msgType: 'download_dataset_request',
 		msgId: createMessageId('download_dataset_request')
 	};

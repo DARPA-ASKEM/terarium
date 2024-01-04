@@ -1,12 +1,12 @@
 <template>
-	<main @scroll="updateScrollPosition" id="tango" ref="assetContainer">
+	<main v-if="!isLoading" @scroll="updateScrollPosition">
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
 			<aside class="spread-out">
 				<slot name="edit-buttons" />
 				<Button
-					v-if="!isEditable"
+					v-if="featureConfig.isPreview"
 					icon="pi pi-times"
 					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 					@click="emit('close-preview')"
@@ -14,7 +14,11 @@
 			</aside>
 		</header>
 		<template v-if="!hideIntro">
-			<header id="asset-top" ref="headerRef">
+			<header
+				id="asset-top"
+				:class="{ 'overview-banner': pageType === ProjectPages.OVERVIEW }"
+				ref="headerRef"
+			>
 				<section>
 					<!-- put the buttons above the title if there is an overline -->
 					<div v-if="overline" class="vertically-center">
@@ -46,10 +50,11 @@
 					<div class="header-buttons">
 						<slot name="bottom-header-buttons" />
 					</div>
+					<slot name="overview-summary" />
 				</section>
-				<aside class="spread-out">
+				<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
 					<Button
-						v-if="!isEditable"
+						v-if="featureConfig.isPreview"
 						icon="pi pi-times"
 						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						@click="emit('close-preview')"
@@ -57,34 +62,55 @@
 				</aside>
 			</header>
 		</template>
-		<section :style="stretchContentStyle">
+		<section :class="overflowHiddenClass" :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
 	</main>
+	<tera-progress-spinner v-else :font-size="2" is-centered />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, PropType } from 'vue';
+import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
+import { FeatureConfig } from '@/types/common';
+import { ProjectPages } from '@/types/Project';
+import { AssetType } from '@/types/Types';
+import teraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
-const assetContainer = ref();
-
-defineExpose({
-	assetContainer
+const props = defineProps({
+	name: {
+		type: String,
+		default: ''
+	},
+	overline: {
+		type: String,
+		default: null
+	},
+	authors: {
+		type: String,
+		default: null
+	},
+	doi: {
+		type: String,
+		default: null
+	},
+	publisher: {
+		type: String,
+		default: null
+	},
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
+	},
+	// Booleans default to false if not specified
+	isNamingAsset: Boolean,
+	hideIntro: Boolean,
+	showStickyHeader: Boolean,
+	stretchContent: Boolean,
+	isLoading: Boolean,
+	overflowHidden: Boolean
 });
-
-const props = defineProps<{
-	name: string;
-	overline?: string;
-	isEditable: boolean;
-	isNamingAsset?: boolean;
-	authors?: string;
-	doi?: string;
-	publisher?: string;
-	hideIntro?: boolean;
-	showStickyHeader?: boolean;
-	stretchContent?: boolean;
-}>();
 
 const emit = defineEmits(['close-preview']);
 
@@ -100,11 +126,15 @@ const shrinkHeader = computed(() => {
 	);
 });
 
+const pageType = useRoute().params.pageType as ProjectPages | AssetType;
+
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
 const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
 const stretchContentStyle = computed(() =>
 	props.stretchContent ? { gridColumn: '1 / span 2' } : {}
 );
+
+const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
@@ -195,6 +225,17 @@ header aside {
 header.shrinked aside {
 	align-self: center;
 }
+header.overview-banner section {
+	width: 100%;
+	max-width: 100%;
+}
+
+.overview-banner {
+	background:
+		url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 20% center,
+		linear-gradient(45deg, #8bd4af1a, #d5e8e5 100%) no-repeat;
+	background-size: 25%, 100%;
+}
 
 .nudge-down {
 	margin-top: 0.25rem;
@@ -282,6 +323,10 @@ main:deep(input) {
 main:deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.overflow-hidden {
+	overflow: hidden;
 }
 
 .spread-out {

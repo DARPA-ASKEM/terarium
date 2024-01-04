@@ -1,15 +1,7 @@
 <template>
 	<main>
-		<Button
-			v-if="showImportButton"
-			label="Import"
-			class="p-button-sm p-button-outlined"
-			icon="pi pi-cloud-download"
-			@click="initializeCodeBrowser"
-		/>
-		<a :href="urlString" rel="noreferrer noopener">{{ urlString }}</a>
 		<Teleport to="body">
-			<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="!isModalVisible">
+			<tera-modal v-if="visible" @modal-mask-clicked="emit('close')">
 				<template #header>
 					<h2>
 						https://github.com/{{ repoOwnerAndName
@@ -160,14 +152,37 @@
 					</div>
 				</template>
 				<template #footer>
+					<Button v-if="useProjects().activeProject.value" @click="addRepoToCodeAsset()"
+						>Import repo to project</Button
+					>
+					<Dropdown
+						v-else
+						placeholder="Import repo to project"
+						class="p-button dropdown-button"
+						:is-dropdown-left-aligned="false"
+						:options="projectOptions"
+						option-label="name"
+						@change="addRepoToCodeAsset"
+					/>
 					<Button
+						v-if="useProjects().activeProject.value"
 						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
 						@click="openSelectedFiles()"
 						>Import {{ selectedFiles.length + selectedUnknownFiles.length }} file{{
 							selectedFiles.length == 1 ? '' : 's'
 						}}</Button
 					>
-					<Button class="p-button-outlined" label="Cancel" @click="isModalVisible = false" />
+					<Dropdown
+						v-else
+						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
+						placeholder="Import files to project"
+						class="p-button dropdown-button"
+						:is-dropdown-left-aligned="false"
+						:options="projectOptions"
+						option-label="name"
+						@change="openSelectedFiles"
+					/>
+					<Button class="p-button-outlined" label="Cancel" @click="emit('close')" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -175,38 +190,42 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ComputedRef, ref, Ref } from 'vue';
+import { computed, ComputedRef, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { IProject } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import { DocumentAsset, AssetType, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
 import Checkbox from 'primevue/checkbox';
-import Dropdown from 'primevue/dropdown';
+import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
+import { extractPDF } from '@/services/knowledge';
+import useAuthStore from '@/stores/auth';
+import { useProjects } from '@/composables/project';
+import { uploadCodeFromGithubRepo, uploadCodeToProjectFromGithub } from '@/services/code';
+import { createNewDocumentFromGithubFile } from '@/services/document-assets';
 import { createNewDatasetFromGithubFile } from '@/services/dataset';
-import { createNewArtifactFromGithubFile } from '@/services/artifact';
+import { useToastService } from '@/services/toast';
 
 const props = defineProps<{
+	visible: boolean;
 	urlString: string;
-	showImportButton: boolean;
-	project?: IProject;
 }>();
+
+const emit = defineEmits(['close']);
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
 const directoryContent: Ref<GithubRepo | null> = ref(null);
-const isModalVisible: Ref<boolean> = ref(false);
 const selectedFiles: Ref<GithubFile[]> = ref([]);
 const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
 const selectedText: Ref<string> = ref('');
 const displayCode: Ref<string> = ref('');
-
+const auth = useAuthStore();
 // Breadcrumb home setup
 const home = ref({
 	icon: 'pi pi-home',
@@ -237,8 +256,11 @@ const hasOther: ComputedRef<boolean> = computed(
 	() => !isEmpty(directoryContent?.value?.files?.Other)
 );
 
+const projectOptions = computed(
+	() => useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
+);
+
 async function initializeCodeBrowser() {
-	isModalVisible.value = true;
 	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
 	await openDirectory(''); // Goes back to root directory if modal is closed then opened again
 }
@@ -264,7 +286,8 @@ function onSelectedTextChange() {
 /**
  * Opens the selected files in the code editor
  */
-async function openSelectedFiles() {
+async function openSelectedFiles(event?: DropdownChangeEvent) {
+	const projectId = event?.value?.id;
 	// split the selected files into their respective categories
 	const selectedCodeFiles: GithubFile[] = [
 		...selectedFiles.value,
@@ -273,7 +296,7 @@ async function openSelectedFiles() {
 
 	// Import code files, if any were selected
 	if (selectedCodeFiles.length > 0) {
-		await openCodeFiles(selectedCodeFiles);
+		await openCodeFiles(selectedCodeFiles, projectId);
 	}
 	const selectedDataFiles: GithubFile[] = [
 		...selectedFiles.value,
@@ -289,11 +312,19 @@ async function openSelectedFiles() {
 	);
 
 	if (selectedDocumentFiles.length > 0) {
-		await importDocumentFiles(selectedDocumentFiles);
+		await importDocumentFiles(selectedDocumentFiles, projectId);
 	}
 
+	// TODO: make this number account for files that were not succussfully imported
+	const numUploadedFiles =
+		selectedCodeFiles.length + selectedDataFiles.length + selectedDocumentFiles.length;
+	const resourceMsg = numUploadedFiles > 1 ? 'resources were' : 'resource was';
+	useToastService().success(
+		'Success!',
+		`${numUploadedFiles} ${resourceMsg} successfuly added to this project`
+	);
 	// FIXME: Files aren't opening
-	isModalVisible.value = false;
+	emit('close');
 }
 
 /**
@@ -330,23 +361,32 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 	// iterate through our files and fetch their contents
 	githubFiles.forEach(async (githubFile) => {
 		// Create a new dataset from this GitHub file
-		await createNewDatasetFromGithubFile(
+		const newDataset = await createNewDatasetFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
-			props.project?.id ?? ''
+			auth.user?.name ?? '',
+			githubFile.htmlUrl
 		);
+		if (newDataset && newDataset.id) {
+			await useProjects().addAsset(AssetType.Datasets, newDataset.id);
+		}
 	});
 }
 
-async function importDocumentFiles(githubFiles: GithubFile[]) {
+async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string) {
 	githubFiles.forEach(async (githubFile) => {
-		await createNewArtifactFromGithubFile(
+		const document: DocumentAsset | null = await createNewDocumentFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			props.project?.username ?? '',
-			props.project?.id ?? ''
+			useProjects().activeProject.value?.username ?? ''
 		);
+		let newAsset;
+		if (document && document.id) {
+			newAsset = await useProjects().addAsset(AssetType.Documents, document.id, projectId);
+		}
+		if (document?.id && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
+			extractPDF(document.id);
+		}
 	});
 }
 
@@ -354,10 +394,44 @@ async function importDocumentFiles(githubFiles: GithubFile[]) {
  * Opens the code editor with the selected file
  * @param githubFiles The code files to open
  */
-async function openCodeFiles(githubFiles: GithubFile[]) {
-	// For now just throw to the document path as they're all artifacts
-	await importDocumentFiles(githubFiles);
+async function openCodeFiles(githubFiles: GithubFile[], projectId?: string) {
+	githubFiles.forEach(async (githubFile) => {
+		const newCode = await uploadCodeToProjectFromGithub(
+			repoOwnerAndName.value,
+			githubFile.path,
+			githubFile.htmlUrl
+		);
+		if (newCode && newCode.id) {
+			await useProjects().addAsset(AssetType.Code, newCode.id, projectId);
+		}
+	});
 }
+
+async function addRepoToCodeAsset(event?: DropdownChangeEvent) {
+	const projectId = event?.value?.id;
+
+	const newCodeAsset = await uploadCodeFromGithubRepo(repoOwnerAndName.value, props.urlString);
+
+	if (newCodeAsset && newCodeAsset.id) {
+		const assetId = await useProjects().addAsset(AssetType.Code, newCodeAsset.id, projectId);
+
+		if (assetId) {
+			useToastService().success(
+				'Success!',
+				'The Github repository was successfuly added to this project'
+			);
+		}
+	}
+}
+
+watch(
+	() => props.visible,
+	() => {
+		if (props.visible) {
+			initializeCodeBrowser();
+		}
+	}
+);
 </script>
 
 <style scoped>
@@ -426,5 +500,24 @@ ul li:hover {
 
 .unknown-icon {
 	padding-left: 10px;
+}
+
+.dropdown-button {
+	height: 3rem;
+	border-radius: var(--border-radius);
+	gap: 16px;
+}
+
+.dropdown-button:hover {
+	background-color: var(--primary-color-dark);
+}
+
+:deep(.dropdown-button.p-dropdown .p-dropdown-label.p-placeholder) {
+	display: contents;
+	color: white;
+	font-size: small;
+}
+:deep .dropdown-button.p-dropdown .p-dropdown-trigger {
+	color: white;
 }
 </style>

@@ -33,7 +33,6 @@ export default defineConfig({
 			{ find: '@graph-scaffolder', replacement: path.resolve(__dirname, '../graph-scaffolder/src') }
 		]
 	},
-	base: '/app/',
 	server: {
 		port: 8080,
 		strictPort: true,
@@ -42,10 +41,21 @@ export default defineConfig({
 		// https://vitejs.dev/config/server-options.html#server-hmr
 		hmr: {
 			port: 8080
+		},
+		proxy: {
+			'^/api': {
+				target: 'http://localhost:3000',
+				rewrite: (path_str) => path_str.replace(/^\/api/, ''),
+				changeOrigin: true
+			}
 		}
 	},
 	preview: {
 		port: 8080
+	},
+	// See https://stackoverflow.com/questions/76051452/rollup-vite-build-error-when-including-geotiff-js-and-web-worker-in-build
+	worker: {
+		format: 'es'
 	},
 	build: {
 		target: 'esnext'

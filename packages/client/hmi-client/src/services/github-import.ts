@@ -2,7 +2,7 @@ import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventType, GithubRepo } from '@/types/Types';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
+import { useProjects } from '@/composables/project';
 
 export async function getGithubRepositoryContent(
 	repoOwnerAndName: string,
@@ -11,7 +11,7 @@ export async function getGithubRepositoryContent(
 	try {
 		EventService.create(
 			EventType.GithubImport,
-			useResourcesStore().activeProject?.id,
+			useProjects().activeProject.value?.id,
 			JSON.stringify({ repoOwnerAndName, path })
 		);
 
@@ -31,6 +31,20 @@ export async function getGithubCode(repoOwnerAndName: string, path: string) {
 	try {
 		const response = await API.get('/code/repo-file-content', {
 			params: { repoOwnerAndName, path }
+		});
+		const { status, data } = response;
+		if (status !== 200) return null;
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export async function getGithubRepo(repoOwnerAndName: string) {
+	try {
+		const response = await API.get('/code/repo-zip', {
+			params: { repoOwnerAndName }
 		});
 		const { status, data } = response;
 		if (status !== 200) return null;

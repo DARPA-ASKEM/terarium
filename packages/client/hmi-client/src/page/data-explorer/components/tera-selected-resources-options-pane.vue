@@ -2,10 +2,7 @@
 	<div class="breakdown-pane-container">
 		<ul>
 			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
-				<tera-asset-card
-					:asset="(asset as Document & Model & Dataset)"
-					:resourceType="(getType(asset) as ResourceType)"
-				>
+				<tera-asset-card :asset="asset" :resourceType="getType(asset) as ResourceType">
 					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
 						<i class="pi pi-ellipsis-v" />
 					</button>
@@ -17,12 +14,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, PropType, ref } from 'vue';
+import { PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
-import { Document, Dataset, Model } from '@/types/Types';
-import { IProject } from '@/types/Project';
-import * as ProjectService from '@/services/project';
 import Menu from 'primevue/menu';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 
@@ -40,8 +34,6 @@ const emit = defineEmits([
 ]);
 
 const contextMenu = ref();
-
-const projectsList = ref<IProject[]>([]);
 
 const getMenuItemsForItem = (item: ResultType) => [
 	{
@@ -70,13 +62,6 @@ const getType = (item: ResultType) => {
 	}
 	return ResourceType.ALL;
 };
-
-onMounted(async () => {
-	const all = await ProjectService.getAll();
-	if (all !== null) {
-		projectsList.value = all;
-	}
-});
 
 const toggleContextMenu = (event, idx: number) => {
 	contextMenu.value[idx].toggle(event);

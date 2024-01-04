@@ -1,22 +1,47 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export interface ClientConfig {
+    baseUrl: string;
+    clientLogShippingEnabled: boolean;
+    clientLogShippingIntervalMillis: number;
+    sseHeartbeatIntervalMillis: number;
+}
+
 export interface Event {
     id?: string;
     timestampMillis?: number;
     projectId?: number;
-    username?: string;
+    userId?: string;
     type: EventType;
     value?: string;
 }
 
-export interface EvaluationScenarioSummary {
-    name: string;
-    username: string;
-    task: string;
-    description: string;
-    notes: string;
+export interface ClientEvent<T> {
+    id: string;
+    createdAtMs: number;
+    type: ClientEventType;
+    data: T;
+}
+
+export interface ClientLog {
+    level: string;
     timestampMillis: number;
+    message: string;
+    args?: string[];
+}
+
+export interface User {
+    id: string;
+    createdAtMs: number;
+    lastLoginAtMs: number;
+    roles: Role[];
+    username: string;
+    email: string;
+    givenName: string;
+    familyName: string;
+    name: string;
+    enabled: boolean;
 }
 
 export interface GithubFile {
@@ -57,6 +82,8 @@ export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
     headers: string[];
+    rowCount: number;
+    data: { [index: string]: string }[];
 }
 
 export interface CsvColumnStats {
@@ -68,37 +95,42 @@ export interface CsvColumnStats {
     sd: number;
 }
 
-export interface DocumentAsset {
+export interface ExternalPublication {
     id?: number;
     title: string;
     xdd_uri: string;
 }
 
-export interface Model {
-    id: string;
-    name: string;
-    description: string;
-    model_version?: string;
-    schema: string;
-    schema_name?: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
+export interface Grounding {
+    identifiers: { [index: string]: string };
+    context?: { [index: string]: any };
 }
 
-export interface ModelConfiguration {
+export interface NotebookSession {
     id: string;
     name: string;
     description?: string;
-    modelId: string;
-    configuration: any;
+    data: any;
+    timestamp: string;
 }
 
-export interface ProvenanceQueryParam {
-    rootId?: number;
-    rootType?: ProvenanceType;
-    userId?: number;
+export interface Project {
+    name: string;
+    description?: string;
+    timestamp?: Date;
+    active: boolean;
+    concept?: Concept;
+    assets?: Assets;
+    metadata?: { [index: string]: string };
+    username: string;
+    publicProject?: boolean;
+    userPermission?: string;
+    id?: string;
+    relatedDocuments?: Document[];
+}
+
+export interface ResponseId {
+    id: string;
 }
 
 export interface Simulation {
@@ -117,6 +149,27 @@ export interface Simulation {
     projectId?: number;
 }
 
+export interface Code {
+    id?: string;
+    timestamp?: Date;
+    name: string;
+    description: string;
+    files?: { [index: string]: CodeFile };
+    repoUrl?: string;
+    metadata?: any;
+}
+
+export interface CodeFile {
+    language: ProgrammingLanguage;
+    dynamics: Dynamics;
+}
+
+export interface Dynamics {
+    name: string;
+    description: string;
+    block: string[];
+}
+
 export interface Dataset {
     id?: string;
     timestamp?: any;
@@ -125,7 +178,7 @@ export interface Dataset {
     description?: string;
     dataSourceDate?: string;
     fileNames?: string[];
-    url?: string;
+    datasetUrl?: string;
     columns?: DatasetColumn[];
     metadata?: any;
     source?: string;
@@ -142,14 +195,65 @@ export interface DatasetColumn {
     description?: string;
 }
 
-export interface Grounding {
-    identifiers: { [index: string]: string };
-    context?: { [index: string]: any };
+export interface AddDocumentAssetFromXDDRequest {
+    document: Document;
+    projectId: string;
 }
 
-export interface PresignedURL {
-    url: string;
-    method: string;
+export interface AddDocumentAssetFromXDDResponse {
+    documentAssetId: string;
+    pdfUploadError: boolean;
+    extractionJobId: string;
+}
+
+export interface DocumentAsset {
+    id?: string;
+    name?: string;
+    description?: string;
+    timestamp?: string;
+    username?: string;
+    fileNames?: string[];
+    documentUrl?: string;
+    metadata?: { [index: string]: any };
+    source?: string;
+    text?: string;
+    grounding?: Grounding;
+    concepts?: Concept[];
+    assets?: DocumentExtraction[];
+}
+
+export interface Equation {
+    id?: string;
+    timestamp?: Date;
+    username?: string;
+    name?: string;
+    equationType: EquationType;
+    content: string;
+    metadata?: { [index: string]: any };
+    source?: EquationSource;
+}
+
+export interface EquationSource {
+    extractedFrom?: string;
+    documentAssetName?: string;
+    hmiGenerated?: boolean;
+}
+
+export interface Model {
+    id: string;
+    header: ModelHeader;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
+}
+
+export interface ModelConfiguration {
+    id: string;
+    name: string;
+    description?: string;
+    modelId: string;
+    configuration: any;
 }
 
 export interface State {
@@ -189,19 +293,167 @@ export interface TypingSemantics {
     system: any;
 }
 
+export interface DecapodesComponent {
+    modelInterface: string[];
+    model: DecapodesExpression;
+    _type: string;
+}
+
+export interface DecapodesEquation {
+    lhs: any;
+    rhs: any;
+    _type: string;
+}
+
+export interface DecapodesExpression {
+    context: any[];
+    equations: DecapodesEquation[];
+    _type: string;
+}
+
+export interface DecapodesTerm {
+    name?: string;
+    var?: DecapodesTerm;
+    symbol?: string;
+    space?: string;
+    fs?: string[];
+    arg?: DecapodesTerm;
+    f?: string;
+    arg1?: DecapodesTerm;
+    arg2?: DecapodesTerm;
+    args?: DecapodesTerm[];
+    _type: string;
+}
+
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
 }
 
+export interface ProvenanceQueryParam {
+    nodes?: boolean;
+    types?: ProvenanceType[];
+    hops?: number;
+    limit?: number;
+    verbose?: boolean;
+    rootId?: string;
+    rootType?: ProvenanceType;
+    userId?: number;
+}
+
+export interface RegNetBaseProperties {
+    name: string;
+    grounding: ModelGrounding;
+    rate_constant: any;
+}
+
+export interface RegNetEdge {
+    source: string;
+    target: string;
+    id: string;
+    sign: boolean;
+    properties?: RegNetBaseProperties;
+}
+
+export interface RegNetModel {
+    vertices: RegNetVertex[];
+    edges: RegNetEdge[];
+    parameters?: RegNetParameter[];
+}
+
+export interface RegNetParameter {
+    id: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+}
+
+export interface RegNetVertex {
+    id: string;
+    name: string;
+    sign: boolean;
+    initial?: any;
+    rate_constant?: any;
+    grounding?: ModelGrounding;
+}
+
+export interface DocumentsResponseOK extends XDDResponseOK {
+    data: Document[];
+    nextPage: string;
+    scrollId: string;
+    hits: number;
+    facets: { [index: string]: XDDFacetsItemResponse };
+}
+
+export interface EvaluationScenarioSummary {
+    name: string;
+    userId: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
+}
+
 export interface ExtractionResponse {
     id: string;
+    status: string;
+    result: ExtractionResponseResult;
+}
+
+export interface ExtractionResponseResult {
     created_at: Date;
     enqueued_at: Date;
     started_at: Date;
-    status: string;
-    extraction_error: string;
-    result: any;
+    job_error: string;
+    job_result: any;
+}
+
+export interface FunmanPostQueriesRequest {
+    model: Model;
+    request: FunmanWorkRequest;
+}
+
+export interface FunmanConfig {
+    tolerance?: number;
+    queueTimeout?: number;
+    numberOfProcesses?: number;
+    waitTimeout?: number;
+    waitActionTimeout?: number;
+    solver?: string;
+    numSteps?: number;
+    stepSize?: number;
+    numInitialBoxes?: number;
+    saveSmtlib?: boolean;
+    drealPrecision?: number;
+    drealLogLevel?: string;
+    constraintNoise?: number;
+    initialStateTolerance?: number;
+    drealMcts?: boolean;
+    substituteSubformulas?: boolean;
+    use_compartmental_constraints?: boolean;
+    normalize?: boolean;
+    normalization_constant?: number;
+}
+
+export interface FunmanInterval {
+    ub?: number;
+    lb?: number;
+    closed_upper_bound?: boolean;
+}
+
+export interface FunmanParameter {
+    name: string;
+    interval: FunmanInterval;
+    label: string;
+}
+
+export interface FunmanWorkRequest {
+    query?: any;
+    constraints?: any;
+    parameters?: FunmanParameter[];
+    config?: FunmanConfig;
+    structure_parameters?: any;
 }
 
 export interface DKG {
@@ -209,6 +461,33 @@ export interface DKG {
     name: string;
     description: string;
     link: string;
+}
+
+export interface PermissionGroup {
+    id: string;
+    name: string;
+    relationship?: string;
+    permissionRelationships?: PermissionRelationships;
+}
+
+export interface PermissionProject {
+    id: string;
+    relationship: string;
+}
+
+export interface PermissionRelationships {
+    permissionGroups: PermissionGroup[];
+    permissionUsers: PermissionUser[];
+    permissionProjects: PermissionProject[];
+}
+
+export interface PermissionUser {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    roles?: PermissionRole[];
+    relationship?: string;
 }
 
 export interface CalibrationRequestCiemss {
@@ -227,24 +506,12 @@ export interface CalibrationRequestJulia {
     engine: string;
 }
 
-export interface DatasetLocation {
-    id: string;
-    filename: string;
-    mappings?: any;
-}
-
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
     timespan: TimeSpan;
     extra: any;
     engine: string;
-}
-
-export interface EnsembleModelConfigs {
-    id: string;
-    solutionMappings: { [index: string]: string };
-    weight: number;
 }
 
 export interface EnsembleSimulationCiemssRequest {
@@ -254,11 +521,39 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface ScimlStatusUpdate {
+    loss: number;
+    iter: number;
+    params: { [index: string]: number };
+    id: string;
+    solData: { [index: string]: any };
+    timesteps: number[];
+}
+
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
     extra: any;
     engine: string;
+    interventions?: Intervention[];
+}
+
+export interface DatasetLocation {
+    id: string;
+    filename: string;
+    mappings?: any;
+}
+
+export interface EnsembleModelConfigs {
+    id: string;
+    solutionMappings: { [index: string]: string };
+    weight: number;
+}
+
+export interface Intervention {
+    name: string;
+    timestep: number;
+    value: number;
 }
 
 export interface TimeSpan {
@@ -266,12 +561,17 @@ export interface TimeSpan {
     end: number;
 }
 
-export interface DocumentsResponseOK extends XDDResponseOK {
-    data: Document[];
-    nextPage: string;
-    scrollId: string;
-    hits: number;
-    facets: { [index: string]: XDDFacetsItemResponse };
+export interface UserEvent {
+    type: EventType;
+    user: UserOld;
+    id: string;
+    message: any;
+}
+
+export interface Role {
+    id: number;
+    name: string;
+    authorities: AuthorityInstance[];
 }
 
 export interface Links {
@@ -283,9 +583,59 @@ export interface Links {
 export interface Concept {
     id: string;
     curie: string;
-    type: Type;
+    type: AssetType;
     status: OntologicalField;
     object_id: string;
+}
+
+export interface Assets {
+    datasets: Dataset[];
+    extractions: Extraction[];
+    models: Model[];
+    publications: ExternalPublication[];
+    workflows: Workflow[];
+    artifacts: Artifact[];
+    code: Code[];
+    documents: DocumentAsset[];
+}
+
+export interface Document {
+    gddId: string;
+    title: string;
+    abstractText: string;
+    journal: string;
+    type: string;
+    number: string;
+    pages: string;
+    publisher: string;
+    volume: string;
+    year: string;
+    link: { [index: string]: string }[];
+    author: { [index: string]: string }[];
+    identifier: { [index: string]: string }[];
+    githubUrls: string[];
+    knownTerms: { [index: string]: string[] };
+    highlight: string[];
+    relatedDocuments: Document[];
+    relatedExtractions: Extraction[];
+    knownEntities: KnownEntities;
+    knownEntitiesCounts: KnownEntitiesCounts;
+    citationList: { [index: string]: string }[];
+    citedBy: { [index: string]: any }[];
+}
+
+export interface DocumentExtraction {
+    fileName: string;
+    assetType: ExtractionAssetType;
+    metadata: { [index: string]: any };
+}
+
+export interface ModelHeader {
+    name: string;
+    schema: string;
+    schema_name?: string;
+    description: string;
+    model_version?: string;
 }
 
 export interface ModelSemantics {
@@ -294,18 +644,24 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
+/**
+ * @deprecated
+ */
 export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     annotations?: Annotations;
-    attributes: any[];
+    attributes?: any[];
     timeseries?: { [index: string]: any };
+    card?: Card;
+    provenance?: string[];
 }
 
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
+    modifiers?: any;
 }
 
 export interface ModelUnit {
@@ -334,28 +690,9 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
-export interface Document {
-    gddId: string;
-    title: string;
-    abstractText: string;
-    journal: string;
+export interface ModelDistribution {
     type: string;
-    number: string;
-    pages: string;
-    publisher: string;
-    volume: string;
-    year: string;
-    link: { [index: string]: string }[];
-    author: { [index: string]: string }[];
-    identifier: { [index: string]: string }[];
-    githubUrls: string[];
-    knownTerms: { [index: string]: string[] };
-    highlight: string[];
-    relatedDocuments: Document[];
-    relatedExtractions: Extraction[];
-    knownEntities: KnownEntities;
-    citationList: { [index: string]: string }[];
-    citedBy: { [index: string]: any }[];
+    parameters: { [index: string]: any };
 }
 
 export interface XDDFacetsItemResponse {
@@ -367,6 +704,53 @@ export interface XDDFacetsItemResponse {
 export interface XDDResponseOK {
     v: number;
     license: string;
+}
+
+export interface PermissionRole {
+    id: string;
+    name: string;
+    users: PermissionUser[];
+}
+
+export interface UserOld {
+    username: string;
+    roles: string[];
+}
+
+export interface AuthorityInstance {
+    id: number;
+    mask: number;
+    authority: Authority;
+}
+
+export interface Extraction {
+    id: number;
+    askemClass: string;
+    properties: ExtractionProperties;
+    askemId: string;
+    xddCreated: Date;
+    xddRegistrant: number;
+    highlight: string[];
+}
+
+export interface Workflow {
+    id: string;
+    name: string;
+    description: string;
+    transform: any;
+    nodes: any[];
+    edges: any[];
+}
+
+export interface KnownEntities {
+    urlExtractions: XDDUrlExtraction[];
+    askemObjects: Extraction[];
+    summaries: string[];
+}
+
+export interface KnownEntitiesCounts {
+    askemObjectCount: number;
+    urlExtractionCount: number;
 }
 
 export interface OdeSemantics {
@@ -399,6 +783,20 @@ export interface Annotations {
     model_types?: string[];
 }
 
+export interface Card {
+    description?: string;
+    authorInst?: string;
+    authorAuthor?: string;
+    authorEmail?: string;
+    date?: string;
+    schema?: string;
+    provenance?: string;
+    dataset?: string;
+    complexity?: string;
+    usage?: string;
+    license?: string;
+}
+
 export interface ModelExpression {
     expression: string;
     expression_mathml: string;
@@ -410,81 +808,14 @@ export interface PetriNetTransitionProperties {
     grounding?: ModelGrounding;
 }
 
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
-}
-
-export interface KnownEntities {
-    urlExtractions: XDDUrlExtraction[];
-    askemObjects: Extraction[];
-    summaries: string[];
-}
-
 export interface XDDFacetBucket {
     key: string;
     docCount: string;
 }
 
-export interface Rate {
-    target: string;
-    expression: string;
-    expression_mathml?: string;
-}
-
-export interface Initial {
-    target: string;
-    expression: string;
-    expression_mathml: string;
-}
-
-export interface ModelParameter {
-    id: string;
-    name?: string;
-    description?: string;
-    value?: number;
-    grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
-    unit?: ModelUnit;
-}
-
-export interface Observable {
-    id: string;
-    name?: string;
-    states: string[];
-    expression?: string;
-    expression_mathml?: string;
-}
-
-export interface Variable {
-    id: string;
+export interface Authority {
+    id: number;
     name: string;
-    metadata: VariableMetadata[];
-    column: DataColumn[];
-    paper: Paper;
-    equations: Equation[];
-    dkg_groundings: DKGConcept[];
-}
-
-export interface StatementValue {
-    value: string;
-    type: string;
-    dkg_grounding?: DKGConcept;
-}
-
-export interface VariableStatementMetadata {
-    type: string;
-    value: string;
-}
-
-export interface ProvenanceInfo {
-    method: string;
-    description: string;
 }
 
 export interface ExtractionProperties {
@@ -512,9 +843,60 @@ export interface XDDUrlExtraction {
     extractedFrom: string[];
 }
 
-export interface ModelDistribution {
+export interface Rate {
+    target: string;
+    expression: string;
+    expression_mathml?: string;
+}
+
+export interface Initial {
+    target: string;
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface ModelParameter {
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+    unit?: ModelUnit;
+}
+
+export interface Observable {
+    id: string;
+    name?: string;
+    states?: string[];
+    expression?: string;
+    expression_mathml?: string;
+}
+
+export interface Variable {
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: EquationVariable[];
+    dkg_groundings: DKGConcept[];
+}
+
+export interface StatementValue {
+    value: string;
     type: string;
-    parameters: { [index: string]: any };
+    dkg_grounding?: DKGConcept;
+}
+
+export interface VariableStatementMetadata {
+    type: string;
+    value: string;
+}
+
+export interface ProvenanceInfo {
+    method: string;
+    description: string;
 }
 
 export interface VariableMetadata {
@@ -534,7 +916,7 @@ export interface Paper {
     file_directory: string;
 }
 
-export interface Equation {
+export interface EquationVariable {
     id: string;
     text: string;
     image: string;
@@ -552,13 +934,6 @@ export interface MetadataDataset {
     metadata: string;
 }
 
-export enum EvaluationScenarioStatus {
-    Started = "STARTED",
-    Paused = "PAUSED",
-    Resumed = "RESUMED",
-    Stopped = "STOPPED",
-}
-
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
@@ -572,6 +947,42 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    TestType = "TEST_TYPE",
+}
+
+export enum AuthorityLevel {
+    Read = "READ",
+    Create = "CREATE",
+    Update = "UPDATE",
+    Delete = "DELETE",
+}
+
+export enum AuthorityType {
+    GrantAuthority = "GRANT_AUTHORITY",
+    Users = "USERS",
+}
+
+export enum RoleType {
+    Admin = "ADMIN",
+    User = "USER",
+    Group = "GROUP",
+    Test = "TEST",
+    Service = "SERVICE",
+    Special = "SPECIAL",
+}
+
+export enum EvaluationScenarioStatus {
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
+}
+
+export enum ClientEventType {
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationSciml = "SIMULATION_SCIML",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
 }
 
 export enum FileType {
@@ -589,18 +1000,11 @@ export enum FileCategory {
     Other = "Other",
 }
 
-export enum ProvenanceType {
-    Dataset = "Dataset",
-    Intermediate = "Intermediate",
-    Model = "Model",
-    ModelParameter = "ModelParameter",
-    ModelRevision = "ModelRevision",
-    Plan = "Plan",
-    PlanParameter = "PlanParameter",
-    Publication = "Publication",
-    Project = "Project",
-    Concept = "Concept",
-    SimulationRun = "SimulationRun",
+export enum ProgrammingLanguage {
+    Python = "python",
+    R = "r",
+    Julia = "julia",
+    Zip = "zip",
 }
 
 export enum ColumnType {
@@ -618,17 +1022,44 @@ export enum ColumnType {
     Time = "TIME",
 }
 
-export enum Type {
-    Datasets = "DATASETS",
-    Extractions = "EXTRACTIONS",
-    Intermediates = "INTERMEDIATES",
-    Models = "MODELS",
-    Plans = "PLANS",
-    Publications = "PUBLICATIONS",
-    SimulationRuns = "SIMULATION_RUNS",
+export enum EquationType {
+    Mathml = "mathml",
+    Latex = "latex",
+}
+
+export enum ProvenanceType {
+    Concept = "Concept",
+    Dataset = "Dataset",
+    Model = "Model",
+    ModelConfiguration = "ModelConfiguration",
+    Project = "Project",
+    Publication = "Publication",
+    Simulation = "Simulation",
+    Artifact = "Artifact",
+    Code = "Code",
+    Document = "Document",
+    Workflow = "Workflow",
+}
+
+export enum AssetType {
+    Datasets = "datasets",
+    ModelConfigurations = "model_configurations",
+    Models = "models",
+    Publications = "publications",
+    Simulations = "simulations",
+    Workflows = "workflows",
+    Artifacts = "artifacts",
+    Code = "code",
+    Documents = "documents",
 }
 
 export enum OntologicalField {
     Object = "OBJECT",
     Unit = "UNIT",
+}
+
+export enum ExtractionAssetType {
+    Figure = "figure",
+    Table = "table",
+    Equation = "equation",
 }

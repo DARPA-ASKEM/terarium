@@ -1,471 +1,390 @@
 <template>
 	<main>
-		<section class="menu">
-			<section class="projects">
-				<header>
-					<h3>Projects</h3>
+		<div class="scrollable">
+			<header>
+				<section>
+					<h3>From data to discovery</h3>
+					<p>
+						Accelerate scientific modeling and simulation using AI. Search available knowledge,
+						enhance extracted models and data, and test scenarios to simulate real-world problems.
+					</p>
+					<!--Placeholder - button is disabled for now-->
 					<Button
-						icon="pi pi-plus"
-						label="New project"
-						size="large"
-						@click="isNewProjectModalVisible = true"
-					></Button>
-				</header>
+						label="Show me around"
+						icon="pi pi-play"
+						icon-pos="right"
+						outlined
+						:disabled="true"
+					/>
+				</section>
+			</header>
+			<section class="menu">
 				<TabView>
-					<TabPanel header="My projects">
-						<section v-if="projects && isEmpty(projects)" class="no-projects">
-							<img src="@assets/svg/seed.svg" alt="" />
-							<h3>Welcome to Terarium</h3>
+					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
+						<section class="filter-and-sort">
+							<div v-if="!isEmpty(tab.projects)">
+								<!-- TODO: Add project search back in once we are ready
+								<span class="p-input-icon-left">
+								<i class="pi pi-filter" />
+								<InputText
+									v-model="searchQuery"
+									size="small"
+									class="p-inputtext-sm"
+									placeholder="Filter by keyword"
+								/>
+							</span> -->
+								<span v-if="view === ProjectsView.Cards"
+									><label>Sort by:</label>
+									<Dropdown
+										v-model="selectedSort"
+										:options="sortOptions"
+										@update:model-value="tab.projects = myFilteredSortedProjects"
+										class="p-inputtext-sm"
+									/>
+								</span>
+								<MultiSelect
+									v-if="view === ProjectsView.Table"
+									:modelValue="selectedColumns"
+									:options="columns"
+									:maxSelectedLabels="1"
+									:selected-items-label="`{0} columns displayed`"
+									optionLabel="header"
+									@update:modelValue="onToggle"
+									placeholder="Add or remove columns"
+									class="p-inputtext-sm"
+								/>
+							</div>
 							<div>
-								Get started by creating a
-								<Button
-									label="new project"
-									class="p-button-text new-project-button"
-									@click="isNewProjectModalVisible = true"
-								/>. Your projects will be displayed on this page.
+								<SelectButton
+									v-if="!isEmpty(tab.projects)"
+									:model-value="view"
+									@change="if ($event.value) view = $event.value;"
+									:options="viewOptions"
+									option-value="value"
+								>
+									<template #option="slotProps">
+										<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+										<span class="p-button-label">{{ slotProps.option.value }}</span>
+									</template>
+								</SelectButton>
+								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
 							</div>
 						</section>
-						<div v-else class="carousel">
-							<div class="chevron-left" @click="scroll('left', $event)">
-								<i class="pi pi-chevron-left" />
+						<section class="projects">
+							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+								<img src="@assets/svg/seed.svg" alt="" />
+								<template v-if="tab.title === TabTitles.MyProjects">
+									<p>
+										Get started by creating a
+										<Button
+											label="new project"
+											class="p-button-text new-project-button"
+											@click="openCreateProjectModal"
+										/>.
+									</p>
+									<p>Your projects will be displayed on this page.</p>
+								</template>
+								<template v-else-if="tab.title === TabTitles.PublicProjects">
+									<h3>You don't have any shared projects</h3>
+									<p>Shared projects will be displayed on this page</p>
+								</template>
 							</div>
-							<div class="chevron-right" @click="scroll('right', $event)">
-								<i class="pi pi-chevron-right" />
-							</div>
-							<ul v-if="isLoadingProjects">
-								<li v-for="i in [0, 1, 2]" :key="i">
-									<tera-project-card />
-								</li>
-							</ul>
-							<ul v-else>
-								<li v-for="project in projects" :key="project.id">
+							<ul v-else-if="view === ProjectsView.Cards" class="project-cards-grid">
+								<template v-if="isLoadingProjects">
+									<li v-for="i in 3" :key="i">
+										<tera-project-card />
+									</li>
+								</template>
+								<li v-else v-for="project in tab.projects" :key="project.id">
 									<tera-project-card
+										v-if="project.id"
 										:project="project"
 										@click="openProject(project.id)"
-										@removed="removeProject"
+										@forked-project="(forkedProject) => openProject(forkedProject.id)"
 									/>
 								</li>
-								<li>
-									<section class="new-project-card" @click="isNewProjectModalVisible = true">
-										<div>
-											<img src="@assets/svg/plus.svg" alt="" />
-										</div>
-										<p>New project</p>
-									</section>
-								</li>
 							</ul>
-						</div>
-					</TabPanel>
-					<TabPanel header="Shared projects">
-						<section class="no-projects">
-							<img src="@assets/svg/plants.svg" alt="" />
-							<h3>You don't have any shared projects</h3>
-							<p>Shared projects will be displayed on this page</p>
+							<tera-project-table
+								v-else-if="view === ProjectsView.Table"
+								:projects="tab.projects"
+								:selected-columns="selectedColumns"
+								@open-project="openProject"
+							/>
 						</section>
 					</TabPanel>
 				</TabView>
 			</section>
-			<section class="papers" v-if="!(projects && isEmpty(projects))">
-				<header>
-					<h3>Papers related to your projects</h3>
-				</header>
-
-				<div v-for="(project, index) in projectsToDisplay" :key="index">
-					<p>{{ project.name }}</p>
-					<div class="carousel">
-						<div class="chevron-left" @click="scroll('left', $event)">
-							<i class="pi pi-chevron-left" />
-						</div>
-						<div class="chevron-right" @click="scroll('right', $event)">
-							<i class="pi pi-chevron-right" />
-						</div>
-						<ul>
-							<li v-for="(document, j) in project.relatedDocuments" :key="j">
-								<tera-document-card :document="document" @click="selectDocument(document)" />
-							</li>
-						</ul>
-					</div>
-				</div>
-				<div v-if="isLoadingProjects">
-					<p>
-						<Skeleton width="6rem" />
-					</p>
-					<div class="carousel">
-						<ul>
-							<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
-								<tera-document-card />
-							</li>
-						</ul>
-					</div>
-				</div>
-			</section>
-		</section>
-		<!-- modal window for showing selected document -->
-		<div
-			v-if="selectedDocument !== undefined"
-			class="selected-document-modal-mask"
-			@click="close()"
-		>
-			<div class="selected-document-modal" @click.stop>
-				<header class="modal-header">
-					Document
-					<i class="pi pi-times close-button" @click="close()" />
-				</header>
-				<div class="modal-subheader-text">
-					<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
-					<em>{{ selectedDocument.journal }}</em>
-					{{ ', ' + selectedDocument.year + ' ' + selectedDocument.volume }}
-				</div>
-				<h3>{{ selectedDocument.title }}</h3>
-				<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
-				<div class="modal-subheader-text">
-					<em> {{ listAuthorNames(selectedDocument.author) }} </em>
-				</div>
-				<tera-selected-document-pane
-					class="selected-document-pane"
-					:selected-document="selectedDocument"
-					@close="close()"
-				/>
-			</div>
 		</div>
-		<!-- New project modal -->
-		<Teleport to="body">
-			<tera-modal
-				v-if="isNewProjectModalVisible"
-				class="modal"
-				@modal-mask-clicked="isNewProjectModalVisible = false"
-			>
-				<template #header>
-					<h4>Create project</h4>
-				</template>
-				<template #default>
-					<form>
-						<label for="new-project-name">Name</label>
-						<InputText
-							id="new-project-name"
-							type="text"
-							v-model="newProjectName"
-							placeholder="What do you want to call your project?"
-						/>
-
-						<label for="new-project-description">Description</label>
-						<Textarea
-							id="new-project-description"
-							rows="5"
-							v-model="newProjectDescription"
-							placeholder="Add a short description"
-						/>
-					</form>
-				</template>
-				<template #footer>
-					<Button @click="createNewProject">Create</Button>
-					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
-						>Cancel</Button
-					>
-				</template>
-			</tera-modal>
-		</Teleport>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
-import { IProject } from '@/types/Project';
-import { XDDSearchParams } from '@/types/XDD';
-import { Document } from '@/types/Types';
-import { searchXDDDocuments } from '@/services/data';
-import useResourcesStore from '@/stores/resources';
+import { computed, ref, onMounted } from 'vue';
 import useQueryStore from '@/stores/query';
-import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
-import * as ProjectService from '@/services/project';
-import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
-import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
+import TeraProjectTable from '@/components/home/tera-project-table.vue';
 import TeraProjectCard from '@/components/home/tera-project-card.vue';
+import { useProjects } from '@/composables/project';
+import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
+import { IProject } from '@/types/Project';
+import SelectButton from 'primevue/selectbutton';
+import { useProjectMenu } from '@/composables/project-menu';
 
-const projects = ref<IProject[]>();
-// Only display projects with at least one related document
-// Only display at most 5 projects
-const projectsToDisplay = computed(() =>
-	projects.value?.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
-);
-const relevantDocuments = ref<Document[]>([]);
-const relevantSearchTerm = 'COVID-19';
-const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
-const selectedDocument = ref<Document>();
+const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
-const resourcesStore = useResourcesStore();
-const queryStore = useQueryStore();
-const router = useRouter();
-const auth = useAuthStore();
+enum ProjectsView {
+	Cards = 'Cards',
+	Table = 'Table'
+}
 
-const isNewProjectModalVisible = ref(false);
-const newProjectName = ref('');
-const newProjectDescription = ref('');
-const isLoadingProjects = computed(() => !projects.value);
+enum TabTitles {
+	MyProjects = 'My projects',
+	PublicProjects = 'Public projects',
+	SampleProjects = 'Sample projects'
+}
 
-onMounted(async () => {
-	// Clear all...
-	resourcesStore.reset(); // Project related resources saved.
-	queryStore.reset(); // Facets queries.
+const selectedSort = ref('Last updated (descending)');
+const sortOptions = [
+	'Last updated (descending)',
+	'Last updated (ascending)',
+	'Creation date (descending)',
+	'Creation date (ascending)',
+	'Alphabetical'
+];
 
-	projects.value = ((await ProjectService.home()) ?? []).slice().reverse();
+const view = ref(ProjectsView.Cards);
+const viewOptions = ref([
+	{ value: ProjectsView.Cards, icon: 'pi pi-credit-card' },
+	{ value: ProjectsView.Table, icon: 'pi pi-list' }
+]);
 
-	// Get all relevant documents (latest on section)
-	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
-	if (allDocuments) {
-		relevantDocuments.value = allDocuments.data;
-	}
+const myFilteredSortedProjects = computed(() => {
+	const projects = useProjects().allProjects.value;
+	if (!projects) return [];
+	const myProjects = projects.filter(({ publicProject }) => publicProject === false);
+	return filterAndSortProjects(myProjects);
 });
 
-const selectDocument = (item: Document) => {
-	const itemID = item as Document;
-	selectedDocument.value = itemID;
-};
+const publicFilteredSortedProjects = computed(() => {
+	const projects = useProjects().allProjects.value;
+	if (!projects) return [];
+	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
+	return filterAndSortProjects(publicProjects);
+});
 
-const close = () => {
-	selectedDocument.value = undefined;
-};
+function openCreateProjectModal() {
+	isProjectConfigDialogVisible.value = true;
+	menuProject.value = null;
+}
 
-const SCROLL_INCREMENT_IN_REM = 18.5 * 6; // (card width + margin) * number of cards to display at once
-const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
-	const chevronElement = event.target as HTMLElement;
-	const cardListElement =
-		chevronElement.nodeName === 'svg'
-			? chevronElement.parentElement?.querySelector('ul')
-			: chevronElement.parentElement?.parentElement?.querySelector('ul');
+function filterAndSortProjects(projects: IProject[]) {
+	if (!projects) return [];
 
-	if (cardListElement === null || cardListElement === undefined) return;
-
-	// Don't scroll if last element is already within viewport
-	if (direction === 'right' && cardListElement.lastElementChild) {
-		const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
-		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
-		if (bounds && parentBounds && bounds.x + bounds.width < parentBounds.x + parentBounds.width) {
-			return;
-		}
+	if (selectedSort.value === 'Alphabetical') {
+		projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 	}
+	// FIXME: Last updated and creation date are the same at the moment
+	else if (
+		selectedSort.value === 'Last updated (descending)' ||
+		selectedSort.value === 'Creation date (descending)'
+	) {
+		projects.sort((a, b) =>
+			a.timestamp && b.timestamp
+				? new Date(b.timestamp).valueOf() - new Date(a.timestamp).valueOf()
+				: -1
+		);
+	} else if (
+		selectedSort.value === 'Last updated (ascending)' ||
+		selectedSort.value === 'Creation date (ascending)'
+	) {
+		projects.sort((a, b) =>
+			a.timestamp && b.timestamp
+				? new Date(a.timestamp).valueOf() - new Date(b.timestamp).valueOf()
+				: -1
+		);
+	}
+	return projects;
+}
 
-	const marginLeftString =
-		cardListElement.style.marginLeft === '' ? '0.5' : cardListElement.style.marginLeft;
-	const currentMarginLeft = parseFloat(marginLeftString);
-	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
-	const newMarginLeft = currentMarginLeft + changeInRem;
-	// Don't let the list scroll far enough left that we see space before the
-	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
+const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
+	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
+	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
+	{ title: TabTitles.SampleProjects, projects: [] }
+]);
+
+// Table view
+const columns = ref([
+	{ field: 'name', header: 'Project title' },
+	{ field: 'description', header: 'Description' },
+	{ field: 'username', header: 'Author' },
+	{ field: 'stats', header: 'Stats' },
+	{ field: 'timestamp', header: 'Created' },
+	{ field: 'lastUpdated', header: 'Last updated' } // Last update property doesn't exist yet
+]);
+
+const selectedColumns = ref(columns.value);
+const onToggle = (val) => {
+	selectedColumns.value = columns.value.filter((col) => val.includes(col));
 };
+
+const queryStore = useQueryStore();
+const router = useRouter();
+
+const isLoadingProjects = computed(() => !useProjects().allProjects.value);
 
 function openProject(projectId: string) {
-	router.push({ name: RouteName.ProjectRoute, params: { projectId } });
+	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
-async function createNewProject() {
-	const author = auth.name ?? '';
-	const project = await ProjectService.create(
-		newProjectName.value,
-		newProjectDescription.value,
-		author
-	);
-	if (project) {
-		openProject(project.id);
-		isNewProjectModalVisible.value = false;
-	}
-}
-
-function listAuthorNames(authors) {
-	return authors.map((author) => author.name).join(', ');
-}
-
-const removeProject = (projectId: IProject['id']) => {
-	projects.value = projects.value?.filter((project) => project.id !== projectId);
-};
+onMounted(() => {
+	// Clear all...
+	queryStore.reset(); // Facets queries.
+});
 </script>
 
 <style scoped>
+main > .scrollable {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow: auto;
+}
+
+header {
+	display: flex;
+	align-items: center;
+	padding: 1.5rem;
+	min-height: 240px;
+	background: url('@/assets/svg/terarium-logo-outline.svg'),
+		radial-gradient(105.92% 916.85% at 101.3% -5.92%, #75d5c8 0%, white 100%);
+	background-repeat: no-repeat;
+	background-size: 25%, 100%;
+	background-position:
+		right 100px top -60px,
+		100%;
+}
+
+header h3 {
+	font-size: 24px;
+	margin-bottom: 1rem;
+}
+
+header p {
+	max-width: 40%;
+	line-height: 1.5;
+}
+
+header > section > button {
+	margin-top: 2rem;
+}
+
 .menu {
-	overflow-y: auto;
-	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
 	flex: 1;
-	padding: 0;
+}
+
+.p-tabview {
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 }
 
-section {
-	background-color: var(--surface-section);
-	color: var(--text-color-secondary);
-	padding: 1rem;
+.p-tabview:deep(.p-tabview-nav-container) {
+	position: sticky;
+	top: 0;
+	z-index: 1;
 }
 
-.papers {
-	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
-	padding: 1rem;
-	border-top: 1px solid var(--gray-100);
-	flex-grow: 1;
-}
-
-.papers p {
-	color: var(--text-color-primary);
-	margin: 1rem 0 1rem 0rem;
-}
-
-h3 {
-	font-size: 24px;
-	color: var(--text-color-primary);
-}
-
-.projects header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
+.p-tabview:deep(.p-tabview-nav li .p-tabview-nav-link:focus) {
+	background-color: transparent;
 }
 
 .p-tabview:deep(.p-tabview-panels) {
-	padding: 0 0 0 0;
+	padding: 0;
+	flex: 1;
+	background-color: #f9f9f9;
+}
+
+.p-dropdown,
+.p-multiselect {
+	min-width: 15rem;
+}
+
+.p-multiselect:deep(.p-multiselect-label) {
+	/* Matches exact size of small dropdown */
+	font-size: 12.25px;
+	padding: 0.875rem;
+}
+
+.filter-and-sort {
+	position: sticky;
+	z-index: 1;
+	background-color: #f4f4f4;
+	border-top: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border-light);
+	padding: 16px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	/*Accomodate for height of projects tabs*/
+	top: 44px;
+}
+
+.filter-and-sort label {
+	padding-right: 0.25rem;
+	font-size: var(--font-caption);
+}
+
+.filter-and-sort > div {
+	display: flex;
+	gap: 16px;
+	height: 40px;
+}
+
+.filter-and-sort > div:last-child {
+	margin-left: auto;
+}
+
+.project-cards-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 16px;
+	padding: 16px;
+	list-style: none;
 }
 
 header svg {
 	color: var(--primary-color);
 	margin-right: 0.5rem;
 }
-
-.carousel {
-	position: relative;
-	display: flex;
-	height: 319px;
-}
-
-.carousel ul {
-	align-items: center;
-	display: flex;
-	margin: 0.5rem 0.5rem 0 0.5rem;
-	padding-bottom: 0.5rem;
-}
-
-.chevron-left,
-.chevron-right {
-	width: 4rem;
-	position: absolute;
-	z-index: 2;
-	cursor: pointer;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	height: 443px;
-}
-
-.chevron-left {
-	left: -1rem;
-	top: 0.5rem;
-	height: 22rem;
-	border-radius: 0rem 10rem 10rem 0rem;
-}
-
-.chevron-right {
-	right: -1rem;
-	top: 0.5em;
-	height: 22em;
-	border-radius: 10rem 0rem 0rem 10rem;
-}
-
-.papers .chevron-left,
-.papers .chevron-right {
-	height: 22rem;
-	top: 0.4rem;
-}
-
-.chevron-left:hover,
-.chevron-right:hover {
-	background-color: var(--chevron-hover);
-}
-
-.chevron-left:hover > .pi-chevron-left,
-.chevron-right:hover > .pi-chevron-right {
-	color: var(--primary-color);
-	opacity: 100;
-}
-
-.pi-chevron-left,
-.pi-chevron-right {
-	margin: 0 1rem;
-	font-size: 2rem;
-	opacity: 0;
-	transition: opacity 0.2s ease;
-}
-
-.pi-chevron-left:hover,
-.pi-chevron-right:hover {
-	color: var(--primary-color);
-}
-
-ul {
-	align-items: center;
-	display: inline-flex;
-	gap: 1.5rem;
-	transition: margin-left 0.8s;
-}
-
-li {
-	list-style: none;
-}
-
-.selected-document-modal-mask {
-	position: fixed;
-	z-index: 998;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-}
-
-.selected-document-modal {
-	position: relative;
-	width: 65%;
-	margin: 0px auto;
-	background-color: var(--surface-section);
-	border-radius: 16px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-	overflow-y: auto;
-	max-height: 75%;
-	padding: 1rem;
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
-}
-
-.selected-document-modal header {
-	display: flex;
-	justify-content: space-between;
-}
-
-.modal-subheader-text {
+.no-projects {
+	margin-top: 8rem;
 	color: var(--text-color-subdued);
 }
+.no-projects > * {
+	margin: auto;
+	text-align: center;
+}
 
-.modal-subheader-text em {
+.no-projects > img {
+	height: 10rem;
+	margin-bottom: 2rem;
+}
+
+a {
 	color: var(--primary-color);
+}
+
+.new-project-button {
+	padding: 0;
 }
 
 .close-button {
@@ -477,66 +396,5 @@ li {
 
 .close-button:hover {
 	opacity: 100%;
-}
-
-.selected-document-pane {
-	margin: 2rem 0;
-}
-
-.no-projects {
-	background-color: var(--gray-0);
-	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
-	background-size: 12px 12px;
-	background-position: 0 0;
-	background-repeat: repeat;
-}
-
-.no-projects > * {
-	margin: auto;
-	margin-top: 1rem;
-	text-align: center;
-}
-
-.no-projects > img {
-	height: 203px;
-}
-
-a {
-	color: var(--primary-color);
-}
-
-.new-project-card {
-	width: 17rem;
-	height: 20rem;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	border-radius: var(--border-radius-big);
-	transition: background-color 0.2s ease, box-shadow 0.2s ease;
-	cursor: pointer;
-}
-
-.new-project-card > p {
-	text-align: center;
-	color: var(--text-color-primary);
-}
-
-.new-project-card img {
-	margin: auto;
-}
-
-.new-project-card:hover {
-	background-color: var(--surface);
-	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-}
-
-.new-project-button {
-	padding: 0;
-}
-
-#new-project-name,
-#new-project-description {
-	border-color: var(--surface-border);
 }
 </style>

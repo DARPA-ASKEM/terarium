@@ -27,11 +27,9 @@
 :root {
 	/* Layout */
 	--navbar-outer-height: 51px;
-
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
-
 	background-color: var(--surface-ground);
 	color: var(--text-color-primary);
 	color-scheme: light;
@@ -50,7 +48,6 @@ body {
 	font: inherit;
 	isolation: isolate;
 	min-width: 1000px;
-
 	display: grid;
 	grid-template-areas:
 		"header"
