@@ -508,7 +508,7 @@ export interface WorkflowEdge {
     direction: WorkflowDirection;
 }
 
-export interface WorkflowNode<T> {
+export interface WorkflowNode<S> {
     id: string;
     displayName: string;
     workflowId: string;
@@ -517,11 +517,18 @@ export interface WorkflowNode<T> {
     y: number;
     width: number;
     height: number;
-    state: T;
-    active?: WorkflowOutput<T>;
+    state: S;
+    active?: WorkflowOutput<S>;
     inputs: WorkflowPort[];
-    outputs: WorkflowOutput<T>[];
+    outputs: WorkflowOutput<S>[];
     status: OperatorStatus;
+}
+
+export interface WorkflowOutput<S> extends WorkflowPort {
+    operatorStatus?: OperatorStatus;
+    state: S;
+    timestamp?: Date;
+    selected: boolean;
 }
 
 export interface WorkflowPort {
@@ -860,9 +867,6 @@ export interface PetriNetTransition {
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
-}
-
-export interface WorkflowOutput<T> extends WorkflowPort {
 }
 
 export interface XDDFacetsItemResponse {

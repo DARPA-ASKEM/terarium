@@ -10,7 +10,7 @@ import java.io.Serializable;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class WorkflowNode<T> implements Serializable {
+public class WorkflowNode<S> implements Serializable {
 
 
 	private String id;
@@ -21,11 +21,11 @@ public class WorkflowNode<T> implements Serializable {
 	private Number y;
 	private Number width;
 	private Number height;
-	private T state;
+	private S state;
 	@TSOptional
-	private WorkflowOutput<T> active;
+	private WorkflowOutput<S> active;
 	private WorkflowPort[] inputs;
-	private WorkflowOutput<T>[] outputs;
+	private WorkflowOutput<S>[] outputs;
 	private OperatorStatus status;
 
 }
