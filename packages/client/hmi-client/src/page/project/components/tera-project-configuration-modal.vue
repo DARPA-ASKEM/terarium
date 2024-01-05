@@ -81,15 +81,15 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
 import useAuthStore from '@/stores/auth';
-import { IProject } from '@/types/Project';
 import { cloneDeep } from 'lodash';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import { Project } from '@/types/Types';
 
 const props = defineProps<{
 	confirmText: string;
 	modalTitle: string;
-	project: IProject | null;
+	project: Project | null;
 }>();
 
 const emit = defineEmits(['close-modal']);

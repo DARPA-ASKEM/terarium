@@ -10,15 +10,15 @@
 </template>
 
 <script setup lang="ts">
-import { IProject } from '@/types/Project';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
 import { useProjectMenu } from '@/composables/project-menu';
+import { Project } from '@/types/Types';
 
-const props = defineProps<{ project: IProject | null }>();
+const props = defineProps<{ project: Project | null }>();
 
 const emit = defineEmits(['forked-project']);
 

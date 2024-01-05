@@ -8,10 +8,10 @@
 			@close-modal="isProjectConfigDialogVisible = false"
 		/>
 	</Teleport>
-	<Dialog :header="`Remove ${menuProject?.name}`" v-model:visible="isRemoveDialogVisible">
+	<Dialog :header="`Remove ${projectName}`" v-model:visible="isRemoveDialogVisible">
 		<p>
 			You are about to remove project
-			<em>{{ menuProject?.name }}</em>
+			<em>{{ projectName }}</em>
 			.
 		</p>
 		<p>Are you sure?</p>
@@ -39,10 +39,12 @@ import { useProjectMenu } from '@/composables/project-menu';
 const router = useRouter();
 const currentRoute = useCurrentRoute();
 
-// For now we just use project-menu.ts to manage modals related to projects
+// For now, we just use project-menu.ts to manage modals related to projects
 // For non-project related modals we may want to create new composables or abstract project-menu.ts into a modal manager
 const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } =
 	useProjectMenu();
+
+const projectName = menuProject?.value?.name || '';
 
 const removeProject = async () => {
 	if (!menuProject.value) return;
