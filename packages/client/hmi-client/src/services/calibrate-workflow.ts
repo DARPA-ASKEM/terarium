@@ -170,12 +170,6 @@ export const autoCalibrationMapping = async (
 	});
 
 	// due to a state and a column having potential for multiple pairwise matches, lets remove duplicates from results.
-	// const distinctResults = result.filter((value, index) => {
-	// 	return index === result.findIndex(obj => {
-	// 		return obj.datasetVariable === value.datasetVariable && obj.modelVariable === value.modelVariable
-	// 	});
-	// });
-
 	const distinctResults = result.filter(
 		(value, index) =>
 			index ===
