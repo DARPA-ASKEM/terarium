@@ -13,8 +13,6 @@ import { Workflow } from '@/types/workflow';
 
 export enum ProjectPages {
 	OVERVIEW = 'overview',
-	CALIBRATE = 'calibrate',
-	STRATIFY = 'stratify',
 	EMPTY = ''
 }
 
