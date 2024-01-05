@@ -49,5 +49,6 @@ img {
 	width: 50%;
 	max-height: 8rem;
 	margin: 0 auto;
+	pointer-events: none;
 }
 </style>
