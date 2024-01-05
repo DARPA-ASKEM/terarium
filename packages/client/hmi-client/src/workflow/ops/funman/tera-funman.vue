@@ -90,8 +90,12 @@
 		</div>
 
 		<template #preview>
-			<tera-drilldown-preview title="Validation results" :options="props.node.outputs">
-				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
+			<tera-drilldown-preview
+				title="Validation results"
+				@update:output="onUpdateOutput"
+				:options="props.node.outputs"
+			>
+				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value[0]" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
@@ -124,7 +128,7 @@ import Dropdown from 'primevue/dropdown';
 import Slider from 'primevue/slider';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -141,7 +145,7 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output-port', 'select-output', 'update-state', 'close']);
 
 enum FunmanTabs {
 	Wizard = 'Wizard',
@@ -187,12 +191,14 @@ const requestParameters = ref();
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
-const outputId = computed(() => {
-	// FIXME: temporary test
-	const last = props.node.outputs.length - 1;
-	if (props.node.outputs[last]?.value) return String(props.node.outputs[last].value);
-	return undefined;
-});
+
+// const outputId = computed(() => {
+// 	// FIXME: temporary test
+// 	const last = props.node.outputs.length - 1;
+// 	if (props.node.outputs[last]?.value) return String(props.node.outputs[last].value);
+// 	return undefined;
+// });
+const activeOutput = ref<WorkflowOutput<any> | null>(null);
 
 const poller = new Poller();
 
@@ -264,12 +270,17 @@ const getStatus = async (runId: string) => {
 
 const updateOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
+	const portId = uuidv4();
 	emit('append-output-port', {
-		id: uuidv4(),
-		label: `${portLabel} Result`,
+		id: portId,
+		label: `${portLabel} Result ${props.node.outputs.length + 1}}`,
 		type: FunmanOperation.outputs[0].type,
-		value: runId
+		value: runId,
+		state: _.cloneDeep(props.node.state)
 	});
+	if (props.node.outputs.length === 1) {
+		emit('select-output', portId);
+	}
 };
 
 const addConstraintForm = () => {
@@ -369,11 +380,26 @@ const setRequestParameters = async (modelParameters) => {
 	});
 };
 
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
+};
+
 watch(
 	() => props.node.inputs[0],
 	async () => {
 		// Set model, modelConfiguration, modelNodeOptions
 		setModelOptions();
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active);
+		}
 	},
 	{ immediate: true }
 );
