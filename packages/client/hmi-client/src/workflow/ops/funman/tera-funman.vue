@@ -92,10 +92,12 @@
 		<template #preview>
 			<tera-drilldown-preview
 				title="Validation results"
+				v-model:output="selectedOutputId"
 				@update:output="onUpdateOutput"
-				:options="props.node.outputs"
+				:options="outputs"
+				is-selectable
 			>
-				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value[0]" />
+				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
@@ -191,6 +193,18 @@ const requestParameters = ref();
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
+const selectedOutputId = ref<string>();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
 
 // const outputId = computed(() => {
 // 	// FIXME: temporary test
@@ -198,7 +212,7 @@ const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
 // 	if (props.node.outputs[last]?.value) return String(props.node.outputs[last].value);
 // 	return undefined;
 // });
-const activeOutput = ref<WorkflowOutput<any> | null>(null);
+const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
 const poller = new Poller();
 
@@ -398,7 +412,8 @@ watch(
 	() => {
 		// Update selected output
 		if (props.node.active) {
-			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active);
+			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
+			selectedOutputId.value = props.node.active;
 		}
 	},
 	{ immediate: true }
