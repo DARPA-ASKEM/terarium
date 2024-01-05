@@ -122,32 +122,68 @@ export const autoCalibrationMapping = async (
 	datasetOptions: DatasetColumn[]
 ) => {
 	const result = [] as CalibrateMap[];
+	const allModelGroundings: string[] = [];
+	const allDataGroundings: string[] = [];
 	const acceptableDistance = 0.7;
-	for (let i = 0; i < modelOptions.length; i++) {
-		for (let j = 0; j < datasetOptions.length; j++) {
-			// Check for direct string match
-			if (modelOptions[i].id.toLowerCase() === datasetOptions[j].name.toLowerCase()) {
-				result.push({ modelVariable: modelOptions[i].id, datasetVariable: datasetOptions[j].name });
-			}
-			// No direct string match, check grounding keys (if they exist)
-			else if (
-				modelOptions[i].grounding?.identifiers &&
-				datasetOptions[j]?.metadata?.groundings?.identifiers
-			) {
-				const modelTemp = Object.entries(modelOptions[i].grounding?.identifiers);
+	// Get all model groundings
+	modelOptions.forEach((state) => {
+		if (state.grounding?.identifiers) {
+			const modelTemp = Object.entries(state.grounding?.identifiers);
+			const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
+			modelGroundingList.forEach((ele) => allModelGroundings.push(ele));
+		}
+	});
+	// Get all data column groundings
+	datasetOptions.forEach((col) => {
+		const dataGroundingList = Object.keys(col.metadata?.groundings?.identifiers);
+		dataGroundingList.forEach((ele) => allDataGroundings.push(ele));
+	});
+
+	// take out duplicates:
+	const distinctModelGroundings = [...new Set(allModelGroundings)];
+	const distinctDataGroundings = [...new Set(allDataGroundings)];
+	const allSimilarity = await getEntitySimilarity(distinctModelGroundings, distinctDataGroundings);
+	if (!allSimilarity) return result;
+
+	const filteredSim = allSimilarity.filter((ele) => ele.distance < acceptableDistance);
+	filteredSim.forEach((sim) => {
+		// Find all states assosiated with this sim
+		const validStates = modelOptions.filter((state) => {
+			if (state.grounding?.identifiers) {
+				const modelTemp = Object.entries(state.grounding?.identifiers);
 				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
-				const dataGroundingList = Object.keys(datasetOptions[j].metadata?.groundings?.identifiers);
-				const entitySimilarity = getEntitySimilarity(modelGroundingList, dataGroundingList);
-				entitySimilarity.then((ele) => {
-					if (ele && ele.filter((e) => e.distance < acceptableDistance).length > 0) {
-						result.push({
-							modelVariable: modelOptions[i].id,
-							datasetVariable: datasetOptions[j].name
-						});
-					}
-				});
+				return modelGroundingList.includes(sim.source);
 			}
-		} // end for each dataset Option
-	} // end for each model Option
-	return result;
+			return false;
+		});
+		// Find all columns assosiated with this sim
+		const validCols = datasetOptions.filter((col) => {
+			const dataGroundingList = Object.keys(col.metadata?.groundings?.identifiers);
+			return dataGroundingList.includes(sim.target);
+		});
+		// For all states and columns that have short distances throw them into results
+		validStates.forEach((state) => {
+			validCols.forEach((col) => {
+				result.push({ modelVariable: state.id, datasetVariable: col.name });
+			});
+		});
+	});
+
+	// due to a state and a column having potential for multiple pairwise matches, lets remove duplicates from results.
+	// const distinctResults = result.filter((value, index) => {
+	// 	return index === result.findIndex(obj => {
+	// 		return obj.datasetVariable === value.datasetVariable && obj.modelVariable === value.modelVariable
+	// 	});
+	// });
+
+	const distinctResults = result.filter(
+		(value, index) =>
+			index ===
+			result.findIndex(
+				(obj) =>
+					obj.datasetVariable === value.datasetVariable && obj.modelVariable === value.modelVariable
+			)
+	);
+
+	return distinctResults;
 };
