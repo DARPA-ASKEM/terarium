@@ -15,7 +15,7 @@ export const generateProjectAssetsMap = (searchAsset: string): IProjectAssetItem
 	// Run through all the assets type within the project
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType = type as AssetType;
+			const projectAssetType = type;
 			const typeAssets = projectAssets[projectAssetType]
 				.map((asset) => ({
 					assetName: (

@@ -357,6 +357,20 @@ export interface PetriNetModel {
     transitions: PetriNetTransition[];
 }
 
+/**
+ * @deprecated
+ */
+export interface Assets {
+    dataset: Dataset[];
+    extraction: Extraction[];
+    model: Model[];
+    publication: ExternalPublication[];
+    workflow: Workflow[];
+    artifact: Artifact[];
+    code: Code[];
+    document: DocumentAsset[];
+}
+
 export interface Project {
     id?: string;
     name: string;
@@ -473,16 +487,71 @@ export interface SimulationResult {
     simulation: Simulation;
 }
 
+export interface Position {
+    x: number;
+    y: number;
+}
+
+export interface Transform {
+    x: number;
+    y: number;
+    k: number;
+}
+
 export interface Workflow {
     id: string;
     name: string;
     description: string;
-    transform: any;
-    nodes: any[];
-    edges: any[];
+    transform: Transform;
+    nodes: WorkflowNode<any>[];
+    edges: WorkflowEdge[];
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
+}
+
+export interface WorkflowEdge {
+    id: string;
+    workflowId: string;
+    points: Position[];
+    source: WorkflowNode<any>;
+    sourcePortId: string;
+    target: WorkflowNode<any>;
+    targetPortId: string;
+    direction: WorkflowDirection;
+}
+
+export interface WorkflowNode<S> {
+    id: string;
+    displayName: string;
+    workflowId: string;
+    operationType: WorkflowOperationTypes;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    state: S;
+    active?: WorkflowOutput<S>;
+    inputs: WorkflowPort[];
+    outputs: WorkflowOutput<S>[];
+    status: OperatorStatus;
+}
+
+export interface WorkflowOutput<S> extends WorkflowPort {
+    operatorStatus?: OperatorStatus;
+    state: S;
+    timestamp?: Date;
+    selected: boolean;
+}
+
+export interface WorkflowPort {
+    id: string;
+    type: string;
+    status: WorkflowPortStatus;
+    label?: string;
+    value?: any[];
+    acceptMultiple?: boolean;
+    optional: boolean;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -808,6 +877,16 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
+export interface Extraction {
+    id: number;
+    askemClass: string;
+    properties: ExtractionProperties;
+    askemId: string;
+    xddCreated: Date;
+    xddRegistrant: number;
+    highlight: string[];
+}
+
 export interface ModelDistribution {
     type: string;
     parameters: { [index: string]: any };
@@ -839,16 +918,6 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
-}
-
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
 }
 
 export interface KnownEntities {
@@ -917,17 +986,6 @@ export interface PetriNetTransitionProperties {
     grounding?: ModelGrounding;
 }
 
-export interface XDDFacetBucket {
-    key: string;
-    docCount: string;
-}
-
-export interface Authority {
-    id: number;
-    name: string;
-    description: string;
-}
-
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
@@ -945,6 +1003,17 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
+}
+
+export interface XDDFacetBucket {
+    key: string;
+    docCount: string;
+}
+
+export interface Authority {
+    id: number;
+    name: string;
+    description: string;
 }
 
 export interface XDDUrlExtraction {
@@ -1226,6 +1295,52 @@ export enum ProgressState {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
+}
+
+export enum WorkflowDirection {
+    FromInput = "FROM_INPUT",
+    FromOutput = "FROM_OUTPUT",
+}
+
+export enum WorkflowOperationTypes {
+    Add = "ADD",
+    Test = "TEST",
+    CalibrationJulia = "CALIBRATION_JULIA",
+    CalibrationCiemss = "CALIBRATION_CIEMSS",
+    Dataset = "DATASET",
+    Model = "MODEL",
+    SimulateJulia = "SIMULATE_JULIA",
+    SimulateCiemss = "SIMULATE_CIEMSS",
+    StratifyJulia = "STRATIFY_JULIA",
+    StratifyMira = "STRATIFY_MIRA",
+    SimulateEnsembleCiemss = "SIMULATE_ENSEMBLE_CIEMSS",
+    CalibrateEnsembleCiemss = "CALIBRATE_ENSEMBLE_CIEMSS",
+    DatasetTransformer = "DATASET_TRANSFORMER",
+    ModelTransformer = "MODEL_TRANSFORMER",
+    ModelFromCode = "MODEL_FROM_CODE",
+    Funman = "FUNMAN",
+    Code = "CODE",
+    ModelConfig = "MODEL_CONFIG",
+    ModelOptimize = "MODEL_OPTIMIZE",
+    ModelCoupling = "MODEL_COUPLING",
+    ModelEdit = "MODEL_EDIT",
+    Document = "DOCUMENT",
+}
+
+export enum OperatorStatus {
+    Default = "DEFAULT",
+    InProgress = "IN_PROGRESS",
+    Success = "SUCCESS",
+    Invalid = "INVALID",
+    Warning = "WARNING",
+    Failed = "FAILED",
+    Error = "ERROR",
+    Disabled = "DISABLED",
+}
+
+export enum WorkflowPortStatus {
+    Connected = "CONNECTED",
+    NotConnected = "NOT_CONNECTED",
 }
 
 export enum ExtractionAssetType {

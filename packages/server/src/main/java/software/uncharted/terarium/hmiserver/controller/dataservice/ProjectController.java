@@ -1,11 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.IOException;
+import java.util.*;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,15 +29,22 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.*;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
@@ -66,6 +69,15 @@ public class ProjectController {
 	final ProjectService projectService;
 
 	final ProjectAssetService projectAssetService;
+
+	//TODO: These are all to be removed once we get rid of getAssets
+	final DatasetService datasetService;
+	final ModelService modelService;
+	final DocumentAssetService documentService;
+	final WorkflowService workflowService;
+	final ExternalPublicationService publicationService;
+	final CodeService codeService;
+	final ArtifactService	artifactService;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -269,14 +281,15 @@ public class ProjectController {
 	// Project Assets
 	// --------------------------------------------------------------------------
 
-	@Operation(summary = "Gets the assets belonging to a specific project, by asset type")
+	@Operation(summary = "DEPRECATED Gets the assets belonging to a specific project, by asset type")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Assets found", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)))),
+			@ApiResponse(responseCode = "200", description = "Assets found", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Assets.class))),
 			@ApiResponse(responseCode = "204", description = "Currently unimplemented. This is all you'll get for now!", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)))),
 			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	@GetMapping("/{id}/assets")
 	@Secured(Roles.USER)
-	public ResponseEntity<List<ProjectAsset>> getAssets(
+	@Deprecated(forRemoval = true)
+	public ResponseEntity<Assets> getAssets(
 			@PathVariable("id") final UUID projectId,
 			@RequestParam("types") final List<AssetType> types) {
 		try {
@@ -285,7 +298,112 @@ public class ProjectController {
 
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
 
-				return ResponseEntity.ok(assets);
+				//sort our list of assets by type, caring only about the UUID of the projectAsset
+				final Map<AssetType, List<UUID>> assetTypeListMap = assets.stream()
+						.collect(
+								HashMap::new,
+								(map, asset) -> {
+									if (!map.containsKey(asset.getAssetType())) {
+										map.put(asset.getAssetType(), new ArrayList<>());
+									}
+									map.get(asset.getAssetType()).add(asset.getAssetId());
+								},
+								HashMap::putAll);
+
+
+				final Assets assetsResponse = new Assets();
+				for(AssetType type: assetTypeListMap.keySet()){
+					switch (type) {
+						case DATASET:
+							List<Dataset> datasets = new ArrayList<>();
+							for(UUID id: assetTypeListMap.get(type)){
+								try {
+									Optional<Dataset> dataset = datasetService.getDataset(id);
+									dataset.ifPresent(datasets::add);
+								} catch (final IOException e) {
+									log.error("Error getting dataset", e);
+								}
+							}
+							assetsResponse.setDataset(datasets);
+							break;
+						case MODEL:
+							List<Model> models = new ArrayList<>();
+							for(UUID id: assetTypeListMap.get(type)){
+								try {
+									Optional<Model> model = modelService.getModel(id);
+									model.ifPresent(models::add);
+								} catch (final IOException e) {
+									log.error("Error getting model", e);
+								}
+							}
+							assetsResponse.setModel(models);
+							break;
+						case DOCUMENT:
+							List<DocumentAsset> documents = new ArrayList<>();
+							for(UUID id: assetTypeListMap.get(type)){
+								try {
+									Optional<DocumentAsset> document = documentService.getDocumentAsset(id);
+									document.ifPresent(documents::add);
+								} catch (final IOException e) {
+									log.error("Error getting document", e);
+								}
+							}
+							assetsResponse.setDocument(documents);
+							break;
+						case WORKFLOW:
+							List<Workflow> workflows = new ArrayList<>();
+							for(UUID id: assetTypeListMap.get(type)){
+								try {
+									Optional<Workflow> workflow = workflowService.getWorkflow(id);
+									workflow.ifPresent(workflows::add);
+								} catch (final IOException e) {
+									log.error("Error getting workflow", e);
+								}
+							}
+							assetsResponse.setWorkflow(workflows);
+							break;
+						case PUBLICATION:
+							List<ExternalPublication> publications = new ArrayList<>();
+							for(UUID id: assetTypeListMap.get(type)){
+								try {
+									Optional<ExternalPublication> publication = publicationService.getExternalPublication(id);
+									publication.ifPresent(publications::add);
+								} catch (final IOException e) {
+									log.error("Error getting publication", e);
+								}
+							}
+							assetsResponse.setPublication(publications);
+							break;
+						case CODE:
+							List<Code> code = new ArrayList<>();
+							for(UUID id: assetTypeListMap.get(type)){
+								try {
+									Optional<Code> codeAsset = codeService.getCode(id);
+									codeAsset.ifPresent(code::add);
+								} catch (final IOException e) {
+									log.error("Error getting code", e);
+								}
+							}
+							assetsResponse.setCode(code);
+							break;
+						case ARTIFACT:
+							List<Artifact> artifacts = new ArrayList<>();
+							for(UUID id: assetTypeListMap.get(type)){
+								try {
+									Optional<Artifact> artifact = artifactService.getArtifact(id);
+									artifact.ifPresent(artifacts::add);
+								} catch (final IOException e) {
+									log.error("Error getting artifact", e);
+								}
+							}
+							assetsResponse.setArtifact(artifacts);
+							break;
+						default:
+							break;
+					}
+				}
+
+				return ResponseEntity.ok(assetsResponse);
 			}
 			return ResponseEntity.notFound().build();
 		} catch (final Exception e) {

@@ -3,10 +3,10 @@ import {
 	AssetType,
 	Code,
 	Dataset,
-	Document,
 	DocumentAsset,
 	ExternalPublication,
-	Model
+	Model,
+	Project
 } from '@/types/Types';
 import { Workflow } from '@/types/workflow';
 
@@ -18,7 +18,7 @@ export enum ProjectPages {
 }
 
 export const isProjectAssetTypes = (type: AssetType | string): boolean =>
-	Object.values(AssetType).includes(type as AssetType);
+	Object.values(AssetType).includes(type.toUpperCase() as AssetType);
 
 // TODO this is essentially the same as Assets from Types.tx, however for some reason the
 // Workflows class referenced here is only implemented on the front end and not
@@ -35,17 +35,6 @@ export type ProjectAssets = {
 
 // TODO this is essentially the same as Project from Types.ts, however it references
 // the above ProjectAssets type instead of the Assets type. This should be fixed.
-export interface IProject {
-	id: string;
-	name: string;
-	description: string;
-	timestamp: string;
-	active: boolean;
-	concept: string | null;
+export interface IProject extends Project {
 	assets: ProjectAssets | null;
-	relatedDocuments: Document[];
-	username: string;
-	metadata?: { [index: string]: string };
-	publicProject?: boolean;
-	userPermission?: string;
 }
