@@ -247,7 +247,7 @@ onMounted(async () => {
 
 		const state = cloneDeep(props.node.state);
 
-		// equations that not been run in image -> equation
+		// equations that have not been run in image -> equation
 		const nonRunEquations = equations?.filter((e) => {
 			const foundEquation = state.equations.find(
 				(eq) => instanceOfEquationFromImageBlock(eq.asset) && eq.asset.fileName === e.asset.fileName
