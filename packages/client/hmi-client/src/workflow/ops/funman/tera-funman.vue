@@ -50,6 +50,7 @@
 						</div>
 						<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
 						<div class="section-row">
+							<!-- This will definitely require a proper tool tip. -->
 							<label>Select parameters of interest<i class="pi pi-info-circle" /></label>
 							<MultiSelect
 								ref="columnSelect"
@@ -58,21 +59,8 @@
 								:show-toggle-all="false"
 								@update:modelValue="onToggleVariableOfInterest"
 								:maxSelectedLabels="1"
-								placeholder="Select columns"
+								placeholder="Select variables"
 							/>
-
-							<!-- This will definitely require a proper tool tip. -->
-							<!--
-							<label>Select parameters to synthesize <i class="pi pi-info-circle" /></label>
-							<div
-								v-for="(parameter, index) of requestParameters"
-								:key="index"
-								class="button-column"
-							>
-								<label>{{ parameter.name }}</label>
-								<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
-							</div>
-							-->
 						</div>
 					</div>
 					<div class="spacer">
@@ -139,7 +127,6 @@ import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-// import Dropdown from 'primevue/dropdown';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
@@ -172,7 +159,6 @@ const toast = useToastService();
 const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
 
-// const labelOptions = ['any', 'all'];
 const showSpinner = ref(false);
 const showAdditionalOptions = ref(false);
 const tolerance = ref(props.node.state.tolerance);
@@ -240,6 +226,10 @@ const onToggleVariableOfInterest = (vals: string[]) => {
 			d.label = 'any';
 		}
 	});
+
+	const state = _.cloneDeep(props.node.state);
+	state.requestParameters = _.cloneDeep(requestParameters.value);
+	emit('update-state', state);
 };
 
 const runMakeQuery = async () => {
@@ -386,9 +376,10 @@ const setModelOptions = async () => {
 
 		if (model.value && model.value.semantics?.ode.parameters) {
 			setRequestParameters(model.value.semantics?.ode.parameters);
+
 			variablesOfInterest.value = requestParameters.value
-				.filter((d) => d.label === 'all')
-				.map((d) => d.name);
+				.filter((d: any) => d.label === 'all')
+				.map((d: any) => d.name);
 		} else {
 			toast.error('', 'Provided model has no parameters');
 		}
@@ -397,7 +388,9 @@ const setModelOptions = async () => {
 
 const setRequestParameters = async (modelParameters: ModelParameter[]) => {
 	if (props.node.state.requestParameters) {
+		console.log('restore from state');
 		requestParameters.value = _.cloneDeep(props.node.state.requestParameters);
+		return;
 	}
 
 	requestParameters.value = modelParameters.map((ele) => {
