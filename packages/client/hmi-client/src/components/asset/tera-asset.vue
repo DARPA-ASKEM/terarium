@@ -47,7 +47,7 @@
 					</div>
 					<div v-if="publisher" v-html="publisher" />
 					<!--created on: date-->
-					<div class="header-buttons" v-if="hasSlot('bottom-header-buttons')">
+					<div class="header-buttons">
 						<slot name="bottom-header-buttons" />
 					</div>
 					<slot name="overview-summary" />
@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, PropType, useSlots } from 'vue';
+import { ref, computed, watch, PropType } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
@@ -116,9 +116,6 @@ const emit = defineEmits(['close-preview']);
 
 const headerRef = ref();
 const scrollPosition = ref(0);
-
-const slots = useSlots();
-const hasSlot = (name: string) => !!slots[name];
 
 const shrinkHeader = computed(() => {
 	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
@@ -267,6 +264,10 @@ header section:deep(> input) {
 .authors i {
 	color: var(--text-color-primary);
 	margin-right: 0.5rem;
+}
+
+.header-buttons:empty {
+	display: none;
 }
 
 .header-buttons,

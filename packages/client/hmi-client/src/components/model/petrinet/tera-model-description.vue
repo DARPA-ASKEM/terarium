@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<section class="info">
+		<section class="overview">
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Description">
 					<section class="description">
@@ -30,40 +30,49 @@
 			</Accordion>
 			<section class="details">
 				<ul>
-					<li>Bam</li>
-					<li>Bam</li>
-					<li>Bam</li>
-					<li>Bam</li>
+					<li class="multiple">
+						<span>
+							<label>Framework</label>
+							<div class="framework">{{ model?.header?.schema_name }}</div>
+						</span>
+						<span>
+							<label>Model version</label>
+							<div>{{ model?.header?.model_version }}</div>
+						</span>
+						<span>
+							<label>Date created</label>
+							<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
+						</span>
+					</li>
+					<li>
+						<label>Created by</label>
+						<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
+					</li>
+					<li>
+						<label>Author email</label>
+						<div>{{ card?.authorEmail }}</div>
+					</li>
+					<li>
+						<label>Institution</label>
+						<div>
+							<tera-show-more-text v-if="card?.authorInst" :text="card?.authorInst" :lines="2" />
+						</div>
+					</li>
+					<li class="multiple">
+						<span>
+							<label>License</label>
+							<div>{{ card?.license }}</div>
+						</span>
+						<span>
+							<label>Complexity</label>
+							<div>{{ card?.complexity }}</div>
+						</span>
+					</li>
+					<li>
+						<label>Source</label>
+						<div>{{ model?.metadata?.processed_by }}</div>
+					</li>
 				</ul>
-				<!-- <table class="bibliography">
-				<tr>
-					<th>Framework</th>
-					<th>Model version</th>
-					<th>Date created</th>
-					<th>Created by</th>
-					<th>Source</th>
-					<th>Author email</th>
-					<th>Institution</th>
-					<th>License</th>
-					<th>Complexity</th>
-				</tr>
-				<tr>
-					<td class="framework">{{ model?.header?.schema_name }}</td>
-					<td>{{ model?.header?.model_version }}</td>
-					<td>{{ model?.metadata?.processed_at ?? card?.date }}</td>
-					<td>
-						{{ card?.authorAuthor }}
-						<template v-if="model?.metadata?.annotations?.authors">
-							, {{ model.metadata.annotations.authors.join(', ') }}
-						</template>
-					</td>
-					<td>{{ card?.authorEmail }}</td>
-					<td>{{ model?.metadata?.processed_by }}</td>
-					<td>{{ card?.authorInst }}</td>
-					<td>{{ card?.license }}</td>
-					<td>{{ card?.complexity }}</td>
-				</tr>
-			</table> -->
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Models"
@@ -73,6 +82,9 @@
 			</section>
 		</section>
 		<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
+			<!--Design in flux: diagram will probably be merged with equations (views would be switched with a toggle).
+			However it may be worth showing the diagram and the equation at the same time on this page.
+			-->
 			<AccordionTab header="Diagram">
 				<tera-model-diagram
 					ref="teraModelDiagramRef"
@@ -186,6 +198,14 @@ const documents = computed(
 			})) ?? []
 );
 
+const authors = computed(() => {
+	const authorsArray = props.model?.metadata?.annotations?.authors ?? [];
+
+	if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
+
+	return authorsArray.join(', ');
+});
+
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -219,17 +239,14 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 </script>
 
 <style scoped>
-.info {
+.overview {
 	display: flex;
 	width: 100%;
 	gap: 2rem;
 
 	& > * {
-		/* width: 50%; */
 		flex: 1;
 	}
-	/* width: 100%; */
-	/* justify-content: space-between; */
 }
 
 .description,
@@ -241,37 +258,42 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 }
 
 .details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 	padding-top: 1rem;
 	padding-right: 1rem;
+
+	& > ul {
+		list-style: none;
+		border-radius: var(--border-radius);
+		border: 1px solid var(--surface-border);
+		padding: 0.5rem 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		background-color: var(--surface-ground);
+
+		& > li.multiple {
+			display: flex;
+
+			& > span {
+				flex: 1 0 0;
+			}
+		}
+
+		& > li label {
+			color: var(--text-color-subdued);
+			font-size: var(--font-caption);
+
+			& + *:empty:before {
+				content: '--';
+			}
+		}
+	}
 }
 
-table th {
-	text-align: left;
-}
-
-table tr > td:empty:before {
-	content: '--';
-}
-
-td.framework {
+.framework {
 	text-transform: capitalize;
-}
-
-table.bibliography th,
-table.bibliography td {
-	font-family: var(--font-family);
-	max-width: 15rem;
-	padding-right: 1rem;
-}
-
-table.bibliography th {
-	font-weight: 500;
-	font-size: var(--font-caption);
-	color: var(--text-color-secondary);
-}
-
-table.bibliography td {
-	font-weight: 400;
-	font-size: var(--font-body-small);
 }
 </style>
