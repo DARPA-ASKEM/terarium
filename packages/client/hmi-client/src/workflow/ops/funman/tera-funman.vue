@@ -140,7 +140,6 @@ import { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } f
 import { getQueries, makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel } from '@/services/model';
 import { useToastService } from '@/services/toast';
 import { Poller, PollerState } from '@/api/api';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
@@ -356,39 +355,38 @@ function getStepList() {
 	return aList;
 }
 
-const setModelOptions = async () => {
+const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+	model.value = modelConfiguration.value.configuration as Model;
+};
 
-	if (modelConfiguration.value) {
-		model.value = await getModel(modelConfiguration.value.modelId);
-		const modelColumnNameOptions: string[] =
-			modelConfiguration.value.configuration.model.states.map((state) => state.id);
-		// observables are not currently supported
-		// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-		// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
-		// 		modelColumnNameOptions.push(o.id);
-		// 	});
-		// }
-		modelNodeOptions.value = modelColumnNameOptions;
+const setModelOptions = async () => {
+	if (!model.value) return;
 
-		if (model.value && model.value.semantics?.ode.parameters) {
-			setRequestParameters(model.value.semantics?.ode.parameters);
+	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+	// observables are not currently supported
+	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+	// 		modelColumnNameOptions.push(o.id);
+	// 	});
+	// }
+	modelNodeOptions.value = modelColumnNameOptions;
 
-			variablesOfInterest.value = requestParameters.value
-				.filter((d: any) => d.label === 'all')
-				.map((d: any) => d.name);
-		} else {
-			toast.error('', 'Provided model has no parameters');
-		}
+	if (model.value && model.value.semantics?.ode.parameters) {
+		setRequestParameters(model.value.semantics?.ode.parameters);
+
+		variablesOfInterest.value = requestParameters.value
+			.filter((d: any) => d.label === 'all')
+			.map((d: any) => d.name);
+	} else {
+		toast.error('', 'Provided model has no parameters');
 	}
 };
 
 const setRequestParameters = async (modelParameters: ModelParameter[]) => {
 	if (props.node.state.requestParameters) {
-		console.log('restore from state');
 		requestParameters.value = _.cloneDeep(props.node.state.requestParameters);
 		return;
 	}
@@ -418,6 +416,7 @@ watch(
 	() => props.node.inputs[0],
 	async () => {
 		// Set model, modelConfiguration, modelNodeOptions
+		await initialize();
 		setModelOptions();
 	},
 	{ immediate: true }
