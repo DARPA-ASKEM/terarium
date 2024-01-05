@@ -1,18 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 public enum OperatorStatus {
-	/*
-	export enum OperatorStatus {
-	DEFAULT = 'default',
-	IN_PROGRESS = 'in progress',
-	SUCCESS = 'success',
-	INVALID = 'invalid',
-	WARNING = 'warning', // Probably won't be used - would there be potential crossover with INVALID?
-	FAILED = 'failed',
-	ERROR = 'error',
-	DISABLED = 'disabled'
-}
-	 */
+
 	DEFAULT("default"),
 	IN_PROGRESS("in progress"),
 	SUCCESS("success"),
