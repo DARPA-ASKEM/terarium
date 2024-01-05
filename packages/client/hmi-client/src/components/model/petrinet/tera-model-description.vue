@@ -1,7 +1,41 @@
 <template>
 	<main>
-		<section>
-			<table class="bibliography">
+		<section class="info">
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Description">
+					<section class="description">
+						<tera-show-more-text :text="description" :lines="5" />
+					</section>
+				</AccordionTab>
+				<AccordionTab header="Additional information">
+					<section class="additional-information">
+						<article v-if="!isEmpty(provenance)">
+							<h5>Provenance</h5>
+							<p v-html="provenance" />
+						</article>
+						<article v-if="!isEmpty(schema)">
+							<h5>Schema</h5>
+							<p v-html="schema" />
+						</article>
+						<article v-if="!isEmpty(sourceDataset)">
+							<h5>Source dataset</h5>
+							<p v-html="sourceDataset" />
+						</article>
+						<article v-if="!isEmpty(usage)">
+							<h5>Usage</h5>
+							<p v-html="usage" />
+						</article>
+					</section>
+				</AccordionTab>
+			</Accordion>
+			<section class="details">
+				<ul>
+					<li>Bam</li>
+					<li>Bam</li>
+					<li>Bam</li>
+					<li>Bam</li>
+				</ul>
+				<!-- <table class="bibliography">
 				<tr>
 					<th>Framework</th>
 					<th>Model version</th>
@@ -29,37 +63,50 @@
 					<td>{{ card?.license }}</td>
 					<td>{{ card?.complexity }}</td>
 				</tr>
-			</table>
-		</section>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
-			<AccordionTab>
-				<template #header>Related publications</template>
+			</table> -->
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Models"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>
+			</section>
+		</section>
+		<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
+			<AccordionTab header="Diagram">
+				<tera-model-diagram
+					ref="teraModelDiagramRef"
+					:model="model"
+					:is-editable="!featureConfig.isPreview"
+					:model-configuration="modelConfigurations[0]"
+					@update-model="updateModelContent"
+					@update-configuration="updateConfiguration"
+				/>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header>Description</template>
-				<p v-html="description" />
+			<AccordionTab header="Model equations">
+				<tera-model-equation
+					:model="model"
+					:is-editable="!featureConfig.isPreview"
+					@model-updated="emit('model-updated')"
+				/>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(usage)">
-				<template #header>Usage</template>
-				<p v-html="usage" />
+			<AccordionTab header="Model observables">
+				<tera-model-observable
+					:model="model"
+					:is-editable="!featureConfig.isPreview"
+					@update-model="updateModelContent"
+				/>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(sourceDataset)">
-				<template #header>Source dataset</template>
-				<p v-html="sourceDataset" />
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(provenance)">
-				<template #header>Provenance</template>
-				<p v-html="provenance" />
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(schema)">
-				<template #header>Schema</template>
-				<p v-html="schema" />
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents" />
+				</DataTable>
 			</AccordionTab>
 		</Accordion>
 		<tera-model-semantic-tables
@@ -72,27 +119,31 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AssetType, DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
-import { AcceptedExtensions } from '@/types/common';
+import { AssetType, DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import { FeatureConfig, AcceptedExtensions, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
+import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
+import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;
 	modelConfigurations: ModelConfiguration[];
 	highlight: string;
+	featureConfig: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-model', 'fetch-model']);
+const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
 
-function fetchAsset() {
-	emit('fetch-model');
-}
+const teraModelDiagramRef = ref();
 
 const card = computed(() => {
 	if (props.model.metadata?.card) {
@@ -142,11 +193,56 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+
+const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
+);
+
+function fetchAsset() {
+	emit('fetch-model');
+}
+
+function updateModelContent(updatedModel: Model) {
+	emit('update-model', updatedModel);
+}
+
+function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+	emit('update-configuration', updatedConfiguration);
+}
 </script>
 
 <style scoped>
-section {
-	margin-left: 1rem;
+.info {
+	display: flex;
+	width: 100%;
+	gap: 2rem;
+
+	& > * {
+		/* width: 50%; */
+		flex: 1;
+	}
+	/* width: 100%; */
+	/* justify-content: space-between; */
+}
+
+.description,
+.additional-information {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-left: 1.5rem;
+}
+
+.details {
+	padding-top: 1rem;
+	padding-right: 1rem;
 }
 
 table th {

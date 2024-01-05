@@ -30,7 +30,7 @@
 					<!--For naming asset such as model or code file-->
 					<div class="vertically-center">
 						<slot name="name-input" />
-						<h4 v-if="!isNamingAsset" v-html="name" class="nudge-down" />
+						<h4 v-if="!isNamingAsset" v-html="name" />
 
 						<div v-if="!overline" class="vertically-center">
 							<slot name="edit-buttons" />
@@ -47,7 +47,7 @@
 					</div>
 					<div v-if="publisher" v-html="publisher" />
 					<!--created on: date-->
-					<div class="header-buttons">
+					<div class="header-buttons" v-if="hasSlot('bottom-header-buttons')">
 						<slot name="bottom-header-buttons" />
 					</div>
 					<slot name="overview-summary" />
@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, PropType } from 'vue';
+import { ref, computed, watch, PropType, useSlots } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
@@ -116,6 +116,9 @@ const emit = defineEmits(['close-preview']);
 
 const headerRef = ref();
 const scrollPosition = ref(0);
+
+const slots = useSlots();
+const hasSlot = (name: string) => !!slots[name];
 
 const shrinkHeader = computed(() => {
 	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
@@ -178,6 +181,8 @@ header {
 	display: flex;
 	gap: 1rem;
 	align-items: center;
+	border-bottom: 1px solid var(--Secondary-Neutral-True-Gray-200, #e1e1e1);
+	background: #f4f4f4;
 }
 
 header.shrinked {
@@ -237,10 +242,6 @@ header.overview-banner section {
 	background-size: 25%, 100%;
 }
 
-.nudge-down {
-	margin-top: 0.25rem;
-}
-
 .vertically-center {
 	display: flex;
 	flex-direction: row;
@@ -283,6 +284,10 @@ main:deep(.p-accordion) {
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
 	scroll-margin-top: v-bind('scrollMarginTopStyle');
+}
+
+main:deep(.p-accordion-content) {
+	padding-bottom: 0.5rem;
 }
 
 main:deep(.p-accordion-content > p),

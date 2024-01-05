@@ -1,26 +1,31 @@
 <template>
 	<main>
-		<p>
-			Terarium can extract information from documents to add relevant information to this resource.
-		</p>
-		<ul>
-			<li v-for="document in relatedDocuments" :key="document.id">
-				<tera-asset-link
-					:label="document.name!"
-					:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+		<section>
+			<h5>Related publications</h5>
+			<p>
+				Terarium can extract information from documents to add relevant information to this
+				resource.
+			</p>
+			<ul>
+				<li v-for="document in relatedDocuments" :key="document.id">
+					<tera-asset-link
+						:label="document.name!"
+						:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+					/>
+				</li>
+			</ul>
+			<div class="extraction-commands">
+				<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
+				<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
+				<Button
+					text
+					:disabled="props.assetType != AssetType.Models"
+					:label="`Align extractions to ${assetType}`"
+					:loading="isLoading"
+					@click="dialogForAlignment"
 				/>
-			</li>
-		</ul>
-		<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
-		<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
-		<Button
-			text
-			:disabled="props.assetType != AssetType.Models"
-			:label="`Align extractions to ${assetType}`"
-			:loading="isLoading"
-			@click="dialogForAlignment"
-		/>
-
+			</div>
+		</section>
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -266,14 +271,35 @@ async function getRelatedDocuments() {
 </script>
 
 <style scoped>
+main {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border);
+	padding: 0.5rem 1rem;
+
+	& > section {
+		display: flex;
+		gap: 0.5rem;
+		flex-direction: column;
+	}
+}
+
 ul {
 	margin: 1rem 0;
+}
+
+ul:empty {
+	display: none;
 }
 
 .no-documents {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+}
+
+.extraction-commands > .p-button {
+	padding: 0.25rem 0.5rem;
 }
 
 .no-documents-img {
