@@ -116,7 +116,7 @@
 
 <script setup lang="ts">
 import _, { floor } from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -125,8 +125,8 @@ import Slider from 'primevue/slider';
 import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode } from '@/types/workflow';
-import teraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
-import teraFunmanOutput from '@/components/funman/tera-funman-output.vue';
+import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { useToastService } from '@/services/toast';
@@ -134,6 +134,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import { Poller, PollerState } from '@/api/api';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 const props = defineProps<{
@@ -187,9 +188,13 @@ const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
 const outputId = computed(() => {
-	if (props.node.outputs[0]?.value) return String(props.node.outputs[0].value);
+	// FIXME: temporary test
+	const last = props.node.outputs.length - 1;
+	if (props.node.outputs[last]?.value) return String(props.node.outputs[last].value);
 	return undefined;
 });
+
+const poller = new Poller();
 
 function toggleAdditonalOptions() {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
@@ -224,29 +229,40 @@ const runMakeQuery = async () => {
 		}
 	};
 
-	const response = await makeQueries(request); // Just commented out so i do not break funman
+	const response = await makeQueries(request);
 	getStatus(response.id);
 };
 
-// TODO: Poller? https://github.com/DARPA-ASKEM/terarium/issues/2196
-const getStatus = async (runId) => {
+const getStatus = async (runId: string) => {
 	showSpinner.value = true;
-	const response = await getQueries(runId);
-	if (response?.error === true) {
+
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => {
+			const response = await getQueries(runId);
+			if (response.done && response.done === true) {
+				return { data: response } as any;
+			}
+			return { data: null } as any;
+		});
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
-		toast.error('', 'An error occured Funman');
-		console.log(response);
-	} else if (response?.done === true) {
-		showSpinner.value = false;
-		updateOutputPorts(runId);
-	} else {
-		setTimeout(async () => {
-			getStatus(runId);
-		}, 2000);
+		return;
 	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		showSpinner.value = false;
+		console.error(`Simulate: ${runId} has failed`);
+		throw Error('Failed Runs');
+	}
+	showSpinner.value = false;
+	updateOutputPorts(runId);
 };
 
-const updateOutputPorts = async (runId) => {
+const updateOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
 		id: uuidv4(),
@@ -353,14 +369,19 @@ const setRequestParameters = async (modelParameters) => {
 	});
 };
 
-// Set model, modelConfiguration, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
 	async () => {
+		// Set model, modelConfiguration, modelNodeOptions
 		setModelOptions();
 	},
 	{ immediate: true }
 );
+
+onUnmounted(() => {
+	console.log('unmounted.........');
+	poller.stop();
+});
 </script>
 
 <style scoped>
