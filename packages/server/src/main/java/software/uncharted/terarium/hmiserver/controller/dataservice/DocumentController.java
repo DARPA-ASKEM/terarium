@@ -337,11 +337,10 @@ public class DocumentController implements SnakeCaseController {
 			// Encode the image in Base 64
 			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
 
-			// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
-
+			// image -> mathML
 			final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
-			System.out.println(mathML);
 
+			// mathML -> LaTeX
 			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
 			return ResponseEntity.ok(latex);
 		} catch (final Exception e) {

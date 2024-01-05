@@ -1,6 +1,6 @@
 import { ModelFromDocumentOperation as operation } from './model-from-document-operation';
-import node from './node.vue';
-import drilldown from './drilldown.vue';
+import node from './tera-model-from-doucment-node.vue';
+import drilldown from './tera-model-from-doucment-drilldown.vue';
 
 const name = operation.name;
 

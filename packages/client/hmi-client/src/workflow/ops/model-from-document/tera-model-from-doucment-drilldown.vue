@@ -11,29 +11,40 @@
 				<div class="equation-view" v-if="activeStepperIndex === 0">
 					<div class="header-group">
 						<p>These equations will be used to create your model.</p>
-						<Button label="Add an equation" icon="pi pi-plus" text />
+						<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
 					</div>
-					<tera-asset-block
-						v-for="(equation, i) in clonedState.equations"
-						:key="i"
-						:is-included="equation.includeInProcess"
-						@update:is-included="onUpdateInclude(equation)"
-					>
-						<template #header>
-							<h5>{{ equation.name }}</h5>
-						</template>
-						<div class="block-container">
-							<label>Extracted Image:</label>
-							<Image id="img" :src="getAssetUrl(equation)" :alt="''" preview />
-							<template v-if="equation.asset.text">
-								<label>Interpreted As:</label>
-								<tera-math-editor :latex-equation="equation.asset.text"> </tera-math-editor>
-
-								<InputText v-model="equation.asset.text" />
+					<div class="blocks-container">
+						<tera-asset-block
+							v-for="(equation, i) in clonedState.equations"
+							:key="i"
+							:is-included="equation.includeInProcess"
+							@update:is-included="onUpdateInclude(equation)"
+							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+							@delete="removeEquation(i)"
+						>
+							<template #header>
+								<h5>{{ equation.name }}</h5>
 							</template>
-							<span v-else>Could not extract LaTeX for image</span>
-						</div>
-					</tera-asset-block>
+							<div class="block-container">
+								<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+									<label>Extracted Image:</label>
+									<Image
+										id="img"
+										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+										:alt="''"
+										preview
+									/>
+								</template>
+								<template v-if="!equation.asset.extractionError">
+									<label>Interpreted As:</label>
+									<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false">
+									</tera-math-editor>
+									<InputText v-model="equation.asset.text" />
+								</template>
+								<span v-else>Could not extract LaTeX for image</span>
+							</div>
+						</tera-asset-block>
+					</div>
 				</div>
 				<div v-if="activeStepperIndex === 1">
 					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
@@ -81,12 +92,27 @@
 						label="Save as new model"
 						:disabled="!selectedModel"
 						outlined
+						:loading="savingAsset"
+						@click="isNewModelModalVisible = true"
 					></Button>
 					<Button label="Close" @click="emit('close')"></Button>
 				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
+	<tera-modal v-if="isNewModelModalVisible">
+		<template #header>
+			<h4>New Model</h4>
+		</template>
+		<form @submit.prevent>
+			<label for="new-model">Enter a unique name for your model</label>
+			<InputText id="new-model" type="text" v-model="newModelName" placeholder="New model" />
+		</form>
+		<template #footer>
+			<Button @click="saveAsNewModel">Create model</Button>
+			<Button class="p-button-secondary" @click="isNewModelModalVisible = false">Cancel</Button>
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -97,14 +123,14 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-assets';
-import { DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
+import { AssetType, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, isEmpty, unionBy } from 'lodash';
 import Image from 'primevue/image';
 import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
-import { getModel } from '@/services/model';
+import { getModel, updateModel, validateModelName } from '@/services/model';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -113,7 +139,15 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import InputText from 'primevue/inputtext';
 import Steps from 'primevue/steps';
 import Textarea from 'primevue/textarea';
-import { EquationFromImageBlock, ModelFromDocumentState } from './model-from-document-operation';
+import { useToastService } from '@/services/toast';
+import { addAsset } from '@/services/project';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import {
+	EquationBlock,
+	EquationFromImageBlock,
+	ModelFromDocumentState,
+	instanceOfEquationFromImageBlock
+} from './model-from-document-operation';
 
 const emit = defineEmits([
 	'close',
@@ -192,8 +226,11 @@ const formSteps = ref([
 		label: 'Text'
 	}
 ]);
-
 const activeStepperIndex = ref<number>(0);
+
+const isNewModelModalVisible = ref(false);
+const newModelName = ref('');
+const savingAsset = ref(false);
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
@@ -212,7 +249,9 @@ onMounted(async () => {
 
 		// equations that not been run in image -> equation
 		const nonRunEquations = equations?.filter((e) => {
-			const foundEquation = state.equations.find((eq) => eq.asset.fileName === e.asset.fileName);
+			const foundEquation = state.equations.find(
+				(eq) => instanceOfEquationFromImageBlock(eq.asset) && eq.asset.fileName === e.asset.fileName
+			);
 			return !foundEquation;
 		});
 
@@ -248,7 +287,7 @@ onMounted(async () => {
 	assetLoading.value = false;
 });
 
-function onUpdateInclude(asset: AssetBlock<EquationFromImageBlock>) {
+function onUpdateInclude(asset: AssetBlock<EquationBlock | EquationFromImageBlock>) {
 	asset.includeInProcess = !asset.includeInProcess;
 	emit('update-state', clonedState.value);
 }
@@ -265,22 +304,14 @@ function onUpdateSelection(id) {
 }
 
 async function onRun() {
-	let equations = clonedState.value.equations
-		.filter((e) => e.includeInProcess && e.asset.text)
+	const equations = clonedState.value.equations
+		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	equations = [
-		`\\frac{dS}{dt} = - \\beta I \\frac{S}{N}`,
-		`\\frac{dE}{dt} = \\beta I \\frac{S}{N} - r_{EI}E`,
-		`\\frac{dI}{dt} = r_{EI}E - r_{IR}p_{IR}I - r_{IH}p_{IH}I`,
-		`\\frac{dH}{dt} = r_{IH}p_{IH}I - r_{HR}p_{HR}H - r_{HD}p_{HD}H`,
-		`\\frac{dR}{dt} = r_{IR}p_{IR}I + r_{HR}p_{HR}H`,
-		`\\frac{dD}{dt} = r_{HD}p_{HD}H`
-	];
 	const res = await equationsToAMR('latex', equations, clonedState.value.modelFramework);
 
 	if (!res) {
-		logger.error('error creating amr');
+		logger.error('Error creating AMR');
 		return;
 	}
 
@@ -318,6 +349,55 @@ function getAssetUrl(asset: AssetBlock<EquationFromImageBlock>): string {
 	const foundAsset = document.value?.assets?.find((a) => a.fileName === asset.asset.fileName);
 	if (!foundAsset) return '';
 	return foundAsset.metadata?.url;
+}
+
+async function saveAsNewModel() {
+	if (!validateModelName(newModelName.value) || !selectedOutputId.value) return;
+
+	savingAsset.value = true;
+	// 1. Update model name
+	const model = selectedModel.value;
+	if (!model) return;
+	model.header.name = newModelName.value;
+	const updateResponse = await updateModel(model);
+	if (!updateResponse) return;
+
+	// 2. Save asset to project
+	const projectId = useProjects().activeProject.value?.id;
+	if (!projectId || !selectedModel.value) return;
+	const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
+	savingAsset.value = false;
+	await useProjects().refresh();
+
+	if (!response) {
+		logger.error('Could not save asset to project');
+		return;
+	}
+	updateNodeLabel(selectedOutputId.value, newModelName.value);
+
+	isNewModelModalVisible.value = false;
+	useToastService().success('', 'Model saved successfully.');
+}
+
+function updateNodeLabel(id: string, label: string) {
+	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.label = label;
+	emit('update-output-port', outputPort);
+}
+
+function addEquation() {
+	clonedState.value.equations.push({
+		name: 'Equation',
+		includeInProcess: true,
+		asset: {
+			text: ' '
+		}
+	});
+}
+
+function removeEquation(index: number) {
+	clonedState.value.equations.splice(index, 1);
 }
 
 watch(
@@ -374,5 +454,9 @@ watch(
 
 :deep(.math-editor) {
 	background-color: var(--surface-disabled);
+}
+
+.blocks-container {
+	overflow-y: auto;
 }
 </style>

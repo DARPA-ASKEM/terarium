@@ -225,9 +225,6 @@ const hideKeyboard = () => {
 watch(
 	() => props.latexEquation,
 	() => {
-		if (props.latexEquation === '') {
-			isEditingEquation.value = true;
-		}
 		name.value = props.name;
 		id.value = props.id;
 		renderEquations();

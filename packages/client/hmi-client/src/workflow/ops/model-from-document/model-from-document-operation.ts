@@ -1,12 +1,23 @@
 import { DocumentExtraction } from '@/types/Types';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 
+export interface EquationBlock {
+	text: string;
+	extractionError?: boolean;
+}
 export interface EquationFromImageBlock extends DocumentExtraction {
 	text: string;
 	extractionError?: boolean;
 }
+
+export function instanceOfEquationFromImageBlock(
+	object: EquationBlock | EquationFromImageBlock
+): object is EquationFromImageBlock {
+	return 'fileName' in object;
+}
+
 export interface ModelFromDocumentState {
-	equations: AssetBlock<EquationFromImageBlock>[];
+	equations: AssetBlock<EquationBlock | EquationFromImageBlock>[];
 	text: string;
 	modelFramework: string;
 	modelId: string | null;
