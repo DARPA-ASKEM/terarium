@@ -162,8 +162,8 @@
 </template>
 
 <script setup lang="ts">
-import { isArray, cloneDeep, isEmpty } from 'lodash';
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { cloneDeep, isArray, isEmpty } from 'lodash';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 
@@ -171,12 +171,12 @@ import {
 	Operation,
 	Position,
 	Workflow,
+	WorkflowDirection,
 	WorkflowEdge,
 	WorkflowNode,
+	WorkflowOutput,
 	WorkflowPort,
-	WorkflowPortStatus,
-	WorkflowDirection,
-	WorkflowOutput
+	WorkflowPortStatus
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -185,6 +185,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
+import { OperatorNodeSize, OperatorImport } from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
@@ -357,16 +358,14 @@ const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
 };
 
-const addOperatorToWorkflow: Function = (operator: any) => () => {
-	workflowService.addNode(wf.value, operator.operation, newNodePosition);
-	workflowDirty = true;
-};
-const addLargeOperatorToWorkflow: Function = (operator: any) => () => {
-	workflowService.addNode(wf.value, operator.operation, newNodePosition, {
-		size: { width: 420, height: 220 }
-	});
-	workflowDirty = true;
-};
+const addOperatorToWorkflow: Function =
+	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
+	() => {
+		workflowService.addNode(wf.value, operator.operation, newNodePosition, {
+			size: nodeSize
+		});
+		workflowDirty = true;
+	};
 
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [
@@ -446,29 +445,29 @@ const contextMenuItems: MenuItem[] = [
 		items: [
 			{
 				label: CalibrateJuliaOp.operation.displayName,
-				command: addLargeOperatorToWorkflow(CalibrateJuliaOp)
+				command: addOperatorToWorkflow(CalibrateJuliaOp, OperatorNodeSize.xlarge)
 			},
 			{
 				label: SimulateJuliaOp.operation.displayName,
-				command: addLargeOperatorToWorkflow(SimulateJuliaOp)
+				command: addOperatorToWorkflow(SimulateJuliaOp, OperatorNodeSize.xlarge)
 			},
 			{ separator: true },
 			{
 				label: SimulateCiemssOp.operation.displayName,
-				command: addLargeOperatorToWorkflow(SimulateCiemssOp)
+				command: addOperatorToWorkflow(SimulateCiemssOp, OperatorNodeSize.xlarge)
 			},
 			{
 				label: CalibrateCiemssOp.operation.displayName,
-				command: addLargeOperatorToWorkflow(CalibrateCiemssOp)
+				command: addOperatorToWorkflow(CalibrateCiemssOp, OperatorNodeSize.xlarge)
 			},
 			{ separator: true },
 			{
 				label: CalibrateEnsembleCiemssOp.operation.displayName,
-				command: addLargeOperatorToWorkflow(CalibrateEnsembleCiemssOp)
+				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp, OperatorNodeSize.xlarge)
 			},
 			{
 				label: SimulateEnsembleCiemssOp.operation.displayName,
-				command: addLargeOperatorToWorkflow(SimulateEnsembleCiemssOp)
+				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp, OperatorNodeSize.xlarge)
 			}
 		]
 	},
