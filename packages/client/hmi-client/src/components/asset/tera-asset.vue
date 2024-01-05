@@ -178,7 +178,7 @@ header {
 	display: flex;
 	gap: 1rem;
 	align-items: center;
-	border-bottom: 1px solid var(--Secondary-Neutral-True-Gray-200, #e1e1e1);
+	border-bottom: 1px solid var(--surface-border-light);
 	background: #f4f4f4;
 }
 
