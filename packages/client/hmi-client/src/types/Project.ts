@@ -12,8 +12,7 @@ import {
 import { Workflow } from '@/types/workflow';
 
 export enum ProjectPages {
-	OVERVIEW = 'overview',
-	EMPTY = ''
+	OVERVIEW = 'overview'
 }
 
 export const isProjectAssetTypes = (type: AssetType | string): boolean =>
