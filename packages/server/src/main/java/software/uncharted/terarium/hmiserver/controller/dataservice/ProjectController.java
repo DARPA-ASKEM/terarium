@@ -41,7 +41,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
-import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -307,7 +306,7 @@ public class ProjectController {
 									if (!map.containsKey(asset.getAssetType())) {
 										map.put(asset.getAssetType(), new ArrayList<>());
 									}
-									map.get(asset.getAssetType()).add(asset.getId());
+									map.get(asset.getAssetType()).add(asset.getAssetId());
 								},
 								HashMap::putAll);
 
@@ -325,7 +324,7 @@ public class ProjectController {
 									log.error("Error getting dataset", e);
 								}
 							}
-							assetsResponse.setDatasets(datasets);
+							assetsResponse.setDataset(datasets);
 							break;
 						case MODEL:
 							List<Model> models = new ArrayList<>();
@@ -337,7 +336,7 @@ public class ProjectController {
 									log.error("Error getting model", e);
 								}
 							}
-							assetsResponse.setModels(models);
+							assetsResponse.setModel(models);
 							break;
 						case DOCUMENT:
 							List<DocumentAsset> documents = new ArrayList<>();
@@ -349,7 +348,7 @@ public class ProjectController {
 									log.error("Error getting document", e);
 								}
 							}
-							assetsResponse.setDocuments(documents);
+							assetsResponse.setDocument(documents);
 							break;
 						case WORKFLOW:
 							List<Workflow> workflows = new ArrayList<>();
@@ -361,7 +360,7 @@ public class ProjectController {
 									log.error("Error getting workflow", e);
 								}
 							}
-							assetsResponse.setWorkflows(workflows);
+							assetsResponse.setWorkflow(workflows);
 							break;
 						case PUBLICATION:
 							List<ExternalPublication> publications = new ArrayList<>();
@@ -373,7 +372,7 @@ public class ProjectController {
 									log.error("Error getting publication", e);
 								}
 							}
-							assetsResponse.setPublications(publications);
+							assetsResponse.setPublication(publications);
 							break;
 						case CODE:
 							List<Code> code = new ArrayList<>();
@@ -397,7 +396,7 @@ public class ProjectController {
 									log.error("Error getting artifact", e);
 								}
 							}
-							assetsResponse.setArtifacts(artifacts);
+							assetsResponse.setArtifact(artifacts);
 							break;
 						default:
 							break;

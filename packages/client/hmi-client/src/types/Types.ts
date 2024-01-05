@@ -361,14 +361,14 @@ export interface PetriNetModel {
  * @deprecated
  */
 export interface Assets {
-    datasets: Dataset[];
-    extractions: Extraction[];
-    models: Model[];
-    publications: ExternalPublication[];
-    workflows: Workflow[];
-    artifacts: Artifact[];
+    dataset: Dataset[];
+    extraction: Extraction[];
+    model: Model[];
+    publication: ExternalPublication[];
+    workflow: Workflow[];
+    artifact: Artifact[];
     code: Code[];
-    documents: DocumentAsset[];
+    document: DocumentAsset[];
 }
 
 export interface Project {

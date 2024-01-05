@@ -5,12 +5,7 @@
 				<strong>{{ document?.name }}</strong>
 			</h5>
 			<tera-operator-placeholder :operation-type="node.operationType" />
-			<Button
-				label="Open document"
-				@click="emit('open-drilldown')"
-				severity="secondary"
-				outlined
-			/>
+			<Button label="Open document" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
@@ -47,7 +42,7 @@ const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();
 const documents = computed<DocumentAsset[]>(
-	() => useProjects().activeProject.value?.assets?.documents ?? []
+	() => useProjects().activeProject.value?.assets?.DOCUMENT ?? []
 );
 
 const fetchingDocument = ref(false);
@@ -112,10 +107,7 @@ watch(
 				});
 			}
 
-			if (
-				!props.node.outputs.find((port) => port.type === 'equations') &&
-				!isEmpty(equations)
-			) {
+			if (!props.node.outputs.find((port) => port.type === 'equations') && !isEmpty(equations)) {
 				const selected = equations.filter((e) => e.includeInProcess);
 				emit('append-output-port', {
 					type: 'equations',
