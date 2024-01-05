@@ -136,7 +136,6 @@ import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
 import { useToastService } from '@/services/toast';
-import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -284,15 +283,14 @@ const getStatus = async (runId: string) => {
 
 const updateOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
-	const portId = uuidv4();
 	emit('append-output-port', {
-		id: portId,
-		label: `${portLabel} Result ${props.node.outputs.length + 1}}`,
+		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
 		type: FunmanOperation.outputs[0].type,
 		value: runId,
 		state: _.cloneDeep(props.node.state)
 	});
 	if (props.node.outputs.length === 1) {
+		const portId = props.node.outputs[0].id;
 		emit('select-output', portId);
 	}
 };
