@@ -26,7 +26,7 @@
 					</div>
 					<div>
 						<!--
-							TODO: Disabled until there is a domain property for IProject.
+							TODO: Disabled until there is a domain property for Project.
 							This section might have similarities to tera-filter-bar.vue.
 						-->
 						<label>Domain</label>
