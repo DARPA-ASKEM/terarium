@@ -190,7 +190,8 @@ const requestConstraints = computed(
 			};
 		})
 );
-const requestParameters = ref();
+
+const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
@@ -315,9 +316,6 @@ const addConstraintForm = () => {
 		timepoints: { lb: 0, ub: 100 },
 		variables: []
 	};
-	if (!state.constraintGroups) {
-		state.constraintGroups = [];
-	}
 	state.constraintGroups.push(newGroup);
 
 	emit('update-state', state);
@@ -325,9 +323,6 @@ const addConstraintForm = () => {
 
 const deleteConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) {
-		return;
-	}
 	state.constraintGroups.splice(data.index, 1);
 
 	emit('update-state', state);
@@ -335,9 +330,6 @@ const deleteConstraintGroupForm = (data) => {
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) {
-		return;
-	}
 	state.constraintGroups[data.index] = data.updatedConfig;
 
 	emit('update-state', state);
