@@ -13,15 +13,15 @@
 					<div class="section-row timespan">
 						<div class="button-column">
 							<label>Start time</label>
-							<InputNumber inputId="integeronly" v-model="startTime" />
+							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.start" />
 						</div>
 						<div class="button-column">
 							<label>End time</label>
-							<InputNumber inputId="integeronly" v-model="endTime" />
+							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.end" />
 						</div>
 						<div class="button-column">
 							<label>Number of steps</label>
-							<InputNumber inputId="integeronly" v-model="numberOfSteps" />
+							<InputNumber inputId="integeronly" v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
 					<InputText
@@ -45,10 +45,10 @@
 								:max="1"
 								:min-fraction-digits="0"
 								:max-fraction-digits="7"
-								v-model="tolerance"
+								v-model="knobs.tolerance"
 							/>
 						</div>
-						<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
+						<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" />
 						<div class="section-row">
 							<!-- This will definitely require a proper tool tip. -->
 							<label>Select parameters of interest<i class="pi pi-info-circle" /></label>
@@ -160,10 +160,27 @@ const validateParametersToolTip =
 
 const showSpinner = ref(false);
 const showAdditionalOptions = ref(false);
-const tolerance = ref(props.node.state.tolerance);
-const startTime = ref(props.node.state.currentTimespan.start);
-const endTime = ref(props.node.state.currentTimespan.end);
-const numberOfSteps = ref(props.node.state.numSteps);
+
+interface BasicKnobs {
+	tolerance: number;
+	currentTimespan: {
+		start: number;
+		end: number;
+	};
+	numberOfSteps: number;
+}
+
+const knobs = ref<BasicKnobs>({
+	tolerance: 0,
+	currentTimespan: { start: 0, end: 0 },
+	numberOfSteps: 0
+});
+
+// const tolerance = ref(props.node.state.tolerance);
+// const startTime = ref(props.node.state.currentTimespan.start);
+// const endTime = ref(props.node.state.currentTimespan.end);
+// const numberOfSteps = ref(props.node.state.numSteps);
+
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
@@ -256,7 +273,7 @@ const runMakeQuery = async () => {
 			config: {
 				use_compartmental_constraints: true,
 				normalization_constant: 1,
-				tolerance: tolerance.value
+				tolerance: knobs.value.tolerance
 			}
 		}
 	};
@@ -317,33 +334,34 @@ const addConstraintForm = () => {
 		variables: []
 	};
 	state.constraintGroups.push(newGroup);
-
 	emit('update-state', state);
 };
 
 const deleteConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
 	state.constraintGroups.splice(data.index, 1);
-
 	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
 	state.constraintGroups[data.index] = data.updatedConfig;
-
 	emit('update-state', state);
 };
 
 // Used to set requestStepList.
 // Grab startTime, endTime, numberOfSteps and create list.
 function getStepList() {
-	const aList = [startTime.value];
-	const stepSize = floor((endTime.value - startTime.value) / numberOfSteps.value);
-	for (let i = 1; i < numberOfSteps.value; i++) {
+	const start = knobs.value.currentTimespan.start;
+	const end = knobs.value.currentTimespan.end;
+	const steps = knobs.value.numberOfSteps;
+
+	const aList = [start];
+	const stepSize = floor((end - start) / steps);
+	for (let i = 1; i < steps; i++) {
 		aList[i] = i * stepSize;
 	}
-	aList.push(endTime.value);
+	aList.push(end);
 	return aList;
 }
 
@@ -366,7 +384,12 @@ const setModelOptions = async () => {
 	// }
 	modelNodeOptions.value = modelColumnNameOptions;
 
-	if (model.value && model.value.semantics?.ode.parameters) {
+	const state = props.node.state;
+	knobs.value.numberOfSteps = state.numSteps;
+	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
+	knobs.value.tolerance = state.tolerance;
+
+	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
 
 		variablesOfInterest.value = requestParameters.value
@@ -377,7 +400,7 @@ const setModelOptions = async () => {
 	}
 };
 
-const setRequestParameters = async (modelParameters: ModelParameter[]) => {
+const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	if (props.node.state.requestParameters) {
 		requestParameters.value = _.cloneDeep(props.node.state.requestParameters);
 		return;
@@ -391,7 +414,6 @@ const setRequestParameters = async (modelParameters: ModelParameter[]) => {
 				ub: ele.distribution.parameters.maximum
 			};
 		}
-
 		return {
 			name: ele.id,
 			interval,
@@ -400,9 +422,24 @@ const setRequestParameters = async (modelParameters: ModelParameter[]) => {
 	});
 };
 
-const onUpdateOutput = (id) => {
+const onUpdateOutput = (id: string) => {
 	emit('select-output', id);
 };
+
+/* Check for simple parameter changes */
+watch(
+	() => knobs.value,
+	() => {
+		const state = _.cloneDeep(props.node.state);
+		state.tolerance = knobs.value.tolerance;
+		state.currentTimespan.start = knobs.value.currentTimespan.start;
+		state.currentTimespan.end = knobs.value.currentTimespan.end;
+		state.numSteps = knobs.value.numberOfSteps;
+
+		emit('update-state', state);
+	},
+	{ deep: true }
+);
 
 watch(
 	() => props.node.inputs[0],
