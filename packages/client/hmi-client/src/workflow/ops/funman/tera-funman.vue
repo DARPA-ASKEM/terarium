@@ -176,11 +176,6 @@ const knobs = ref<BasicKnobs>({
 	numberOfSteps: 0
 });
 
-// const tolerance = ref(props.node.state.tolerance);
-// const startTime = ref(props.node.state.currentTimespan.start);
-// const endTime = ref(props.node.state.currentTimespan.end);
-// const numberOfSteps = ref(props.node.state.numSteps);
-
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
@@ -287,7 +282,7 @@ const getStatus = async (runId: string) => {
 
 	poller
 		.setInterval(3000)
-		.setThreshold(300)
+		.setThreshold(50)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
 			if (response.done && response.done === true) {
@@ -304,8 +299,8 @@ const getStatus = async (runId: string) => {
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		console.error(`Simulate: ${runId} has failed`);
-		throw Error('Failed Runs');
+		console.error(`Funman: ${runId} has failed`);
+		throw Error('Failed Funman validation');
 	}
 	showSpinner.value = false;
 	addOutputPorts(runId);
@@ -458,6 +453,7 @@ watch(
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
+			setModelOptions();
 		}
 	},
 	{ immediate: true }
