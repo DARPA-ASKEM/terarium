@@ -171,25 +171,25 @@ export const getUnstratifiedParameters = (amr: Model) => {
 	const map = new Map<string, string[]>();
 	parameters.forEach((p) => {
 		const rootName = _.first(p.id.split('_')) as string;
-		if (map.has(rootName)) {
-			map.get(rootName)?.push(p.id);
-		} else {
-			map.set(rootName, [p.id]);
-		}
-	});
-	return map;
-};
-
-export const getUnstratifiedParameters2 = (amr: Model) => {
-	const parameters = amr.semantics?.ode.parameters || [];
-	const map = new Map<string, string[]>();
-	parameters.forEach((p) => {
-		const rootName = _.first(p.id.split('_')) as string;
 		const name = p.name ? p.name : rootName;
 		if (map.has(name)) {
 			map.get(name)?.push(p.id);
 		} else {
 			map.set(name, [p.id]);
+		}
+	});
+	return map;
+};
+
+export const getUnstratifiedInitials = (amr: Model) => {
+	const initials = amr.semantics?.ode.initials || [];
+	const map = new Map<string, string[]>();
+	initials.forEach((i) => {
+		const rootName = _.first(i.target.split('_')) as string;
+		if (map.has(rootName)) {
+			map.get(rootName)?.push(i.target);
+		} else {
+			map.set(rootName, [i.target]);
 		}
 	});
 	return map;
