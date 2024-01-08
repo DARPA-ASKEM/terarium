@@ -130,7 +130,7 @@ main {
 	border-radius: var(--border-radius-medium);
 	box-shadow: var(--overlayMenuShadow);
 	min-width: 15rem;
-
+	transition: box-shadow 80ms ease;
 	&:hover {
 		box-shadow: var(--overlayMenuShadowHover);
 		z-index: 2;
