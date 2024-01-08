@@ -391,7 +391,7 @@ function addEquation() {
 		name: 'Equation',
 		includeInProcess: true,
 		asset: {
-			text: ' '
+			text: ''
 		}
 	});
 }
