@@ -8,32 +8,32 @@
 						<template #header>
 							{{ init }}
 						</template>
-						<div v-for="val in vals" :key="val">
-							<Button
-								:label="val"
-								class="asset-button"
-								plain
-								text
-								size="small"
-								@click="getClickedField('initial', val)"
-							/>
-						</div>
+						<ul>
+							<li v-for="val in vals" :key="val">
+								<Button
+									:label="val"
+									class="asset-button"
+									plain
+									text
+									size="small"
+									@click="getClickedField('initial', val)"
+								/>
+							</li>
+						</ul>
 					</AccordionTab>
 				</Accordion>
-				<div
-					v-else-if="!stratifiedModelType && !_.isEmpty(initials)"
-					v-for="[init, vals] in initials"
-					:key="init"
-				>
-					<Button
-						:label="init"
-						class="asset-button"
-						plain
-						text
-						size="large"
-						@click="getClickedField('initial', vals[0])"
-					/>
-				</div>
+				<ul v-else-if="!stratifiedModelType && !_.isEmpty(initials)">
+					<li v-for="[init, vals] in initials" :key="init">
+						<Button
+							:label="init"
+							class="asset-button"
+							plain
+							text
+							size="large"
+							@click="getClickedField('initial', vals[0])"
+						/>
+					</li>
+				</ul>
 			</div>
 			<div>
 				<h4>Parameters</h4>
@@ -42,32 +42,32 @@
 						<template #header>
 							{{ param }}
 						</template>
-						<div v-for="val in vals" :key="val">
-							<Button
-								:label="val"
-								class="asset-button"
-								plain
-								text
-								size="small"
-								@click="getClickedField('parameter', val)"
-							/>
-						</div>
+						<ul>
+							<li v-for="val in vals" :key="val">
+								<Button
+									:label="val"
+									class="asset-button"
+									plain
+									text
+									size="small"
+									@click="getClickedField('parameter', val)"
+								/>
+							</li>
+						</ul>
 					</AccordionTab>
 				</Accordion>
-				<div
-					v-else-if="!stratifiedModelType && !_.isEmpty(parameters)"
-					v-for="[param, vals] in parameters"
-					:key="param"
-				>
-					<Button
-						:label="param"
-						class="asset-button"
-						plain
-						text
-						size="large"
-						@click="getClickedField('parameter', vals[0])"
-					/>
-				</div>
+				<ul v-else-if="!stratifiedModelType && !_.isEmpty(parameters)">
+					<li v-for="[param, vals] in parameters" :key="param">
+						<Button
+							:label="param"
+							class="asset-button"
+							plain
+							text
+							size="large"
+							@click="getClickedField('parameter', vals[0])"
+						/>
+					</li>
+				</ul>
 			</div>
 		</section>
 		<section>
@@ -184,6 +184,10 @@ watch(
 </script>
 
 <style scoped>
+ul {
+	list-style: none;
+}
+
 .value-editor {
 	display: flex;
 	flex-direction: row;
