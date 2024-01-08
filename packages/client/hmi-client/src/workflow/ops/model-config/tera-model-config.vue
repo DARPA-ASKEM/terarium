@@ -2,9 +2,7 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<div>
-					<Steps :model="formSteps" :readonly="false" @update:active-step="activeIndex = $event" />
-				</div>
+				<Steps :model="formSteps" :readonly="false" @update:active-step="activeIndex = $event" />
 				<div v-if="activeIndex === 0" class="form-section">
 					<h3>Name</h3>
 					<InputText
@@ -43,12 +41,11 @@
 				@update:selection="onUpdateSelection"
 				is-selectable
 			>
-				<div v-if="configCache[selectedConfigId]">
-					<TeraModelSemanticTables
-						:model="configCache[selectedConfigId].configuration"
-						:is-editable="false"
-					/>
-				</div>
+				<tera-model-semantic-tables
+					v-if="configCache[selectedConfigId]"
+					:model="configCache[selectedConfigId].configuration"
+					:is-editable="false"
+				/>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
