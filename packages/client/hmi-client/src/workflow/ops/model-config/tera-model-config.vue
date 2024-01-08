@@ -43,6 +43,12 @@
 				@update:selection="onUpdateSelection"
 				is-selectable
 			>
+				<div v-if="configCache[selectedConfigId]">
+					<TeraModelSemanticTables
+						:model="configCache[selectedConfigId].configuration"
+						:is-editable="false"
+					/>
+				</div>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -69,6 +75,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { getModel } from '@/services/model';
 import {
 	createModelConfiguration,
