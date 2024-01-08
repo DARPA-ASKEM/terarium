@@ -43,7 +43,7 @@
 							<template #body="{ index }">
 								<Button
 									class="p-button-sm p-button-text"
-									label="Delete Row"
+									label="Delete"
 									@click="deleteMapRow(index)"
 								/>
 							</template>
@@ -383,7 +383,7 @@ function deleteMapping() {
 	emit('update-state', state);
 }
 
-function deleteMapRow(index) {
+function deleteMapRow(index: number) {
 	mapping.value.splice(index, 1);
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
