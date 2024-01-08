@@ -5,7 +5,6 @@
 				<i class="pi pi-search" />
 				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
 			</span>
-			<!-- <Button class="new" label="New" size="small" outlined @click="toggleOptionsMenu" /> -->
 			<SplitButton
 				class="new-resource-button"
 				label="New"
