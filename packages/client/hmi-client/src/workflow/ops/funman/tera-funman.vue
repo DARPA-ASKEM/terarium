@@ -379,7 +379,7 @@ const setModelOptions = async () => {
 	// }
 	modelNodeOptions.value = modelColumnNameOptions;
 
-	const state = props.node.state;
+	const state = _.cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
@@ -393,10 +393,14 @@ const setModelOptions = async () => {
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
+
+	state.requestParameters = _.cloneDeep(requestParameters.value);
+	emit('update-state', state);
 };
 
 const setRequestParameters = (modelParameters: ModelParameter[]) => {
-	if (props.node.state.requestParameters) {
+	const previous = props.node.state.requestParameters;
+	if (previous && previous.length > 0) {
 		requestParameters.value = _.cloneDeep(props.node.state.requestParameters);
 		return;
 	}
