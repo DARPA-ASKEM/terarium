@@ -202,7 +202,7 @@ watch(
 	flex-direction: column;
 	background-color: var(--surface-50);
 	flex-grow: 1;
-	padding: 1rem;
+	padding: var(--gap);
 	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	overflow: hidden;
@@ -212,6 +212,6 @@ watch(
 .form-section {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--gap);
 }
 </style>
