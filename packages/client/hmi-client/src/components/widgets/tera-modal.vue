@@ -67,7 +67,6 @@ main > section {
 	margin: 0px auto;
 	padding: 2rem 0;
 	transition: all 0.1s ease;
-	min-width: max-content;
 	width: 80vw;
 	z-index: 2;
 	top: 50%;
