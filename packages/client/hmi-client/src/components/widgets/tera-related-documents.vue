@@ -275,17 +275,17 @@ main {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
-	padding: 0.5rem 1rem;
+	padding: var(--gap-small) var(--gap);
 
 	& > section {
 		display: flex;
-		gap: 0.5rem;
+		gap: var(--gap-small);
 		flex-direction: column;
 	}
 }
 
 ul {
-	margin: 1rem 0;
+	margin: var(--gap) 0;
 }
 
 ul:empty {
@@ -299,7 +299,7 @@ ul:empty {
 }
 
 .extraction-commands > .p-button {
-	padding: 0.25rem 0.5rem;
+	padding: 0.25rem var(--gap-small);
 }
 
 .no-documents-img {
@@ -317,9 +317,9 @@ ul:empty {
 }
 
 .p-dialog aside > * {
-	margin-top: 1rem;
+	margin-top: var(--gap);
 }
 .p-dialog aside label {
-	margin: 0 1rem 0 0.5rem;
+	margin: 0 var(--gap) 0 var(--gap-small);
 }
 </style>
