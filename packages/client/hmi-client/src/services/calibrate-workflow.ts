@@ -128,9 +128,9 @@ export const autoCalibrationMapping = async (
 	// Get all model groundings
 	modelOptions.forEach((state) => {
 		if (state.grounding?.identifiers) {
-			const modelTemp = Object.entries(state.grounding?.identifiers);
-			const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
-			modelGroundingList.forEach((ele) => allModelGroundings.push(ele));
+			Object.entries(state.grounding?.identifiers)
+				.map((ele) => ele.join(':'))
+				.forEach((e) => allModelGroundings.push(e));
 		}
 	});
 	// Get all data column groundings
