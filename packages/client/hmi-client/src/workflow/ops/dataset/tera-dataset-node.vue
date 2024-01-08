@@ -118,7 +118,6 @@ watch(
 );
 
 onMounted(async () => {
-	console.log(props.node.state);
 	if (props.node.state.datasetId) {
 		dataset.value = await getDataset(props.node.state.datasetId);
 	}
