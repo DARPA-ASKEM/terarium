@@ -162,7 +162,7 @@ $textButtonHoverBgOpacity: .04 !default;
 $textButtonActiveBgOpacity: .16 !default;
 $outlinedSecondaryButtonBg: #ffffff !default;
 $outlinedSecondaryButtonTextColor: var(--text-color-primary) !default;
-$outlinedSecondaryBoxShadow: var(--surface-border-alt) inset 0 0 0 1px;
+$outlinedSecondaryBoxShadow: var(--surface-border) inset 0 0 0 1px;
 $outlinedButtonBorder: 0 none !default;
 $plainButtonTextColor: $textColor !default;
 $plainButtonHoverBgColor: rgba(0, 0, 0, .04) !default;
