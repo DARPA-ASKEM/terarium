@@ -20,6 +20,7 @@
 							@update:modelValue="onToggle"
 							:maxSelectedLabels="1"
 							placeholder="Select columns"
+							filter
 						/>
 					</div>
 				</div>
