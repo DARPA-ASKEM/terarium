@@ -79,9 +79,9 @@ than the main application behind the modal when these render issues come, howeve
 */
 .overlay-container > section {
 	height: calc(100% - 1rem);
-	margin: 0.5rem;
-	background: #fff;
-	border-radius: var(--modal-border-radius);
+	margin: 1rem 1.5rem 0rem 1.5rem;
+	background: var(--surface-0);
+	border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -93,7 +93,7 @@ main {
 	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 	overflow: hidden;
 	flex-grow: 1;
-	padding: 1rem 1.5rem;
+	padding: 0.5rem 0.5rem 0rem 0.5rem;
 	gap: 0.5rem;
 }
 
