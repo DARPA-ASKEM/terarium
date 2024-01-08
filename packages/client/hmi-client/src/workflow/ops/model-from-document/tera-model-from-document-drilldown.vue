@@ -9,42 +9,42 @@
 				/>
 
 				<div class="equation-view" v-if="activeStepperIndex === 0">
-					<div class="header-group">
+					<header class="header-group">
 						<p>These equations will be used to create your model.</p>
 						<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
-					</div>
-					<div class="blocks-container">
-						<tera-asset-block
-							v-for="(equation, i) in clonedState.equations"
-							:key="i"
-							:is-included="equation.includeInProcess"
-							@update:is-included="onUpdateInclude(equation)"
-							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
-							@delete="removeEquation(i)"
-						>
-							<template #header>
-								<h5>{{ equation.name }}</h5>
-							</template>
-							<div class="block-container">
-								<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
-									<label>Extracted Image:</label>
-									<Image
-										id="img"
-										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
-										:alt="''"
-										preview
-									/>
+					</header>
+					<ul class="blocks-container">
+						<li v-for="(equation, i) in clonedState.equations" :key="i">
+							<tera-asset-block
+								:is-included="equation.includeInProcess"
+								@update:is-included="onUpdateInclude(equation)"
+								:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+								@delete="removeEquation(i)"
+							>
+								<template #header>
+									<h5>{{ equation.name }}</h5>
 								</template>
-								<template v-if="!equation.asset.extractionError">
-									<label>Interpreted As:</label>
-									<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false">
-									</tera-math-editor>
-									<InputText v-model="equation.asset.text" />
-								</template>
-								<span v-else>Could not extract LaTeX for image</span>
-							</div>
-						</tera-asset-block>
-					</div>
+								<div class="block-container">
+									<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+										<label>Extracted Image:</label>
+										<Image
+											id="img"
+											:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+											:alt="''"
+											preview
+										/>
+									</template>
+									<template v-if="!equation.asset.extractionError">
+										<label>Interpreted As:</label>
+										<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false">
+										</tera-math-editor>
+										<InputText v-model="equation.asset.text" />
+									</template>
+									<span v-else>Could not extract LaTeX for image</span>
+								</div>
+							</tera-asset-block>
+						</li>
+					</ul>
 				</div>
 				<div v-if="activeStepperIndex === 1">
 					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
@@ -436,7 +436,7 @@ watch(
 .block-container {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 
 .header-group {
@@ -448,7 +448,7 @@ watch(
 
 .equation-view {
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 	flex-direction: column;
 }
 
@@ -458,5 +458,8 @@ watch(
 
 .blocks-container {
 	overflow-y: auto;
+	> li:not(:last-child) {
+		margin-bottom: var(--gap-small);
+	}
 }
 </style>
