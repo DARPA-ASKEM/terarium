@@ -100,19 +100,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible">
-		<template #header>
-			<h4>New Model</h4>
-		</template>
-		<form @submit.prevent>
-			<label for="new-model">Enter a unique name for your model</label>
-			<InputText id="new-model" type="text" v-model="newModelName" placeholder="New model" />
-		</form>
-		<template #footer>
-			<Button @click="saveAsNewModel">Create model</Button>
-			<Button class="p-button-secondary" @click="isNewModelModalVisible = false">Cancel</Button>
-		</template>
-	</tera-modal>
+	<tera-model-modal
+		:modelId="selectedModel?.id"
+		:is-visible="isNewModelModalVisible"
+		@close-modal="onCloseModelModal"
+		@update="onAddModel"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -123,14 +116,14 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-assets';
-import { AssetType, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
+import { DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, isEmpty, unionBy } from 'lodash';
 import Image from 'primevue/image';
 import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
-import { getModel, updateModel, validateModelName } from '@/services/model';
+import { getModel } from '@/services/model';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -139,9 +132,7 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import InputText from 'primevue/inputtext';
 import Steps from 'primevue/steps';
 import Textarea from 'primevue/textarea';
-import { useToastService } from '@/services/toast';
-import { addAsset } from '@/services/project';
-import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -229,7 +220,6 @@ const formSteps = ref([
 const activeStepperIndex = ref<number>(0);
 
 const isNewModelModalVisible = ref(false);
-const newModelName = ref('');
 const savingAsset = ref(false);
 
 onMounted(async () => {
@@ -351,32 +341,12 @@ function getAssetUrl(asset: AssetBlock<EquationFromImageBlock>): string {
 	return foundAsset.metadata?.url;
 }
 
-async function saveAsNewModel() {
-	if (!validateModelName(newModelName.value) || !selectedOutputId.value) return;
-
-	savingAsset.value = true;
-	// 1. Update model name
-	const model = selectedModel.value;
-	if (!model) return;
-	model.header.name = newModelName.value;
-	const updateResponse = await updateModel(model);
-	if (!updateResponse) return;
-
-	// 2. Save asset to project
-	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId || !selectedModel.value) return;
-	const response = await addAsset(projectId, AssetType.Models, selectedModel.value.id);
-	savingAsset.value = false;
-	await useProjects().refresh();
-
-	if (!response) {
-		logger.error('Could not save asset to project');
-		return;
-	}
-	updateNodeLabel(selectedOutputId.value, newModelName.value);
-
+function onAddModel(modelName: string) {
+	if (!modelName || !selectedOutputId.value) return;
+	updateNodeLabel(selectedOutputId.value, modelName);
+}
+function onCloseModelModal() {
 	isNewModelModalVisible.value = false;
-	useToastService().success('', 'Model saved successfully.');
 }
 
 function updateNodeLabel(id: string, label: string) {
