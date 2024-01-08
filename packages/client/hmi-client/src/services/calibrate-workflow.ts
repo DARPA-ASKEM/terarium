@@ -1,8 +1,9 @@
 import * as d3 from 'd3';
 
-import { ModelConfiguration, Dataset, CsvAsset, State } from '@/types/Types';
+import { ModelConfiguration, Dataset, CsvAsset, State, DatasetColumn } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
+import { getEntitySimilarity } from './concept';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -116,27 +117,67 @@ export const renderLossGraph = (
 	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
 };
 
-export const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: any[]) => {
+export const autoCalibrationMapping = async (
+	modelOptions: State[],
+	datasetOptions: DatasetColumn[]
+) => {
 	const result = [] as CalibrateMap[];
-	modelOptions.forEach((modelOption) => {
-		datasetOptions.forEach((datasetOption) => {
-			// Check for direct string match
-			if (modelOption.id.toLowerCase() === datasetOption.name.toLowerCase()) {
-				result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
+	const allModelGroundings: string[] = [];
+	const allDataGroundings: string[] = [];
+	const acceptableDistance = 0.7;
+	// Get all model groundings
+	modelOptions.forEach((state) => {
+		if (state.grounding?.identifiers) {
+			Object.entries(state.grounding?.identifiers)
+				.map((ele) => ele.join(':'))
+				.forEach((e) => allModelGroundings.push(e));
+		}
+	});
+	// Get all data column groundings
+	datasetOptions.forEach((col) => {
+		const dataGroundingList = Object.keys(col.metadata?.groundings?.identifiers);
+		dataGroundingList.forEach((ele) => allDataGroundings.push(ele));
+	});
+
+	// take out duplicates:
+	const distinctModelGroundings = [...new Set(allModelGroundings)];
+	const distinctDataGroundings = [...new Set(allDataGroundings)];
+	const allSimilarity = await getEntitySimilarity(distinctModelGroundings, distinctDataGroundings);
+	if (!allSimilarity) return result;
+
+	const filteredSim = allSimilarity.filter((ele) => ele.distance < acceptableDistance);
+	filteredSim.forEach((sim) => {
+		// Find all states assosiated with this sim
+		const validStates = modelOptions.filter((state) => {
+			if (state.grounding?.identifiers) {
+				const modelTemp = Object.entries(state.grounding?.identifiers);
+				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
+				return modelGroundingList.includes(sim.source);
 			}
-			// No direct string match, check grounding keys (if they exist)
-			else if (
-				modelOption.grounding?.identifiers &&
-				datasetOption?.metadata?.groundings?.identifiers
-			) {
-				const datasetKeys = Object.keys(datasetOption.metadata.groundings.identifiers);
-				Object.keys(modelOption.grounding.identifiers).forEach((modelGrounding) => {
-					if (datasetKeys.includes(modelGrounding)) {
-						result.push({ modelVariable: modelOption.id, datasetVariable: datasetOption.name });
-					}
-				}); // End for each grounding key
-			}
-		}); // end for each dataset Option
-	}); // end for each model Option
-	return result as CalibrateMap[];
+			return false;
+		});
+		// Find all columns assosiated with this sim
+		const validCols = datasetOptions.filter((col) => {
+			const dataGroundingList = Object.keys(col.metadata?.groundings?.identifiers);
+			return dataGroundingList.includes(sim.target);
+		});
+		// For all states and columns that have short distances throw them into results
+		validStates.forEach((state) => {
+			validCols.forEach((col) => {
+				result.push({ modelVariable: state.id, datasetVariable: col.name });
+			});
+		});
+	});
+
+	// due to a state and a column having potential for multiple pairwise matches, lets remove duplicates from results.
+	const distinctResults = result.filter(
+		(value, index) =>
+			index ===
+			result.findIndex(
+				(obj) =>
+					obj.datasetVariable === value.datasetVariable && obj.modelVariable === value.modelVariable
+			)
+	);
+
+	return distinctResults;
 };
