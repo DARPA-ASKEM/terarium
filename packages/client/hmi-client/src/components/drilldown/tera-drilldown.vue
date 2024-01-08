@@ -93,7 +93,7 @@ main {
 	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 	overflow: hidden;
 	flex-grow: 1;
-	padding: 0.5rem 0.5rem 0rem 0.5rem;
+	padding: 0rem 0rem 0rem 0.5rem;
 	gap: 0.5rem;
 }
 
