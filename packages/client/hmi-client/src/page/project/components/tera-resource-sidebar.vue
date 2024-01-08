@@ -5,7 +5,16 @@
 				<i class="pi pi-search" />
 				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
 			</span>
-			<Button class="new" label="New" size="small" outlined @click="toggleOptionsMenu" />
+			<!-- <Button class="new" label="New" size="small" outlined @click="toggleOptionsMenu" /> -->
+			<SplitButton
+				class="new-resource-button"
+				label="New"
+				size="small"
+				severity="secondary"
+				outlined
+				@click="toggleOptionsMenu"
+				:model="optionsMenuItems"
+			/>
 			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
 				<template #item="slotProps">
 					<a class="p-menuitem-link">
@@ -137,6 +146,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
+import SplitButton from 'primevue/splitbutton';
 import { ProjectPages } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
@@ -246,6 +256,36 @@ header {
 .icon {
 	fill: var(--text-color-primary);
 	overflow: visible;
+}
+
+/* Split button
+ * This needs to be into its own component
+ */
+
+:deep(.new-resource-button) {
+	color: var(--text-color-primary);
+}
+
+:deep(.new-resource-button.p-splitbutton .p-button:first-of-type) {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-right: 0 none;
+	padding-left: 0;
+	color: var(--text-color);
+}
+
+:deep(.new-resource-button.p-splitbutton .p-button:last-of-type) {
+	background-color: var(--surface-200);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	color: var(--text-color-light);
+	padding: 0.65rem 0;
+	width: 2rem;
+
+	&:hover {
+		background-color: var(--surface-50);
+		color: var(--text-color);
+	}
 }
 
 .removeResourceButton {
