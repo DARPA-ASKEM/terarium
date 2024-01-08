@@ -10,11 +10,18 @@ export interface ConstraintGroup {
 	interval?: FunmanInterval;
 }
 
+export interface RequestParameter {
+	name: string;
+	interval?: FunmanInterval;
+	label: string;
+}
+
 export interface FunmanOperationState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;
-	constraintGroups?: ConstraintGroup[];
+	constraintGroups: ConstraintGroup[];
+	requestParameters: RequestParameter[];
 }
 
 export const FunmanOperation: Operation = {
@@ -30,7 +37,8 @@ export const FunmanOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSteps: 10,
 			tolerance: 0.89,
-			constraintGroups: []
+			constraintGroups: [],
+			requestParameters: []
 		};
 		return init;
 	}

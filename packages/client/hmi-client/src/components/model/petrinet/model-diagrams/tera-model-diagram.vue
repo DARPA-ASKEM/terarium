@@ -4,7 +4,9 @@
 			<section class="graph-element">
 				<Toolbar>
 					<template #start>
-						<Button @click="resetZoom" label="Reset zoom" class="p-button-sm p-button-outlined" />
+						<span>
+							<Button @click="resetZoom" label="Reset zoom" class="p-button-sm p-button-outlined" />
+						</span>
 					</template>
 					<template #center>
 						<span v-if="isEditing">
@@ -35,12 +37,23 @@
 									:class="isEditing ? 'p-button-sm save-model' : 'p-button-sm p-button-outlined'"
 								/>
 							</template>
-							<Button
-								v-if="model && getStratificationType(model) && !isEditing"
-								@click="toggleCollapsedView"
-								:label="isCollapsed ? 'Show expanded view' : 'Show collapsed view'"
-								class="p-button-sm p-button-outlined"
-							/>
+							<SelectButton
+								v-if="model && getStratificationType(model)"
+								:model-value="stratifiedView"
+								@change="
+									if ($event.value) {
+										stratifiedView = $event.value;
+										toggleCollapsedView();
+									}
+								"
+								:options="stratifiedViewOptions"
+								option-value="value"
+							>
+								<template #option="slotProps">
+									<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+									<span class="p-button-label">{{ slotProps.option.value }}</span>
+								</template>
+							</SelectButton>
 						</span>
 					</template>
 				</Toolbar>
@@ -133,6 +146,7 @@ import { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
+import SelectButton from 'primevue/selectbutton';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -190,6 +204,20 @@ const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
+
+enum StratifiedView {
+	Expanded = 'Expanded',
+	Collapsed = 'Collapsed'
+}
+
+const stratifiedView = ref(StratifiedView.Collapsed);
+const stratifiedViewOptions = ref([
+	{ value: StratifiedView.Expanded },
+	{ value: StratifiedView.Collapsed }
+]);
+
+// Is this going to consistently have an option to switch from diagram to equation if not the toggle should be somewherlse
+// enum
 
 let previousId: any = null;
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;

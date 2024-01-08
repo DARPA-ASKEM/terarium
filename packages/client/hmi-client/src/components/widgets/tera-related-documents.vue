@@ -1,26 +1,31 @@
 <template>
 	<main>
-		<p>
-			Terarium can extract information from documents to add relevant information to this resource.
-		</p>
-		<ul>
-			<li v-for="document in relatedDocuments" :key="document.id">
-				<tera-asset-link
-					:label="document.name!"
-					:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+		<section>
+			<h5>Related publications</h5>
+			<p>
+				Terarium can extract information from documents to add relevant information to this
+				resource.
+			</p>
+			<ul>
+				<li v-for="document in relatedDocuments" :key="document.id">
+					<tera-asset-link
+						:label="document.name!"
+						:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+					/>
+				</li>
+			</ul>
+			<div class="extraction-commands">
+				<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
+				<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
+				<Button
+					text
+					:disabled="props.assetType != AssetType.Models"
+					:label="`Align extractions to ${assetType}`"
+					:loading="isLoading"
+					@click="dialogForAlignment"
 				/>
-			</li>
-		</ul>
-		<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
-		<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
-		<Button
-			text
-			:disabled="props.assetType != AssetType.Models"
-			:label="`Align extractions to ${assetType}`"
-			:loading="isLoading"
-			@click="dialogForAlignment"
-		/>
-
+			</div>
+		</section>
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -266,14 +271,35 @@ async function getRelatedDocuments() {
 </script>
 
 <style scoped>
+main {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border);
+	padding: var(--gap-small) var(--gap);
+
+	& > section {
+		display: flex;
+		gap: var(--gap-small);
+		flex-direction: column;
+	}
+}
+
 ul {
-	margin: 1rem 0;
+	margin: var(--gap) 0;
+}
+
+ul:empty {
+	display: none;
 }
 
 .no-documents {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+}
+
+.extraction-commands > .p-button {
+	padding: 0.25rem var(--gap-small);
 }
 
 .no-documents-img {
@@ -291,9 +317,9 @@ ul {
 }
 
 .p-dialog aside > * {
-	margin-top: 1rem;
+	margin-top: var(--gap);
 }
 .p-dialog aside label {
-	margin: 0 1rem 0 0.5rem;
+	margin: 0 var(--gap) 0 var(--gap-small);
 }
 </style>
