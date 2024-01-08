@@ -9,13 +9,19 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
 import {
+	Artifact,
 	AssetType,
+	Code,
+	Dataset,
+	DocumentAsset,
 	EventType,
 	ExternalPublication,
+	Model,
 	PermissionRelationships,
 	Project,
 	ProjectAsset
 } from '@/types/Types';
+import { Workflow } from '@/types/workflow';
 
 /**
  * Create a project
@@ -119,8 +125,19 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 			});
 		}
 		const response = await API.get(url);
-		const { status, data } = response;
-		if (status !== 200) return null;
+		if (response.status !== 200) return null;
+
+		// FIXME: this is a hack to get around the fact that the backend returns list names in lower case and we need them in upper case for ProjectAssets
+		const data: ProjectAssets = {
+			[AssetType.Publication]: response.data?.publication ?? ([] as ExternalPublication[]),
+			[AssetType.Model]: response.data?.model ?? ([] as Model[]),
+			[AssetType.Dataset]: response.data?.dataset ?? ([] as Dataset[]),
+			[AssetType.Code]: response.data?.code ?? ([] as Code[]),
+			[AssetType.Artifact]: response.data?.artifact ?? ([] as Artifact[]),
+			[AssetType.Workflow]: response.data?.workflow ?? ([] as Workflow[]),
+			[AssetType.Document]: response.data?.document ?? ([] as DocumentAsset[])
+		};
+
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);

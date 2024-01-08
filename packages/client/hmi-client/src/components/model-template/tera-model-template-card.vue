@@ -3,7 +3,7 @@
 		<section class="card">
 			<div class="draggable"><i class="pi pi-pause" /></div>
 			<main>
-				<h7>Template title</h7>
+				<header>Template title</header>
 				<section>Diagram/Equations</section>
 			</main>
 			<Button icon="pi pi-ellipsis-v" rounded text />
@@ -45,10 +45,6 @@ const fakeVariables = ['X', 'Y', 'p'];
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-
-		& > h7 {
-			font-weight: var(--font-weight);
-		}
 
 		& > * {
 			margin: 0 auto;

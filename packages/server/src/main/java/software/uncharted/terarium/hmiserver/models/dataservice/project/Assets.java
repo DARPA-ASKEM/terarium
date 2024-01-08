@@ -22,13 +22,12 @@ import java.util.List;
 @Deprecated
 @TSModel
 public class Assets implements Serializable {
-	private List<Dataset> datasets;
-	private List<Extraction> extractions;
-	private List<Model> models;
-	private List<ExternalPublication> publications;
-	private List<Workflow> workflows;
-	private List<Artifact> artifacts;
+	private List<Dataset> dataset;
+	private List<Extraction> extraction;
+	private List<Model> model;
+	private List<ExternalPublication> publication;
+	private List<Workflow> workflow;
+	private List<Artifact> artifact;
 	private List<Code> code;
-	private List<DocumentAsset> documents;
-
+	private List<DocumentAsset> document;
 }

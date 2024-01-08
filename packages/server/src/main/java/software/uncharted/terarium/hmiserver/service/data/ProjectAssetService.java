@@ -9,6 +9,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +56,7 @@ public class ProjectAssetService {
 		asset.setProject(project);
 		asset.setAssetType(type);
 		asset.setAssetId(assetId);
+		asset.setCreatedOn(Timestamp.from(Instant.now()));
 
 		return projectAssetRepository.save(asset);
 	}
