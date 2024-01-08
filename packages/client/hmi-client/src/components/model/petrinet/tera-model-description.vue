@@ -1,65 +1,124 @@
 <template>
 	<main>
-		<section>
-			<table class="bibliography">
-				<tr>
-					<th>Framework</th>
-					<th>Model version</th>
-					<th>Date created</th>
-					<th>Created by</th>
-					<th>Source</th>
-					<th>Author email</th>
-					<th>Institution</th>
-					<th>License</th>
-					<th>Complexity</th>
-				</tr>
-				<tr>
-					<td class="framework">{{ model?.header?.schema_name }}</td>
-					<td>{{ model?.header?.model_version }}</td>
-					<td>{{ model?.metadata?.processed_at ?? card?.date }}</td>
-					<td>
-						{{ card?.authorAuthor }}
-						<template v-if="model?.metadata?.annotations?.authors">
-							, {{ model.metadata.annotations.authors.join(', ') }}
-						</template>
-					</td>
-					<td>{{ card?.authorEmail }}</td>
-					<td>{{ model?.metadata?.processed_by }}</td>
-					<td>{{ card?.authorInst }}</td>
-					<td>{{ card?.license }}</td>
-					<td>{{ card?.complexity }}</td>
-				</tr>
-			</table>
-		</section>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
-			<AccordionTab>
-				<template #header>Related publications</template>
+		<section class="overview">
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Description">
+					<section class="description">
+						<tera-show-more-text :text="description" :lines="5" />
+					</section>
+				</AccordionTab>
+				<AccordionTab header="Additional information">
+					<section class="additional-information">
+						<article v-if="!isEmpty(provenance)">
+							<h5>Provenance</h5>
+							<p v-html="provenance" />
+						</article>
+						<article v-if="!isEmpty(schema)">
+							<h5>Schema</h5>
+							<p v-html="schema" />
+						</article>
+						<article v-if="!isEmpty(sourceDataset)">
+							<h5>Source dataset</h5>
+							<p v-html="sourceDataset" />
+						</article>
+						<article v-if="!isEmpty(usage)">
+							<h5>Usage</h5>
+							<p v-html="usage" />
+						</article>
+					</section>
+				</AccordionTab>
+			</Accordion>
+			<section class="details">
+				<ul>
+					<li class="multiple">
+						<span>
+							<label>Framework</label>
+							<div class="framework">{{ model?.header?.schema_name }}</div>
+						</span>
+						<span>
+							<label>Model version</label>
+							<div>{{ model?.header?.model_version }}</div>
+						</span>
+						<span>
+							<label>Date created</label>
+							<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
+						</span>
+					</li>
+					<li>
+						<label>Created by</label>
+						<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
+					</li>
+					<li>
+						<label>Author email</label>
+						<div>{{ card?.authorEmail }}</div>
+					</li>
+					<li>
+						<label>Institution</label>
+						<div>
+							<tera-show-more-text v-if="card?.authorInst" :text="card?.authorInst" :lines="2" />
+						</div>
+					</li>
+					<li class="multiple">
+						<span>
+							<label>License</label>
+							<div>{{ card?.license }}</div>
+						</span>
+						<span>
+							<label>Complexity</label>
+							<div>{{ card?.complexity }}</div>
+						</span>
+					</li>
+					<li>
+						<label>Source</label>
+						<div>{{ model?.metadata?.processed_by }}</div>
+					</li>
+				</ul>
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Models"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>
+			</section>
+		</section>
+		<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
+			<!--Design in flux: diagram will probably be merged with equations (views would be switched with a toggle).
+			However it may be worth showing the diagram and the equation at the same time on this page.
+			-->
+			<AccordionTab header="Diagram">
+				<tera-model-diagram
+					ref="teraModelDiagramRef"
+					:model="model"
+					:is-editable="!featureConfig.isPreview"
+					:model-configuration="modelConfigurations[0]"
+					@update-model="updateModelContent"
+					@update-configuration="updateConfiguration"
+				/>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header>Description</template>
-				<p v-html="description" />
+			<AccordionTab header="Model equations">
+				<tera-model-equation
+					:model="model"
+					:is-editable="!featureConfig.isPreview"
+					@model-updated="emit('model-updated')"
+				/>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(usage)">
-				<template #header>Usage</template>
-				<p v-html="usage" />
+			<AccordionTab header="Model observables">
+				<tera-model-observable
+					:model="model"
+					:is-editable="!featureConfig.isPreview"
+					@update-model="updateModelContent"
+				/>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(sourceDataset)">
-				<template #header>Source dataset</template>
-				<p v-html="sourceDataset" />
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(provenance)">
-				<template #header>Provenance</template>
-				<p v-html="provenance" />
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(schema)">
-				<template #header>Schema</template>
-				<p v-html="schema" />
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets" />
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents" />
+				</DataTable>
 			</AccordionTab>
 		</Accordion>
 		<tera-model-semantic-tables
@@ -72,27 +131,31 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AssetType, DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
-import { AcceptedExtensions } from '@/types/common';
+import { AssetType, DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import { FeatureConfig, AcceptedExtensions, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
+import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
+import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;
 	modelConfigurations: ModelConfiguration[];
 	highlight: string;
+	featureConfig: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-model', 'fetch-model']);
+const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
 
-function fetchAsset() {
-	emit('fetch-model');
-}
+const teraModelDiagramRef = ref();
 
 const card = computed(() => {
 	if (props.model.metadata?.card) {
@@ -135,6 +198,14 @@ const documents = computed(
 			})) ?? []
 );
 
+const authors = computed(() => {
+	const authorsArray = props.model?.metadata?.annotations?.authors ?? [];
+
+	if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
+
+	return authorsArray.join(', ');
+});
+
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -142,40 +213,87 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+
+const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
+);
+
+function fetchAsset() {
+	emit('fetch-model');
+}
+
+function updateModelContent(updatedModel: Model) {
+	emit('update-model', updatedModel);
+}
+
+function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+	emit('update-configuration', updatedConfiguration);
+}
 </script>
 
 <style scoped>
-section {
-	margin-left: 1rem;
+.overview {
+	display: flex;
+	width: 100%;
+	gap: 2rem;
+
+	& > * {
+		flex: 1;
+	}
 }
 
-table th {
-	text-align: left;
+.description,
+.additional-information {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-left: 1.5rem;
 }
 
-table tr > td:empty:before {
-	content: '--';
-}
-
-td.framework {
-	text-transform: capitalize;
-}
-
-table.bibliography th,
-table.bibliography td {
-	font-family: var(--font-family);
-	max-width: 15rem;
+.details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding-top: 1rem;
 	padding-right: 1rem;
+
+	& > ul {
+		list-style: none;
+		border-radius: var(--border-radius);
+		border: 1px solid var(--surface-border);
+		padding: 0.5rem 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		background-color: var(--surface-ground);
+
+		& > li.multiple {
+			display: flex;
+
+			& > span {
+				flex: 1 0 0;
+			}
+		}
+
+		& > li label {
+			color: var(--text-color-subdued);
+			font-size: var(--font-caption);
+
+			& + *:empty:before {
+				content: '--';
+			}
+		}
+	}
 }
 
-table.bibliography th {
-	font-weight: 500;
-	font-size: var(--font-caption);
-	color: var(--text-color-secondary);
-}
-
-table.bibliography td {
-	font-weight: 400;
-	font-size: var(--font-body-small);
+.framework {
+	text-transform: capitalize;
 }
 </style>

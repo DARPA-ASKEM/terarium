@@ -30,7 +30,7 @@
 					<!--For naming asset such as model or code file-->
 					<div class="vertically-center">
 						<slot name="name-input" />
-						<h4 v-if="!isNamingAsset" v-html="name" class="nudge-down" />
+						<h4 v-if="!isNamingAsset" v-html="name" />
 
 						<div v-if="!overline" class="vertically-center">
 							<slot name="edit-buttons" />
@@ -173,11 +173,13 @@ header {
 	height: fit-content;
 	grid-column-start: 2;
 	color: var(--text-color-subdued);
-	padding: 0.5rem 1rem;
+	padding: var(--gap-small) var(--gap);
 	transition: 0.2s;
 	display: flex;
-	gap: 1rem;
+	gap: var(--gap);
 	align-items: center;
+	border-bottom: 1px solid var(--surface-border-light);
+	background: var(--surface-disabled);
 }
 
 header.shrinked {
@@ -188,7 +190,7 @@ header.shrinked {
 	isolation: isolate;
 	background-color: rgba(255, 255, 255, 0.85);
 	backdrop-filter: blur(6px);
-	padding: 0.5rem 1rem;
+	padding: var(--gap-small) var(--gap);
 	border-bottom: 1px solid var(--surface-border-light);
 	box-shadow: 0px 4px 8px -7px #b8b8b8;
 }
@@ -212,7 +214,7 @@ header section,
 header aside {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 	max-width: var(--constrain-width);
 }
 
@@ -237,15 +239,11 @@ header.overview-banner section {
 	background-size: 25%, 100%;
 }
 
-.nudge-down {
-	margin-top: 0.25rem;
-}
-
 .vertically-center {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: 1rem;
+	gap: var(--gap);
 }
 
 main:deep(.p-inputtext.p-inputtext-sm) {
@@ -265,24 +263,32 @@ header section:deep(> input) {
 
 .authors i {
 	color: var(--text-color-primary);
-	margin-right: 0.5rem;
+	margin-right: var(--gap-small);
+}
+
+.header-buttons:empty {
+	display: none;
 }
 
 .header-buttons,
 header aside {
 	display: flex;
 	flex-direction: row;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
-	margin: 0.5rem;
+	margin: var(--gap-small);
 }
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
 	scroll-margin-top: v-bind('scrollMarginTopStyle');
+}
+
+main:deep(.p-accordion-content) {
+	padding-bottom: var(--gap-small);
 }
 
 main:deep(.p-accordion-content > p),
@@ -294,7 +300,7 @@ main:deep(.data-row) {
 main:deep(.p-accordion-content ul) {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 	list-style: none;
 }
 
