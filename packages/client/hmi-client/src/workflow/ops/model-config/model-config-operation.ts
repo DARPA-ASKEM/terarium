@@ -5,10 +5,10 @@ export const name = 'ModelConfigOperation';
 
 export interface ModelConfigOperationState {
 	modelId: string | null;
-	configName: string;
-	configDescription: string;
-	configInitials?: Initial[];
-	configParams?: ModelParameter[];
+	name: string;
+	description: string;
+	initials?: Initial[];
+	parameters?: ModelParameter[];
 }
 
 export const ModelConfigOperation: Operation = {
@@ -23,8 +23,8 @@ export const ModelConfigOperation: Operation = {
 	initState: () => {
 		const init: ModelConfigOperationState = {
 			modelId: null,
-			configName: '',
-			configDescription: ''
+			name: '',
+			description: ''
 		};
 		return init;
 	}

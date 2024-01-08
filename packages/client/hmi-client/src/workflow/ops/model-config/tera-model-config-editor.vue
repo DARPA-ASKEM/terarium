@@ -1,6 +1,6 @@
 <template>
 	<div class="value-editor">
-		<div>
+		<section>
 			<div>
 				<h4>Initials</h4>
 				<Accordion v-if="stratifiedModelType && !_.isEmpty(initials)" :multiple="true">
@@ -69,8 +69,8 @@
 					/>
 				</div>
 			</div>
-		</div>
-		<div>
+		</section>
+		<section>
 			<div class="content-container">
 				<div v-if="fieldType === 'parameter'" class="form-section">
 					<h4>
@@ -106,7 +106,7 @@
 				</div>
 				<h4 v-else>Select a field to edit</h4>
 			</div>
-		</div>
+		</section>
 	</div>
 </template>
 

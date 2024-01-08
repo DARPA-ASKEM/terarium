@@ -8,13 +8,13 @@
 					<InputText
 						placeholder="Enter a name for this configuration"
 						v-model="configName"
-						@update:model-value="() => debouncedUpdateState({ configName })"
+						@update:model-value="() => debouncedUpdateState({ name: configName })"
 					/>
 					<h3>Description</h3>
 					<Textarea
 						placeholder="Enter a description"
 						v-model="configDescription"
-						@update:model-value="() => debouncedUpdateState({ configDescription })"
+						@update:model-value="() => debouncedUpdateState({ description: configDescription })"
 					/>
 				</div>
 				<div v-else-if="activeIndex === 1">
@@ -126,8 +126,8 @@ const selectedConfigId = computed(
 const configCache = ref<Record<string, ModelConfiguration>>({});
 
 const activeIndex = ref<number>(0);
-const configName = ref<string>(props.node.state.configName);
-const configDescription = ref<string>(props.node.state.configDescription);
+const configName = ref<string>(props.node.state.name);
+const configDescription = ref<string>(props.node.state.description);
 const model = ref<Model>();
 
 const configInitials = ref<Initial[]>();
@@ -143,8 +143,8 @@ onMounted(async () => {
 			// TODO: set this only if configs don't exist already
 			// set the state with the model initials and params
 			const state = _.cloneDeep(props.node.state);
-			state.configInitials = m.semantics?.ode.initials;
-			state.configParams = m.semantics?.ode.parameters;
+			state.initials = m.semantics?.ode.initials;
+			state.parameters = m.semantics?.ode.parameters;
 			emit('update-state', state);
 		}
 	}
@@ -159,7 +159,7 @@ const updateState = (updatedField) => {
 const updateConfigParam = (param) => {
 	const state = _.cloneDeep(props.node.state);
 	// find param with the same id and update it
-	state.configParams = state.configParams?.map((p) => {
+	state.parameters = state.parameters?.map((p) => {
 		if (p.id === param.id) {
 			return param;
 		}
@@ -171,7 +171,7 @@ const updateConfigParam = (param) => {
 const updateConfigInitial = (initial) => {
 	const state = _.cloneDeep(props.node.state);
 	// find initial with the same target and update it
-	state.configInitials = state.configInitials?.map((i) => {
+	state.initials = state.initials?.map((i) => {
 		if (i.target === initial.target) {
 			return initial;
 		}
@@ -206,10 +206,10 @@ const saveConfiguration = async () => {
 				isSelected: false,
 				state: {
 					modelId: modelConfig.modelId,
-					configName: modelConfig.name,
-					configDescription: modelConfig.description,
-					configInitials: modelConfig.configuration.semantics?.ode.initials,
-					configParams: modelConfig.configuration.semantics?.ode.parameters
+					name: modelConfig.name,
+					description: modelConfig.description,
+					initials: modelConfig.configuration.semantics?.ode.initials,
+					parameters: modelConfig.configuration.semantics?.ode.parameters
 				}
 			});
 		}, 1000);
@@ -221,8 +221,8 @@ const debouncedUpdateState = _.debounce(updateState, 500);
 watch(
 	() => props.node.state,
 	() => {
-		configInitials.value = props.node.state.configInitials;
-		configParams.value = props.node.state.configParams;
+		configInitials.value = props.node.state.initials;
+		configParams.value = props.node.state.parameters;
 	},
 	{ immediate: true }
 );
@@ -246,10 +246,10 @@ watch(
 			selectedOutputId.value = props.node.active;
 		}
 		// Fill the form with the config data
-		configName.value = props.node.state.configName;
-		configDescription.value = props.node.state.configDescription;
-		configInitials.value = props.node.state.configInitials;
-		configParams.value = props.node.state.configParams;
+		configName.value = props.node.state.name;
+		configDescription.value = props.node.state.description;
+		configInitials.value = props.node.state.initials;
+		configParams.value = props.node.state.parameters;
 	},
 	{ immediate: true }
 );
