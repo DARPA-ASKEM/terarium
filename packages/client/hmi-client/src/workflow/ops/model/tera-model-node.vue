@@ -3,7 +3,7 @@
 		<template v-if="model">
 			<tera-operator-title>{{ model.header.name }}</tera-operator-title>
 			<SelectButton
-				class="p-button-sm"
+				class="p-button-sm smallSegmentedControl"
 				:model-value="view"
 				@change="if ($event.value) view = $event.value;"
 				:options="viewOptions"
@@ -120,5 +120,9 @@ main {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	overflow: hidden;
+}
+
+:deep(.smallSegmentedControl .p-button-label) {
+	font-size: var(--font-caption);
 }
 </style>
