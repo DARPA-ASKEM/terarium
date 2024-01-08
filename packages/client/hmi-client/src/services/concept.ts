@@ -51,6 +51,28 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 	}
 }
 
+/**
+ * Hit MIRA to get pairwise similarities between elements referenced by CURIEs in the first list and second list.
+ * @input a List of curies (strings) for each source, and target.
+ * @return EntitySimilarityResult[] - The source and target curies and their corresponding cosine_distance
+  Sample:
+	"sources": ["ido:0000514"],
+  "targets": ["doid:0081014", "cido:0000180"]
+
+  Output:
+	[
+		{
+			"source": "ido:0000514",
+			"target": "doid:0081014",
+			"distance": 1.3786096032625137
+		},
+		{
+			"source": "ido:0000514",
+			"target": "cido:0000180",
+			"distance": 0.8597939628230753
+		}
+	]
+ */
 async function getEntitySimilarity(
 	sources: string[],
 	targets: string[]
