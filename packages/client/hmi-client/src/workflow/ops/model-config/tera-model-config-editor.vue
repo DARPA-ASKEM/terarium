@@ -1,5 +1,6 @@
 <template>
 	<div class="value-editor">
+		<!-- FIXME: may want to replace section with something that handles long initials list better -->
 		<section>
 			<div>
 				<h4>Initials</h4>
@@ -70,6 +71,7 @@
 				</ul>
 			</div>
 		</section>
+		<!-- FIXME: may want to replace section with something that handles long parameters list better -->
 		<section>
 			<div class="content-container">
 				<div v-if="fieldType === 'parameter'" class="form-section">
@@ -127,8 +129,8 @@ import { getStratificationType } from '@/model-representation/petrinet/petrinet-
 
 const props = defineProps<{
 	model: Model;
-	initials?: Initial[];
-	parameters?: ModelParameter[];
+	initials: Initial[];
+	parameters: ModelParameter[];
 }>();
 
 const emit = defineEmits(['update-param', 'update-initial']);
@@ -151,10 +153,10 @@ const getClickedField = (type: string, field: string) => {
 	selectedField.value = field;
 
 	if (type === 'parameter') {
-		currentParam.value = props.parameters?.find((p) => p.id === field);
+		currentParam.value = props.parameters.find((p) => p.id === field);
 		paramValue.value = currentParam.value?.value;
 	} else if (type === 'initial') {
-		currentInitial.value = props.initials?.find((i) => i.target === field);
+		currentInitial.value = props.initials.find((i) => i.target === field);
 		initialExpression.value = currentInitial.value?.expression;
 	}
 };

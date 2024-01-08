@@ -21,8 +21,8 @@
 					<tera-model-config-editor
 						v-if="model"
 						:model="model"
-						:initials="configInitials"
-						:parameters="configParams"
+						:initials="configInitials ?? []"
+						:parameters="configParams ?? []"
 						@update-param="updateConfigParam"
 						@update-initial="updateConfigInitial"
 					/>
@@ -54,7 +54,7 @@
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
-				@click="saveConfiguration"
+				@click="createConfiguration"
 			/>
 			<Button label="Close" @click="emit('close')" />
 		</template>
@@ -82,6 +82,11 @@ import { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Type
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import teraModelConfigEditor from './tera-model-config-editor.vue';
 
+enum ConfigTabs {
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
+}
+
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
@@ -93,19 +98,7 @@ const emit = defineEmits([
 	'close'
 ]);
 
-enum ConfigTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
-
-const formSteps = ref([
-	{
-		label: 'Context'
-	},
-	{
-		label: 'Set values'
-	}
-]);
+const formSteps = ref([{ label: 'Context' }, { label: 'Set values' }]);
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -133,99 +126,73 @@ const model = ref<Model>();
 const configInitials = ref<Initial[]>();
 const configParams = ref<ModelParameter[]>();
 
-onMounted(async () => {
-	const input = props.node.inputs[0];
-	if (input.value) {
-		const m = await getModel(input.value[0]);
-		if (m) {
-			model.value = m;
-
-			// TODO: set this only if configs don't exist already
-			// set the state with the model initials and params
-			const state = _.cloneDeep(props.node.state);
-			state.initials = m.semantics?.ode.initials;
-			state.parameters = m.semantics?.ode.parameters;
-			emit('update-state', state);
-		}
-	}
-});
-
 const updateState = (updatedField) => {
 	let state = _.cloneDeep(props.node.state);
 	state = { ...state, ...updatedField };
 	emit('update-state', state);
 };
 
-const updateConfigParam = (param) => {
+const updateConfigParam = (param: ModelParameter) => {
 	const state = _.cloneDeep(props.node.state);
+	if (!state.parameters) return;
+
 	// find param with the same id and update it
-	state.parameters = state.parameters?.map((p) => {
-		if (p.id === param.id) {
-			return param;
-		}
-		return p;
-	});
-	emit('update-state', state);
-};
-
-const updateConfigInitial = (initial) => {
-	const state = _.cloneDeep(props.node.state);
-	// find initial with the same target and update it
-	state.initials = state.initials?.map((i) => {
-		if (i.target === initial.target) {
-			return initial;
-		}
-		return i;
-	});
-	emit('update-state', state);
-};
-
-const saveConfiguration = async () => {
-	if (model.value) {
-		const newModel = _.cloneDeep(model.value);
-		if (newModel.semantics) {
-			newModel.semantics.ode.initials = configInitials.value;
-			newModel.semantics.ode.parameters = configParams.value;
-		}
-
-		const data = await createModelConfiguration(
-			model.value.id,
-			configName.value,
-			configDescription.value,
-			newModel
-		);
-
-		setTimeout(async () => {
-			const modelConfig = await getModelConfigurationById(data.id);
-			configCache.value[modelConfig.id] = modelConfig;
-
-			emit('append-output-port', {
-				type: ModelConfigOperation.outputs[0].type,
-				label: modelConfig.name,
-				value: modelConfig.id,
-				isSelected: false,
-				state: {
-					modelId: modelConfig.modelId,
-					name: modelConfig.name,
-					description: modelConfig.description,
-					initials: modelConfig.configuration.semantics?.ode.initials,
-					parameters: modelConfig.configuration.semantics?.ode.parameters
-				}
-			});
-		}, 1000);
+	const idx = state.parameters.findIndex((p) => p.id === param.id);
+	if (idx !== -1) {
+		state.parameters[idx] = param;
 	}
+
+	emit('update-state', state);
+};
+
+const updateConfigInitial = (initial: Initial) => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.initials) return;
+
+	// find initial with the same target and update it
+	const idx = state.initials.findIndex((i) => i.target === initial.target);
+	if (idx !== -1) {
+		state.initials[idx] = initial;
+	}
+
+	emit('update-state', state);
+};
+
+const createConfiguration = async () => {
+	if (!model.value) return;
+
+	const state = _.cloneDeep(props.node.state);
+
+	const newModel = _.cloneDeep(model.value);
+	if (newModel.semantics) {
+		newModel.semantics.ode.initials = configInitials.value;
+		newModel.semantics.ode.parameters = configParams.value;
+	}
+
+	const data = await createModelConfiguration(
+		model.value.id,
+		configName.value,
+		configDescription.value,
+		newModel
+	);
+
+	emit('append-output-port', {
+		type: ModelConfigOperation.outputs[0].type,
+		label: state.name,
+		value: data.id,
+		isSelected: false,
+		state
+	});
+
+	setTimeout(async () => {
+		const modelConfig = await getModelConfigurationById(data.id);
+		// TODO: do we need to cache here at all?
+		// model configs aren't too large so we could potentially just fetch each time
+		configCache.value[modelConfig.id] = modelConfig;
+	}, 1000);
 };
 
 const debouncedUpdateState = _.debounce(updateState, 500);
-
-watch(
-	() => props.node.state,
-	() => {
-		configInitials.value = props.node.state.initials;
-		configParams.value = props.node.state.parameters;
-	},
-	{ immediate: true }
-);
 
 const onUpdateOutput = (id) => {
 	emit('select-output', id);
@@ -237,6 +204,24 @@ const onUpdateSelection = (id) => {
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
 };
+
+const lazyLoadModelConfig = async (configId: string) => {
+	if (!configId || configCache.value[configId]) return;
+
+	const config = await getModelConfigurationById(configId);
+	if (config) {
+		configCache.value[configId] = config;
+	}
+};
+
+watch(
+	() => props.node.state,
+	() => {
+		configInitials.value = props.node.state.initials;
+		configParams.value = props.node.state.parameters;
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.node.active,
@@ -254,15 +239,6 @@ watch(
 	{ immediate: true }
 );
 
-const lazyLoadModelConfig = async (configId: string) => {
-	if (!configId || configCache.value[configId]) return;
-
-	const config = await getModelConfigurationById(configId);
-	if (config) {
-		configCache.value[configId] = config;
-	}
-};
-
 watch(
 	() => selectedConfigId.value,
 	() => {
@@ -270,6 +246,23 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onMounted(async () => {
+	const input = props.node.inputs[0];
+	if (input.value) {
+		const m = await getModel(input.value[0]);
+		if (m) {
+			model.value = m;
+
+			// TODO: set this only if configs don't exist already
+			// set the state with the model initials and params
+			const state = _.cloneDeep(props.node.state);
+			state.initials = m.semantics?.ode.initials;
+			state.parameters = m.semantics?.ode.parameters;
+			emit('update-state', state);
+		}
+	}
+});
 </script>
 
 <style scoped>
