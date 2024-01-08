@@ -195,6 +195,11 @@ main {
 
 		&:deep(.port-connected:hover .unlink) {
 			display: block;
+			color: var(--text-color-primary);
+			padding: 0.25rem 0.5rem;
+			margin: 0.5rem;
+			background-color: var(--surface-0);
+			border: solid 1px var(--surface-border);
 		}
 
 		&:deep(.port-connected) {
