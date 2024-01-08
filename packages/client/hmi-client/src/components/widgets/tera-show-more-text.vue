@@ -1,15 +1,17 @@
 <template>
-	<div
-		ref="textContainerRef"
-		:class="{ default: !expanded, expanded: expanded }"
-		:style="`--lines: ${lines}`"
-	>
-		<div v-html="text"></div>
-	</div>
-	<span @click="collapseOrExpand">
-		<template v-if="triggerShowMore">Show more</template>
-		<template v-if="expanded">Show less</template>
-	</span>
+	<section>
+		<div
+			ref="textContainerRef"
+			:class="{ default: !expanded, expanded: expanded }"
+			:style="`--lines: ${lines}`"
+		>
+			<div v-html="text"></div>
+		</div>
+		<span @click="collapseOrExpand">
+			<template v-if="triggerShowMore">Show more</template>
+			<template v-if="expanded">Show less</template>
+		</span>
+	</section>
 </template>
 
 <script setup lang="ts">

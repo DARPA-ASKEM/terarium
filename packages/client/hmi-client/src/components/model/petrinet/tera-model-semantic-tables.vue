@@ -2,6 +2,97 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
+				State variables<span class="artifact-amount">({{ states.length }})</span>
+			</template>
+			<table v-if="states.length > 0" class="datatable" style="--columns: 5">
+				<tr>
+					<th>Symbol</th>
+					<th>Name</th>
+					<th>Unit</th>
+					<th>Concept</th>
+					<th>Extractions</th>
+				</tr>
+				<tr
+					v-for="(state, i) in states"
+					:key="state.id"
+					:class="[
+						{ active: isRowEditable === `${VariableTypes.STATE}-${state.id}` },
+						`${VariableTypes.STATE}-${state.id}`
+					]"
+				>
+					<template v-if="isRowEditable === `${VariableTypes.STATE}-${state.id}`">
+						<td>
+							<input
+								type="text"
+								:value="state?.id ?? '--'"
+								@input="updateTable('states', i, 'id', $event.target?.['value'])"
+							/>
+						</td>
+						<td>
+							<input
+								type="text"
+								:value="state?.name ?? '--'"
+								@input="updateTable('states', i, 'name', $event.target?.['value'])"
+							/>
+						</td>
+						<td><input type="text" :value="state?.units?.expression ?? '--'" /></td>
+						<td>Identifiers</td>
+						<td>
+							<template v-if="extractions?.[state?.id]">
+								<Tag :value="extractions?.[state?.id].length" />
+							</template>
+							<template v-else>--</template>
+						</td>
+						<td v-if="extractions?.[state?.id]" style="grid-column: 1 / span 4">
+							<tera-model-extraction :extractions="extractions[state.id]" />
+						</td>
+					</template>
+					<template v-else>
+						<td>{{ state.id }}</td>
+						<td>{{ state?.name }}</td>
+						<td>{{ state?.units?.expression }}</td>
+						<td>
+							<template
+								v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
+							>
+								<a
+									target="_blank"
+									rel="noopener noreferrer"
+									:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
+										state.grounding.identifiers
+									)}`"
+								>
+									{{
+										getNameOfCurieCached(
+											getCurieFromGroudingIdentifier(state.grounding.identifiers)
+										)
+									}}
+								</a>
+							</template>
+							<template v-else>--</template>
+						</td>
+						<td>
+							<template v-if="extractions?.[state?.id]">
+								<Tag
+									class="clickable-tag"
+									:value="extractions?.[state?.id].length"
+									@click="openExtractions(VariableTypes.STATE, state?.id)"
+								/>
+							</template>
+							<template v-else>--</template>
+						</td>
+					</template>
+					<td
+						v-if="shouldShowExtractions(VariableTypes.STATE, state.id)"
+						style="grid-column: 1 / span 4"
+					>
+						<tera-model-extraction :extractions="extractions[state.id]" />
+					</td>
+				</tr>
+			</table>
+		</AccordionTab>
+		<AccordionTab>
+			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 			</template>
 			<table
@@ -92,97 +183,6 @@
 						style="grid-column: 1 / span 4"
 					>
 						<tera-model-extraction :extractions="extractions[parameter.id]" />
-					</td>
-				</tr>
-			</table>
-		</AccordionTab>
-		<AccordionTab>
-			<template #header>
-				State variables<span class="artifact-amount">({{ states.length }})</span>
-			</template>
-			<table v-if="states.length > 0" class="datatable" style="--columns: 5">
-				<tr>
-					<th>Symbol</th>
-					<th>Name</th>
-					<th>Unit</th>
-					<th>Concept</th>
-					<th>Extractions</th>
-				</tr>
-				<tr
-					v-for="(state, i) in states"
-					:key="state.id"
-					:class="[
-						{ active: isRowEditable === `${VariableTypes.STATE}-${state.id}` },
-						`${VariableTypes.STATE}-${state.id}`
-					]"
-				>
-					<template v-if="isRowEditable === `${VariableTypes.STATE}-${state.id}`">
-						<td>
-							<input
-								type="text"
-								:value="state?.id ?? '--'"
-								@input="updateTable('states', i, 'id', $event.target?.['value'])"
-							/>
-						</td>
-						<td>
-							<input
-								type="text"
-								:value="state?.name ?? '--'"
-								@input="updateTable('states', i, 'name', $event.target?.['value'])"
-							/>
-						</td>
-						<td><input type="text" :value="state?.units?.expression ?? '--'" /></td>
-						<td>Identifiers</td>
-						<td>
-							<template v-if="extractions?.[state?.id]">
-								<Tag :value="extractions?.[state?.id].length" />
-							</template>
-							<template v-else>--</template>
-						</td>
-						<td v-if="extractions?.[state?.id]" style="grid-column: 1 / span 4">
-							<tera-model-extraction :extractions="extractions[state.id]" />
-						</td>
-					</template>
-					<template v-else>
-						<td>{{ state.id }}</td>
-						<td>{{ state?.name }}</td>
-						<td>{{ state?.units?.expression }}</td>
-						<td>
-							<template
-								v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
-							>
-								<a
-									target="_blank"
-									rel="noopener noreferrer"
-									:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
-										state.grounding.identifiers
-									)}`"
-								>
-									{{
-										getNameOfCurieCached(
-											getCurieFromGroudingIdentifier(state.grounding.identifiers)
-										)
-									}}
-								</a>
-							</template>
-							<template v-else>--</template>
-						</td>
-						<td>
-							<template v-if="extractions?.[state?.id]">
-								<Tag
-									class="clickable-tag"
-									:value="extractions?.[state?.id].length"
-									@click="openExtractions(VariableTypes.STATE, state?.id)"
-								/>
-							</template>
-							<template v-else>--</template>
-						</td>
-					</template>
-					<td
-						v-if="shouldShowExtractions(VariableTypes.STATE, state.id)"
-						style="grid-column: 1 / span 4"
-					>
-						<tera-model-extraction :extractions="extractions[state.id]" />
 					</td>
 				</tr>
 			</table>
