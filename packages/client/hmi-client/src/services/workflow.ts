@@ -36,13 +36,35 @@ export const emptyWorkflow = (name: string = 'test', description: string = '') =
 	return workflow;
 };
 
-const defaultNodeSize: Size = { width: 180, height: 220 };
+export enum OperatorNodeSize {
+	small,
+	medium,
+	large,
+	xlarge
+}
+
+function getOperatorNodeSize(size: OperatorNodeSize): Size {
+	switch (size) {
+		case OperatorNodeSize.small:
+			return { width: 140, height: 220 };
+		case OperatorNodeSize.large:
+			return { width: 300, height: 220 };
+		case OperatorNodeSize.xlarge:
+			return { width: 420, height: 220 };
+		case OperatorNodeSize.medium:
+		default:
+			return { width: 180, height: 220 };
+	}
+}
+
 export const addNode = (
 	wf: Workflow,
 	op: Operation,
 	pos: Position,
-	options: { size?: Size; state?: any } = { size: defaultNodeSize, state: {} }
+	options: { size?: OperatorNodeSize; state?: any }
 ) => {
+	const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
+
 	const node: WorkflowNode<any> = {
 		id: uuidv4(),
 		workflowId: wf.id,
@@ -50,7 +72,7 @@ export const addNode = (
 		displayName: op.displayName,
 		x: pos.x,
 		y: pos.y,
-		state: options.state,
+		state: options.state ?? {},
 
 		inputs: op.inputs.map((port) => ({
 			id: uuidv4(),
@@ -73,8 +95,8 @@ export const addNode = (
 	  */
 		status: OperatorStatus.INVALID,
 
-		width: options?.size?.width ?? defaultNodeSize.width,
-		height: options?.size?.height ?? defaultNodeSize.height
+		width: nodeSize.width,
+		height: nodeSize.height
 	};
 	if (op.initState && _.isEmpty(node.state)) {
 		node.state = op.initState();
@@ -253,7 +275,7 @@ export const workflowEventBus = new WorkflowEventEmitter();
 // Workflow component registry, this is used to
 // dynamically determine which component should be rendered
 /// /////////////////////////////////////////////////////////////////////////////
-interface OperatorImport {
+export interface OperatorImport {
 	name: string;
 	operation: Operation;
 	node: Component;
