@@ -21,7 +21,7 @@
 				</form>
 			</template>
 			<template #footer>
-				<Button @click="createNewModel">Create model</Button>
+				<Button @click="createOrUpdateModel">Create model</Button>
 				<Button class="p-button-secondary" @click="emit('close-modal')"> Cancel </Button>
 			</template>
 		</tera-modal>
@@ -36,13 +36,17 @@ import InputText from 'primevue/inputtext';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import { AssetType } from '@/types/Types';
-import { addNewModelToProject, validateModelName } from '@/services/model';
+import { addNewModelToProject, getModel, updateModel, validateModelName } from '@/services/model';
 import { useProjects } from '@/composables/project';
+import { addAsset } from '@/services/project';
+import { logger } from '@/utils/logger';
+import { useToastService } from '@/services/toast';
 
-defineProps<{
+const props = defineProps<{
 	isVisible: boolean;
+	modelId?: string;
 }>();
-const emit = defineEmits(['close-modal']);
+const emit = defineEmits(['close-modal', 'update']);
 
 // New Model Modal
 const newModelName = ref<string>('');
@@ -67,6 +71,40 @@ async function createNewModel() {
 		});
 	}
 	emit('close-modal');
+}
+
+async function updateModelName() {
+	if (!validateModelName(newModelName.value) || !props.modelId) return;
+
+	// 1. Update model name
+	const model = await getModel(props.modelId);
+	if (!model) return;
+	model.header.name = newModelName.value;
+	const updateResponse = await updateModel(model);
+	if (!updateResponse) return;
+
+	// 2. Save asset to project
+	const projectId = useProjects().activeProject.value?.id;
+	if (!projectId) return;
+	const response = await addAsset(projectId, AssetType.Models, props.modelId);
+	await useProjects().refresh();
+
+	if (!response) {
+		logger.error('Could not save asset to project');
+		return;
+	}
+
+	useToastService().success('', 'Model saved successfully');
+	emit('update', newModelName.value);
+	emit('close-modal');
+}
+
+async function createOrUpdateModel() {
+	if (props.modelId) {
+		updateModelName();
+	} else {
+		createNewModel();
+	}
 }
 </script>
 

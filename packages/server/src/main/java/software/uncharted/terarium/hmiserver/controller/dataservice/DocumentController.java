@@ -15,9 +15,13 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
@@ -34,11 +38,13 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
@@ -48,8 +54,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -62,6 +70,8 @@ public class DocumentController implements SnakeCaseController {
 	final ExtractionProxy extractionProxy;
 
 	final SkemaUnifiedProxy skemaUnifiedProxy;
+
+	final SkemaRustProxy skemaRustProxy;
 
 	final JsDelivrProxy gitHubProxy;
 
@@ -309,6 +319,38 @@ public class DocumentController implements SnakeCaseController {
 	}
 
 	/**
+	 * Post Images to Equations Unified service to get an AMR
+	 *
+	 * @param requestMap (Map<String, Object>) JSON request body containing the following fields:
+	 *  	- format		(String) the format of the equations. Options: "latex", "mathml".
+	 *  	- framework (String) the type of AMR to return. Options: "regnet", "petrinet".
+	 *  	- modelId   (String): the id of the model (to update) based on the set of equations
+	 *  	- equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @return (ExtractionResponse): The response from the extraction service
+	 */
+	@GetMapping("/{id}/image-to-equation")
+	@Secured(Roles.USER)
+	public ResponseEntity<String> postImageToEquation(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
+		try{
+			final String url = proxy.getDownloadUrl(documentId, filename).getBody().getUrl();
+			final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
+			// Encode the image in Base 64
+			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+			// image -> mathML
+			final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+
+			// mathML -> LaTeX
+			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
+			return ResponseEntity.ok(latex);
+		} catch (final Exception e) {
+			log.error("Unable to GET equation", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+
+	/**
 	 * Creates a document asset from an XDD document
 	 * @param document xdd document
 	 * @param username current user name
@@ -427,6 +469,5 @@ public class DocumentController implements SnakeCaseController {
 		}
 
 	}
-
 
 }
