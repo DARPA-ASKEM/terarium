@@ -8,17 +8,16 @@
 		</template>
 		<template #icons>
 			<label>Include in process</label>
-			<InputSwitch
-				:model-value="isIncluded"
-				@update:model-value="emit('update:is-included')"
-			/>
+			<InputSwitch :model-value="isIncluded" @update:model-value="emit('update:is-included')" />
 
 			<Button v-if="isDeletable" icon="pi pi-trash" text rounded @click="emit('delete')" />
 		</template>
 		<template #togglericon="{ collapsed }">
 			<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 		</template>
-		<slot />
+		<main class="panel-content">
+			<slot />
+		</main>
 	</Panel>
 </template>
 
@@ -64,5 +63,10 @@ header > section {
 	display: flex;
 	align-items: center;
 	gap: 1rem;
+}
+
+.panel-content {
+	display: flex;
+	flex-direction: column;
 }
 </style>

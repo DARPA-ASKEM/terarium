@@ -43,4 +43,7 @@ public interface SkemaRustProxy {
 
 	@PutMapping("/mathml/amr")
 	ResponseEntity<JsonNode> convertMathML2AMR(@RequestBody JsonNode request);
+
+	@PostMapping("/mathml/latex")
+	ResponseEntity<String> convertMathML2Latex(@RequestBody String mathML);
 }
