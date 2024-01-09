@@ -115,3 +115,9 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 	emit('update', clonedState.value);
 }
 </script>
+
+<style scoped>
+:deep(.p-accordion-content > :not(:last-child)) {
+	margin-bottom: var(--gap-small);
+}
+</style>

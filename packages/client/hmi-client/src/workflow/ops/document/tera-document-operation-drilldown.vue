@@ -8,57 +8,7 @@
 			<tera-drilldown-preview hide-header>
 				<h5>{{ document?.name }}</h5>
 
-				<p class="clamp-text">{{ document?.text }}</p>
-				<Accordion multiple :active-index="[0, 1, 2]">
-					<AccordionTab v-if="!isEmpty(clonedState.equations)">
-						<template #header>
-							<header>Equation Images</header>
-						</template>
-						<tera-asset-block
-							v-for="(equation, i) in clonedState.equations"
-							:key="i"
-							:is-included="equation.includeInProcess"
-							@update:is-included="onUpdateInclude(equation)"
-						>
-							<template #header>
-								<h5>{{ equation.name }}</h5>
-							</template>
-							<Image id="img" :src="getAssetUrl(equation)" :alt="''" preview />
-						</tera-asset-block>
-					</AccordionTab>
-					<AccordionTab v-if="!isEmpty(clonedState.figures)">
-						<template #header>
-							<header>Figure Images</header>
-						</template>
-						<tera-asset-block
-							v-for="(figure, i) in clonedState.figures"
-							:key="i"
-							:is-included="figure.includeInProcess"
-							@update:is-included="onUpdateInclude(figure)"
-						>
-							<template #header>
-								<h5>{{ figure.name }}</h5>
-							</template>
-							<Image id="img" :src="getAssetUrl(figure)" :alt="''" preview />
-						</tera-asset-block>
-					</AccordionTab>
-					<AccordionTab v-if="!isEmpty(clonedState.tables)">
-						<template #header>
-							<header>Table Images</header>
-						</template>
-						<tera-asset-block
-							v-for="(table, i) in clonedState.tables"
-							:key="i"
-							:is-included="table.includeInProcess"
-							@update:is-included="onUpdateInclude(table)"
-						>
-							<template #header>
-								<h5>{{ table.name }}</h5>
-							</template>
-							<Image id="img" :src="getAssetUrl(table)" :alt="''" preview />
-						</tera-asset-block>
-					</AccordionTab>
-				</Accordion>
+				<tera-extractions :document="document" :state="clonedState" @update="onUpdateAsset" />
 				<template #footer?>
 					<Button label="Close" @click="emit('close')"></Button>
 				</template>
@@ -69,24 +19,21 @@
 
 <script setup lang="ts">
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { onMounted, ref, watch } from 'vue';
-import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
+import { DocumentAsset } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
 	getDocumentFileAsText
 } from '@/services/document-assets';
-import { cloneDeep, isEmpty } from 'lodash';
-import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
-import Image from 'primevue/image';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
+import { cloneDeep } from 'lodash';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
-import { DocumentOperationState } from './document-operation';
+import TeraExtractions from '@/components/documents/tera-extractions.vue';
+import { DocumentOperationPortType, DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['close', 'update-state', 'update-output-port']);
 const props = defineProps<{
@@ -115,46 +62,29 @@ onMounted(async () => {
 	}
 });
 
-function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
-	asset.includeInProcess = !asset.includeInProcess;
-	emit('update-state', clonedState.value);
+function onUpdateAsset(state: DocumentOperationState) {
+	emit('update-state', state);
+	const outputPorts = props.node.outputs?.filter((port) =>
+		[
+			DocumentOperationPortType.EQUATION,
+			DocumentOperationPortType.TABLE,
+			DocumentOperationPortType.FIGURE
+		].includes(port.type as DocumentOperationPortType)
+	);
 
-	let outputPort: WorkflowOutput<DocumentOperationState> | null = null;
-
-	const portType = assetTypeToPortType(asset.asset.assetType);
-	if (!portType) return;
-
-	outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === portType)) || null;
-	if (!outputPort) return;
-	const selected = clonedState.value[portType]?.filter((a) => a.includeInProcess) ?? [];
-	outputPort.label = `${portType} (${selected?.length}/${clonedState.value[portType]?.length})`;
-	outputPort.value = [
-		{
-			documentId: outputPort.value?.[0]?.documentId,
-			[portType]: clonedState.value[portType]
-		}
-	];
-
-	emit('update-output-port', outputPort);
-}
-
-function assetTypeToPortType(assetType: ExtractionAssetType) {
-	switch (assetType) {
-		case ExtractionAssetType.Equation:
-			return 'equations';
-		case ExtractionAssetType.Figure:
-			return 'figures';
-		case ExtractionAssetType.Table:
-			return 'tables';
-		default:
-			return null;
-	}
-}
-// since AWS links expire we need to use the refetched document image urls to display the images
-function getAssetUrl(asset: AssetBlock<DocumentExtraction>): string {
-	const foundAsset = document.value?.assets?.find((a) => a.fileName === asset.asset.fileName);
-	if (!foundAsset) return '';
-	return foundAsset.metadata?.url;
+	outputPorts.forEach((port) => {
+		const outputPort = cloneDeep(port);
+		if (!outputPort) return;
+		const selected = state[outputPort.type]?.filter((a) => a.includeInProcess) ?? [];
+		outputPort.label = `${outputPort.type} (${selected?.length}/${state[outputPort.type]?.length})`;
+		outputPort.value = [
+			{
+				documentId: outputPort.value?.[0]?.documentId,
+				[outputPort.type]: state[outputPort.type]
+			}
+		];
+		emit('update-output-port', outputPort);
+	});
 }
 
 watch(
@@ -166,14 +96,4 @@ watch(
 );
 </script>
 
-<style scoped>
-.clamp-text {
-	font-size: var(--font-caption);
-	font-weight: var(--font-weight-semibold);
-	max-height: 2em;
-	color: var(--gray-700);
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
-}
-</style>
+<style scoped></style>

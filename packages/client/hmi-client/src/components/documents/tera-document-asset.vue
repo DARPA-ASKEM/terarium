@@ -9,13 +9,13 @@
 		overflow-hidden
 	>
 		<div class="document-asset-container">
-			<tera-drilldown-section>
+			<section>
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<tera-text-editor v-else-if="docText" :initial-text="docText" />
-			</tera-drilldown-section>
-			<tera-drilldown-section class="extractions-section">
+			</section>
+			<section class="extractions-section">
 				<tera-extractions :document="document" :state="clonedState" @update="onUpdateAsset" />
-			</tera-drilldown-section>
+			</section>
 		</div>
 	</tera-asset>
 </template>
@@ -29,7 +29,6 @@ import {
 	getDocumentAsset,
 	getDocumentFileAsText
 } from '@/services/document-assets';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { AssetBlock } from '@/types/workflow';
 import { DocumentOperationState } from '@/workflow/ops/document/document-operation';
 import { FeatureConfig } from '@/types/common';
@@ -121,13 +120,13 @@ watch(
 	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 	overflow: hidden;
 	height: 100%;
+
+	> section {
+		overflow-y: auto;
+	}
 }
 
 .extractions-section {
 	padding: 1rem;
-}
-
-:deep(.p-accordion-content > :not(:last-child)) {
-	margin-bottom: 0.5rem;
 }
 </style>
