@@ -2,10 +2,14 @@ package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -79,6 +83,14 @@ public class ElasticsearchService {
 
 		final RestClientBuilder httpClientBuilder = RestClient.builder(
 				HttpHost.create(config.getUrl()));
+
+		if (config.isAuthEnabled()) {
+			String auth = config.getUsername() + ":" + config.getPassword();
+			String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+			Header header = new BasicHeader("Authorization", "Basic " + encodedAuth);
+
+			httpClientBuilder.setDefaultHeaders(new Header[] { header });
+		}
 
 		final RestClient httpClient = httpClientBuilder.build();
 
