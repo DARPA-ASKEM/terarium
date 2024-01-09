@@ -40,11 +40,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
@@ -65,11 +60,19 @@ import software.uncharted.terarium.hmiserver.models.documentservice.responses.XD
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
+import java.net.URL;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -80,6 +83,8 @@ public class DocumentController {
 	final ExtractionProxy extractionProxy;
 
 	final SkemaUnifiedProxy skemaUnifiedProxy;
+
+	final SkemaRustProxy skemaRustProxy;
 
 	final JsDelivrProxy gitHubProxy;
 
@@ -486,6 +491,38 @@ public class DocumentController {
 		}
 
 	}
+
+	/**
+	 * Post Images to Equations Unified service to get an AMR
+	 *
+	 * @param requestMap (Map<String, Object>) JSON request body containing the following fields:
+	 *  	- format		(String) the format of the equations. Options: "latex", "mathml".
+	 *  	- framework (String) the type of AMR to return. Options: "regnet", "petrinet".
+	 *  	- modelId   (String): the id of the model (to update) based on the set of equations
+	 *  	- equations (List<String>): A list of LaTeX strings representing the functions that are used to convert to AMR model
+	 * @return (ExtractionResponse): The response from the extraction service
+	 */
+	@GetMapping("/{id}/image-to-equation")
+	@Secured(Roles.USER)
+	public ResponseEntity<String> postImageToEquation(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
+		try{
+			final String url = ""//TODO: proxy.getDownloadUrl(documentId, filename).getBody().getUrl();
+			final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
+			// Encode the image in Base 64
+			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+			// image -> mathML
+			final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+
+			// mathML -> LaTeX
+			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
+			return ResponseEntity.ok(latex);
+		} catch (final Exception e) {
+			log.error("Unable to GET equation", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
 
 	/**
 	 * Creates a document asset from an XDD document

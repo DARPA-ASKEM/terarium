@@ -116,6 +116,14 @@ main {
 	gap: 0.5rem;
 }
 
+.p-selectbutton {
+	width: 100%;
+}
+
+.p-selectbutton.p-button-sm:deep(.p-button) {
+	flex-grow: 1;
+}
+
 .container {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);

@@ -5,6 +5,11 @@
 				<div class="form-section">
 					<h4>Mapping</h4>
 					<DataTable class="mapping-table" :value="mapping">
+						<Button
+							class="p-button-sm p-button-text"
+							label="Delete All Mapping"
+							@click="deleteMapping"
+						/>
 						<Column field="modelVariable">
 							<template #header>
 								<span class="column-header">Model variable</span>
@@ -28,6 +33,18 @@
 									placeholder="Select a variable"
 									v-model="data[field]"
 									:options="datasetColumns?.map((ele) => ele.name)"
+								/>
+							</template>
+						</Column>
+						<Column field="deleteRow">
+							<template #header>
+								<span class="column-header"></span>
+							</template>
+							<template #body="{ index }">
+								<Button
+									class="p-button-sm p-button-text"
+									label="Delete"
+									@click="deleteMapRow(index)"
 								/>
 							</template>
 						</Column>
@@ -140,6 +157,7 @@ import {
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
+	DatasetColumn,
 	ModelConfiguration,
 	ProgressState,
 	State
@@ -179,7 +197,7 @@ enum CalibrateTabs {
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<State[] | undefined>();
 
-const datasetColumns = ref<any[]>();
+const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
@@ -357,6 +375,23 @@ function addMapping() {
 	emit('update-state', state);
 }
 
+function deleteMapping() {
+	mapping.value = [{ modelVariable: '', datasetVariable: '' }];
+
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	emit('update-state', state);
+}
+
+function deleteMapRow(index: number) {
+	mapping.value.splice(index, 1);
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	emit('update-state', state);
+}
+
 async function getAutoMapping() {
 	if (!modelStateOptions.value) {
 		toast.error('', 'No model states to map with');
@@ -366,7 +401,10 @@ async function getAutoMapping() {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
-	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
+	mapping.value = (await autoCalibrationMapping(
+		modelStateOptions.value,
+		datasetColumns.value
+	)) as CalibrateMap[];
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);
