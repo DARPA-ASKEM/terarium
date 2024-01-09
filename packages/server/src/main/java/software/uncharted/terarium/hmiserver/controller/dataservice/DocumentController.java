@@ -506,7 +506,7 @@ public class DocumentController {
 	@Secured(Roles.USER)
 	public ResponseEntity<String> postImageToEquation(@PathVariable("id") final String documentId, @RequestParam("filename") final String filename) {
 		try{
-			final String url = ""//TODO: proxy.getDownloadUrl(documentId, filename).getBody().getUrl();
+			final String url = "";//TODO: proxy.getDownloadUrl(documentId, filename).getBody().getUrl();
 			final byte[] imagesByte = IOUtils.toByteArray(new URL(url));
 			// Encode the image in Base 64
 			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
