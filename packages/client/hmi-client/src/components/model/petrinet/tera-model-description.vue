@@ -33,15 +33,15 @@
 					<li class="multiple">
 						<span>
 							<label>Framework</label>
-							<div class="framework">{{ model?.header?.schema_name }}</div>
+							<div class="framework">{{ model?.header?.schemaName }}</div>
 						</span>
 						<span>
 							<label>Model version</label>
-							<div>{{ model?.header?.model_version }}</div>
+							<div>{{ model?.header?.modelVersion }}</div>
 						</span>
 						<span>
 							<label>Date created</label>
-							<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
+							<div>{{ model?.metadata?.processedAt ?? card?.date }}</div>
 						</span>
 					</li>
 					<li>
@@ -70,7 +70,7 @@
 					</li>
 					<li>
 						<label>Source</label>
-						<div>{{ model?.metadata?.processed_by }}</div>
+						<div>{{ model?.metadata?.processedBy }}</div>
 					</li>
 				</ul>
 				<tera-related-documents
@@ -134,7 +134,7 @@ import { isEmpty } from 'lodash';
 import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AssetType, DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import type { AssetType, DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
 import { FeatureConfig, AcceptedExtensions, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
