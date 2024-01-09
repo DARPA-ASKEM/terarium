@@ -37,39 +37,41 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
 }
 
 /**
- * Transform a list of LaTeX strings to an AMR
- * @param latex string[] - list of LaTeX strings representing a model
+ * Transform a list of LaTeX or mathml strings to an AMR
+ * @param format string - the type of equations used to define an AMR ('mathml' or 'latex')
+ * @param equations string[] - list of LaTeX or mathml strings representing a model
  * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
- * @return {Promise<Boolean>}
+ * @return {Promise<any>}
  */
-export const latexToAMR = async (
+export const equationsToAMR = async (
+	format: string,
 	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
-): Promise<Boolean> => {
+): Promise<any> => {
 	try {
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
 			`/knowledge/equations-to-model`,
-			{ format: 'latex', framework, modelId, equations }
+			{ format, framework, modelId, equations }
 		);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;
 			if (status === 'queued') {
 				const result = await fetchExtraction(id);
 				if (result?.state === PollerState.Done && result?.data?.job_result?.status_code === 200) {
-					return true;
+					return result.data;
 				}
 			}
 			if (status === 'finished' && response.data.result.job_result?.status_code === 200) {
-				return true;
+				return response.data.result;
 			}
 		}
-		logger.error(`LaTeX to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
+		logger.error(`Equations to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
 	}
-	return false;
+	return null;
 };
 
 /**

@@ -171,6 +171,23 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 	return response.data;
 }
 
+async function getEquationFromImageUrl(
+	documentId: string,
+	filename: string
+): Promise<string | null> {
+	const response = await API.get(
+		`/document-asset/${documentId}/image-to-equation?filename=${filename}`,
+		{}
+	);
+
+	if (!response || response.status >= 400) {
+		logger.error('Error getting equation from image url');
+		return null;
+	}
+
+	return response.data;
+}
+
 async function getBulkDocumentAssets(docIDs: string[]) {
 	const result: DocumentAsset[] = [];
 	const promiseList = [] as Promise<DocumentAsset | null>[];
@@ -212,5 +229,6 @@ export {
 	getDocumentFileAsText,
 	getBulkDocumentAssets,
 	createDocumentFromXDD,
-	createNewDocumentAsset
+	createNewDocumentAsset,
+	getEquationFromImageUrl
 };
