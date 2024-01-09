@@ -24,7 +24,6 @@
 						</li>
 					</ul>
 				</section>
-				{{ edges }}
 				<section class="trash">
 					<i class="pi pi-trash"></i>
 					<div>Drag items here to delete</div>
@@ -44,8 +43,11 @@
 			>
 				<tera-model-template
 					:card="card"
+					@update-name="(name: string) => updateName(name, index)"
 					@port-selected="createNewEdge(card)"
-					@port-mouseover="onPortMouseover"
+					@port-mouseover="
+						(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
+					"
 					@port-mouseleave="onPortMouseleave"
 				/>
 			</tera-canvas-item>
@@ -87,8 +89,8 @@ defineProps<{
 }>();
 
 interface ModelTemplate {
-	// Position on canvas
 	id: number;
+	name: string;
 	x: number;
 	y: number;
 }
@@ -105,17 +107,17 @@ let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 
-const cards = ref<ModelTemplate[]>([{ id: 1, x: 300, y: 40 }]);
+const cards = ref<ModelTemplate[]>([{ id: 1, name: 'Template name', x: 300, y: 40 }]);
 const edges = ref<ModelTemplateEdge[]>([]);
 
-const newCard: ModelTemplate = { id: -1, x: 0, y: 0 };
+const newCard: ModelTemplate = { id: -1, name: 'Template name', x: 0, y: 0 };
 const newEdge = ref();
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
-	const controlXOffset = 50;
+	const controlXOffset = 0;
 	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
 }
 
@@ -128,10 +130,15 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
+function updateName(name: string, index: number) {
+	cards.value[index].name = name;
+}
+
 function createNewEdge(card: ModelTemplate) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
+			source: card.id,
 			points: [
 				{ x: currentPortPosition.x, y: currentPortPosition.y },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
@@ -141,7 +148,7 @@ function createNewEdge(card: ModelTemplate) {
 		edges.value.push({
 			id: edges.value.length + 1,
 			points: newEdge.value.points,
-			source: card.id,
+			source: newEdge.value.source,
 			target: card.id
 		});
 		cancelNewEdge();
@@ -150,8 +157,17 @@ function createNewEdge(card: ModelTemplate) {
 	console.log(newEdge.value);
 }
 
-function onPortMouseover(position: Position) {
-	currentPortPosition = position;
+function onPortMouseover(event: MouseEvent, card: ModelTemplate, cardWidth: number) {
+	const el = event.target as HTMLElement;
+	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
+	const nodePosition: Position = { x: card.x, y: card.y };
+	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
+
+	currentPortPosition = {
+		x: nodePosition.x + cardWidth + portElement.offsetWidth / 2,
+		y: nodePosition.y + totalOffsetY
+	};
+
 	isMouseOverPort = true;
 }
 
@@ -184,7 +200,7 @@ function updateNewCardPosition(event) {
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-	cards.value.push({ id: cards.value.length + 1, x: newCard.x, y: newCard.y });
+	cards.value.push({ id: cards.value.length + 1, name: newCard.name, x: newCard.x, y: newCard.y });
 }
 
 let prevX = 0;

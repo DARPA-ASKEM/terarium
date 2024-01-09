@@ -1,9 +1,14 @@
 <template>
 	<section class="card-container">
-		<section class="card">
+		<section class="card" ref="card">
 			<div class="draggable"><i class="pi pi-pause" /></div>
 			<main>
-				<header>Template title</header>
+				<header>
+					<span @click="isEditingName = true" v-if="!isEditingName">
+						{{ card.name }}
+					</span>
+					<InputText v-else size="small" type="text" v-model="name" @keyup.enter="updateName" />
+				</header>
 				<section>Diagram/Equations</section>
 			</main>
 			<Button icon="pi pi-ellipsis-v" rounded text />
@@ -11,8 +16,9 @@
 		<ul>
 			<li
 				v-for="(variable, index) in fakeVariables"
+				class="port"
 				:key="index"
-				@mouseenter="emit('port-mouseover', $event)"
+				@mouseenter="emit('port-mouseover', $event, cardRef.clientWidth)"
 				@mouseleave="emit('port-mouseleave')"
 				@focus="() => {}"
 				@blur="() => {}"
@@ -25,11 +31,34 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 
-const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected']);
+interface ModelTemplate {
+	id: number;
+	name: string;
+	x: number;
+	y: number;
+}
+
+const props = defineProps<{ card: ModelTemplate }>();
+
+const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name']);
+
+// Used to pass card width.
+// Unsure if we want to set widths on certain cards but for now this works
+const cardRef = ref();
+
+const isEditingName = ref(false);
+const name = ref(props.card.name);
 
 const fakeVariables = ['X', 'Y', 'p'];
+
+function updateName() {
+	emit('update-name', name);
+	isEditingName.value = false;
+}
 </script>
 
 <style scoped>
@@ -55,6 +84,17 @@ const fakeVariables = ['X', 'Y', 'p'];
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+
+		& > header {
+			cursor: pointer;
+			text-align: center;
+			height: 2rem;
+
+			& > .p-inputtext.p-inputtext-sm {
+				padding: 0.2rem 0.3rem;
+				text-align: center;
+			}
+		}
 
 		& > * {
 			margin: 0 auto;
