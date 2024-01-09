@@ -128,6 +128,12 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 	if (!outputPort) return;
 	const selected = clonedState.value[portType]?.filter((a) => a.includeInProcess) ?? [];
 	outputPort.label = `${portType} (${selected?.length}/${clonedState.value[portType]?.length})`;
+	outputPort.value = [
+		{
+			documentId: outputPort.value?.[0]?.documentId,
+			[portType]: clonedState.value[portType]
+		}
+	];
 
 	emit('update-output-port', outputPort);
 }
