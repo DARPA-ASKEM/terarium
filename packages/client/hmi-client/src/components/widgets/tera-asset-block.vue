@@ -15,7 +15,9 @@
 		<template #togglericon="{ collapsed }">
 			<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 		</template>
-		<slot />
+		<main class="panel-content">
+			<slot />
+		</main>
 	</Panel>
 </template>
 
@@ -61,5 +63,10 @@ header > section {
 	display: flex;
 	align-items: center;
 	gap: 1rem;
+}
+
+.panel-content {
+	display: flex;
+	flex-direction: column;
 }
 </style>
