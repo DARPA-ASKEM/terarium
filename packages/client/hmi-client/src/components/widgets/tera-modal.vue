@@ -60,7 +60,7 @@ aside {
 
 main > section {
 	max-height: 95vh;
-	max-width: 640px;
+	max-width: 1280px;
 	background-color: #fff;
 	border-radius: var(--modal-border-radius);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);

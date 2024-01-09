@@ -14,11 +14,12 @@
 		v-model:visible="isRemoveDialogVisible"
 		style="max-width: 640px"
 	>
-		<p>
+		<p style="margin-bottom: 0.5rem">
 			This action is irreversible and will permanently remove
 			<span style="font-weight: bold">{{ menuProject?.name }}</span>
-			from the system. Are you sure?
+			from the system.
 		</p>
+		<p>Are you sure?</p>
 		<template #footer>
 			<Button label="Cancel" class="p-button-secondary" @click="isRemoveDialogVisible = false" />
 			<Button label="Delete project" severity="danger" @click="removeProject" />
