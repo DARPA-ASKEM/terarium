@@ -90,6 +90,7 @@
 							class="p-inputtext-sm"
 							inputId="numericInput"
 							mode="decimal"
+							:min-fraction-digits="1"
 							v-model="paramValue"
 							@update:model-value="updateParameter(paramValue)"
 						/>
