@@ -2,8 +2,8 @@
 <template>
 	<tera-asset
 		:feature-config="featureConfig"
-		:name="document?.name"
-		:overline="document?.source"
+		:name="highlightSearchTerms(document?.name)"
+		:overline="highlightSearchTerms(document?.source)"
 		@close-preview="emit('close-preview')"
 		:is-loading="isFetchingPDF"
 		overflow-hidden
@@ -32,12 +32,14 @@ import {
 import { AssetBlock } from '@/types/workflow';
 import { DocumentOperationState } from '@/workflow/ops/document/document-operation';
 import { FeatureConfig } from '@/types/common';
+import * as textUtil from '@/utils/text';
 import TeraAsset from '../asset/tera-asset.vue';
 import TeraTextEditor from './tera-text-editor.vue';
 import TeraExtractions from './tera-extractions.vue';
 
 const props = defineProps<{
 	assetId: string;
+	highlight?: string;
 	featureConfig?: FeatureConfig;
 }>();
 
@@ -57,6 +59,14 @@ const emit = defineEmits(['close-preview', 'asset-loaded']);
 
 function onUpdateAsset(state: DocumentOperationState) {
 	clonedState.value = state;
+}
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
 }
 
 watch(
