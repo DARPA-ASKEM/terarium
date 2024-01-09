@@ -109,6 +109,7 @@
 								:projects="tab.projects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
+								class="project-table"
 							/>
 						</section>
 					</TabPanel>
@@ -363,6 +364,9 @@ header > section > button {
 	gap: 16px;
 	padding: 16px;
 	list-style: none;
+}
+:deep(.project-table) {
+	margin: 1rem;
 }
 
 header svg {
