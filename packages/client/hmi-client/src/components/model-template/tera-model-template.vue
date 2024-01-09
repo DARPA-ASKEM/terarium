@@ -1,6 +1,6 @@
 <template>
 	<section class="card-container">
-		<section class="card" ref="card">
+		<section class="card" ref="cardRef">
 			<div class="draggable"><i class="pi pi-pause" /></div>
 			<main>
 				<header>
@@ -18,7 +18,7 @@
 				v-for="(variable, index) in fakeVariables"
 				class="port"
 				:key="index"
-				@mouseenter="emit('port-mouseover', $event, cardRef.clientWidth)"
+				@mouseenter="emit('port-mouseover', $event, cardRef?.clientWidth ?? 0)"
 				@mouseleave="emit('port-mouseleave')"
 				@focus="() => {}"
 				@blur="() => {}"

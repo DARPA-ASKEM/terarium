@@ -153,8 +153,6 @@ function createNewEdge(card: ModelTemplate) {
 		});
 		cancelNewEdge();
 	}
-
-	console.log(newEdge.value);
 }
 
 function onPortMouseover(event: MouseEvent, card: ModelTemplate, cardWidth: number) {
