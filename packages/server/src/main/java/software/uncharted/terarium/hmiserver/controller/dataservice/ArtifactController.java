@@ -184,7 +184,7 @@ public class ArtifactController {
 	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final UUID id,
-			@PathVariable("filename") final String filename) {
+			@RequestParam("filename") final String filename) {
 
 		try {
 			return ResponseEntity.ok(artifactService.getUploadUrl(id, filename));
