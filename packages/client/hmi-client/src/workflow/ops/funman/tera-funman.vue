@@ -330,13 +330,15 @@ const addConstraintForm = () => {
 		timepoints: { lb: 0, ub: 100 },
 		variables: []
 	};
-	state.constraintGroups.push(newGroup);
+	constraintGroups.value.push(newGroup);
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
 const deleteConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	state.constraintGroups.splice(data.index, 1);
+	constraintGroups.value.splice(data.index, 1);
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
