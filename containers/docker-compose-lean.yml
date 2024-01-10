@@ -27,6 +27,8 @@ services:
     ports:
       - "9000:9000"
       - "9090:9090"
+    networks:
+      - terarium
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: admin123
@@ -68,6 +70,12 @@ services:
   neo4j:
     container_name: neo4j
     image: neo4j:5.12-community
+    healthcheck:
+      test: wget http://127.0.0.1:7474 || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 20
+      start_period: 3s
     networks:
       - terarium
     ports:
@@ -152,7 +160,7 @@ services:
       POSTGRES_DB: "postgres"
     volumes:
       - terarium-db:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   db-migration:
     container_name: db-migration
@@ -212,7 +220,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./realm/:/data/
+      - ./scripts/realm/:/data/
     ports:
       - '8081:8081'
 
@@ -222,7 +230,7 @@ services:
       - terarium
     command: [ 'import', '--dir', '/data', '--override', 'false' ]
     volumes:
-      - ./realm:/data
+      - ./scripts/realm:/data
     environment:
       KC_DB: 'postgres'
       KC_DB_URL: 'jdbc:postgresql://postgres/postgres'
@@ -255,35 +263,54 @@ services:
     environment:
       ADOBE_API-KEY: ""
       GOOGLE-ANALYTICS-ID: ""
+      AWS_URL: "http://minio:9000"
+      AWS_ACCESS_KEY_ID: "admin"
+      AWS_SECRET_ACCESS_KEY: "admin123"
       SPICEDB_LAUNCHMODE: "PLAINTEXT"
       SPICEDB_SHARED-KEY: "dev"
       SPICEDB_TARGET: "spicedb:50051"
       SPRING_DATA_REDIS_URL: "redis://redis:6379"
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/terarium"
       SPRING_PROFILES_ACTIVE: "default"
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER-URI: "keycloak:8081/realms/Terarium"
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER-URI: "http://keycloak:8081/realms/Terarium"
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT-ID: "app"
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: "keycloak:8081/realms/Terarium"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: "http://keycloak:8081/realms/Terarium"
       TERARIUM_DB_PASSWORD: "postgres"
       TERARIUM_DB_USERNAME: "postgres"
-      TERARIUM_KEYCLOAK_ADMIN-CLIENT-ID: "admin-cli"
-      TERARIUM_KEYCLOAK_ADMIN-PASSWORD: "admin123"
-      TERARIUM_KEYCLOAK_ADMIN-REALM: "Terarium"
-      TERARIUM_KEYCLOAK_ADMIN-USERNAME: "admin"
-      TERARIUM_KEYCLOAK_CLIENT-ID: "app"
+      TERARIUM_KEYCLOAK_URL: "http://keycloak:8081"
       TERARIUM_KEYCLOAK_REALM: "Terarium"
-      TERARIUM_KEYCLOAK_URL: "keycloak:8081"
+      TERARIUM_KEYCLOAK_CLIENT-ID: "app"
+      TERARIUM_KEYCLOAK_ADMIN-REALM: "master"
+      TERARIUM_KEYCLOAK_ADMIN-CLIENT-ID: "admin-cli"
+      TERARIUM_KEYCLOAK_ADMIN-USERNAME: "admin"
+      TERARIUM_KEYCLOAK_ADMIN-PASSWORD: "admin123"
       TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
       TERARIUM_MQ-HOST: "rabbitmq"
       TERARIUM_MQ-PASSWORD: "terarium123"
       TERARIUM_MQ-POST: "5672"
       TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_ELASTICSEARCH_URL: "http://elasticsearch:9200"
+      TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
+      MANAGMENT_HEALTH_ELASTICSEARCH_ENABLED: false
+      SPRING_DATA_NEO4J_URI: "bolt://neo4j:7687"
+      SPRING_DATA_NEO4J_AUTHENTICATION_USERNAME: "neo4j"
+      SPRING_DATA_NEO4J_AUTHENTICATION_PASSWORD: "password"
+      MANAGMENT_HEALTH_NEO4J_ENABLED: false
+      TGPT_APP_URL: ""
+      TGPT_TOKEN: ""
+      TGPT_WS_URL: ""
+      XDD_API-ES-KEY: ""
+      XDD_API-KEY: ""
     depends_on:
       postgres:
         condition: service_healthy
       spicedb:
         condition: service_healthy
       keycloak:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      neo4j:
         condition: service_healthy
       redis:
         condition: service_started

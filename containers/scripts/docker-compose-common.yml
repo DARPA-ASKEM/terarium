@@ -27,6 +27,8 @@ services:
     ports:
       - "9000:9000"
       - "9090:9090"
+    networks:
+      - terarium
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: admin123
