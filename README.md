@@ -11,9 +11,10 @@ machine extracted models.
 1. [Project Status](#project-status)
 1. [Getting Started](#getting-started)
   1. [Dependencies](#dependencies)
-  1. [Running and Debugging](#running-and-debugging)
+  1. [Developing and Debugging](#running-and-debugging)
      1. [Running the Client](#running-the-client)
      1. [Running the Server](#running-the-server)
+     1. [Running only only for the Data Services](#running-only-for-the-data-services)
   1. [Testing](#testing)
      1. [Running the Client Tests](#running-the-client-tests)
      1. [Running the Server Tests](#running-the-server-tests)
@@ -152,6 +153,27 @@ There should now be a `application-secrets.properties` file in the `packages/ser
 }
 ```
 </details>
+
+### Running only only for the Data Services
+
+A self-contained "lean" version docker-compose-lean.yml with all services necessary to run the `terarium` backend can be spun up with the following:
+
+```shell
+docker compose --file containers/docker-compose-lean.yml pull
+docker compose --file containers/docker-compose-lean.yml up --detach --wait
+```
+
+This will deploy a local `terarium` backend along with all required services along with a localized `keycloak` instance to auth against. In order to hit the data service endpoints on port 3000 you will need to include the following basic auth credential:
+
+```
+'Authorization: Basic YXBpLXNlcnZpY2U6aWNvbiB2aW9sZXQgcmh5bWU='
+```
+
+If you prefer the JSON request / response keys to be `snake_case` rather than `camelCase` include the following header in any data service request:
+
+```
+'X-Enable-Snake-Case'
+```
 
 ## Testing
 
