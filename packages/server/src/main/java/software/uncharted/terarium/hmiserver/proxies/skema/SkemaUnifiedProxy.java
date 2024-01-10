@@ -2,9 +2,12 @@ package software.uncharted.terarium.hmiserver.proxies.skema;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 @FeignClient(name = "skema-unified", url = "${skema-unified.url}")
