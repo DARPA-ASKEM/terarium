@@ -4,7 +4,7 @@
 			<template #header>
 				<header>
 					Equation Images
-					<span style="font-size: var(--font-caption)">({{ countEquations }} selected)</span>
+					<span class="sub-text">({{ countEquations }} selected)</span>
 				</header>
 			</template>
 			<tera-asset-block
@@ -23,7 +23,7 @@
 			<template #header>
 				<header>
 					Figure Images
-					<span style="font-size: var(--font-caption)">({{ countFigures }} selected)</span>
+					<span class="sub-text">({{ countFigures }} selected)</span>
 				</header>
 			</template>
 			<tera-asset-block
@@ -42,7 +42,7 @@
 			<template #header>
 				<header>
 					Table Images
-					<span style="font-size: var(--font-caption)">({{ countTables }} selected)</span>
+					<span class="sub-text">({{ countTables }} selected)</span>
 				</header>
 			</template>
 			<tera-asset-block
@@ -60,7 +60,7 @@
 		<AccordionTab v-if="!isEmpty(document?.text)">
 			<template #header>
 				<header>
-					Text <span style="font-size: var(--font-caption)">({{ countWords }} words)</span>
+					Text <span class="sub-text">({{ countWords }} words)</span>
 				</header>
 			</template>
 			<p>{{ document?.text }}</p>
@@ -119,5 +119,9 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 <style scoped>
 :deep(.p-accordion-content > :not(:last-child)) {
 	margin-bottom: var(--gap-small);
+}
+
+.sub-text {
+	font-size: var(--font-caption);
 }
 </style>
