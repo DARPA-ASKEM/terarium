@@ -1,5 +1,5 @@
 <template>
-	<section class="overview">
+	<tera-columnar-panel>
 		<Accordion multiple :active-index="[0, 1]">
 			<AccordionTab header="Description">
 				<section class="description">
@@ -14,39 +14,73 @@
 				</section>
 			</AccordionTab>
 		</Accordion>
-		<section class="details">
-			<ul></ul>
+		<section class="details-column">
+			<tera-asset-card class="details">
+				<ul>
+					<li class="multiple">
+						<span>
+							<label>Rows</label>
+							<div class="framework">{{ rawContent?.rowCount }}</div>
+						</span>
+						<span>
+							<label>Columns</label>
+							<div>{{ rawContent?.stats?.length }}</div>
+						</span>
+						<span>
+							<label>Date created</label>
+							<div>{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') }}</div>
+						</span>
+					</li>
+					<li>
+						<label>Created by</label>
+						<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
+					</li>
+					<li>
+						<label>Source Name</label>
+						<div>{{ card?.authorEmail }}</div>
+					</li>
+					<li>
+						<label>Source URL</label>
+						<div>{{ dataset?.metadata?.processed_by }}</div>
+					</li>
+				</ul>
+			</tera-asset-card>
 			<tera-related-documents
 				:documents="documents"
 				:asset-type="AssetType.Datasets"
-				:assetId="dataset.id ?? ''"
+				:assetId="dataset?.id ?? ''"
 				@enriched="fetchAsset"
 			/>
 		</section>
-	</section>
+	</tera-columnar-panel>
+	<tera-dataset-overview-table :selected-columns="selectedColumns" />
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import { AssetType, Dataset, DocumentAsset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
 import { AcceptedExtensions, FeatureConfig } from '@/types/common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import * as textUtil from '@/utils/text';
 import { useProjects } from '@/composables/project';
+import TeraAssetCard from '@/components/widgets/tera-asset-card.vue';
+import TeraColumnarPanel from '../widgets/tera-columnar-panel.vue';
+import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 
 const props = defineProps<{
-	dataset: Dataset;
-	highlight: string;
-	featureConfig: FeatureConfig;
+	dataset: Dataset | null;
+	highlight?: string;
+	featureConfig?: FeatureConfig;
+	rawContent: CsvAsset | null;
 }>();
 
 const emit = defineEmits(['fetch-dataset']);
 const card = computed(() => {
-	if (props.dataset.metadata?.card) {
+	if (props.dataset?.metadata?.card) {
 		const cardWithUnknowns = props.dataset.metadata?.card;
 		const cardWithUnknownsArr = Object.entries(cardWithUnknowns);
 
@@ -83,6 +117,25 @@ const documents = computed(
 			})) ?? []
 );
 
+const authors = computed(() => {
+	const authorsArray = props.dataset?.metadata?.annotations?.authors ?? [];
+
+	if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
+
+	return authorsArray.join(', ');
+});
+
+// Table view
+const columns = [
+	{ field: 'id', header: 'ID' },
+	{ field: 'name', header: 'Name' },
+	{ field: 'description', header: 'Description' },
+	{ field: 'unit', header: 'Unit' },
+	{ field: 'datatype', header: 'Data type' }
+];
+
+const selectedColumns = ref(columns);
+
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
 		return textUtil.highlight(text, props.highlight);
@@ -102,6 +155,38 @@ function fetchAsset() {
 	gap: var(--gap-large);
 	& > * {
 		flex: 1;
+	}
+}
+
+.details-column {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-small);
+	> .details {
+		> ul {
+			list-style: none;
+			padding: 0.5rem 1rem;
+			display: flex;
+			flex-direction: column;
+			gap: var(--gap-small);
+
+			& > li.multiple {
+				display: flex;
+
+				& > span {
+					flex: 1 0 0;
+				}
+			}
+
+			& > li label {
+				color: var(--text-color-subdued);
+				font-size: var(--font-caption);
+
+				& + *:empty:before {
+					content: '--';
+				}
+			}
+		}
 	}
 }
 </style>

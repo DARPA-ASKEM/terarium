@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<section class="overview">
+		<tera-columnar-panel>
 			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab header="Description">
 					<section class="description">
@@ -28,51 +28,53 @@
 					</section>
 				</AccordionTab>
 			</Accordion>
-			<section class="details">
-				<ul>
-					<li class="multiple">
-						<span>
-							<label>Framework</label>
-							<div class="framework">{{ model?.header?.schema_name }}</div>
-						</span>
-						<span>
-							<label>Model version</label>
-							<div>{{ model?.header?.model_version }}</div>
-						</span>
-						<span>
-							<label>Date created</label>
-							<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
-						</span>
-					</li>
-					<li>
-						<label>Created by</label>
-						<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
-					</li>
-					<li>
-						<label>Author email</label>
-						<div>{{ card?.authorEmail }}</div>
-					</li>
-					<li>
-						<label>Institution</label>
-						<div>
-							<tera-show-more-text v-if="card?.authorInst" :text="card?.authorInst" :lines="2" />
-						</div>
-					</li>
-					<li class="multiple">
-						<span>
-							<label>License</label>
-							<div>{{ card?.license }}</div>
-						</span>
-						<span>
-							<label>Complexity</label>
-							<div>{{ card?.complexity }}</div>
-						</span>
-					</li>
-					<li>
-						<label>Source</label>
-						<div>{{ model?.metadata?.processed_by }}</div>
-					</li>
-				</ul>
+			<section class="details-column">
+				<tera-asset-card class="details">
+					<ul>
+						<li class="multiple">
+							<span>
+								<label>Framework</label>
+								<div class="framework">{{ model?.header?.schema_name }}</div>
+							</span>
+							<span>
+								<label>Model version</label>
+								<div>{{ model?.header?.model_version }}</div>
+							</span>
+							<span>
+								<label>Date created</label>
+								<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
+							</span>
+						</li>
+						<li>
+							<label>Created by</label>
+							<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
+						</li>
+						<li>
+							<label>Author email</label>
+							<div>{{ card?.authorEmail }}</div>
+						</li>
+						<li>
+							<label>Institution</label>
+							<div>
+								<tera-show-more-text v-if="card?.authorInst" :text="card?.authorInst" :lines="2" />
+							</div>
+						</li>
+						<li class="multiple">
+							<span>
+								<label>License</label>
+								<div>{{ card?.license }}</div>
+							</span>
+							<span>
+								<label>Complexity</label>
+								<div>{{ card?.complexity }}</div>
+							</span>
+						</li>
+						<li>
+							<label>Source</label>
+							<div>{{ model?.metadata?.processed_by }}</div>
+						</li>
+					</ul>
+				</tera-asset-card>
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Models"
@@ -80,7 +82,7 @@
 					@enriched="fetchAsset"
 				/>
 			</section>
-		</section>
+		</tera-columnar-panel>
 		<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
 			<!--Design in flux: diagram will probably be merged with equations (views would be switched with a toggle).
 			However it may be worth showing the diagram and the equation at the same time on this page.
@@ -144,6 +146,8 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
+import TeraAssetCard from '@/components/widgets/tera-asset-card.vue';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
@@ -257,37 +261,33 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	margin-left: 1.5rem;
 }
 
-.details {
+.details-column {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
-	padding-top: 1rem;
-	padding-right: 1rem;
-
-	& > ul {
-		list-style: none;
-		border-radius: var(--border-radius);
-		border: 1px solid var(--surface-border);
-		padding: 0.5rem 1rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		background-color: var(--surface-ground);
-
-		& > li.multiple {
+	gap: var(--gap-small);
+	> .details {
+		> ul {
+			list-style: none;
+			padding: 0.5rem 1rem;
 			display: flex;
+			flex-direction: column;
+			gap: var(--gap-small);
 
-			& > span {
-				flex: 1 0 0;
+			& > li.multiple {
+				display: flex;
+
+				& > span {
+					flex: 1 0 0;
+				}
 			}
-		}
 
-		& > li label {
-			color: var(--text-color-subdued);
-			font-size: var(--font-caption);
+			& > li label {
+				color: var(--text-color-subdued);
+				font-size: var(--font-caption);
 
-			& + *:empty:before {
-				content: '--';
+				& + *:empty:before {
+					content: '--';
+				}
 			}
 		}
 	}
