@@ -91,6 +91,7 @@
 							inputId="numericInput"
 							mode="decimal"
 							:min-fraction-digits="1"
+							:max-fraction-digits="10"
 							v-model="paramValue"
 							@update:model-value="updateParameter(paramValue)"
 						/>

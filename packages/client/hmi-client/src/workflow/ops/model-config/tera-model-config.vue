@@ -44,7 +44,7 @@
 				<tera-model-semantic-tables
 					v-if="configCache[selectedConfigId]"
 					:model="configCache[selectedConfigId].configuration"
-					:is-editable="false"
+					:readonly="true"
 				/>
 			</tera-drilldown-preview>
 		</template>
