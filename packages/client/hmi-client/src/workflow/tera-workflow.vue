@@ -712,7 +712,14 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
+const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	if (!isMouseOverCanvas) return;
+
+	// Update node position
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
+
+	// Update edge positions
 	wf.value.edges.forEach((edge) => {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
@@ -723,13 +730,7 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 			edge.points[edge.points.length - 1].y += y / canvasTransform.k;
 		}
 	});
-}
 
-const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	if (!isMouseOverCanvas) return;
-	node.x += x / canvasTransform.k;
-	node.y += y / canvasTransform.k;
-	updateEdgePositions(node, { x, y });
 	workflowDirty = true;
 };
 
