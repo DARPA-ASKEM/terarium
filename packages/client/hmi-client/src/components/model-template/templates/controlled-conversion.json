@@ -1,0 +1,90 @@
+{
+    "header": {
+        "name": "Controlled conversion",
+        "schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.6/petrinet/petrinet_schema.json",
+        "schema_name": "petrinet",
+        "description": "ControlledConversionTemplateModel",
+        "model_version": "0.1"
+    },
+    "properties": {},
+    "model": {
+        "states": [
+            {
+                "id": "A",
+                "name": "A",
+                "grounding": {
+                    "identifiers": {},
+                    "modifiers": {}
+                }
+            },
+            {
+                "id": "C",
+                "name": "C",
+                "grounding": {
+                    "identifiers": {},
+                    "modifiers": {}
+                }
+            },
+            {
+                "id": "B",
+                "name": "B",
+                "grounding": {
+                    "identifiers": {},
+                    "modifiers": {}
+                }
+            }
+        ],
+        "transitions": [
+            {
+                "id": "ControlledConversion",
+                "input": [
+                    "C",
+                    "A"
+                ],
+                "output": [
+                    "C",
+                    "B"
+                ],
+                "properties": {
+                    "name": "ControlledConversion"
+                }
+            }
+        ]
+    },
+    "semantics": {
+        "ode": {
+            "rates": [
+                {
+                    "target": "ControlledConversion",
+                    "expression": "A*B*p",
+                    "expression_mathml": "<apply><times/><ci>A</ci><ci>B</ci><ci>p</ci></apply>"
+                }
+            ],
+            "initials": [],
+            "parameters": [],
+            "observables": [],
+            "time": {
+                "id": "t",
+                "units": {
+                    "expression": "day",
+                    "expression_mathml": "<ci>day</ci>"
+                }
+            }
+        }
+    },
+    "metadata": {
+        "annotations": {
+            "license": null,
+            "authors": [],
+            "references": [],
+            "time_scale": null,
+            "time_start": null,
+            "time_end": null,
+            "locations": [],
+            "pathogens": [],
+            "diseases": [],
+            "hosts": [],
+            "model_types": []
+        }
+    }
+}

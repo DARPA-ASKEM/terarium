@@ -1,0 +1,70 @@
+{
+    "header": {
+        "name": "Natural degradation",
+        "schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.6/petrinet/petrinet_schema.json",
+        "schema_name": "petrinet",
+        "description": "NaturalDegradationTemplateModel",
+        "model_version": "0.1"
+    },
+    "properties": {},
+    "model": {
+        "states": [
+            {
+                "id": "A",
+                "name": "A",
+                "grounding": {
+                    "identifiers": {},
+                    "modifiers": {}
+                }
+            }
+        ],
+        "transitions": [
+            {
+                "id": "NaturalDegradation",
+                "input": [
+                    "A"
+                ],
+                "output": [],
+                "properties": {
+                    "name": "NaturalDegradation"
+                }
+            }
+        ]
+    },
+    "semantics": {
+        "ode": {
+            "rates": [
+                {
+                    "target": "NaturalDegradation",
+                    "expression": "A*p",
+                    "expression_mathml": "<apply><times/><ci>A</ci><ci>p</ci></apply>"
+                }
+            ],
+            "initials": [],
+            "parameters": [],
+            "observables": [],
+            "time": {
+                "id": "t",
+                "units": {
+                    "expression": "day",
+                    "expression_mathml": "<ci>day</ci>"
+                }
+            }
+        }
+    },
+    "metadata": {
+        "annotations": {
+            "license": null,
+            "authors": [],
+            "references": [],
+            "time_scale": null,
+            "time_start": null,
+            "time_end": null,
+            "locations": [],
+            "pathogens": [],
+            "diseases": [],
+            "hosts": [],
+            "model_types": []
+        }
+    }
+}

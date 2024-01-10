@@ -4,14 +4,14 @@
 			<div class="draggable"><i class="pi pi-pause" /></div>
 			<main>
 				<header>
-					<span @click="isEditingName = true" v-if="!isEditingName">
-						{{ card.name }}
+					<span @click="if (!readOnly) isEditingName = true;" v-if="!isEditingName">
+						{{ card?.name }}
 					</span>
 					<InputText v-else size="small" type="text" v-model="name" @keyup.enter="updateName" />
 				</header>
 				<section>Diagram/Equations</section>
 			</main>
-			<Button icon="pi pi-ellipsis-v" rounded text />
+			<Button v-if="!readOnly" icon="pi pi-ellipsis-v" rounded text />
 		</section>
 		<ul>
 			<li
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 
@@ -42,7 +42,7 @@ interface ModelTemplate {
 	y: number;
 }
 
-const props = defineProps<{ card: ModelTemplate }>();
+const props = defineProps<{ model: any; readOnly: boolean }>();
 
 const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name']);
 
@@ -51,7 +51,18 @@ const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 
 const cardRef = ref();
 
 const isEditingName = ref(false);
-const name = ref(props.card.name);
+
+const card = computed<ModelTemplate>(
+	() =>
+		props.model.metadata.templateCard ?? {
+			id: -1,
+			name: props.model.header.name,
+			x: 0,
+			y: 0
+		}
+);
+
+const name = ref(props.model.header.name);
 
 const fakeVariables = ['X', 'Y', 'p'];
 
@@ -84,6 +95,7 @@ function updateName() {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+		overflow: hidden;
 
 		& > header {
 			cursor: pointer;
@@ -151,10 +163,6 @@ ul {
 /* When a card is placed in the data layer of the infinite canvas 
 (eg. ports shouldn't look selectable if card is in the sidebar) */
 .data-layer .card-container {
-	& .card:hover > .p-button {
-		display: block;
-	}
-
 	& > ul > li:hover {
 		background-color: var(--surface-highlight);
 		cursor: pointer;
