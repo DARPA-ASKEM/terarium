@@ -1,5 +1,5 @@
 <template>
-	<tera-columnar-panel>
+	<tera-columnar-panel class="columns-container">
 		<Accordion multiple :active-index="[0, 1]">
 			<AccordionTab header="Description">
 				<section class="description">
@@ -53,12 +53,13 @@
 			/>
 		</section>
 	</tera-columnar-panel>
-	<tera-dataset-overview-table :selected-columns="selectedColumns" />
+	<h4>Column Information</h4>
+	<tera-dataset-overview-table v-if="dataset?.columns" :data="dataset.columns" />
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
 import { AcceptedExtensions, FeatureConfig } from '@/types/common';
@@ -125,17 +126,6 @@ const authors = computed(() => {
 	return authorsArray.join(', ');
 });
 
-// Table view
-const columns = [
-	{ field: 'id', header: 'ID' },
-	{ field: 'name', header: 'Name' },
-	{ field: 'description', header: 'Description' },
-	{ field: 'unit', header: 'Unit' },
-	{ field: 'datatype', header: 'Data type' }
-];
-
-const selectedColumns = ref(columns);
-
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
 		return textUtil.highlight(text, props.highlight);
@@ -149,6 +139,9 @@ function fetchAsset() {
 </script>
 
 <style scoped>
+.columns-container {
+	padding: 0;
+}
 .overview {
 	display: flex;
 	width: 100%;

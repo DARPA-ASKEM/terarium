@@ -6,28 +6,20 @@
 		:stretch-content="view === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		:is-loading="isDatasetLoading"
+		:overflow-hidden="selectedViewIndex === 1"
 	>
 		<TabView :active-index="selectedViewIndex" @tab-change="(e) => (selectedViewIndex = e.index)">
 			<TabPanel header="Description">
 				<tera-dataset-description :dataset="dataset" :raw-content="rawContent" />
 			</TabPanel>
 			<TabPanel header="Data">
-				<Accordion :multiple="true" :activeIndex="[0, 1]">
-					<AccordionTab>
-						<template #header>
-							Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-						</template>
-						<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
-					</AccordionTab>
-				</Accordion>
+				<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
 			</TabPanel>
 		</TabView>
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onUpdated, Ref, PropType } from 'vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
+import { ref, watch, onUpdated, Ref, PropType } from 'vue';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { downloadRawFile, getDataset } from '@/services/dataset';
@@ -73,8 +65,6 @@ const isDatasetLoading = ref(false);
 const selectedViewIndex = ref(0);
 
 const view = ref(DatasetView.DESCRIPTION);
-
-const csvContent = computed(() => rawContent.value?.csv);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -378,5 +368,22 @@ main :deep(.p-inputtext.p-inputtext-sm) {
 }
 :deep(.p-tabview .p-tabview-nav) {
 	background: none;
+}
+
+:deep(.p-tabview.p-component) {
+	display: flex;
+	height: 100%;
+	overflow: hidden;
+	flex-direction: column;
+}
+
+:deep(.p-tabview-panels),
+:deep(.p-tabview-panel) {
+	overflow: hidden;
+	/* display: flex; */
+	/* height: 100%; */
+	flex: 1;
+	display: flex;
+	flex-direction: column;
 }
 </style>
