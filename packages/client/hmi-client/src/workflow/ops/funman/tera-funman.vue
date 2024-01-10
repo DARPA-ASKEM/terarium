@@ -345,6 +345,7 @@ const deleteConstraintGroupForm = (data) => {
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
 	state.constraintGroups[data.index] = data.updatedConfig;
+	constraintGroups.value[data.index] = data.updatedConfig;
 	emit('update-state', state);
 };
 
