@@ -93,7 +93,7 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
+				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
 			</template>
 			<table
 				v-if="parameters.length > 0"
@@ -119,44 +119,44 @@
 						<td>
 							<input
 								type="text"
-								:value="parameter?.id ?? '--'"
+								:value="parameter.id"
 								@input="updateTable('parameters', i, 'id', $event.target?.['value'])"
 							/>
 						</td>
 						<td>
 							<input
 								type="text"
-								:value="parameter?.name ?? '--'"
+								:value="parameter.name ?? '--'"
 								@input="updateTable('parameters', i, 'name', $event.target?.['value'])"
 							/>
 						</td>
 						<td>
 							<input
 								type="text"
-								:value="parameter?.value ?? '--'"
+								:value="parameter.value ?? '--'"
 								@input="updateTable('parameters', i, 'value', $event.target?.['value'])"
 							/>
 						</td>
-						<td>--</td>
 						<td>
-							<template v-if="parameter?.distribution?.parameters">
-								[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
-								{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
+							<template v-if="parameter.distribution?.parameters">
+								[{{ round(parameter.distribution?.parameters.minimum, 4) }},
+								{{ round(parameter.distribution?.parameters.maximum, 4) }}]
 							</template>
 							<template v-else>--</template>
 						</td>
-						<td v-if="extractions?.[parameter?.id]" style="grid-column: 1 / span 4">
+						<td v-if="extractions?.[parameter.id]" style="grid-column: 1 / span 4">
 							<tera-model-extraction :extractions="extractions[parameter.id]" />
 						</td>
+						<td v-else>--</td>
 					</template>
 					<template v-else>
-						<td>{{ parameter?.id }}</td>
-						<td>{{ parameter?.name }}</td>
-						<td>{{ parameter?.value }}</td>
+						<td>{{ parameter.id }}</td>
+						<td>{{ parameter.name }}</td>
+						<td>{{ parameter.value }}</td>
 						<td>
-							<template v-if="parameter?.distribution?.parameters">
-								[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
-								{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
+							<template v-if="parameter.distribution?.parameters">
+								[{{ round(parameter.distribution?.parameters.minimum, 4) }},
+								{{ round(parameter.distribution?.parameters.maximum, 4) }}]
 							</template>
 							<template v-else>--</template>
 						</td>
@@ -164,8 +164,8 @@
 							<template v-if="extractions?.[parameter.id]">
 								<Tag
 									class="clickable-tag"
-									:value="extractions?.[parameter?.id].length"
-									@click="openExtractions(VariableTypes.PARAMETER, parameter?.id)"
+									:value="extractions?.[parameter.id].length"
+									@click="openExtractions(VariableTypes.PARAMETER, parameter.id)"
 								/>
 							</template>
 							<template v-else>--</template>
