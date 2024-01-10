@@ -1,6 +1,197 @@
 ---
 version: "3.8"
 
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - terarium
+    ports:
+      - "6379:6379"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2023-11-15T20-43-25Z
+    command: [ "server", "/data", "--console-address", ":9090" ]
+    healthcheck:
+      test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    ports:
+      - "9000:9000"
+      - "9090:9090"
+    networks:
+      - terarium
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - minio-data:/data
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.7.0
+    networks:
+      - terarium
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--head",
+          "0.0.0.0:9200/_cluster/health?wait_for_status=yellow"
+        ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    environment:
+      - cluster.name=elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  neo4j:
+    container_name: neo4j
+    image: neo4j:5.12-community
+    networks:
+      - terarium
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_PLUGINS=["apoc"]
+      - apoc.import.file.enabled=true
+      - NEO4J_AUTH=none
+      - NEO4J_dbms_memory_pagecache_size=512M
+      - PG_HOST=postgres
+      - PG_PORT=5432
+    depends_on:
+      - postgres
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management-alpine
+    networks:
+      - terarium
+    ports:
+      - "5672:5672"
+      - "15671:15671"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "terarium"
+      RABBITMQ_DEFAULT_PASS: "terarium123"
+      RABBITMQ_MANAGEMENT_ENABLED: "true"
+
+  spicedb:
+    container_name: spicedb
+    image: authzed/spicedb:v1.28.0
+    networks:
+      - terarium
+    ports:
+      - "50051:50051"
+    command: [ "serve" ]
+    environment:
+      SPICEDB_GRPC_PRESHARED_KEY: "dev"
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_HTTP_ENABLED: "true"
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    healthcheck:
+      test: [ "CMD", "grpc_health_probe", "-addr=:50051" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    depends_on:
+      migrate-spicedb:
+        condition: service_completed_successfully
+
+  migrate-spicedb:
+    image: authzed/spicedb:v1.28.0
+    networks:
+      - terarium
+    command: [ "migrate", "head" ]
+    restart: "on-failure"
+    environment:
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    container_name: postgres
+    image: postgres:14-alpine
+    networks:
+      - terarium
+    ports:
+      - "5430:5432"
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "terarium" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    user: postgres
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
+    volumes:
+      - terarium-db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  db-migration:
+    container_name: db-migration
+    image: ghcr.io/darpa-askem/db-migration:latest
+    networks:
+      - terarium
+    environment:
+      SPRING_PROFILES_ACTIVE: "default, local-docker"
+      TERARIUM_DB_PASSWORD: "postgres"
+      TERARIUM_DB_USERNAME: "postgres"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  # rebac-permission-init:
+  #   image: ghcr.io/darpa-askem/permissions:local_1
+  #   container_name: permissions
+  #   networks:
+  #     - terarium
+  #   environment:
+  #     SPICEDB_SHARED_KEY: "dev"
+  #     SPICEDB_TARGET: "${local_host_name}:50051"
+  #     SPICEDB_INSECURE: "true"
+  #     TERARIUM_KEYCLOAK_ADMIN_CLIENT_ID: "${secret_terarium_keycloak_admin_client_id}"
+  #     TERARIUM_KEYCLOAK_ADMIN_PASSWORD: "${secret_terarium_keycloak_admin_password}"
+  #     TERARIUM_KEYCLOAK_ADMIN_USERNAME: "${secret_terarium_keycloak_admin_username}"
+  #     TERARIUM_KEYCLOAK_REALM: "${secret_terarium_keycloak_realm}"
+  #     TERARIUM_KEYCLOAK_URL: "${secret_terarium_keycloak_url}"
+  #   depends_on:
+  #     spicedb:
+  #       condition: service_healthy
+
+volumes:
+  elasticsearch-data:
+  minio-data:
+  terarium-db:
+    driver: local
+
 networks:
   terarium:
     name: terarium

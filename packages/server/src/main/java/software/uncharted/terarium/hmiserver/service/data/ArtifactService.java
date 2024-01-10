@@ -77,28 +77,34 @@ public class ArtifactService {
 		return String.join("/", config.getArtifactPath(), artifactId.toString(), filename);
 	}
 
-	public PresignedURL getUploadUrl(UUID artifactId, String filename) {
+	public PresignedURL getUploadUrl(UUID id, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
 				config.getFileStorageS3BucketName(),
-				getPath(artifactId, filename),
+				getPath(id, filename),
 				HOUR_EXPIRATION));
 		presigned.setMethod("PUT");
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(UUID artifactId, String filename) {
+	public Optional<PresignedURL> getDownloadUrl(UUID artifactId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
-		PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
+		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
 				getPath(artifactId, filename),
-				HOUR_EXPIRATION));
+				HOUR_EXPIRATION);
+
+		if (url.isEmpty()) {
+			return Optional.empty();
+		}
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
 		presigned.setMethod("GET");
-		return presigned;
+		return Optional.of(presigned);
 	}
 
 }

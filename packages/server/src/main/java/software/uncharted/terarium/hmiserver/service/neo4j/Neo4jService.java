@@ -9,7 +9,10 @@ import org.neo4j.driver.Session;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class Neo4jService {
 
 	@Value("${spring.data.neo4j.uri}")
@@ -25,6 +28,7 @@ public class Neo4jService {
 
 	@PostConstruct
 	public void init() {
+		log.info("Connecting to Neo4j at {}", uri);
 		driver = GraphDatabase.driver(uri, AuthTokens.basic(username, password));
 	}
 

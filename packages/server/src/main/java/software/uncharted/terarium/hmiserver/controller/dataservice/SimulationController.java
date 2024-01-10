@@ -163,7 +163,11 @@ public class SimulationController {
 			@RequestParam("filename") final String filename) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build()) {
-			final PresignedURL presignedURL = simulationService.getDownloadUrl(id, filename);
+			Optional<PresignedURL> url = simulationService.getDownloadUrl(id, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			if (presignedURL == null) {
 				final String error = String.format("Failed to get presigned URL for result of simulation %s", id);
 				log.error(error);

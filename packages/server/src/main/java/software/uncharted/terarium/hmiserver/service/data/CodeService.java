@@ -142,16 +142,22 @@ public class CodeService {
 	 * @param filename The name of the file.
 	 * @return A presigned download URL.
 	 */
-	public PresignedURL getDownloadUrl(UUID codeId, String filename) {
+	public Optional<PresignedURL> getDownloadUrl(UUID codeId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
-		PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
+		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
 				getPath(codeId, filename),
-				HOUR_EXPIRATION));
+				HOUR_EXPIRATION);
+
+		if (url.isEmpty()) {
+			return Optional.empty();
+		}
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
 		presigned.setMethod("GET");
-		return presigned;
+		return Optional.of(presigned);
 	}
 
 }

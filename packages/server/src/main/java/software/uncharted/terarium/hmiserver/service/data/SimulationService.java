@@ -91,14 +91,22 @@ public class SimulationService {
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(final UUID id, final String filename) {
-		final PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
+	public Optional<PresignedURL> getDownloadUrl(UUID id, String filename) {
+		long HOUR_EXPIRATION = 60;
+
+		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
 				getPath(id, filename),
-				HOUR_EXPIRATION));
+				HOUR_EXPIRATION);
+
+		if (url.isEmpty()) {
+			return Optional.empty();
+		}
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
 		presigned.setMethod("GET");
-		return presigned;
+		return Optional.of(presigned);
 	}
 
 	private String getResultsPath(UUID simId, String filename) {
