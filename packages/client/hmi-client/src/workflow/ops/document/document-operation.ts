@@ -1,11 +1,16 @@
 import { DocumentExtraction } from '@/types/Types';
 import { Operation, AssetBlock, WorkflowOperationTypes } from '@/types/workflow';
 
+export enum DocumentOperationPortType {
+	EQUATION = 'equations',
+	TABLE = 'tables',
+	FIGURE = 'figures'
+}
 export interface DocumentOperationState {
 	documentId: string | null;
-	equations: AssetBlock<DocumentExtraction>[];
-	tables: AssetBlock<DocumentExtraction>[];
-	figures: AssetBlock<DocumentExtraction>[];
+	[DocumentOperationPortType.EQUATION]: AssetBlock<DocumentExtraction>[];
+	[DocumentOperationPortType.TABLE]: AssetBlock<DocumentExtraction>[];
+	[DocumentOperationPortType.FIGURE]: AssetBlock<DocumentExtraction>[];
 }
 
 export const DocumentOperation: Operation = {
