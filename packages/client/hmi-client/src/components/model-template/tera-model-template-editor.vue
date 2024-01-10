@@ -25,7 +25,6 @@
 								read-only
 								draggable="true"
 								@dragstart="newModelTemplate = modelTemplate"
-								@dragend="newModelTemplate = null"
 							/>
 						</li>
 					</ul>
@@ -84,6 +83,7 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep } from 'lodash';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import * as d3 from 'd3';
 import { Position } from '@/types/workflow'; // temp
@@ -235,7 +235,9 @@ function onDrop(event) {
 	updateNewCardPosition(event);
 
 	newModelTemplate.value.metadata.templateCard.id = modelTemplates.value.length + 1;
-	modelTemplates.value.push(newModelTemplate.value);
+	modelTemplates.value.push(cloneDeep(newModelTemplate.value));
+	newModelTemplate.value = null;
+	console.log(modelTemplates.value);
 }
 
 let prevX = 0;
@@ -295,6 +297,7 @@ aside {
 	border-right: 1px solid var(--surface-border-alt);
 	padding: var(--gap) 0;
 	gap: 0.5rem;
+	overflow: hidden;
 }
 
 ul {

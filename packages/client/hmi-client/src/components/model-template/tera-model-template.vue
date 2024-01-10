@@ -15,7 +15,7 @@
 		</section>
 		<ul>
 			<li
-				v-for="(variable, index) in fakeVariables"
+				v-for="({ id }, index) in [...model.model.states, ...model.model.transitions]"
 				class="port"
 				:key="index"
 				@mouseenter="emit('port-mouseover', $event, cardRef?.clientWidth ?? 0)"
@@ -24,7 +24,7 @@
 				@blur="() => {}"
 				@click.stop="emit('port-selected')"
 			>
-				{{ variable }}
+				{{ id }}
 			</li>
 		</ul>
 	</section>
@@ -63,8 +63,6 @@ const card = computed<ModelTemplate>(
 );
 
 const name = ref(props.model.header.name);
-
-const fakeVariables = ['X', 'Y', 'p'];
 
 function updateName() {
 	emit('update-name', name);
@@ -126,7 +124,8 @@ ul {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	margin: 0.5rem 0;
+	padding: 0.5rem 0;
+	margin: auto 0;
 
 	& > li {
 		background-color: var(--surface-section);
