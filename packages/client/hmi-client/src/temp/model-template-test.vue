@@ -1,7 +1,7 @@
 <template>
-	<tera-model-templator />
+	<tera-model-template-editor />
 </template>
 
 <script setup lang="ts">
-import TeraModelTemplator from '@/components/model-template/tera-model-templator.vue';
+import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 </script>
