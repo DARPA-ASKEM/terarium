@@ -236,7 +236,11 @@ public class TDSCodeController {
 				.disableRedirectHandling()
 				.build()) {
 
-			final PresignedURL presignedURL = codeService.getDownloadUrl(codeId, filename);
+			Optional<PresignedURL> url = codeService.getDownloadUrl(codeId, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);

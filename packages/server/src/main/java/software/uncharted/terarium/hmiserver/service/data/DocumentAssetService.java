@@ -90,16 +90,22 @@ public class DocumentAssetService {
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(UUID documentId, String filename) {
+	public Optional<PresignedURL> getDownloadUrl(UUID documentId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
-		PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
+		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
 				getPath(documentId, filename),
-				HOUR_EXPIRATION));
+				HOUR_EXPIRATION);
+
+		if (url.isEmpty()) {
+			return Optional.empty();
+		}
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
 		presigned.setMethod("GET");
-		return presigned;
+		return Optional.of(presigned);
 	}
 
 	public String getDocumentDoi(Document doc) {

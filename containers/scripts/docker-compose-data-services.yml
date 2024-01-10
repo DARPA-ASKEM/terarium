@@ -10,7 +10,7 @@ services:
     ports:
       - "3050:8888"
     environment:
-      DATA_SERVICE_URL: "http://${local_host_name}:3020"
+      DATA_SERVICE_URL: "http://${local_host_name}:3000"
       JUPYTER_SERVER: "http://${local_host_name}:3050"
       SIMULATION_SCHEDULER_URL: "http://${local_host_name}:3030"
       JUPYTER_TOKEN: "89f73481102c46c0bc13b2998f9a4fce"
@@ -23,7 +23,7 @@ services:
     ports:
       - "3060:8000"
     environment:
-      TDS_URL: "http://${local_host_name}:3020"
+      TDS_URL: "http://${local_host_name}:3000"
       SKEMA_RS_URL: "https://skema-rs.staging.terarium.ai"
       SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
       MIT_TR_URL: "https://mit-tr.staging.terarium.ai"
@@ -36,7 +36,7 @@ services:
     networks:
       - terarium
     environment:
-      TDS_URL: "http://${local_host_name}:3020"
+      TDS_URL: "http://${local_host_name}:3000"
       SKEMA_RS_URL: "https://skema-rs.staging.terarium.ai"
       SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
       MIT_TR_URL: "https://mit-tr.staging.terarium.ai"

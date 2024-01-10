@@ -160,16 +160,22 @@ public class ExternalPublicationService {
 	 * @param filename The name of the file.
 	 * @return The generated pre-signed URL for downloading the file.
 	 */
-	public PresignedURL getDownloadUrl(UUID id, String filename) {
+	public Optional<PresignedURL> getDownloadUrl(UUID id, String filename) {
 		long HOUR_EXPIRATION = 60;
 
-		PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
+		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
 				getPath(id, filename),
-				HOUR_EXPIRATION));
+				HOUR_EXPIRATION);
+
+		if (url.isEmpty()) {
+			return Optional.empty();
+		}
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
 		presigned.setMethod("GET");
-		return presigned;
+		return Optional.of(presigned);
 	}
 
 }

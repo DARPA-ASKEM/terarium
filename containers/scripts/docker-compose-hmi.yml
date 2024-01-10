@@ -34,7 +34,6 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER-URI: "${secret_terarium_keycloak_url}/realms/${secret_terarium_keycloak_realm}"
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT-ID: "${secret_terarium_keycloak_client_id}"
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: "${secret_terarium_keycloak_url}/realms/${secret_terarium_keycloak_realm}"
-      TERARIUM_DATASERVICE_URL: "http://${local_host_name}:3020"
       TERARIUM_DB_PASSWORD: "postgres"
       TERARIUM_DB_USERNAME: "postgres"
       TERARIUM_KEYCLOAK_ADMIN-CLIENT-ID: "${secret_terarium_keycloak_admin_client_id}"

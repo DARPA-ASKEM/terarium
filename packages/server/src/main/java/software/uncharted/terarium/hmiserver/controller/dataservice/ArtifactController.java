@@ -206,10 +206,14 @@ public class ArtifactController {
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id,
-			@PathVariable("filename") final String filename) {
+			@RequestParam("filename") final String filename) {
 
 		try {
-			return ResponseEntity.ok(artifactService.getDownloadUrl(id, filename));
+			Optional<PresignedURL> url = artifactService.getDownloadUrl(id, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(url.get());
 		} catch (Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
@@ -233,7 +237,11 @@ public class ArtifactController {
 				.disableRedirectHandling()
 				.build()) {
 
-			final PresignedURL presignedURL = artifactService.getDownloadUrl(artifactId, filename);
+			Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -265,7 +273,11 @@ public class ArtifactController {
 				.disableRedirectHandling()
 				.build()) {
 
-			final PresignedURL presignedURL = artifactService.getDownloadUrl(artifactId, filename);
+			Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {

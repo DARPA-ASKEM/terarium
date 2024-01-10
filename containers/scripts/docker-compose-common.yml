@@ -16,17 +16,22 @@ services:
       timeout: "3s"
       retries: 30
 
-  seaweedfs:
-    container_name: seaweedfs
-    image: chrislusf/seaweedfs:latest
+  minio:
+    image: quay.io/minio/minio:RELEASE.2023-11-15T20-43-25Z
+    command: [ "server", "/data", "--console-address", ":9090" ]
+    healthcheck:
+      test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
     ports:
-      - "4566:8333"
-    networks:
-      terarium:
-    command: server -s3
+      - "9000:9000"
+      - "9090:9090"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
     volumes:
-      - "seaweedfs-data:/data"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - minio-data:/data
 
   elasticsearch:
     container_name: elasticsearch
@@ -181,7 +186,7 @@ services:
 
 volumes:
   elasticsearch-data:
-  seaweedfs-data:
+  minio-data:
   terarium-db:
     driver: local
 
