@@ -18,9 +18,7 @@ services:
       SIMSERVICE_RABBITMQ_HOST: "${local_host_name}"
       SIMSERVICE_RABBITMQ_PORT: "5672"
     depends_on:
-      message-queue:
-        condition: service_started
-      data-service:
+      rabbitmq:
         condition: service_started
 
   pyciemss-api:
@@ -39,8 +37,6 @@ services:
     depends_on:
       redis:
         condition: service_started
-      data-service:
-        condition: service_started
 
   pyciemss-worker:
     container_name: pyciemss-worker
@@ -55,6 +51,4 @@ services:
       REDIS_PORT: "6379"
     depends_on:
       redis:
-        condition: service_started
-      data-service:
         condition: service_started

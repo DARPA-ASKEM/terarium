@@ -10,7 +10,13 @@ services:
     ports:
       - "3000:3000"
     healthcheck:
-      test: ["CMD", "curl", "--head", "0.0.0.0:3000/actuator/health"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "--head",
+          "0.0.0.0:3000/actuator/health"
+        ]
       interval: "3s"
       timeout: "3s"
       retries: 30
@@ -48,29 +54,27 @@ services:
       TGPT_WS_URL: "ws://${local_host_name}:3050/beaker_ws/"
       XDD_API-ES-KEY: "${secret_xdd_api_es_key}"
       XDD_API-KEY: "${secret_xdd_api_key}"
-#      GITHUB_URL: https://api.github.com
-#      JSDELIVR_URL: https://cdn.jsdelivr.net
-#      MIRA-API_URL: http://34.230.33.149:8771
-#      MIT-PROXY_URL: https://mit-proxy.staging.terarium.ai
-#      SKEMA-PY_URL: https://skema-py.staging.terarium.ai
-#      SKEMA-RS_URL: https://skema-rs.staging.terarium.ai
-#      SKEMA-UNIFIED_URL: https://skema-unified.staging.terarium.ai
-#      XDD-DEV-SERVICE_URL: https://xdddev.chtc.io
-#      XDD-PROD-SERVICE_URL: https://xdd.wisc.edu
+    #      GITHUB_URL: https://api.github.com
+    #      JSDELIVR_URL: https://cdn.jsdelivr.net
+    #      MIRA-API_URL: http://34.230.33.149:8771
+    #      MIT-PROXY_URL: https://mit-proxy.staging.terarium.ai
+    #      SKEMA-PY_URL: https://skema-py.staging.terarium.ai
+    #      SKEMA-RS_URL: https://skema-rs.staging.terarium.ai
+    #      SKEMA-UNIFIED_URL: https://skema-unified.staging.terarium.ai
+    #      XDD-DEV-SERVICE_URL: https://xdddev.chtc.io
+    #      XDD-PROD-SERVICE_URL: https://xdd.wisc.edu
     depends_on:
       postgres:
         condition: service_healthy
       spicedb:
         condition: service_healthy
-      data-service:
-        condition: service_started
       knowledge-middleware-api:
         condition: service_started
       model-service:
         condition: service_started
       redis:
         condition: service_started
-      message-queue:
+      rabbitmq:
         condition: service_started
 
   hmi-client:
@@ -82,7 +86,7 @@ services:
       - "8080:80"
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "--head", "0.0.0.0:80/healthcheck"]
+      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
       interval: "3s"
       timeout: "3s"
       retries: 30
@@ -99,7 +103,7 @@ services:
       - "8082:80"
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "--head", "0.0.0.0:80/healthcheck"]
+      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
       interval: "3s"
       timeout: "3s"
       retries: 30
