@@ -198,14 +198,14 @@ public class DocumentController {
 
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets a presigned url to download the document")
+	@Operation(summary = "Gets a presigned url to upload the document")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final UUID id,
-			@PathVariable("filename") final String filename) {
+			@RequestParam("filename") final String filename) {
 
 		try {
 			return ResponseEntity.ok(documentAssetService.getUploadUrl(id, filename));
