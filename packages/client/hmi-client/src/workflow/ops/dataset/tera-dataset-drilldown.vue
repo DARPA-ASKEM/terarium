@@ -61,7 +61,7 @@ const fetchDataset = async () => {
 </script>
 
 <style scoped>
-.dataset-container {
+.datatable-container {
 	display: flex;
 	flex-direction: column;
 	flex: 1;

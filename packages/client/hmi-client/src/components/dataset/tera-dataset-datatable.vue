@@ -4,14 +4,10 @@
 		<span class="datatable-toolbar-item">
 			{{ csvHeaders?.length || 'No' }} columns | {{ csvContent?.length || 'No' }} rows
 		</span>
-		<Button
-			class="datatable-toolbar-item"
-			label="Download"
-			icon="pi pi-download"
-			text
-			outlined
-			style="margin-left: auto"
-		/>
+		<span class="datatable-toolbar-item" style="margin-left: auto">
+			Show column summaries<InputSwitch v-model="showSummaries" />
+		</span>
+		<Button class="datatable-toolbar-item" label="Download" icon="pi pi-download" text outlined />
 		<span class="datatable-toolbar-item">
 			<MultiSelect
 				:modelValue="selectedColumns"
@@ -54,6 +50,38 @@
 			sortable
 			:frozen="index == 0"
 		>
+			<template #header>
+				<!-- column summary charts below -->
+				<div v-if="!previewMode && props.rawContent?.stats && showSummaries" class="column-summary">
+					<div class="column-summary-row">
+						<span class="column-summary-label">Max:</span>
+						<span class="column-summary-value">{{ csvMaxsToDisplay?.at(index) }}</span>
+					</div>
+					<Chart
+						class="histogram"
+						type="bar"
+						:height="480"
+						:data="chartData?.at(index)"
+						:options="chartOptions"
+					/>
+					<div class="column-summary-row max">
+						<span class="column-summary-label">Min:</span>
+						<span class="column-summary-value">{{ csvMinsToDisplay?.at(index) }}</span>
+					</div>
+					<div class="column-summary-row">
+						<span class="column-summary-label">Mean:</span>
+						<span class="column-summary-value">{{ csvMeansToDisplay?.at(index) }}</span>
+					</div>
+					<div class="column-summary-row">
+						<span class="column-summary-label">Median:</span>
+						<span class="column-summary-value">{{ csvMedianToDisplay?.at(index) }}</span>
+					</div>
+					<div class="column-summary-row">
+						<span class="column-summary-label">SD:</span>
+						<span class="column-summary-value">{{ csvSdToDisplay?.at(index) }}</span>
+					</div>
+				</div>
+			</template>
 		</Column>
 	</DataTable>
 </template>
@@ -65,6 +93,7 @@ import Column from 'primevue/column';
 import { CsvAsset } from '@/types/Types';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
+import Chart from 'primevue/chart';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
@@ -75,10 +104,116 @@ const props = defineProps<{
 	tableStyle?: String;
 }>();
 
+const CATEGORYPERCENTAGE = 1.0;
+const BARPERCENTAGE = 1.0;
+const MINBARLENGTH = 1;
+
+const showSummaries = ref(true);
+
 const csvContent = computed(() => props.rawContent?.data || props.rawContent?.csv);
 const csvHeaders = computed(() => props.rawContent?.headers);
+const chartData = computed(
+	() => props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))
+);
 
 const selectedColumns = ref(csvHeaders?.value);
+
+const csvMinsToDisplay = computed(
+	() => props.rawContent?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
+);
+const csvMaxsToDisplay = computed(
+	() => props.rawContent?.stats?.map((stat) => Math.round(stat.maxValue * 1000) / 1000)
+);
+const csvMeansToDisplay = computed(
+	() => props.rawContent?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000)
+);
+const csvMedianToDisplay = computed(
+	() => props.rawContent?.stats?.map((stat) => Math.round(stat.median * 1000) / 1000)
+);
+const csvSdToDisplay = computed(
+	() => props.rawContent?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000)
+);
+const chartOptions = computed(() => setChartOptions());
+
+// Given the bins for a column set up the object needed for the chart.
+const setBarChartData = (bins: any[]) => {
+	const documentStyle = getComputedStyle(document.documentElement);
+	const dummyLabels: string[] = [];
+	// reverse the bins so that the chart is displayed in the correct order
+	bins.reverse();
+	for (let i = 0; i < bins.length; i++) {
+		dummyLabels.push(i.toString());
+	}
+	return {
+		labels: [
+			'Bin 1',
+			'Bin 2',
+			'Bin 3',
+			'Bin 4',
+			'Bin 5',
+			'Bin 6',
+			'Bin 7',
+			'Bin 8',
+			'Bin 9',
+			'Bin 10'
+		].reverse(),
+		datasets: [
+			{
+				label: 'Count',
+				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
+				hoverBackgroundColor: documentStyle.getPropertyValue('--primary-color-light'),
+				data: bins,
+				categoryPercentage: CATEGORYPERCENTAGE,
+				barPercentage: BARPERCENTAGE,
+				minBarLength: MINBARLENGTH
+			}
+		]
+	};
+};
+
+const setChartOptions = () => {
+	const documentStyle = getComputedStyle(document.documentElement);
+	return {
+		indexAxis: 'y',
+		plugins: {
+			legend: {
+				labels: {
+					display: false
+				},
+				display: false
+			},
+			tooltip: {
+				enabled: true,
+				position: 'nearest',
+				displayColors: false,
+				beforeTitle: 'Count:',
+				backgroundColor: '#666666dd'
+			}
+		},
+		scales: {
+			x: {
+				ticks: {
+					display: false
+				},
+				grid: {
+					display: false,
+					drawBorder: false
+				}
+			},
+			y: {
+				ticks: {
+					display: false
+				},
+				grid: {
+					display: false,
+					drawBorder: false,
+					borderColor: documentStyle.getPropertyValue('--surface-border-light')
+				}
+			}
+		}
+	};
+};
+
 const onToggle = (val) => {
 	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
 };
@@ -147,6 +282,10 @@ const onToggle = (val) => {
 .column-summary-row.max {
 	position: relative;
 	top: -0.5rem;
+}
+
+.histogram {
+	height: 100px;
 }
 
 .p-datatable-flex-scrollable {
