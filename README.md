@@ -166,7 +166,7 @@ docker compose --file containers/docker-compose-lean.yml up --detach --wait
 This will deploy a local `terarium` backend along with all required services along with a localized `keycloak` instance to auth against. In order to hit the data service endpoints on port 3000 you will need to include the following basic auth credential:
 
 ```
-'Authorization: Basic YXBpLXNlcnZpY2U6aWNvbiB2aW9sZXQgcmh5bWU='
+'Authorization: Basic YWRhbTphc2RmMUFTREY='
 ```
 
 If you prefer the JSON request / response keys to be `snake_case` rather than `camelCase` include the following header in any data service request:
