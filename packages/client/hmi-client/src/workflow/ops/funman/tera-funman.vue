@@ -13,15 +13,15 @@
 					<div class="section-row timespan">
 						<div class="button-column">
 							<label>Start time</label>
-							<InputNumber inputId="integeronly" v-model="startTime" />
+							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.start" />
 						</div>
 						<div class="button-column">
 							<label>End time</label>
-							<InputNumber inputId="integeronly" v-model="endTime" />
+							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.end" />
 						</div>
 						<div class="button-column">
 							<label>Number of steps</label>
-							<InputNumber inputId="integeronly" v-model="numberOfSteps" />
+							<InputNumber inputId="integeronly" v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
 					<InputText
@@ -45,21 +45,22 @@
 								:max="1"
 								:min-fraction-digits="0"
 								:max-fraction-digits="7"
-								v-model="tolerance"
+								v-model="knobs.tolerance"
 							/>
 						</div>
-						<Slider v-model="tolerance" :min="0" :max="1" :step="0.01" />
+						<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" />
 						<div class="section-row">
 							<!-- This will definitely require a proper tool tip. -->
-							<label>Select parameters to synthesize <i class="pi pi-info-circle" /></label>
-							<div
-								v-for="(parameter, index) of requestParameters"
-								:key="index"
-								class="button-column"
-							>
-								<label>{{ parameter.name }}</label>
-								<Dropdown v-model="parameter.label" :options="labelOptions"> </Dropdown>
-							</div>
+							<label>Select parameters of interest<i class="pi pi-info-circle" /></label>
+							<MultiSelect
+								ref="columnSelect"
+								:modelValue="variablesOfInterest"
+								:options="requestParameters.map((d: any) => d.name)"
+								:show-toggle-all="false"
+								@update:modelValue="onToggleVariableOfInterest"
+								:maxSelectedLabels="1"
+								placeholder="Select variables"
+							/>
 						</div>
 					</div>
 					<div class="spacer">
@@ -67,8 +68,8 @@
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
 					<tera-constraint-group-form
-						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index"
+						v-for="(cfg, index) in constraintGroups"
+						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
 						:model-node-options="modelNodeOptions"
@@ -90,8 +91,14 @@
 		</div>
 
 		<template #preview>
-			<tera-drilldown-preview title="Validation results">
-				<tera-funman-output v-if="outputId" :fun-model-id="outputId" />
+			<tera-drilldown-preview
+				title="Validation results"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				:options="outputs"
+				is-selectable
+			>
+				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Output</h4>
@@ -120,20 +127,20 @@ import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import Dropdown from 'primevue/dropdown';
 import Slider from 'primevue/slider';
-import { FunmanPostQueriesRequest, Model, ModelConfiguration } from '@/types/Types';
-import { getQueries, makeQueries } from '@/services/models/funman-service';
-import { WorkflowNode } from '@/types/workflow';
+import MultiSelect from 'primevue/multiselect';
+
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
-import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel } from '@/services/model';
-import { useToastService } from '@/services/toast';
-import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+
+import { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import { getQueries, makeQueries } from '@/services/models/funman-service';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { useToastService } from '@/services/toast';
 import { Poller, PollerState } from '@/api/api';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
@@ -141,7 +148,7 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output-port', 'select-output', 'update-state', 'close']);
 
 enum FunmanTabs {
 	Wizard = 'Wizard',
@@ -151,15 +158,29 @@ const toast = useToastService();
 const validateParametersToolTip =
 	'Validate the configuration of the model using functional model analysis (FUNMAN). \n \n The parameter space regions defined by the model configuration are evaluated to satisfactory or unsatisfactory depending on whether they generate model outputs that are within a given set of time-dependent constraints';
 
-const labelOptions = ['any', 'all'];
 const showSpinner = ref(false);
 const showAdditionalOptions = ref(false);
-const tolerance = ref(props.node.state.tolerance);
-const startTime = ref(props.node.state.currentTimespan.start);
-const endTime = ref(props.node.state.currentTimespan.end);
-const numberOfSteps = ref(props.node.state.numSteps);
+
+interface BasicKnobs {
+	tolerance: number;
+	currentTimespan: {
+		start: number;
+		end: number;
+	};
+	numberOfSteps: number;
+}
+
+const knobs = ref<BasicKnobs>({
+	tolerance: 0,
+	currentTimespan: { start: 0, end: 0 },
+	numberOfSteps: 0
+});
+
+const constraintGroups = ref(props.node.state.constraintGroups);
+
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
+
 const requestConstraints = computed(
 	() =>
 		// Same as node state's except typing for state vs linear constraint
@@ -183,22 +204,47 @@ const requestConstraints = computed(
 			};
 		})
 );
-const requestParameters = ref();
+
+const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
 const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
-const outputId = computed(() => {
-	// FIXME: temporary test
-	const last = props.node.outputs.length - 1;
-	if (props.node.outputs[last]?.value) return String(props.node.outputs[last].value);
-	return undefined;
+const selectedOutputId = ref<string>();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
 });
+
+const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
 const poller = new Poller();
 
-function toggleAdditonalOptions() {
+const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
-}
+};
+
+const variablesOfInterest = ref<string[]>([]);
+const onToggleVariableOfInterest = (vals: string[]) => {
+	variablesOfInterest.value = vals;
+	requestParameters.value.forEach((d) => {
+		if (variablesOfInterest.value.includes(d.name)) {
+			d.label = 'all';
+		} else {
+			d.label = 'any';
+		}
+	});
+
+	const state = _.cloneDeep(props.node.state);
+	state.requestParameters = _.cloneDeep(requestParameters.value);
+	emit('update-state', state);
+};
 
 const runMakeQuery = async () => {
 	if (!model.value) {
@@ -224,7 +270,7 @@ const runMakeQuery = async () => {
 			config: {
 				use_compartmental_constraints: true,
 				normalization_constant: 1,
-				tolerance: tolerance.value
+				tolerance: knobs.value.tolerance
 			}
 		}
 	};
@@ -238,7 +284,7 @@ const getStatus = async (runId: string) => {
 
 	poller
 		.setInterval(3000)
-		.setThreshold(300)
+		.setThreshold(50)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
 			if (response.done && response.done === true) {
@@ -255,21 +301,25 @@ const getStatus = async (runId: string) => {
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		console.error(`Simulate: ${runId} has failed`);
-		throw Error('Failed Runs');
+		console.error(`Funman: ${runId} has failed`);
+		throw Error('Failed Funman validation');
 	}
 	showSpinner.value = false;
-	updateOutputPorts(runId);
+	addOutputPorts(runId);
 };
 
-const updateOutputPorts = async (runId: string) => {
+const addOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
-		id: uuidv4(),
-		label: `${portLabel} Result`,
+		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
 		type: FunmanOperation.outputs[0].type,
-		value: runId
+		value: runId,
+		state: _.cloneDeep(props.node.state)
 	});
+	if (props.node.outputs.length === 1) {
+		const portId = props.node.outputs[0].id;
+		emit('select-output', portId);
+	}
 };
 
 const addConstraintForm = () => {
@@ -280,106 +330,147 @@ const addConstraintForm = () => {
 		timepoints: { lb: 0, ub: 100 },
 		variables: []
 	};
-	if (!state.constraintGroups) {
-		state.constraintGroups = [];
-	}
-	state.constraintGroups.push(newGroup);
-
+	constraintGroups.value.push(newGroup);
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
 const deleteConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) {
-		return;
-	}
-	state.constraintGroups.splice(data.index, 1);
-
+	constraintGroups.value.splice(data.index, 1);
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	if (!state.constraintGroups) {
-		return;
-	}
-	state.constraintGroups[data.index] = data.updatedConfig;
-
+	constraintGroups.value[data.index] = data.updatedConfig;
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
 // Used to set requestStepList.
 // Grab startTime, endTime, numberOfSteps and create list.
 function getStepList() {
-	const aList = [startTime.value];
-	const stepSize = floor((endTime.value - startTime.value) / numberOfSteps.value);
-	for (let i = 1; i < numberOfSteps.value; i++) {
+	const start = knobs.value.currentTimespan.start;
+	const end = knobs.value.currentTimespan.end;
+	const steps = knobs.value.numberOfSteps;
+
+	const aList = [start];
+	const stepSize = floor((end - start) / steps);
+	for (let i = 1; i < steps; i++) {
 		aList[i] = i * stepSize;
 	}
-	aList.push(endTime.value);
+	aList.push(end);
 	return aList;
 }
 
-const setModelOptions = async () => {
+const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
-	if (modelConfigurationId) {
-		modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-		if (modelConfiguration.value) {
-			model.value = await getModel(modelConfiguration.value.modelId);
-			const modelColumnNameOptions: string[] =
-				modelConfiguration.value.configuration.model.states.map((state) => state.id);
-			// observables are not currently supported
-			// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
-			// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
-			// 		modelColumnNameOptions.push(o.id);
-			// 	});
-			// }
-			modelNodeOptions.value = modelColumnNameOptions;
-
-			if (model.value && model.value.semantics?.ode.parameters) {
-				setRequestParameters(model.value.semantics?.ode.parameters);
-			} else {
-				toast.error('', 'Provided model has no parameters');
-			}
-		}
-	}
+	if (!modelConfigurationId) return;
+	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+	model.value = modelConfiguration.value.configuration as Model;
 };
 
-const setRequestParameters = async (modelParameters) => {
+const setModelOptions = async () => {
+	if (!model.value) return;
+
+	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+	// observables are not currently supported
+	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
+	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
+	// 		modelColumnNameOptions.push(o.id);
+	// 	});
+	// }
+	modelNodeOptions.value = modelColumnNameOptions;
+
+	const state = _.cloneDeep(props.node.state);
+	knobs.value.numberOfSteps = state.numSteps;
+	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
+	knobs.value.tolerance = state.tolerance;
+
+	constraintGroups.value = _.cloneDeep(props.node.state.constraintGroups);
+
+	if (model.value.semantics?.ode.parameters) {
+		setRequestParameters(model.value.semantics?.ode.parameters);
+
+		variablesOfInterest.value = requestParameters.value
+			.filter((d: any) => d.label === 'all')
+			.map((d: any) => d.name);
+	} else {
+		toast.error('', 'Provided model has no parameters');
+	}
+
+	state.requestParameters = _.cloneDeep(requestParameters.value);
+	emit('update-state', state);
+};
+
+const setRequestParameters = (modelParameters: ModelParameter[]) => {
+	const previous = props.node.state.requestParameters;
+	if (previous && previous.length > 0) {
+		requestParameters.value = _.cloneDeep(props.node.state.requestParameters);
+		return;
+	}
+
 	requestParameters.value = modelParameters.map((ele) => {
+		let interval = { lb: ele.value, ub: ele.value };
 		if (ele.distribution) {
-			return {
-				name: ele.id,
-				interval: {
-					lb: ele.distribution.parameters.minimum,
-					ub: ele.distribution.parameters.maximum
-				},
-				label: 'any'
+			interval = {
+				lb: +ele.distribution.parameters.minimum,
+				ub: +ele.distribution.parameters.maximum
 			};
 		}
-
 		return {
 			name: ele.id,
-			interval: {
-				lb: ele.value,
-				ub: ele.value
-			},
+			interval,
 			label: 'any'
 		};
 	});
 };
 
+const onUpdateOutput = (id: string) => {
+	emit('select-output', id);
+};
+
+/* Check for simple parameter changes */
+watch(
+	() => knobs.value,
+	() => {
+		const state = _.cloneDeep(props.node.state);
+		state.tolerance = knobs.value.tolerance;
+		state.currentTimespan.start = knobs.value.currentTimespan.start;
+		state.currentTimespan.end = knobs.value.currentTimespan.end;
+		state.numSteps = knobs.value.numberOfSteps;
+
+		emit('update-state', state);
+	},
+	{ deep: true }
+);
+
 watch(
 	() => props.node.inputs[0],
 	async () => {
 		// Set model, modelConfiguration, modelNodeOptions
+		await initialize();
 		setModelOptions();
 	},
 	{ immediate: true }
 );
 
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
+			selectedOutputId.value = props.node.active;
+			setModelOptions();
+		}
+	},
+	{ immediate: true }
+);
+
 onUnmounted(() => {
-	console.log('unmounted.........');
 	poller.stop();
 });
 </script>

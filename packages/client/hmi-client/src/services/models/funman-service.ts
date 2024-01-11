@@ -173,7 +173,7 @@ export const renderFumanTrajectories = (
 	const height = options.height;
 	const topMargin = 10;
 	const rightMargin = 30;
-	const leftMargin = 30;
+	const leftMargin = 40;
 	const bottomMargin = 30;
 	const { trajs, states } = processedData;
 
@@ -240,12 +240,22 @@ export const renderFumanTrajectories = (
 
 	Object.keys(points).forEach((boxId) => {
 		const path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
-		svg
-			.append('g')
-			.append('path')
-			.attr('d', pathFn(path))
-			.style('stroke', '#888')
-			.style('fill', 'none');
+		if (path.length > 1) {
+			svg
+				.append('g')
+				.append('path')
+				.attr('d', pathFn(path))
+				.style('stroke', '#888')
+				.style('fill', 'none');
+		} else if (path.length === 1) {
+			svg
+				.append('g')
+				.append('circle')
+				.attr('cx', xScale(path[0].x))
+				.attr('cy', yScale(path[0].y))
+				.attr('r', 4)
+				.style('fill', '#888');
+		}
 	});
 };
 

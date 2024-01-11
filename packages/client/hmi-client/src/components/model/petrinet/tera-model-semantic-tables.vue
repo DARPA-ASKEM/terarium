@@ -2,102 +2,6 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
-			</template>
-			<table
-				v-if="parameters.length > 0"
-				class="datatable"
-				:style="{ '--columns': readonly ? 5 : 6 }"
-			>
-				<tr>
-					<th>Symbol</th>
-					<th>Name</th>
-					<th>Value</th>
-					<th>Distribution</th>
-					<th>Extractions</th>
-				</tr>
-				<tr
-					v-for="(parameter, i) in parameters"
-					:key="parameter.id"
-					:class="[
-						{ active: isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}` },
-						`${VariableTypes.PARAMETER}-${parameter.id}`
-					]"
-				>
-					<template v-if="isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}`">
-						<td>
-							<input
-								type="text"
-								:value="parameter?.id ?? '--'"
-								@input="updateTable('parameters', i, 'id', $event.target?.['value'])"
-							/>
-						</td>
-						<td>
-							<input
-								type="text"
-								:value="parameter?.name ?? '--'"
-								@input="updateTable('parameters', i, 'name', $event.target?.['value'])"
-							/>
-						</td>
-						<td>
-							<input
-								type="text"
-								:value="parameter?.value ?? '--'"
-								@input="updateTable('parameters', i, 'value', $event.target?.['value'])"
-							/>
-						</td>
-						<td>--</td>
-						<td>
-							<template v-if="parameter?.distribution?.parameters">
-								[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
-								{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
-							</template>
-							<template v-else>--</template>
-						</td>
-						<td v-if="extractions?.[parameter?.id]" style="grid-column: 1 / span 4">
-							<tera-model-extraction :extractions="extractions[parameter.id]" />
-						</td>
-					</template>
-					<template v-else>
-						<td>{{ parameter?.id }}</td>
-						<td>{{ parameter?.name }}</td>
-						<td>{{ parameter?.value }}</td>
-						<td>
-							<template v-if="parameter?.distribution?.parameters">
-								[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
-								{{ round(parameter?.distribution?.parameters.maximum, 4) }}]
-							</template>
-							<template v-else>--</template>
-						</td>
-						<td>
-							<template v-if="extractions?.[parameter.id]">
-								<Tag
-									class="clickable-tag"
-									:value="extractions?.[parameter?.id].length"
-									@click="openExtractions(VariableTypes.PARAMETER, parameter?.id)"
-								/>
-							</template>
-							<template v-else>--</template>
-						</td>
-					</template>
-					<td v-if="!readonly && !isRowEditable">
-						<Button icon="pi pi-file-edit" text @click="editRow" />
-					</td>
-					<td v-else-if="isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}`">
-						<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
-						<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
-					</td>
-					<td
-						v-if="shouldShowExtractions(VariableTypes.PARAMETER, parameter.id)"
-						style="grid-column: 1 / span 4"
-					>
-						<tera-model-extraction :extractions="extractions[parameter.id]" />
-					</td>
-				</tr>
-			</table>
-		</AccordionTab>
-		<AccordionTab>
-			<template #header>
 				State variables<span class="artifact-amount">({{ states.length }})</span>
 			</template>
 			<table v-if="states.length > 0" class="datatable" style="--columns: 5">
@@ -183,6 +87,102 @@
 						style="grid-column: 1 / span 4"
 					>
 						<tera-model-extraction :extractions="extractions[state.id]" />
+					</td>
+				</tr>
+			</table>
+		</AccordionTab>
+		<AccordionTab>
+			<template #header>
+				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
+			</template>
+			<table
+				v-if="parameters.length > 0"
+				class="datatable"
+				:style="{ '--columns': readonly ? 5 : 6 }"
+			>
+				<tr>
+					<th>Symbol</th>
+					<th>Name</th>
+					<th>Value</th>
+					<th>Distribution</th>
+					<th>Extractions</th>
+				</tr>
+				<tr
+					v-for="(parameter, i) in parameters"
+					:key="parameter.id"
+					:class="[
+						{ active: isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}` },
+						`${VariableTypes.PARAMETER}-${parameter.id}`
+					]"
+				>
+					<template v-if="isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}`">
+						<td>
+							<input
+								type="text"
+								:value="parameter.id"
+								@input="updateTable('parameters', i, 'id', $event.target?.['value'])"
+							/>
+						</td>
+						<td>
+							<input
+								type="text"
+								:value="parameter.name ?? '--'"
+								@input="updateTable('parameters', i, 'name', $event.target?.['value'])"
+							/>
+						</td>
+						<td>
+							<input
+								type="text"
+								:value="parameter.value ?? '--'"
+								@input="updateTable('parameters', i, 'value', $event.target?.['value'])"
+							/>
+						</td>
+						<td>
+							<template v-if="parameter.distribution?.parameters">
+								[{{ round(parameter.distribution?.parameters.minimum, 4) }},
+								{{ round(parameter.distribution?.parameters.maximum, 4) }}]
+							</template>
+							<template v-else>--</template>
+						</td>
+						<td v-if="extractions?.[parameter.id]" style="grid-column: 1 / span 4">
+							<tera-model-extraction :extractions="extractions[parameter.id]" />
+						</td>
+						<td v-else>--</td>
+					</template>
+					<template v-else>
+						<td>{{ parameter.id }}</td>
+						<td>{{ parameter.name }}</td>
+						<td>{{ parameter.value }}</td>
+						<td>
+							<template v-if="parameter.distribution?.parameters">
+								[{{ round(parameter.distribution?.parameters.minimum, 4) }},
+								{{ round(parameter.distribution?.parameters.maximum, 4) }}]
+							</template>
+							<template v-else>--</template>
+						</td>
+						<td>
+							<template v-if="extractions?.[parameter.id]">
+								<Tag
+									class="clickable-tag"
+									:value="extractions?.[parameter.id].length"
+									@click="openExtractions(VariableTypes.PARAMETER, parameter.id)"
+								/>
+							</template>
+							<template v-else>--</template>
+						</td>
+					</template>
+					<td v-if="!readonly && !isRowEditable">
+						<Button icon="pi pi-file-edit" text @click="editRow" />
+					</td>
+					<td v-else-if="isRowEditable === `${VariableTypes.PARAMETER}-${parameter.id}`">
+						<Button icon="pi pi-check" text rounded aria-label="Save" @click="confirmEdit" />
+						<Button icon="pi pi-times" text rounded aria-label="Discard" @click="cancelEdit" />
+					</td>
+					<td
+						v-if="shouldShowExtractions(VariableTypes.PARAMETER, parameter.id)"
+						style="grid-column: 1 / span 4"
+					>
+						<tera-model-extraction :extractions="extractions[parameter.id]" />
 					</td>
 				</tr>
 			</table>

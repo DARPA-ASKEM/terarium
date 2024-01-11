@@ -1,7 +1,7 @@
 <template>
 	<section class="math-editor">
 		<div :class="expandedDiv">
-			<div v-if="isEditingEquation" class="input-label">MathLive</div>
+			<div v-if="isEditable && isEditingEquation" class="input-label">MathLive</div>
 			<div
 				class="eq"
 				@mouseenter="hover = true"
@@ -32,7 +32,7 @@
 					<Menu ref="menu" id="overlay_menu" :model="menuItems" :popup="true" />
 				</section>
 			</div>
-			<div v-if="isEditingEquation">
+			<div v-if="isEditable && isEditingEquation">
 				<div class="input-label spacer">LaTeX</div>
 				<section class="latex-input" v-if="isEditingEquation">
 					<InputText
