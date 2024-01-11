@@ -70,6 +70,12 @@ services:
   neo4j:
     container_name: neo4j
     image: neo4j:5.12-community
+    healthcheck:
+      test: wget http://127.0.0.1:7474 || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 20
+      start_period: 3s
     networks:
       - terarium
     ports:
@@ -88,6 +94,11 @@ services:
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management-alpine
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
     networks:
       - terarium
     ports:

@@ -23,6 +23,9 @@ services:
     environment:
       ADOBE_API-KEY: "${secret_adobe_api_key}"
       GOOGLE-ANALYTICS-ID: ""
+      AWS_URL: "http://${local_host_name}:9000"
+      AWS_ACCESS_KEY_ID: "admin"
+      AWS_SECRET_ACCESS_KEY: "admin123"
       KNOWLEDGE-MIDDLEWARE_URL: "http://${local_host_name}:3060"
       MODEL-SERVICE_URL: "http://${local_host_name}:3010"
       SPICEDB_LAUNCHMODE: "PLAINTEXT"
@@ -48,6 +51,11 @@ services:
       TERARIUM_MQ-PASSWORD: "terarium123"
       TERARIUM_MQ-POST: "5672"
       TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_ELASTICSEARCH_URL: "http://${local_host_name}:9200"
+      TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
+      SPRING_DATA_NEO4J_URI: "bolt://${local_host_name}:7687"
+      SPRING_DATA_NEO4J_AUTHENTICATION_USERNAME: "neo4j"
+      SPRING_DATA_NEO4J_AUTHENTICATION_PASSWORD: "password"
       TGPT_APP_URL: "http://${local_host_name}:3050/beaker/"
       TGPT_TOKEN: "${secret_tgpt_token}"
       TGPT_WS_URL: "ws://${local_host_name}:3050/beaker_ws/"
@@ -67,13 +75,19 @@ services:
         condition: service_healthy
       spicedb:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       knowledge-middleware-api:
         condition: service_started
       model-service:
-        condition: service_started
-      redis:
-        condition: service_started
-      rabbitmq:
         condition: service_started
 
   hmi-client:

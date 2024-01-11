@@ -94,6 +94,11 @@ services:
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management-alpine
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
     networks:
       - terarium
     ports:
@@ -310,12 +315,12 @@ services:
         condition: service_healthy
       neo4j:
         condition: service_healthy
-      redis:
-        condition: service_started
       minio:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   elasticsearch-data:
