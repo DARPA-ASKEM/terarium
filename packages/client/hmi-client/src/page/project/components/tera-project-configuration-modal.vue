@@ -111,7 +111,6 @@ const author = auth.user?.name ?? '';
 
 const title = ref(props.project?.name ?? '');
 const description = ref(props.project?.description ?? '');
-// const imageSearch = ref('');
 const isApplyingConfiguration = ref(false);
 
 async function createProject() {
