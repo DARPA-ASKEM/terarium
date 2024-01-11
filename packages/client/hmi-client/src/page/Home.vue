@@ -62,8 +62,6 @@
 									option-value="value"
 								>
 									<template #option="slotProps">
-										<!-- JW: removing unnecessary icons for now -->
-										<!-- <i :class="`${slotProps.option.icon} p-button-icon-left`" /> -->
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
