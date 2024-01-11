@@ -175,6 +175,17 @@ If you prefer the JSON request / response keys to be `snake_case` rather than `c
 'X-Enable-Snake-Case'
 ```
 
+If integrating the `docker-compose-lean.yml` into another repo, the docker compose volumes expect the following directory structure:
+
+```
+- scripts
+  - init.sql                     // initialize the postgres databases
+  - realm
+    - Terarium-realm.json        // keycloak realm definition
+    - Terarium-users-0.json      // keycloak user definitions
+- docker-compose-lean.yml
+```
+
 ## Testing
 
 ## Debugging REST Api
