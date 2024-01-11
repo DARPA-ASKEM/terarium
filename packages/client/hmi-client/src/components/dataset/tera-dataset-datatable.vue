@@ -299,7 +299,7 @@ const onToggle = (val) => {
 .p-datatable-flex-scrollable {
 	overflow: hidden;
 }
-:deep(.p-button.p-button-text),
+:deep(.download-button.p-button.p-button-text),
 .columns-dropdown {
 	color: var(--text-color-primary);
 }
