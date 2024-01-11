@@ -8,6 +8,24 @@
 		:is-loading="isDatasetLoading"
 		:overflow-hidden="selectedViewIndex === 1"
 	>
+		<template #name-input>
+			<InputText
+				v-if="isRenamingDataset"
+				v-model.lazy="newDatasetName"
+				placeholder="Dataset name"
+				@keyup.enter="updateDatasetName"
+			/>
+		</template>
+		<template #edit-buttons>
+			<template v-if="!featureConfig.isPreview">
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleOptionsMenu"
+				/>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			</template>
+		</template>
 		<TabView :active-index="selectedViewIndex" @tab-change="(e) => (selectedViewIndex = e.index)">
 			<TabPanel header="Description">
 				<tera-dataset-description :dataset="dataset" :raw-content="rawContent" />
@@ -21,16 +39,20 @@
 <script setup lang="ts">
 import { ref, watch, onUpdated, Ref, PropType } from 'vue';
 import * as textUtil from '@/utils/text';
-import { isString } from 'lodash';
-import { downloadRawFile, getDataset } from '@/services/dataset';
+import { cloneDeep, isString } from 'lodash';
+import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
 import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import { enrichDataset } from './utils';
+import { useProjects } from '@/composables/project';
+import InputText from 'primevue/inputtext';
+import Menu from 'primevue/menu';
+import Button from 'primevue/button';
 import TeraDatasetDescription from './tera-dataset-description.vue';
+import { enrichDataset } from './utils';
 
 enum DatasetView {
 	DESCRIPTION = 'Description',
@@ -58,6 +80,7 @@ const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
 const dataset = ref<Dataset | null>(null);
+const newDatasetName = ref('');
 const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const jupyterCsv: Ref<CsvAsset | null> = ref(null);
@@ -81,6 +104,34 @@ const suggestedValues = ref<string[]>([]);
 const rowEditList = ref<boolean[]>([]);
 // editableRows is are the dataset columns that can be edited by the user; transient data
 const editableRows = ref<DatasetColumn[]>([]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingDataset.value = true;
+			newDatasetName.value = dataset.value?.name ?? '';
+		}
+	}
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
+]);
+
+async function updateDatasetName() {
+	if (dataset.value && newDatasetName.value !== '') {
+		const datasetClone = cloneDeep(dataset.value);
+		datasetClone.name = newDatasetName.value;
+		await updateDataset(datasetClone);
+		dataset.value = await getDataset(props.assetId);
+		useProjects().refresh();
+		isRenamingDataset.value = false;
+	}
+}
 
 const fetchDataset = async () => {
 	const datasetTemp: Dataset | null = await getDataset(props.assetId);
