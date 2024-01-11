@@ -88,15 +88,9 @@
 		<template #footer>
 			<Button
 				label="Save"
-				@click="
-					() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-				"
+				@click="() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })"
 			/>
-			<Button
-				class="p-button-secondary"
-				label="Cancel"
-				@click="isNewModelModalVisible = false"
-			/>
+			<Button class="p-button-secondary" label="Cancel" @click="isNewModelModalVisible = false" />
 		</template>
 	</tera-modal>
 </template>
