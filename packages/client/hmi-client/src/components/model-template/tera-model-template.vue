@@ -22,7 +22,7 @@
 		</section>
 		<ul>
 			<li
-				v-for="({ id }, index) in [...model.model.states, ...model.model.transitions]"
+				v-for="({ id }, index) in [...model.model.states, ...model.semantics.ode.parameters]"
 				class="port"
 				:class="{ selectable: isEditable }"
 				:key="index"
