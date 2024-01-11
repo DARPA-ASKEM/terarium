@@ -85,7 +85,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-// import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import TeraModal from '@/components/widgets/tera-modal.vue';
