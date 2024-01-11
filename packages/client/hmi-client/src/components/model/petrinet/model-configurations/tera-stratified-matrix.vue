@@ -37,20 +37,14 @@
 									class="cell-input"
 									v-model.lazy="valueToEdit"
 									v-focus
-									@focusout="
-										updateModelConfigValue(cell.content.id, rowIdx, colIdx)
-									"
-									@keyup.stop.enter="
-										updateModelConfigValue(cell.content.id, rowIdx, colIdx)
-									"
+									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 								/>
 								<section v-else>
 									<div>
 										<div
 											class="mathml-container"
-											v-html="
-												matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'
-											"
+											v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
 										/>
 										<template v-if="cell?.content?.controllers">
 											controllers: {{ cell?.content?.controllers }}
@@ -96,11 +90,12 @@ const editableCellStates = ref<boolean[][]>([]);
 
 const matrixExpressionsList = ref<string[][]>([]);
 
-const parametersValueMap = computed(() =>
-	props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
-		acc[val.id] = val.value;
-		return acc;
-	}, {})
+const parametersValueMap = computed(
+	() =>
+		props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
+			acc[val.id] = val.value;
+			return acc;
+		}, {})
 );
 
 // Makes cell inputs focus once they appear
@@ -121,10 +116,7 @@ watch(
 							if (!output[cell.row]) {
 								output[cell.row] = [];
 							}
-							output[cell.row][cell.col] = await getMatrixValue(
-								cell.content.id,
-								props.shouldEval
-							);
+							output[cell.row][cell.col] = await getMatrixValue(cell.content.id, props.shouldEval);
 						}
 					})
 				)
