@@ -141,15 +141,6 @@ function fetchAsset() {
 </script>
 
 <style scoped>
-.overview {
-	display: flex;
-	width: 100%;
-	gap: var(--gap-large);
-	& > * {
-		flex: 1;
-	}
-}
-
 .details-column {
 	display: flex;
 	flex-direction: column;
