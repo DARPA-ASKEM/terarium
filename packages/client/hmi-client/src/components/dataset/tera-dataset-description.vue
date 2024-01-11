@@ -6,9 +6,9 @@
 					<tera-show-more-text :text="description" :lines="5" />
 				</section>
 			</AccordionTab>
-			<AccordionTab header="Provenance">
+			<AccordionTab v-if="!isEmpty(provenance)" header="Provenance">
 				<section class="provenance">
-					<article v-if="!isEmpty(provenance)">
+					<article>
 						<p v-html="provenance" />
 					</article>
 				</section>
