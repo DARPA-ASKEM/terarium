@@ -16,7 +16,7 @@
 				</AccordionTab>
 			</Accordion>
 			<section class="details-column">
-				<tera-asset-info-card class="details">
+				<tera-grey-card class="details">
 					<ul>
 						<li class="multiple">
 							<span>
@@ -45,7 +45,7 @@
 							<div>{{ dataset?.metadata?.processed_by }}</div>
 						</li>
 					</ul>
-				</tera-asset-info-card>
+				</tera-grey-card>
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Datasets"
@@ -70,7 +70,7 @@ import AccordionTab from 'primevue/accordiontab';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import * as textUtil from '@/utils/text';
 import { useProjects } from '@/composables/project';
-import TeraAssetInfoCard from '@/components/widgets/tera-asset-info-card.vue';
+import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import TeraColumnarPanel from '../widgets/tera-columnar-panel.vue';
 import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 

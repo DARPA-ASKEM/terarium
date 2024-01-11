@@ -29,7 +29,7 @@
 				</AccordionTab>
 			</Accordion>
 			<section class="details-column">
-				<tera-asset-info-card class="details">
+				<tera-grey-card class="details">
 					<ul>
 						<li class="multiple">
 							<span>
@@ -74,7 +74,7 @@
 							<div>{{ model?.metadata?.processed_by }}</div>
 						</li>
 					</ul>
-				</tera-asset-info-card>
+				</tera-grey-card>
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Models"
@@ -146,7 +146,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
-import TeraAssetInfoCard from '@/components/widgets/tera-asset-info-card.vue';
+import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
