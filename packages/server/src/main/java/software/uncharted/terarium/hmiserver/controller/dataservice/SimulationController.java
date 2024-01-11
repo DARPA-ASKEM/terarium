@@ -246,6 +246,54 @@ public class SimulationController {
 		}
 	}
 
+	@GetMapping("/{id}/upload-url")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to upload the simulation results")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
+	public ResponseEntity<PresignedURL> getUploadURL(
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
+
+		try {
+			return ResponseEntity.ok(simulationService.getUploadUrl(id, filename));
+		} catch (Exception e) {
+			final String error = "Unable to get upload url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@GetMapping("/{id}/download-url")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to download the simulation results")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
+	public ResponseEntity<PresignedURL> getDownloadURL(
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
+
+		try {
+			Optional<PresignedURL> url = simulationService.getDownloadUrl(id, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(url.get());
+		} catch (Exception e) {
+			final String error = "Unable to get download url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
 	@GetMapping("/subscribe")
 	@Secured(Roles.USER)
 	@Operation(summary = "Subscribe to simulation events")
