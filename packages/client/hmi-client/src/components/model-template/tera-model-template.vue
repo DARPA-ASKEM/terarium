@@ -1,110 +1,112 @@
 <template>
-	<tera-infinite-canvas
-		@save-transform="saveTransform"
-		@mouseenter="setMouseOverCanvas(true)"
-		@mouseleave="setMouseOverCanvas(false)"
-		@drop="onDrop"
-		@dragover.prevent
-		@dragenter.prevent
-		@focus="() => {}"
-		@blur="() => {}"
-	>
-		<template #foreground>
-			<aside>
-				<section v-if="model?.header?.schema_name">
-					<header>Model framework</header>
-					<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
-				</section>
-				<section>
-					<header>Model templates</header>
-					<ul>
-						<li v-for="(_, index) in 5" :key="index">
-							<tera-model-template-card :card="newCard" draggable="true" />
-						</li>
-					</ul>
-				</section>
-				<section class="trash">
-					<i class="pi pi-trash"></i>
-					<div>Drag items here to delete</div>
-				</section>
-			</aside>
-		</template>
-		<template #data>
-			<tera-canvas-item
-				v-for="(card, index) in cards"
+	<section class="card-container">
+		<section class="card" ref="cardRef">
+			<div class="draggable"><i class="pi pi-pause" /></div>
+			<main>
+				<header>
+					<span @click="isEditingName = true" v-if="!isEditingName">
+						{{ card.name }}
+					</span>
+					<InputText v-else size="small" type="text" v-model="name" @keyup.enter="updateName" />
+				</header>
+				<section>Diagram/Equations</section>
+			</main>
+			<Button icon="pi pi-ellipsis-v" rounded text />
+		</section>
+		<ul>
+			<li
+				v-for="(variable, index) in fakeVariables"
+				class="port"
 				:key="index"
-				:style="{
-					width: 'fit-content',
-					top: `${card.y}px`,
-					left: `${card.x}px`
-				}"
-				@dragging="(event) => updatePosition(card, event)"
+				@mouseenter="emit('port-mouseover', $event, cardRef?.clientWidth ?? 0)"
+				@mouseleave="emit('port-mouseleave')"
+				@focus="() => {}"
+				@blur="() => {}"
+				@click.stop="emit('port-selected')"
 			>
-				<tera-model-template-card :card="card" />
-			</tera-canvas-item>
-		</template>
-	</tera-infinite-canvas>
+				{{ variable }}
+			</li>
+		</ul>
+	</section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { cloneDeep } from 'lodash';
-import { Model } from '@/types/Types';
-import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
-import TeraModelTemplateCard from './tera-model-template-card.vue';
-import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 
-defineProps<{
-	model?: Model;
-}>();
-
-interface ModelTemplateCard {
-	// Position on canvas
+interface ModelTemplate {
+	id: number;
+	name: string;
 	x: number;
 	y: number;
 }
 
-const newCard: ModelTemplateCard = { x: 0, y: 0 };
-let isMouseOverCanvas: boolean = false;
-let canvasTransform = { x: 0, y: 0, k: 1 };
+const props = defineProps<{ card: ModelTemplate }>();
 
-const cards = ref<ModelTemplateCard[]>([{ x: 300, y: 40 }]);
+const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name']);
 
-const setMouseOverCanvas = (val: boolean) => {
-	isMouseOverCanvas = val;
-};
+// Used to pass card width.
+// Unsure if we want to set widths on certain cards but for now this works
+const cardRef = ref();
 
-function saveTransform(newTransform: { k: number; x: number; y: number }) {
-	canvasTransform = newTransform;
+const isEditingName = ref(false);
+const name = ref(props.card.name);
+
+const fakeVariables = ['X', 'Y', 'p'];
+
+function updateName() {
+	emit('update-name', name);
+	isEditingName.value = false;
 }
-
-function updateNewCardPosition(event) {
-	newCard.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
-	newCard.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
-}
-
-function onDrop(event) {
-	updateNewCardPosition(event);
-	cards.value.push(cloneDeep(newCard));
-}
-
-const updatePosition = (card: ModelTemplateCard, { x, y }) => {
-	if (!isMouseOverCanvas) return;
-	card.x += x / canvasTransform.k;
-	card.y += y / canvasTransform.k;
-};
 </script>
 
 <style scoped>
-aside {
-	width: 15rem;
+.card-container {
 	display: flex;
-	flex-direction: column;
-	height: 100%;
-	background-color: #f4f7fa;
-	border-right: 1px solid var(--surface-border-alt);
-	padding: 1rem;
-	gap: 0.5rem;
+	font-size: var(--font-caption);
+}
+
+.card {
+	display: flex;
+	background-color: var(--surface-section);
+	border-radius: var(--border-radius-medium);
+	outline: 1px solid var(--surface-border-alt);
+	min-width: 12rem;
+	position: relative;
+	box-shadow:
+		0px 1px 3px 0px rgba(0, 0, 0, 0.08),
+		0px 1px 2px 0px rgba(0, 0, 0, 0.04);
+
+	& > main {
+		width: 100%;
+		margin: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+
+		& > header {
+			cursor: pointer;
+			text-align: center;
+			height: 2rem;
+
+			& > .p-inputtext.p-inputtext-sm {
+				padding: 0.2rem 0.3rem;
+				text-align: center;
+			}
+		}
+
+		& > * {
+			margin: 0 auto;
+		}
+	}
+
+	& > .p-button {
+		display: none;
+		position: absolute;
+		bottom: 0;
+		right: 0;
+	}
 }
 
 ul {
@@ -112,39 +114,50 @@ ul {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	margin-top: 0.5rem;
+	margin: 0.5rem 0;
+
+	& > li {
+		background-color: var(--surface-section);
+		border: 1px solid var(--surface-border-alt);
+		border-top-right-radius: var(--border-radius);
+		border-bottom-right-radius: var(--border-radius);
+		padding: 0.15rem 0.25rem;
+		color: var(--text-color-subdued);
+		box-shadow:
+			0px 1px 3px 0px rgba(0, 0, 0, 0.08),
+			0px 1px 2px 0px rgba(0, 0, 0, 0.04);
+		/* Font should be "Latin Modern Math" */
+		font-family: serif;
+		font-style: italic;
+	}
 }
 
-h5 {
+.draggable {
+	width: 0.75rem;
+	border-top-left-radius: var(--border-radius-medium);
+	border-bottom-left-radius: var(--border-radius-medium);
+	background-color: var(--surface-highlight);
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
-	font-weight: var(--font-weight);
+
+	& > .pi {
+		font-size: 0.75rem;
+		color: var(--text-color-subdued);
+	}
 }
+</style>
 
-header {
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
-}
+<style>
+/* When a card is placed in the data layer of the infinite canvas 
+(eg. ports shouldn't look selectable if card is in the sidebar) */
+.data-layer .card-container {
+	& .card:hover > .p-button {
+		display: block;
+	}
 
-.pi-info-circle {
-	color: var(--text-color-subdued);
-	cursor: help;
-}
-
-.trash {
-	margin-top: auto;
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	border: 1px dashed #9fa9b7;
-	border-radius: var(--border-radius);
-	background-color: #eff2f5;
-	text-align: center;
-	padding: 1rem 0;
-
-	& > .pi-trash {
-		font-size: 1.5rem;
-		margin-bottom: 0.5rem;
+	& > ul > li:hover {
+		background-color: var(--surface-highlight);
+		cursor: pointer;
 	}
 }
 </style>

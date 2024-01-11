@@ -68,8 +68,8 @@
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
 					<tera-constraint-group-form
-						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index"
+						v-for="(cfg, index) in constraintGroups"
+						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
 						:model-node-options="modelNodeOptions"
@@ -175,6 +175,8 @@ const knobs = ref<BasicKnobs>({
 	currentTimespan: { start: 0, end: 0 },
 	numberOfSteps: 0
 });
+
+const constraintGroups = ref(props.node.state.constraintGroups);
 
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
@@ -328,19 +330,22 @@ const addConstraintForm = () => {
 		timepoints: { lb: 0, ub: 100 },
 		variables: []
 	};
-	state.constraintGroups.push(newGroup);
+	constraintGroups.value.push(newGroup);
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
 const deleteConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	state.constraintGroups.splice(data.index, 1);
+	constraintGroups.value.splice(data.index, 1);
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	state.constraintGroups[data.index] = data.updatedConfig;
+	constraintGroups.value[data.index] = data.updatedConfig;
+	state.constraintGroups = constraintGroups.value;
 	emit('update-state', state);
 };
 
@@ -384,6 +389,8 @@ const setModelOptions = async () => {
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 
+	constraintGroups.value = _.cloneDeep(props.node.state.constraintGroups);
+
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
 
@@ -409,8 +416,8 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 		let interval = { lb: ele.value, ub: ele.value };
 		if (ele.distribution) {
 			interval = {
-				lb: ele.distribution.parameters.minimum,
-				ub: ele.distribution.parameters.maximum
+				lb: +ele.distribution.parameters.minimum,
+				ub: +ele.distribution.parameters.maximum
 			};
 		}
 		return {

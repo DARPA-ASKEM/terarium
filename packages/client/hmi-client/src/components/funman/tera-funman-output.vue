@@ -57,7 +57,7 @@ const props = defineProps<{
 const parameterOptions = ref<string[]>([]);
 const selectedParam = ref();
 const selectedTrajState = ref();
-const modelStates = ref<string[]>();
+const modelStates = ref<string[]>([]);
 const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
@@ -74,14 +74,18 @@ const initalizeParameters = async () => {
 	selectedParam.value = parameterOptions.value[0];
 	timestepOptions.value = funModel.request.structure_parameters[0].schedules[0].timepoints;
 	timestep.value = timestepOptions.value[1];
-	const tempList: string[] = [];
+
+	modelStates.value = [];
 	funModel.model.petrinet.model.states.forEach((element) => {
-		tempList.push(element.id);
+		modelStates.value.push(element.id);
 	});
-	modelStates.value = tempList;
 	selectedTrajState.value = modelStates.value[0];
 
 	lastTrueBox.value = funModel.parameter_space.true_boxes?.at(-1);
+
+	if (selectedTrajState.value) {
+		renderGraph();
+	}
 };
 
 const renderGraph = async () => {
@@ -160,7 +164,7 @@ watch(
 .variables-row {
 	display: grid;
 	grid-template-columns: repeat(6, 1fr) 0.5fr;
-	grid-template-rows: 1fr 1fr;
+	grid-template-rows: 1fr;
 	border-top: 1px solid var(--surface-border);
 }
 

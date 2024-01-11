@@ -2,197 +2,64 @@
 <template>
 	<tera-asset
 		:feature-config="featureConfig"
-		:name="highlightSearchTerms(doc?.name)"
-		:overline="highlightSearchTerms(doc?.source)"
+		:name="highlightSearchTerms(document?.name)"
+		:overline="highlightSearchTerms(document?.source)"
 		@close-preview="emit('close-preview')"
-		:hide-intro="view === DocumentView.PDF"
-		:stretch-content="view === DocumentView.PDF"
-		:show-sticky-header="view === DocumentView.PDF"
-		:is-loading="documentLoading"
+		:is-loading="isFetchingPDF"
+		overflow-hidden
 	>
-		<template #edit-buttons>
-			<SelectButton
-				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
-				:options="viewOptions"
-				option-value="value"
-				option-disabled="disabled"
-			>
-				<template #option="{ option }">
-					<i
-						:class="`${
-							!pdfLink &&
-							option.value !== DocumentView.EXTRACTIONS &&
-							option.value !== DocumentView.NOT_FOUND
-								? 'pi pi-spin pi-spinner'
-								: option.icon
-						} p-button-icon-left`"
-					/>
-					<span class="p-button-label">{{ option.value }}</span>
-				</template>
-			</SelectButton>
-		</template>
-		<Accordion
-			v-if="view === DocumentView.EXTRACTIONS"
-			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
-		>
-			<AccordionTab v-if="!isEmpty(formattedAbstract)">
-				<template #header>
-					<header id="Abstract">Abstract</header>
-				</template>
-				<p v-html="formattedAbstract" />
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(figures)">
-				<template #header>
-					<header id="Figures">
-						Figures<span class="artifact-amount">({{ figures.length }})</span>
-					</header>
-				</template>
-				<ul>
-					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
-						<tera-show-more-text
-							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
-							:lines="previewLineLimit"
-						/>
-					</li>
-				</ul>
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(tables)">
-				<template #header>
-					<header id="Tables">
-						Tables<span class="artifact-amount">({{ tables.length }})</span>
-					</header>
-				</template>
-				<ul>
-					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
-						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
-								:lines="previewLineLimit"
-							/>
-						</div>
-					</li>
-				</ul>
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(equations)">
-				<template #header>
-					<header id="Equations">
-						Equations<span class="artifact-amount">({{ equations.length }})</span>
-					</header>
-				</template>
-				<ul>
-					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
-						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
-								:lines="previewLineLimit"
-							/>
-						</div>
-						<tera-math-editor v-if="ex.metadata.equation" :latex-equation="ex.metadata.equation" />
-					</li>
-				</ul>
-			</AccordionTab>
-		</Accordion>
-		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
-		<p
-			class="pl-3"
-			v-if="
-				isEmpty(doc?.assets) &&
-				view === DocumentView.EXTRACTIONS &&
-				viewOptions[1]?.value === DocumentView.PDF
-			"
-		>
-			PDF Extractions may still be processsing please refresh in some time...
-		</p>
-		<tera-pdf-embed
-			v-else-if="view === DocumentView.PDF && pdfLink"
-			:pdf-link="pdfLink"
-			:title="doc?.name || ''"
-		/>
-		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
+		<div class="document-asset-container">
+			<section>
+				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+				<tera-text-editor v-else-if="docText" :initial-text="docText" />
+			</section>
+			<section class="extractions-section">
+				<tera-extractions :document="document" :state="clonedState" @update="onUpdateAsset" />
+			</section>
+		</div>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onUpdated } from 'vue';
-import { isEmpty } from 'lodash';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
-import { FeatureConfig } from '@/types/common';
+import { ref, watch } from 'vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import { DocumentAsset, ExtractionAssetType } from '@/types/Types';
-import * as textUtil from '@/utils/text';
-import TeraAsset from '@/components/asset/tera-asset.vue';
+import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
 	getDocumentFileAsText
 } from '@/services/document-assets';
-import Image from 'primevue/image';
-import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import SelectButton from 'primevue/selectbutton';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import { AssetBlock } from '@/types/workflow';
+import { DocumentOperationState } from '@/workflow/ops/document/document-operation';
+import { FeatureConfig } from '@/types/common';
+import * as textUtil from '@/utils/text';
+import TeraAsset from '../asset/tera-asset.vue';
 import TeraTextEditor from './tera-text-editor.vue';
+import TeraExtractions from './tera-extractions.vue';
 
-enum DocumentView {
-	EXTRACTIONS = 'Extractions',
-	PDF = 'PDF',
-	TXT = 'Text',
-	NOT_FOUND = 'Not found'
-}
 const props = defineProps<{
 	assetId: string;
 	highlight?: string;
-	previewLineLimit: number;
 	featureConfig?: FeatureConfig;
 }>();
 
-const doc = ref<DocumentAsset | null>(null);
-const pdfLink = ref<string | null>(null);
-const view = ref(DocumentView.EXTRACTIONS);
+const document = ref<DocumentAsset | null>();
+const pdfLink = ref<string | null>();
+const docText = ref<string | null>();
+const isFetchingPDF = ref(false);
 
-const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' };
-const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
-const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
-const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true };
-
-const viewOptions = computed(() => {
-	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
-	if (!isEmpty(doc.value?.fileNames)) {
-		if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
-			options.push(pdfOption);
-		} else {
-			options.push(txtOption);
-		}
-	} else {
-		options.push(notFoundOption);
-	}
-	return options;
+const clonedState = ref<DocumentOperationState>({
+	equations: [],
+	figures: [],
+	tables: [],
+	documentId: null
 });
 
-const docText = ref<string>('');
-
-const documentLoading = ref(false);
-
-const docLink = computed(() =>
-	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
-);
-
-const figures = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
-);
-const tables = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
-);
-const equations = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) || []
-);
-
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+
+function onUpdateAsset(state: DocumentOperationState) {
+	clonedState.value = state;
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -202,85 +69,74 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-async function openTextDocument() {
-	const filename: string | undefined = doc.value?.fileNames?.at(0);
-	const res: string | null = await getDocumentFileAsText(props.assetId!, filename!);
-	if (!res) return;
-	docText.value = res;
-}
-
 watch(
 	() => props.assetId,
 	async () => {
 		if (props.assetId) {
-			documentLoading.value = true;
-			const document = await getDocumentAsset(props.assetId);
+			isFetchingPDF.value = true;
+			document.value = await getDocumentAsset(props.assetId);
+			const filename = document.value?.fileNames?.[0];
+			const isPdf = document.value?.fileNames?.[0]?.endsWith('.pdf');
+			if (document.value?.id && filename)
+				if (isPdf) {
+					pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
+				} else {
+					docText.value = await getDocumentFileAsText(document.value.id, filename);
+				}
 
-			if (!document) {
-				return;
-			}
-			doc.value = document;
-			if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
-				if (view.value === DocumentView.TXT) {
-					view.value = DocumentView.PDF;
-				}
-			} else {
-				await openTextDocument();
-				if (view.value === DocumentView.PDF) {
-					view.value = DocumentView.TXT;
-				}
-			}
-			documentLoading.value = false;
+			const figures: AssetBlock<DocumentExtraction>[] =
+				document.value?.assets
+					?.filter((asset) => asset.assetType === ExtractionAssetType.Figure)
+					.map((asset, i) => ({
+						name: `Figure ${i + 1}`,
+						includeInProcess: false,
+						asset
+					})) || [];
+			const tables: AssetBlock<DocumentExtraction>[] =
+				document.value?.assets
+					?.filter((asset) => asset.assetType === ExtractionAssetType.Table)
+					.map((asset, i) => ({
+						name: `Table ${i + 1}`,
+						includeInProcess: false,
+						asset
+					})) || [];
+			const equations: AssetBlock<DocumentExtraction>[] =
+				document.value?.assets
+					?.filter((asset) => asset.assetType === ExtractionAssetType.Equation)
+					.map((asset, i) => ({
+						name: `Equation ${i + 1}`,
+						includeInProcess: true,
+						asset
+					})) || [];
+
+			clonedState.value.equations = equations;
+			clonedState.value.figures = figures;
+			clonedState.value.tables = tables;
+			clonedState.value.documentId = props.assetId;
+			isFetchingPDF.value = false;
 		} else {
-			doc.value = null;
+			document.value = null;
 		}
 	},
 	{
 		immediate: true
 	}
 );
-
-const formattedAbstract = computed(() => {
-	if (!doc.value || !doc.value.description) return '';
-	return highlightSearchTerms(doc.value.description);
-});
-
-watch(docLink, async (currentValue, oldValue) => {
-	if (currentValue !== oldValue) {
-		// fetchDocumentArtifacts();
-		// fetchAssociatedResources();
-		pdfLink.value = null;
-		pdfLink.value = await downloadDocumentAsset(props.assetId, docLink.value!); // Generate PDF download link on (doi change)
-	}
-});
-
-onUpdated(() => {
-	if (doc.value) {
-		emit('asset-loaded');
-	}
-});
 </script>
 <style scoped>
-.container {
-	margin-left: 1rem;
-	margin-right: 1rem;
-	max-width: 70rem;
+.document-asset-container {
+	display: grid;
+	grid-auto-flow: column;
+	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+	overflow: hidden;
+	height: 100%;
+
+	> section {
+		overflow-y: auto;
+	}
 }
 
-.extracted-item {
-	border: 1px solid var(--surface-border-light);
+.extractions-section {
 	padding: 1rem;
-	border-radius: var(--border-radius);
-}
-
-.extracted-item > .extracted-image {
-	display: block;
-	max-width: 30rem;
-	margin-bottom: 0.5rem;
-	width: fit-content;
-	padding: 8px;
-	border: 1px solid var(--gray-300);
-	border-radius: 6px;
-	object-fit: contain;
 }
 </style>
