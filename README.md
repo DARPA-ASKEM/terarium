@@ -14,7 +14,7 @@ machine extracted models.
   1. [Developing and Debugging](#running-and-debugging)
      1. [Running the Client](#running-the-client)
      1. [Running the Server](#running-the-server)
-     1. [Running only the Data Services](#running-only-for-the-data-services)
+     1. [Running only the Data Services](#running-only-the-data-services)
   1. [Testing](#testing)
      1. [Running the Client Tests](#running-the-client-tests)
      1. [Running the Server Tests](#running-the-server-tests)
