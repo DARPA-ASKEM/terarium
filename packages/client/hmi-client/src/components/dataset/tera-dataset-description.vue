@@ -1,60 +1,62 @@
 <template>
-	<tera-columnar-panel class="columns-container">
-		<Accordion multiple :active-index="[0, 1]">
-			<AccordionTab header="Description">
-				<section class="description">
-					<tera-show-more-text :text="description" :lines="5" />
-				</section>
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(provenance)" header="Provenance">
-				<section class="provenance">
-					<article>
-						<p v-html="provenance" />
-					</article>
-				</section>
-			</AccordionTab>
-		</Accordion>
-		<section class="details-column">
-			<tera-asset-card class="details">
-				<ul>
-					<li class="multiple">
-						<span>
-							<label>Rows</label>
-							<div class="framework">{{ rawContent?.rowCount }}</div>
-						</span>
-						<span>
-							<label>Columns</label>
-							<div>{{ rawContent?.stats?.length }}</div>
-						</span>
-						<span>
-							<label>Date created</label>
-							<div>{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') }}</div>
-						</span>
-					</li>
-					<li>
-						<label>Created by</label>
-						<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
-					</li>
-					<li>
-						<label>Source Name</label>
-						<div>{{ card?.authorEmail }}</div>
-					</li>
-					<li>
-						<label>Source URL</label>
-						<div>{{ dataset?.metadata?.processed_by }}</div>
-					</li>
-				</ul>
-			</tera-asset-card>
-			<tera-related-documents
-				:documents="documents"
-				:asset-type="AssetType.Datasets"
-				:assetId="dataset?.id ?? ''"
-				@enriched="fetchAsset"
-			/>
-		</section>
-	</tera-columnar-panel>
-	<h4>Column Information</h4>
-	<tera-dataset-overview-table v-if="dataset?.columns" :data="dataset.columns" />
+	<div>
+		<tera-columnar-panel>
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Description">
+					<section class="description">
+						<tera-show-more-text :text="description" :lines="5" />
+					</section>
+				</AccordionTab>
+				<AccordionTab v-if="!isEmpty(provenance)" header="Provenance">
+					<section class="provenance">
+						<article>
+							<p v-html="provenance" />
+						</article>
+					</section>
+				</AccordionTab>
+			</Accordion>
+			<section class="details-column">
+				<tera-asset-info-card class="details">
+					<ul>
+						<li class="multiple">
+							<span>
+								<label>Rows</label>
+								<div class="framework">{{ rawContent?.rowCount }}</div>
+							</span>
+							<span>
+								<label>Columns</label>
+								<div>{{ rawContent?.stats?.length }}</div>
+							</span>
+							<span>
+								<label>Date created</label>
+								<div>{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') }}</div>
+							</span>
+						</li>
+						<li>
+							<label>Created by</label>
+							<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
+						</li>
+						<li>
+							<label>Source Name</label>
+							<div>{{ card?.authorEmail }}</div>
+						</li>
+						<li>
+							<label>Source URL</label>
+							<div>{{ dataset?.metadata?.processed_by }}</div>
+						</li>
+					</ul>
+				</tera-asset-info-card>
+				<tera-related-documents
+					:documents="documents"
+					:asset-type="AssetType.Datasets"
+					:assetId="dataset?.id ?? ''"
+					@enriched="fetchAsset"
+				/>
+			</section>
+		</tera-columnar-panel>
+		<h4>Column Information</h4>
+		<tera-dataset-overview-table v-if="dataset?.columns" :data="dataset.columns" />
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -68,7 +70,7 @@ import AccordionTab from 'primevue/accordiontab';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import * as textUtil from '@/utils/text';
 import { useProjects } from '@/composables/project';
-import TeraAssetCard from '@/components/widgets/tera-asset-card.vue';
+import TeraAssetInfoCard from '@/components/widgets/tera-asset-info-card.vue';
 import TeraColumnarPanel from '../widgets/tera-columnar-panel.vue';
 import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 
@@ -139,9 +141,6 @@ function fetchAsset() {
 </script>
 
 <style scoped>
-.columns-container {
-	padding: 0;
-}
 .overview {
 	display: flex;
 	width: 100%;

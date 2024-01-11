@@ -1,95 +1,100 @@
 <template>
-	<!-- Toggle histograms & column summary charts -->
-	<div class="datatable-toolbar">
-		<span class="datatable-toolbar-item">
-			{{ csvHeaders?.length || 'No' }} columns | {{ csvContent?.length || 'No' }} rows
-		</span>
-		<span class="datatable-toolbar-item" style="margin-left: auto">
-			Show column summaries<InputSwitch v-model="showSummaries" />
-		</span>
-		<Button
-			class="download-button datatable-toolbar-item"
-			label="Download"
-			icon="pi pi-download"
-			text
-			outlined
-		/>
-		<span class="datatable-toolbar-item">
-			<MultiSelect
-				:modelValue="selectedColumns"
-				:options="csvHeaders"
-				@update:modelValue="onToggle"
-				:maxSelectedLabels="1"
-				placeholder="Select columns"
-			>
-				<template #value>
-					<span class="columns-dropdown datatable-toolbar-item">
-						<vue-feather type="columns" size="1.25rem" />
-						<span>Columns</span>
-					</span>
-				</template>
-			</MultiSelect>
-		</span>
-	</div>
-	<!-- Datable -->
-	<DataTable
-		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-		:value="props.rawContent?.data ? csvContent : csvContent?.slice(1, csvContent.length)"
-		:rows="props.rows"
-		paginator
-		:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"
-		:rowsPerPageOptions="[5, 10, 25, 50, 100]"
-		paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-		currentPageReportTemplate="{first} to {last} of {totalRecords}"
-		removableSort
-		showGridlines
-		scrollable
-		scroll-height="flex"
-		:tableStyle="tableStyle ? tableStyle : `width:auto`"
-	>
-		<Column
-			v-for="(colName, index) of selectedColumns"
-			:key="index"
-			:field="props.rawContent?.data ? colName : index.toString()"
-			:header="colName"
-			:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
-			sortable
-			:frozen="index == 0"
+	<div class="datatable-container">
+		<!-- Toggle histograms & column summary charts -->
+		<div class="datatable-toolbar">
+			<span class="datatable-toolbar-item">
+				{{ csvHeaders?.length || 'No' }} columns | {{ csvContent?.length || 'No' }} rows
+			</span>
+			<span class="datatable-toolbar-item" style="margin-left: auto">
+				Show column summaries<InputSwitch v-model="showSummaries" />
+			</span>
+			<Button
+				class="download-button datatable-toolbar-item"
+				label="Download"
+				icon="pi pi-download"
+				text
+				outlined
+			/>
+			<span class="datatable-toolbar-item">
+				<MultiSelect
+					:modelValue="selectedColumns"
+					:options="csvHeaders"
+					@update:modelValue="onToggle"
+					:maxSelectedLabels="1"
+					placeholder="Select columns"
+				>
+					<template #value>
+						<span class="columns-dropdown datatable-toolbar-item">
+							<vue-feather type="columns" size="1.25rem" />
+							<span>Columns</span>
+						</span>
+					</template>
+				</MultiSelect>
+			</span>
+		</div>
+		<!-- Datable -->
+		<DataTable
+			:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
+			:value="props.rawContent?.data ? csvContent : csvContent?.slice(1, csvContent.length)"
+			:rows="props.rows"
+			paginator
+			:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"
+			:rowsPerPageOptions="[5, 10, 25, 50, 100]"
+			paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+			currentPageReportTemplate="{first} to {last} of {totalRecords}"
+			removableSort
+			showGridlines
+			scrollable
+			scroll-height="flex"
+			:tableStyle="tableStyle ? tableStyle : `width:auto`"
 		>
-			<template #header>
-				<!-- column summary charts below -->
-				<div v-if="!previewMode && props.rawContent?.stats && showSummaries" class="column-summary">
-					<div class="column-summary-row">
-						<span class="column-summary-label">Max:</span>
-						<span class="column-summary-value">{{ csvMaxsToDisplay?.at(index) }}</span>
+			<Column
+				v-for="(colName, index) of selectedColumns"
+				:key="index"
+				:field="props.rawContent?.data ? colName : index.toString()"
+				:header="colName"
+				:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
+				sortable
+				:frozen="index == 0"
+			>
+				<template #header>
+					<!-- column summary charts below -->
+					<div
+						v-if="!previewMode && props.rawContent?.stats && showSummaries"
+						class="column-summary"
+					>
+						<div class="column-summary-row">
+							<span class="column-summary-label">Max:</span>
+							<span class="column-summary-value">{{ csvMaxsToDisplay?.at(index) }}</span>
+						</div>
+						<Chart
+							class="histogram"
+							type="bar"
+							:height="480"
+							:data="chartData?.at(index)"
+							:options="chartOptions"
+						/>
+						<div class="column-summary-row max">
+							<span class="column-summary-label">Min:</span>
+							<span class="column-summary-value">{{ csvMinsToDisplay?.at(index) }}</span>
+						</div>
+						<div class="column-summary-row">
+							<span class="column-summary-label">Mean:</span>
+							<span class="column-summary-value">{{ csvMeansToDisplay?.at(index) }}</span>
+						</div>
+						<div class="column-summary-row">
+							<span class="column-summary-label">Median:</span>
+							<span class="column-summary-value">{{ csvMedianToDisplay?.at(index) }}</span>
+						</div>
+						<div class="column-summary-row">
+							<span class="column-summary-label">SD:</span>
+							<span class="column-summary-value">{{ csvSdToDisplay?.at(index) }}</span>
+						</div>
 					</div>
-					<Chart
-						class="histogram"
-						type="bar"
-						:height="480"
-						:data="chartData?.at(index)"
-						:options="chartOptions"
-					/>
-					<div class="column-summary-row max">
-						<span class="column-summary-label">Min:</span>
-						<span class="column-summary-value">{{ csvMinsToDisplay?.at(index) }}</span>
-					</div>
-					<div class="column-summary-row">
-						<span class="column-summary-label">Mean:</span>
-						<span class="column-summary-value">{{ csvMeansToDisplay?.at(index) }}</span>
-					</div>
-					<div class="column-summary-row">
-						<span class="column-summary-label">Median:</span>
-						<span class="column-summary-value">{{ csvMedianToDisplay?.at(index) }}</span>
-					</div>
-					<div class="column-summary-row">
-						<span class="column-summary-label">SD:</span>
-						<span class="column-summary-value">{{ csvSdToDisplay?.at(index) }}</span>
-					</div>
-				</div>
-			</template>
-		</Column>
-	</DataTable>
+				</template>
+			</Column>
+		</DataTable>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -302,5 +307,11 @@ const onToggle = (val) => {
 :deep(.download-button.p-button.p-button-text),
 .columns-dropdown {
 	color: var(--text-color-primary);
+}
+.datatable-container {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow: hidden;
 }
 </style>

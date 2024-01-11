@@ -2,16 +2,12 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section tabName="Description">
 			<tera-drilldown-section :is-loading="fetchingDataset">
-				<div>
-					<tera-dataset-description :dataset="dataset" :raw-content="rawContent" />
-				</div>
+				<tera-dataset-description :dataset="dataset" :raw-content="rawContent" />
 			</tera-drilldown-section>
 		</section>
 		<section tabName="Data">
 			<tera-drilldown-section :is-loading="fetchingDataset">
-				<div class="datatable-container">
-					<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
-				</div>
+				<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
 			</tera-drilldown-section>
 		</section>
 	</tera-drilldown>
@@ -60,11 +56,4 @@ const fetchDataset = async () => {
 };
 </script>
 
-<style scoped>
-.datatable-container {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	overflow: hidden;
-}
-</style>
+<style scoped></style>
