@@ -1,21 +1,24 @@
 <template>
-	<section class="card-container">
+	<section class="card-container" :style="{ width: `${cardWidth}px` }">
 		<section class="card" ref="cardRef">
-			<div class="draggable"><i class="pi pi-pause" /></div>
+			<div class="drag-handle"><i class="pi pi-pause" /></div>
 			<main>
 				<header>
-					<span
-						:class="{ 'edit-name': isEditable }"
-						@click="if (isEditable) isEditingName = true;"
-						v-if="!isEditingName"
-					>
+					<span :class="{ 'edit-name': isEditable }" @click="turnOnNameEdit" v-if="!isEditingName">
 						{{ card?.name }}
 					</span>
-					<InputText v-else size="small" type="text" v-model="name" @keyup.enter="updateName" />
+					<Textarea
+						v-else
+						ref="nameInputRef"
+						v-model="name"
+						@keyup.enter="updateName()"
+						@keydown.enter="$event.preventDefault()"
+						@focusout="updateName"
+					/>
 				</header>
-				<section>Diagram/Equations</section>
+				<tera-model-diagram :model="model" :is-editable="false" is-preview />
 			</main>
-			<Button icon="pi pi-ellipsis-v" rounded text />
+			<Button v-if="isEditable" icon="pi pi-ellipsis-v" rounded text />
 		</section>
 		<ul>
 			<li
@@ -23,7 +26,7 @@
 				class="port"
 				:class="{ selectable: isEditable }"
 				:key="index"
-				@mouseenter="emit('port-mouseover', $event, cardRef?.clientWidth ?? 0)"
+				@mouseenter="emit('port-mouseover', $event, cardWidth)"
 				@mouseleave="emit('port-mouseleave')"
 				@focus="() => {}"
 				@blur="() => {}"
@@ -36,9 +39,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 
 interface ModelTemplate {
 	id: number;
@@ -54,8 +58,11 @@ const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 
 // Used to pass card width.
 // Unsure if we want to set widths on certain cards but for now this works
 const cardRef = ref();
-
+const nameInputRef = ref();
 const isEditingName = ref(false);
+const name = ref(props.model.header.name);
+
+const cardWidth = computed(() => cardRef.value?.clientWidth ?? 0);
 
 const card = computed<ModelTemplate>(
 	() =>
@@ -67,7 +74,13 @@ const card = computed<ModelTemplate>(
 		}
 );
 
-const name = ref(props.model.header.name);
+async function turnOnNameEdit() {
+	if (props.isEditable) {
+		isEditingName.value = true;
+		await nextTick();
+		if (nameInputRef.value) nameInputRef.value.$el.focus();
+	}
+}
 
 function updateName() {
 	emit('update-name', name);
@@ -102,28 +115,28 @@ function updateName() {
 
 		& > header {
 			text-align: center;
-			height: 2rem;
 
 			& > .edit-name {
 				cursor: pointer;
 			}
 
-			& > .p-inputtext.p-inputtext-sm {
+			& > .p-inputtext {
 				padding: 0.2rem 0.3rem;
 				text-align: center;
+				width: fit-content;
+				font-size: var(--font-caption);
 			}
 		}
-
-		& > * {
-			margin: 0 auto;
-		}
 	}
-
 	& > .p-button {
 		display: none;
 		position: absolute;
 		bottom: 0;
 		right: 0;
+	}
+
+	&:hover > .p-button {
+		display: block;
 	}
 }
 
@@ -156,7 +169,7 @@ ul {
 	}
 }
 
-.draggable {
+.drag-handle {
 	width: 0.75rem;
 	border-top-left-radius: var(--border-radius-medium);
 	border-bottom-left-radius: var(--border-radius-medium);

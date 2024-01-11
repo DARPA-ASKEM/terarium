@@ -2,7 +2,7 @@
 	<section>
 		<!--FIXME: See fetchModel()-->
 		<template v-if="model">
-			<tera-model-diagram :model="model" :is-editable="false" nodePreview />
+			<tera-model-diagram :model="model" :is-editable="false" is-preview />
 			<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
 		</template>
 		<template v-else>

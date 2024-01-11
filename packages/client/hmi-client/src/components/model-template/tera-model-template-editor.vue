@@ -237,7 +237,6 @@ function onDrop(event) {
 	newModelTemplate.value.metadata.templateCard.id = modelTemplates.value.length + 1;
 	modelTemplates.value.push(cloneDeep(newModelTemplate.value));
 	newModelTemplate.value = null;
-	console.log(modelTemplates.value);
 }
 
 let prevX = 0;

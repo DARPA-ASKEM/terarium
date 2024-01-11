@@ -13,7 +13,7 @@
 					v-if="view === ModelNodeView.Diagram"
 					:model="model"
 					:is-editable="false"
-					nodePreview
+					is-preview
 				/>
 				<tera-model-equation
 					v-else-if="view === ModelNodeView.Equation"

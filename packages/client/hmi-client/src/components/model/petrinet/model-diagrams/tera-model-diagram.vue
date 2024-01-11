@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!nodePreview" class="diagram-container">
+		<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 			<section class="graph-element">
 				<Toolbar>
 					<template #start>
@@ -162,7 +162,7 @@ const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
 	modelConfiguration?: ModelConfiguration;
-	nodePreview?: boolean;
+	isPreview?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'update-configuration']);
