@@ -286,6 +286,7 @@ main {
 
 ul {
 	margin: var(--gap) 0;
+	list-style: none;
 }
 
 ul:empty {

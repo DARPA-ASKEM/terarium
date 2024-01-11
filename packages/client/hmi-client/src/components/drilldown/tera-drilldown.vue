@@ -9,7 +9,7 @@
 				@close="emit('on-close-clicked')"
 				>{{ props.title }}</tera-drilldown-header
 			>
-			<main>
+			<tera-columnar-panel>
 				<template v-for="(tab, index) in tabs" :key="index">
 					<component :is="tab" v-show="selectedViewIndex === index" />
 				</template>
@@ -17,7 +17,7 @@
 				<section v-if="slots.preview">
 					<slot name="preview" />
 				</section>
-			</main>
+			</tera-columnar-panel>
 			<footer v-if="slots.footer">
 				<slot name="footer" />
 			</footer>
@@ -29,6 +29,7 @@
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 
 const props = defineProps<{
 	title: string;
@@ -88,13 +89,8 @@ than the main application behind the modal when these render issues come, howeve
 }
 
 main {
-	display: grid;
-	grid-auto-flow: column;
-	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-	overflow: hidden;
 	flex-grow: 1;
-	padding: 1rem 1.5rem;
-	gap: 0.5rem;
+	padding: var(--gap);
 }
 
 main > :deep(*) {
