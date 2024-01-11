@@ -6,7 +6,9 @@
 		:stretch-content="view === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		:is-loading="isDatasetLoading"
-		:overflow-hidden="selectedViewIndex === 1"
+		:overflow-hidden="selectedTabIndex === 1"
+		:selected-tab-index="selectedTabIndex"
+		@tab-change="(e) => (selectedTabIndex = e.index)"
 	>
 		<template #name-input>
 			<InputText
@@ -26,14 +28,19 @@
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
 		</template>
-		<TabView :active-index="selectedViewIndex" @tab-change="(e) => (selectedViewIndex = e.index)">
-			<TabPanel header="Description">
-				<tera-dataset-description :dataset="dataset" :raw-content="rawContent" />
-			</TabPanel>
-			<TabPanel header="Data">
+
+		<template #tabs>
+			<section class="tab" tabName="Description">
+				<tera-dataset-description
+					tabName="Description"
+					:dataset="dataset"
+					:raw-content="rawContent"
+				/>
+			</section>
+			<section class="tab data-tab" tabName="Data">
 				<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
-			</TabPanel>
-		</TabView>
+			</section>
+		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
@@ -45,8 +52,6 @@ import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
 import { useProjects } from '@/composables/project';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -76,16 +81,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
-const newCsvContent: any = ref(null);
-const newCsvHeader: any = ref(null);
-const oldCsvHeaders: any = ref(null);
 const dataset = ref<Dataset | null>(null);
 const newDatasetName = ref('');
 const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
-const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
-const selectedViewIndex = ref(0);
+const selectedTabIndex = ref(0);
 
 const view = ref(DatasetView.DESCRIPTION);
 
@@ -170,17 +171,6 @@ onUpdated(() => {
 	}
 });
 
-watch(
-	() => [jupyterCsv.value?.csv],
-	() => {
-		if (jupyterCsv.value?.csv) {
-			oldCsvHeaders.value = newCsvHeader.value;
-			newCsvContent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
-			newCsvHeader.value = jupyterCsv.value.headers;
-		}
-	}
-);
-
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => [props.assetId],
@@ -200,28 +190,13 @@ watch(
 </script>
 
 <style scoped>
-.tabs-view:deep(.p-tabview-nav-content) {
-	padding: 0 1rem;
-	background-color: var(--surface-disabled);
-}
-:deep(.p-tabview .p-tabview-nav) {
-	background: none;
-}
-
-:deep(.p-tabview.p-component) {
-	display: flex;
-	height: 100%;
-	overflow: hidden;
-	flex-direction: column;
-}
-
-:deep(.p-tabview-panels),
-:deep(.p-tabview-panel) {
-	overflow: hidden;
-	/* display: flex; */
-	/* height: 100%; */
-	flex: 1;
-	display: flex;
-	flex-direction: column;
+.tab {
+	padding: var(--gap);
+	&.data-tab {
+		display: flex;
+		height: 100%;
+		overflow: hidden;
+		flex-direction: column;
+	}
 }
 </style>

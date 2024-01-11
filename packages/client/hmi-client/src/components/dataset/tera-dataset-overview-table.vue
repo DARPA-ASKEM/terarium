@@ -46,4 +46,8 @@ function formatData(data: DatasetColumn[]) {
 .dataset-overview-table :deep(td:empty:before) {
 	content: '--';
 }
+
+.p-datatable:deep(.p-datatable-thead > tr > th) {
+	background-color: var(--surface-50);
+}
 </style>

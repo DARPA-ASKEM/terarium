@@ -7,7 +7,13 @@
 		<span class="datatable-toolbar-item" style="margin-left: auto">
 			Show column summaries<InputSwitch v-model="showSummaries" />
 		</span>
-		<Button class="datatable-toolbar-item" label="Download" icon="pi pi-download" text outlined />
+		<Button
+			class="download-button datatable-toolbar-item"
+			label="Download"
+			icon="pi pi-download"
+			text
+			outlined
+		/>
 		<span class="datatable-toolbar-item">
 			<MultiSelect
 				:modelValue="selectedColumns"
@@ -17,7 +23,7 @@
 				placeholder="Select columns"
 			>
 				<template #value>
-					<span class="datatable-toolbar-item">
+					<span class="columns-dropdown datatable-toolbar-item">
 						<vue-feather type="columns" size="1.25rem" />
 						<span>Columns</span>
 					</span>
@@ -94,6 +100,7 @@ import { CsvAsset } from '@/types/Types';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
+import InputSwitch from 'primevue/inputswitch';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
@@ -223,7 +230,8 @@ const onToggle = (val) => {
 .datatable-toolbar {
 	display: flex;
 	flex-direction: row;
-	gap: 1rem;
+	gap: var(--gap);
+	padding-bottom: var(--gap);
 }
 .datatable-toolbar-item {
 	display: flex;
@@ -231,11 +239,11 @@ const onToggle = (val) => {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 
 .datatable-toolbar:deep(.p-multiselect .p-multiselect-label) {
-	padding: 0.5rem;
+	padding: var(--gap-small);
 	font-size: var(--font-caption);
 }
 
@@ -290,5 +298,9 @@ const onToggle = (val) => {
 
 .p-datatable-flex-scrollable {
 	overflow: hidden;
+}
+:deep(.p-button.p-button-text),
+.columns-dropdown {
+	color: var(--text-color-primary);
 }
 </style>
