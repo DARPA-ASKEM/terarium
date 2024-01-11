@@ -156,14 +156,18 @@ There should now be a `application-secrets.properties` file in the `packages/ser
 
 ### Running only the Data Services
 
-A self-contained "lean" version docker-compose-lean.yml with all services necessary to run the `terarium` backend can be spun up with the following:
+A functional `docker-compose-lean.yml` with all services necessary to run the `terarium` backend can be spun up with the following:
 
 ```shell
 docker compose --file containers/docker-compose-lean.yml pull
 docker compose --file containers/docker-compose-lean.yml up --detach --wait
 ```
 
-This will deploy a local `terarium` backend along with all required services along with a localized `keycloak` instance to auth against. In order to hit the data service endpoints on port 3000 you will need to include the following basic auth credential:
+This will standup a local `terarium` server on port `3000` supporting all data service endpoints.
+
+The `terarium` backend uses `OAuth2.0` via `keycloak` for user authentication. In order to make calls to the data services simpler, a `service-user` can be used by providing a basic auth credential instead.
+
+Please use the following basic auth credential if running `docker-compose-lean.yml`:
 
 ```
 'Authorization: Basic YWRhbTphc2RmMUFTREY='
@@ -175,7 +179,7 @@ If you prefer the JSON request / response keys to be `snake_case` rather than `c
 'X-Enable-Snake-Case'
 ```
 
-If integrating the `docker-compose-lean.yml` into another repo, the docker compose volumes expect the following directory structure:
+If integrating the `docker-compose-lean.yml` into another repo, the following files and directory structure is expected:
 
 ```
 - scripts
