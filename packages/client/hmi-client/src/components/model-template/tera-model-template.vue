@@ -16,7 +16,12 @@
 						@focusout="updateName"
 					/>
 				</header>
-				<tera-model-diagram :model="model" :is-editable="false" is-preview />
+				<tera-model-diagram
+					:style="!isEditable && { pointerEvents: 'none' }"
+					:model="model"
+					:is-editable="false"
+					is-preview
+				/>
 			</main>
 			<Button v-if="isEditable" icon="pi pi-ellipsis-v" rounded text />
 		</section>

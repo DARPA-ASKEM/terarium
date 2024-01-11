@@ -326,7 +326,6 @@ header {
 }
 
 .template-options {
-	/* max-height: 85%;
 	overflow: hidden;
 
 	& > header {
@@ -334,20 +333,21 @@ header {
 	}
 
 	& > ul {
-		padding: 0.25rem 0 0 var(--gap-small);
+		height: 85%;
+		padding: 0.25rem 0 0.25rem var(--gap-small);
 		overflow-y: scroll;
-	} */
+	}
 }
 
 .trash {
-	margin-top: auto;
+	margin: auto 0.5rem 0 0.5rem;
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	border: 1px dashed #9fa9b7;
 	border-radius: var(--border-radius);
 	background-color: #eff2f5;
 	text-align: center;
-	padding: 1rem 0;
+	padding: 1rem;
 
 	& > .pi-trash {
 		font-size: 1.5rem;
