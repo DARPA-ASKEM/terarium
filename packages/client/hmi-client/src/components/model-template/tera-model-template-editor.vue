@@ -126,6 +126,7 @@ const modelTemplateOptions = [
 	controlledDegredation,
 	observable
 ].map((modelTemplate) => {
+	// TODO: Add templateCard attribute to Model later
 	modelTemplate.metadata.templateCard = {
 		id: -1,
 		name: modelTemplate.header.name,
