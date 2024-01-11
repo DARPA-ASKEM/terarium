@@ -14,7 +14,7 @@ machine extracted models.
   1. [Developing and Debugging](#running-and-debugging)
      1. [Running the Client](#running-the-client)
      1. [Running the Server](#running-the-server)
-     1. [Running only only for the Data Services](#running-only-for-the-data-services)
+     1. [Running only the Data Services](#running-only-for-the-data-services)
   1. [Testing](#testing)
      1. [Running the Client Tests](#running-the-client-tests)
      1. [Running the Server Tests](#running-the-server-tests)
@@ -154,7 +154,7 @@ There should now be a `application-secrets.properties` file in the `packages/ser
 ```
 </details>
 
-### Running only only for the Data Services
+### Running only the Data Services
 
 A self-contained "lean" version docker-compose-lean.yml with all services necessary to run the `terarium` backend can be spun up with the following:
 
