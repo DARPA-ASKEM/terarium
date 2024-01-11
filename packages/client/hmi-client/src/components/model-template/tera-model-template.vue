@@ -4,19 +4,24 @@
 			<div class="draggable"><i class="pi pi-pause" /></div>
 			<main>
 				<header>
-					<span @click="if (!readOnly) isEditingName = true;" v-if="!isEditingName">
+					<span
+						:class="{ 'edit-name': isEditable }"
+						@click="if (isEditable) isEditingName = true;"
+						v-if="!isEditingName"
+					>
 						{{ card?.name }}
 					</span>
 					<InputText v-else size="small" type="text" v-model="name" @keyup.enter="updateName" />
 				</header>
 				<section>Diagram/Equations</section>
 			</main>
-			<Button v-if="!readOnly" icon="pi pi-ellipsis-v" rounded text />
+			<Button icon="pi pi-ellipsis-v" rounded text />
 		</section>
 		<ul>
 			<li
 				v-for="({ id }, index) in [...model.model.states, ...model.model.transitions]"
 				class="port"
+				:class="{ selectable: isEditable }"
 				:key="index"
 				@mouseenter="emit('port-mouseover', $event, cardRef?.clientWidth ?? 0)"
 				@mouseleave="emit('port-mouseleave')"
@@ -42,7 +47,7 @@ interface ModelTemplate {
 	y: number;
 }
 
-const props = defineProps<{ model: any; readOnly: boolean }>();
+const props = defineProps<{ model: any; isEditable: boolean }>();
 
 const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name']);
 
@@ -96,9 +101,12 @@ function updateName() {
 		overflow: hidden;
 
 		& > header {
-			cursor: pointer;
 			text-align: center;
 			height: 2rem;
+
+			& > .edit-name {
+				cursor: pointer;
+			}
 
 			& > .p-inputtext.p-inputtext-sm {
 				padding: 0.2rem 0.3rem;
@@ -141,6 +149,11 @@ ul {
 		font-family: serif;
 		font-style: italic;
 	}
+
+	& > li.selectable:hover {
+		background-color: var(--surface-highlight);
+		cursor: pointer;
+	}
 }
 
 .draggable {
@@ -154,17 +167,6 @@ ul {
 	& > .pi {
 		font-size: 0.75rem;
 		color: var(--text-color-subdued);
-	}
-}
-</style>
-
-<style>
-/* When a card is placed in the data layer of the infinite canvas 
-(eg. ports shouldn't look selectable if card is in the sidebar) */
-.data-layer .card-container {
-	& > ul > li:hover {
-		background-color: var(--surface-highlight);
-		cursor: pointer;
 	}
 }
 </style>

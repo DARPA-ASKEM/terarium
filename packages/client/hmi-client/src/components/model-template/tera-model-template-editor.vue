@@ -22,7 +22,7 @@
 						<li v-for="(modelTemplate, index) in modelTemplateOptions" :key="index">
 							<tera-model-template
 								:model="modelTemplate"
-								read-only
+								:is-editable="false"
 								draggable="true"
 								@dragstart="newModelTemplate = modelTemplate"
 							/>
@@ -48,7 +48,7 @@
 			>
 				<tera-model-template
 					:model="template"
-					:read-only="false"
+					is-editable
 					@update-name="(name: string) => updateName(name, index)"
 					@port-selected="createNewEdge(template.metadata.templateCard)"
 					@port-mouseover="
