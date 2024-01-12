@@ -802,10 +802,10 @@ function resetZoom() {
 	padding: 0.5rem 1rem;
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
+	background-color: var(--surface-transparent);
 }
 
 .glass {
-	background-color: rgba(255, 255, 255, 0.8);
 	backdrop-filter: blur(10px);
 }
 

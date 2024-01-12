@@ -80,9 +80,9 @@ than the main application behind the modal when these render issues come, howeve
 */
 .overlay-container > section {
 	height: calc(100% - 1rem);
-	margin: 0.5rem;
-	background: #fff;
-	border-radius: var(--modal-border-radius);
+	margin: 1rem 1.5rem 0rem 1.5rem;
+	background: var(--surface-0);
+	border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -90,7 +90,8 @@ than the main application behind the modal when these render issues come, howeve
 
 main {
 	flex-grow: 1;
-	padding: var(--gap);
+	padding: 0 0 0 var(--gap-small);
+	gap: var(--gap-small);
 }
 
 main > :deep(*) {

@@ -50,9 +50,9 @@ header {
 	flex-direction: column;
 	gap: 1rem;
 	background-color: var(--surface-highlight);
-	padding-top: 1.25rem;
-	padding-left: 1rem;
-	padding-right: 1rem;
+	padding-top: 1rem;
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;
 }
 
 header > * {
