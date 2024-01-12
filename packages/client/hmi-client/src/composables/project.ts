@@ -9,7 +9,7 @@
 import { IProject } from '@/types/Project';
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import { AssetType, PermissionRelationships } from '@/types/Types';
+import { AssetType, PermissionRelationships, Project } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;
@@ -30,7 +30,7 @@ export function useProjects() {
 	async function get(projectId: IProject['id']): Promise<IProject | null> {
 		if (projectId) {
 			projectLoading.value = true;
-			activeProject.value = await ProjectService.get(projectId, true);
+			activeProject.value = await ProjectService.get(projectId);
 			projectLoading.value = false;
 		} else {
 			activeProject.value = null;
@@ -41,7 +41,7 @@ export function useProjects() {
 	async function refresh(): Promise<IProject | null> {
 		const projectId: IProject['id'] = activeProjectId.value;
 		if (projectId) {
-			activeProject.value = await ProjectService.get(projectId, true);
+			activeProject.value = await ProjectService.get(projectId);
 		}
 		return activeProject.value;
 	}
@@ -72,7 +72,7 @@ export function useProjects() {
 		);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
-				activeProject.value = await ProjectService.get(activeProjectId.value, true);
+				activeProject.value = await ProjectService.get(activeProjectId.value);
 			}, TIMEOUT_MS);
 		}
 		return newAssetId;
@@ -95,7 +95,7 @@ export function useProjects() {
 		);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
-				activeProject.value = await ProjectService.get(activeProjectId.value, true);
+				activeProject.value = await ProjectService.get(activeProjectId.value);
 			}, TIMEOUT_MS);
 		}
 		return deleted;
@@ -127,7 +127,7 @@ export function useProjects() {
 		const updated = await ProjectService.update(project);
 		if (project.id === activeProjectId.value) {
 			setTimeout(async () => {
-				activeProject.value = await ProjectService.get(project.id, true);
+				activeProject.value = await ProjectService.get(project.id);
 			}, 1000);
 		}
 		return updated;
@@ -158,13 +158,11 @@ export function useProjects() {
 	 * @param {string} projectId Project id to get assets for.
 	 * @return {Promise<DocumentAsset[]>} The documents assets for the project.
 	 */
-	async function getPublicationAssets(projectId: IProject['id']) {
+	async function getPublicationAssets(projectId: Project['id']) {
 		return ProjectService.getPublicationAssets(projectId);
 	}
 
-	async function getPermissions(
-		projectId: IProject['id']
-	): Promise<PermissionRelationships | null> {
+	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 		return ProjectService.getPermissions(projectId);
 	}
 
@@ -172,16 +170,12 @@ export function useProjects() {
 		return ProjectService.setPermissions(projectId, userId, relationship);
 	}
 
-	async function removePermissions(
-		projectId: IProject['id'],
-		userId: string,
-		relationship: string
-	) {
+	async function removePermissions(projectId: Project['id'], userId: string, relationship: string) {
 		return ProjectService.removePermissions(projectId, userId, relationship);
 	}
 
 	async function updatePermissions(
-		projectId: IProject['id'],
+		projectId: Project['id'],
 		userId: string,
 		oldRelationship: string,
 		to: string
@@ -194,7 +188,7 @@ export function useProjects() {
 		if (!userId) {
 			return null;
 		}
-		const projectToClone = await ProjectService.get(projectId, true);
+		const projectToClone = await ProjectService.get(projectId);
 		if (!projectToClone || !projectToClone.assets) {
 			return null;
 		}
