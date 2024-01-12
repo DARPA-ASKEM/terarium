@@ -3,7 +3,6 @@
  */
 
 import API from '@/api/api';
-import { IProject, ProjectAssets } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
@@ -52,16 +51,13 @@ async function create(
 	}
 }
 
-async function update(project: IProject): Promise<IProject | null> {
+async function update(project: Project): Promise<Project | null> {
 	try {
-		const { id, name, description, active, username, assets } = project;
+		const { id, name, description } = project;
 		const response = await API.put(`/projects/${id}`, {
 			id,
 			name,
-			description,
-			active,
-			username,
-			assets
+			description
 		});
 		const { status, data } = response;
 		if (status !== 200) {
@@ -76,10 +72,10 @@ async function update(project: IProject): Promise<IProject | null> {
 
 /**
  * Remove a project (soft-delete)
- * @param projectId {IProject["id"]} - the id of the project to be removed
- * @return boolean - if the removal was succesful
+ * @param projectId {Project["id"]} - the id of the project to be removed
+ * @return boolean - if the removal was successful
  */
-async function remove(projectId: IProject['id']): Promise<boolean> {
+async function remove(projectId: Project['id']): Promise<boolean> {
 	try {
 		const { status } = await API.delete(`/projects/${projectId}`);
 		return status === 200;
@@ -107,7 +103,7 @@ async function getAll(): Promise<Project[] | null> {
 
 /**
  * Get project assets for a given project per id
- * @param projectId projet id to get assets for
+ * @param projectId project id to get assets for
  * @param types optional list of types. If none are given we assume you want it all
  * @return ProjectAssets|null - the appropriate project, or null if none returned by API
  */
@@ -115,13 +111,13 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 	try {
 		let url = `/projects/${projectId}/assets`;
 		if (types) {
-			types.forEach((type, indx) => {
+			types.forEach((type, index) => {
 				// add URL with format: ...?types=A&types=B&types=C
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+				url += `${index === 0 ? '?' : '&'}types=${type}`;
 			});
 		} else {
-			Object.values(AssetType).forEach((type, indx) => {
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+			Object.values(AssetType).forEach((type, index) => {
+				url += `${index === 0 ? '?' : '&'}types=${type}`;
 			});
 		}
 		const response = await API.get(url);
@@ -147,7 +143,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 
 /**
  * Get projects publication assets for a given project per id
- * @param projectId projet id to get assets for
+ * @param projectId project id to get assets for
  * @return ExternalPublication[] the documents assets for the project
  */
 async function getPublicationAssets(projectId: string): Promise<ExternalPublication[]> {
@@ -189,13 +185,13 @@ async function addAsset(projectId: string, assetType: string, assetId: string) {
 
 /**
  * Delete a project asset
- * @projectId IProject["id"] - represents the project id wherein the asset will be added
+ * @projectId Project["id"] - represents the project id wherein the asset will be added
  * @assetType AssetType - represents the type of asset to be added, e.g., 'documents'
  * @assetId string | number - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return boolean
  */
 async function deleteAsset(
-	projectId: IProject['id'],
+	projectId: Project['id'],
 	assetType: AssetType,
 	assetId: string | number
 ): Promise<boolean> {
@@ -211,18 +207,18 @@ async function deleteAsset(
 
 /**
  * Get a project per id
- * @param projectId - string
+ * @param projectId - Project['id']
  * @param containingAssetsInformation - boolean - Add the assets information during the same call
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function get(
-	projectId: string,
+	projectId: Project['id'],
 	containingAssetsInformation: boolean = false
-): Promise<IProject | null> {
+): Promise<Project | null> {
 	try {
 		const { status, data } = await API.get(`/projects/${projectId}`);
 		if (status !== 200) return null;
-		const project = data as IProject;
+		const project = data as Project;
 
 		if (project && containingAssetsInformation) {
 			const assets = await getAssets(projectId);
@@ -238,7 +234,7 @@ async function get(
 	}
 }
 
-async function getPermissions(projectId: IProject['id']): Promise<PermissionRelationships | null> {
+async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 	try {
 		const { status, data } = await API.get(`projects/${projectId}/permissions`);
 		if (status !== 200) {
@@ -251,7 +247,7 @@ async function getPermissions(projectId: IProject['id']): Promise<PermissionRela
 	}
 }
 
-async function setPermissions(projectId: IProject['id'], userId: string, relationship: string) {
+async function setPermissions(projectId: Project['id'], userId: string, relationship: string) {
 	try {
 		const { status, data } = await API.post(
 			`projects/${projectId}/permissions/user/${userId}/${relationship}`
@@ -266,7 +262,7 @@ async function setPermissions(projectId: IProject['id'], userId: string, relatio
 	}
 }
 
-async function removePermissions(projectId: IProject['id'], userId: string, relationship: string) {
+async function removePermissions(projectId: Project['id'], userId: string, relationship: string) {
 	try {
 		const { status, data } = await API.delete(
 			`projects/${projectId}/permissions/user/${userId}/${relationship}`
@@ -282,7 +278,7 @@ async function removePermissions(projectId: IProject['id'], userId: string, rela
 }
 
 async function updatePermissions(
-	projectId: IProject['id'],
+	projectId: Project['id'],
 	userId: string,
 	oldRelationship: string,
 	to: string
