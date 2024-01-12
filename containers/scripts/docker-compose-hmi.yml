@@ -10,13 +10,22 @@ services:
     ports:
       - "3000:3000"
     healthcheck:
-      test: ["CMD", "curl", "--head", "0.0.0.0:3000/actuator/health"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "--head",
+          "0.0.0.0:3000/actuator/health"
+        ]
       interval: "3s"
       timeout: "3s"
       retries: 30
     environment:
       ADOBE_API-KEY: "${secret_adobe_api_key}"
       GOOGLE-ANALYTICS-ID: ""
+      AWS_URL: "http://${local_host_name}:9000"
+      AWS_ACCESS_KEY_ID: "admin"
+      AWS_SECRET_ACCESS_KEY: "admin123"
       KNOWLEDGE-MIDDLEWARE_URL: "http://${local_host_name}:3060"
       MODEL-SERVICE_URL: "http://${local_host_name}:3010"
       SPICEDB_LAUNCHMODE: "PLAINTEXT"
@@ -28,7 +37,6 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER-URI: "${secret_terarium_keycloak_url}/realms/${secret_terarium_keycloak_realm}"
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT-ID: "${secret_terarium_keycloak_client_id}"
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: "${secret_terarium_keycloak_url}/realms/${secret_terarium_keycloak_realm}"
-      TERARIUM_DATASERVICE_URL: "http://${local_host_name}:3020"
       TERARIUM_DB_PASSWORD: "postgres"
       TERARIUM_DB_USERNAME: "postgres"
       TERARIUM_KEYCLOAK_ADMIN-CLIENT-ID: "${secret_terarium_keycloak_admin_client_id}"
@@ -43,34 +51,43 @@ services:
       TERARIUM_MQ-PASSWORD: "terarium123"
       TERARIUM_MQ-POST: "5672"
       TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_ELASTICSEARCH_URL: "http://${local_host_name}:9200"
+      TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
+      SPRING_DATA_NEO4J_URI: "bolt://${local_host_name}:7687"
+      SPRING_DATA_NEO4J_AUTHENTICATION_USERNAME: "neo4j"
+      SPRING_DATA_NEO4J_AUTHENTICATION_PASSWORD: "password"
       TGPT_APP_URL: "http://${local_host_name}:3050/beaker/"
       TGPT_TOKEN: "${secret_tgpt_token}"
       TGPT_WS_URL: "ws://${local_host_name}:3050/beaker_ws/"
       XDD_API-ES-KEY: "${secret_xdd_api_es_key}"
       XDD_API-KEY: "${secret_xdd_api_key}"
-#      GITHUB_URL: https://api.github.com
-#      JSDELIVR_URL: https://cdn.jsdelivr.net
-#      MIRA-API_URL: http://34.230.33.149:8771
-#      MIT-PROXY_URL: https://mit-proxy.staging.terarium.ai
-#      SKEMA-PY_URL: https://skema-py.staging.terarium.ai
-#      SKEMA-RS_URL: https://skema-rs.staging.terarium.ai
-#      SKEMA-UNIFIED_URL: https://skema-unified.staging.terarium.ai
-#      XDD-DEV-SERVICE_URL: https://xdddev.chtc.io
-#      XDD-PROD-SERVICE_URL: https://xdd.wisc.edu
+    #      GITHUB_URL: https://api.github.com
+    #      JSDELIVR_URL: https://cdn.jsdelivr.net
+    #      MIRA-API_URL: http://34.230.33.149:8771
+    #      MIT-PROXY_URL: https://mit-proxy.staging.terarium.ai
+    #      SKEMA-PY_URL: https://skema-py.staging.terarium.ai
+    #      SKEMA-RS_URL: https://skema-rs.staging.terarium.ai
+    #      SKEMA-UNIFIED_URL: https://skema-unified.staging.terarium.ai
+    #      XDD-DEV-SERVICE_URL: https://xdddev.chtc.io
+    #      XDD-PROD-SERVICE_URL: https://xdd.wisc.edu
     depends_on:
       postgres:
         condition: service_healthy
       spicedb:
         condition: service_healthy
-      data-service:
-        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       knowledge-middleware-api:
         condition: service_started
       model-service:
-        condition: service_started
-      redis:
-        condition: service_started
-      message-queue:
         condition: service_started
 
   hmi-client:
@@ -82,7 +99,7 @@ services:
       - "8080:80"
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "--head", "0.0.0.0:80/healthcheck"]
+      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
       interval: "3s"
       timeout: "3s"
       retries: 30
@@ -99,7 +116,7 @@ services:
       - "8082:80"
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "--head", "0.0.0.0:80/healthcheck"]
+      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
       interval: "3s"
       timeout: "3s"
       retries: 30

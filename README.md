@@ -11,9 +11,10 @@ machine extracted models.
 1. [Project Status](#project-status)
 1. [Getting Started](#getting-started)
   1. [Dependencies](#dependencies)
-  1. [Running and Debugging](#running-and-debugging)
+  1. [Developing and Debugging](#running-and-debugging)
      1. [Running the Client](#running-the-client)
      1. [Running the Server](#running-the-server)
+     1. [Running only the Data Services](#running-only-the-data-services)
   1. [Testing](#testing)
      1. [Running the Client Tests](#running-the-client-tests)
      1. [Running the Server Tests](#running-the-server-tests)
@@ -152,6 +153,42 @@ There should now be a `application-secrets.properties` file in the `packages/ser
 }
 ```
 </details>
+
+### Running only the Data Services
+
+A functional `docker-compose-lean.yml` with all services necessary to run the `terarium` backend can be spun up with the following:
+
+```shell
+docker compose --file containers/docker-compose-lean.yml pull
+docker compose --file containers/docker-compose-lean.yml up --detach --wait
+```
+
+This will standup a local `terarium` server on port `3000` supporting all data service endpoints.
+
+The `terarium` backend uses `OAuth2.0` via `keycloak` for user authentication. In order to make calls to the data services simpler, a `service-user` can be used by providing a basic auth credential instead.
+
+Please use the following basic auth credential if running `docker-compose-lean.yml`:
+
+```
+'Authorization: Basic YWRhbTphc2RmMUFTREY='
+```
+
+If you prefer the JSON request / response keys to be `snake_case` rather than `camelCase` include the following header in any data service request:
+
+```
+'X-Enable-Snake-Case'
+```
+
+If integrating the `docker-compose-lean.yml` into another repo, the following files and directory structure is expected:
+
+```
+- scripts
+  - init.sql                     // initialize the postgres databases
+  - realm
+    - Terarium-realm.json        // keycloak realm definition
+    - Terarium-users-0.json      // keycloak user definitions
+- docker-compose-lean.yml
+```
 
 ## Testing
 

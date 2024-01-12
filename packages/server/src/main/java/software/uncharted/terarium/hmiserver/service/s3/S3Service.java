@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.LongStream;
 
 import org.apache.commons.io.FileUtils;
@@ -102,6 +103,27 @@ public class S3Service {
 			return true;
 		} catch (NoSuchBucketException e) {
 			log.debug("Bucket {} does not exist", bucketName);
+			return false;
+		}
+	}
+
+	/**
+	 * Checks if an object exists in a bucket
+	 *
+	 * @param s3Client
+	 * @param bucketName
+	 * @param key
+	 * @return
+	 */
+	public boolean doesObjectExist(String bucketName, String key) {
+		try {
+			HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+					.bucket(bucketName)
+					.key(key)
+					.build();
+			client.headObject(headObjectRequest);
+			return true;
+		} catch (NoSuchKeyException e) {
 			return false;
 		}
 	}
@@ -411,7 +433,12 @@ public class S3Service {
 	 * @param expirationSeconds The number of seconds the signature is valid for
 	 * @return The pre-signed URL
 	 */
-	public String getS3PreSignedGetUrl(final String bucket, final String key, final long expirationSeconds) {
+	public Optional<String> getS3PreSignedGetUrl(final String bucket, final String key, final long expirationSeconds) {
+
+		if (!doesObjectExist(bucket, key)) {
+			return Optional.empty();
+		}
+
 		GetObjectPresignRequest request = GetObjectPresignRequest.builder()
 				.signatureDuration(Duration.ofSeconds(expirationSeconds))
 				.getObjectRequest(GetObjectRequest.builder()
@@ -420,7 +447,7 @@ public class S3Service {
 						.build())
 				.build();
 		PresignedGetObjectRequest presignedGetObjectRequest = preSigner.presignGetObject(request);
-		return presignedGetObjectRequest.url().toString();
+		return Optional.of(presignedGetObjectRequest.url().toString());
 	}
 
 	/**
@@ -491,7 +518,7 @@ public class S3Service {
 
 	/**
 	 * Parses the filename from a path
-	 * 
+	 *
 	 * @param path
 	 * @return
 	 */

@@ -105,19 +105,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible">
-		<template #header>
-			<h4>New Model</h4>
-		</template>
-		<form @submit.prevent>
-			<label for="new-model">Enter a unique name for your model</label>
-			<InputText id="new-model" type="text" v-model="newModelName" placeholder="New model" />
-		</form>
-		<template #footer>
-			<Button @click="saveAsNewModel">Create model</Button>
-			<Button class="p-button-secondary" @click="isNewModelModalVisible = false">Cancel</Button>
-		</template>
-	</tera-modal>
+	<tera-model-modal
+		:modelId="selectedModel?.id"
+		:is-visible="isNewModelModalVisible"
+		@close-modal="onCloseModelModal"
+		@update="onAddModel"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -129,7 +122,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import { AssetType, Model, ProgrammingLanguage } from '@/types/Types';
+import { ProgrammingLanguage, Model } from '@/types/Types';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -137,14 +130,10 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { createModel, getModel, updateModel, validateModelName } from '@/services/model';
-import { addAsset } from '@/services/project';
+import { createModel, getModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
-import { useToastService } from '@/services/toast';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import InputText from 'primevue/inputtext';
 import { getCodeAsset } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
@@ -168,7 +157,6 @@ enum ModelFramework {
 	Decapodes = 'Decapodes'
 }
 const isNewModelModalVisible = ref(false);
-const newModelName = ref('');
 const isProcessing = ref(false);
 const fetchingInputBlocks = ref(false);
 
@@ -325,32 +313,12 @@ function openModal() {
 	isNewModelModalVisible.value = true;
 }
 
-async function saveAsNewModel() {
-	if (!validateModelName(newModelName.value) || !selectedOutputId.value) return;
-
-	savingAsset.value = true;
-	// 1. Update model name
-	const model = selectedModel.value;
-	if (!model) return;
-	model.header.name = newModelName.value;
-	const updateResponse = await updateModel(model);
-	if (!updateResponse) return;
-
-	// 2. Save asset to project
-	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId || !selectedModel.value) return;
-	const response = await addAsset(projectId, AssetType.Model, selectedModel.value.id);
-	savingAsset.value = false;
-	await useProjects().refresh();
-
-	if (!response) {
-		logger.error('Could not save asset to project');
-		return;
-	}
-	updateNodeLabel(selectedOutputId.value, newModelName.value);
-
+function onAddModel(modelName: string) {
+	if (!modelName || !selectedOutputId.value) return;
+	updateNodeLabel(selectedOutputId.value, modelName);
+}
+function onCloseModelModal() {
 	isNewModelModalVisible.value = false;
-	useToastService().success('', 'Model saved successfully.');
 }
 
 function handleCompileExprResponse() {

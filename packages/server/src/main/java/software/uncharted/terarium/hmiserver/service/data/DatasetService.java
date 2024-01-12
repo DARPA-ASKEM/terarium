@@ -72,31 +72,37 @@ public class DatasetService {
 		return Optional.of(dataset);
 	}
 
-	private String getPath(UUID documentId, String filename) {
-		return String.join("/", config.getDatasetPath(), documentId.toString(), filename);
+	private String getPath(UUID datasetId, String filename) {
+		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public PresignedURL getUploadUrl(UUID documentId, String filename) {
+	public PresignedURL getUploadUrl(UUID datasetId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
 		PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
 				config.getFileStorageS3BucketName(),
-				getPath(documentId, filename),
+				getPath(datasetId, filename),
 				HOUR_EXPIRATION));
 		presigned.setMethod("PUT");
 		return presigned;
 	}
 
-	public PresignedURL getDownloadUrl(UUID documentId, String filename) {
+	public Optional<PresignedURL> getDownloadUrl(UUID datasetId, String filename) {
 		long HOUR_EXPIRATION = 60;
 
-		PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedGetUrl(
+		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
-				getPath(documentId, filename),
-				HOUR_EXPIRATION));
+				getPath(datasetId, filename),
+				HOUR_EXPIRATION);
+
+		if (url.isEmpty()) {
+			return Optional.empty();
+		}
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
 		presigned.setMethod("GET");
-		return presigned;
+		return Optional.of(presigned);
 	}
 }

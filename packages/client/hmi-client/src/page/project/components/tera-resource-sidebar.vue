@@ -83,9 +83,7 @@
 								assetItem.pageType === AssetType.Code ||
 								assetItem.pageType === AssetType.Document)
 						"
-						@dragstart="
-							startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })
-						"
+						@dragstart="startDrag({ assetId: assetItem.assetId, pageType: assetItem.pageType })"
 						@dragend="endDrag"
 						:class="isEqual(draggedAsset, assetItem) ? 'dragged-asset' : ''"
 						fallback-class="original-asset"
@@ -123,18 +121,13 @@
 				</template>
 				<template #default>
 					<p>
-						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it
-						from {{ useProjects().activeProject.value?.name }}.
+						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
+						{{ useProjects().activeProject.value?.name }}.
 					</p>
 				</template>
 				<template #footer>
 					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
-					<Button
-						label="Cancel"
-						severity="secondary"
-						outlined
-						@click="isRemovalModal = false"
-					/>
+					<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -175,9 +168,7 @@ const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
 const activeAccordionTabs = ref(
 	new Set(
-		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [
-			0, 1, 2, 3, 4, 5, 6
-		]
+		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
 	)
 );
 

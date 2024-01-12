@@ -217,7 +217,11 @@ public class DatasetController {
 				.disableRedirectHandling()
 				.build()) {
 
-			final PresignedURL presignedURL = datasetService.getDownloadUrl(datasetId, filename);
+			Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);

@@ -236,7 +236,11 @@ public class TDSCodeController {
 				.disableRedirectHandling()
 				.build()) {
 
-			final PresignedURL presignedURL = codeService.getDownloadUrl(codeId, filename);
+			Optional<PresignedURL> url = codeService.getDownloadUrl(codeId, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -251,6 +255,29 @@ public class TDSCodeController {
 		}
 
 	}
+
+	@GetMapping("/{id}/upload-url")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to upload the code file")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
+	public ResponseEntity<PresignedURL> getUploadURL(
+		@PathVariable("id") final UUID id,
+		@RequestParam("filename") final String filename) {
+
+		try {
+			return ResponseEntity.ok(codeService.getUploadUrl(id, filename));
+		} catch (final Exception e) {
+			final String error = "Unable to get upload url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				error);
+		}
+	}
+
 
 	/**
 	 * Uploads a file to the specified codeId.

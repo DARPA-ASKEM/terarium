@@ -633,11 +633,22 @@ export interface FunmanWorkRequest {
     structure_parameters?: any;
 }
 
+export interface Curies {
+    sources: string[];
+    targets: string[];
+}
+
 export interface DKG {
     curie: string;
     name: string;
     description: string;
     link: string;
+}
+
+export interface EntitySimilarityResult {
+    source: string;
+    target: string;
+    distance: number;
 }
 
 export interface PermissionGroup {

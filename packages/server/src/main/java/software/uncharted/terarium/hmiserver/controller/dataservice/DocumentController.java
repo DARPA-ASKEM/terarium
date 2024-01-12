@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -65,6 +66,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.responses.XD
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -80,6 +82,8 @@ public class DocumentController {
 	final ExtractionProxy extractionProxy;
 
 	final SkemaUnifiedProxy skemaUnifiedProxy;
+
+	final SkemaRustProxy skemaRustProxy;
 
 	final JsDelivrProxy gitHubProxy;
 
@@ -166,8 +170,12 @@ public class DocumentController {
 			document.get().getAssets().forEach(asset -> {
 				try {
 					// Add the S3 bucket url to each asset metadata
-					final String url = documentAssetService.getDownloadUrl(id, asset.getFileName()).getUrl();
-					asset.getMetadata().put("url", url);
+					Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
+					if (url.isEmpty()) {
+						return;
+					}
+					final PresignedURL presignedURL = url.get();
+					asset.getMetadata().put("url", presignedURL.getUrl());
 
 				} catch (final Exception e) {
 					log.error("Unable to extract S3 url for assets or extract equations", e);
@@ -190,14 +198,14 @@ public class DocumentController {
 
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets a presigned url to download the document")
+	@Operation(summary = "Gets a presigned url to upload the document")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final UUID id,
-			@PathVariable("filename") final String filename) {
+			@RequestParam("filename") final String filename) {
 
 		try {
 			return ResponseEntity.ok(documentAssetService.getUploadUrl(id, filename));
@@ -219,10 +227,14 @@ public class DocumentController {
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id,
-			@PathVariable("filename") final String filename) {
+			@RequestParam("filename") final String filename) {
 
 		try {
-			return ResponseEntity.ok(documentAssetService.getDownloadUrl(id, filename));
+			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(url.get());
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
@@ -303,7 +315,7 @@ public class DocumentController {
 	 */
 	@PutMapping(value = "/{id}/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	@Operation(summary = "Uploads a document to a project")
+	@Operation(summary = "Uploads a document")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
@@ -332,7 +344,7 @@ public class DocumentController {
 	 */
 	@PutMapping("/{documentId}/upload-document-from-github")
 	@Secured(Roles.USER)
-	@Operation(summary = "Uploads a document from github to a project")
+	@Operation(summary = "Uploads a document from github")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
@@ -437,7 +449,11 @@ public class DocumentController {
 				.disableRedirectHandling()
 				.build()) {
 
-			final PresignedURL presignedURL = documentAssetService.getDownloadUrl(id, filename);
+			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
@@ -470,7 +486,11 @@ public class DocumentController {
 				.disableRedirectHandling()
 				.build()) {
 
-			final PresignedURL presignedURL = documentAssetService.getDownloadUrl(documentId, filename);
+			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
 			final HttpGet httpGet = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(httpGet);
 			final String textFileAsString = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -485,6 +505,47 @@ public class DocumentController {
 					error);
 		}
 
+	}
+
+	/**
+	 * Post Images to Equations Unified service to get an AMR
+	 *
+	 * @param documentId document id
+	 * @param filename   filename of the image
+	 * @return LaTeX representation of the equation
+	 */
+	@GetMapping("/{id}/image-to-equation")
+	@Secured(Roles.USER)
+	@Operation(summary = "Post Images to Equations Unified service to get an AMR")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Converts image to string", content = @Content(mediaType = "application/text", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating equation", content = @Content)
+	})
+	public ResponseEntity<String> postImageToEquation(@PathVariable("id") final UUID documentId,
+			@RequestParam("filename") final String filename) {
+		try {
+			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final PresignedURL presignedURL = url.get();
+			final byte[] imagesByte = IOUtils.toByteArray(new URL(presignedURL.getUrl()));
+			// Encode the image in Base 64
+			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
+
+			// image -> mathML
+			final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
+
+			// mathML -> LaTeX
+			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
+			return ResponseEntity.ok(latex);
+		} catch (final Exception e) {
+			final String error = "Unable to convert image to equation";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	/**
