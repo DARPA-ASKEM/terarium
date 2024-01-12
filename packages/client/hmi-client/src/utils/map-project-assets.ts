@@ -18,12 +18,6 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 				({
 					assetId: asset.id.toString(),
 					assetName: asset.assetName ?? asset.assetId,
-					/* (
-					asset?.name ||
-					asset?.header?.name || // FIXME should unify upstream via a summary endpoint
-					asset?.title ||
-					asset?.id
-				)?.toString(), */
 					pageType: asset.assetType
 				}) as AssetItem
 		)
