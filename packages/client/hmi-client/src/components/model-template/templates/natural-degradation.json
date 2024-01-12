@@ -40,7 +40,13 @@
                     "expression_mathml": "<apply><times/><ci>A</ci><ci>p</ci></apply>"
                 }
             ],
-            "initials": [],
+            "initials": [
+                {
+                    "target": "A",
+                    "expression": "1.0",
+                    "expression_mathml": "<cn>1.0</cn>"
+                }
+            ],
             "parameters": [
                 {
                     "id": "p",
