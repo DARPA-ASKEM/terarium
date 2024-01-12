@@ -234,6 +234,13 @@ function configureMatrix() {
 	}
 }
 
+watch(
+	() => props.id,
+	() => {
+		configureMatrix();
+	}
+);
+
 onMounted(() => {
 	configureMatrix();
 });

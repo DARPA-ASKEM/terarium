@@ -4,12 +4,22 @@
 		<section>
 			<div>
 				<h4>Initials</h4>
-				<Accordion v-if="stratifiedModelType && !_.isEmpty(initials)" :multiple="true">
-					<AccordionTab v-for="[init, vals] in initials" :key="init">
-						<template #header>
-							{{ init }}
-						</template>
-						<ul>
+				<!-- TODO: create a separate component for this custom "Accordion" -->
+				<div v-if="stratifiedModelType && !_.isEmpty(initials)">
+					<div v-for="([init, vals], idx) in initials" :key="init">
+						<div>
+							<Button
+								:icon="openInitials.includes(idx) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+								class="p-button-sm p-button-text"
+								@click="toggleAccordion(FieldTypes.StratifiedInitial, idx)"
+							/>
+							<Button
+								:label="init"
+								class="p-button-text"
+								@click="getClickedField(FieldTypes.StratifiedInitial, init)"
+							/>
+						</div>
+						<ul v-if="openInitials.includes(idx)">
 							<li v-for="val in vals" :key="val">
 								<Button
 									:label="val"
@@ -17,12 +27,12 @@
 									plain
 									text
 									size="small"
-									@click="getClickedField('initial', val)"
+									@click="getClickedField(FieldTypes.Initial, val)"
 								/>
 							</li>
 						</ul>
-					</AccordionTab>
-				</Accordion>
+					</div>
+				</div>
 				<ul v-else-if="!stratifiedModelType && !_.isEmpty(initials)">
 					<li v-for="[init, vals] in initials" :key="init">
 						<Button
@@ -31,19 +41,29 @@
 							plain
 							text
 							size="large"
-							@click="getClickedField('initial', vals[0])"
+							@click="getClickedField(FieldTypes.Initial, vals[0])"
 						/>
 					</li>
 				</ul>
 			</div>
 			<div>
 				<h4>Parameters</h4>
-				<Accordion v-if="stratifiedModelType && !_.isEmpty(parameters)" :multiple="true">
-					<AccordionTab v-for="[param, vals] in parameters" :key="param">
-						<template #header>
-							{{ param }}
-						</template>
-						<ul>
+				<!-- TODO: create a separate component for this custom "Accordion" -->
+				<div v-if="stratifiedModelType && !_.isEmpty(parameters)">
+					<div v-for="([param, vals], idx) in parameters" :key="param">
+						<div>
+							<Button
+								:icon="openParameters.includes(idx) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+								class="p-button-sm p-button-text"
+								@click="toggleAccordion(FieldTypes.StratifiedParameter, idx)"
+							/>
+							<Button
+								:label="param"
+								class="p-button-text"
+								@click="getClickedField(FieldTypes.StratifiedParameter, param)"
+							/>
+						</div>
+						<ul v-if="openParameters.includes(idx)">
 							<li v-for="val in vals" :key="val">
 								<Button
 									:label="val"
@@ -51,12 +71,12 @@
 									plain
 									text
 									size="small"
-									@click="getClickedField('parameter', val)"
+									@click="getClickedField(FieldTypes.Parameter, val)"
 								/>
 							</li>
 						</ul>
-					</AccordionTab>
-				</Accordion>
+					</div>
+				</div>
 				<ul v-else-if="!stratifiedModelType && !_.isEmpty(parameters)">
 					<li v-for="[param, vals] in parameters" :key="param">
 						<Button
@@ -65,7 +85,7 @@
 							plain
 							text
 							size="large"
-							@click="getClickedField('parameter', vals[0])"
+							@click="getClickedField(FieldTypes.Parameter, vals[0])"
 						/>
 					</li>
 				</ul>
@@ -74,7 +94,27 @@
 		<!-- FIXME: may want to replace section with something that handles long parameters list better -->
 		<section>
 			<div class="content-container">
-				<div v-if="fieldType === 'parameter'" class="form-section">
+				<div v-if="fieldType === FieldTypes.StratifiedParameter" class="form-section">
+					<h4>{{ paramBase }}</h4>
+					<tera-stratified-matrix
+						:model-configuration="basicModelConfig"
+						:id="paramBase!"
+						:stratified-model-type="stratifiedModelType!"
+						:stratified-matrix-type="StratifiedMatrix.Parameters"
+						:should-eval="false"
+					/>
+				</div>
+				<div v-else-if="fieldType === FieldTypes.StratifiedInitial" class="form-section">
+					<h4>{{ initBase }}</h4>
+					<tera-stratified-matrix
+						:model-configuration="basicModelConfig"
+						:id="initBase!"
+						:stratified-model-type="stratifiedModelType!"
+						:stratified-matrix-type="StratifiedMatrix.Initials"
+						:should-eval="false"
+					/>
+				</div>
+				<div v-else-if="fieldType === FieldTypes.Parameter" class="form-section">
 					<h4>
 						{{
 							currentParam?.name ? `${currentParam.name} | ${currentParam.id}` : currentParam?.id
@@ -97,7 +137,7 @@
 						/>
 					</div>
 				</div>
-				<div v-else-if="fieldType === 'initial'" class="form-section">
+				<div v-else-if="fieldType === FieldTypes.Initial" class="form-section">
 					<h4>{{ currentInitial?.target }}</h4>
 					<div>
 						<h3>Expression</h3>
@@ -116,18 +156,25 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
+import { computed, ComputedRef, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import { Model, Initial, ModelParameter } from '@/types/Types';
+import { Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import {
 	getUnstratifiedParameters,
 	getUnstratifiedInitials
 } from '@/model-representation/petrinet/mira-petri';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
+import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
+import { StratifiedMatrix } from '@/types/Model';
+
+enum FieldTypes {
+	Parameter = 'parameter',
+	Initial = 'initial',
+	StratifiedParameter = 'stratified-parameter',
+	StratifiedInitial = 'stratified-initial'
+}
 
 const props = defineProps<{
 	model: Model;
@@ -137,27 +184,59 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-param', 'update-initial']);
 
+const openInitials = ref<number[]>([]);
+const openParameters = ref<number[]>([]);
+
+const basicModelConfig: ComputedRef<ModelConfiguration> = computed(() => ({
+	id: '',
+	name: '',
+	modelId: props.model.id,
+	configuration: props.model
+}));
+
 const stratifiedModelType = computed(() => getStratificationType(props.model));
 
 const parameters = computed<Map<string, string[]>>(() => getUnstratifiedParameters(props.model));
 const currentParam = ref<ModelParameter>();
 const paramValue = ref<number>();
+const paramBase = ref<string>();
 
 const initials = computed<Map<string, string[]>>(() => getUnstratifiedInitials(props.model));
 const currentInitial = ref<Initial>();
 const initialExpression = ref<string>();
+const initBase = ref<string>();
 
-const fieldType = ref<string>();
+const fieldType = ref<FieldTypes>();
 const selectedField = ref<string>();
 
-const getClickedField = (type: string, field: string) => {
+const toggleAccordion = (type: FieldTypes, index: number) => {
+	if (type === FieldTypes.StratifiedInitial) {
+		toggleAccordionHelper(openInitials, index);
+	} else if (type === FieldTypes.StratifiedParameter) {
+		toggleAccordionHelper(openParameters, index);
+	}
+};
+
+const toggleAccordionHelper = (openIndices: Ref<number[]>, index: number) => {
+	if (openIndices.value.includes(index)) {
+		openIndices.value = openIndices.value.filter((i) => i !== index);
+	} else {
+		openIndices.value = [...openIndices.value, index];
+	}
+};
+
+const getClickedField = (type: FieldTypes, field: string) => {
 	fieldType.value = type;
 	selectedField.value = field;
 
-	if (type === 'parameter') {
+	if (type === FieldTypes.StratifiedParameter) {
+		paramBase.value = field;
+	} else if (type === FieldTypes.StratifiedInitial) {
+		initBase.value = field;
+	} else if (type === FieldTypes.Parameter) {
 		currentParam.value = props.parameters.find((p) => p.id === field);
 		paramValue.value = currentParam.value?.value;
-	} else if (type === 'initial') {
+	} else if (type === FieldTypes.Initial) {
 		currentInitial.value = props.initials.find((i) => i.target === field);
 		initialExpression.value = currentInitial.value?.expression;
 	}
