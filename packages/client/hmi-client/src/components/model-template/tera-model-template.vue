@@ -16,12 +16,7 @@
 						@focusout="updateName"
 					/>
 				</header>
-				<tera-model-diagram
-					:style="!isEditable && { pointerEvents: 'none' }"
-					:model="model"
-					:is-editable="false"
-					is-preview
-				/>
+				<tera-model-diagram :model="model" :is-editable="isEditable" is-preview />
 			</main>
 			<Button v-if="isEditable" icon="pi pi-ellipsis-v" rounded text />
 		</section>
@@ -131,6 +126,11 @@ function updateName() {
 				width: fit-content;
 				font-size: var(--font-caption);
 			}
+		}
+
+		& .diagram-container {
+			height: 8rem;
+			overflow: hidden;
 		}
 	}
 	& > .p-button {
