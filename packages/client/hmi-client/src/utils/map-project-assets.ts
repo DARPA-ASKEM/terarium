@@ -1,44 +1,43 @@
 import { AssetItem } from '@/types/common';
-import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { isEmpty } from 'lodash';
 import { isProjectAssetTypes } from '@/types/Project';
 
-type IProjectAssetItems = Map<AssetType, Set<AssetItem>>;
+type ProjectAssetItems = Map<string, Set<AssetItem>>;
 
-export const generateProjectAssetsMap = (searchAsset: string): IProjectAssetItems => {
-	const assetItemsMap = new Map<AssetType, Set<AssetItem>>();
+export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems => {
+	const assetItemsMap = new Map<string, Set<AssetItem>>();
 
-	const projectAssets = useProjects().activeProject?.value?.assets;
+	const projectAssets = useProjects().activeProject?.value?.projectAssets;
 	if (!projectAssets) return assetItemsMap;
 
 	// Run through all the assets type within the project
-	Object.keys(projectAssets).forEach((type) => {
-		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType = type;
-			const typeAssets = projectAssets[projectAssetType]
-				.map((asset) => ({
-					assetName: (
-						asset?.name ||
-						asset?.header?.name || // FIXME should unify upstream via a summary endpoint
-						asset?.title ||
-						asset?.id
-					)?.toString(),
-					pageType: asset?.type ?? projectAssetType,
-					assetId: asset?.id?.toString() ?? ''
-				}))
-				.filter((asset) => {
-					// filter assets
-					if (!searchAsset.trim()) {
-						return true;
-					}
-					const searchTermLower = searchAsset.trim().toLowerCase();
-					return asset.assetName.toLowerCase().includes(searchTermLower);
-				}) as AssetItem[];
-			if (!isEmpty(typeAssets)) {
-				assetItemsMap.set(projectAssetType, new Set(typeAssets));
-			}
-		}
-	});
+	const cleanAssets = projectAssets
+		.filter((asset) => isProjectAssetTypes(asset.assetType))
+		.map(
+			(asset) =>
+				({
+					assetId: asset.id.toString(),
+					assetName: asset.assetName ?? asset.assetId,
+					/* (
+					asset?.name ||
+					asset?.header?.name || // FIXME should unify upstream via a summary endpoint
+					asset?.title ||
+					asset?.id
+				)?.toString(), */
+					pageType: asset.assetType
+				}) as AssetItem
+		)
+		.filter((asset) => {
+			if (!searchAsset.trim()) return true;
+			if (!asset.assetName) return false;
+			const searchTermLower = searchAsset.trim().toLowerCase();
+			return asset.assetName.toLowerCase().includes(searchTermLower);
+		});
+
+	Object.entries(Object.groupBy(cleanAssets, (asset) => asset.pageType)).forEach(
+		([type, assetList]) => assetItemsMap.set(type, new Set(assetList))
+	);
+
+	console.log(assetItemsMap);
 	return assetItemsMap;
 };
