@@ -10,7 +10,7 @@
 					</p>
 					<!--Placeholder - button is disabled for now-->
 					<Button
-						label="Show me around"
+						label="Get started"
 						icon="pi pi-play"
 						icon-pos="right"
 						outlined
@@ -33,13 +33,12 @@
 									placeholder="Filter by keyword"
 								/>
 							</span> -->
-								<span v-if="view === ProjectsView.Cards"
-									><label>Sort by:</label>
+								<span v-if="view === ProjectsView.Cards">
 									<Dropdown
 										v-model="selectedSort"
 										:options="sortOptions"
 										@update:model-value="tab.projects = myFilteredSortedProjects"
-										class="p-inputtext-sm"
+										class="p-inputtext-sm sort-options-dropdown"
 									/>
 								</span>
 								<MultiSelect
@@ -63,7 +62,6 @@
 									option-value="value"
 								>
 									<template #option="slotProps">
-										<i :class="`${slotProps.option.icon} p-button-icon-left`" />
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
@@ -109,6 +107,7 @@
 								:projects="tab.projects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
+								class="project-table"
 							/>
 						</section>
 					</TabPanel>
@@ -331,7 +330,7 @@ header > section > button {
 	background-color: #f4f4f4;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
-	padding: 16px;
+	padding: var(--gap-small) var(--gap);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -355,12 +354,19 @@ header > section > button {
 	margin-left: auto;
 }
 
+.sort-options-dropdown {
+	height: 40px;
+	padding-left: 0.5rem;
+}
 .project-cards-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 	gap: 16px;
 	padding: 16px;
 	list-style: none;
+}
+:deep(.project-table) {
+	margin: var(--gap);
 }
 
 header svg {

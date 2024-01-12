@@ -64,10 +64,10 @@ const projectMenuItems = computed(() => {
 		return [forkMenuItem];
 	}
 	if (props.project?.userPermission === 'creator') {
-		return [renameMenuItem, separatorMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem];
+		return [renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem];
 	}
 	if (props.project?.userPermission === 'writer') {
-		return [renameMenuItem, separatorMenuItem, shareMenuItem];
+		return [renameMenuItem, shareMenuItem];
 	}
 	if (props.project?.userPermission === 'reader') {
 		return [];

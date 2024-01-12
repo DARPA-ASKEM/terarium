@@ -31,15 +31,15 @@
 						-->
 						<label>Domain</label>
 						<span>
-							<Dropdown placeholder="Select domain" disabled />
+							<Dropdown placeholder="Select domain" disabled :style="{ width: '100%' }" />
 							<Button disabled label="Suggest" text />
 						</span>
 					</div>
 				</form>
 			</section>
-			<section>
-				<div>
-					<label>Select a thumbnail for your project</label>
+			<section class="select-thumbnail-panel">
+				<label>Select a thumbnail image for your project</label>
+				<!-- <div>
 					<span class="p-input-icon-left">
 						<i class="pi pi-search" />
 						<InputText
@@ -53,10 +53,14 @@
 				<p>
 					The concepts mentioned in your project title and description will be used to suggest
 					relevant thumbnail images.
-				</p>
+				</p> -->
 				<ul>
-					<li v-for="i in 6" :key="i">
-						<img src="@assets/svg/terarium-icon-transparent.svg" :alt="`Thumbnail ${i}`" />
+					<li v-for="i in 12" :key="i">
+						<img
+							src="@assets/svg/terarium-icon-transparent.svg"
+							:alt="`Thumbnail ${i}`"
+							class="thumbnail-image"
+						/>
 					</li>
 				</ul>
 			</section>
@@ -66,15 +70,21 @@
 				@click="applyConfiguration"
 				:loading="isApplyingConfiguration"
 				:label="isApplyingConfiguration ? 'Loading' : confirmText"
+				size="large"
 			/>
-			<Button severity="secondary" outlined @click="emit('close-modal')" label="Cancel" />
+			<Button
+				severity="secondary"
+				outlined
+				@click="emit('close-modal')"
+				label="Cancel"
+				size="large"
+			/>
 		</template>
 	</tera-modal>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -100,7 +110,6 @@ const userId = auth.user?.id ?? '';
 
 const title = ref(props.project?.name ?? '');
 const description = ref(props.project?.description ?? '');
-const imageSearch = ref('');
 const isApplyingConfiguration = ref(false);
 
 async function createProject() {
@@ -169,6 +178,10 @@ img {
 	width: 100%;
 }
 
+.thumbnail-image {
+	background-color: var(--surface-0);
+}
+
 :deep(.content span) {
 	display: flex;
 }
@@ -180,5 +193,14 @@ Should probably switch everything to use gap (like here) at some point
 :deep(.content input),
 :deep(.content textarea) {
 	margin-bottom: 0;
+}
+
+.select-thumbnail-panel {
+	background: var(--surface-50);
+	padding: 1rem;
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	max-height: 100%;
+	overflow-y: scroll;
 }
 </style>
