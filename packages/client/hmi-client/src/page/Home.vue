@@ -364,7 +364,7 @@ header > section > button {
 	list-style: none;
 }
 :deep(.project-table) {
-	margin: 1rem;
+	margin: var(--gap);
 }
 
 header svg {
