@@ -69,6 +69,7 @@ header {
 	white-space: nowrap;
 	border-top-right-radius: var(--border-radius-medium);
 	border-top-left-radius: var(--border-radius-medium);
+	transition: all 80ms ease;
 }
 
 .warning {
@@ -86,17 +87,11 @@ header {
 }
 
 .focus {
-	background-color: var(--primary-color);
-	color: var(--gray-0);
+	background-color: var(--surface-highlight-hover);
 }
 
 .p-button.p-button-icon-only {
 	color: var(--text-color-primary);
-}
-
-.focus .p-button.p-button-icon-only,
-.focus .p-button.p-button-icon-only:hover {
-	color: var(--gray-0);
 }
 
 h6 {
