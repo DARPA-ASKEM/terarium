@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
 
-@FeignClient(name = "funman-api", url = "${funman-service.url}", path="/queries")
+@FeignClient(name = "funman-api", url = "${funman-service.url}", path="/api/queries")
 public interface FunmanProxy {
 
     @GetMapping("/{queryId}/halt")
     ResponseEntity<JsonNode> halt(@PathVariable("queryId") String queryId);
-   
+
     @GetMapping("/{queryId}")
     ResponseEntity<JsonNode> getQueries(@PathVariable("queryId") String queryId);
 
