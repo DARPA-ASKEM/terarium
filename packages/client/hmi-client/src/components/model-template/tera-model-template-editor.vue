@@ -37,23 +37,23 @@
 		</template>
 		<template #data>
 			<tera-canvas-item
-				v-for="(template, index) in modelTemplates"
+				v-for="(modelTemplate, index) in modelTemplates"
 				:key="index"
 				:style="{
 					width: 'fit-content',
-					top: `${template.metadata.templateCard.y}px`,
-					left: `${template.metadata.templateCard.x}px`
+					top: `${modelTemplate.metadata.templateCard.y}px`,
+					left: `${modelTemplate.metadata.templateCard.x}px`
 				}"
-				@dragging="(event) => updatePosition(template.metadata.templateCard, event)"
+				@dragging="(event) => updatePosition(modelTemplate.metadata.templateCard, event)"
 			>
 				<tera-model-template
-					:model="template"
+					:model="modelTemplate"
 					is-editable
 					@update-name="(name: string) => updateName(name, index)"
-					@port-selected="createNewEdge(template.metadata.templateCard)"
+					@port-selected="createNewEdge(modelTemplate.metadata.templateCard)"
 					@port-mouseover="
 						(event: MouseEvent, cardWidth: number) =>
-							onPortMouseover(event, template.metadata.templateCard, cardWidth)
+							onPortMouseover(event, modelTemplate.metadata.templateCard, cardWidth)
 					"
 					@port-mouseleave="onPortMouseleave"
 				/>
