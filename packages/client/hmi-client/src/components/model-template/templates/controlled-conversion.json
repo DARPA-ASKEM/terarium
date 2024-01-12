@@ -61,7 +61,17 @@
                 }
             ],
             "initials": [],
-            "parameters": [],
+            "parameters": [
+                {
+                    "id": "p",
+                    "description": "Parameter named 'p'",
+                    "value": 1.0,
+                    "units": {
+                        "expression": "1/day",
+                        "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                    }
+                }
+            ],
             "observables": [],
             "time": {
                 "id": "t",
