@@ -26,7 +26,7 @@ import { Workflow } from '@/types/workflow';
  * Create a project
  * @param name Project['name']
  * @param [description] Project['description']
- * @param [username] Project['username']
+ * @param [userId] Project['userId']
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
@@ -172,7 +172,7 @@ async function addAsset(projectId: string, assetType: string, assetId: string) {
 	const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 	const response = await API.post(url);
 
-	EventService.create(
+	await EventService.create(
 		EventType.AddResourcesToProject,
 		projectId,
 		JSON.stringify({
