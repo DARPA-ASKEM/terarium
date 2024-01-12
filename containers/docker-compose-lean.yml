@@ -248,7 +248,7 @@ services:
         condition: service_healthy
 
   hmi-server:
-    image: ghcr.io/darpa-askem/hmi-server:latest
+    image: ghcr.io/darpa-askem/hmi-server:lean-test
     container_name: hmi-server
     networks:
       - terarium
