@@ -32,6 +32,5 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 		([type, assetList]) => assetItemsMap.set(type, new Set(assetList))
 	);
 
-	console.log(assetItemsMap);
 	return assetItemsMap;
 };
