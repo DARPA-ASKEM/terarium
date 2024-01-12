@@ -17,8 +17,8 @@
 				</div>
 				<section class="details">
 					<div>
-						<div class="author">{{ project.username }}</div>
-						<div class="creation-date">{{ formatDdMmmYyyy(project.timestamp) }}</div>
+						<div class="author">{{ project?.userName ?? '——' }}</div>
+						<div class="creation-date">{{ formatDdMmmYyyy(project.createdOn) }}</div>
 					</div>
 					<div class="description">
 						{{ project.description }}
@@ -27,8 +27,7 @@
 			</section>
 		</template>
 		<template #footer>
-			<!--FIXME: There is no 'last updated' property in project yet-->
-			<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
+			<span>Last updated {{ formatDdMmmYyyy(project.updatedOn) }}</span>
 			<tera-project-menu
 				:project="project"
 				@forked-project="(forkedProject) => emit('forked-project', forkedProject)"
@@ -65,11 +64,11 @@ import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import { IProject } from '@/types/Project';
+import { Project } from '@/types/Types';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
-	project?: IProject;
+	project?: Project;
 }>();
 const emit = defineEmits(['forked-project']);
 

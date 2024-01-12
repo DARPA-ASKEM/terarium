@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 
 @RequiredArgsConstructor
@@ -19,6 +21,7 @@ import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 public class ProjectService {
 
 	final ProjectRepository projectRepository;
+	final UserRepository userRepository;
 
 	public List<Project> getProjects() {
 		return projectRepository.findAll();
@@ -33,7 +36,14 @@ public class ProjectService {
 	}
 
 	public Optional<Project> getProject(final UUID id) {
-		return projectRepository.findById(id);
+		final Optional<Project> project = projectRepository.findById(id);
+		if (project.isPresent()) {
+			final Optional<User> user = userRepository.findById(project.get().getUserId());
+			if (user.isPresent()) {
+				project.get().setUserName(user.get().getName());
+			}
+		}
+		return project;
 	}
 
 	public Project createProject(final Project project) {

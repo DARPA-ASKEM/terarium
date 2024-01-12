@@ -375,6 +375,7 @@ export interface Project {
 	id?: string;
 	name: string;
 	userId: string;
+	userName?: string;
 	description?: string;
 	createdOn?: Date;
 	updatedOn?: Date;
