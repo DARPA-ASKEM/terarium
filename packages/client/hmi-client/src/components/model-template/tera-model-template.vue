@@ -127,11 +127,6 @@ function updateName() {
 				font-size: var(--font-caption);
 			}
 		}
-
-		& .diagram-container {
-			height: 8rem;
-			overflow: hidden;
-		}
 	}
 	& > .p-button {
 		display: none;
