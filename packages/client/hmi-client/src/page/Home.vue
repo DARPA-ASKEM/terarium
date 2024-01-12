@@ -132,7 +132,6 @@ import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import { IProject } from '@/types/Project';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
@@ -194,7 +193,7 @@ function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'A
 	});
 }
 
-function filterAndSortProjects(projects: IProject[]) {
+function filterAndSortProjects(projects: Project[]) {
 	if (projects) {
 		if (selectedSort.value === 'Alphabetical') {
 			return projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
@@ -215,7 +214,7 @@ function filterAndSortProjects(projects: IProject[]) {
 	return [];
 }
 
-const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
+const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
 	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
 	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
 	{ title: TabTitles.SampleProjects, projects: [] }
