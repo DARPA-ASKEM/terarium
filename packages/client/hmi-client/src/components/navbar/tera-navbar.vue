@@ -161,6 +161,7 @@ import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
+import { ProjectPages } from '@/types/Project';
 
 defineProps<{
 	active: boolean;
@@ -402,7 +403,11 @@ watch(
 			items.push({
 				label: project.name,
 				icon: 'pi pi-folder',
-				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
+				command: () =>
+					router.push({
+						name: RouteName.Project,
+						params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
+					})
 			});
 		});
 		navMenuItems.value = [homeItem, explorerItem, ...items];
