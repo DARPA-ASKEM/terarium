@@ -40,7 +40,7 @@ public class ProjectAssetService {
 		final ProjectAsset asset = projectAssetRepository.findById(id).orElse(null);
 		if (asset == null)
 			return false;
-		asset.setDeletedOn(null);
+		asset.setDeletedOn(Timestamp.from(Instant.now()));
 		return (save(asset) != null);
 	}
 
