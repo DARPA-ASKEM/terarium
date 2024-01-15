@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 public enum OperatorStatus {
-
 	DEFAULT("default"),
 	IN_PROGRESS("in progress"),
 	SUCCESS("success"),

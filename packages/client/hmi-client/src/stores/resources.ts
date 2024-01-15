@@ -1,18 +1,13 @@
 import { Store, defineStore } from 'pinia';
-import { IProject, ProjectAssets } from '@/types/Project';
 
 export type ResourceType = Store<
 	'resources',
 	{
 		xddDataset: string | null;
-		activeProject: IProject | null;
-		activeProjectAssets: ProjectAssets | null;
 	},
 	{},
 	{
 		setXDDDataset(dataset: string | null): void;
-		setActiveProject(project: IProject | null): void;
-		reset(): void;
 	}
 >;
 
@@ -21,22 +16,14 @@ export type ResourceType = Store<
  */
 const useResourcesStore = defineStore('resources', {
 	state: () => ({
-		xddDataset: null as string | null,
-		activeProject: null as null | IProject
+		xddDataset: null as string | null
 	}),
 	getters: {
-		activeProjectAssets: (state) => state.activeProject?.assets,
 		getXddDataset: (state) => state.xddDataset
 	},
 	actions: {
 		setXDDDataset(dataset: string | null) {
 			this.xddDataset = dataset;
-		},
-		setActiveProject(project: null | IProject) {
-			this.activeProject = project;
-		},
-		reset() {
-			this.activeProject = null;
 		}
 	}
 });
