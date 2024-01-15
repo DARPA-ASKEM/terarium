@@ -33,7 +33,7 @@ public class ProjectService {
 	}
 
 	public Optional<Project> getProject(final UUID id) {
-		return projectRepository.findById(id);
+		return projectRepository.getByIdAndDeletedOnIsNull(id);
 	}
 
 	public Project createProject(final Project project) {
