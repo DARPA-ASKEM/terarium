@@ -1,14 +1,16 @@
 <template>
-	<Panel toggleable>
+	<Panel :toggleable="toggleable">
 		<template #header>
 			<section>
 				<slot name="header" />
-				<Button v-if="isEditable" icon="pi pi-pencil" text rounded />
+				<Button v-if="isEditable" icon="pi pi-pencil" text rounded @click="emit('edit')" />
 			</section>
 		</template>
 		<template #icons>
-			<label>Include in process</label>
-			<InputSwitch :model-value="isIncluded" @update:model-value="emit('update:is-included')" />
+			<template v-if="isIncludable">
+				<label>Include in process</label>
+				<InputSwitch :model-value="isIncluded" @update:model-value="emit('update:is-included')" />
+			</template>
 
 			<Button v-if="isDeletable" icon="pi pi-trash" text rounded @click="emit('delete')" />
 		</template>
@@ -18,6 +20,10 @@
 		<main class="panel-content">
 			<slot />
 		</main>
+
+		<template #footer>
+			<slot name="footer" />
+		</template>
 	</Panel>
 </template>
 
@@ -28,11 +34,25 @@ import InputSwitch from 'primevue/inputswitch';
 
 const emit = defineEmits(['delete', 'edit', 'update:is-included']);
 
-defineProps<{
-	isDeletable?: boolean;
-	isIncluded?: boolean;
-	isEditable?: boolean;
-}>();
+defineProps({
+	isDeletable: {
+		type: Boolean
+	},
+	isIncludable: {
+		type: Boolean,
+		default: true
+	},
+	isIncluded: {
+		type: Boolean
+	},
+	isEditable: {
+		type: Boolean
+	},
+	toggleable: {
+		type: Boolean,
+		default: true
+	}
+});
 </script>
 
 <style scoped>
