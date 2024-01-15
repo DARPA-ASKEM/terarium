@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!nodePreview" class="diagram-container">
+		<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 			<section class="graph-element">
 				<Toolbar>
 					<template #start>
@@ -70,7 +70,12 @@
 				<ContextMenu ref="menu" :model="contextMenuItems" />
 			</section>
 		</TeraResizablePanel>
-		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
+		<div
+			v-else-if="model"
+			ref="graphElement"
+			class="graph-element preview"
+			:style="!isEditable && { pointerEvents: 'none' }"
+		/>
 		<Teleport to="body">
 			<tera-modal
 				class="edit-modal"
@@ -162,7 +167,7 @@ const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
 	modelConfiguration?: ModelConfiguration;
-	nodePreview?: boolean;
+	isPreview?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'update-configuration']);
@@ -471,9 +476,13 @@ main {
 }
 
 .preview {
+	/* Having both min and max heights prevents height from resizing itself while being dragged on templating canvas
+	This resizes on template canvas but not when its in a workflow node?? (tera-model-node)
+	FIXME: Will take a look at this again later
+	*/
 	min-height: 8rem;
+	max-height: 8rem;
 	background-color: var(--surface-secondary);
-	flex-grow: 1;
 	overflow: hidden;
 	border: none;
 	position: relative;
