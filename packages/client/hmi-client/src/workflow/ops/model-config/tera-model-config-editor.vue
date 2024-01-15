@@ -102,6 +102,7 @@
 						:stratified-model-type="stratifiedModelType!"
 						:stratified-matrix-type="StratifiedMatrix.Parameters"
 						:should-eval="false"
+						@update-configuration="updateParametersFromMatrix"
 					/>
 				</div>
 				<div v-else-if="fieldType === FieldTypes.StratifiedInitial" class="form-section">
@@ -112,6 +113,7 @@
 						:stratified-model-type="stratifiedModelType!"
 						:stratified-matrix-type="StratifiedMatrix.Initials"
 						:should-eval="false"
+						@update-configuration="updateInitialsFromMatrix"
 					/>
 				</div>
 				<div v-else-if="fieldType === FieldTypes.Parameter" class="form-section">
@@ -124,7 +126,7 @@
 						<h3>Description</h3>
 						<p>{{ currentParam?.description }}</p>
 					</div>
-					<div>
+					<div v-if="currentParam?.value">
 						<h3>Value</h3>
 						<InputNumber
 							class="p-inputtext-sm"
@@ -132,19 +134,42 @@
 							mode="decimal"
 							:min-fraction-digits="1"
 							:max-fraction-digits="10"
-							v-model="paramValue"
-							@update:model-value="updateParameter(paramValue)"
+							v-model="currentParam.value"
+							@update:model-value="updateParameter"
+						/>
+					</div>
+					<div v-if="currentParam?.distribution">
+						<h3>Distribution</h3>
+						<label>Min</label>
+						<InputNumber
+							class="p-inputtext-sm"
+							inputId="numericInput"
+							mode="decimal"
+							:min-fraction-digits="1"
+							:max-fraction-digits="10"
+							v-model="currentParam.distribution.parameters.minimum"
+							@update:model-value="updateParameter"
+						/>
+						<label>Max</label>
+						<InputNumber
+							class="p-inputtext-sm"
+							inputId="numericInput"
+							mode="decimal"
+							:min-fraction-digits="1"
+							:max-fraction-digits="10"
+							v-model="currentParam.distribution.parameters.maximum"
+							@update:model-value="updateParameter"
 						/>
 					</div>
 				</div>
 				<div v-else-if="fieldType === FieldTypes.Initial" class="form-section">
 					<h4>{{ currentInitial?.target }}</h4>
-					<div>
+					<div v-if="currentInitial?.expression">
 						<h3>Expression</h3>
 						<InputText
 							class="p-inputtext-sm"
-							v-model="initialExpression"
-							@update:model-value="updateInitial(initialExpression)"
+							v-model="currentInitial.expression"
+							@update:model-value="updateInitial"
 						/>
 					</div>
 				</div>
@@ -156,7 +181,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ComputedRef, ref, Ref, watch } from 'vue';
+import { computed, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
@@ -187,23 +212,21 @@ const emit = defineEmits(['update-param', 'update-initial']);
 const openInitials = ref<number[]>([]);
 const openParameters = ref<number[]>([]);
 
-const basicModelConfig: ComputedRef<ModelConfiguration> = computed(() => ({
+const basicModelConfig = ref<ModelConfiguration>({
 	id: '',
 	name: '',
 	modelId: props.model.id,
 	configuration: props.model
-}));
+});
 
 const stratifiedModelType = computed(() => getStratificationType(props.model));
 
 const parameters = computed<Map<string, string[]>>(() => getUnstratifiedParameters(props.model));
 const currentParam = ref<ModelParameter>();
-const paramValue = ref<number>();
 const paramBase = ref<string>();
 
 const initials = computed<Map<string, string[]>>(() => getUnstratifiedInitials(props.model));
 const currentInitial = ref<Initial>();
-const initialExpression = ref<string>();
 const initBase = ref<string>();
 
 const fieldType = ref<FieldTypes>();
@@ -235,22 +258,34 @@ const getClickedField = (type: FieldTypes, field: string) => {
 		initBase.value = field;
 	} else if (type === FieldTypes.Parameter) {
 		currentParam.value = props.parameters.find((p) => p.id === field);
-		paramValue.value = currentParam.value?.value;
 	} else if (type === FieldTypes.Initial) {
 		currentInitial.value = props.initials.find((i) => i.target === field);
-		initialExpression.value = currentInitial.value?.expression;
 	}
 };
 
-const updateParameter = (paramVal?: number) => {
-	if (paramVal) {
-		emit('update-param', { ...currentParam.value, value: paramVal });
+const updateParameter = () => {
+	if (currentParam.value) {
+		emit('update-param', [currentParam.value]);
 	}
 };
 
-const updateInitial = (initialExp?: string) => {
-	if (initialExp) {
-		emit('update-initial', { ...currentInitial.value, expression: initialExp });
+const updateInitial = () => {
+	if (currentInitial.value) {
+		emit('update-initial', [currentInitial.value]);
+	}
+};
+
+const updateParametersFromMatrix = (configToUpdate: ModelConfiguration) => {
+	const newParams = configToUpdate.configuration?.semantics.ode.parameters;
+	if (newParams) {
+		emit('update-param', newParams, true);
+	}
+};
+
+const updateInitialsFromMatrix = (configToUpdate: ModelConfiguration) => {
+	const newInits = configToUpdate.configuration?.semantics.ode.initials;
+	if (newInits) {
+		emit('update-initial', newInits, true);
 	}
 };
 
@@ -258,6 +293,18 @@ const updateInitial = (initialExp?: string) => {
 watch(
 	[() => props.initials, () => props.parameters],
 	() => {
+		const model = _.cloneDeep(props.model);
+		if (model.semantics) {
+			model.semantics.ode.initials = props.initials;
+			model.semantics.ode.parameters = props.parameters;
+			basicModelConfig.value = {
+				id: '',
+				name: '',
+				modelId: props.model.id,
+				configuration: model
+			};
+		}
+
 		if (fieldType.value && selectedField.value) {
 			getClickedField(fieldType.value, selectedField.value);
 		}
