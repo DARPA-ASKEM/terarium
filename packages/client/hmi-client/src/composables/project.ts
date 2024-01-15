@@ -8,7 +8,7 @@
 
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import { AssetType, PermissionRelationships, Project } from '@/types/Types';
+import { AssetType, PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;
@@ -51,6 +51,13 @@ export function useProjects() {
 	async function getAll(): Promise<Project[]> {
 		allProjects.value = (await ProjectService.getAll()) as Project[];
 		return allProjects.value;
+	}
+
+	function getActiveProjectAssets(assetType: AssetType) {
+		return (
+			activeProject.value?.projectAssets.filter((asset) => asset.assetType === assetType) ??
+			([] as ProjectAsset[])
+		);
 	}
 
 	/**
@@ -208,6 +215,7 @@ export function useProjects() {
 		projectLoading,
 		get,
 		getAll,
+		getActiveProjectAssets,
 		addAsset,
 		deleteAsset,
 		create,
