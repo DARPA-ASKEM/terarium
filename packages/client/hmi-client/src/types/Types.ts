@@ -390,7 +390,7 @@ export interface ProjectAsset {
     id: string;
     assetId: string;
     assetType: AssetType;
-    assetName?: string;
+    assetName: string;
     externalRef?: string;
     createdOn?: Date;
     updatedOn?: Date;
