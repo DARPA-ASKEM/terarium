@@ -139,26 +139,49 @@
 						/>
 					</div>
 					<div v-if="currentParam?.distribution">
+						<!-- TODO: add dropdown for more distribution types, right now there's
+                            only support for uniform distribution so we're just hardcoding it
+                        -->
+						<div class="distribution-section">
+							<h3>Distribution: {{ currentParam.distribution.type }}</h3>
+							<div>
+								<i
+									class="trash-button pi pi-trash"
+									:style="'cursor: pointer'"
+									@click="removeDistribution"
+								/>
+							</div>
+						</div>
+						<div class="distribution-section">
+							<label>Min</label>
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="numericInput"
+								mode="decimal"
+								:min-fraction-digits="1"
+								:max-fraction-digits="10"
+								v-model="currentParam.distribution.parameters.minimum"
+								@update:model-value="updateParameter"
+							/>
+							<label>Max</label>
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="numericInput"
+								mode="decimal"
+								:min-fraction-digits="1"
+								:max-fraction-digits="10"
+								v-model="currentParam.distribution.parameters.maximum"
+								@update:model-value="updateParameter"
+							/>
+						</div>
+					</div>
+					<div v-else-if="!currentParam?.distribution">
 						<h3>Distribution</h3>
-						<label>Min</label>
-						<InputNumber
-							class="p-inputtext-sm"
-							inputId="numericInput"
-							mode="decimal"
-							:min-fraction-digits="1"
-							:max-fraction-digits="10"
-							v-model="currentParam.distribution.parameters.minimum"
-							@update:model-value="updateParameter"
-						/>
-						<label>Max</label>
-						<InputNumber
-							class="p-inputtext-sm"
-							inputId="numericInput"
-							mode="decimal"
-							:min-fraction-digits="1"
-							:max-fraction-digits="10"
-							v-model="currentParam.distribution.parameters.maximum"
-							@update:model-value="updateParameter"
+						<Button
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text"
+							label="Add Distribution"
+							@click="addDistribution"
 						/>
 					</div>
 				</div>
@@ -263,6 +286,25 @@ const getClickedField = (type: FieldTypes, field: string) => {
 	}
 };
 
+const addDistribution = () => {
+	if (currentParam.value) {
+		currentParam.value.distribution = {
+			type: 'Uniform1',
+			parameters: {
+				minimum: 0,
+				maximum: 0
+			}
+		};
+	}
+};
+
+const removeDistribution = () => {
+	if (currentParam.value) {
+		currentParam.value.distribution = undefined;
+	}
+	updateParameter();
+};
+
 const updateParameter = () => {
 	if (currentParam.value) {
 		emit('update-param', [currentParam.value]);
@@ -346,6 +388,13 @@ ul {
 .form-section {
 	display: flex;
 	flex-direction: column;
+	gap: var(--gap);
+}
+
+.distribution-section {
+	align-items: center;
+	display: flex;
+	flex-direction: row;
 	gap: var(--gap);
 }
 </style>
