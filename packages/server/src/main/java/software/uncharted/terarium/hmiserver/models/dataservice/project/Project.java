@@ -8,6 +8,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
@@ -65,6 +66,7 @@ public class Project implements Serializable {
 	private Timestamp deletedOn;
 
 	@OneToMany(mappedBy = "project")
+	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
