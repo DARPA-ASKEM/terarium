@@ -118,7 +118,7 @@ const projectOptions = computed(() => [
 
 					if (isDocument(selectedAsset.value)) {
 						const document = selectedAsset.value as Document;
-						await createDocumentFromXDD(document, project.id);
+						await createDocumentFromXDD(document, project.id as string);
 						// finally add asset to project
 						response = await useProjects().get(project.id);
 						assetName = selectedAsset.value.title;

@@ -185,7 +185,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
-import { OperatorNodeSize, OperatorImport } from '@/services/workflow';
+import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
@@ -527,7 +527,7 @@ function onDrop(event) {
 				operation = CodeAssetOp.operation;
 				state = { codeAssetId: assetId };
 				break;
-			case AssetType.Documents:
+			case AssetType.Document:
 				operation = DocumentOp.operation;
 				state = { documentId: assetId };
 				break;

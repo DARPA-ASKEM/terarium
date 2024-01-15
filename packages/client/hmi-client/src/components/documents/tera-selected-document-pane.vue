@@ -69,7 +69,7 @@ const addAssetsToProject = async (projectName) => {
 		projectId = project?.id as string;
 	} else {
 		if (useProjects().activeProject.value) return;
-		projectId = useProjects().activeProject.value!.id;
+		projectId = useProjects().activeProject.value!.id as string;
 	}
 
 	addResourcesToProject(projectId);
