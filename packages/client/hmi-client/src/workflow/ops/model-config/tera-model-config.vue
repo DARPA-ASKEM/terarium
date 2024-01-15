@@ -177,8 +177,6 @@ const createConfiguration = async () => {
 		newModel.semantics.ode.parameters = configParams.value;
 	}
 
-	console.log(newModel);
-
 	const data = await createModelConfiguration(
 		model.value.id,
 		configName.value,
