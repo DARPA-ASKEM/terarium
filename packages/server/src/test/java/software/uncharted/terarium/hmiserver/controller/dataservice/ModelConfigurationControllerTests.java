@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,6 +114,8 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
+
+		Assertions.assertTrue(modelConfigurationService.getModelConfiguration(modelConfiguration.getId()).isEmpty());
 	}
 
 }

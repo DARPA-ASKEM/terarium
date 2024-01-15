@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,6 +112,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
+
+		Assertions.assertTrue(modelService.getModel(model.getId()).isEmpty());
 	}
 
 	@Test

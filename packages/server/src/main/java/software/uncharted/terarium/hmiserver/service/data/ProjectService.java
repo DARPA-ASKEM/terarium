@@ -36,7 +36,7 @@ public class ProjectService {
 	}
 
 	public Optional<Project> getProject(final UUID id) {
-		final Optional<Project> project = projectRepository.findById(id);
+		final Optional<Project> project = projectRepository.getByIdAndDeletedOnIsNull(id);
 		if (project.isPresent()) {
 			final Optional<User> user = userRepository.findById(project.get().getUserId());
 			user.ifPresent(value -> project.get().setUserName(value.getName()));
