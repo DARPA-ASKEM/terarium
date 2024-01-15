@@ -14,6 +14,8 @@ services:
       JUPYTER_SERVER: "http://${local_host_name}:3050"
       SIMULATION_SCHEDULER_URL: "http://${local_host_name}:3030"
       JUPYTER_TOKEN: "89f73481102c46c0bc13b2998f9a4fce"
+      TDS_USERNAME: "${secret_service_account_username}"
+      TDS_PASSWORD: "${secret_service_account_password}"
 
   knowledge-middleware-api:
     container_name: knowledge-middleware-api
@@ -29,6 +31,8 @@ services:
       MIT_TR_URL: "https://mit-tr.staging.terarium.ai"
       TA1_UNIFIED_URL: "https://skema-unified.staging.terarium.ai"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
+      TDS_USERNAME: "${secret_service_account_username}"
+      TDS_PASSWORD: "${secret_service_account_password}"
 
   knowledge-middleware-worker:
     container_name: knowledge-middleware-worker
@@ -42,6 +46,8 @@ services:
       MIT_TR_URL: "https://mit-tr.staging.terarium.ai"
       TA1_UNIFIED_URL: "https://skema-unified.staging.terarium.ai"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
+      TDS_USERNAME: "${secret_service_account_username}"
+      TDS_PASSWORD: "${secret_service_account_password}"
     depends_on:
       redis:
         condition: service_started
