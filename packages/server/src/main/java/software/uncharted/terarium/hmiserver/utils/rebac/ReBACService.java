@@ -110,8 +110,15 @@ public class ReBACService {
 		if (!schemaManager.doesSchemaExist(channel, spiceDbBearerToken)) {
 			schemaManager.createSchema(channel, spiceDbBearerToken, Schema.schema);
 
-			PUBLIC_GROUP_ID = createGroup(PUBLIC_GROUP_NAME).getId();
-			ASKEM_ADMIN_GROUP_ID = createGroup(ASKEM_ADMIN_GROUP_NAME).getId();
+			PUBLIC_GROUP_ID = getGroupId(PUBLIC_GROUP_NAME);
+			if (PUBLIC_GROUP_ID == null) {
+				PUBLIC_GROUP_ID = createGroup(PUBLIC_GROUP_NAME).getId();
+			}
+
+			ASKEM_ADMIN_GROUP_ID = getGroupId(ASKEM_ADMIN_GROUP_NAME);
+			if (ASKEM_ADMIN_GROUP_ID == null) {
+				ASKEM_ADMIN_GROUP_ID = createGroup(ASKEM_ADMIN_GROUP_NAME).getId();
+			}
 
 			UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 			List<UserRepresentation> users = usersResource.list();
