@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { AssetItem } from '@/types/common';
 import { useProjects } from '@/composables/project';
 import { isProjectAssetTypes } from '@/types/Project';
@@ -31,8 +32,8 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 			return asset.assetName.toLowerCase().includes(searchTermLower);
 		});
 
-	Object.entries(Object.groupBy(cleanAssets, (asset) => asset.pageType)).forEach(
-		([type, assetList]) => assetItemsMap.set(type, new Set(assetList as AssetItem[]))
+	Object.entries(_.groupBy(cleanAssets, 'pageType')).forEach(([type, assetList]) =>
+		assetItemsMap.set(type, new Set(assetList as AssetItem[]))
 	);
 
 	return assetItemsMap;
