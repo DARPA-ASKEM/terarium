@@ -66,12 +66,10 @@
 						@click="isDynamicsModalVisible = true"
 					/>
 					<tera-code-dynamic
-						v-for="(dynamic, index) in dynamics"
-						:filename="dynamic[0]"
-						:codefile="dynamic[1]"
+						v-if="codeAssetCopy"
+						:code="codeAssetCopy"
 						@remove="onRemoveCodeBlock"
 						@save="onSaveCodeBlock"
-						:key="index"
 						:is-preview="props.isPreview"
 					/>
 				</div>
@@ -294,12 +292,6 @@ const fileNames = computed<string[]>(() => {
 });
 
 const codeAssetCopy = ref<Code | null>(null);
-const dynamics = computed(() => {
-	if (!codeAssetCopy.value?.files) return [];
-	return Object.entries(codeAssetCopy.value?.files).filter(
-		(fileEntry) => fileEntry[1].dynamics?.block?.length > 0
-	);
-});
 const savingAsset = ref(false);
 /**
  * Editor initialization function
