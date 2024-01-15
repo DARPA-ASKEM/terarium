@@ -38,10 +38,10 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
-import { Model } from '@/types/Types';
+import { AssetType, Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -57,7 +57,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
-const models = computed<Model[]>(() => useProjects().activeProject.value?.assets?.MODEL ?? []);
+const models = useProjects().getActiveProjectAssets(AssetType.Model);
 
 enum ModelNodeView {
 	Diagram = 'Diagram',

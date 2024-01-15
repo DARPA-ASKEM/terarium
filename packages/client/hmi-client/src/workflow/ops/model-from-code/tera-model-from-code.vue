@@ -82,7 +82,7 @@
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
-						<span>Decapodes created: {{ selectedModel.id }}</span>
+						<span>Decapodes created: {{ selectedModel?.id }}</span>
 					</template>
 				</section>
 				<tera-operator-placeholder
@@ -122,7 +122,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import { ProgrammingLanguage, Model } from '@/types/Types';
+import { AssetType, Model, ProgrammingLanguage } from '@/types/Types';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -184,9 +184,9 @@ const clonedState = ref<ModelFromCodeState>({
 });
 
 const outputs = computed(() => {
-	const activeProjectModelIds = useProjects().activeProject.value?.assets?.MODEL?.map(
-		(model) => model.id
-	);
+	const activeProjectModelIds = useProjects()
+		.getActiveProjectAssets(AssetType.Model)
+		.map((model) => model.id);
 
 	const savedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
 	const unsavedOutputs: WorkflowOutput<ModelFromCodeState>[] = [];
@@ -394,9 +394,9 @@ async function fetchModel() {
 }
 
 function isSaveModelDisabled(): boolean {
-	const activeProjectModelIds = useProjects().activeProject.value?.assets?.MODEL?.map(
-		(model) => model.id
-	);
+	const activeProjectModelIds = useProjects()
+		.getActiveProjectAssets(AssetType.Model)
+		.map((model) => model.id);
 
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }

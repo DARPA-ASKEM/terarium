@@ -2,7 +2,7 @@ import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
-import { EventType, Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, EventType, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 
@@ -89,7 +89,7 @@ export async function addNewModelToProject(modelName: string): Promise<string | 
 
 // A helper function to check if a model is empty.
 export function isModelEmpty(model: Model) {
-	if (model.header.schema_name === 'petrinet') {
+	if (model.header.schemaName === 'petrinet') {
 		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
 	}
 	// TODO: support different frameworks' version of empty
@@ -98,10 +98,9 @@ export function isModelEmpty(model: Model) {
 
 // A helper function to check if a model name already exists
 export function validateModelName(name: string): boolean {
-	const existingModelNames: string[] = [];
-	useProjects().activeProject.value?.assets?.MODEL.forEach((item) => {
-		existingModelNames.push(item.header.name);
-	});
+	const existingModelNames: string[] = useProjects()
+		.getActiveProjectAssets(AssetType.Model)
+		.map((item) => item.assetName ?? '');
 
 	if (name.trim().length === 0) {
 		logger.info('Model name cannot be empty - please enter a different name');

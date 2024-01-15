@@ -94,7 +94,7 @@ const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: as
 const assetName = computed<string>(() => {
 	if (pageType.value === ProjectPages.OVERVIEW) return 'Overview';
 
-	const assets = useProjects().activeProject.value?.assets;
+	const assets = useProjects().activeProject.value?.projectAssets;
 
 	/**
 	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
@@ -148,12 +148,8 @@ async function removeAsset(assetRoute: AssetRoute) {
 
 const openWorkflow = async () => {
 	// Create a new workflow
-	let wfName = 'workflow';
-	const { activeProject } = useProjects();
-	if (activeProject.value && activeProject.value?.assets) {
-		wfName = `workflow ${activeProject.value.assets[AssetType.Workflow].length + 1}`;
-	}
-	const wf = emptyWorkflow(wfName, '');
+	const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
+	const wf = emptyWorkflow(`workflow ${workflows.length + 1}`, '');
 
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
@@ -186,10 +182,7 @@ const openNewAsset = (assetType: AssetType) => {
 // This conversion should maybe be done in tera-external-publication.vue - tera-preview-panel.vue does this conversion differently...
 // This should be deleted eventually since publications are deprecated
 // So delete this when we choose to delete tera-external-publication.vue
-const getXDDuri = (docAssetId: string): string =>
-	useProjects().activeProject.value?.assets?.[AssetType.Publication]?.find(
-		(document) => document?.id === docAssetId
-	)?.xdd_uri ?? '';
+const getXDDuri = (docAssetId: string): string => docAssetId;
 
 async function openCode() {
 	const res: string | null = await getCodeFileAsText(assetId.value!, assetName.value!);

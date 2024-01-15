@@ -26,8 +26,8 @@
 import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
 import { getCodeAsset } from '@/services/code';
-import { computed, onMounted, ref, watch } from 'vue';
-import { Code } from '@/types/Types';
+import { onMounted, ref, watch } from 'vue';
+import { AssetType, Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -42,7 +42,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
 
 const code = ref<Code | null>(null);
-const codeAssets = computed<Code[]>(() => useProjects().activeProject.value?.assets?.CODE ?? []);
+const codeAssets = useProjects().getActiveProjectAssets(AssetType.Code);
 
 onMounted(async () => {
 	if (props.node.state.codeAssetId) {

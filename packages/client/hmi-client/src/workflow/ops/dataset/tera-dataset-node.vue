@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
-import { CsvAsset, Dataset } from '@/types/Types';
+import { AssetType, CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
@@ -77,9 +77,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
 
-const datasets = computed<Dataset[]>(
-	() => useProjects().activeProject.value?.assets?.DATASET ?? []
-);
+const datasets = useProjects().getActiveProjectAssets(AssetType.Dataset);
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);

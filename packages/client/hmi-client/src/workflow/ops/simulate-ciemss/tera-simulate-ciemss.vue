@@ -144,20 +144,27 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import { CsvAsset, Model, ModelConfiguration, SimulationRequest, TimeSpan } from '@/types/Types';
+import {
+	CsvAsset,
+	Model,
+	ModelConfiguration,
+	ProgressState,
+	SimulationRequest,
+	TimeSpan
+} from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel, getModelConfigurations } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
-	makeForecastJobCiemss as makeForecastJob,
 	getRunResultCiemss,
-	simulationPollAction,
+	getSimulation,
+	makeForecastJobCiemss as makeForecastJob,
 	querySimulationInProgress,
-	getSimulation
+	simulationPollAction
 } from '@/services/models/simulation-service';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
-import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
+import { WorkflowNode } from '@/types/workflow';
+import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
@@ -210,7 +217,7 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const showSpinner = ref(false);
 const completedRunId = ref<string>('');
 const runResults = ref<{ [runId: string]: RunResults }>({});
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
@@ -264,6 +271,7 @@ const runSimulate = async () => {
 	const state = props.node.state;
 
 	const payload: SimulationRequest = {
+		projectId: useProjects().activeProject.value?.id as string,
 		modelConfigId,
 		timespan: {
 			start: state.currentTimespan.start,

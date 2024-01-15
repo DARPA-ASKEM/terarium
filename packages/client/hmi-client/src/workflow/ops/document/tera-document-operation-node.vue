@@ -27,8 +27,8 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
-import { computed, onMounted, ref, watch } from 'vue';
+import { AssetType, DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
+import { onMounted, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
 import { cloneDeep, isEmpty } from 'lodash';
 import { getDocumentAsset } from '@/services/document-assets';
@@ -41,9 +41,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output-port'
 const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();
-const documents = computed<DocumentAsset[]>(
-	() => useProjects().activeProject.value?.assets?.DOCUMENT ?? []
-);
+const documents = useProjects().getActiveProjectAssets(AssetType.Document);
 
 const fetchingDocument = ref(false);
 
