@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +15,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 @Transactional
@@ -24,6 +31,12 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private ProjectService projectService;
+
+	@Autowired
+	private ProjectAssetService projectAssetService;
+
+	@Autowired
+	private DocumentAssetService documentAssetService;
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
@@ -77,6 +90,67 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(projectService.getProject(project.getId()).isEmpty());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCreateProjectAsset() throws Exception {
+
+		final Project project = projectService.createProject(new Project()
+				.setName("test-name"));
+
+		final DocumentAsset documentAsset = documentAssetService.createDocumentAsset(new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description"));
+
+		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
+				documentAsset.getId());
+
+		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId() + "/assets")
+				.param("types", AssetType.DOCUMENT.name())
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		Assets results = objectMapper.readValue(res.getResponse().getContentAsString(),
+				Assets.class);
+
+		Assertions.assertEquals(1, results.getDocument().size());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanDeleteProjectAsset() throws Exception {
+
+		final Project project = projectService.createProject(new Project()
+				.setName("test-name"));
+
+		final DocumentAsset documentAsset = documentAssetService.createDocumentAsset(new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description"));
+
+		final ProjectAsset asset = projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
+				documentAsset.getId());
+
+		mockMvc.perform(
+				MockMvcRequestBuilders
+						.delete("/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/"
+								+ asset.getId())
+						.with(csrf()))
+				.andExpect(status().isOk());
+
+		MvcResult res = mockMvc
+				.perform(MockMvcRequestBuilders
+						.get("/projects/" + project.getId() + "/assets")
+						.param("types", AssetType.DOCUMENT.name())
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		Assets results = objectMapper.readValue(res.getResponse().getContentAsString(),
+				Assets.class);
+
+		Assertions.assertNull(results.getDocument());
 	}
 
 }

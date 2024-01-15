@@ -1,7 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +50,15 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.*;
+import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ExternalPublicationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
@@ -70,14 +84,14 @@ public class ProjectController {
 
 	final ProjectAssetService projectAssetService;
 
-	//TODO: These are all to be removed once we get rid of getAssets
+	// TODO: These are all to be removed once we get rid of getAssets
 	final DatasetService datasetService;
 	final ModelService modelService;
 	final DocumentAssetService documentService;
 	final WorkflowService workflowService;
 	final ExternalPublicationService publicationService;
 	final CodeService codeService;
-	final ArtifactService	artifactService;
+	final ArtifactService artifactService;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -298,7 +312,8 @@ public class ProjectController {
 
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
 
-				//sort our list of assets by type, caring only about the UUID of the projectAsset
+				// sort our list of assets by type, caring only about the UUID of the
+				// projectAsset
 				final Map<AssetType, List<UUID>> assetTypeListMap = assets.stream()
 						.collect(
 								HashMap::new,
@@ -310,13 +325,12 @@ public class ProjectController {
 								},
 								HashMap::putAll);
 
-
 				final Assets assetsResponse = new Assets();
-				for(AssetType type: assetTypeListMap.keySet()){
+				for (AssetType type : assetTypeListMap.keySet()) {
 					switch (type) {
 						case DATASET:
 							List<Dataset> datasets = new ArrayList<>();
-							for(UUID id: assetTypeListMap.get(type)){
+							for (UUID id : assetTypeListMap.get(type)) {
 								try {
 									Optional<Dataset> dataset = datasetService.getDataset(id);
 									dataset.ifPresent(datasets::add);
@@ -328,7 +342,7 @@ public class ProjectController {
 							break;
 						case MODEL:
 							List<Model> models = new ArrayList<>();
-							for(UUID id: assetTypeListMap.get(type)){
+							for (UUID id : assetTypeListMap.get(type)) {
 								try {
 									Optional<Model> model = modelService.getModel(id);
 									model.ifPresent(models::add);
@@ -340,7 +354,7 @@ public class ProjectController {
 							break;
 						case DOCUMENT:
 							List<DocumentAsset> documents = new ArrayList<>();
-							for(UUID id: assetTypeListMap.get(type)){
+							for (UUID id : assetTypeListMap.get(type)) {
 								try {
 									Optional<DocumentAsset> document = documentService.getDocumentAsset(id);
 									document.ifPresent(documents::add);
@@ -352,7 +366,7 @@ public class ProjectController {
 							break;
 						case WORKFLOW:
 							List<Workflow> workflows = new ArrayList<>();
-							for(UUID id: assetTypeListMap.get(type)){
+							for (UUID id : assetTypeListMap.get(type)) {
 								try {
 									Optional<Workflow> workflow = workflowService.getWorkflow(id);
 									workflow.ifPresent(workflows::add);
@@ -364,9 +378,10 @@ public class ProjectController {
 							break;
 						case PUBLICATION:
 							List<ExternalPublication> publications = new ArrayList<>();
-							for(UUID id: assetTypeListMap.get(type)){
+							for (UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<ExternalPublication> publication = publicationService.getExternalPublication(id);
+									Optional<ExternalPublication> publication = publicationService
+											.getExternalPublication(id);
 									publication.ifPresent(publications::add);
 								} catch (final IOException e) {
 									log.error("Error getting publication", e);
@@ -376,7 +391,7 @@ public class ProjectController {
 							break;
 						case CODE:
 							List<Code> code = new ArrayList<>();
-							for(UUID id: assetTypeListMap.get(type)){
+							for (UUID id : assetTypeListMap.get(type)) {
 								try {
 									Optional<Code> codeAsset = codeService.getCode(id);
 									codeAsset.ifPresent(code::add);
@@ -388,7 +403,7 @@ public class ProjectController {
 							break;
 						case ARTIFACT:
 							List<Artifact> artifacts = new ArrayList<>();
-							for(UUID id: assetTypeListMap.get(type)){
+							for (UUID id : assetTypeListMap.get(type)) {
 								try {
 									Optional<Artifact> artifact = artifactService.getArtifact(id);
 									artifact.ifPresent(artifacts::add);
@@ -462,8 +477,9 @@ public class ProjectController {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
 				final boolean deleted = projectAssetService.delete(assetId);
-				if (deleted)
+				if (deleted) {
 					return ResponseEntity.ok(new ResponseDeleted("asset-" + type, assetId));
+				}
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
