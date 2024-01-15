@@ -1,9 +1,14 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Initial, ModelParameter } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
 
 export interface ModelConfigOperationState {
 	modelId: string | null;
+	name: string;
+	description: string;
+	initials?: Initial[];
+	parameters?: ModelParameter[];
 }
 
 export const ModelConfigOperation: Operation = {
@@ -17,7 +22,9 @@ export const ModelConfigOperation: Operation = {
 
 	initState: () => {
 		const init: ModelConfigOperationState = {
-			modelId: null
+			modelId: null,
+			name: '',
+			description: ''
 		};
 		return init;
 	}

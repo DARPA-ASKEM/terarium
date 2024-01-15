@@ -112,7 +112,12 @@ watch(
 				emit('append-output-port', {
 					type: 'equations',
 					label: `equations (${selected.length}/${equations.length})`,
-					value: equations
+					value: [
+						{
+							documentId: document.value.id,
+							equations
+						}
+					]
 				});
 			}
 
@@ -121,7 +126,12 @@ watch(
 				emit('append-output-port', {
 					type: 'figures',
 					label: `figures (${selected.length}/${figures.length})`,
-					value: figures
+					value: [
+						{
+							documentId: document.value.id,
+							figures
+						}
+					]
 				});
 			}
 
@@ -130,7 +140,12 @@ watch(
 				emit('append-output-port', {
 					type: 'tables',
 					label: `tables (${selected.length}/${tables.length})`,
-					value: tables
+					value: [
+						{
+							documentId: document.value.id,
+							tables
+						}
+					]
 				});
 			}
 		}

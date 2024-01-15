@@ -50,3 +50,10 @@
         }
     }
 }
+
+.p-selectbutton.p-button-xsm {
+    @extend .p-button-sm;
+    .p-button-label {
+        font-size: var(--font-caption);
+    }
+}

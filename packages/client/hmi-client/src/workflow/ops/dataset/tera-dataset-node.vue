@@ -7,7 +7,13 @@
 					<span>{{ csvContent[0].length }} columns</span>
 					<!--TODO: May want to turn this feather icon button into its own component-->
 					<div class="multiselect-btn">
-						<Button class="p-button-icon-only" rounded text @click="columnSelect.show()">
+						<Button
+							class="p-button-icon-only"
+							rounded
+							text
+							@click="columnSelect.show()"
+							v-tooltip="columnSelectTooltip"
+						>
 							<span>
 								<vue-feather type="columns" size="1.25rem" />
 							</span>
@@ -20,6 +26,7 @@
 							@update:modelValue="onToggle"
 							:maxSelectedLabels="1"
 							placeholder="Select columns"
+							filter
 						/>
 					</div>
 				</div>
@@ -85,6 +92,7 @@ const columnSelect = ref();
 const onToggle = (val) => {
 	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
 };
+const columnSelectTooltip = 'Select columns to display';
 
 watch(
 	() => dataset.value,
