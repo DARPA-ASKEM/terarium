@@ -53,6 +53,11 @@ export function useProjects() {
 		return allProjects.value;
 	}
 
+	/**
+	 * Return all the asset of a certain AssetType from the active project.
+	 * @param assetType
+	 * @returns ProjectAsset[]
+	 */
 	function getActiveProjectAssets(assetType: AssetType) {
 		return (
 			activeProject.value?.projectAssets.filter((asset) => asset.assetType === assetType) ??
