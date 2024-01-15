@@ -233,7 +233,7 @@ services:
     image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0
     networks:
       - terarium
-    command: [ 'import', '--dir', '/data', '--override', 'false' ]
+    command: [ 'import', '--dir', '/data', '--override', 'true' ]
     volumes:
       - ./scripts/realm:/data
     environment:
