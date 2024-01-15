@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -74,6 +75,8 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.delete("/projects/" + project.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
+
+		Assertions.assertTrue(projectService.getProject(project.getId()).isEmpty());
 	}
 
 }
