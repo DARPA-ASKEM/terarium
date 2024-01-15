@@ -1,5 +1,5 @@
 <template>
-	<Panel :toggleable="toggleable">
+	<Panel :toggleable="isToggleable">
 		<template #header>
 			<section>
 				<slot name="header" />
@@ -7,7 +7,7 @@
 			</section>
 		</template>
 		<template #icons>
-			<template v-if="isIncludable">
+			<template v-if="isPermitted">
 				<label>Include in process</label>
 				<InputSwitch :model-value="isIncluded" @update:model-value="emit('update:is-included')" />
 			</template>
@@ -38,7 +38,7 @@ defineProps({
 	isDeletable: {
 		type: Boolean
 	},
-	isIncludable: {
+	isPermitted: {
 		type: Boolean,
 		default: true
 	},
@@ -48,7 +48,7 @@ defineProps({
 	isEditable: {
 		type: Boolean
 	},
-	toggleable: {
+	isToggleable: {
 		type: Boolean,
 		default: true
 	}

@@ -7,8 +7,8 @@
 					<tera-asset-block
 						is-deletable
 						is-editable
-						:is-includable="false"
-						:toggleable="false"
+						:is-permitted="false"
+						:is-toggleable="false"
 						@edit="editCodeBlock(codeBlock.asset.block, filename as string, i)"
 						@delete="deleteCodeBlock(filename as string, i)"
 						:key="i"
