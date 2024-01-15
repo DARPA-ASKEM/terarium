@@ -85,6 +85,7 @@
 <script setup lang="ts">
 import { cloneDeep } from 'lodash';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
 import { Position } from '@/types/workflow'; // temp
 import { Model } from '@/types/Types';
@@ -116,6 +117,12 @@ interface ModelTemplateEdge {
 	target: number;
 	points: Position[];
 }
+
+// Junction
+// x: number
+// y: number
+// targets: string[]
+// paths array: ???
 
 const modelTemplateOptions = [
 	naturalConversion,
@@ -150,16 +157,39 @@ const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
 
+function collisionFn(p: Position) {
+	const buffer = 50;
+	for (let i = 0; i < modelTemplates.value.length; i++) {
+		const checkingNode = modelTemplates.value[i].metadata.templateCard;
+		// FIXME: Thi is  a hack to get around hierarhical geometries, will need to
+		// relax this guard.
+		// if (node.nodes && node.nodes.length > 0) continue;
+		if (p.x >= checkingNode.x - buffer && p.x <= checkingNode.x + checkingNode.width + buffer) {
+			if (p.y >= checkingNode.y - buffer && p.y <= checkingNode.y + checkingNode.height + buffer) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
 	const controlXOffset = 0;
+	console.log(getAStarPath(a, b, collisionFn), [
+		a,
+		{ x: a.x + controlXOffset, y: a.y },
+		{ x: b.x - controlXOffset, y: b.y },
+		b
+	]);
+	return getAStarPath(a, b, collisionFn);
 	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
 }
 
 const pathFn = d3
 	.line<{ x: number; y: number }>()
 	.x((d) => d.x)
-	.y((d) => d.y);
-// .curve(d3.curveBasis);
+	.y((d) => d.y)
+	.curve(d3.curveBasis);
 
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
