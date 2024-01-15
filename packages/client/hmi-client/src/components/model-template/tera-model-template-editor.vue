@@ -16,11 +16,16 @@
 					<header>Model framework</header>
 					<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
 				</section>
-				<section>
+				<section class="template-options">
 					<header>Model templates</header>
 					<ul>
-						<li v-for="(_, index) in 5" :key="index">
-							<tera-model-template :card="newCard" draggable="true" />
+						<li v-for="(modelTemplate, index) in modelTemplateOptions" :key="index">
+							<tera-model-template
+								:model="modelTemplate"
+								:is-editable="false"
+								draggable="true"
+								@dragstart="newModelTemplate = modelTemplate"
+							/>
 						</li>
 					</ul>
 				</section>
@@ -32,21 +37,23 @@
 		</template>
 		<template #data>
 			<tera-canvas-item
-				v-for="(card, index) in cards"
+				v-for="(modelTemplate, index) in modelTemplates"
 				:key="index"
 				:style="{
 					width: 'fit-content',
-					top: `${card.y}px`,
-					left: `${card.x}px`
+					top: `${modelTemplate.metadata.templateCard.y}px`,
+					left: `${modelTemplate.metadata.templateCard.x}px`
 				}"
-				@dragging="(event) => updatePosition(card, event)"
+				@dragging="(event) => updatePosition(modelTemplate.metadata.templateCard, event)"
 			>
 				<tera-model-template
-					:card="card"
+					:model="modelTemplate"
+					is-editable
 					@update-name="(name: string) => updateName(name, index)"
-					@port-selected="createNewEdge(card)"
+					@port-selected="createNewEdge(modelTemplate.metadata.templateCard)"
 					@port-mouseover="
-						(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
+						(event: MouseEvent, cardWidth: number) =>
+							onPortMouseover(event, modelTemplate.metadata.templateCard, cardWidth)
 					"
 					@port-mouseleave="onPortMouseleave"
 				/>
@@ -76,6 +83,7 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep } from 'lodash';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import * as d3 from 'd3';
 import { Position } from '@/types/workflow'; // temp
@@ -83,6 +91,13 @@ import { Model } from '@/types/Types';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
+import naturalConversion from './templates/natural-conversion.json';
+import naturalProduction from './templates/natural-production.json';
+import naturalDegredation from './templates/natural-degradation.json';
+import controlledConversion from './templates/controlled-conversion.json';
+import controlledProduction from './templates/controlled-production.json';
+import controlledDegredation from './templates/controlled-degradation.json';
+import observable from './templates/observable.json';
 
 defineProps<{
 	model?: Model;
@@ -102,15 +117,34 @@ interface ModelTemplateEdge {
 	points: Position[];
 }
 
+const modelTemplateOptions = [
+	naturalConversion,
+	naturalProduction,
+	naturalDegredation,
+	controlledConversion,
+	controlledProduction,
+	controlledDegredation,
+	observable
+].map((modelTemplate: any) => {
+	// TODO: Add templateCard attribute to Model later
+	modelTemplate.metadata.templateCard = {
+		id: -1,
+		name: modelTemplate.header.name,
+		x: 0,
+		y: 0
+	};
+	return modelTemplate;
+});
+
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 
-const cards = ref<ModelTemplate[]>([{ id: 1, name: 'Template name', x: 300, y: 40 }]);
+const modelTemplates = ref<any[]>([]); // ([{ id: 1, name: 'Template name', x: 300, y: 40 }]);
 const edges = ref<ModelTemplateEdge[]>([]);
 
-const newCard: ModelTemplate = { id: -1, name: 'Template name', x: 0, y: 0 };
+const newModelTemplate = ref();
 const newEdge = ref();
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
@@ -131,13 +165,13 @@ const pathFn = d3
 const drawPath = (v: any) => pathFn(v) as string;
 
 function updateName(name: string, index: number) {
-	cards.value[index].name = name;
+	modelTemplates.value[index].metadata.templateCard.name = name;
 }
 
 function createNewEdge(card: ModelTemplate) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
-			id: 'new edge',
+			id: -1,
 			source: card.id,
 			points: [
 				{ x: currentPortPosition.x, y: currentPortPosition.y },
@@ -192,13 +226,18 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 }
 
 function updateNewCardPosition(event) {
-	newCard.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
-	newCard.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
+	newModelTemplate.value.metadata.templateCard.x =
+		(event.offsetX - canvasTransform.x) / canvasTransform.k;
+	newModelTemplate.value.metadata.templateCard.y =
+		(event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-	cards.value.push({ id: cards.value.length + 1, name: newCard.name, x: newCard.x, y: newCard.y });
+
+	newModelTemplate.value.metadata.templateCard.id = modelTemplates.value.length + 1;
+	modelTemplates.value.push(cloneDeep(newModelTemplate.value));
+	newModelTemplate.value = null;
 }
 
 let prevX = 0;
@@ -256,8 +295,9 @@ aside {
 	height: 100%;
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-alt);
-	padding: 1rem;
+	padding: var(--gap) 0;
 	gap: 0.5rem;
+	overflow: hidden;
 }
 
 ul {
@@ -285,15 +325,29 @@ header {
 	cursor: help;
 }
 
+.template-options {
+	overflow: hidden;
+
+	& > header {
+		padding: 0 var(--gap);
+	}
+
+	& > ul {
+		height: 85%;
+		padding: 0.25rem 0 0.25rem var(--gap-small);
+		overflow-y: scroll;
+	}
+}
+
 .trash {
-	margin-top: auto;
+	margin: auto 0.5rem 0 0.5rem;
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	border: 1px dashed #9fa9b7;
 	border-radius: var(--border-radius);
 	background-color: #eff2f5;
 	text-align: center;
-	padding: 1rem 0;
+	padding: 1rem;
 
 	& > .pi-trash {
 		font-size: 1.5rem;
