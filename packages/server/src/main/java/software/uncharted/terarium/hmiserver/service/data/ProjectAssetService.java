@@ -1,20 +1,21 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
 
 @RequiredArgsConstructor
 @Service
@@ -28,7 +29,7 @@ public class ProjectAssetService {
 	}
 
 	public List<ProjectAsset> findActiveAssetsForProject(@NotNull final UUID projectId,
-                                                         final Collection<@NotNull AssetType> types) {
+			final Collection<@NotNull AssetType> types) {
 		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNull(projectId, types);
 	}
 
@@ -38,21 +39,27 @@ public class ProjectAssetService {
 
 	public boolean delete(final UUID id) {
 		final ProjectAsset asset = projectAssetRepository.findById(id).orElse(null);
-		if (asset == null)
+		if (asset == null) {
 			return false;
-		asset.setDeletedOn(null);
+		}
+		asset.setDeletedOn(Timestamp.from(Instant.now()));
 		return (save(asset) != null);
 	}
 
-	public ProjectAsset findByProjectIdAndAssetIdAndAssetType(@NotNull final UUID projectId, @NotNull final UUID assetId,
-                                                                 @NotNull final AssetType type) {
+	public ProjectAsset findByProjectIdAndAssetIdAndAssetType(@NotNull final UUID projectId,
+			@NotNull final UUID assetId,
+			@NotNull final AssetType type) {
 		return projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, assetId, type);
 	}
 
-	public ProjectAsset createProjectAsset(final Project project, final AssetType type, final UUID assetId) {
+	public ProjectAsset createProjectAsset(Project project, final AssetType type, final UUID assetId) {
 
 		final ProjectAsset asset = new ProjectAsset();
-		project.getProjectAssets().add(asset);
+		if (project.getProjectAssets() == null) {
+			project.setProjectAssets(List.of(asset));
+		} else {
+			project.getProjectAssets().add(asset);
+		}
 		asset.setProject(project);
 		asset.setAssetType(type);
 		asset.setAssetId(assetId);
