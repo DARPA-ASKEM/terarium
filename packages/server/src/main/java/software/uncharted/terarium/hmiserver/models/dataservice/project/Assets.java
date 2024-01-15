@@ -30,5 +30,4 @@ public class Assets implements Serializable {
 	private List<Artifact> artifact;
 	private List<Code> code;
 	private List<DocumentAsset> document;
-
 }

@@ -39,6 +39,11 @@ public class Project implements Serializable {
 	private String userId;
 
 	@TSOptional
+	@Transient
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private String userName;
+
+	@TSOptional
 	@Schema(defaultValue = "My Project Description")
 	private String description;
 

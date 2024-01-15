@@ -88,9 +88,7 @@ const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);
 
-const pageType = computed(
-	() => (route.params.pageType as ProjectPages | AssetType) ?? ProjectPages.EMPTY
-);
+const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as string) ?? '');
 const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }));
 const assetName = computed<string>(() => {

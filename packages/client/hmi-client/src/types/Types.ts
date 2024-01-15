@@ -375,6 +375,7 @@ export interface Project {
     id?: string;
     name: string;
     userId: string;
+    userName?: string;
     description?: string;
     createdOn?: Date;
     updatedOn?: Date;
@@ -389,6 +390,7 @@ export interface ProjectAsset {
     id: string;
     assetId: string;
     assetType: AssetType;
+    assetName?: string;
     externalRef?: string;
     createdOn?: Date;
     updatedOn?: Date;

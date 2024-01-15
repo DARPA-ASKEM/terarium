@@ -26,7 +26,7 @@
 					</div>
 					<div>
 						<!--
-							TODO: Disabled until there is a domain property for IProject.
+							TODO: Disabled until there is a domain property for Project.
 							This section might have similarities to tera-filter-bar.vue.
 						-->
 						<label>Domain</label>
@@ -91,15 +91,15 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
 import useAuthStore from '@/stores/auth';
-import { IProject } from '@/types/Project';
 import { cloneDeep } from 'lodash';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import { Project } from '@/types/Types';
 
 const props = defineProps<{
 	confirmText: string;
 	modalTitle: string;
-	project: IProject | null;
+	project: Project | null;
 }>();
 
 const emit = defineEmits(['close-modal']);

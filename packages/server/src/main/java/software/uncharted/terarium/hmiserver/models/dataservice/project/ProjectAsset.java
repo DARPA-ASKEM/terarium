@@ -44,6 +44,9 @@ public class ProjectAsset implements Serializable {
 	@Enumerated(EnumType.STRING)
 	private AssetType assetType;
 
+	@NotNull
+	private String assetName;
+
 	@TSOptional
 	private String externalRef;
 
