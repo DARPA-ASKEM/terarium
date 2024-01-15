@@ -2,11 +2,11 @@ import _, { cloneDeep, isEmpty, some } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import {
-	PetriNetModel,
 	Model,
+	ModelConfiguration,
+	PetriNetModel,
 	PetriNetTransition,
-	TypingSemantics,
-	ModelConfiguration
+	TypingSemantics
 } from '@/types/Types';
 import { updateModelConfiguration } from '@/services/model-configurations';
 import { logger } from '@/utils/logger';
@@ -632,12 +632,12 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
-		const { name, description, schema } = amrCopy.header;
+		const { name, description, modelSchema, modelVersion } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
-			schema,
-			model_version: amrCopy.header.model_version,
+			modelSchema,
+			modelVersion,
 			model: amrCopy.semantics?.typing?.system
 		};
 		amrCopy.semantics.typing.system = typeSystem;
@@ -692,10 +692,10 @@ export function newAMR(modelName: string) {
 		header: {
 			name: modelName,
 			description: '',
-			schema:
+			modelSchema:
 				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-			schema_name: 'petrinet',
-			model_version: '0.1'
+			schemaName: 'petrinet',
+			modelVersion: '0.1'
 		},
 		id: '',
 		model: {

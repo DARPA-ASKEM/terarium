@@ -86,7 +86,7 @@ async function updateModelName() {
 	// 2. Save asset to project
 	const projectId = useProjects().activeProject.value?.id;
 	if (!projectId) return;
-	const response = await addAsset(projectId, AssetType.Models, props.modelId);
+	const response = await addAsset(projectId, AssetType.Model, props.modelId);
 	await useProjects().refresh();
 
 	if (!response) {

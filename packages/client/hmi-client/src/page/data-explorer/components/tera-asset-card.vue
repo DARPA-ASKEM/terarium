@@ -31,7 +31,7 @@
 					</template>
 				</div>
 				<div v-else-if="resourceType === ResourceType.MODEL">
-					{{ (asset as Model).header.schema_name }}
+					{{ (asset as Model).header.schemaName }}
 				</div>
 				<ul>
 					<li v-for="(project, index) in foundInProjects" :key="index">
@@ -118,10 +118,10 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed, ComputedRef } from 'vue';
+import { computed, ComputedRef, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
-import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
+import { Dataset, Document, Extraction, Model, XDDUrlExtraction } from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';

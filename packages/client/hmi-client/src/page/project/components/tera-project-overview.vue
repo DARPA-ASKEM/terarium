@@ -1,10 +1,10 @@
 <template>
 	<tera-asset
 		:name="useProjects().activeProject.value?.name"
-		:authors="useProjects().activeProject.value?.username"
+		:authors="useProjects().activeProject.value?.userName"
 		:is-naming-asset="isRenamingProject"
 		:publisher="`Last updated ${DateUtils.formatLong(
-			useProjects().activeProject.value?.timestamp
+			useProjects().activeProject.value?.updatedOn ?? useProjects().activeProject.value?.createdOn
 		)}`"
 		:is-loading="useProjects().projectLoading.value"
 	>
@@ -18,13 +18,9 @@
 			</p>
 			<!-- Project summary KPIs -->
 			<section class="summary-KPI-bar">
-				<div
-					class="summary-KPI"
-					v-for="(assets, type) of useProjects().activeProject.value?.assets"
-					:key="type"
-				>
-					<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
-					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
+				<div class="summary-KPI" v-for="[key, asset] of assetItemsMap" :key="key">
+					<span class="summary-KPI-number">{{ asset.size ?? 0 }}</span>
+					<span class="summary-KPI-label">{{ capitalize(key) }}</span>
 				</div>
 			</section>
 		</template>
@@ -186,6 +182,8 @@ const assetRouteToOpen = ref<AssetRoute | null>(null);
 
 const searchTable = ref('');
 const showMultiSelect = ref<boolean>(false);
+
+const assetItemsMap = computed(() => generateProjectAssetsMap(searchTable.value));
 
 const assetItems = computed(() =>
 	Array.from(generateProjectAssetsMap(searchTable.value).values())
