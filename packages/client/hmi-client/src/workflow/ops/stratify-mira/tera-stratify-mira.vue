@@ -96,6 +96,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Model, ModelConfiguration } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -105,7 +107,6 @@ import teraStratificationGroupForm from '@/components/stratification/tera-strati
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
 import { createModel, getModel } from '@/services/model';
-import { AssetType, Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import _ from 'lodash';

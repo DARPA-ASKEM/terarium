@@ -62,7 +62,7 @@ import Dropdown from 'primevue/dropdown';
 import { watch, ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { getUsers } from '@/services/user';
-import { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
+import type { PermissionRelationships, PermissionUser } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraUserCard from './tera-user-card.vue';
 

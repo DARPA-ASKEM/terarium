@@ -56,9 +56,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, onMounted, watch } from 'vue';
 import { isEmpty } from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
-import { AssetType, CsvAsset, Dataset } from '@/types/Types';
+import { AssetType } from '@/types/Types';
+import type { CsvAsset, Dataset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';

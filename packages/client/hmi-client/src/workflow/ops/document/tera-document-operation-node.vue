@@ -27,7 +27,8 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { AssetType, DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
+import type { DocumentAsset, DocumentExtraction } from '@/types/Types';
+import { AssetType, ExtractionAssetType } from '@/types/Types';
 import { onMounted, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
 import { cloneDeep, isEmpty } from 'lodash';

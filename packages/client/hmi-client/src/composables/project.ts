@@ -8,7 +8,8 @@
 
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import { AssetType, PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
+import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;

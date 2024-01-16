@@ -121,11 +121,11 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import {
+import { ProgressState } from '@/types/Types';
+import type {
 	CsvAsset,
 	Model,
 	ModelConfiguration,
-	ProgressState,
 	SimulationRequest,
 	TimeSpan
 } from '@/types/Types';

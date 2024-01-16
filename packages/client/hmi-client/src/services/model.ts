@@ -1,8 +1,9 @@
 import API from '@/api/api';
+import type { Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
-import { AssetType, EventType, Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 

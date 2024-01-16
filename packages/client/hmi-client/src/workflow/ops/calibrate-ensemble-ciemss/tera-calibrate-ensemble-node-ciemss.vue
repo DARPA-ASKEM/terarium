@@ -39,13 +39,17 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'; // import { csvParse } from 'd3';
-import { OperatorStatus, WorkflowNode } from '@/types/workflow'; // import { getModelConfigurationById } from '@/services/model-configurations';
-import {
+import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { OperatorStatus, WorkflowNode } from '@/types/workflow';
+import { ProgressState } from '@/types/Types';
+// import { csvParse } from 'd3';
+// import type { ModelConfiguration } from '@/types/Types';
+// import { getRunResult } from '@/services/models/simulation-service';
+// import { getModelConfigurationById } from '@/services/model-configurations';
+import type {
 	CsvAsset,
 	EnsembleCalibrationCiemssRequest,
-	EnsembleModelConfigs,
-	ProgressState
+	EnsembleModelConfigs
 } from '@/types/Types';
 import {
 	getRunResultCiemss,

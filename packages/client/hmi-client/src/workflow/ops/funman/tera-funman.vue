@@ -136,7 +136,12 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 
-import { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type {
+	FunmanPostQueriesRequest,
+	Model,
+	ModelConfiguration,
+	ModelParameter
+} from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';

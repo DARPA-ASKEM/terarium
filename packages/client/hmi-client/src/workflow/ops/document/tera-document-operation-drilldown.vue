@@ -74,7 +74,8 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { onMounted, ref, watch } from 'vue';
-import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
+import { ExtractionAssetType } from '@/types/Types';
+import type { DocumentAsset, DocumentExtraction } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,

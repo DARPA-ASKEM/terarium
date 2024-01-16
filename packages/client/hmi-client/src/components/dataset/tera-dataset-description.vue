@@ -63,7 +63,8 @@
 import { isEmpty } from 'lodash';
 import { computed } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import { AssetType, CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
+import type { CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { AcceptedExtensions, FeatureConfig } from '@/types/common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';

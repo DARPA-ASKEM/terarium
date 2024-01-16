@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
+import type { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 

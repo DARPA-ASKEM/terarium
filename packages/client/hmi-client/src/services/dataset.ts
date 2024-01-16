@@ -4,7 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
+import type { CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';

@@ -211,7 +211,7 @@ import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
-import { CsvAsset, ModelConfiguration, EnsembleModelConfigs } from '@/types/Types';
+import type { CsvAsset, ModelConfiguration, EnsembleModelConfigs } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';

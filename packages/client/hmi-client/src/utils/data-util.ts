@@ -2,7 +2,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import { Dataset, Document, DocumentAsset, Model } from '@/types/Types';
+import type { Model, Document, Dataset, DocumentAsset } from '@/types/Types';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';

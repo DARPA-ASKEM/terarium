@@ -1,4 +1,4 @@
-import { DocumentExtraction } from '@/types/Types';
+import type { DocumentExtraction } from '@/types/Types';
 import { Operation, AssetBlock, WorkflowOperationTypes } from '@/types/workflow';
 
 export interface DocumentOperationState {

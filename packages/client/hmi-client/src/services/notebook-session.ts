@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { NotebookSession } from '@/types/Types';
+import type { NotebookSession } from '@/types/Types';
 
 export const getAllNotebookSessions = async () => {
 	const response = await API.get(`/sessions`);

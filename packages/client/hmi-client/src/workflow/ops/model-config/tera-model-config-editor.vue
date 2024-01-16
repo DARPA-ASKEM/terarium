@@ -121,7 +121,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import { Model, Initial, ModelParameter } from '@/types/Types';
+import type { Model, Initial, ModelParameter } from '@/types/Types';
 import {
 	getUnstratifiedParameters,
 	getUnstratifiedInitials

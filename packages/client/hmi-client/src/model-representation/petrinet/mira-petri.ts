@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Model, PetriNetTransition } from '@/types/Types';
+import type { Model, PetriNetTransition } from '@/types/Types';
 import { createMatrix1D } from '@/utils/pivot';
 import { StratifiedMatrix } from '@/types/Model';
 import { createParameterMatrix, createTransitionMatrix } from './petri-matrix-service';

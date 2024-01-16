@@ -18,7 +18,7 @@
 
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { CsvAsset, Dataset } from '@/types/Types';
+import type { CsvAsset, Dataset } from '@/types/Types';
 import { onMounted, ref } from 'vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDatasetDescription from '@/components/dataset/tera-dataset-description.vue';

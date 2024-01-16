@@ -121,7 +121,7 @@
 import { computed, ComputedRef, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
-import { Dataset, Document, Extraction, Model, XDDUrlExtraction } from '@/types/Types';
+import type { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';

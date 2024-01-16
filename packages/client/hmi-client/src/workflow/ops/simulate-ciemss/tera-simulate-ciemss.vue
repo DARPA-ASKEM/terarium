@@ -144,11 +144,11 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import {
+import { ProgressState } from '@/types/Types';
+import type {
 	CsvAsset,
 	Model,
 	ModelConfiguration,
-	ProgressState,
 	SimulationRequest,
 	TimeSpan
 } from '@/types/Types';

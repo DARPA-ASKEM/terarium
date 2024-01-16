@@ -54,16 +54,16 @@
 import _ from 'lodash';
 import { computed, ComputedRef, onMounted, onUnmounted, ref, watch } from 'vue';
 // import { csvParse } from 'd3';
-// import { ModelConfiguration } from '@/types/Types';
+// import type { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
-import {
-	EnsembleModelConfigs,
+import type {
 	EnsembleSimulationCiemssRequest,
-	ProgressState,
-	TimeSpan
+	TimeSpan,
+	EnsembleModelConfigs
 } from '@/types/Types';
+import { ProgressState } from '@/types/Types';
 import {
 	getRunResultCiemss,
 	makeEnsembleCiemssSimulation,
