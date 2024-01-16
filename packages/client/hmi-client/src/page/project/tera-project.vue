@@ -68,7 +68,7 @@ import { AssetRoute } from '@/types/common';
 import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { createWorkflow, emptyWorkflow } from '@/services/workflow';
-import type { AssetType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';

@@ -24,7 +24,8 @@
 import { computed, PropType } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import type { AssetType, Document } from '@/types/Types';
+import type { Document } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';

@@ -88,7 +88,7 @@ import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
-import type { AssetType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import teraProgressSpinner from '../widgets/tera-progress-spinner.vue';

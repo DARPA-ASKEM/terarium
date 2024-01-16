@@ -168,7 +168,7 @@ import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 import { capitalize } from 'lodash';
-import type { AssetType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';

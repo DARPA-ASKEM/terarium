@@ -58,7 +58,7 @@
 import { ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import type { AssetType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';

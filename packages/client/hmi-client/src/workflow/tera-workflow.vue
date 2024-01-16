@@ -187,7 +187,7 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorNodeSize, OperatorImport } from '@/services/workflow';
 import * as d3 from 'd3';
-import type { AssetType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 

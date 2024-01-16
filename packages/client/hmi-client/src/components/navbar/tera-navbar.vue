@@ -158,7 +158,7 @@ import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
-import type { EvaluationScenarioStatus, EventType } from '@/types/Types';
+import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';

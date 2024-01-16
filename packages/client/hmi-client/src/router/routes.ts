@@ -1,6 +1,6 @@
 import IconAccount32 from '@carbon/icons-vue/es/account/32';
 import IconFlow32 from '@carbon/icons-vue/es/flow/32';
-import type { AssetType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 
 export enum RouteName {
 	Home = 'home',
