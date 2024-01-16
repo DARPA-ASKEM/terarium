@@ -44,7 +44,7 @@
 					top: `${modelTemplate.metadata.templateCard.y}px`,
 					left: `${modelTemplate.metadata.templateCard.x}px`
 				}"
-				@dragging="(event) => updatePosition(modelTemplate.metadata.templateCard, event)"
+				@dragging="(event) => updatePosition(event, modelTemplate.metadata.templateCard)"
 			>
 				<tera-model-template
 					:model="modelTemplate"
@@ -64,6 +64,7 @@
 				v-for="(junction, index) in junctions"
 				:key="index"
 				:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
+				@dragging="(event) => updatePosition(event, junction)"
 			>
 				<tera-model-junction :junction="junction" />
 			</tera-canvas-item>
@@ -345,17 +346,23 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-const updatePosition = ({ x, y }, card: ModelTemplate) => {
+const updatePosition = ({ x, y }, node: ModelTemplate | ModelTemplateJunction) => {
 	if (!isMouseOverCanvas) return;
 
-	// Update card position
-	card.x += x / canvasTransform.k;
-	card.y += y / canvasTransform.k;
+	// Update node position
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
 
 	// Update edge positions
-	junctions.value.forEach(({ edges }) => {
+	junctions.value.forEach(({ edges, id }) => {
 		edges.forEach((edge) => {
-			if (edge.target.cardId === card.id) {
+			// On junction move
+			if (id === node.id) {
+				edge.points[0].x += x / canvasTransform.k;
+				edge.points[0].y += y / canvasTransform.k;
+			}
+			// On card move
+			if (edge.target.cardId === node.id) {
 				edge.points[edge.points.length - 1].x += x / canvasTransform.k;
 				edge.points[edge.points.length - 1].y += y / canvasTransform.k;
 			}
