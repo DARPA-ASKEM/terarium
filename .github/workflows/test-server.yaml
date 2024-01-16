@@ -120,7 +120,7 @@ jobs:
           PG_HOST: postgres
           PG_PORT: 5432
         options: >-
-          --health-cmd "curl --head
+          --health-cmd "curl --head wget http://127.0.0.1:7474 || exit 1"
 
       spicedb:
         image: authzed/spicedb:v1.28.0
