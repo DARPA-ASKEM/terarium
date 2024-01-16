@@ -1,112 +1,123 @@
 <template>
-	<h3>{{ filename ?? '' }}</h3>
-	<Card v-for="(block, index) in codeBlocks" class="code-dynamic-card-container" :key="index">
-		<template #title>
-			Code Block
-			<div v-if="editIndex !== index">
-				<Button text icon="pi pi-pencil" @click="editCodeBlock(block.block, index)" />
-				<Button text icon="pi pi-trash" @click="deleteCodeBlock(index)" />
-			</div>
-		</template>
-		<template #content>
-			<div v-if="editIndex !== index">
-				Lines {{ extractDynamicRows(block.block).startRow + 1 }} to
-				{{ extractDynamicRows(block.block).endRow + 1 }}
-			</div>
-			<div class="edit-container" v-else>
-				<div class="edit-input-container">
-					<label for="code-dynamic-start">Start</label>
-					<InputNumber v-model="startLine" input-id="code-dynamic-start" />
-				</div>
+	<ul>
+		<li v-for="(codeBlocks, filename) in formattedCodeBlocks" :key="filename">
+			<h3>{{ filename ?? '' }}</h3>
+			<ul>
+				<li v-for="(codeBlock, i) in codeBlocks" :key="i">
+					<tera-asset-block
+						is-deletable
+						is-editable
+						:is-permitted="false"
+						:is-toggleable="false"
+						@edit="editCodeBlock(codeBlock.asset.block, filename as string, i)"
+						@delete="deleteCodeBlock(filename as string, i)"
+						:key="i"
+					>
+						<template #header>
+							<h5>Code Block</h5>
+						</template>
+						<div
+							v-if="
+								(editRef?.index !== i || editRef?.filename !== filename) && codeBlock.asset.block
+							"
+						>
+							Lines {{ extractDynamicRows(codeBlock.asset.block).startRow + 1 }} to
+							{{ extractDynamicRows(codeBlock.asset.block).endRow + 1 }}
+						</div>
+						<div class="edit-container" v-else>
+							<div class="edit-input-container">
+								<label for="code-dynamic-start">Start</label>
+								<InputNumber v-model="startLine" input-id="code-dynamic-start" />
+							</div>
 
-				<div class="edit-input-container">
-					<label for="code-dynamic-start">End</label>
-					<InputNumber v-model="endLine" input-id="code-dynamic-end" />
-				</div>
-			</div>
+							<div class="edit-input-container">
+								<label for="code-dynamic-start">End</label>
+								<InputNumber v-model="endLine" input-id="code-dynamic-end" />
+							</div>
+						</div>
 
-			<div v-if="props.isPreview && editIndex !== index" class="switch-container">
-				<label>Include in process</label>
-				<InputSwitch v-model="block.includeInProcess" />
-			</div>
-		</template>
-
-		<template #footer v-if="editIndex === index">
-			<div class="footer-container">
-				<Button outlined label="Cancel" @click="editIndex = null" />
-				<Button label="OK" @click="saveCodeBlockChanges(index)" />
-			</div>
-		</template>
-	</Card>
+						<template #footer v-if="editRef?.index === i && editRef?.filename === filename">
+							<div class="footer-container">
+								<Button outlined label="Cancel" @click="editRef = null" />
+								<Button label="OK" @click="saveCodeBlockChanges" />
+							</div>
+						</template>
+					</tera-asset-block>
+				</li>
+			</ul>
+		</li>
+	</ul>
 </template>
 
 <script setup lang="ts">
-import Card from 'primevue/card';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import InputSwitch from 'primevue/inputswitch';
-import { onMounted, ref, watch } from 'vue';
-import { CodeFile } from '@/types/Types';
-import { extractDynamicRows } from '@/utils/code-asset';
-import { cloneDeep } from 'lodash';
+import { computed, onMounted, ref, watch } from 'vue';
+import { Code } from '@/types/Types';
+import { CodeBlock, extractDynamicRows, getCodeBlocks } from '@/utils/code-asset';
+import { cloneDeep, groupBy } from 'lodash';
+import { AssetBlock } from '@/types/workflow';
+import TeraAssetBlock from '../widgets/tera-asset-block.vue';
 
 const props = defineProps<{
-	filename: string;
-	codefile: CodeFile;
+	code: Code;
 	isPreview?: boolean;
 }>();
 
 const emit = defineEmits(['remove', 'save']);
-const editIndex = ref<number | null>(null);
+const editRef = ref<{ filename: string; index: number } | null>(null);
 const startLine = ref();
 const endLine = ref();
-const codeBlocks = ref<any>([]);
+const codeBlocks = ref<AssetBlock<CodeBlock>[]>();
 
-onMounted(() => {
-	codeBlocks.value = props.codefile.dynamics.block.map((b) => ({
-		block: b,
-		includeInProcess: true
-	}));
+const formattedCodeBlocks = computed(() => groupBy(codeBlocks.value, 'asset.filename'));
+
+onMounted(async () => {
+	if (props.code) {
+		codeBlocks.value = await getCodeBlocks(props.code);
+	}
 });
 watch(
-	() => props.codefile,
-	() => {
-		codeBlocks.value = props.codefile.dynamics.block.map((b) => ({
-			block: b,
-			includeInProcess: true
-		}));
+	() => props.code,
+	async () => {
+		codeBlocks.value = await getCodeBlocks(props.code);
 	},
 	{ deep: true }
 );
-const deleteCodeBlock = (index: number) => {
-	const clonedCodefile = cloneDeep(props.codefile);
+const deleteCodeBlock = (filename: string, index: number) => {
+	const clonedCodefile = cloneDeep(props.code?.files?.[filename]);
+	if (!clonedCodefile) return;
 	clonedCodefile.dynamics.block.splice(index, 1);
-	editIndex.value = null;
+	editRef.value = null;
 
 	emit('remove', {
-		[props.filename]: {
+		[filename]: {
 			...clonedCodefile
 		}
 	});
 };
 
-const editCodeBlock = (block: string, index: number) => {
+const editCodeBlock = (block: string | undefined, filename: string, index: number) => {
+	if (!block) return;
 	const { startRow, endRow } = extractDynamicRows(block);
 	startLine.value = startRow + 1;
 	endLine.value = endRow + 1;
-	editIndex.value = index;
+	editRef.value = { filename, index };
 };
 
-const saveCodeBlockChanges = (index: number) => {
-	if (isValidRange()) {
-		const clonedCodefile = cloneDeep(props.codefile);
+const saveCodeBlockChanges = () => {
+	if (isValidRange() && editRef.value) {
+		const filename = editRef.value.filename;
+		const index = editRef.value.index;
+		const clonedCodefile = cloneDeep(props.code?.files?.[filename]);
+		if (!clonedCodefile) return;
 		clonedCodefile.dynamics.block[index] = `L${startLine.value}-L${endLine.value}`;
 		emit('save', {
-			[props.filename]: {
+			[filename]: {
 				...clonedCodefile
 			}
 		});
-		editIndex.value = null;
+		editRef.value = null;
 	}
 };
 
@@ -116,20 +127,11 @@ function isValidRange(): boolean {
 </script>
 
 <style scoped>
-h3 {
-	padding-top: 2rem;
-}
-.code-dynamic-card-container {
-	width: 240px;
-	max-width: 240px;
-	border-left: solid 0.5rem var(--primary-color);
-	margin-top: 1rem;
-}
-
-.code-dynamic-card-container:deep(.p-card-title) {
+ul {
+	list-style: none;
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	flex-direction: column;
+	gap: var(--gap-small);
 }
 
 .edit-container {
@@ -138,20 +140,5 @@ h3 {
 
 .edit-input-container:deep(.p-inputnumber-input) {
 	width: 100px;
-}
-
-.footer-container {
-	display: flex;
-	justify-content: flex-end;
-}
-
-.footer-container > * {
-	margin-left: 0.5rem;
-}
-
-.switch-container {
-	display: flex;
-	justify-content: space-between;
-	padding-top: 1rem;
 }
 </style>

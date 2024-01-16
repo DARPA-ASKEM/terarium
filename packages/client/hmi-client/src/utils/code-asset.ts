@@ -1,5 +1,6 @@
 import { getCodeFileAsText } from '@/services/code';
 import { Code, ProgrammingLanguage } from '@/types/Types';
+import { AssetBlock } from '@/types/workflow';
 
 export enum CodeBlockType {
 	INPUT = 'input'
@@ -9,8 +10,6 @@ export interface CodeBlock {
 	block?: string;
 	codeLanguage: ProgrammingLanguage;
 	codeContent: string;
-	name: string;
-	includeInProcess?: boolean;
 	type?: CodeBlockType;
 }
 
@@ -34,7 +33,7 @@ export const extractCodeLines = (code: string, start: number, end: number) => {
 	return extractedCode;
 };
 
-export const getCodeBlocks = async (code: Code): Promise<CodeBlock[]> => {
+export const getCodeBlocks = async (code: Code): Promise<AssetBlock<CodeBlock>[]> => {
 	if (!code.id || !code.files) return [];
 
 	const filteredFiles = Object.entries(code.files).filter(
@@ -50,13 +49,15 @@ export const getCodeBlocks = async (code: Code): Promise<CodeBlock[]> => {
 			const codeSnippet = extractCodeLines(codeContent, startRow, endRow);
 
 			return {
-				filename: fileEntry[0],
-				block,
-				codeLanguage: fileEntry[1].language,
-				codeContent: codeSnippet ?? '',
 				name: 'Code Block',
 				includeInProcess: true,
-				type: CodeBlockType.INPUT
+				asset: {
+					filename: fileEntry[0],
+					block,
+					codeLanguage: fileEntry[1].language,
+					codeContent: codeSnippet ?? '',
+					type: CodeBlockType.INPUT
+				}
 			};
 		});
 

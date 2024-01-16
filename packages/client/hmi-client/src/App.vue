@@ -9,7 +9,7 @@
 	</header>
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" :key="route.path" />
+			<component class="page" ref="pageRef" :is="Component" />
 		</router-view>
 	</main>
 	<footer>
