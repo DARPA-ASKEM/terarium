@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { ExtractionResponse } from '@/types/Types';
+import type { ExtractionResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**

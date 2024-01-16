@@ -87,7 +87,7 @@ import { cloneDeep } from 'lodash';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import * as d3 from 'd3';
 import { Position } from '@/types/workflow'; // temp
-import { Model } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';

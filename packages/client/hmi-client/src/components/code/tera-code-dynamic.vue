@@ -53,7 +53,7 @@
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { computed, onMounted, ref, watch } from 'vue';
-import { Code } from '@/types/Types';
+import type { Code } from '@/types/Types';
 import { CodeBlock, extractDynamicRows, getCodeBlocks } from '@/utils/code-asset';
 import { cloneDeep, groupBy } from 'lodash';
 import { AssetBlock } from '@/types/workflow';

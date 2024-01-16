@@ -25,7 +25,7 @@ import { ref, computed, watch } from 'vue';
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, DataseriesConfig, RunResults, RunType } from '@/types/SimulateConfig';
-import { CsvAsset } from '@/types/Types';
+import type { CsvAsset } from '@/types/Types';
 import { getGraphDataFromDatasetCSV } from './util';
 
 const emit = defineEmits(['configuration-change']);

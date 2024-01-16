@@ -78,7 +78,7 @@ import {
 	createModelConfiguration,
 	getModelConfigurationById
 } from '@/services/model-configurations';
-import { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
+import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import teraModelConfigEditor from './tera-model-config-editor.vue';
 

@@ -16,7 +16,7 @@ import { computed } from 'vue';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
 import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { StratifiedMatrix } from '@/types/Model';
-import { ModelConfiguration } from '@/types/Types';
+import type { ModelConfiguration } from '@/types/Types';
 import { getMiraAMRPresentationData } from '@/model-representation/petrinet/mira-petri';
 
 const props = defineProps<{
