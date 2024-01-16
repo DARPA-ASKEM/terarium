@@ -48,8 +48,6 @@ jobs:
           - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       db-migration:
         image: ghcr.io/darpa-askem/db-migration:latest
-        networks:
-          - terarium
         environment:
           SPRING_PROFILES_ACTIVE: "default, local-docker"
           TERARIUM_DB_PASSWORD: "postgres"
@@ -60,8 +58,6 @@ jobs:
 
       keycloak:
         image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0
-        networks:
-          - terarium
         restart: always
         healthcheck:
           # Keycloak no longer has curl, https://stackoverflow.com/questions/58168955/testing-minimal-docker-containers-with-healthcheck/76790330#76790330
@@ -109,8 +105,6 @@ jobs:
 
       keycloak-init:
         image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0
-        networks:
-          - terarium
         command: [ 'import', '--dir', '/data', '--override', 'true' ]
         volumes:
           - ./scripts/realm:/data
@@ -147,8 +141,6 @@ jobs:
         ports:
           - "9000:9000"
           - "9090:9090"
-        networks:
-          - terarium
         environment:
           MINIO_ROOT_USER: admin
           MINIO_ROOT_PASSWORD: admin123
@@ -162,8 +154,6 @@ jobs:
           timeout: 10s
           retries: 20
           start_period: 3s
-        networks:
-          - terarium
         ports:
           - "7474:7474"
           - "7687:7687"
@@ -195,8 +185,6 @@ jobs:
           --health-retries 5
       elasticsearch:
         image: elasticsearch:8.7.0
-        networks:
-          - terarium
         ports:
           - "9200:9200"
           - "9300:9300"
@@ -226,8 +214,6 @@ jobs:
 
       spicedb:
         image: authzed/spicedb:v1.28.0
-        networks:
-          - terarium
         ports:
           - "50051:50051"
         command: [ "serve" ]
@@ -247,8 +233,6 @@ jobs:
 
       migrate-spicedb:
         image: authzed/spicedb:v1.28.0
-        networks:
-          - terarium
         command: [ "migrate", "head" ]
         restart: "on-failure"
         environment:
