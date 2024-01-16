@@ -1,10 +1,10 @@
 import { ProgrammingLanguage } from '@/types/Types';
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { CodeBlock } from '@/utils/code-asset';
 
 export interface ModelFromCodeState {
 	codeLanguage: ProgrammingLanguage;
-	codeBlocks: CodeBlock[];
+	codeBlocks: AssetBlock<CodeBlock>[];
 	modelFramework: string;
 	modelId: string;
 }
