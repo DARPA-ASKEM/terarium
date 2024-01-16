@@ -10,7 +10,7 @@ import VueFeather from 'vue-feather';
 import VueGtag from 'vue-gtag';
 import { MathfieldElement } from 'mathlive';
 import VueKatex from '@hsorby/vue3-katex';
-import type { EventType } from '@/types/Types';
+import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import API from '@/api/api';
 import useAuthStore from '@/stores/auth';
