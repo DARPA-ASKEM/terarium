@@ -208,7 +208,7 @@ import { computed, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import { Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { Model, ModelConfiguration, ModelParameter, Initial } from '@/types/Types';
 import {
 	getUnstratifiedParameters,
 	getUnstratifiedInitials
