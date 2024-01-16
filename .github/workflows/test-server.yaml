@@ -170,5 +170,4 @@ jobs:
           arguments: |
             test
             --info
-            minHeapSize=512m
-            maxHeapSize=768m
+
