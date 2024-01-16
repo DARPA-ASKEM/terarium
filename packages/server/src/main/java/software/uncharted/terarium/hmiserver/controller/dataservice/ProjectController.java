@@ -439,7 +439,7 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("asset-type") final AssetType type,
+			@PathVariable("asset-type") final AssetType assetType,
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
@@ -447,8 +447,13 @@ public class ProjectController {
 					.canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
 				if (project.isPresent()) {
-					final ProjectAsset asset = projectAssetService.createProjectAsset(project.get(), type, assetId);
-					return ResponseEntity.status(HttpStatus.CREATED).body(asset);
+					final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
+							assetType, assetId);
+					if (asset.isEmpty()) {
+						// underlying asset does not exist
+						return ResponseEntity.notFound().build();
+					}
+					return ResponseEntity.status(HttpStatus.CREATED).body(asset.get());
 				}
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -476,9 +481,9 @@ public class ProjectController {
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
-				final boolean deleted = projectAssetService.delete(assetId);
+				final boolean deleted = projectAssetService.deleteByAssetId(projectId, type, assetId);
 				if (deleted) {
-					return ResponseEntity.ok(new ResponseDeleted("asset-" + type, assetId));
+					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + type, assetId));
 				}
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();

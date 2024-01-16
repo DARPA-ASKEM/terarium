@@ -229,9 +229,14 @@ public class SimulationController {
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
-				final ProjectAsset asset = projectAssetService.createProjectAsset(project.get(), AssetType.DATASET,
+				final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
+						AssetType.DATASET,
 						dataset.getId());
-				return ResponseEntity.status(HttpStatus.CREATED).body(asset);
+				if (asset.isEmpty()) {
+					// underlying asset does not exist
+					return ResponseEntity.notFound().build();
+				}
+				return ResponseEntity.status(HttpStatus.CREATED).body(asset.get());
 			} else {
 				log.error("Failed to add the dataset from simulation {} result", id);
 				return ResponseEntity.internalServerError().build();

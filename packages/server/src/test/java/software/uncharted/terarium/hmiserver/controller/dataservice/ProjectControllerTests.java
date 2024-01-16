@@ -103,8 +103,18 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description"));
 
-		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
-				documentAsset.getId());
+		final ProjectAsset projectAsset = new ProjectAsset()
+				.setAssetId(documentAsset.getId())
+				.setAssetName("my-asset-name")
+				.setAssetType(AssetType.DOCUMENT);
+
+		mockMvc.perform(MockMvcRequestBuilders
+				.post("/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/"
+						+ documentAsset.getId())
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(projectAsset)))
+				.andExpect(status().isCreated());
 
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId() + "/assets")
 				.param("types", AssetType.DOCUMENT.name())
@@ -129,13 +139,13 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description"));
 
-		final ProjectAsset asset = projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
+		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
 				documentAsset.getId());
 
 		mockMvc.perform(
 				MockMvcRequestBuilders
 						.delete("/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/"
-								+ asset.getId())
+								+ documentAsset.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
