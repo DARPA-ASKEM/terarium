@@ -35,7 +35,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import { AssetType } from '@/types/Types';
+import type { AssetType } from '@/types/Types';
 import { addNewModelToProject, getModel, updateModel, validateModelName } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import { addAsset } from '@/services/project';

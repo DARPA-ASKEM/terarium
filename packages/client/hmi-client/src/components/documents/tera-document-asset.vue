@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
+import type { DocumentAsset, DocumentExtraction, ExtractionAssetType } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,

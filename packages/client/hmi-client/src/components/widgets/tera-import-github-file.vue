@@ -195,7 +195,7 @@ import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { DocumentAsset, AssetType, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import type { DocumentAsset, AssetType, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';

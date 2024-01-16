@@ -11,7 +11,7 @@
 import { AssetRoute } from '@/types/common';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import { AssetType } from '@/types/Types';
+import type { AssetType } from '@/types/Types';
 import TeraAssetIcon from './tera-asset-icon.vue';
 
 defineProps<{

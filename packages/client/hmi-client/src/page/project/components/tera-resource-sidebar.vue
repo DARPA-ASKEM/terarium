@@ -150,7 +150,7 @@ import { ProjectPages } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
-import { AssetType } from '@/types/Types';
+import type { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { generateProjectAssetsMap } from '@/utils/map-project-assets';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';

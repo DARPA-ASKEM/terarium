@@ -31,7 +31,7 @@ import TeraNumericalFacet from '@/page/data-explorer/components/facets/tera-nume
 
 import { FacetBucket, Facets, ResourceType } from '@/types/common';
 import { getFacetNameFormatter, getFacetsDisplayNames } from '@/utils/facets';
-import { XDDFacetsItemResponse } from '@/types/Types';
+import type { XDDFacetsItemResponse } from '@/types/Types';
 
 const BUCKETS = 'buckets';
 

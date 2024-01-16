@@ -48,7 +48,7 @@ import { ref, watch, onUpdated, Ref, PropType } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
+import type { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';

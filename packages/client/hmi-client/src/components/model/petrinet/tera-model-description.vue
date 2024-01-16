@@ -136,7 +136,7 @@ import { isEmpty } from 'lodash';
 import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AssetType, DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import type { AssetType, DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
 import { FeatureConfig, AcceptedExtensions, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';

@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-import { ModelConfiguration, Dataset, CsvAsset, State, DatasetColumn } from '@/types/Types';
+import type { ModelConfiguration, Dataset, CsvAsset, State, DatasetColumn } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { getEntitySimilarity } from './concept';

@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { PermissionRole, PermissionUser } from '@/types/Types';
+import type { PermissionRole, PermissionUser } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 export async function getUsers(): Promise<PermissionUser[] | null> {

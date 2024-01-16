@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { getAssetIcon } from '@/services/project';
-import { AssetType } from '@/types/Types';
+import type { AssetType } from '@/types/Types';
 
 defineProps<{
 	assetType: AssetType;

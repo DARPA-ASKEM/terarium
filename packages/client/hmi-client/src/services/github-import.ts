@@ -1,6 +1,6 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { EventType, GithubRepo } from '@/types/Types';
+import type { EventType, GithubRepo } from '@/types/Types';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 

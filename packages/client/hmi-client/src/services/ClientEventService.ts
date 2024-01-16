@@ -1,5 +1,5 @@
 import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
-import { ClientEvent, ClientEventType } from '@/types/Types';
+import type { ClientEvent, ClientEventType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
 import getConfiguration from '@/services/ConfigService';
 

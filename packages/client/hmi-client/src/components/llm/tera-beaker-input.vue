@@ -38,7 +38,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import InputText from 'primevue/inputtext';
 import * as EventService from '@/services/event';
-import { EventType } from '@/types/Types';
+import type { EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 
 const emit = defineEmits(['submit-query', 'add-code-cell']);

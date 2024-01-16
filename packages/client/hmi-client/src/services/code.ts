@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { Code, ProgrammingLanguage } from '@/types/Types';
+import type { Code, ProgrammingLanguage } from '@/types/Types';
 import { Ref } from 'vue';
 import { logger } from '@/utils/logger';
 

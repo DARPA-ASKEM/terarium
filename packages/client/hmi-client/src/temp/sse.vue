@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import { ClientEvent, ClientEventType } from '@/types/Types';
+import type { ClientEvent, ClientEventType } from '@/types/Types';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 const messages = ref<ClientEvent<any>[]>([]);
 

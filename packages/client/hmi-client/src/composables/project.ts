@@ -1,5 +1,5 @@
-/* 
-	Use `activeProject` to get the active project in your component. It is read only and should not be directly modified. 
+/*
+	Use `activeProject` to get the active project in your component. It is read only and should not be directly modified.
 	`activeProject` can be refreshed by calling `getProject`
 	Use the functions in this composable to make modifications to the project and to add/remove assets from it.
 	Using these functions guarantees that such changes propogate to all components using `activeProject`.
@@ -9,7 +9,7 @@
 import { IProject } from '@/types/Project';
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import { AssetType, PermissionRelationships } from '@/types/Types';
+import type { AssetType, PermissionRelationships } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;

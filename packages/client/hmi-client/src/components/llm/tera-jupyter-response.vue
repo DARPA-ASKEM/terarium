@@ -109,7 +109,7 @@ import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-th
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { ref, computed, onMounted, watch } from 'vue';
-import { CsvAsset } from '@/types/Types';
+import type { CsvAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
 const emit = defineEmits(['cell-updated', 'preview-selected', 'update-kernel-state']);

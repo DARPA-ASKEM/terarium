@@ -1,5 +1,5 @@
 import { AssetItem } from '@/types/common';
-import { AssetType } from '@/types/Types';
+import type { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { isEmpty } from 'lodash';
 import { isProjectAssetTypes } from '@/types/Project';

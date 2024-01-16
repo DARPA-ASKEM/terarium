@@ -99,7 +99,7 @@ import {
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
-import { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
+import type { AssetType, DocumentAsset, ProvenanceType } from '@/types/Types';
 import {
 	createProvenance,
 	getRelatedArtifacts,

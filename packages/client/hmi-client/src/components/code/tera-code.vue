@@ -222,7 +222,7 @@ import {
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import { codeToAMR } from '@/services/knowledge';
-import { AssetType, Code, CodeFile, ProgrammingLanguage } from '@/types/Types';
+import type { AssetType, Code, CodeFile, ProgrammingLanguage } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import router from '@/router';

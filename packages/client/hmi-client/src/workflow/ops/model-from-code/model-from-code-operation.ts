@@ -1,4 +1,4 @@
-import { ProgrammingLanguage } from '@/types/Types';
+import type { ProgrammingLanguage } from '@/types/Types';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { CodeBlock } from '@/utils/code-asset';
 

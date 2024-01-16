@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
-import { AssetType, Document, ExternalPublication } from '@/types/Types';
+import type { AssetType, Document, ExternalPublication } from '@/types/Types';
 import { addDocuments } from '@/services/external';
 import dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';

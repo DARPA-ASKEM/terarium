@@ -63,7 +63,7 @@ tl;dr `yarn dev` and the rest is handled.
 
 The generated types are added to `packages/client/hmi-client/src/types/Types.ts` and can be imported as follows:
 ```typescript
-import { EventType } from '@/types/Types';
+import type { EventType } from '@/types/Types';
 
 EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 ```

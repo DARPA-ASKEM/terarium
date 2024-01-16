@@ -61,7 +61,7 @@ import Button from 'primevue/button';
 import { AcceptedTypes, AcceptedExtensions } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import { useProjects } from '@/composables/project';
-import { DocumentAsset, AssetType, Dataset } from '@/types/Types';
+import type { DocumentAsset, AssetType, Dataset } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';

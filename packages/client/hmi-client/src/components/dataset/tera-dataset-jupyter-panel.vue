@@ -106,7 +106,7 @@ import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
-import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
+import type { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {

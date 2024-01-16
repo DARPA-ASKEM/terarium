@@ -28,7 +28,7 @@
 import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
-import { Model } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import { convertAMRToACSet, petriToLatex } from '@/model-representation/petrinet/petrinet-service';
 import { equationsToAMR } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
