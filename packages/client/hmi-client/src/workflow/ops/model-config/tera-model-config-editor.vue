@@ -226,6 +226,11 @@ enum FieldTypes {
 
 const props = defineProps<{
 	model: Model;
+	// while initials and parameters exist in the model, we're taking in these additional props
+	// because these initials/parameters correspond to the saem initials/parameters stored in state
+	// I thought that it might make sense to just store the initials/parameters in state, instead of
+	// the whole model. Also think this way makes it a bit easier to modify the initials/parameters
+	// in the wizard and keep track of changes when switching back and forth between outputs.
 	initials: Initial[];
 	parameters: ModelParameter[];
 }>();
