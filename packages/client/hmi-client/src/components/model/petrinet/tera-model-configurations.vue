@@ -211,7 +211,7 @@ import {
 	StratifiedModel,
 	getStratificationType
 } from '@/model-representation/petrinet/petrinet-service';
-import { ModelConfiguration, Model } from '@/types/Types';
+import type { ModelConfiguration, Model } from '@/types/Types';
 import SplitButton from 'primevue/splitbutton';
 import { getCatlabAMRPresentationData } from '@/model-representation/petrinet/catlab-petri';
 import {

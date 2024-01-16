@@ -147,7 +147,7 @@ import {
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
-import { Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';

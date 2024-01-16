@@ -191,7 +191,7 @@ import DataTable, { DataTableRowSelectEvent } from 'primevue/datatable';
 import Column from 'primevue/column';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
-import { PermissionGroup, PermissionUser } from '@/types/Types';
+import type { PermissionGroup, PermissionUser } from '@/types/Types';
 import {
 	getAllGroups,
 	getGroup,

@@ -1,4 +1,4 @@
-import { Document, Extraction } from '@/types/Types';
+import type { Document, Extraction } from '@/types/Types';
 
 export enum XDDExtractionType {
 	Doc = 'Document',

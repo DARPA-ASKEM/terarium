@@ -20,19 +20,42 @@
 				{{ title }}
 			</header>
 		</div>
+
 		<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter">
-			<div class="variables-row" v-if="parameterOptions.includes(parameter.toString())">
-				<RadioButton v-model="selectedParam" :value="parameter.toString()" />
-				<div>{{ parameter.toString() }}</div>
-				<InputText v-model="bound.lb" />
-				<InputText v-model="bound.ub" />
+			<div class="variables-row" v-if="parameterOptions.includes(parameter)">
+				<RadioButton v-model="selectedParam" :value="parameter" />
+				<div>{{ parameter }}</div>
+				<InputNumber
+					mode="decimal"
+					:min-fraction-digits="1"
+					class="p-inputtext-sm"
+					v-model="bound.lb"
+				/>
+				<InputNumber
+					mode="decimal"
+					:min-fraction-digits="1"
+					class="p-inputtext-sm"
+					v-model="bound.ub"
+				/>
 				<TeraFunmanBoundaryChart
 					:processed-data="processedData as FunmanProcessedData"
-					:param1="parameter.toString()"
-					:param2="selectedParam"
+					:param1="selectedParam"
+					:param2="parameter"
 					:timestep="timestep"
+					@click="selectedParam2 = parameter"
 				/>
 			</div>
+		</div>
+
+		<!-- Larger version of boundary chart: TODO -->
+		<div v-if="selectedParam2">
+			<TeraFunmanBoundaryChart
+				:processed-data="processedData as FunmanProcessedData"
+				:param1="selectedParam"
+				:param2="selectedParam2"
+				:options="{ width: 350, height: 250 }"
+				:timestep="timestep"
+			/>
 		</div>
 	</div>
 </template>
@@ -47,7 +70,7 @@ import {
 } from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
-import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
@@ -55,33 +78,48 @@ const props = defineProps<{
 }>();
 
 const parameterOptions = ref<string[]>([]);
-const selectedParam = ref();
-const selectedTrajState = ref();
+const selectedParam = ref<string>('');
+const selectedParam2 = ref<string>('');
+
+const selectedTrajState = ref<string>('');
 const modelStates = ref<string[]>([]);
 const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
-const lastTrueBox = ref();
+
+interface FunmanBound {
+	lb: number;
+	ub: number;
+}
+interface FunmanBox {
+	label: string;
+	bounds: Record<string, FunmanBound>;
+	explanation: any;
+	schedule: any;
+	points: any;
+}
+const lastTrueBox = ref<FunmanBox>();
 const processedData = ref<FunmanProcessedData>();
 
 const initalizeParameters = async () => {
-	const funModel = await getQueries(props.funModelId);
-	processedData.value = processFunman(funModel);
+	const funmanResult = await getQueries(props.funModelId);
+	processedData.value = processFunman(funmanResult);
 	parameterOptions.value = [];
-	funModel.model.petrinet.semantics.ode.parameters.map((ele) =>
+
+	funmanResult.model.petrinet.semantics.ode.parameters.map((ele) =>
 		parameterOptions.value.push(ele.id)
 	);
 	selectedParam.value = parameterOptions.value[0];
-	timestepOptions.value = funModel.request.structure_parameters[0].schedules[0].timepoints;
+	timestepOptions.value = funmanResult.request.structure_parameters[0].schedules[0].timepoints;
 	timestep.value = timestepOptions.value[1];
 
 	modelStates.value = [];
-	funModel.model.petrinet.model.states.forEach((element) => {
+	funmanResult.model.petrinet.model.states.forEach((element) => {
 		modelStates.value.push(element.id);
 	});
 	selectedTrajState.value = modelStates.value[0];
 
-	lastTrueBox.value = funModel.parameter_space.true_boxes?.at(-1);
+	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 
 	if (selectedTrajState.value) {
 		renderGraph();

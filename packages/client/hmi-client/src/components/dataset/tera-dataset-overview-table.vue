@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { DatasetColumn } from '@/types/Types';
+import type { DatasetColumn } from '@/types/Types';
 import { computed } from 'vue';
 
 const props = defineProps<{

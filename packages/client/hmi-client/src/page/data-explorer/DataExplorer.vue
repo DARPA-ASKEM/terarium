@@ -98,7 +98,7 @@ import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
-import { XDDFacetsItemResponse } from '@/types/Types';
+import type { XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
 import Chip from 'primevue/chip';
 import { useSearchByExampleOptions } from './search-by-example';
