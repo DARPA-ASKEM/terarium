@@ -82,11 +82,11 @@ jobs:
           MINIO_ROOT_PASSWORD: admin123
         volumes:
             - minio-data:/data
-        options: >-
-          --health-cmd "timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+        #options: >-
+        #  --health-cmd "timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1"
+        #  --health-interval 10s
+        # --health-timeout 5s
+        #  --health-retries 5
         #command: [ "server", "/data", "--console-address", ":9090" ]
 
       elasticsearch:
