@@ -198,21 +198,21 @@ const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
 		key: AssetType.Code,
-		label: 'New code',
+		label: 'Code',
 		command() {
 			emit('open-new-asset', AssetType.Code);
 		}
 	},
 	{
 		key: AssetType.Models,
-		label: 'New Model',
+		label: 'Model',
 		command() {
 			emit('open-new-asset', AssetType.Models);
 		}
 	},
 	{
 		key: AssetType.Workflows,
-		label: 'New Workflow',
+		label: 'Workflow',
 		command() {
 			emit('open-new-asset', AssetType.Workflows);
 		}
