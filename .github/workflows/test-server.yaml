@@ -69,4 +69,4 @@ jobs:
       # Stop containers
       - name: Stop containers
         if: always()
-        run: cd containers/local && docker compose down
+        run: cd containers && docker compose --file docker-compose-lean.yml down
