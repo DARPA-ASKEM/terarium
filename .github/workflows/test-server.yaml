@@ -63,7 +63,7 @@ jobs:
         if: always()
         with:
           name: Server JUnit Tests
-          path: modules/server/build/test-results/test/*.xml    # Path to test results
+          path: packages/server/build/test-results/test/*.xml    # Path to test results
           reporter: java-junit        # Format of test results
 
       # Stop containers
