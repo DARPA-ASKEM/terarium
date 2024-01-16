@@ -110,6 +110,7 @@ export const processFunman = (result: any) => {
 					let pushFlag = true;
 					const traj: any = {
 						boxId,
+						label: box.label,
 						pointId: point.id,
 						timestep: t
 					};
@@ -240,12 +241,25 @@ export const renderFumanTrajectories = (
 
 	Object.keys(points).forEach((boxId) => {
 		const path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
-		svg
-			.append('g')
-			.append('path')
-			.attr('d', pathFn(path))
-			.style('stroke', '#888')
-			.style('fill', 'none');
+		const label = points[boxId][0].label;
+
+		if (path.length > 1) {
+			svg
+				.append('g')
+				.append('path')
+				.attr('d', pathFn(path))
+				.style('stroke', label === 'true' ? 'teal' : 'orange')
+				.style('opacity', 0.5)
+				.style('fill', 'none');
+		} else if (path.length === 1) {
+			svg
+				.append('g')
+				.append('circle')
+				.attr('cx', xScale(path[0].x))
+				.attr('cy', yScale(path[0].y))
+				.attr('r', 4)
+				.style('fill', '#888');
+		}
 	});
 };
 
@@ -314,6 +328,9 @@ export const renderFunmanBoundaryChart = (
 		.attr('height', (d) => yScale(d.y1) - yScale(d.y2))
 		.attr('stroke', '#888')
 		.attr('fill-opacity', 0.5);
+
+	// Don't render text into tight spaces
+	if (height < 100 || width < 100) return;
 
 	g.selectAll('text')
 		.data([...trueBoxes, ...falseBoxes])
