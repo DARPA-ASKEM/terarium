@@ -56,7 +56,6 @@ jobs:
           arguments: |
             test
             --info
-            # Run test reporter
 
       # Run test reporter
       - name: Test Report
