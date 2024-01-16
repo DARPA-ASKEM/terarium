@@ -23,124 +23,6 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
 
-    # Service containers to run with this job
-    services:
-      # Label used to access the service container
-      postgres:
-        # Docker Hub image
-        image: postgres:14.1-alpine
-        # Env Variables
-        env:
-          POSTGRES_USER: "postgres"
-          POSTGRES_PASSWORD: "postgres"
-          POSTGRES_DB: "terarium"
-        ports:
-          - 5430:5432
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        # Docker Hub image
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      rabbitmq:
-        # Docker Hub image
-        image: rabbitmq:3.9-alpine
-        ports:
-          - 5672:5672
-          - 15672:15672
-        env:
-          RABBITMQ_DEFAULT_USER: "terarium"
-          RABBITMQ_DEFAULT_PASS: "terarium123"
-          RABBITMQ_MANAGEMENT_ENABLED: "true"
-        # Set health checks to wait until rabbitmq has started
-        options: >-
-          --health-cmd "rabbitmq-diagnostics ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      minio:
-        image: quay.io/minio/minio:RELEASE.2023-11-15T20-43-25Z
-        ports:
-          - 9000:9000
-          - 9090:9090
-        env:
-          MINIO_ROOT_USER: admin
-          MINIO_ROOT_PASSWORD: admin123
-        volumes:
-            - minio-data:/data
-        #options: >-
-        #  --health-cmd "timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1"
-        #  --health-interval 10s
-        # --health-timeout 5s
-        #  --health-retries 5
-        #command: [ "server", "/data", "--console-address", ":9090" ]
-
-      elasticsearch:
-        image: elasticsearch:8.7.0
-        ports:
-          - 9200:9200
-          - 9300:9300
-        env:
-          cluster.name: "elasticsearch"
-          discovery.type: "single-node"
-          bootstrap.memory_lock: "true"
-          #xpack.security.enabled= "false"
-          ES_JAVA_OPTS: -Xms1024m -Xmx1024m
-#        options: >-
-#          --health-cmd "curl --head 0.0.0.0:9200/_cluster/health?wait_for_status=yellow"
-#          --health-interval 10s
-#          --health-timeout 5s
-#          --health-retries 5
-        volumes:
-          - elasticsearch-data:/usr/share/elasticsearch/data
-
-      neo4j:
-        image: neo4j:5.12-community
-        ports:
-          - 7687:7687
-          - 7474:7474
-        env:
-          NEO4J_PLUGINS: apoc"
-          apoc.import.file.enabled: true
-          NEO4J_AUTH: none
-          NEO4J_dbms_memory_pagecache_size: 512M
-          PG_HOST: postgres
-          PG_PORT: 5432
-#        options: >-
-#          --health-cmd "curl --head wget http://127.0.0.1:7474 || exit 1"
-
-      spicedb:
-        image: authzed/spicedb:v1.28.0
-        ports:
-          - 50051:50051
-        env:
-          SPICEDB_GRPC_PRESHARED_KEY: "dev"
-          SPICEDB_DATASTORE_ENGINE: "postgres"
-          SPICEDB_HTTP_ENABLED: "true"
-          SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
-#        options: >-
-#          --health-cmd "grpc_health_probe -addr=:50051"
-#          --health-interval 10s
-#          --health-timeout 5s
-#          --health-retries 5
-
-
-
-
     permissions:
       contents: read
 
@@ -159,8 +41,11 @@ jobs:
         with:
           distribution: "temurin"
           java-version: 17
-        env:
-            DEFAULT_JVM_OPTS: -Xmx2048m -Xms2048m
+
+      # Start containers
+      - name: Start containers
+        run: cd containers && docker compose --file docker-compose-lean.yml up --detach --wait
+
       # Run the tests
       - name: Run tests
         uses: gradle/gradle-build-action@5516b399405349a7d56e45a78a0bd4b3eaa62f9e
