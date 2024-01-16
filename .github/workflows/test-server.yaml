@@ -36,7 +36,7 @@ jobs:
       - name: Validate GradleW JAR
         uses: gradle/wrapper-validation-action@342dbebe7272035434f9baccc29a816ec6dd2c7b
 
-      # Setup Java 17 with additional memory allocated
+      # Setup Java 17
       - name: Setup Java v17
         uses: actions/setup-java@v3
         with:
