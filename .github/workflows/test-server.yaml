@@ -99,6 +99,7 @@ jobs:
           discovery.type: "single-node"
           bootstrap.memory_lock: "true"
           #xpack.security.enabled= "false"
+          ES_JAVA_OPTS: -Xms1024m -Xmx1024m
         options: >-
           --health-cmd "curl --head 0.0.0.0:9200/_cluster/health?wait_for_status=yellow"
           --health-interval 10s
@@ -132,7 +133,7 @@ jobs:
           SPICEDB_HTTP_ENABLED: "true"
           SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
         options: >-
-          --health-cmd "curl grpc_health_probe -addr=:50051"
+          --health-cmd "grpc_health_probe -addr=:50051"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
