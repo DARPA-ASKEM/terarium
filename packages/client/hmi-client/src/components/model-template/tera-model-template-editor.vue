@@ -153,7 +153,6 @@ const modelTemplateOptions = [
 		name: modelTemplate.header.name,
 		x: 0,
 		y: 0
-		// ports: [...modelTemplate.model.states, ...modelTemplate.semantics.ode.parameters]
 	};
 	return modelTemplate;
 });
@@ -164,7 +163,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: number | null = null;
 
-const modelTemplates = ref<any[]>([]); // ([{ id: 1, name: 'Template name', x: 300, y: 40 }]);
+const modelTemplates = ref<any[]>([]);
 const junctions = ref<ModelTemplateJunction[]>([]);
 
 const newModelTemplate = ref();
@@ -172,7 +171,6 @@ const newEdge = ref();
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
-// const newJunctionPos = computed(() => ({ x: 0, y: 0 + junctions.value.length * 100 }));
 
 function collisionFn(p: Position) {
 	const buffer = 50;
@@ -191,9 +189,7 @@ function collisionFn(p: Position) {
 }
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
-	// const controlXOffset = 0;
 	return getAStarPath(a, b, collisionFn);
-	// return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
 }
 
 const pathFn = d3
@@ -270,6 +266,8 @@ function createNewEdge(card: ModelTemplate, portId: string) {
 
 		cancelNewEdge();
 	}
+
+	console.table(junctions.value);
 }
 
 function onPortMouseover(event: MouseEvent, card: ModelTemplate, cardWidth: number) {
@@ -327,6 +325,32 @@ function onDrop(event) {
 	newModelTemplate.value = null;
 }
 
+const updatePosition = ({ x, y }, node: ModelTemplate & ModelTemplateJunction) => {
+	if (!isMouseOverCanvas) return;
+
+	const isJunction = node.edges !== undefined;
+
+	// Update node position
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
+
+	// Update edge positions
+	junctions.value.forEach(({ edges, id }) => {
+		edges.forEach((edge) => {
+			// On junction move
+			if (isJunction && id === node.id) {
+				edge.points[0].x += x / canvasTransform.k;
+				edge.points[0].y += y / canvasTransform.k;
+			}
+			// On card move
+			if (!isJunction && edge.target.cardId === node.id) {
+				edge.points[edge.points.length - 1].x += x / canvasTransform.k;
+				edge.points[edge.points.length - 1].y += y / canvasTransform.k;
+			}
+		});
+	});
+};
+
 let prevX = 0;
 let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
@@ -345,30 +369,6 @@ function mouseUpdate(event: MouseEvent) {
 	prevX = event.x;
 	prevY = event.y;
 }
-
-const updatePosition = ({ x, y }, node: ModelTemplate | ModelTemplateJunction) => {
-	if (!isMouseOverCanvas) return;
-
-	// Update node position
-	node.x += x / canvasTransform.k;
-	node.y += y / canvasTransform.k;
-
-	// Update edge positions
-	junctions.value.forEach(({ edges, id }) => {
-		edges.forEach((edge) => {
-			// On junction move
-			if (id === node.id) {
-				edge.points[0].x += x / canvasTransform.k;
-				edge.points[0].y += y / canvasTransform.k;
-			}
-			// On card move
-			if (edge.target.cardId === node.id) {
-				edge.points[edge.points.length - 1].x += x / canvasTransform.k;
-				edge.points[edge.points.length - 1].y += y / canvasTransform.k;
-			}
-		});
-	});
-};
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
