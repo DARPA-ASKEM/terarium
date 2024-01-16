@@ -90,7 +90,7 @@ than the main application behind the modal when these render issues come, howeve
 
 main {
 	flex-grow: 1;
-	padding: 0 0 0 var(--gap-small);
+	padding: var(--gap);
 	gap: var(--gap-small);
 }
 

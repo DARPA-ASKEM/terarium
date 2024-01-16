@@ -21,10 +21,10 @@
 				</tera-operator-placeholder>
 				<template v-else>
 					<tera-asset-block
-						v-for="({ name, codeLanguage, type }, i) in allCodeBlocks"
+						v-for="({ name, asset }, i) in allCodeBlocks"
 						:key="i"
-						:is-editable="type !== CodeBlockType.INPUT"
-						:is-deletable="type !== CodeBlockType.INPUT"
+						:is-editable="asset.type !== CodeBlockType.INPUT"
+						:is-deletable="asset.type !== CodeBlockType.INPUT"
 						@delete="removeCodeBlock(i)"
 						:is-included="allCodeBlocks[i].includeInProcess"
 						@update:is-included="
@@ -35,12 +35,12 @@
 							<h5>{{ name }}</h5>
 						</template>
 						<v-ace-editor
-							v-model:value="allCodeBlocks[i].codeContent"
-							:lang="codeLanguage"
+							v-model:value="allCodeBlocks[i].asset.codeContent"
+							:lang="asset.codeLanguage"
 							theme="chrome"
 							style="height: 10rem; width: 100%"
 							class="ace-editor"
-							:readonly="type === CodeBlockType.INPUT"
+							:readonly="asset.type === CodeBlockType.INPUT"
 						/>
 					</tera-asset-block>
 				</template>
@@ -123,7 +123,7 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { ProgrammingLanguage, Model } from '@/types/Types';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -167,9 +167,9 @@ const kernelManager = new KernelSessionManager();
 
 const selectedModel = ref<Model | null>(null);
 
-const inputCodeBlocks = ref<CodeBlock[]>([]);
+const inputCodeBlocks = ref<AssetBlock<CodeBlock>[]>([]);
 
-const allCodeBlocks = computed<CodeBlock[]>(() => [
+const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => [
 	...inputCodeBlocks.value,
 	...clonedState.value.codeBlocks
 ]);
@@ -295,7 +295,7 @@ async function handleCode() {
 	if (clonedState.value.modelFramework === ModelFramework.Decapodes) {
 		if (isEmpty(allCodeBlocks.value)) return;
 		// we only use one code block for decapodes at the moment
-		const code = allCodeBlocks.value[0].codeContent;
+		const code = allCodeBlocks.value[0].asset.codeContent;
 		const messageContent = {
 			declaration: code
 		};
@@ -369,11 +369,13 @@ async function getInputCodeBlocks() {
 }
 
 function addCodeBlock() {
-	const codeBlock: CodeBlock = {
+	const codeBlock: AssetBlock<CodeBlock> = {
 		includeInProcess: false,
-		codeContent: '',
 		name: 'Code Block',
-		codeLanguage: clonedState.value.codeLanguage
+		asset: {
+			codeContent: '',
+			codeLanguage: clonedState.value.codeLanguage
+		}
 	};
 	clonedState.value.codeBlocks.push(codeBlock);
 }
