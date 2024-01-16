@@ -100,11 +100,11 @@ jobs:
           bootstrap.memory_lock: "true"
           #xpack.security.enabled= "false"
           ES_JAVA_OPTS: -Xms1024m -Xmx1024m
-        options: >-
-          --health-cmd "curl --head 0.0.0.0:9200/_cluster/health?wait_for_status=yellow"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+#        options: >-
+#          --health-cmd "curl --head 0.0.0.0:9200/_cluster/health?wait_for_status=yellow"
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
         volumes:
           - elasticsearch-data:/usr/share/elasticsearch/data
 
@@ -120,8 +120,8 @@ jobs:
           NEO4J_dbms_memory_pagecache_size: 512M
           PG_HOST: postgres
           PG_PORT: 5432
-        options: >-
-          --health-cmd "curl --head wget http://127.0.0.1:7474 || exit 1"
+#        options: >-
+#          --health-cmd "curl --head wget http://127.0.0.1:7474 || exit 1"
 
       spicedb:
         image: authzed/spicedb:v1.28.0
@@ -132,11 +132,11 @@ jobs:
           SPICEDB_DATASTORE_ENGINE: "postgres"
           SPICEDB_HTTP_ENABLED: "true"
           SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
-        options: >-
-          --health-cmd "grpc_health_probe -addr=:50051"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+#        options: >-
+#          --health-cmd "grpc_health_probe -addr=:50051"
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
 
 
 
