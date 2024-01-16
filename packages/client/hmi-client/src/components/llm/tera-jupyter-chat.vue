@@ -36,7 +36,8 @@ import {
 	KernelState,
 	createMessageId
 } from '@/services/jupyter';
-import { AssetType, CsvAsset, NotebookSession } from '@/types/Types';
+import type { CsvAsset, NotebookSession } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';

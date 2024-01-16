@@ -23,7 +23,7 @@ import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.v
 import { computed, onMounted, ref } from 'vue';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
 import { v4 as uuidv4 } from 'uuid';
-import { NotebookSession } from '@/types/Types';
+import type { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
