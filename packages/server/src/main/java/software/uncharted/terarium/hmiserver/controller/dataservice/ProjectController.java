@@ -471,19 +471,19 @@ public class ProjectController {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
 			@ApiResponse(responseCode = "204", description = "User may not have permission to this project", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
-	@DeleteMapping("/{id}/assets/{asset-type}/{project-asset-id}")
+	@DeleteMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("asset-type") final AssetType type,
-			@PathVariable("project-asset-id") final UUID projectAssetId) {
+			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
-				final boolean deleted = projectAssetService.delete(projectAssetId);
+				final boolean deleted = projectAssetService.deleteByAssetId(projectId, type, assetId);
 				if (deleted) {
-					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + type, projectAssetId));
+					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + type, assetId));
 				}
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();

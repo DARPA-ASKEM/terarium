@@ -52,6 +52,17 @@ public class ProjectAssetService {
 		return projectAssetRepository.save(asset);
 	}
 
+	public boolean deleteByAssetId(@NotNull final UUID projectId, @NotNull final AssetType type,
+			@NotNull final UUID originalAssetId) {
+		final ProjectAsset asset = projectAssetRepository
+				.findByProjectIdAndAssetIdAndAssetType(projectId, originalAssetId, type);
+		if (asset == null) {
+			return false;
+		}
+		asset.setDeletedOn(Timestamp.from(Instant.now()));
+		return (save(asset) != null);
+	}
+
 	public boolean delete(final UUID id) {
 		final ProjectAsset asset = projectAssetRepository.findById(id).orElse(null);
 		if (asset == null) {
