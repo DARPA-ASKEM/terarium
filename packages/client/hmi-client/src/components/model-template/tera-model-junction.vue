@@ -1,20 +1,33 @@
 <template>
 	<section>
 		<i class="pi pi-info-circle" />
+		<ul>
+			<li v-for="(edge, index) in junction.edges" :key="index">
+				{{ junction.edges[0].target.portId }}
+				=
+				{{ edge.target.cardName }}.{{ edge.target.portId }}
+			</li>
+		</ul>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { Position } from '@/types/workflow'; // temp
 
+interface ModelTemplateEdge {
+	target: {
+		cardName: string;
+		cardId: number;
+		portId: string;
+	};
+	points: Position[];
+}
+
 interface ModelTemplateJunction {
 	id: number;
 	x: number;
 	y: number;
-	edges: {
-		target: number;
-		points: Position[];
-	}[];
+	edges: ModelTemplateEdge[];
 }
 
 defineProps<{
@@ -25,12 +38,42 @@ defineProps<{
 <style scoped>
 section {
 	background-color: var(--text-color-subdued);
+
 	color: var(--gray-0);
-	width: 1.5rem;
-	height: 1.5rem;
+	min-width: 1.5rem;
+	min-height: 1.5rem;
 	border-radius: var(--border-radius);
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	position: relative;
+
+	&:hover {
+		& > i {
+			display: none;
+		}
+		& > ul {
+			display: block;
+		}
+	}
+
+	& > ul {
+		display: none;
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		border: 2px solid var(--text-color-subdued);
+		border-radius: var(--border-radius);
+		padding: var(--gap-small);
+		list-style: none;
+		background-color: var(--surface-section);
+		color: var(--text-color-primary);
+		font-size: var(--font-caption);
+
+		& > li {
+			text-wrap: nowrap;
+		}
+	}
 }
 </style>

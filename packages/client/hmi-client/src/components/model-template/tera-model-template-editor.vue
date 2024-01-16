@@ -44,15 +44,14 @@
 					top: `${modelTemplate.metadata.templateCard.y}px`,
 					left: `${modelTemplate.metadata.templateCard.x}px`
 				}"
-				@dragging="(event) => updatePosition(event, modelTemplate.metadata.templateCard)"
+				@dragging="(event) => updatePosition(modelTemplate.metadata.templateCard, event)"
 			>
 				<tera-model-template
 					:model="modelTemplate"
 					is-editable
 					@update-name="(name: string) => updateName(name, index)"
 					@port-selected="
-						(portId: string) =>
-							createNewEdge({ cardId: modelTemplate.metadata.templateCard.id, portId })
+						(portId: string) => createNewEdge(modelTemplate.metadata.templateCard, portId)
 					"
 					@port-mouseover="
 						(event: MouseEvent, cardWidth: number) =>
@@ -73,19 +72,16 @@
 			<path
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
-				stroke="#1B8073"
+				stroke="var(--text-color-subdued)"
 				stroke-width="2"
-				marker-start="url(#circle)"
-				marker-end="url(#arrow)"
 				fill="none"
 			/>
 			<template v-for="{ edges } in junctions">
 				<path
 					v-for="(edge, index) in edges"
 					:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-					stroke="#1B8073"
+					stroke="var(--text-color-subdued)"
 					stroke-width="2"
-					marker-start="url(#circle)"
 					:key="index"
 					fill="none"
 				/>
@@ -122,17 +118,12 @@ interface ModelTemplate {
 	name: string;
 	x: number;
 	y: number;
-	// ports: string[];
-	// Every initial and parameter will generate a junction.
-	// When a port is first created a junction will be generated
-	// Connections after that will be just adding more targets to the junction
-	// Should be referencing a junction id
-	// hasJunction: boolean;
 }
 
-// Edges sources are always junctions
+// Edge sources are always junctions so you'd reference the junction id for that
 interface ModelTemplateEdge {
 	target: {
+		cardName: string;
 		cardId: number;
 		portId: string;
 	};
@@ -180,7 +171,7 @@ const newEdge = ref();
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
-const newJunctionPos = computed(() => ({ x: 0, y: 0 + junctions.value.length * 100 }));
+// const newJunctionPos = computed(() => ({ x: 0, y: 0 + junctions.value.length * 100 }));
 
 function collisionFn(p: Position) {
 	const buffer = 50;
@@ -217,7 +208,9 @@ function updateName(name: string, index: number) {
 	modelTemplates.value[index].metadata.templateCard.name = name;
 }
 
-function createNewEdge(target: { cardId: number; portId: string }) {
+function createNewEdge(card: ModelTemplate, portId: string) {
+	const target = { cardName: card.name, cardId: card.id, portId };
+
 	// Handles the edge that goes from port to junction
 	if (!isCreatingNewEdge.value) {
 		// Find the junction that we want to draw from
@@ -236,12 +229,15 @@ function createNewEdge(target: { cardId: number; portId: string }) {
 			junctionIdForNewEdge = junctions.value.length + 1;
 			junctions.value.push({
 				id: junctionIdForNewEdge,
-				x: newJunctionPos.value.x,
-				y: newJunctionPos.value.y,
+				x: currentPortPosition.x + 500,
+				y: currentPortPosition.y - 10,
 				edges: [
 					{
 						target,
-						points: [newJunctionPos.value, { x: currentPortPosition.x, y: currentPortPosition.y }]
+						points: [
+							{ x: currentPortPosition.x + 510, y: currentPortPosition.y },
+							{ x: currentPortPosition.x, y: currentPortPosition.y }
+						]
 					}
 				]
 			});
@@ -251,7 +247,7 @@ function createNewEdge(target: { cardId: number; portId: string }) {
 		newEdge.value = {
 			target,
 			points: [
-				{ x: junctions.value[index].x, y: junctions.value[index].y },
+				{ x: junctions.value[index].x + 10, y: junctions.value[index].y + 10 },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
 			]
 		};
@@ -266,15 +262,13 @@ function createNewEdge(target: { cardId: number; portId: string }) {
 		junctions.value[index].edges.push({
 			target,
 			points: [
-				{ x: junctions.value[index].x, y: junctions.value[index].y },
+				{ x: junctions.value[index].x + 10, y: junctions.value[index].y + 10 },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
 			]
 		});
 
 		cancelNewEdge();
 	}
-
-	console.log(junctions.value);
 }
 
 function onPortMouseover(event: MouseEvent, card: ModelTemplate, cardWidth: number) {
@@ -354,7 +348,7 @@ function mouseUpdate(event: MouseEvent) {
 const updatePosition = ({ x, y }, card: ModelTemplate) => {
 	if (!isMouseOverCanvas) return;
 
-	// Update node position
+	// Update card position
 	card.x += x / canvasTransform.k;
 	card.y += y / canvasTransform.k;
 
