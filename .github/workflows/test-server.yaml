@@ -153,13 +153,14 @@ jobs:
       - name: Validate GradleW JAR
         uses: gradle/wrapper-validation-action@342dbebe7272035434f9baccc29a816ec6dd2c7b
 
-      # Setup Java
+      # Setup Java 17 with additional memory allocated
       - name: Setup Java v17
         uses: actions/setup-java@v3
         with:
           distribution: "temurin"
           java-version: 17
-
+        env:
+            DEFAULT_JVM_OPTS: -Xmx2048m -Xms2048m
       # Run the tests
       - name: Run tests
         uses: gradle/gradle-build-action@5516b399405349a7d56e45a78a0bd4b3eaa62f9e
