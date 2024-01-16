@@ -5,7 +5,7 @@
 import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
-import { Curies, DKG, EntitySimilarityResult } from '@/types/Types';
+import type { Curies, DKG, EntitySimilarityResult } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**

@@ -32,7 +32,7 @@
 import { ref, computed, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
-import { Model, Observable } from '@/types/Types';
+import type { Model, Observable } from '@/types/Types';
 import { extractVariablesFromMathML, EquationSide } from '@/utils/math';
 import { cloneDeep, isEmpty } from 'lodash';
 

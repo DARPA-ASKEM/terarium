@@ -1,5 +1,6 @@
 import { getCodeFileAsText } from '@/services/code';
-import { Code, ProgrammingLanguage } from '@/types/Types';
+import type { Code } from '@/types/Types';
+import { ProgrammingLanguage } from '@/types/Types';
 import { AssetBlock } from '@/types/workflow';
 
 export enum CodeBlockType {

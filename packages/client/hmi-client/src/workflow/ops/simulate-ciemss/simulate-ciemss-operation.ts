@@ -1,4 +1,4 @@
-import { TimeSpan } from '@/types/Types';
+import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 export interface SimulateCiemssOperationState {

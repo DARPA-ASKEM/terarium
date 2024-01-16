@@ -144,7 +144,13 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import { CsvAsset, Model, ModelConfiguration, SimulationRequest, TimeSpan } from '@/types/Types';
+import type {
+	CsvAsset,
+	Model,
+	ModelConfiguration,
+	SimulationRequest,
+	TimeSpan
+} from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { getModel, getModelConfigurations } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';

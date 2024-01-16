@@ -1,4 +1,4 @@
-import { ClientConfig } from '@/types/Types';
+import type { ClientConfig } from '@/types/Types';
 import axios, { AxiosHeaders } from 'axios';
 import useAuthStore from '@/stores/auth';
 

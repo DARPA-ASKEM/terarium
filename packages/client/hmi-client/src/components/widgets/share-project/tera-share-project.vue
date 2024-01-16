@@ -63,7 +63,7 @@ import { watch, ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { IProject } from '@/types/Project';
 import { getUsers } from '@/services/user';
-import { PermissionRelationships, PermissionUser } from '@/types/Types';
+import type { PermissionRelationships, PermissionUser } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraUserCard from './tera-user-card.vue';
 

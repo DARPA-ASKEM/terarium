@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { FunmanPostQueriesRequest } from '@/types/Types';
+import type { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
 import { Dictionary, groupBy } from 'lodash';
 

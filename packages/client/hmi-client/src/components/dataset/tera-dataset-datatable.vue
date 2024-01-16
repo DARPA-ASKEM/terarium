@@ -101,7 +101,7 @@
 import { computed, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { CsvAsset } from '@/types/Types';
+import type { CsvAsset } from '@/types/Types';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
