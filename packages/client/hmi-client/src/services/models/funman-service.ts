@@ -88,7 +88,6 @@ export const processFunman = (result: any) => {
 		boxes.push(temp);
 
 		if (box.points) {
-			console.log('debug', box.label, box.points);
 			Object.values(box.points).forEach((point: any) => {
 				point.id = `point${j}`;
 				j++;
@@ -178,8 +177,6 @@ export const renderFumanTrajectories = (
 	const leftMargin = 40;
 	const bottomMargin = 30;
 	const { trajs, states } = processedData;
-
-	console.log(trajs);
 
 	const elemSelection = d3.select(element);
 	d3.select(element).selectAll('*').remove();
