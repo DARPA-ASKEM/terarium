@@ -47,7 +47,6 @@ jobs:
           - terarium-db:/var/lib/postgresql/data
           - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       db-migration:
-        container_name: db-migration
         image: ghcr.io/darpa-askem/db-migration:latest
         networks:
           - terarium
@@ -156,7 +155,6 @@ jobs:
         volumes:
           - minio-data:/data
       neo4j:
-        container_name: neo4j
         image: neo4j:5.12-community
         healthcheck:
           test: wget http://127.0.0.1:7474 || exit 1
@@ -196,7 +194,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       elasticsearch:
-        container_name: elasticsearch
         image: elasticsearch:8.7.0
         networks:
           - terarium
@@ -228,7 +225,6 @@ jobs:
           - elasticsearch-data:/usr/share/elasticsearch/data
 
       spicedb:
-        container_name: spicedb
         image: authzed/spicedb:v1.28.0
         networks:
           - terarium
