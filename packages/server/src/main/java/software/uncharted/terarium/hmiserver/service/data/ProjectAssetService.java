@@ -143,6 +143,7 @@ public class ProjectAssetService {
 			return Optional.empty();
 		}
 		asset.setAssetType(assetType);
+		asset.setProject(project);
 		asset.setAssetId(assetId);
 		asset.setCreatedOn(Timestamp.from(Instant.now()));
 
