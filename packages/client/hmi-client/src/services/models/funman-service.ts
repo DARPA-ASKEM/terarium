@@ -289,6 +289,11 @@ export const renderFunmanBoundaryChart = (
 ) => {
 	const { width, height } = options;
 
+	let margin = 30;
+	if (height < 100 || width < 100) {
+		margin = 0;
+	}
+
 	const trueBoxes = getBoxes(processedData, param1, param2, timestep, 'true');
 	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
 	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
@@ -300,12 +305,12 @@ export const renderFunmanBoundaryChart = (
 	const xScale = d3
 		.scaleLinear()
 		.domain([minX, maxX]) // input domain
-		.range([0, width]); // output range
+		.range([margin, width - margin]); // output range
 
 	const yScale = d3
 		.scaleLinear()
 		.domain([minY, maxY]) // input domain (inverted)
-		.range([height, 0]); // output range (inverted)
+		.range([height - margin, margin]); // output range (inverted)
 
 	g.selectAll('.true-box')
 		.data(trueBoxes)
@@ -332,6 +337,14 @@ export const renderFunmanBoundaryChart = (
 	// Don't render text into tight spaces
 	if (height < 100 || width < 100) return;
 
+	g.append('rect')
+		.attr('x', margin)
+		.attr('y', margin)
+		.attr('width', width - 2 * margin)
+		.attr('height', height - 2 * margin)
+		.attr('stroke', '#888')
+		.attr('fill', 'transparent');
+
 	g.selectAll('text')
 		.data([...trueBoxes, ...falseBoxes])
 		.enter()
@@ -341,4 +354,40 @@ export const renderFunmanBoundaryChart = (
 		.style('stroke', 'none')
 		.style('fill', '#333')
 		.text((d) => d.id);
+
+	const xaxisH = height - margin + 13;
+
+	// xaxis-label
+	g.append('text')
+		.attr('x', 0.5 * width)
+		.attr('y', xaxisH)
+		.text(param1);
+
+	// yaxis-label
+	g.append('g')
+		.attr('transform', `translate(15, ${0.5 * height})`)
+		.append('text')
+		.style('text-anchor', 'middle')
+		.style('transform', 'rotate(270deg)')
+		.text(param2);
+
+	g.append('text').attr('x', margin).attr('y', xaxisH).style('font-size', '12').text(minX);
+	g.append('text')
+		.attr('x', width - margin)
+		.attr('y', xaxisH)
+		.style('font-size', '12')
+		.text(maxX);
+
+	g.append('text')
+		.attr('x', margin - 2)
+		.attr('y', xaxisH - 12)
+		.style('text-anchor', 'end')
+		.style('font-size', '12')
+		.text(minY);
+	g.append('text')
+		.attr('x', margin - 2)
+		.attr('y', margin)
+		.style('text-anchor', 'end')
+		.style('font-size', '12')
+		.text(maxY);
 };

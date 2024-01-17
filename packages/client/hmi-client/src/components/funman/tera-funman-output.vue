@@ -11,7 +11,31 @@
 	</p>
 
 	<!-- TODO: add boxes modal per row https://github.com/DARPA-ASKEM/terarium/issues/1924 -->
-	<div class="variables-table">
+	<div class="variables-table" v-if="selectedParam2">
+		<!-- Larger version of boundary chart: TODO -->
+		<section class="boundary-drilldown">
+			<div class="boundary-drilldown-header">
+				{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
+				<Button
+					class="close-mask"
+					icon="pi pi-times"
+					text
+					rounded
+					aria-label="Close"
+					@click="selectedParam2 = ''"
+				/>
+			</div>
+			<TeraFunmanBoundaryChart
+				:processed-data="processedData as FunmanProcessedData"
+				:param1="selectedParam"
+				:param2="selectedParam2"
+				:options="{ width: 475, height: 280 }"
+				:timestep="timestep"
+			/>
+		</section>
+	</div>
+
+	<div class="variables-table" v-if="selectedParam2 === ''">
 		<div class="variables-header">
 			<header
 				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '']"
@@ -46,17 +70,6 @@
 				/>
 			</div>
 		</div>
-
-		<!-- Larger version of boundary chart: TODO -->
-		<div v-if="selectedParam2">
-			<TeraFunmanBoundaryChart
-				:processed-data="processedData as FunmanProcessedData"
-				:param1="selectedParam"
-				:param2="selectedParam2"
-				:options="{ width: 350, height: 250 }"
-				:timestep="timestep"
-			/>
-		</div>
 	</div>
 </template>
 
@@ -70,6 +83,7 @@ import {
 } from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
+import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
@@ -127,8 +141,8 @@ const initalizeParameters = async () => {
 };
 
 const renderGraph = async () => {
-	const width = 800;
-	const height = 250;
+	const width = 650;
+	const height = 225;
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
 		processedData.value as FunmanProcessedData,
@@ -209,5 +223,18 @@ watch(
 .variables-header {
 	display: grid;
 	grid-template-columns: repeat(6, 1fr) 0.5fr;
+}
+
+.boundary-drilldown {
+	border: 1px solid var(--00-neutral-300, #c3ccd6);
+	padding: 5px;
+}
+
+.boundary-drilldown-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--font-body-medium);
 }
 </style>
