@@ -18,7 +18,7 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 		.map(
 			(asset) =>
 				({
-					assetId: asset.id.toString(),
+					assetId: asset.assetId.toString(),
 					assetName:
 						asset.assetName ??
 						`${asset.assetId.substring(0, 3)} - ${formatShort(asset?.updatedOn)}`,
