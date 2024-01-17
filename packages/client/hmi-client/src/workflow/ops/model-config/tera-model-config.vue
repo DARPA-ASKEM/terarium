@@ -78,7 +78,7 @@ import {
 	createModelConfiguration,
 	getModelConfigurationById
 } from '@/services/model-configurations';
-import { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
+import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import teraModelConfigEditor from './tera-model-config-editor.vue';
 
@@ -132,27 +132,35 @@ const updateState = (updatedField) => {
 	emit('update-state', state);
 };
 
-const updateConfigParam = (param: ModelParameter) => {
+const updateConfigParam = (params: ModelParameter[], updateAll = false) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.parameters) return;
 
-	// find param with the same id and update it
-	const idx = state.parameters.findIndex((p) => p.id === param.id);
-	if (idx !== -1) {
-		state.parameters[idx] = param;
+	if (updateAll) {
+		state.parameters = params;
+	} else {
+		// find param with the same id and update it
+		const idx = state.parameters.findIndex((p) => p.id === params[0].id);
+		if (idx !== -1) {
+			state.parameters[idx] = params[0];
+		}
 	}
 
 	emit('update-state', state);
 };
 
-const updateConfigInitial = (initial: Initial) => {
+const updateConfigInitial = (initials: Initial[], updateAll = false) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.initials) return;
 
-	// find initial with the same target and update it
-	const idx = state.initials.findIndex((i) => i.target === initial.target);
-	if (idx !== -1) {
-		state.initials[idx] = initial;
+	if (updateAll) {
+		state.initials = initials;
+	} else {
+		// find initial with the same target and update it
+		const idx = state.initials.findIndex((i) => i.target === initials[0].target);
+		if (idx !== -1) {
+			state.initials[idx] = initials[0];
+		}
 	}
 
 	emit('update-state', state);

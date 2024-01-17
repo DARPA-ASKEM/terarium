@@ -1,6 +1,6 @@
 import { DatasetOperation as operation } from './dataset-operation';
 import node from './tera-dataset-node.vue';
-import drilldown from './tera-dataset-workflow-wrapper.vue';
+import drilldown from './tera-dataset-drilldown.vue';
 
 const name = operation.name;
 

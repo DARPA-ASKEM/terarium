@@ -1,0 +1,86 @@
+{
+    "header": {
+        "name": "Natural degradation",
+        "schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.6/petrinet/petrinet_schema.json",
+        "schema_name": "petrinet",
+        "description": "NaturalDegradationTemplateModel",
+        "model_version": "0.1"
+    },
+    "properties": {},
+    "model": {
+        "states": [
+            {
+                "id": "A",
+                "name": "A",
+                "grounding": {
+                    "identifiers": {},
+                    "modifiers": {}
+                }
+            }
+        ],
+        "transitions": [
+            {
+                "id": "NaturalDegradation",
+                "input": [
+                    "A"
+                ],
+                "output": [],
+                "properties": {
+                    "name": "NaturalDegradation"
+                }
+            }
+        ]
+    },
+    "semantics": {
+        "ode": {
+            "rates": [
+                {
+                    "target": "NaturalDegradation",
+                    "expression": "A*p",
+                    "expression_mathml": "<apply><times/><ci>A</ci><ci>p</ci></apply>"
+                }
+            ],
+            "initials": [
+                {
+                    "target": "A",
+                    "expression": "1.0",
+                    "expression_mathml": "<cn>1.0</cn>"
+                }
+            ],
+            "parameters": [
+                {
+                    "id": "p",
+                    "description": "Parameter named 'p'",
+                    "value": 1.0,
+                    "units": {
+                        "expression": "1/day",
+                        "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                    }
+                }
+            ],
+            "observables": [],
+            "time": {
+                "id": "t",
+                "units": {
+                    "expression": "day",
+                    "expression_mathml": "<ci>day</ci>"
+                }
+            }
+        }
+    },
+    "metadata": {
+        "annotations": {
+            "license": null,
+            "authors": [],
+            "references": [],
+            "time_scale": null,
+            "time_start": null,
+            "time_end": null,
+            "locations": [],
+            "pathogens": [],
+            "diseases": [],
+            "hosts": [],
+            "model_types": []
+        }
+    }
+}

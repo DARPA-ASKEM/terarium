@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { ExternalPublication } from '@/types/Types';
+import type { ExternalPublication } from '@/types/Types';
 
 /**
  * Get external document asset linked by a given project asset/doc id

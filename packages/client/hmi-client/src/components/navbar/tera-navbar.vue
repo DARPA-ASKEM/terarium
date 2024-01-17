@@ -1,6 +1,6 @@
 <template>
 	<nav>
-		<router-link :to="RoutePath.Home">
+		<router-link :to="RoutePath.Home" class="terarium-logo">
 			<img src="@assets/svg/terarium-logo.svg" height="30" alt="Terarium logo" />
 		</router-link>
 		<SplitButton
@@ -161,6 +161,7 @@ import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
+import { ProjectPages } from '@/types/Project';
 
 defineProps<{
 	active: boolean;
@@ -402,7 +403,11 @@ watch(
 			items.push({
 				label: project.name,
 				icon: 'pi pi-folder',
-				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
+				command: () =>
+					router.push({
+						name: RouteName.Project,
+						params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
+					})
 			});
 		});
 		navMenuItems.value = [homeItem, explorerItem, ...items];
@@ -435,19 +440,22 @@ nav {
 	}
 }
 
+.terarium-logo {
+	margin-top: 5px;
+}
 .layout-project-selection {
 	margin-right: auto;
 }
 
 .avatar {
 	color: var(--text-color-subdued);
-	background-color: var(--surface-ground);
+	background-color: var(--primary-color-lighter);
 	cursor: pointer;
 }
 
 .avatar:hover {
 	color: var(--text-color);
-	background-color: var(--surface-hover);
+	background-color: var(--primary-color-light);
 }
 
 /* Split button
