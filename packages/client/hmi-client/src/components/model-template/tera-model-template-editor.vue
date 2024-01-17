@@ -252,9 +252,18 @@ function createNewEdge(card: ModelTemplate, portId: string) {
 	// Handles the edge going from junction to port
 	else if (
 		junctionIdForNewEdge &&
-		target.cardId !== newEdge.value.target.cardId // Prevents ports from the same card connecting
+		target.cardId !== newEdge.value.target.cardId // Prevents connecting ports of the same card
 	) {
-		console.log(junctionIdForNewEdge);
+		// If chosen port already has a junction then use that one
+		// junctions.value.forEach(({ edges, id }) => {
+		// 	for (let i = 0; i < edges.length; i++) {
+		// 		if (isEqual(target, edges[i].target)) {
+		// 			junctionIdForNewEdge = id;
+		// 			console.log(junctionIdForNewEdge);
+		// 		}
+		// 	}
+		// });
+
 		const index = junctions.value.findIndex(({ id }) => id === junctionIdForNewEdge);
 		junctions.value[index].edges.push({
 			target,
@@ -266,8 +275,6 @@ function createNewEdge(card: ModelTemplate, portId: string) {
 
 		cancelNewEdge();
 	}
-
-	console.table(junctions.value);
 }
 
 function onPortMouseover(event: MouseEvent, card: ModelTemplate, cardWidth: number) {
@@ -325,7 +332,7 @@ function onDrop(event) {
 	newModelTemplate.value = null;
 }
 
-const updatePosition = ({ x, y }, node: ModelTemplate & ModelTemplateJunction) => {
+const updatePosition = ({ x, y }, node: any) => {
 	if (!isMouseOverCanvas) return;
 
 	const isJunction = node.edges !== undefined;
