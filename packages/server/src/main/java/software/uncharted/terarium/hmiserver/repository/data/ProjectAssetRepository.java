@@ -21,4 +21,8 @@ public interface ProjectAssetRepository extends PSCrudRepository<ProjectAsset, U
 	ProjectAsset findByProjectIdAndAssetIdAndAssetType(@NotNull UUID projectId, @NotNull UUID assetId,
 			@NotNull AssetType type);
 
+	ProjectAsset findByAssetNameAndAssetTypeAndDeletedOnIsNull(@NotNull String assetName, @NotNull AssetType type);
+
+	ProjectAsset findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(@NotNull UUID projectId, @NotNull String assetName, @NotNull AssetType type);
+
 }

@@ -156,4 +156,12 @@ public class ProjectAssetService {
 		return Optional.of(projectAssetRepository.save(asset));
 	}
 
+	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType) {
+		return Optional.ofNullable(projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
+	}
+
+	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(final UUID projectId, final String assetName, final AssetType assetType) {
+		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType));
+	}
+
 }
