@@ -144,7 +144,6 @@ public class ProjectAssetService {
 		}
 		asset.setAssetType(assetType);
 		asset.setAssetId(assetId);
-		asset.setProject(project);
 		asset.setCreatedOn(Timestamp.from(Instant.now()));
 
 		return Optional.of(projectAssetRepository.save(asset));
