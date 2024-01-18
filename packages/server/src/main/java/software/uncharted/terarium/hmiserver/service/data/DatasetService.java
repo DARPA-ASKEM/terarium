@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
@@ -105,4 +108,20 @@ public class DatasetService {
 		presigned.setMethod("GET");
 		return Optional.of(presigned);
 	}
+
+	public ResponseEntity<Void> getUploadStream(UUID datasetId, String filename, MultipartFile file)
+			throws IOException {
+		final String bucket = config.getFileStorageS3BucketName();
+		final String key = getPath(datasetId, filename);
+
+		return s3ClientService.getS3Service().getUploadStream(bucket, key, file);
+	}
+
+	public ResponseEntity<StreamingResponseBody> getDownloadStream(UUID datasetId, String filename) {
+		final String bucket = config.getFileStorageS3BucketName();
+		final String key = getPath(datasetId, filename);
+
+		return s3ClientService.getS3Service().getDownloadStream(bucket, key);
+	}
+
 }

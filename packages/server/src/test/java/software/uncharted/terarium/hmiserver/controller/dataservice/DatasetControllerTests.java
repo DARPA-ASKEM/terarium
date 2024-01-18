@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -125,7 +127,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanUploadDataset() throws Exception {
+	public void testItCanUploadDatasetCSV() throws Exception {
 
 		Dataset dataset = datasetService.createDataset(new Dataset()
 				.setName("test-dataset-name")
@@ -175,7 +177,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanDownloadDataset() throws Exception {
+	public void testItCanDownloadDatasetCSV() throws Exception {
 
 		Dataset dataset = datasetService.createDataset(new Dataset()
 				.setName("test-dataset-name")
@@ -214,6 +216,80 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		String resultContent = res.getResponse().getContentAsString();
 
 		Assertions.assertTrue(resultContent.length() > 0);
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanUploadDataset() throws Exception {
+
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
+
+		String content = "This is my small test dataset\n";
+
+		// Create a MockMultipartFile object
+		MockMultipartFile file = new MockMultipartFile(
+				"file", // name of the file as expected in the request
+				"filename.txt", // original filename
+				"text/plain", // content type
+				content.getBytes() // content of the file
+		);
+
+		// Perform the multipart file upload request
+		mockMvc.perform(
+				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-file")
+						.file(file)
+						.queryParam("filename", "filename.txt")
+						.with(csrf())
+						.contentType(MediaType.MULTIPART_FORM_DATA)
+						.with(request -> {
+							request.setMethod("PUT");
+							return request;
+						}))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanDownloadDataset() throws Exception {
+
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
+
+		String content = "col0,col1,col2,col3\na,b,c,d\n";
+
+		// Create a MockMultipartFile object
+		MockMultipartFile file = new MockMultipartFile(
+				"file", // name of the file as expected in the request
+				"filename.csv", // original filename
+				"text/csv", // content type
+				content.getBytes() // content of the file
+		);
+
+		// Perform the multipart file upload request
+		mockMvc.perform(
+				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
+						.file(file)
+						.queryParam("filename", "filename.csv")
+						.with(csrf())
+						.contentType(MediaType.MULTIPART_FORM_DATA)
+						.with(request -> {
+							request.setMethod("PUT");
+							return request;
+						}))
+				.andExpect(status().isOk());
+
+		MvcResult res = mockMvc
+				.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-file")
+						.queryParam("filename", "filename.csv")
+						.with(csrf()))
+				.andExpect(request().asyncStarted())
+				.andDo(MvcResult::getAsyncResult)
+				.andExpect(status().isOk())
+				.andExpect(content().string(content))
+				.andReturn();
 	}
 
 	@Test
