@@ -257,6 +257,7 @@ export interface ModelConfiguration {
 }
 
 export interface ModelDescription {
+    id: string;
     header: ModelHeader;
     timestamp: Date;
     userId?: string;

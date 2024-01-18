@@ -11,8 +11,7 @@
 			<Dropdown
 				class="w-full p-dropdown-sm"
 				:options="documents"
-				option-label="name"
-				:model-value="document"
+				option-label="assetName"
 				placeholder="Select document"
 				@update:model-value="onDocumentChange"
 			/>
@@ -27,7 +26,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import type { DocumentAsset, DocumentExtraction } from '@/types/Types';
+import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
 import { AssetType, ExtractionAssetType } from '@/types/Types';
 import { onMounted, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
@@ -36,14 +35,13 @@ import { getDocumentAsset } from '@/services/document-assets';
 import teraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { DocumentOperationState } from './document-operation';
 
-const document = ref<DocumentAsset | null>(null);
-
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output-port']);
 const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();
-const documents = useProjects().getActiveProjectAssets(AssetType.Document);
 
+const documents = useProjects().getActiveProjectAssets(AssetType.Document);
+const document = ref<DocumentAsset | null>(null);
 const fetchingDocument = ref(false);
 
 onMounted(async () => {
@@ -54,10 +52,10 @@ onMounted(async () => {
 	}
 });
 
-async function onDocumentChange(documentAsset: DocumentAsset) {
-	if (documentAsset.id) {
+async function onDocumentChange(chosenProjectDocument: ProjectAsset) {
+	if (chosenProjectDocument?.assetId) {
 		fetchingDocument.value = true;
-		document.value = await getDocumentAsset(documentAsset.id);
+		document.value = await getDocumentAsset(chosenProjectDocument.assetId);
 		fetchingDocument.value = false;
 	}
 }

@@ -26,10 +26,10 @@
 		<template v-else>
 			<Dropdown
 				class="w-full p-dropdown-sm"
-				v-model="selectedModel"
 				:options="models"
-				option-label="header.name"
+				option-label="assetName"
 				placeholder="Select a model"
+				@update:model-value="onModelChange"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
@@ -38,11 +38,11 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import { AssetType } from '@/types/Types';
-import type { Model } from '@/types/Types';
+import type { Model, ProjectAsset } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -66,7 +66,6 @@ enum ModelNodeView {
 }
 
 const model = ref<Model | null>();
-const selectedModel = ref<Model>();
 const view = ref(ModelNodeView.Diagram);
 const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
 
@@ -85,14 +84,9 @@ async function getModelById(modelId: string) {
 	}
 }
 
-watch(
-	() => selectedModel.value,
-	async () => {
-		if (selectedModel.value) {
-			await getModelById(selectedModel.value.id.toString());
-		}
-	}
-);
+async function onModelChange(chosenProjectModel: ProjectAsset) {
+	await getModelById(chosenProjectModel.assetId);
+}
 
 onMounted(async () => {
 	const state = props.node.state;
