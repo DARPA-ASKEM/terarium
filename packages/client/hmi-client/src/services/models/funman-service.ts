@@ -112,7 +112,8 @@ export const processFunman = (result: any) => {
 						boxId,
 						label: box.label,
 						pointId: point.id,
-						timestep: t
+						timestep: t,
+						n: point.values.timestep // how many actual points
 					};
 					states.forEach((s) => {
 						// Only push states that have a timestep key pair
@@ -236,12 +237,19 @@ export const renderFumanTrajectories = (
 	const pathFn = d3
 		.line<{ x: number; y: number }>()
 		.x((d) => xScale(d.x))
-		.y((d) => yScale(d.y))
-		.curve(d3.curveBasis);
+		.y((d) => yScale(d.y));
 
 	Object.keys(points).forEach((boxId) => {
-		const path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
 		const label = points[boxId][0].label;
+		let path = points[boxId].map((p: any) => ({ x: p.timestep, y: p[state] }));
+
+		// FIXME: funman can set the value to 0 at time t, if the trajectory ends at t
+		// This makes the linecharts really weird, until this is addressed we will ignore
+		// the last point if it is 0
+		const n = points[boxId][0].n;
+		if (n >= 0) {
+			path = path.filter((_d: any, i: number) => i <= n);
+		}
 
 		if (path.length > 1) {
 			svg
@@ -251,6 +259,17 @@ export const renderFumanTrajectories = (
 				.style('stroke', label === 'true' ? 'teal' : 'orange')
 				.style('opacity', 0.5)
 				.style('fill', 'none');
+
+			svg
+				.selectAll(`.${boxId}`)
+				.data(path)
+				.enter()
+				.append('circle')
+				.attr('cx', (d: any) => xScale(d.x))
+				.attr('cy', (d: any) => yScale(d.y))
+				.attr('r', 2)
+				.style('opacity', 0.5)
+				.style('fill', label === 'true' ? 'teal' : 'orange');
 		} else if (path.length === 1) {
 			svg
 				.append('g')

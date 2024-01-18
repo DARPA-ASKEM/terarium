@@ -6,7 +6,7 @@
 	<div ref="trajRef"></div>
 
 	<h4>Configuration parameters <i class="pi pi-info-circle" /></h4>
-	<p class="secondary-text">
+	<p class="secondary-text" v-if="selectedParam2 === ''">
 		Adjust parameter ranges to only include values in the green region or less.
 	</p>
 
@@ -141,8 +141,8 @@ const initalizeParameters = async () => {
 };
 
 const renderGraph = async () => {
-	const width = 650;
-	const height = 225;
+	const width = 600;
+	const height = 200;
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
 		processedData.value as FunmanProcessedData,
