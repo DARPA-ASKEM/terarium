@@ -3,11 +3,14 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
+
+import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
@@ -20,6 +23,10 @@ public class ModelDescription implements Serializable {
 				.setUserId(model.getUserId())
 				.setTimestamp(model.getCreatedOn());
 
+		if (model.getId() != null) {
+			desc.setId(model.getId());
+		}		
+
 		if (model.getHeader() != null) {
 			desc.setHeader(new ModelHeader()
 					.setName(model.getHeader().getName())
@@ -29,10 +36,11 @@ public class ModelDescription implements Serializable {
 					.setModelVersion(model.getHeader().getModelVersion())
 					.setExtractedFrom(model.getHeader().getExtractedFrom()));
 		}
-
 		return desc;
 	}
 
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private UUID id;
 	private ModelHeader header;
 	private Timestamp timestamp;
 
