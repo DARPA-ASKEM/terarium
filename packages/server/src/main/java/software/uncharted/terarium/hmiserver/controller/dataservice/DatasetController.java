@@ -59,7 +59,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -122,7 +121,7 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets dataset by ID")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dataset found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
+			@ApiResponse(responseCode = "200", description = "Dataset found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
 			@ApiResponse(responseCode = "204", description = "There was no dataset found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
@@ -263,6 +262,32 @@ public class DatasetController {
 		return ResponseEntity.ok(csvAsset);
 	}
 
+	@GetMapping("/{id}/download-url")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to download the dataset file")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
+	public ResponseEntity<PresignedURL> getDownloadURL(
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
+
+		try {
+			Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
+			if (url.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(url.get());
+		} catch (final Exception e) {
+			final String error = "Unable to get download url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
 	/**
 	 * Downloads a CSV file from github given the path and owner name, then uploads
 	 * it to the dataset.
@@ -331,6 +356,33 @@ public class DatasetController {
 		}
 	}
 
+	@GetMapping("/{id}/upload-url")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to upload the dataset")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
+	public ResponseEntity<PresignedURL> getUploadURL(
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
+		try {
+			final Optional<Dataset> dataset = datasetService.getDataset(id);
+			if (dataset.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			dataset.get().getFileNames().add(filename);
+			datasetService.updateDataset(dataset.get());
+			return ResponseEntity.ok(datasetService.getUploadUrl(id, filename));
+		} catch (final Exception e) {
+			final String error = "Unable to get upload url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
 	/**
 	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS
 	 * then push
@@ -374,6 +426,7 @@ public class DatasetController {
 					return ResponseEntity.internalServerError().build();
 				}
 				updatedDataset.get().setColumns(columns);
+				updatedDataset.get().getFileNames().add(fileName);
 
 				datasetService.updateDataset(updatedDataset.get());
 			}
