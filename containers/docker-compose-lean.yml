@@ -18,6 +18,7 @@ services:
 
   minio:
     image: quay.io/minio/minio:RELEASE.2023-11-15T20-43-25Z
+    container_name: minio
     command: [ "server", "/data", "--console-address", ":9090" ]
     healthcheck:
       test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
@@ -133,6 +134,7 @@ services:
         condition: service_completed_successfully
 
   migrate-spicedb:
+    container_name: migrate-spicedb
     image: authzed/spicedb:v1.28.0
     networks:
       - terarium
@@ -168,6 +170,7 @@ services:
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   keycloak:
+    container_name: keycloak
     image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0
     networks:
       - terarium
@@ -217,6 +220,7 @@ services:
       - '8081:8081'
 
   keycloak-init:
+    container_name: keycloak-init
     image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0
     networks:
       - terarium

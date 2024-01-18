@@ -1,6 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,10 +15,6 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Represents a dataset document from TDS
@@ -74,13 +75,6 @@ public class Dataset {
 	@TSOptional
 	@JsonAlias("file_names")
 	private List<String> fileNames;
-
-	/**
-	 * (Optional) Url from which the dataset can be downloaded/fetched
-	 **/
-	@TSOptional
-	@JsonAlias("dataset_url")
-	private String datasetUrl;
 
 	/**
 	 * Information regarding the columns that make up the dataset

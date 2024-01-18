@@ -159,7 +159,6 @@ export interface Dataset {
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
-    datasetUrl?: string;
     columns?: DatasetColumn[];
     metadata?: any;
     source?: string;
@@ -423,6 +422,11 @@ export interface ProvenanceQueryParam {
     hops?: number;
     limit?: number;
     verbose?: boolean;
+}
+
+export interface ProvenanceSearchResult {
+    nodes: ProvenanceNode[];
+    edges: ProvenanceEdge[];
 }
 
 export interface RegNetBaseProperties {
@@ -910,6 +914,19 @@ export interface Extraction {
     xddCreated: Date;
     xddRegistrant: number;
     highlight: string[];
+}
+
+export interface ProvenanceNode {
+    id: string;
+    type: ProvenanceType;
+    uuid: string;
+}
+
+export interface ProvenanceEdge {
+    id: string;
+    relationType: ProvenanceRelationType;
+    left: ProvenanceNode;
+    right: ProvenanceNode;
 }
 
 export interface ModelDistribution {
