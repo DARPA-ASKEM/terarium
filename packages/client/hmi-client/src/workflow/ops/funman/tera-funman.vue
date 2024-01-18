@@ -292,7 +292,7 @@ const getStatus = async (runId: string) => {
 
 	poller
 		.setInterval(3000)
-		.setThreshold(50)
+		.setThreshold(100)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
 			if (response.done && response.done === true) {
@@ -386,7 +386,6 @@ const setModelOptions = async () => {
 	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
 
-	// FIXME: filter out initial values
 	model.value.semantics?.ode.parameters?.forEach((param) => {
 		if (initialVars?.includes(param.id)) return;
 		modelColumnNameOptions.push(param.id);

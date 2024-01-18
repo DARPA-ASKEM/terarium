@@ -4,8 +4,21 @@ import type { FunmanPostQueriesRequest } from '@/types/Types';
 import * as d3 from 'd3';
 import { Dictionary, groupBy } from 'lodash';
 
+// Partially typing Funman response
+interface FunmanBound {
+	lb: number;
+	ub: number;
+}
+export interface FunmanBox {
+	id?: string;
+	label: string;
+	bounds: Record<string, FunmanBound>;
+	explanation: any;
+	schedule: any;
+	points: any;
+}
 export interface FunmanProcessedData {
-	boxes: any[];
+	boxes: FunmanBox[];
 	points: any[];
 	states: string[];
 	trajs: any[];
@@ -14,6 +27,7 @@ export interface FunmanProcessedData {
 export interface RenderOptions {
 	width: number;
 	height: number;
+	click?: Function;
 }
 
 export async function getQueries(id: string) {
@@ -134,7 +148,7 @@ export const processFunman = (result: any) => {
 	return { boxes, points, states, trajs } as FunmanProcessedData;
 };
 
-interface FunmanBox {
+interface FunmanBoundingBox {
 	id: string;
 	x1: number;
 	y1: number;
@@ -148,7 +162,7 @@ export const getBoxes = (
 	timestep: number,
 	boxType: string
 ) => {
-	const result: FunmanBox[] = [];
+	const result: FunmanBoundingBox[] = [];
 	processedData.boxes
 		.filter((d: any) => d.label === boxType)
 		.filter((d: any) => d.timestep.ub === timestep)
@@ -161,7 +175,6 @@ export const getBoxes = (
 				y2: d[param2][1]
 			});
 		});
-
 	return result;
 };
 
@@ -169,6 +182,7 @@ export const renderFumanTrajectories = (
 	element: HTMLElement,
 	processedData: FunmanProcessedData,
 	state: string,
+	selectedBoxId: string,
 	options: RenderOptions
 ) => {
 	const width = options.width;
@@ -257,7 +271,14 @@ export const renderFumanTrajectories = (
 				.append('path')
 				.attr('d', pathFn(path))
 				.style('stroke', label === 'true' ? 'teal' : 'orange')
-				.style('opacity', 0.5)
+				.style('stroke-width', () => {
+					if (selectedBoxId === '' || selectedBoxId === boxId) return 2.0;
+					return 1.0;
+				})
+				.style('opacity', () => {
+					if (selectedBoxId === '' || selectedBoxId === boxId) return 0.75;
+					return 0.05;
+				})
 				.style('fill', 'none');
 
 			svg
@@ -268,7 +289,10 @@ export const renderFumanTrajectories = (
 				.attr('cx', (d: any) => xScale(d.x))
 				.attr('cy', (d: any) => yScale(d.y))
 				.attr('r', 2)
-				.style('opacity', 0.5)
+				.style('opacity', () => {
+					if (selectedBoxId === '' || selectedBoxId === boxId) return 0.75;
+					return 0.05;
+				})
 				.style('fill', label === 'true' ? 'teal' : 'orange');
 		} else if (path.length === 1) {
 			svg
@@ -280,9 +304,11 @@ export const renderFumanTrajectories = (
 				.style('fill', '#888');
 		}
 	});
+
+	return svg;
 };
 
-const getBoxesDomain = (boxes: FunmanBox[]) => {
+const getBoxesDomain = (boxes: FunmanBoundingBox[]) => {
 	let minX = Number.MAX_VALUE;
 	let maxX = Number.MIN_VALUE;
 	let minY = Number.MAX_VALUE;
@@ -304,6 +330,7 @@ export const renderFunmanBoundaryChart = (
 	param1: string,
 	param2: string,
 	timestep: number,
+	selectedBoxId: string,
 	options: RenderOptions
 ) => {
 	const { width, height } = options;
@@ -345,24 +372,40 @@ export const renderFunmanBoundaryChart = (
 		.classed('false-box', true)
 		.attr('fill', 'orange');
 
-	g.selectAll<any, FunmanBox>('rect')
+	g.selectAll<any, FunmanBoundingBox>('rect')
 		.attr('x', (d) => xScale(d.x1))
 		.attr('y', (d) => yScale(d.y2))
 		.attr('width', (d) => xScale(d.x2) - xScale(d.x1))
 		.attr('height', (d) => yScale(d.y1) - yScale(d.y2))
 		.attr('stroke', '#888')
-		.attr('fill-opacity', 0.5);
+		.style('stroke-width', (d) => {
+			if (selectedBoxId !== '' && selectedBoxId === d.id) return 2.0;
+			return 1.0;
+		})
+		.attr('fill-opacity', 0.5)
+		.on('click', (_evt: PointerEvent, d: any) => {
+			// Invoke callback
+			if (options.click) {
+				options.click(d);
+			}
+		});
+
+	if (options.click) {
+		g.selectAll<any, FunmanBoundingBox>('rect').style('cursor', 'pointer');
+	}
 
 	// Don't render text into tight spaces
 	if (height < 100 || width < 100) return;
 
+	// Border box
 	g.append('rect')
 		.attr('x', margin)
 		.attr('y', margin)
 		.attr('width', width - 2 * margin)
 		.attr('height', height - 2 * margin)
 		.attr('stroke', '#888')
-		.attr('fill', 'transparent');
+		.attr('fill', 'transparent')
+		.style('pointer-events', 'none');
 
 	g.selectAll('text')
 		.data([...trueBoxes, ...falseBoxes])
@@ -372,7 +415,8 @@ export const renderFunmanBoundaryChart = (
 		.attr('y', (d) => 15 + yScale(d.y2))
 		.style('stroke', 'none')
 		.style('fill', '#333')
-		.text((d) => d.id);
+		.text((d) => d.id)
+		.style('pointer-events', 'none');
 
 	const xaxisH = height - margin + 13;
 

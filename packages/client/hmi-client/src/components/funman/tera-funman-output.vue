@@ -10,9 +10,7 @@
 		Adjust parameter ranges to only include values in the green region or less.
 	</p>
 
-	<!-- TODO: add boxes modal per row https://github.com/DARPA-ASKEM/terarium/issues/1924 -->
 	<div class="variables-table" v-if="selectedParam2">
-		<!-- Larger version of boundary chart: TODO -->
 		<section class="boundary-drilldown">
 			<div class="boundary-drilldown-header">
 				{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
@@ -29,7 +27,7 @@
 				:processed-data="processedData as FunmanProcessedData"
 				:param1="selectedParam"
 				:param2="selectedParam2"
-				:options="{ width: 475, height: 280 }"
+				:options="drilldownChartOptions"
 				:timestep="timestep"
 			/>
 		</section>
@@ -66,8 +64,13 @@
 					:param1="selectedParam"
 					:param2="parameter"
 					:timestep="timestep"
+					:selectedBoxId="selectedBoxId"
 					@click="selectedParam2 = parameter"
 				/>
+				&nbsp;
+				<div v-if="selectedBox[parameter]">
+					{{ selectedBox[parameter][0].toFixed(4) }}:{{ selectedBox[parameter][1].toFixed(4) }}
+				</div>
 			</div>
 		</div>
 	</div>
@@ -85,6 +88,7 @@ import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import type { FunmanBox, RenderOptions } from '@/services/models/funman-service';
 import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
@@ -101,19 +105,20 @@ const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
 
-interface FunmanBound {
-	lb: number;
-	ub: number;
-}
-interface FunmanBox {
-	label: string;
-	bounds: Record<string, FunmanBound>;
-	explanation: any;
-	schedule: any;
-	points: any;
-}
 const lastTrueBox = ref<FunmanBox>();
 const processedData = ref<FunmanProcessedData>();
+
+const selectedBoxId = ref('');
+const selectedBox = ref<any>({});
+
+const drilldownChartOptions = ref<RenderOptions>({
+	width: 475,
+	height: 280,
+	click: (d: any) => {
+		console.log('selected', d.id);
+		selectedBoxId.value = d.id;
+	}
+});
 
 const initalizeParameters = async () => {
 	const funmanResult = await getQueries(props.funModelId);
@@ -123,8 +128,8 @@ const initalizeParameters = async () => {
 	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map((d) => d.expression);
 
 	funmanResult.model.petrinet.semantics.ode.parameters
-		.filter((ele) => !initialVars.includes(ele.id))
-		.map((ele) => parameterOptions.value.push(ele.id));
+		.filter((ele: any) => !initialVars.includes(ele.id))
+		.map((ele: any) => parameterOptions.value.push(ele.id));
 	selectedParam.value = parameterOptions.value[0];
 	timestepOptions.value = funmanResult.request.structure_parameters[0].schedules[0].timepoints;
 	timestep.value = timestepOptions.value[1];
@@ -138,17 +143,18 @@ const initalizeParameters = async () => {
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 
 	if (selectedTrajState.value) {
-		renderGraph();
+		renderGraph(selectedBoxId.value);
 	}
 };
 
-const renderGraph = async () => {
+const renderGraph = async (boxId: string) => {
 	const width = 600;
 	const height = 200;
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
 		processedData.value as FunmanProcessedData,
 		selectedTrajState.value,
+		boxId,
 		{
 			width,
 			height
@@ -170,9 +176,18 @@ watch(
 
 watch(
 	// Whenever user changes options rerender.
-	() => [selectedParam.value, timestep.value, selectedTrajState.value],
-	async () => {
-		renderGraph();
+	// () => [selectedParam.value, timestep.value, selectedTrajState.value, selectedBoxId.value],
+	() => [selectedParam.value, selectedTrajState.value],
+	() => {
+		renderGraph(selectedBoxId.value);
+	}
+);
+
+watch(
+	() => [selectedBoxId.value],
+	() => {
+		selectedBox.value = processedData.value?.boxes.find((d) => d.id === selectedBoxId.value);
+		renderGraph(selectedBoxId.value);
 	}
 );
 </script>
