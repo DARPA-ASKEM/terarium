@@ -47,8 +47,8 @@
 				class="w-full p-dropdown-sm"
 				:options="datasets"
 				option-label="assetName"
-				v-model="chosenProjectDataset"
 				placeholder="Select a dataset"
+				@update:model-value="onDatasetChange"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { isEmpty } from 'lodash';
 import { AssetType } from '@/types/Types';
 import type { CsvAsset, Dataset, ProjectAsset } from '@/types/Types';
@@ -80,7 +80,6 @@ const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown'
 
 const datasets = useProjects().getActiveProjectAssets(AssetType.Dataset);
 
-const chosenProjectDataset = ref<ProjectAsset | null>(null);
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
@@ -96,41 +95,29 @@ const columnSelectTooltip = 'Select columns to display';
 
 async function getDatasetById(id: string) {
 	dataset.value = await getDataset(id);
-}
 
-watch(
-	() => chosenProjectDataset.value,
-	async () => {
-		if (chosenProjectDataset.value) {
-			await getDatasetById(chosenProjectDataset.value.assetId);
+	if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
+		rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
+		selectedColumns = ref(csvHeaders?.value);
 
-			if (
-				dataset?.value?.id &&
-				dataset?.value?.fileNames &&
-				dataset?.value?.fileNames?.length > 0
-			) {
-				rawContent.value = await downloadRawFile(
-					dataset.value.id,
-					dataset.value?.fileNames[0] ?? ''
-				);
-				selectedColumns = ref(csvHeaders?.value);
+		// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
+		if (isEmpty(props.node.outputs)) {
+			emit('update-state', {
+				datasetId: dataset.value.id
+			});
 
-				// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
-				if (isEmpty(props.node.outputs)) {
-					emit('update-state', {
-						datasetId: dataset.value.id
-					});
-
-					emit('append-output-port', {
-						type: 'datasetId',
-						label: dataset.value.name,
-						value: [dataset.value.id]
-					});
-				}
-			}
+			emit('append-output-port', {
+				type: 'datasetId',
+				label: dataset.value.name,
+				value: [dataset.value.id]
+			});
 		}
 	}
-);
+}
+
+async function onDatasetChange(chosenProjectDataset: ProjectAsset) {
+	await getDatasetById(chosenProjectDataset.assetId);
+}
 
 onMounted(async () => {
 	if (props.node.state.datasetId) await getDatasetById(props.node.state.datasetId);
