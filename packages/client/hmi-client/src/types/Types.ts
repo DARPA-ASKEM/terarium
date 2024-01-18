@@ -768,6 +768,17 @@ export interface TimeSpan {
     end: number;
 }
 
+export interface Annotation {
+    id: string;
+    timestampMillis: number;
+    projectId: string;
+    content: string;
+    userId: string;
+    artifactId: string;
+    artifactType: string;
+    section: string;
+}
+
 export interface Event {
     id?: string;
     timestampMillis?: number;

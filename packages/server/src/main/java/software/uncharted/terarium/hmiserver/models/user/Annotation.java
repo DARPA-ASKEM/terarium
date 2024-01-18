@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @Table(indexes = {
 	@Index(columnList = "artifactType, artifactId")
 })
+@TSModel
 public class Annotation implements Serializable {
 	@Serial
 	private static final long serialVersionUID = 4939620703969267901L;
@@ -43,10 +45,8 @@ public class Annotation implements Serializable {
 	@Column(nullable = false)
 	private String userId;
 
-	@JsonProperty("artifact_id")
 	private String artifactId;
 
-	@JsonProperty("artifact_type")
 	private String artifactType;
 
 	private String section;
