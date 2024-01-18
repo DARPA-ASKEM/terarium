@@ -537,7 +537,6 @@ nav {
 	font-size: 1.25rem;
 	display: flex;
 	align-items: center;
-	margin-top: 0.5rem;
 }
 .about-uncharted-section {
 	padding: 1rem;
