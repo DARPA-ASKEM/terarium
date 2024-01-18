@@ -89,6 +89,7 @@ export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 		if (resp && resp.status === 200 && resp.data && typeof resp.data === 'string') {
 			return resp.data;
 		}
+		if (resp && resp.status === 204) return null;
 
 		logger.error('[Model Service] petriToLatex: Server did not provide a correct response', {
 			showToast: false,
