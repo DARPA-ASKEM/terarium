@@ -26,9 +26,9 @@
 		<template v-else>
 			<Dropdown
 				class="w-full p-dropdown-sm"
-				v-model="selectedModel"
+				v-model="chosenProjectModel"
 				:options="models"
-				option-label="header.name"
+				option-label="assetName"
 				placeholder="Select a model"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
@@ -42,7 +42,7 @@ import { onMounted, ref, watch } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import { AssetType } from '@/types/Types';
-import type { Model } from '@/types/Types';
+import type { Model, ProjectAsset } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -66,7 +66,7 @@ enum ModelNodeView {
 }
 
 const model = ref<Model | null>();
-const selectedModel = ref<Model>();
+const chosenProjectModel = ref<ProjectAsset | null>(null);
 const view = ref(ModelNodeView.Diagram);
 const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
 
@@ -86,10 +86,10 @@ async function getModelById(modelId: string) {
 }
 
 watch(
-	() => selectedModel.value,
+	() => chosenProjectModel.value,
 	async () => {
-		if (selectedModel.value) {
-			await getModelById(selectedModel.value.id.toString());
+		if (chosenProjectModel.value) {
+			await getModelById(chosenProjectModel.value.assetId);
 		}
 	}
 );
