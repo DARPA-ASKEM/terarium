@@ -120,9 +120,11 @@ const initalizeParameters = async () => {
 	processedData.value = processFunman(funmanResult);
 	parameterOptions.value = [];
 
-	funmanResult.model.petrinet.semantics.ode.parameters.map((ele) =>
-		parameterOptions.value.push(ele.id)
-	);
+	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map((d) => d.expression);
+
+	funmanResult.model.petrinet.semantics.ode.parameters
+		.filter((ele) => !initialVars.includes(ele.id))
+		.map((ele) => parameterOptions.value.push(ele.id));
 	selectedParam.value = parameterOptions.value[0];
 	timestepOptions.value = funmanResult.request.structure_parameters[0].schedules[0].timepoints;
 	timestep.value = timestepOptions.value[1];

@@ -383,7 +383,15 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
+	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+
+	// FIXME: filter out initial values
+	model.value.semantics?.ode.parameters?.forEach((param) => {
+		if (initialVars?.includes(param.id)) return;
+		modelColumnNameOptions.push(param.id);
+	});
+
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
 	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
