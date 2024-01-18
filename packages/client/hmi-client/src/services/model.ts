@@ -46,7 +46,6 @@ export async function getBulkModels(modelIDs: string[]) {
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
 	const response = await API.get('/models/descriptions?page-size=500');
-	console.log(response);
 	return response?.data ?? null;
 }
 
