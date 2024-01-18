@@ -2,6 +2,7 @@
 version: '3.8'
 
 include:
+  - scripts/docker-compose-base.yml
   - scripts/docker-compose-common.yml
   - scripts/docker-compose-data-services.yml
   - scripts/docker-compose-sim-services.yml

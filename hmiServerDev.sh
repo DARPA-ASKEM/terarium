@@ -76,7 +76,7 @@ function stop_full() {
 function start_remote() {
   echo "Starting remote server"
   cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets'
+  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,beta'
   cd - || exit
 }
 
