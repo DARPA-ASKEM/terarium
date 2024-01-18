@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -367,12 +368,6 @@ public class DatasetController {
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename) {
 		try {
-			final Optional<Dataset> dataset = datasetService.getDataset(id);
-			if (dataset.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			dataset.get().getFileNames().add(filename);
-			datasetService.updateDataset(dataset.get());
 			return ResponseEntity.ok(datasetService.getUploadUrl(id, filename));
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
@@ -425,8 +420,22 @@ public class DatasetController {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
 				}
-				updatedDataset.get().setColumns(columns);
-				updatedDataset.get().getFileNames().add(fileName);
+				// add the columns to existing columns
+				if (updatedDataset.get().getColumns() == null) {
+					updatedDataset.get()
+							.setColumns(columns);
+				} else {
+					updatedDataset.get()
+							.setColumns(Stream.concat(updatedDataset.get().getColumns().stream(), columns.stream())
+									.collect(Collectors.toList()));
+				}
+
+				// add the filename to existing file names
+				if (updatedDataset.get().getFileNames() == null) {
+					updatedDataset.get().setFileNames(List.of(fileName));
+				} else {
+					updatedDataset.get().getFileNames().add(fileName);
+				}
 
 				datasetService.updateDataset(updatedDataset.get());
 			}

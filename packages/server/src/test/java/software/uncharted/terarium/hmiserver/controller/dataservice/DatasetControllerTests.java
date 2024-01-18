@@ -5,6 +5,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -205,5 +214,89 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		String resultContent = res.getResponse().getContentAsString();
 
 		Assertions.assertTrue(resultContent.length() > 0);
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetUploadUrl() throws Exception {
+
+		Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
+
+		// Perform the multipart file upload request
+		MvcResult res = mockMvc.perform(
+				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")
+						.queryParam("filename", "filename.csv")
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		PresignedURL url = objectMapper.readValue(res.getResponse().getContentAsString(),
+				PresignedURL.class);
+
+		String content = "col0,col1,col2,col3\na,b,c,d\n";
+		final byte[] csvBytes = content.getBytes();
+		final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
+
+		final CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build();
+
+		final HttpPut put = new HttpPut(url.getUrl());
+		put.setEntity(csvEntity);
+		final HttpResponse response = httpclient.execute(put);
+		int status = response.getStatusLine().getStatusCode();
+
+		Assertions.assertEquals(200, status);
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetDownloadUrl() throws Exception {
+
+		final Dataset dataset = datasetService.createDataset(new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description"));
+
+		// Perform the multipart file upload request
+		MvcResult res = mockMvc.perform(
+				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")
+						.queryParam("filename", "filename.txt")
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		PresignedURL url = objectMapper.readValue(res.getResponse().getContentAsString(),
+				PresignedURL.class);
+
+		String content = "col0,col1,col2,col3\na,b,c,d\n";
+		final byte[] csvBytes = content.getBytes();
+		final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
+
+		final CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build();
+
+		final HttpPut put = new HttpPut(url.getUrl());
+		put.setEntity(csvEntity);
+		HttpResponse response = httpclient.execute(put);
+		int status = response.getStatusLine().getStatusCode();
+
+		Assertions.assertEquals(200, status);
+
+		res = mockMvc
+				.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-url")
+						.queryParam("filename", "filename.txt")
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		url = objectMapper.readValue(res.getResponse().getContentAsString(),
+				PresignedURL.class);
+
+		final HttpGet get = new HttpGet(url.getUrl());
+		response = httpclient.execute(get);
+		Assertions.assertEquals(response.getStatusLine().getStatusCode(), 200);
 	}
 }
