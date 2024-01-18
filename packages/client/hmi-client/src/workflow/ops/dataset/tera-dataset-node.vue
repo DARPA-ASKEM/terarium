@@ -43,10 +43,11 @@
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
+			{{ datasets }}
 			<Dropdown
 				class="w-full p-dropdown-sm"
 				:options="datasets"
-				option-label="name"
+				option-label="assetName"
 				v-model="dataset"
 				placeholder="Select a dataset"
 			/>
