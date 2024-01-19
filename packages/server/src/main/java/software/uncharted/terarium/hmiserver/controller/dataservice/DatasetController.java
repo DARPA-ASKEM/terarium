@@ -393,7 +393,7 @@ public class DatasetController {
 				// add the filename to existing file names
 				Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
 				if (updatedDataset.get().getFileNames() == null) {
-					updatedDataset.get().setFileNames(List.of(filename));
+					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
 				} else {
 					updatedDataset.get().getFileNames().add(filename);
 				}
@@ -486,7 +486,7 @@ public class DatasetController {
 
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
-					updatedDataset.get().setFileNames(List.of(filename));
+					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
 				} else {
 					updatedDataset.get().getFileNames().add(filename);
 				}
@@ -528,7 +528,7 @@ public class DatasetController {
 
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
-					updatedDataset.get().setFileNames(List.of(filename));
+					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
 				} else {
 					updatedDataset.get().getFileNames().add(filename);
 				}

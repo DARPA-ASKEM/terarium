@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -24,12 +25,14 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
+import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 
 @RequiredArgsConstructor
 @Service
 @Slf4j
 public class ProjectAssetService {
 
+	final ProjectRepository projectRepository;
 	final ProjectAssetRepository projectAssetRepository;
 	final DatasetService datasetService;
 	final ModelService modelService;
@@ -133,11 +136,6 @@ public class ProjectAssetService {
 			throws IOException {
 
 		final ProjectAsset asset = new ProjectAsset();
-		if (project.getProjectAssets() == null) {
-			project.setProjectAssets(List.of(asset));
-		} else {
-			project.getProjectAssets().add(asset);
-		}
 		if (!populateProjectAssetFields(asset, assetType, assetId)) {
 			// underlying asset does not exist
 			return Optional.empty();
@@ -145,7 +143,12 @@ public class ProjectAssetService {
 		asset.setAssetType(assetType);
 		asset.setProject(project);
 		asset.setAssetId(assetId);
-		asset.setCreatedOn(Timestamp.from(Instant.now()));
+
+		if (project.getProjectAssets() == null) {
+			project.setProjectAssets(new ArrayList<>(List.of(asset)));
+		} else {
+			project.getProjectAssets().add(asset);
+		}
 
 		return Optional.of(projectAssetRepository.save(asset));
 	}
@@ -158,11 +161,14 @@ public class ProjectAssetService {
 	}
 
 	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType) {
-		return Optional.ofNullable(projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
+		return Optional
+				.ofNullable(projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
 	}
 
-	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(final UUID projectId, final String assetName, final AssetType assetType) {
-		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType));
+	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(final UUID projectId, final String assetName,
+			final AssetType assetType) {
+		return Optional.ofNullable(projectAssetRepository
+				.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType));
 	}
 
 }

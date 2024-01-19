@@ -47,7 +47,6 @@ public enum ProvenanceType {
 	 * @throws IllegalArgumentException if the ProvenanceType is not found
 	 */
 	public static ProvenanceType findByType(final String type) {
-		System.out.println("hello?");
 		return Arrays.stream(values()).filter(
 				value -> type.equalsIgnoreCase(value.type)).findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type));
