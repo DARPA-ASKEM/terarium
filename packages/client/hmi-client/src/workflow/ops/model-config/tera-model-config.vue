@@ -18,13 +18,23 @@
 					/>
 				</div>
 				<div v-else-if="activeIndex === 1">
-					<tera-model-config-editor
-						v-if="model"
-						:model="model"
-						:initials="configInitials ?? []"
-						:parameters="configParams ?? []"
-						@update-param="updateConfigParam"
-						@update-initial="updateConfigInitial"
+					<h4>Initials</h4>
+					<tera-model-config-table
+						v-if="modelConfiguration"
+						:model-configuration="modelConfiguration"
+						:data="tableFormattedInitials"
+						:stratified-model-type="stratifiedModelType"
+						:table-type="StratifiedMatrix.Initials"
+						@update-value="updateConfigInitial"
+					/>
+					<h4>Parameters</h4>
+					<tera-model-config-table
+						v-if="modelConfiguration"
+						:model-configuration="modelConfiguration"
+						:data="tableFormattedParams"
+						:stratified-model-type="stratifiedModelType"
+						:table-type="StratifiedMatrix.Parameters"
+						@update-value="updateConfigParam"
 					/>
 				</div>
 			</tera-drilldown-section>
@@ -32,22 +42,6 @@
 		<section :tabName="ConfigTabs.Notebook">
 			<h4>TODO</h4>
 		</section>
-		<template #preview>
-			<tera-drilldown-preview
-				title="Output"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				is-selectable
-			>
-				<tera-model-semantic-tables
-					v-if="configCache[selectedConfigId]"
-					:model="configCache[selectedConfigId].configuration"
-					:readonly="true"
-				/>
-			</tera-drilldown-preview>
-		</template>
 		<template #footer>
 			<Button
 				outlined
@@ -71,16 +65,21 @@ import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { getModel } from '@/services/model';
 import {
 	createModelConfiguration,
 	getModelConfigurationById
 } from '@/services/model-configurations';
 import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
+import { ParamType } from '@/types/common';
+import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
+import {
+	getUnstratifiedInitials,
+	getUnstratifiedParameters
+} from '@/model-representation/petrinet/mira-petri';
+import { StratifiedMatrix } from '@/types/Model';
+import TeraModelConfigTable from './tera-model-config-table.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import teraModelConfigEditor from './tera-model-config-editor.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -100,17 +99,6 @@ const emit = defineEmits([
 
 const formSteps = ref([{ label: 'Context' }, { label: 'Set values' }]);
 
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 const selectedOutputId = ref<string>();
 const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
@@ -123,8 +111,128 @@ const configName = ref<string>(props.node.state.name);
 const configDescription = ref<string>(props.node.state.description);
 const model = ref<Model>();
 
+const modelConfiguration = computed<ModelConfiguration | null>(() => {
+	if (!model.value) return null;
+
+	const cloneModel = _.cloneDeep(model.value);
+	if (cloneModel.semantics) {
+		cloneModel.semantics.ode.initials = configInitials.value;
+		cloneModel.semantics.ode.parameters = configParams.value;
+	}
+	const modelConfig: ModelConfiguration = {
+		id: '',
+		name: '',
+		modelId: cloneModel.id,
+		configuration: cloneModel
+	};
+	return modelConfig;
+});
+
 const configInitials = ref<Initial[]>();
 const configParams = ref<ModelParameter[]>();
+
+const stratifiedModelType = computed(() => {
+	if (!model.value) return null;
+	return getStratificationType(model.value);
+});
+
+const parameters = computed<Map<string, string[]>>(() => {
+	if (!model.value) return new Map();
+	return getUnstratifiedParameters(model.value);
+});
+
+const initials = computed<Map<string, string[]>>(() => {
+	if (!model.value) return new Map();
+	return getUnstratifiedInitials(model.value);
+});
+
+const tableFormattedInitials = computed(() => {
+	const formattedInitials: any[] = [];
+
+	if (stratifiedModelType.value) {
+		initials.value.forEach((vals, init) => {
+			const tableFormattedMatrix = vals.map((v) => {
+				const initial = configInitials.value?.find((i) => i.target === v);
+				return {
+					id: v,
+					name: v,
+					type: ParamType.EXPRESSION,
+					value: initial,
+					source: '',
+					visibility: true
+				};
+			});
+			formattedInitials.push({
+				id: init,
+				name: init,
+				type: ParamType.MATRIX,
+				value: 'matrix',
+				source: '',
+				visibility: true,
+				values: vals,
+				tableFormattedMatrix
+			});
+		});
+	} else {
+		initials.value.forEach((vals, init) => {
+			formattedInitials.push({
+				id: init,
+				name: init,
+				type: ParamType.EXPRESSION,
+				value: configInitials.value?.find((i) => i.target === vals[0]),
+				source: '',
+				visibility: true
+			});
+		});
+	}
+
+	return formattedInitials;
+});
+
+const tableFormattedParams = computed(() => {
+	const formattedParams: any[] = [];
+
+	if (stratifiedModelType.value) {
+		parameters.value.forEach((vals, init) => {
+			const tableFormattedMatrix = vals.map((v) => {
+				const param = configParams.value?.find((i) => i.id === v);
+				const paramType = param?.distribution ? ParamType.DISTRIBUTION : ParamType.CONSTANT;
+				return {
+					id: v,
+					name: v,
+					type: paramType,
+					value: param,
+					source: '',
+					visibility: true
+				};
+			});
+			formattedParams.push({
+				id: init,
+				name: init,
+				type: ParamType.MATRIX,
+				value: 'matrix',
+				source: '',
+				visibility: true,
+				tableFormattedMatrix
+			});
+		});
+	} else {
+		parameters.value.forEach((vals, init) => {
+			const param = configParams.value?.find((i) => i.id === vals[0]);
+			const paramType = param?.distribution ? ParamType.DISTRIBUTION : ParamType.CONSTANT;
+			formattedParams.push({
+				id: init,
+				name: init,
+				type: paramType,
+				value: param,
+				source: '',
+				visibility: true
+			});
+		});
+	}
+
+	return formattedParams;
+});
 
 const updateState = (updatedField) => {
 	let state = _.cloneDeep(props.node.state);
@@ -132,37 +240,30 @@ const updateState = (updatedField) => {
 	emit('update-state', state);
 };
 
-const updateConfigParam = (params: ModelParameter[], updateAll = false) => {
+const updateConfigParam = (params: ModelParameter[]) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.parameters) return;
 
-	if (updateAll) {
-		state.parameters = params;
-	} else {
-		// find param with the same id and update it
-		const idx = state.parameters.findIndex((p) => p.id === params[0].id);
-		if (idx !== -1) {
-			state.parameters[idx] = params[0];
+	for (let i = 0; i < state.parameters.length; i++) {
+		const foundParam = params.find((p) => p.id === state.parameters![i].id);
+		if (foundParam) {
+			state.parameters[i] = foundParam;
 		}
 	}
-
+	console.log(state.parameters);
 	emit('update-state', state);
 };
 
-const updateConfigInitial = (initials: Initial[], updateAll = false) => {
+const updateConfigInitial = (inits: Initial[]) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.initials) return;
 
-	if (updateAll) {
-		state.initials = initials;
-	} else {
-		// find initial with the same target and update it
-		const idx = state.initials.findIndex((i) => i.target === initials[0].target);
-		if (idx !== -1) {
-			state.initials[idx] = initials[0];
+	for (let i = 0; i < state.initials.length; i++) {
+		const foundInitial = inits.find((init) => init.target === state.initials![i].target);
+		if (foundInitial) {
+			state.initials[i] = foundInitial;
 		}
 	}
-
 	emit('update-state', state);
 };
 
@@ -201,17 +302,6 @@ const createConfiguration = async () => {
 };
 
 const debouncedUpdateState = _.debounce(updateState, 500);
-
-const onUpdateOutput = (id) => {
-	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-};
 
 const lazyLoadModelConfig = async (configId: string) => {
 	if (!configId || configCache.value[configId]) return;
