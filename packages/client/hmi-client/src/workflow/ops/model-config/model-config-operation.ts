@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { Initial, ModelParameter } from '@/types/Types';
+import type { Initial, ModelParameter } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
 

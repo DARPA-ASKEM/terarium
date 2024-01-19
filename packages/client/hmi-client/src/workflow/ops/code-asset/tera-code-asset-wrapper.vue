@@ -15,7 +15,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { cloneDeep } from 'lodash';
-import { Code } from '@/types/Types';
+import type { Code } from '@/types/Types';
 import { getCodeBlocks } from '@/utils/code-asset';
 import { CodeAssetState } from './code-asset-operation';
 

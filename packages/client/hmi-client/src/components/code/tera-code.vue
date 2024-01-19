@@ -17,18 +17,8 @@
 						/>
 						<Button outlined label="Save" @click="saveCode()" />
 						<Button outlined label="Save as new" @click="isCodeNamingModalVisible = true" />
-						<Button
-							label="Create model from code"
-							@click="isModelNamingModalVisible = true"
-							:loading="isCodeToModelLoading"
-						/>
 					</template>
 					<template v-else>
-						<Button
-							label="Create model from code"
-							@click="isModelNamingModalVisible = true"
-							:loading="isCodeToModelLoading"
-						/>
 						<Button label="Download Zip" />
 					</template>
 				</section>
@@ -66,12 +56,10 @@
 						@click="isDynamicsModalVisible = true"
 					/>
 					<tera-code-dynamic
-						v-for="(dynamic, index) in dynamics"
-						:filename="dynamic[0]"
-						:codefile="dynamic[1]"
+						v-if="codeAssetCopy"
+						:code="codeAssetCopy"
 						@remove="onRemoveCodeBlock"
 						@save="onSaveCodeBlock"
-						:key="index"
 						:is-preview="props.isPreview"
 					/>
 				</div>
@@ -98,44 +86,6 @@
 			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{ repoUrl }}</a>
 		</div>
 		<Teleport to="body">
-			<tera-modal
-				v-if="isModelNamingModalVisible"
-				@modal-mask-clicked="isModelDiagramModalVisible = false"
-				@modal-enter-press="isModelDiagramModalVisible = false"
-			>
-				<template #header>
-					<h4>New model</h4>
-				</template>
-				<template #default>
-					<form @submit.prevent>
-						<label for="model-name">Enter a unique name for your model</label>
-						<InputText id="model-name" type="text" v-model="newModelName" />
-						<label for="model-description">Enter a description (optional)</label>
-						<Textarea v-model="newModelDescription" />
-						<div class="form-checkbox">
-							<Checkbox v-model="willGenerateFromDynamics" binary />
-							<label>Generate from dynamics</label>
-						</div>
-					</form>
-				</template>
-				<template #footer>
-					<Button
-						label="Create model"
-						@click="
-							() => {
-								isModelNamingModalVisible = false;
-								extractModel();
-							}
-						"
-					/>
-					<Button
-						label="Cancel"
-						severity="secondary"
-						outlined
-						@click="isModelNamingModalVisible = false"
-					/>
-				</template>
-			</tera-modal>
 			<tera-modal
 				v-if="isDynamicsModalVisible"
 				@modal-mask-clicked="isDynamicsModalVisible = false"
@@ -213,7 +163,6 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import Button from 'primevue/button';
-import Checkbox from 'primevue/checkbox';
 import {
 	getCodeFileAsText,
 	getCodeAsset,
@@ -223,8 +172,8 @@ import {
 	getProgrammingLanguage
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
-import { codeToAMR } from '@/services/knowledge';
-import { AssetType, Code, CodeFile, ProgrammingLanguage } from '@/types/Types';
+import type { Code, CodeFile } from '@/types/Types';
+import { AssetType, ProgrammingLanguage } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import router from '@/router';
@@ -261,15 +210,9 @@ const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const selectionRange = ref<Ace.Range | null>(null);
 const progress = ref(0);
-const isCodeToModelLoading = ref(false);
-const willGenerateFromDynamics = ref(false);
-const isModelDiagramModalVisible = ref(false);
-const isModelNamingModalVisible = ref(false);
 const isCodeNamingModalVisible = ref(false);
 const isDynamicsModalVisible = ref(false);
 const newCodeName = ref('');
-const newModelName = ref('');
-const newModelDescription = ref('');
 const newDynamicsName = ref('');
 const newDynamicsDescription = ref('');
 const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
@@ -294,12 +237,6 @@ const fileNames = computed<string[]>(() => {
 });
 
 const codeAssetCopy = ref<Code | null>(null);
-const dynamics = computed(() => {
-	if (!codeAssetCopy.value?.files) return [];
-	return Object.entries(codeAssetCopy.value?.files).filter(
-		(fileEntry) => fileEntry[1].dynamics?.block?.length > 0
-	);
-});
 const savingAsset = ref(false);
 /**
  * Editor initialization function
@@ -432,34 +369,6 @@ async function refreshCodeAsset(codeId: string) {
 	if (code) {
 		codeAsset.value = code;
 		codeAssetCopy.value = cloneDeep(codeAsset.value);
-	}
-}
-
-async function extractModel() {
-	await saveCode();
-	if (codeAsset.value?.id) {
-		isCodeToModelLoading.value = true;
-		const extractedModelId = await codeToAMR(
-			codeAsset.value.id,
-			newModelName.value,
-			newModelDescription.value,
-			willGenerateFromDynamics.value
-		);
-		isCodeToModelLoading.value = false;
-		if (extractedModelId) {
-			await useProjects().addAsset(
-				AssetType.Models,
-				extractedModelId,
-				useProjects().activeProject.value?.id
-			);
-			router.push({
-				name: RouteName.Project,
-				params: {
-					pageType: AssetType.Models,
-					assetId: extractedModelId
-				}
-			});
-		}
 	}
 }
 

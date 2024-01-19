@@ -1,4 +1,5 @@
-import { EventType, Event } from '@/types/Types';
+import type { Event } from '@/types/Types';
+import { EventType } from '@/types/Types';
 import API from '@/api/api';
 import { toQueryString } from '@/utils/query-string';
 import { logger } from '@/utils/logger';

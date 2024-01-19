@@ -15,13 +15,13 @@ const props = defineProps<{
 	param1: string;
 	param2: string;
 	timestep: number;
-	options?: RenderOptions; // Should be optional
+	options?: RenderOptions;
 }>();
 
 const boundaryRef = ref();
 const width = 60;
 const height = 60;
-const renderOptions = { width, height };
+const renderOptions = props.options || { width, height };
 
 onMounted(async () => {
 	renderFunmanBoundaryChart(

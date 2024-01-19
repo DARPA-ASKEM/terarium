@@ -16,7 +16,10 @@
 		<template v-if="!hideIntro">
 			<header
 				id="asset-top"
-				:class="{ 'overview-banner': pageType === ProjectPages.OVERVIEW }"
+				:class="{
+					'overview-banner': pageType === ProjectPages.OVERVIEW,
+					'with-tabs': tabs.length > 1
+				}"
 				ref="headerRef"
 			>
 				<section>
@@ -51,6 +54,13 @@
 						<slot name="bottom-header-buttons" />
 					</div>
 					<slot name="overview-summary" />
+					<TabView
+						v-if="tabs.length > 1"
+						:active-index="selectedTabIndex"
+						@tab-change="(e) => emit('tab-change', e)"
+					>
+						<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
+					</TabView>
 				</section>
 				<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
 					<Button
@@ -63,6 +73,9 @@
 			</header>
 		</template>
 		<section :class="overflowHiddenClass" :style="stretchContentStyle">
+			<template v-for="(tab, index) in tabs" :key="index">
+				<component :is="tab" v-show="selectedTabIndex === index" />
+			</template>
 			<slot name="default" />
 		</section>
 	</main>
@@ -70,12 +83,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, PropType } from 'vue';
+import { ref, computed, watch, PropType, useSlots } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 import teraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps({
@@ -109,11 +124,16 @@ const props = defineProps({
 	showStickyHeader: Boolean,
 	stretchContent: Boolean,
 	isLoading: Boolean,
-	overflowHidden: Boolean
+	overflowHidden: Boolean,
+	selectedTabIndex: {
+		type: Number,
+		default: 0
+	}
 });
 
-const emit = defineEmits(['close-preview']);
+const emit = defineEmits(['close-preview', 'tab-change']);
 
+const slots = useSlots();
 const headerRef = ref();
 const scrollPosition = ref(0);
 
@@ -139,6 +159,18 @@ const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hid
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
 }
+
+const tabs = computed(() => {
+	if (slots.tabs?.()) {
+		if (slots.tabs().length === 1) {
+			// if there is only 1 component we don't need to know the tab name and we can render it.
+			return slots.tabs();
+		}
+
+		return slots.tabs().filter((vnode) => vnode.props?.tabName);
+	}
+	return [];
+});
 
 // Reset the scroll position to the top on asset change
 watch(
@@ -230,6 +262,10 @@ header.shrinked aside {
 header.overview-banner section {
 	width: 100%;
 	max-width: 100%;
+}
+
+header.with-tabs {
+	padding: var(--gap-small) var(--gap) 0;
 }
 
 .overview-banner {
@@ -339,5 +375,17 @@ main:deep(.p-button.p-button-outlined) {
 	align-items: center;
 	justify-content: space-between;
 	flex-grow: 1;
+}
+
+:deep(.p-tabview .p-tabview-panels) {
+	padding: 0;
+}
+
+:deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {
+	background: var(--tab-backgroundcolor-unselected);
+}
+
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
+	background-color: var(--surface-section);
 }
 </style>
