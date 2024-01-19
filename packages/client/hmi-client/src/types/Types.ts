@@ -511,8 +511,8 @@ export interface Workflow {
     name: string;
     description: string;
     transform: Transform;
-    nodes: WorkflowNode<any>[];
-    edges: WorkflowEdge[];
+    nodes: any;
+    edges: any;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
