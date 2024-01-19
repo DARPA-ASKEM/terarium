@@ -29,6 +29,7 @@
 				:param2="selectedParam2"
 				:options="drilldownChartOptions"
 				:timestep="timestep"
+				:selectedBoxId="selectedBoxId"
 			/>
 		</section>
 	</div>
@@ -112,10 +113,9 @@ const selectedBoxId = ref('');
 const selectedBox = ref<any>({});
 
 const drilldownChartOptions = ref<RenderOptions>({
-	width: 475,
-	height: 280,
+	width: 550,
+	height: 275,
 	click: (d: any) => {
-		console.log('selected', d.id);
 		selectedBoxId.value = d.id;
 	}
 });
@@ -148,8 +148,8 @@ const initalizeParameters = async () => {
 };
 
 const renderGraph = async (boxId: string) => {
-	const width = 600;
-	const height = 200;
+	const width = 580;
+	const height = 180;
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
 		processedData.value as FunmanProcessedData,

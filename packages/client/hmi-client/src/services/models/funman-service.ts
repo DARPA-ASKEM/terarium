@@ -378,10 +378,6 @@ export const renderFunmanBoundaryChart = (
 		.attr('width', (d) => xScale(d.x2) - xScale(d.x1))
 		.attr('height', (d) => yScale(d.y1) - yScale(d.y2))
 		.attr('stroke', '#888')
-		.style('stroke-width', (d) => {
-			if (selectedBoxId !== '' && selectedBoxId === d.id) return 2.0;
-			return 1.0;
-		})
 		.attr('fill-opacity', 0.5)
 		.on('click', (_evt: PointerEvent, d: any) => {
 			// Invoke callback
@@ -389,6 +385,27 @@ export const renderFunmanBoundaryChart = (
 				options.click(d);
 			}
 		});
+
+	if (selectedBoxId !== '') {
+		const boundBox = [...trueBoxes, ...falseBoxes].find((box) => box.id === selectedBoxId);
+		if (!boundBox) return;
+
+		g.selectAll('.select-marker')
+			.data([
+				[boundBox.x1, boundBox.y1],
+				[boundBox.x2, boundBox.y1],
+				[boundBox.x2, boundBox.y2],
+				[boundBox.x1, boundBox.y2]
+			])
+			.enter()
+			.append('circle')
+			.classed('select-marker', true)
+			.attr('cx', (d) => xScale(d[0]))
+			.attr('cy', (d) => yScale(d[1]))
+			.attr('r', 4)
+			.style('stroke', '#888')
+			.style('fill', '#bbb');
+	}
 
 	if (options.click) {
 		g.selectAll<any, FunmanBoundingBox>('rect').style('cursor', 'pointer');
