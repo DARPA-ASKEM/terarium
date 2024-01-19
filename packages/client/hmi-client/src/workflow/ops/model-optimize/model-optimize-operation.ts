@@ -1,4 +1,5 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/Types';
+import { Operation } from '@/types/workflow';
 
 export interface InterventionPolicyGroup {
 	borderColour: string;
@@ -44,7 +45,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 };
 
 export const ModelOptimizeOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_OPTIMIZE,
+	name: WorkflowOperationTypes.ModelOptimize,
 	description: 'Optimize a model',
 	displayName: 'Optimize model',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],

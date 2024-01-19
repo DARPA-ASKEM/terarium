@@ -14,9 +14,9 @@ public class WorkflowEdge implements Serializable {
 	private String id;
 	private String workflowId;
 	private Position[] points;
-	private WorkflowNode source;
+	private String source;
 	private String sourcePortId;
-	private WorkflowNode target;
+	private String target;
 	private String targetPortId;
 	private WorkflowDirection direction;
 

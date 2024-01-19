@@ -167,17 +167,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 
-import {
-	Operation,
-	Position,
-	Workflow,
-	WorkflowDirection,
-	WorkflowEdge,
-	WorkflowNode,
-	WorkflowOutput,
-	WorkflowPort,
-	WorkflowPortStatus
-} from '@/types/workflow';
+import { Operation } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -187,7 +177,17 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType } from '@/types/Types';
+import {
+	WorkflowDirection,
+	AssetType,
+	WorkflowPort,
+	WorkflowPortStatus,
+	Position,
+	Workflow,
+	WorkflowEdge,
+	WorkflowNode,
+	WorkflowOutput
+} from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -302,7 +302,7 @@ function appendInputPort(
 		type: port.type,
 		label: port.label,
 		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
+		status: WorkflowPortStatus.NotConnected
 	});
 }
 
@@ -320,7 +320,7 @@ function appendOutputPort(
 		label: port.label,
 		value: isArray(port.value) ? port.value : [port.value],
 		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED,
+		status: WorkflowPortStatus.NotConnected,
 		state: port.state,
 		timestamp: new Date()
 	};
@@ -571,10 +571,10 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 				{ x: currentPortPosition.x, y: currentPortPosition.y },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
 			],
-			source: direction === WorkflowDirection.FROM_OUTPUT ? node.id : undefined,
-			sourcePortId: direction === WorkflowDirection.FROM_OUTPUT ? port.id : undefined,
-			target: direction === WorkflowDirection.FROM_OUTPUT ? undefined : node.id,
-			targetPortId: direction === WorkflowDirection.FROM_OUTPUT ? undefined : port.id,
+			source: direction === WorkflowDirection.FromOutput ? node.id : undefined,
+			sourcePortId: direction === WorkflowDirection.FromOutput ? port.id : undefined,
+			target: direction === WorkflowDirection.FromOutput ? undefined : node.id,
+			targetPortId: direction === WorkflowDirection.FromOutput ? undefined : port.id,
 			direction
 		};
 	} else {
@@ -697,7 +697,7 @@ let prevX = 0;
 let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
-		const pointIndex = newEdge.value?.direction === WorkflowDirection.FROM_OUTPUT ? 1 : 0;
+		const pointIndex = newEdge.value?.direction === WorkflowDirection.FromOutput ? 1 : 0;
 		if (isMouseOverPort) {
 			newEdge.value!.points[pointIndex].x = currentPortPosition.x;
 			newEdge.value!.points[pointIndex].y = currentPortPosition.y;

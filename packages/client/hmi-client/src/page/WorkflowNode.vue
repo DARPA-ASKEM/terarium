@@ -1,33 +1,34 @@
 <template>
 	<template v-if="node">
-		<tera-model-workflow-wrapper v-if="isNodeType(OperationType.MODEL)" :node="node" />
-		<tera-stratify-mira v-else-if="isNodeType(OperationType.STRATIFY_MIRA)" :node="node" />
+		<tera-model-workflow-wrapper v-if="isNodeType(OperationType.Model)" :node="node" />
+		<tera-stratify-mira v-else-if="isNodeType(OperationType.StratifyMira)" :node="node" />
 		<tera-dataset-transformer
-			v-else-if="isNodeType(OperationType.DATASET_TRANSFORMER)"
+			v-else-if="isNodeType(OperationType.DatasetTransformer)"
 			:node="node"
 		/>
-		<tera-dataset-drilldown v-else-if="isNodeType(OperationType.DATASET)" :node="node" />
-		<tera-calibrate-julia v-else-if="isNodeType(OperationType.CALIBRATION_JULIA)" :node="node" />
-		<tera-simulate-julia v-else-if="isNodeType(OperationType.SIMULATE_JULIA)" :node="node" />
-		<tera-calibrate-ciemss v-else-if="isNodeType(OperationType.CALIBRATION_CIEMSS)" :node="node" />
+		<tera-dataset-drilldown v-else-if="isNodeType(OperationType.Dataset)" :node="node" />
+		<tera-calibrate-julia v-else-if="isNodeType(OperationType.CalibrationJulia)" :node="node" />
+		<tera-simulate-julia v-else-if="isNodeType(OperationType.SimulateJulia)" :node="node" />
+		<tera-calibrate-ciemss v-else-if="isNodeType(OperationType.CalibrationCiemss)" :node="node" />
 		<tera-calibrate-ensemble-ciemss
-			v-else-if="isNodeType(OperationType.CALIBRATE_ENSEMBLE_CIEMSS)"
+			v-else-if="isNodeType(OperationType.CalibrateEnsembleCiemss)"
 			:node="node"
 		/>
-		<tera-simulate-ciemss v-else-if="isNodeType(OperationType.SIMULATE_CIEMSS)" :node="node" />
+		<tera-simulate-ciemss v-else-if="isNodeType(OperationType.SimulateCiemss)" :node="node" />
 		<tera-simulate-ensemble-ciemss
-			v-else-if="isNodeType(OperationType.SIMULATE_ENSEMBLE_CIEMSS)"
+			v-else-if="isNodeType(OperationType.SimulateEnsembleCiemss)"
 			:node="node"
 		/>
-		<tera-funman v-else-if="isNodeType(OperationType.FUNMAN)" :node="node" />
-		<tera-code-asset-wrapper v-else-if="isNodeType(OperationType.CODE)" :node="node" />
+		<tera-funman v-else-if="isNodeType(OperationType.Funman)" :node="node" />
+		<tera-code-asset-wrapper v-else-if="isNodeType(OperationType.Code)" :node="node" />
 	</template>
 	<template v-else>{{ node }}</template>
 </template>
 
 <script setup lang="ts">
 import { watch, ref } from 'vue';
-import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
+import { WorkflowOperationTypes as OperationType } from '@/types/Types';
+import type { WorkflowNode } from '@/types/Types';
 import * as workflowService from '@/services/workflow';
 
 import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';

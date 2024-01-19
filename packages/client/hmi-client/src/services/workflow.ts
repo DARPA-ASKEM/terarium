@@ -4,18 +4,17 @@ import _ from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
+import { Operation, Size } from '@/types/workflow';
 import {
-	Operation,
 	Position,
-	Size,
+	WorkflowPort,
+	OperatorStatus,
+	WorkflowPortStatus,
 	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPortStatus,
-	OperatorStatus,
-	WorkflowPort,
 	WorkflowOutput
-} from '@/types/workflow';
+} from '@/types/Types';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -78,7 +77,7 @@ export const addNode = (
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
-			status: WorkflowPortStatus.NOT_CONNECTED,
+			status: WorkflowPortStatus.NotConnected,
 			value: null,
 			isOptional: false,
 			acceptMultiple: port.acceptMultiple
@@ -93,7 +92,7 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		status: OperatorStatus.INVALID,
+		status: OperatorStatus.Invalid,
 
 		width: nodeSize.width,
 		height: nodeSize.height
@@ -138,7 +137,7 @@ export const addEdge = (
 	// Check if type is compatible
 	if (sourceOutputPort.value === null) return;
 	if (sourceOutputPort.type !== targetInputPort.type) return;
-	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.Connected) {
 		return;
 	}
 
@@ -162,8 +161,8 @@ export const addEdge = (
 	};
 
 	wf.edges.push(edge);
-	sourceOutputPort.status = WorkflowPortStatus.CONNECTED;
-	targetInputPort.status = WorkflowPortStatus.CONNECTED;
+	sourceOutputPort.status = WorkflowPortStatus.Connected;
+	targetInputPort.status = WorkflowPortStatus.Connected;
 };
 
 export const removeEdge = (wf: Workflow, id: string) => {
@@ -176,7 +175,7 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
 	if (!targetPort) return;
 	targetPort.value = null;
-	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
+	targetPort.status = WorkflowPortStatus.NotConnected;
 	delete targetPort.label;
 
 	// Edge re-assignment
@@ -188,7 +187,7 @@ export const removeEdge = (wf: Workflow, id: string) => {
 		if (!sourceNode) return;
 		const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
 		if (!sourcePort) return;
-		sourcePort.status = WorkflowPortStatus.NOT_CONNECTED;
+		sourcePort.status = WorkflowPortStatus.NotConnected;
 	}
 };
 
@@ -246,6 +245,7 @@ export const createWorkflow = async (workflow: Workflow) => {
 // Update
 export const updateWorkflow = async (workflow: Workflow) => {
 	const id = workflow.id;
+	console.log(workflow);
 	const response = await API.put(`/workflows/${id}`, workflow);
 	return response?.data ?? null;
 };
@@ -344,7 +344,7 @@ export function selectOutput(
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
 	if (selected) {
 		operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
-		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
+		operator.status = selected.operatorStatus ?? OperatorStatus.Default;
 		operator.active = selected.id;
 	} else {
 		logger.warn(

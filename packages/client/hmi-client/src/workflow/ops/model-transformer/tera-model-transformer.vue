@@ -18,12 +18,13 @@
 <script setup lang="ts">
 // Proxy to use tera-dataset via a workflow context
 
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
 import { v4 as uuidv4 } from 'uuid';
 import type { NotebookSession } from '@/types/Types';
+import { WorkflowPortStatus } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
@@ -38,7 +39,7 @@ const emit = defineEmits(['append-output-port', 'update-state', 'close']);
 const modelId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
 	const modelConfirgurationList = props.node?.inputs
-		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
+		.filter((inputNode) => inputNode.status === WorkflowPortStatus.Connected && inputNode.value)
 		.map((inputNode) => inputNode.value![0]);
 
 	return modelConfirgurationList[0];

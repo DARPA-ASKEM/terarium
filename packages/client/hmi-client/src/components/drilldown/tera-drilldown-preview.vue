@@ -30,7 +30,7 @@
 							/>
 							<span>{{ slotProps.option?.label }}</span>
 							<span
-								v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED"
+								v-if="slotProps.option?.status === WorkflowPortStatus.Connected"
 								class="connection-indicator"
 								><i class="pi pi-link" />Connected</span
 							>
@@ -53,7 +53,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
-import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowOutput, WorkflowPortStatus } from '@/types/Types';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Checkbox from 'primevue/checkbox';
 

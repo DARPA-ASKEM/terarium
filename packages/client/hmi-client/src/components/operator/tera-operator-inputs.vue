@@ -4,10 +4,10 @@
 			v-for="input in inputs"
 			:id="input.id"
 			:key="input.id"
-			:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
+			:class="{ 'port-connected': input.status === WorkflowPortStatus.Connected }"
 			@mouseenter="emit('port-mouseover', $event)"
 			@mouseleave="emit('port-mouseleave')"
-			@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
+			@click.stop="emit('port-selected', input, WorkflowDirection.FromInput)"
 			@focus="() => {}"
 			@focusout="() => {}"
 		>
@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { PropType } from 'vue';
-import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/Types';
 import { getPortLabel } from '@/services/workflow';
 import Button from 'primevue/button';
 

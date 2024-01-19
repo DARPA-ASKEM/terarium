@@ -25,7 +25,7 @@
 				<Button label="Run" @click="runEnsemble" :disabled="disableRunButton" icon="pi pi-play" />
 			</template>
 			<tera-operator-placeholder
-				v-else-if="node.status === OperatorStatus.INVALID"
+				v-else-if="node.status === OperatorStatus.Invalid"
 				:operation-type="node.operationType"
 			>
 				Connect a model configuration and dataset
@@ -40,8 +40,8 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { OperatorStatus, WorkflowNode } from '@/types/workflow';
-import { ProgressState } from '@/types/Types';
+import { WorkflowNode } from '@/types/workflow';
+import { OperatorStatus, ProgressState } from '@/types/Types';
 // import { csvParse } from 'd3';
 // import type { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';

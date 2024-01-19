@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/Types';
 import plants from '@/assets/svg/plants.svg';
 import seed from '@/assets/svg/seed.svg';
 import plantsSmallToBig from '@/assets/svg/plants-small-to-big.svg';
@@ -22,13 +22,13 @@ const props = defineProps<{
 }>();
 
 const operatorGraphics = {
-	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS]: seed,
-	[WorkflowOperationTypes.CALIBRATION_CIEMSS]: seed,
-	[WorkflowOperationTypes.CALIBRATION_JULIA]: seed,
-	[WorkflowOperationTypes.MODEL_CONFIG]: plantAndRoot,
-	[WorkflowOperationTypes.SIMULATE_CIEMSS]: plantsSmallToBig,
-	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS]: plantsSmallToBig,
-	[WorkflowOperationTypes.SIMULATE_JULIA]: plantsSmallToBig
+	[WorkflowOperationTypes.CalibrateEnsembleCiemss]: seed,
+	[WorkflowOperationTypes.CalibrationCiemss]: seed,
+	[WorkflowOperationTypes.CalibrationJulia]: seed,
+	[WorkflowOperationTypes.ModelConfig]: plantAndRoot,
+	[WorkflowOperationTypes.SimulateCiemss]: plantsSmallToBig,
+	[WorkflowOperationTypes.SimulateEnsembleCiemss]: plantsSmallToBig,
+	[WorkflowOperationTypes.SimulateJulia]: plantsSmallToBig
 };
 
 const placeholderGraphic = operatorGraphics[props.operationType] ?? plants;

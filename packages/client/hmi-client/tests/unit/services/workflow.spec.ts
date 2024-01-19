@@ -1,18 +1,12 @@
-import {
-	OperatorStatus,
-	Workflow,
-	WorkflowPort,
-	Operation,
-	WorkflowNode,
-	WorkflowOperationTypes
-} from '@/types/workflow';
+import { Workflow, WorkflowPort, Operation, WorkflowNode } from '@/types/workflow';
+import { WorkflowOperationTypes, OperatorStatus } from '@/types/Types';
 import * as workflowService from '@/services/workflow';
 
 import { describe, expect, it } from 'vitest';
 
 const addOperation: Operation = {
-	name: WorkflowOperationTypes.ADD,
-	displayName: 'Add',
+	name: WorkflowOperationTypes.Add,
+	displayName: WorkflowOperationTypes.Add,
 	description: 'add two numbers',
 	inputs: [{ type: 'number' }, { type: 'number' }],
 	outputs: [{ type: 'number' }],
@@ -38,7 +32,7 @@ const workflow: Workflow = {
 };
 
 const operationLib = new Map<string, Operation>();
-operationLib.set('add', addOperation);
+operationLib.set(WorkflowOperationTypes.Add, addOperation);
 
 const runNode = (node: WorkflowNode<any>): void => {
 	const opType = node.operationType;
@@ -54,18 +48,18 @@ const plusNode = (id: string) =>
 	({
 		id,
 		workflowId: '0',
-		operationType: 'add',
+		operationType: WorkflowOperationTypes.Add,
 		inputs: operationLib
-			.get('add')
+			.get(WorkflowOperationTypes.Add)
 			?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
 		outputs: operationLib
-			.get('add')
+			.get(WorkflowOperationTypes.Add)
 			?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
 		x: 0,
 		y: 0,
 		width: 0,
 		height: 0,
-		status: OperatorStatus.INVALID
+		status: OperatorStatus.Invalid
 	}) as WorkflowNode<any>;
 
 describe('basic tests to make sure it all works', () => {

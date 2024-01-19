@@ -4,10 +4,10 @@
 			v-for="output in selectedOutputs"
 			:id="output.id"
 			:key="output.id"
-			:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
+			:class="{ 'port-connected': output.status === WorkflowPortStatus.Connected }"
 			@mouseenter="emit('port-mouseover', $event)"
 			@mouseleave="emit('port-mouseleave')"
-			@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
+			@click.stop="emit('port-selected', output, WorkflowDirection.FromOutput)"
 			@focus="() => {}"
 			@focusout="() => {}"
 		>
@@ -37,7 +37,8 @@
 
 <script setup lang="ts">
 import { PropType, computed } from 'vue';
-import { WorkflowPortStatus, WorkflowDirection, WorkflowOutput } from '@/types/workflow';
+import { WorkflowOutput } from '@/types/workflow';
+import { WorkflowPortStatus, WorkflowDirection } from '@/types/Types';
 import Button from 'primevue/button';
 
 const emit = defineEmits([

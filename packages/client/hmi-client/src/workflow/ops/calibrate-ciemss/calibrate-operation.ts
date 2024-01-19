@@ -1,4 +1,5 @@
-import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowPort, WorkflowOperationTypes } from '@/types/Types';
+import { Operation } from '@/types/workflow';
 // import type { CalibrationRequest } from '@/types/Types';
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
@@ -12,7 +13,7 @@ export interface CalibrationOperationStateCiemss {
 }
 
 export const CalibrationOperationCiemss: Operation = {
-	name: WorkflowOperationTypes.CALIBRATION_CIEMSS,
+	name: WorkflowOperationTypes.CalibrationCiemss,
 	displayName: 'Calibrate & Simulate (probabilistic)',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',

@@ -1,5 +1,6 @@
 import type { DocumentExtraction } from '@/types/Types';
-import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/Types';
+import { AssetBlock, Operation } from '@/types/workflow';
 
 export interface EquationBlock {
 	text: string;
@@ -24,7 +25,7 @@ export interface ModelFromDocumentState {
 }
 
 export const ModelFromDocumentOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_FROM_DOCUMENT,
+	name: WorkflowOperationTypes.ModelFromDocument,
 	description: 'Create model from document',
 	displayName: 'Create model from document',
 	isRunnable: true,

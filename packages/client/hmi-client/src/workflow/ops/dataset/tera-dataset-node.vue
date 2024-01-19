@@ -58,13 +58,12 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { isEmpty } from 'lodash';
-import { AssetType } from '@/types/Types';
+import { AssetType, WorkflowNode } from '@/types/Types';
 import type { CsvAsset, Dataset, ProjectAsset } from '@/types/Types';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { WorkflowNode } from '@/types/workflow';
 import MultiSelect from 'primevue/multiselect';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import Button from 'primevue/button';

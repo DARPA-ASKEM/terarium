@@ -42,6 +42,7 @@ public enum WorkflowOperationTypes {
 	DATASET_TRANSFORMER("DatasetTransformer"),
 	MODEL_TRANSFORMER("ModelTransformer"),
 	MODEL_FROM_CODE("ModelFromCode"),
+	MODEL_FROM_DOCUMENT("ModelFromDocument")
 	FUNMAN("Funman"),
 	CODE("Code"),
 	MODEL_CONFIG("ModelConfiguraiton"),

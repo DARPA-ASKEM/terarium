@@ -1,4 +1,5 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/Types';
+import { Operation } from '@/types/workflow';
 
 export interface DatasetTransformerState {
 	datasetId: string | null;
@@ -6,7 +7,7 @@ export interface DatasetTransformerState {
 }
 
 export const DatasetTransformerOperation: Operation = {
-	name: WorkflowOperationTypes.DATASET_TRANSFORMER,
+	name: WorkflowOperationTypes.DatasetTransformer,
 	description: 'Select a dataset',
 	displayName: 'Dataset Transformer',
 	isRunnable: true,

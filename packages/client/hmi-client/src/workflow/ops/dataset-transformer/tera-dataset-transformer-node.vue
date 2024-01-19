@@ -9,7 +9,8 @@
 
 <script setup lang="ts">
 import { watch } from 'vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import type { WorkflowNode } from '@/types/Types';
+import { WorkflowPortStatus } from '@/types/Types';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DatasetTransformerState } from './dataset-transformer-operation';
@@ -24,7 +25,7 @@ watch(
 	// add another input port when all inputs are connected, we want to add as many datasets as we can
 	() => props.node.inputs,
 	() => {
-		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
+		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.Connected)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset' });
 		}
 	},

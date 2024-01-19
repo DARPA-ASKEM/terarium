@@ -1,5 +1,5 @@
-import { ProgrammingLanguage } from '@/types/Types';
-import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { ProgrammingLanguage, WorkflowOperationTypes } from '@/types/Types';
+import { AssetBlock, Operation } from '@/types/workflow';
 import { CodeBlock } from '@/utils/code-asset';
 
 export interface ModelFromCodeState {
@@ -10,7 +10,7 @@ export interface ModelFromCodeState {
 }
 
 export const ModelFromCodeOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_FROM_CODE,
+	name: WorkflowOperationTypes.ModelFromCode,
 	description: 'Create model',
 	displayName: 'Create model from code',
 	isRunnable: true,

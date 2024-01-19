@@ -1,9 +1,10 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/Types';
+import { Operation } from '@/types/workflow';
 
 export interface ModelCouplingState {}
 
 export const ModelCouplingOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_COUPLING,
+	name: WorkflowOperationTypes.ModelCoupling,
 	description: 'Couple models',
 	displayName: 'Couple models',
 	isRunnable: true,

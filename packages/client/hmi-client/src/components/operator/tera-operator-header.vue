@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { ref, PropType, computed } from 'vue';
 import { isHover } from '@/services/operator-bitmask';
-import { OperatorStatus } from '@/types/workflow';
+import { OperatorStatus } from '@/types/Types';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
@@ -26,7 +26,7 @@ const props = defineProps({
 	},
 	status: {
 		type: String as PropType<OperatorStatus>,
-		default: OperatorStatus.DEFAULT
+		default: OperatorStatus.Default
 	},
 	interactionStatus: {
 		type: Number,

@@ -1,5 +1,6 @@
 import type { DocumentExtraction } from '@/types/Types';
-import { Operation, AssetBlock, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/Types';
+import { Operation, AssetBlock } from '@/types/workflow';
 
 export interface DocumentOperationState {
 	documentId: string | null;
@@ -9,7 +10,7 @@ export interface DocumentOperationState {
 }
 
 export const DocumentOperation: Operation = {
-	name: WorkflowOperationTypes.DOCUMENT,
+	name: WorkflowOperationTypes.Document,
 	displayName: 'Document',
 	description: 'Document',
 	inputs: [],

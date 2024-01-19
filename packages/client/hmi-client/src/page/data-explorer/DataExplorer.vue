@@ -400,6 +400,7 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 			previewItem.value = null;
 		} else {
 			// open the preview panel
+			console.log(item);
 			previewItem.value = item;
 			isSliderResourcesOpen.value = false;
 		}

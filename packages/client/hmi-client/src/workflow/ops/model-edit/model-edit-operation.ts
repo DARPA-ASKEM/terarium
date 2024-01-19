@@ -1,4 +1,5 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/Types';
+import { Operation } from '@/types/workflow';
 
 export interface ModelEditCode {
 	code: string;
@@ -11,7 +12,7 @@ export interface ModelEditOperationState {
 }
 
 export const ModelEditOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_EDIT,
+	name: WorkflowOperationTypes.ModelEdit,
 	displayName: 'Model Edit',
 	description: 'Edit a model',
 	isRunnable: false,
