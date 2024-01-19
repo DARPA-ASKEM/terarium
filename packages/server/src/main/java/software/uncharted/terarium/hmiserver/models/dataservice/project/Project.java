@@ -77,11 +77,17 @@ public class Project implements Serializable {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, String> metadata;
 
+	/**
+	 * Information for the front-end to display/filter the project accordingly.
+	 */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Boolean publicProject;
 
+	/**
+	 * Information for the front-end to enable/disable features based on user permissions (Read/Write).
+	 */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)

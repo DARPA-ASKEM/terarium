@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import com.google.common.math.Quantiles;
 import com.google.common.math.Stats;
@@ -184,7 +185,7 @@ public class DatasetController {
 			}
 			return ResponseEntity.ok(updated.get());
 		} catch (IOException e) {
-			final String error = "Unable to delete dataset";
+			final String error = "Unable to update a dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -261,6 +262,21 @@ public class DatasetController {
 				csv.size());
 
 		return ResponseEntity.ok(csvAsset);
+	}
+
+	@GetMapping("/{id}/download-file")
+	@Secured(Roles.USER)
+	@Operation(summary = "Download an arbitrary dataset file")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dataset file.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = CsvAsset.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
+	})
+	public ResponseEntity<StreamingResponseBody> getFile(
+			@PathVariable("id") final UUID datasetId,
+			@RequestParam("filename") final String filename) {
+
+		return datasetService.getDownloadStream(datasetId, filename);
+
 	}
 
 	@GetMapping("/{id}/download-url")
@@ -349,7 +365,45 @@ public class DatasetController {
 			final String[] headers = csvRows[0].split(",");
 			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
 		} catch (IOException e) {
-			final String error = "Unable to delete dataset";
+			final String error = "Unable to upload csv dataset";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@PutMapping(value = "/{id}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
+	@Operation(summary = "Uploads an arbitrary file to a dataset")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Uploaded the file.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
+	public ResponseEntity<Void> uploadData(// HttpServletRequest request,
+			@PathVariable("id") final UUID datasetId,
+			@RequestParam("filename") final String filename,
+			@RequestPart("file") final MultipartFile input) {
+
+		try {
+			log.debug("Uploading file to dataset {}", datasetId);
+
+			ResponseEntity<Void> res = datasetService.getUploadStream(datasetId, filename, input);
+			if (res.getStatusCode() == HttpStatus.OK) {
+				// add the filename to existing file names
+				Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
+				if (updatedDataset.get().getFileNames() == null) {
+					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
+				} else {
+					updatedDataset.get().getFileNames().add(filename);
+				}
+
+				datasetService.updateDataset(updatedDataset.get());
+			}
+
+			return res;
+		} catch (IOException e) {
+			final String error = "Unable to upload file to dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -388,12 +442,12 @@ public class DatasetController {
 	 * just be the status of the original csv upload.
 	 *
 	 * @param datasetId ID of the dataset to upload to
-	 * @param fileName  CSV file to upload
+	 * @param filename  CSV file to upload
 	 * @param csvEntity CSV file as an HttpEntity
 	 * @param headers   headers of the CSV file
 	 * @return Response from the upload
 	 */
-	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(final UUID datasetId, final String fileName,
+	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(final UUID datasetId, final String filename,
 			final HttpEntity csvEntity, final String[] headers) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
@@ -401,7 +455,7 @@ public class DatasetController {
 				.build()) {
 
 			// upload CSV to S3
-			final PresignedURL presignedURL = datasetService.getUploadUrl(datasetId, fileName);
+			final PresignedURL presignedURL = datasetService.getUploadUrl(datasetId, filename);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(csvEntity);
 			final HttpResponse response = httpclient.execute(put);
@@ -432,9 +486,9 @@ public class DatasetController {
 
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
-					updatedDataset.get().setFileNames(List.of(fileName));
+					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
 				} else {
-					updatedDataset.get().getFileNames().add(fileName);
+					updatedDataset.get().getFileNames().add(filename);
 				}
 
 				datasetService.updateDataset(updatedDataset.get());
@@ -444,6 +498,48 @@ public class DatasetController {
 
 		} catch (final Exception e) {
 			log.error("Unable to PUT csv data", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	private ResponseEntity<ResponseStatus> uploadFileToDataset(final UUID datasetId, final String filename,
+			final HttpEntity fileEntity) {
+
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build()) {
+
+			// upload file to S3
+			final PresignedURL presignedURL = datasetService.getUploadUrl(datasetId, filename);
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse response = httpclient.execute(put);
+			int status = response.getStatusLine().getStatusCode();
+
+			// update dataset with headers if the previous upload was successful
+			if (status == HttpStatus.OK.value()) {
+				log.debug("Successfully uploaded file to dataset {}", datasetId);
+
+				final Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
+				if (updatedDataset.isEmpty()) {
+					log.error("Failed to get dataset {} after upload", datasetId);
+					return ResponseEntity.internalServerError().build();
+				}
+
+				// add the filename to existing file names
+				if (updatedDataset.get().getFileNames() == null) {
+					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
+				} else {
+					updatedDataset.get().getFileNames().add(filename);
+				}
+
+				datasetService.updateDataset(updatedDataset.get());
+			}
+
+			return ResponseEntity.ok(new ResponseStatus(status));
+
+		} catch (final Exception e) {
+			log.error("Unable to PUT file data", e);
 			return ResponseEntity.internalServerError().build();
 		}
 	}
