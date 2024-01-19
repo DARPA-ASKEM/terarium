@@ -10,6 +10,9 @@ import java.util.Optional;
 import java.util.stream.LongStream;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -470,6 +473,51 @@ public class S3Service {
 				.build();
 		PresignedPutObjectRequest presignedPutObjectRequest = preSigner.presignPutObject(request);
 		return presignedPutObjectRequest.url().toString();
+	}
+
+	public ResponseEntity<Void> getUploadStream(String bucket, String key, MultipartFile file) throws IOException {
+		if (!bucketExists(bucket)) {
+			return ResponseEntity.notFound().build();
+		}
+
+		long SIZE_THRESHOLD = 1028 * 1028 * 5; // S3 does not allow streaming for files smaller than 5MB
+		long sizeInBytes = file.getSize();
+		if (sizeInBytes < SIZE_THRESHOLD) {
+			// don't stream it
+			putObject(bucket, key, file.getBytes());
+			return ResponseEntity.ok().build();
+		}
+
+		// stream it
+
+		final String uploadId = createMultipartUpload(bucket, key).uploadId();
+
+		InputStream stream = file.getInputStream();
+		putObject(uploadId, bucket, key, stream);
+		return ResponseEntity.ok().build();
+	}
+
+	public ResponseEntity<StreamingResponseBody> getDownloadStream(String bucket, String key) {
+		if (!bucketExists(bucket)) {
+			return ResponseEntity.notFound().build();
+		}
+
+		final S3Object s3Object = getObjectInformation(bucket, key);
+
+		// Stream object back to client
+		final ResponseInputStream<GetObjectResponse> responseStream = getObject(bucket, key);
+		final StreamingResponseBody body = outputStream -> {
+			int numberOfBytesToWrite;
+			byte[] data = new byte[BUFFER_SIZE];
+			while ((numberOfBytesToWrite = responseStream.read(data, 0, data.length)) != -1) {
+				outputStream.write(data, 0, numberOfBytesToWrite);
+			}
+		};
+
+		return ResponseEntity.ok()
+				.header("Content-Disposition", "attachment; filename=\"" + key + "\"")
+				.header("Content-Length", String.valueOf(s3Object.getSizeInBytes()))
+				.body(body);
 	}
 
 	/**
