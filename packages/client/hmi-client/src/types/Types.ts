@@ -522,11 +522,11 @@ export interface WorkflowEdge {
     id: string;
     workflowId: string;
     points: Position[];
-    source: WorkflowNode<any>;
-    sourcePortId: string;
-    target: WorkflowNode<any>;
-    targetPortId: string;
-    direction: WorkflowDirection;
+    source?: string;
+    sourcePortId?: string;
+    target?: string;
+    targetPortId?: string;
+    direction?: WorkflowDirection;
 }
 
 export interface WorkflowNode<S> {
@@ -1361,6 +1361,7 @@ export enum WorkflowOperationTypes {
     DatasetTransformer = "DATASET_TRANSFORMER",
     ModelTransformer = "MODEL_TRANSFORMER",
     ModelFromCode = "MODEL_FROM_CODE",
+    ModelFromDocument = "MODEL_FROM_DOCUMENT",
     Funman = "FUNMAN",
     Code = "CODE",
     ModelConfig = "MODEL_CONFIG",
