@@ -33,6 +33,8 @@ services:
       OPENAI_API_KEY: "${secret_mit_openai_key}"
       TDS_USERNAME: "${secret_service_account_username}"
       TDS_PASSWORD: "${secret_service_account_password}"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
 
   knowledge-middleware-worker:
     container_name: knowledge-middleware-worker
@@ -48,6 +50,8 @@ services:
       OPENAI_API_KEY: "${secret_mit_openai_key}"
       TDS_USERNAME: "${secret_service_account_username}"
       TDS_PASSWORD: "${secret_service_account_password}"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
     depends_on:
       redis:
         condition: service_started
