@@ -66,7 +66,7 @@
 				:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
 				@dragging="(event) => updatePosition(event, junction)"
 			>
-				<tera-model-junction :junction="junction" />
+				<tera-model-junction :junction="junction" :template-cards="modelTemplateCards" />
 			</tera-canvas-item>
 		</template>
 		<template #background>
@@ -119,12 +119,13 @@ interface ModelTemplate {
 	name: string;
 	x: number;
 	y: number;
+	width: number;
+	height: number;
 }
 
 // Edge sources are always junctions so you'd reference the junction id for that
 interface ModelTemplateEdge {
 	target: {
-		cardName: string;
 		cardId: number;
 		portId: string;
 	};
@@ -166,6 +167,10 @@ let junctionIdForNewEdge: number | null = null;
 const modelTemplates = ref<any[]>([]);
 const junctions = ref<ModelTemplateJunction[]>([]);
 
+const modelTemplateCards = computed<ModelTemplate[]>(
+	() => modelTemplates.value.map(({ metadata }) => metadata.templateCard) ?? []
+);
+
 const newModelTemplate = ref();
 const newEdge = ref();
 const isCreatingNewEdge = computed(
@@ -174,8 +179,8 @@ const isCreatingNewEdge = computed(
 
 function collisionFn(p: Position) {
 	const buffer = 50;
-	for (let i = 0; i < modelTemplates.value.length; i++) {
-		const checkingNode = modelTemplates.value[i].metadata.templateCard;
+	for (let i = 0; i < modelTemplateCards.value.length; i++) {
+		const checkingNode = modelTemplateCards.value[i];
 		if (p.x >= checkingNode.x - buffer && p.x <= checkingNode.x + checkingNode.width + buffer) {
 			if (p.y >= checkingNode.y - buffer && p.y <= checkingNode.y + checkingNode.height + buffer) {
 				return true;
@@ -203,7 +208,7 @@ function updateName(name: string, index: number) {
 }
 
 function createNewEdge(card: ModelTemplate, portId: string) {
-	const target = { cardName: card.name, cardId: card.id, portId };
+	const target = { cardId: card.id, portId };
 
 	// Handles the edge that goes from port to junction
 	if (!isCreatingNewEdge.value) {
@@ -329,7 +334,10 @@ function onDrop(event) {
 	newModelTemplate.value = null;
 }
 
-const updatePosition = ({ x, y }, node: any) => {
+const updatePosition = (
+	{ x, y },
+	node: any // node can be a ModelTemplate or a ModelTemplateJunction
+) => {
 	if (!isMouseOverCanvas) return;
 
 	const isJunction = node.edges !== undefined;

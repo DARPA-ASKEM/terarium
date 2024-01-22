@@ -5,7 +5,9 @@
 			<li v-for="(edge, index) in junction.edges" :key="index">
 				{{ junction.edges[0].target.portId }}
 				=
-				{{ edge.target.cardName }}.{{ edge.target.portId }}
+				{{ templateCards.find(({ id }) => id === edge.target.cardId)?.name }}.{{
+					edge.target.portId
+				}}
 			</li>
 		</ul>
 	</section>
@@ -14,9 +16,15 @@
 <script setup lang="ts">
 import { Position } from '@/types/workflow'; // temp
 
+interface ModelTemplate {
+	id: number;
+	name: string;
+	x: number;
+	y: number;
+}
+
 interface ModelTemplateEdge {
 	target: {
-		cardName: string;
 		cardId: number;
 		portId: string;
 	};
@@ -32,6 +40,7 @@ interface ModelTemplateJunction {
 
 defineProps<{
 	junction: ModelTemplateJunction;
+	templateCards: ModelTemplate[];
 }>();
 </script>
 
