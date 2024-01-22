@@ -433,17 +433,17 @@ public class S3Service {
 	 *
 	 * @param bucket            The bucket to download from
 	 * @param key               The key to download
-	 * @param expirationSeconds The number of seconds the signature is valid for
+	 * @param expirationSeconds The number of minutes the signature is valid for
 	 * @return The pre-signed URL
 	 */
-	public Optional<String> getS3PreSignedGetUrl(final String bucket, final String key, final long expirationSeconds) {
+	public Optional<String> getS3PreSignedGetUrl(final String bucket, final String key, final long expirationMinutes) {
 
 		if (!doesObjectExist(bucket, key)) {
 			return Optional.empty();
 		}
 
 		GetObjectPresignRequest request = GetObjectPresignRequest.builder()
-				.signatureDuration(Duration.ofSeconds(expirationSeconds))
+				.signatureDuration(Duration.ofMinutes(expirationMinutes))
 				.getObjectRequest(GetObjectRequest.builder()
 						.bucket(bucket)
 						.key(key)
@@ -460,12 +460,12 @@ public class S3Service {
 	 *
 	 * @param bucket            The bucket to download from
 	 * @param key               The key to download
-	 * @param expirationSeconds The number of seconds the signature is valid for
+	 * @param expirationMinutes The number of minutes the signature is valid for
 	 * @return The pre-signed URL
 	 */
-	public String getS3PreSignedPutUrl(final String bucket, final String key, final long expirationSeconds) {
+	public String getS3PreSignedPutUrl(final String bucket, final String key, final long expirationMinutes) {
 		PutObjectPresignRequest request = PutObjectPresignRequest.builder()
-				.signatureDuration(Duration.ofSeconds(expirationSeconds))
+				.signatureDuration(Duration.ofMinutes(expirationMinutes))
 				.putObjectRequest(PutObjectRequest.builder()
 						.bucket(bucket)
 						.key(key)

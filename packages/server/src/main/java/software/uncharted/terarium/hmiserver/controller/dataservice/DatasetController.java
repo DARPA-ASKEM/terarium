@@ -502,48 +502,6 @@ public class DatasetController {
 		}
 	}
 
-	private ResponseEntity<ResponseStatus> uploadFileToDataset(final UUID datasetId, final String filename,
-			final HttpEntity fileEntity) {
-
-		try (final CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build()) {
-
-			// upload file to S3
-			final PresignedURL presignedURL = datasetService.getUploadUrl(datasetId, filename);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse response = httpclient.execute(put);
-			int status = response.getStatusLine().getStatusCode();
-
-			// update dataset with headers if the previous upload was successful
-			if (status == HttpStatus.OK.value()) {
-				log.debug("Successfully uploaded file to dataset {}", datasetId);
-
-				final Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
-				if (updatedDataset.isEmpty()) {
-					log.error("Failed to get dataset {} after upload", datasetId);
-					return ResponseEntity.internalServerError().build();
-				}
-
-				// add the filename to existing file names
-				if (updatedDataset.get().getFileNames() == null) {
-					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
-				} else {
-					updatedDataset.get().getFileNames().add(filename);
-				}
-
-				datasetService.updateDataset(updatedDataset.get());
-			}
-
-			return ResponseEntity.ok(new ResponseStatus(status));
-
-		} catch (final Exception e) {
-			log.error("Unable to PUT file data", e);
-			return ResponseEntity.internalServerError().build();
-		}
-	}
-
 	private static List<List<String>> csvToRecords(final String rawCsvString) throws IOException {
 		List<List<String>> records = new ArrayList<>();
 		try (CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
