@@ -15,6 +15,7 @@ const props = defineProps<{
 	param1: string;
 	param2: string;
 	timestep: number;
+	selectedBoxId: string;
 	options?: RenderOptions;
 }>();
 
@@ -30,12 +31,13 @@ onMounted(async () => {
 		props.param1,
 		props.param2,
 		props.timestep,
+		props.selectedBoxId,
 		renderOptions
 	);
 });
 
 watch(
-	() => [props.param1, props.param2],
+	() => [props.param1, props.param2, props.selectedBoxId],
 	async () => {
 		renderFunmanBoundaryChart(
 			boundaryRef.value as HTMLElement,
@@ -43,6 +45,7 @@ watch(
 			props.param1,
 			props.param2,
 			props.timestep,
+			props.selectedBoxId,
 			renderOptions
 		);
 	}
