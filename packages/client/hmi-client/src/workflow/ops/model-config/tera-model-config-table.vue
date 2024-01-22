@@ -34,7 +34,11 @@
 			<template #body="slotProps">
 				<span v-if="slotProps.data.type === ParamType.MATRIX">Matrix</span>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
-					{{ slotProps.data.value.expression }}
+					<InputText
+						class="p-inputtext-sm"
+						v-model.lazy="slotProps.data.value.expression"
+						@update:model-value="updateExpression(slotProps.data.value)"
+					/>
 				</span>
 				<div v-else-if="slotProps.data.type === ParamType.DISTRIBUTION">
 					<label>Min</label>
@@ -44,8 +48,8 @@
 						mode="decimal"
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
-						v-model="slotProps.data.value.distribution.parameters.minimum"
-						@update:model-value="updateValue(slotProps.data.value)"
+						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
+						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<label>Max</label>
 					<InputNumber
@@ -54,19 +58,19 @@
 						mode="decimal"
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
-						v-model="slotProps.data.value.distribution.parameters.maximum"
-						@update:model-value="updateValue(slotProps.data.value)"
+						v-model.lazy="slotProps.data.value.distribution.parameters.maximum"
+						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
-				<span v-else>
+				<span v-else-if="slotProps.data.type === ParamType.CONSTANT">
 					<InputNumber
 						class="p-inputtext-sm"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
-						v-model="slotProps.data.value.value"
-						@update:model-value="updateValue(slotProps.data.value)"
+						v-model.lazy="slotProps.data.value.value"
+						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</span>
 			</template>
@@ -85,7 +89,7 @@
 				:stratified-model-type="stratifiedModelType"
 				:data="slotProps.data.tableFormattedMatrix"
 				:table-type="tableType"
-				@update-value="(id: string) => emit('update-value', id)"
+				@update-value="(val: ModelParameter | Initial) => emit('update-value', [val])"
 			/>
 		</template>
 	</Datatable>
@@ -116,11 +120,13 @@ import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configu
 import { ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import InputSwitch from 'primevue/inputswitch';
+import { pythonInstance } from '@/python/PyodideController';
+import InputText from 'primevue/inputtext';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT },
 	{ label: 'Distribution', value: ParamType.DISTRIBUTION },
-	{ label: 'Time Series', value: ParamType.TIME_SERIES }
+	{ label: 'Time Varying', value: ParamType.TIME_SERIES }
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -171,7 +177,9 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	emit('update-value', [param]);
 };
 
-const updateValue = (value: ModelParameter | Initial) => {
+const updateExpression = async (value: Initial) => {
+	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
+	value.expression_mathml = mathml;
 	emit('update-value', [value]);
 };
 

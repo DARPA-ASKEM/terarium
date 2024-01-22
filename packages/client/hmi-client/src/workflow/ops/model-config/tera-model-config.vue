@@ -2,6 +2,14 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
+				<tera-output-dropdown
+					style="margin-left: auto"
+					:output="selectedOutputId"
+					is-selectable
+					:options="outputs"
+					@update:output="onUpdateOutput"
+					@update:selection="onUpdateSelection"
+				/>
 				<Steps :model="formSteps" :readonly="false" @update:active-step="activeIndex = $event" />
 				<div v-if="activeIndex === 0" class="form-section">
 					<h3>Name</h3>
@@ -18,24 +26,28 @@
 					/>
 				</div>
 				<div v-else-if="activeIndex === 1">
-					<h4>Initials</h4>
-					<tera-model-config-table
-						v-if="modelConfiguration"
-						:model-configuration="modelConfiguration"
-						:data="tableFormattedInitials"
-						:stratified-model-type="stratifiedModelType"
-						:table-type="StratifiedMatrix.Initials"
-						@update-value="updateConfigInitial"
-					/>
-					<h4>Parameters</h4>
-					<tera-model-config-table
-						v-if="modelConfiguration"
-						:model-configuration="modelConfiguration"
-						:data="tableFormattedParams"
-						:stratified-model-type="stratifiedModelType"
-						:table-type="StratifiedMatrix.Parameters"
-						@update-value="updateConfigParam"
-					/>
+					<Accordion multiple :active-index="[0, 1]">
+						<AccordionTab header="Initials">
+							<tera-model-config-table
+								v-if="modelConfiguration"
+								:model-configuration="modelConfiguration"
+								:data="tableFormattedInitials"
+								:stratified-model-type="stratifiedModelType"
+								:table-type="StratifiedMatrix.Initials"
+								@update-value="updateConfigInitial"
+							/>
+						</AccordionTab>
+						<AccordionTab header="Parameters">
+							<tera-model-config-table
+								v-if="modelConfiguration"
+								:model-configuration="modelConfiguration"
+								:data="tableFormattedParams"
+								:stratified-model-type="stratifiedModelType"
+								:table-type="StratifiedMatrix.Parameters"
+								@update-value="updateConfigParam"
+							/>
+						</AccordionTab>
+					</Accordion>
 				</div>
 			</tera-drilldown-section>
 		</section>
@@ -45,8 +57,8 @@
 		<template #footer>
 			<Button
 				outlined
-				:style="{ marginRight: 'auto' }"
-				label="Run"
+				:disabled="!configName"
+				label="Run Configuration"
 				icon="pi pi-play"
 				@click="createConfiguration"
 			/>
@@ -78,8 +90,11 @@ import {
 	getUnstratifiedParameters
 } from '@/model-representation/petrinet/mira-petri';
 import { StratifiedMatrix } from '@/types/Model';
-import TeraModelConfigTable from './tera-model-config-table.vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import TeraOutputDropdown from '@/components/widgets/tera-output-dropdown.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import TeraModelConfigTable from './tera-model-config-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -89,6 +104,19 @@ enum ConfigTabs {
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
+
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+
 const emit = defineEmits([
 	'append-output-port',
 	'update-state',
@@ -159,7 +187,7 @@ const tableFormattedInitials = computed(() => {
 					type: ParamType.EXPRESSION,
 					value: initial,
 					source: '',
-					visibility: true
+					visibility: false
 				};
 			});
 			formattedInitials.push({
@@ -168,7 +196,7 @@ const tableFormattedInitials = computed(() => {
 				type: ParamType.MATRIX,
 				value: 'matrix',
 				source: '',
-				visibility: true,
+				visibility: false,
 				values: vals,
 				tableFormattedMatrix
 			});
@@ -181,7 +209,7 @@ const tableFormattedInitials = computed(() => {
 				type: ParamType.EXPRESSION,
 				value: configInitials.value?.find((i) => i.target === vals[0]),
 				source: '',
-				visibility: true
+				visibility: false
 			});
 		});
 	}
@@ -203,7 +231,7 @@ const tableFormattedParams = computed(() => {
 					type: paramType,
 					value: param,
 					source: '',
-					visibility: true
+					visibility: false
 				};
 			});
 			formattedParams.push({
@@ -212,7 +240,7 @@ const tableFormattedParams = computed(() => {
 				type: ParamType.MATRIX,
 				value: 'matrix',
 				source: '',
-				visibility: true,
+				visibility: false,
 				tableFormattedMatrix
 			});
 		});
@@ -226,7 +254,7 @@ const tableFormattedParams = computed(() => {
 				type: paramType,
 				value: param,
 				source: '',
-				visibility: true
+				visibility: false
 			});
 		});
 	}
@@ -250,7 +278,6 @@ const updateConfigParam = (params: ModelParameter[]) => {
 			state.parameters[i] = foundParam;
 		}
 	}
-	console.log(state.parameters);
 	emit('update-state', state);
 };
 
@@ -310,6 +337,16 @@ const lazyLoadModelConfig = async (configId: string) => {
 	if (config) {
 		configCache.value[configId] = config;
 	}
+};
+
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
+};
+const onUpdateSelection = (id) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
 };
 
 watch(
