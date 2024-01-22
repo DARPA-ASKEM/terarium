@@ -30,7 +30,7 @@
 				@mouseleave="emit('port-mouseleave')"
 				@focus="() => {}"
 				@blur="() => {}"
-				@click.stop="emit('port-selected')"
+				@click.stop="emit('port-selected', id)"
 			>
 				{{ id }}
 			</li>
