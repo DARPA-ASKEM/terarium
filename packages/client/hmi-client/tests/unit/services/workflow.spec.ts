@@ -119,9 +119,14 @@ describe('operator state sync/staleness check', () => {
 	const operatorState = { vars: ['a', 'b', 'c'], extra: 123 };
 	const outputState1 = { vars: ['a', 'b', 'c'], constraintGroups: [{ name: 'abc' }] };
 	const outputState2 = { vars: ['a', 'b', 'c'] };
+	const outputState3 = { vars: ['a', 'b'] };
 
-	it('states unsynced', () => {
+	it('states unsynced 1', () => {
 		expect(workflowService.isOperatorStateInSync(operatorState, outputState1)).to.eq(false);
+	});
+
+	it('states unsynced 2', () => {
+		expect(workflowService.isOperatorStateInSync(operatorState, outputState3)).to.eq(false);
 	});
 
 	it('states synced', () => {
