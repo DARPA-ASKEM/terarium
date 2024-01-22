@@ -176,9 +176,6 @@ function collisionFn(p: Position) {
 	const buffer = 50;
 	for (let i = 0; i < modelTemplates.value.length; i++) {
 		const checkingNode = modelTemplates.value[i].metadata.templateCard;
-		// FIXME: Thi is  a hack to get around hierarhical geometries, will need to
-		// relax this guard.
-		// if (node.nodes && node.nodes.length > 0) continue;
 		if (p.x >= checkingNode.x - buffer && p.x <= checkingNode.x + checkingNode.width + buffer) {
 			if (p.y >= checkingNode.y - buffer && p.y <= checkingNode.y + checkingNode.height + buffer) {
 				return true;
@@ -344,25 +341,21 @@ const updatePosition = ({ x, y }, node: any) => {
 	// Update edge positions
 	junctions.value.forEach(({ edges, id }) => {
 		edges.forEach((edge) => {
+			const lastPointIndex = edge.points.length - 1;
+
 			// On junction move
 			if (isJunction && id === node.id) {
 				edge.points[0].x += x / canvasTransform.k;
 				edge.points[0].y += y / canvasTransform.k;
 
-				edge.points = interpolatePointsForCurve(
-					edge.points[0],
-					edge.points[edge.points.length - 1]
-				);
+				edge.points = interpolatePointsForCurve(edge.points[0], edge.points[lastPointIndex]);
 			}
 			// On card move
 			if (!isJunction && edge.target.cardId === node.id) {
-				edge.points[edge.points.length - 1].x += x / canvasTransform.k;
-				edge.points[edge.points.length - 1].y += y / canvasTransform.k;
+				edge.points[lastPointIndex].x += x / canvasTransform.k;
+				edge.points[lastPointIndex].y += y / canvasTransform.k;
 
-				edge.points = interpolatePointsForCurve(
-					edge.points[0],
-					edge.points[edge.points.length - 1]
-				);
+				edge.points = interpolatePointsForCurve(edge.points[0], edge.points[lastPointIndex]);
 			}
 		});
 	});
