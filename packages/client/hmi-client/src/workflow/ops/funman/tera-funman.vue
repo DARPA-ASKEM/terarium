@@ -292,7 +292,7 @@ const getStatus = async (runId: string) => {
 
 	poller
 		.setInterval(3000)
-		.setThreshold(50)
+		.setThreshold(100)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
 			if (response.done && response.done === true) {
@@ -383,7 +383,14 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
+	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+
+	model.value.semantics?.ode.parameters?.forEach((param) => {
+		if (initialVars?.includes(param.id)) return;
+		modelColumnNameOptions.push(param.id);
+	});
+
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
 	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {

@@ -6,12 +6,35 @@
 	<div ref="trajRef"></div>
 
 	<h4>Configuration parameters <i class="pi pi-info-circle" /></h4>
-	<p class="secondary-text">
+	<p class="secondary-text" v-if="selectedParam2 === ''">
 		Adjust parameter ranges to only include values in the green region or less.
 	</p>
 
-	<!-- TODO: add boxes modal per row https://github.com/DARPA-ASKEM/terarium/issues/1924 -->
-	<div class="variables-table">
+	<div class="variables-table" v-if="selectedParam2">
+		<section class="boundary-drilldown">
+			<div class="boundary-drilldown-header">
+				{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
+				<Button
+					class="close-mask"
+					icon="pi pi-times"
+					text
+					rounded
+					aria-label="Close"
+					@click="selectedParam2 = ''"
+				/>
+			</div>
+			<tera-funman-boundary-chart
+				:processed-data="processedData as FunmanProcessedData"
+				:param1="selectedParam"
+				:param2="selectedParam2"
+				:options="drilldownChartOptions"
+				:timestep="timestep"
+				:selectedBoxId="selectedBoxId"
+			/>
+		</section>
+	</div>
+
+	<div class="variables-table" v-if="selectedParam2 === ''">
 		<div class="variables-header">
 			<header
 				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '']"
@@ -37,25 +60,19 @@
 					class="p-inputtext-sm"
 					v-model="bound.ub"
 				/>
-				<TeraFunmanBoundaryChart
+				<tera-funman-boundary-chart
 					:processed-data="processedData as FunmanProcessedData"
 					:param1="selectedParam"
 					:param2="parameter"
 					:timestep="timestep"
+					:selectedBoxId="selectedBoxId"
 					@click="selectedParam2 = parameter"
 				/>
+				&nbsp;
+				<div v-if="selectedBox[parameter]">
+					{{ selectedBox[parameter][0].toFixed(4) }}:{{ selectedBox[parameter][1].toFixed(4) }}
+				</div>
 			</div>
-		</div>
-
-		<!-- Larger version of boundary chart: TODO -->
-		<div v-if="selectedParam2">
-			<TeraFunmanBoundaryChart
-				:processed-data="processedData as FunmanProcessedData"
-				:param1="selectedParam"
-				:param2="selectedParam2"
-				:options="{ width: 350, height: 250 }"
-				:timestep="timestep"
-			/>
 		</div>
 	</div>
 </template>
@@ -70,7 +87,9 @@ import {
 } from '@/services/models/funman-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
+import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import type { FunmanBox, RenderOptions } from '@/services/models/funman-service';
 import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
@@ -87,28 +106,30 @@ const timestepOptions = ref();
 const timestep = ref();
 const trajRef = ref();
 
-interface FunmanBound {
-	lb: number;
-	ub: number;
-}
-interface FunmanBox {
-	label: string;
-	bounds: Record<string, FunmanBound>;
-	explanation: any;
-	schedule: any;
-	points: any;
-}
 const lastTrueBox = ref<FunmanBox>();
 const processedData = ref<FunmanProcessedData>();
+
+const selectedBoxId = ref('');
+const selectedBox = ref<any>({});
+
+const drilldownChartOptions = ref<RenderOptions>({
+	width: 550,
+	height: 275,
+	click: (d: any) => {
+		selectedBoxId.value = d.id;
+	}
+});
 
 const initalizeParameters = async () => {
 	const funmanResult = await getQueries(props.funModelId);
 	processedData.value = processFunman(funmanResult);
 	parameterOptions.value = [];
 
-	funmanResult.model.petrinet.semantics.ode.parameters.map((ele) =>
-		parameterOptions.value.push(ele.id)
-	);
+	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map((d) => d.expression);
+
+	funmanResult.model.petrinet.semantics.ode.parameters
+		.filter((ele: any) => !initialVars.includes(ele.id))
+		.map((ele: any) => parameterOptions.value.push(ele.id));
 	selectedParam.value = parameterOptions.value[0];
 	timestepOptions.value = funmanResult.request.structure_parameters[0].schedules[0].timepoints;
 	timestep.value = timestepOptions.value[1];
@@ -122,17 +143,18 @@ const initalizeParameters = async () => {
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 
 	if (selectedTrajState.value) {
-		renderGraph();
+		renderGraph(selectedBoxId.value);
 	}
 };
 
-const renderGraph = async () => {
-	const width = 800;
-	const height = 250;
+const renderGraph = async (boxId: string) => {
+	const width = 580;
+	const height = 180;
 	renderFumanTrajectories(
 		trajRef.value as HTMLElement,
 		processedData.value as FunmanProcessedData,
 		selectedTrajState.value,
+		boxId,
 		{
 			width,
 			height
@@ -154,9 +176,18 @@ watch(
 
 watch(
 	// Whenever user changes options rerender.
-	() => [selectedParam.value, timestep.value, selectedTrajState.value],
-	async () => {
-		renderGraph();
+	// () => [selectedParam.value, timestep.value, selectedTrajState.value, selectedBoxId.value],
+	() => [selectedParam.value, selectedTrajState.value],
+	() => {
+		renderGraph(selectedBoxId.value);
+	}
+);
+
+watch(
+	() => [selectedBoxId.value],
+	() => {
+		selectedBox.value = processedData.value?.boxes.find((d) => d.id === selectedBoxId.value);
+		renderGraph(selectedBoxId.value);
 	}
 );
 </script>
@@ -209,5 +240,18 @@ watch(
 .variables-header {
 	display: grid;
 	grid-template-columns: repeat(6, 1fr) 0.5fr;
+}
+
+.boundary-drilldown {
+	border: 1px solid var(--00-neutral-300, #c3ccd6);
+	padding: 5px;
+}
+
+.boundary-drilldown-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--font-body-medium);
 }
 </style>
