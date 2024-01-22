@@ -119,6 +119,7 @@ interface ModelTemplate {
 	name: string;
 	x: number;
 	y: number;
+	// For collisionFn
 	width: number;
 	height: number;
 }
