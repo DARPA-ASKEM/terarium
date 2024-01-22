@@ -21,6 +21,7 @@ import { useProjects } from '@/composables/project';
 import '@/assets/css/style.scss';
 import Keycloak from 'keycloak-js';
 import { init } from '@/services/ClientEventService';
+import '@node_modules/shepherd.js/dist/css/shepherd.css'; // Extend the window object to include the Keycloak object
 
 // Extend the window object to include the Keycloak object
 declare global {

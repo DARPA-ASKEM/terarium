@@ -2,7 +2,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import svgLoader from 'vite-svg-loader';
-import * as path from 'path';
+import * as path from 'path'; // const node_modules_dir = path.resolve(__dirname, '../../../node_modules/');
 
 // const node_modules_dir = path.resolve(__dirname, '../../../node_modules/');
 const node_modules_dir = path.resolve(
@@ -19,6 +19,9 @@ const node_modules_dir = path.resolve(
 // See: https://vitejs.dev/config/
 // See: https://vitejs.dev/config/server-options.html#server-proxy
 export default defineConfig({
+	define: {
+		'process.env': {}
+	},
 	optimizeDeps: {
 		exclude: ['mathlive']
 	},

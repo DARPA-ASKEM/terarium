@@ -1081,6 +1081,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@floating-ui/core@npm:^1.5.3":
+  version: 1.5.3
+  resolution: "@floating-ui/core@npm:1.5.3"
+  dependencies:
+    "@floating-ui/utils": "npm:^0.2.0"
+  checksum: 7d9feaca2565a2a71bf03d23cd292c03def63097d7fde7d62909cdb8ddb84664781f3922086bcf10443f3310cb92381a0ecf745b2774edb917fa74fe61015c56
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:^1.5.1":
+  version: 1.5.4
+  resolution: "@floating-ui/dom@npm:1.5.4"
+  dependencies:
+    "@floating-ui/core": "npm:^1.5.3"
+    "@floating-ui/utils": "npm:^0.2.0"
+  checksum: 3ba02ba2b4227c1e18df6ccdd029a1c100058db2e76ca1dac60a593ec72b2d4d995fa5c2d1639a5c38adb17e12398fbfe4f6cf5fd45f2ee6170ed0cf64acea06
+  languageName: node
+  linkType: hard
+
+"@floating-ui/utils@npm:^0.2.0":
+  version: 0.2.1
+  resolution: "@floating-ui/utils@npm:0.2.1"
+  checksum: 33c9ab346e7b05c5a1e6a95bc902aafcfc2c9d513a147e2491468843bd5607531b06d0b9aa56aa491cbf22a6c2495c18ccfc4c0344baec54a689a7bb8e4898d6
+  languageName: node
+  linkType: hard
+
 "@fortawesome/fontawesome-common-types@npm:^0.2.36":
   version: 0.2.36
   resolution: "@fortawesome/fontawesome-common-types@npm:0.2.36"
@@ -5915,7 +5941,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"deepmerge@npm:^4.2.2":
+"deepmerge@npm:^4.2.2, deepmerge@npm:^4.3.1":
   version: 4.3.1
   resolution: "deepmerge@npm:4.3.1"
   checksum: 058d9e1b0ff1a154468bf3837aea436abcfea1ba1d165ddaaf48ca93765fdd01a30d33c36173da8fbbed951dd0a267602bc782fe288b0fc4b7e1e7091afc4529
@@ -8637,6 +8663,7 @@ __metadata:
     vue-feather: "npm:2.0.0"
     vue-gtag: "npm:2.0.1"
     vue-router: "npm:4.2.5"
+    vue-shepherd: "npm:3.0.0"
     vue-tsc: "npm:1.8.27"
     vue3-ace-editor: "npm:2.2.4"
     vue3-draggable-resizable: "npm:1.6.5"
@@ -13120,6 +13147,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"shepherd.js@npm:^11.1.0":
+  version: 11.2.0
+  resolution: "shepherd.js@npm:11.2.0"
+  dependencies:
+    "@floating-ui/dom": "npm:^1.5.1"
+    deepmerge: "npm:^4.3.1"
+  checksum: 7b17ee89875f398b5a61c7f20bfd86e7939725d50a8ed9a22cdf8391b9d01a8971619ed98570b0ac5208238b566a2c9aced044c5c5643356a1e6d24d43078474
+  languageName: node
+  linkType: hard
+
 "side-channel@npm:^1.0.4":
   version: 1.0.4
   resolution: "side-channel@npm:1.0.4"
@@ -14619,6 +14656,17 @@ __metadata:
   peerDependencies:
     vue: ^3.2.0
   checksum: 491ebb273cf9b668a0a0da5886a45d6ca34a5192ca58aceaecba222223748f35f7dc6519f0d2bfe065aaf0be95564cccea22096b60a805d67b0e020fc9f882c8
+  languageName: node
+  linkType: hard
+
+"vue-shepherd@npm:3.0.0":
+  version: 3.0.0
+  resolution: "vue-shepherd@npm:3.0.0"
+  dependencies:
+    shepherd.js: "npm:^11.1.0"
+  peerDependencies:
+    vue: ">=3.0.0"
+  checksum: 914b9a5f948243e7d4866604c7f8c398a5f1cd5ed701f95c4af4806de0737fe1a7c4bc8b1fd31404e8fd5fa508a6879834f461581abdea7c6ae8e3a84903b9a9
   languageName: node
   linkType: hard
 

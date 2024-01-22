@@ -70,6 +70,7 @@
 		"vue-feather": "2.0.0",
 		"vue-gtag": "2.0.1",
 		"vue-router": "4.2.5",
+		"vue-shepherd": "3.0.0",
 		"vue3-ace-editor": "2.2.4",
 		"vue3-draggable-resizable": "1.6.5"
 	},
