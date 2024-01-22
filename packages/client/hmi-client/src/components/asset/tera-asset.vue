@@ -174,25 +174,24 @@ header {
 	grid-column-start: 2;
 	color: var(--text-color-subdued);
 	padding: var(--gap-small) var(--gap);
-	transition: 0.2s;
 	display: flex;
 	gap: var(--gap);
 	align-items: center;
 	border-bottom: 1px solid var(--surface-border-light);
-	background: var(--surface-disabled);
+	background: var(--surface-ground);
 }
 
 header.shrinked {
 	height: 3rem;
 	position: sticky;
-	top: -1px;
+	top: 0px;
 	z-index: 100;
 	isolation: isolate;
-	background-color: rgba(255, 255, 255, 0.85);
+	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
 	padding: var(--gap-small) var(--gap);
 	border-bottom: 1px solid var(--surface-border-light);
-	box-shadow: 0px 4px 8px -7px #b8b8b8;
+	/* box-shadow: 0px 4px 8px -7px #b8b8b8; */
 }
 
 header.shrinked h4 {
@@ -202,7 +201,6 @@ header.shrinked h4 {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	max-width: var(--constrain-width);
-	font-size: var(--font-body-small);
 }
 
 h4,
