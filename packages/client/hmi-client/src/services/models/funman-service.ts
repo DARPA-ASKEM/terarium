@@ -337,7 +337,7 @@ export const renderFunmanBoundaryChart = (
 
 	let margin = 30;
 	if (height < 100 || width < 100) {
-		margin = 0;
+		margin = 5;
 	}
 
 	const trueBoxes = getBoxes(processedData, param1, param2, timestep, 'true');

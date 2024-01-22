@@ -44,10 +44,17 @@
 			</header>
 		</div>
 
-		<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter">
+		<div v-for="(bound, parameter) in lastTrueBox?.bounds" :key="parameter + Date.now()">
 			<div class="variables-row" v-if="parameterOptions.includes(parameter)">
 				<RadioButton v-model="selectedParam" :value="parameter" />
 				<div>{{ parameter }}</div>
+				<div>
+					{{ selectedBoxId === '' ? bound.lb.toFixed(4) : selectedBox[parameter][0].toFixed(4) }}
+				</div>
+				<div>
+					{{ selectedBoxId === '' ? bound.ub.toFixed(4) : selectedBox[parameter][1].toFixed(4) }}
+				</div>
+				<!--
 				<InputNumber
 					mode="decimal"
 					:min-fraction-digits="1"
@@ -60,6 +67,7 @@
 					class="p-inputtext-sm"
 					v-model="bound.ub"
 				/>
+				-->
 				<tera-funman-boundary-chart
 					:processed-data="processedData as FunmanProcessedData"
 					:param1="selectedParam"
@@ -68,10 +76,12 @@
 					:selectedBoxId="selectedBoxId"
 					@click="selectedParam2 = parameter"
 				/>
+				<!--
 				&nbsp;
 				<div v-if="selectedBox[parameter]">
 					{{ selectedBox[parameter][0].toFixed(4) }}:{{ selectedBox[parameter][1].toFixed(4) }}
 				</div>
+				-->
 			</div>
 		</div>
 	</div>
@@ -88,7 +98,7 @@ import {
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
+// import InputNumber from 'primevue/inputnumber';
 import type { FunmanBox, RenderOptions } from '@/services/models/funman-service';
 import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
@@ -116,7 +126,11 @@ const drilldownChartOptions = ref<RenderOptions>({
 	width: 550,
 	height: 275,
 	click: (d: any) => {
-		selectedBoxId.value = d.id;
+		if (d.id === selectedBoxId.value) {
+			selectedBoxId.value = '';
+		} else {
+			selectedBoxId.value = d.id;
+		}
 	}
 });
 
