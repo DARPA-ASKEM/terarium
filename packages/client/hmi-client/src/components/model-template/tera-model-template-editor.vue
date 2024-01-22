@@ -80,7 +80,7 @@
 			<template v-for="{ edges } in junctions">
 				<path
 					v-for="(edge, index) in edges"
-					:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
+					:d="drawPath(edge.points)"
 					stroke="var(--text-color-subdued)"
 					stroke-width="2"
 					:key="index"
@@ -189,7 +189,7 @@ function collisionFn(p: Position) {
 }
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
-	return getAStarPath(a, b, collisionFn);
+	return getAStarPath(a, b, collisionFn, { w: 25, h: 25 });
 }
 
 const pathFn = d3
@@ -348,11 +348,21 @@ const updatePosition = ({ x, y }, node: any) => {
 			if (isJunction && id === node.id) {
 				edge.points[0].x += x / canvasTransform.k;
 				edge.points[0].y += y / canvasTransform.k;
+
+				edge.points = interpolatePointsForCurve(
+					edge.points[0],
+					edge.points[edge.points.length - 1]
+				);
 			}
 			// On card move
 			if (!isJunction && edge.target.cardId === node.id) {
 				edge.points[edge.points.length - 1].x += x / canvasTransform.k;
 				edge.points[edge.points.length - 1].y += y / canvasTransform.k;
+
+				edge.points = interpolatePointsForCurve(
+					edge.points[0],
+					edge.points[edge.points.length - 1]
+				);
 			}
 		});
 	});
