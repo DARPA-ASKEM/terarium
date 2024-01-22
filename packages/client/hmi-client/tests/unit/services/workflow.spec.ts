@@ -114,3 +114,17 @@ describe('basic tests to make sure it all works', () => {
 		expect(Z.outputs[0].value?.[0]).to.eq(10);
 	});
 });
+
+describe('operator state sync/staleness check', () => {
+	const operatorState = { vars: ['a', 'b', 'c'], extra: 123 };
+	const outputState1 = { vars: ['a', 'b', 'c'], constraintGroups: [{ name: 'abc' }] };
+	const outputState2 = { vars: ['a', 'b', 'c'] };
+
+	it('states unsynced', () => {
+		expect(workflowService.isOperatorStateInSync(operatorState, outputState1)).to.eq(false);
+	});
+
+	it('states synced', () => {
+		expect(workflowService.isOperatorStateInSync(operatorState, outputState2)).to.eq(true);
+	});
+});

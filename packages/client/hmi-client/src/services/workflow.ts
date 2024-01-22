@@ -358,3 +358,20 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
 }
+
+// Check if the current-state matches that of the output-state.
+// Note operatorState subsumes the keys of the outputState
+export const isOperatorStateInSync = (
+	operatorState: Record<string, any>,
+	outputState: Record<string, any>
+) => {
+	const hasKey = Object.prototype.hasOwnProperty;
+
+	const keys = Object.keys(outputState);
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		if (!hasKey.call(operatorState, key)) return false;
+		if (!_.isEqual(operatorState[key], outputState[key])) return false;
+	}
+	return true;
+};
