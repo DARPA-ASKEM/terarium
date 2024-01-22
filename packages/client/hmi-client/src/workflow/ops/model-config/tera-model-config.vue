@@ -93,6 +93,7 @@ import { StratifiedMatrix } from '@/types/Model';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraOutputDropdown from '@/components/widgets/tera-output-dropdown.vue';
+import { useToastService } from '@/services/toast';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -312,6 +313,12 @@ const createConfiguration = async () => {
 		newModel
 	);
 
+	if (!data) {
+		useToastService().error('', 'Failed to create model configuration');
+		return;
+	}
+
+	useToastService().success('', 'Created model configuration');
 	emit('append-output-port', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: state.name,
@@ -388,13 +395,12 @@ onMounted(async () => {
 		const m = await getModel(input.value[0]);
 		if (m) {
 			model.value = m;
-
-			// TODO: set this only if configs don't exist already
-			// set the state with the model initials and params
-			const state = _.cloneDeep(props.node.state);
-			state.initials = m.semantics?.ode.initials;
-			state.parameters = m.semantics?.ode.parameters;
-			emit('update-state', state);
+			if (outputs.value.length === 0) {
+				const state = _.cloneDeep(props.node.state);
+				state.initials = m.semantics?.ode.initials;
+				state.parameters = m.semantics?.ode.parameters;
+				emit('update-state', state);
+			}
 		}
 	}
 });
