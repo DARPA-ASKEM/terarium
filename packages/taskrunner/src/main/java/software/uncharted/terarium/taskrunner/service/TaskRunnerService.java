@@ -29,7 +29,7 @@ import software.uncharted.terarium.taskrunner.configuration.Config;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class TaskRequestService {
+public class TaskRunnerService {
 
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
@@ -92,10 +92,11 @@ public class TaskRequestService {
 			return;
 		}
 
-		dispatchBasicIOTask(req);
+		// for now just support a basic single input, single output task
+		dispatchSingleInputSingleOutputTask(req);
 	}
 
-	private void dispatchBasicIOTask(TaskRequest req) throws IOException, InterruptedException {
+	private void dispatchSingleInputSingleOutputTask(TaskRequest req) throws IOException, InterruptedException {
 
 		Task task = new Task(req);
 		try {

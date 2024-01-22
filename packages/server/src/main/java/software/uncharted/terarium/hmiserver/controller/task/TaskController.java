@@ -20,6 +20,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
@@ -52,11 +54,17 @@ public class TaskController {
 
 	final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
 
-	@Value("${terarium.task-runner-request-queue}")
-	private String TASK_RUNNER_REQUEST_QUEUE;
+	@Value("${terarium.task-runner-request-exchange}")
+	private String TASK_RUNNER_REQUEST_EXCHANGE;
 
 	@Value("${terarium.task-runner-cancellation-exchange}")
 	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
+
+	@Value("${terarium.task-runner-response-exchange}")
+	private String TASK_RUNNER_RESPONSE_EXCHANGE;
+
+	@Value("${terarium.task-runner-response-queue}")
+	private String TASK_RUNNER_RESPONSE_QUEUE;
 
 	private void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
 		// Declare a direct exchange
@@ -70,6 +78,26 @@ public class TaskController {
 		// Bind the queue to the exchange with a routing key
 		Binding binding = BindingBuilder.bind(queue).to(exchange).with(routingKey);
 		rabbitAdmin.declareBinding(binding);
+	}
+
+	private void declareAndBindQueue(String exchangeName, String queueName) {
+		// Declare a direct exchange
+		DirectExchange exchange = new DirectExchange(exchangeName);
+		rabbitAdmin.declareExchange(exchange);
+
+		// Declare a queue
+		Queue queue = new Queue(queueName);
+		rabbitAdmin.declareQueue(queue);
+
+		// Bind the queue to the exchange with a routing key
+		Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
+		rabbitAdmin.declareBinding(binding);
+	}
+
+	@PostConstruct
+	void init() {
+		declareAndBindQueue(TASK_RUNNER_REQUEST_EXCHANGE, TASK_RUNNER_REQUEST_EXCHANGE);
+		declareAndBindQueue(TASK_RUNNER_RESPONSE_EXCHANGE, TASK_RUNNER_RESPONSE_EXCHANGE);
 	}
 
 	@PostMapping
@@ -89,7 +117,7 @@ public class TaskController {
 		try {
 			// send the request to the task runner
 			final String jsonStr = objectMapper.writeValueAsString(req);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_REQUEST_QUEUE, jsonStr);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_REQUEST_EXCHANGE, jsonStr);
 		} catch (Exception e) {
 			rabbitAdmin.deleteQueue(queueName);
 			return ResponseEntity.badRequest().build();
@@ -99,6 +127,16 @@ public class TaskController {
 		resp.setId(req.getId());
 		resp.setStatus(TaskStatus.QUEUED);
 		return ResponseEntity.ok().body(resp);
+	}
+
+	@PutMapping("/{task-id}")
+	@IgnoreRequestLogging
+	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
+		// send the cancellation to the task runner
+		final String jsonStr = "";
+		rabbitTemplate.convertAndSend(TASK_RUNNER_CANCELLATION_EXCHANGE, jsonStr);
+
+		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/{task-id}")
