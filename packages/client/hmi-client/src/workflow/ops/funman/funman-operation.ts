@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { TimeSpan, FunmanInterval } from '@/types/Types';
+import type { TimeSpan, FunmanInterval } from '@/types/Types';
 
 export interface ConstraintGroup {
 	borderColour: string;

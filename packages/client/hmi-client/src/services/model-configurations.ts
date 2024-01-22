@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import API from '@/api/api';
-import { ModelConfiguration, Model } from '@/types/Types';
+import type { ModelConfiguration, Model } from '@/types/Types';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model_configurations`);

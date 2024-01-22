@@ -41,11 +41,15 @@
 import _ from 'lodash';
 import { ref, shallowRef, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
 // import { csvParse } from 'd3';
-// import { ModelConfiguration } from '@/types/Types';
+// import type { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
 import { ProgressState, WorkflowNode, OperatorStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
-import { CsvAsset, EnsembleCalibrationCiemssRequest, EnsembleModelConfigs } from '@/types/Types';
+import type {
+	CsvAsset,
+	EnsembleCalibrationCiemssRequest,
+	EnsembleModelConfigs
+} from '@/types/Types';
 import {
 	makeEnsembleCiemssCalibration,
 	getRunResultCiemss,

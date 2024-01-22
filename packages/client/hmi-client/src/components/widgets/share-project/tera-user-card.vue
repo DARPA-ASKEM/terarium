@@ -23,7 +23,7 @@ import Avatar from 'primevue/avatar';
 import { computed, ref, watch } from 'vue';
 import useAuthStore from '@/stores/auth';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
-import { PermissionUser } from '@/types/Types';
+import type { PermissionUser } from '@/types/Types';
 
 const props = defineProps<{ user: PermissionUser; permission?: string }>();
 const emit = defineEmits(['select-permission']);

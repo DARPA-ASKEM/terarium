@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { getXDDArtifacts } from '@/services/data';
-import { Document, Extraction } from '@/types/Types';
+import type { Document, Extraction } from '@/types/Types';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi } from '@/utils/data-util';
 import Card from 'primevue/card';

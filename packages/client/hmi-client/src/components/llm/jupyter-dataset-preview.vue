@@ -21,7 +21,7 @@ import { computed } from 'vue';
 import { SessionContext } from '@jupyterlab/apputils';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { CsvAsset } from '@/types/Types';
+import type { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
 	jupyterSession: SessionContext;

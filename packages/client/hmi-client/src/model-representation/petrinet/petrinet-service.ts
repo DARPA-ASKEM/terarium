@@ -8,8 +8,34 @@ import {
 	TypingSemantics,
 	ModelConfiguration
 } from '@/types/Types';
-import { PetriNet } from '@/petrinet/petrinet-service';
 import { updateModelConfiguration } from '@/services/model-configurations';
+import { logger } from '@/utils/logger';
+import { AxiosError } from 'axios';
+
+// deprecated section - this is the acset representation, we should do the conversion on model-service
+interface PetriNet {
+	S: State[]; // List of state names
+	T: Transition[]; // List of transition names
+	I: Input[]; // List of inputs
+	O: Output[]; // List of outputs
+}
+interface State {
+	sname: string;
+	uid?: string | number;
+}
+interface Transition {
+	tname: string;
+	uid?: string | number;
+}
+interface Input {
+	it: number;
+	is: number;
+}
+interface Output {
+	ot: number;
+	os: number;
+}
+// end deprecated section
 
 export interface NodeData {
 	type: string;
@@ -25,6 +51,61 @@ export enum StratifiedModel {
 	Mira = 'mira',
 	Catlab = 'catlab'
 }
+
+// Transform list of mathML strings to a petrinet ascet
+export const mathmlToPetri = async (mathml: string[]) => {
+	try {
+		const resp = await API.post('/transforms/mathml-to-acset', mathml);
+
+		if (resp && resp.status === 200 && resp.data) {
+			return resp.data;
+		}
+		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });
+	} catch (error: unknown) {
+		if ((error as AxiosError).isAxiosError) {
+			const axiosError = error as AxiosError;
+			logger.error('mathmlToPetri Error: ', axiosError.response?.data || axiosError.message, {
+				showToast: false
+			});
+		} else {
+			logger.error(error, { showToast: false });
+		}
+	}
+	return null;
+};
+
+// Transform a petrinet into latex
+export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
+	try {
+		const payloadPetri = {
+			S: petri.S.map((s) => ({ sname: s.sname })),
+			T: petri.T.map((t) => ({ tname: t.tname })),
+			I: petri.I,
+			O: petri.O
+		};
+
+		const resp = await API.post('/transforms/acset-to-latex', payloadPetri);
+
+		if (resp && resp.status === 200 && resp.data && typeof resp.data === 'string') {
+			return resp.data;
+		}
+
+		logger.error('[Model Service] petriToLatex: Server did not provide a correct response', {
+			showToast: false,
+			toastTitle: 'Model Service'
+		});
+	} catch (error: unknown) {
+		if ((error as AxiosError).isAxiosError) {
+			const axiosError = error as AxiosError;
+			logger.error('petriToLatex Error:', axiosError.response?.data || axiosError.message, {
+				showToast: false
+			});
+		} else {
+			logger.error(error, { showToast: false });
+		}
+	}
+	return null;
+};
 
 // Used to derive equations
 // AMR => ACSet => ODE => Equation => Latex

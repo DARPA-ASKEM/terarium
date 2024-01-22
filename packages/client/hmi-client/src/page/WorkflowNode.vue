@@ -1,13 +1,12 @@
 <template>
 	<template v-if="node">
 		<tera-model-workflow-wrapper v-if="isNodeType(OperationType.MODEL)" :node="node" />
-		<tera-stratify-julia v-else-if="isNodeType(OperationType.STRATIFY_JULIA)" :node="node" />
 		<tera-stratify-mira v-else-if="isNodeType(OperationType.STRATIFY_MIRA)" :node="node" />
 		<tera-dataset-transformer
 			v-else-if="isNodeType(OperationType.DATASET_TRANSFORMER)"
 			:node="node"
 		/>
-		<tera-dataset-workflow-wrapper v-else-if="isNodeType(OperationType.DATASET)" :node="node" />
+		<tera-dataset-drilldown v-else-if="isNodeType(OperationType.DATASET)" :node="node" />
 		<tera-calibrate-julia v-else-if="isNodeType(OperationType.CALIBRATION_JULIA)" :node="node" />
 		<tera-simulate-julia v-else-if="isNodeType(OperationType.SIMULATE_JULIA)" :node="node" />
 		<tera-calibrate-ciemss v-else-if="isNodeType(OperationType.CALIBRATION_CIEMSS)" :node="node" />
@@ -32,7 +31,7 @@ import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/w
 import * as workflowService from '@/services/workflow';
 
 import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
-import TeraDatasetWorkflowWrapper from '@/workflow/ops/dataset/tera-dataset-workflow-wrapper.vue';
+import TeraDatasetDrilldown from '@/workflow/ops/dataset/tera-dataset-drilldown.vue';
 import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
 import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
 import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';
@@ -40,7 +39,6 @@ import TeraCalibrateCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibrate-
 import TeraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
 import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
 import TeraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
-import TeraStratifyJulia from '@/workflow/ops/stratify-julia/tera-stratify.vue';
 import TeraFunman from '@/workflow/ops/funman/tera-funman.vue';
 import teraStratifyMira from '@/workflow/ops/stratify-mira/tera-stratify-mira.vue';
 import TeraCodeAssetWrapper from '@/workflow/ops/code-asset/tera-code-asset-wrapper.vue';

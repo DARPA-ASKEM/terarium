@@ -73,3 +73,9 @@ a {
 		color: var(--primary-color-dark);
 	}
 }
+
+/* SplitButton menu width fix */
+.p-tieredmenu {
+	width: auto;
+	min-width: 3em; 
+}

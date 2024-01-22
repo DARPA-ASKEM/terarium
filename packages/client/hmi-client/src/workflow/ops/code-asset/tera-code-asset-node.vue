@@ -27,7 +27,7 @@ import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
 import { getCodeAsset } from '@/services/code';
 import { onMounted, ref, computed, watch } from 'vue';
-import { Code } from '@/types/Types';
+import type { Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';

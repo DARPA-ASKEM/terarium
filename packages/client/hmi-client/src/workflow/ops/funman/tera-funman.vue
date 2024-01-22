@@ -136,7 +136,12 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 
-import { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type {
+	FunmanPostQueriesRequest,
+	Model,
+	ModelConfiguration,
+	ModelParameter
+} from '@/types/Types';
 import { getQueries, makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -185,6 +190,9 @@ const requestConstraints = computed(
 	() =>
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
+			if (ele.timepoints) {
+				ele.timepoints.closed_upper_bound = true;
+			}
 			if (ele.variables.length === 1) {
 				// State Variable Constraint
 				return {
@@ -284,7 +292,7 @@ const getStatus = async (runId: string) => {
 
 	poller
 		.setInterval(3000)
-		.setThreshold(50)
+		.setThreshold(100)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
 			if (response.done && response.done === true) {
@@ -375,7 +383,14 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
+	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+
+	model.value.semantics?.ode.parameters?.forEach((param) => {
+		if (initialVars?.includes(param.id)) return;
+		modelColumnNameOptions.push(param.id);
+	});
+
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
 	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {

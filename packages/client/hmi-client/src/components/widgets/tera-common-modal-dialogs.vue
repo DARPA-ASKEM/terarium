@@ -8,16 +8,21 @@
 			@close-modal="isProjectConfigDialogVisible = false"
 		/>
 	</Teleport>
-	<Dialog :header="`Remove ${menuProject?.name}`" v-model:visible="isRemoveDialogVisible">
-		<p>
-			You are about to remove project
-			<em>{{ menuProject?.name }}</em>
-			.
+	<Dialog
+		modal
+		:header="`Delete ${menuProject?.name}?`"
+		v-model:visible="isRemoveDialogVisible"
+		style="max-width: 640px"
+	>
+		<p style="margin-bottom: 0.5rem">
+			This action is irreversible and will permanently remove
+			<span style="font-weight: bold">{{ menuProject?.name }}</span>
+			from the system.
 		</p>
 		<p>Are you sure?</p>
 		<template #footer>
 			<Button label="Cancel" class="p-button-secondary" @click="isRemoveDialogVisible = false" />
-			<Button label="Remove project" @click="removeProject" />
+			<Button label="Delete project" severity="danger" @click="removeProject" />
 		</template>
 	</Dialog>
 	<tera-share-project v-if="menuProject" v-model="isShareDialogVisible" :project="menuProject" />

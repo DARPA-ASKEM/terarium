@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { User } from '@/types/Types';
+import type { User } from '@/types/Types';
 import Keycloak from 'keycloak-js';
 import axios, { AxiosHeaders } from 'axios';
 import { computed, ref } from 'vue';

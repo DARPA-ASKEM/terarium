@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
-import { ModelConfiguration } from '@/types/Types';
+import type { ModelConfiguration } from '@/types/Types';
 import Checkbox from 'primevue/checkbox';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';

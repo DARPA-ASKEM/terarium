@@ -4,7 +4,7 @@ import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
-import { Model } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
 
 export interface NodeData {

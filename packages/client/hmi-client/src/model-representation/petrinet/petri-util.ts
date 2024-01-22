@@ -17,7 +17,7 @@ import {
 	extractNestedStratas
 } from '@/model-representation/petrinet/mira-petri';
 import { createMatrix2D } from '@/utils/pivot';
-import { Model } from '@/types/Types';
+import type { Model } from '@/types/Types';
 
 export const getPetrinetRenderer = (
 	model: Model,
