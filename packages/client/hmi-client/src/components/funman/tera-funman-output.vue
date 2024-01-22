@@ -23,7 +23,7 @@
 					@click="selectedParam2 = ''"
 				/>
 			</div>
-			<TeraFunmanBoundaryChart
+			<tera-funman-boundary-chart
 				:processed-data="processedData as FunmanProcessedData"
 				:param1="selectedParam"
 				:param2="selectedParam2"
@@ -60,7 +60,7 @@
 					class="p-inputtext-sm"
 					v-model="bound.ub"
 				/>
-				<TeraFunmanBoundaryChart
+				<tera-funman-boundary-chart
 					:processed-data="processedData as FunmanProcessedData"
 					:param1="selectedParam"
 					:param2="parameter"
