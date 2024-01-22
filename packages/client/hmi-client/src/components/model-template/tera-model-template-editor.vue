@@ -189,7 +189,7 @@ function collisionFn(p: Position) {
 }
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
-	return getAStarPath(a, b, collisionFn, { w: 25, h: 25 });
+	return getAStarPath(a, b, collisionFn, { w: 20, h: 20 });
 }
 
 const pathFn = d3
@@ -231,10 +231,10 @@ function createNewEdge(card: ModelTemplate, portId: string) {
 				edges: [
 					{
 						target,
-						points: [
+						points: interpolatePointsForCurve(
 							{ x: currentPortPosition.x + 510, y: currentPortPosition.y },
 							{ x: currentPortPosition.x, y: currentPortPosition.y }
-						]
+						)
 					}
 				]
 			});
@@ -267,10 +267,10 @@ function createNewEdge(card: ModelTemplate, portId: string) {
 		const index = junctions.value.findIndex(({ id }) => id === junctionIdForNewEdge);
 		junctions.value[index].edges.push({
 			target,
-			points: [
+			points: interpolatePointsForCurve(
 				{ x: junctions.value[index].x + 10, y: junctions.value[index].y + 10 },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
-			]
+			)
 		});
 
 		cancelNewEdge();
