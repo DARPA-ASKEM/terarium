@@ -13,21 +13,20 @@
 					<div class="section-row timespan">
 						<div class="button-column">
 							<label>Start time</label>
-							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.start" />
+							<InputNumber v-model="knobs.currentTimespan.start" />
 						</div>
 						<div class="button-column">
 							<label>End time</label>
-							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.end" />
+							<InputNumber v-model="knobs.currentTimespan.end" />
 						</div>
 						<div class="button-column">
 							<label>Number of steps</label>
-							<InputNumber inputId="integeronly" v-model="knobs.numberOfSteps" />
+							<InputNumber v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
 					<InputText
 						:disabled="true"
 						class="p-inputtext-sm timespan-list"
-						inputId="integeronly"
 						v-model="requestStepListString"
 					/>
 					<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
@@ -202,12 +201,13 @@ const requestConstraints = computed(
 					timepoints: ele.timepoints
 				};
 			}
+
 			return {
 				// Linear Constraint
 				name: ele.name,
 				variables: ele.variables,
 				weights: ele.weights,
-				interval: ele.interval,
+				additive_bounds: ele.interval,
 				timepoints: ele.timepoints
 			};
 		})
@@ -292,7 +292,7 @@ const getStatus = async (runId: string) => {
 
 	poller
 		.setInterval(3000)
-		.setThreshold(50)
+		.setThreshold(100)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
 			if (response.done && response.done === true) {
@@ -383,7 +383,14 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
+	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+
+	model.value.semantics?.ode.parameters?.forEach((param) => {
+		if (initialVars?.includes(param.id)) return;
+		modelColumnNameOptions.push(param.id);
+	});
+
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
 	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
