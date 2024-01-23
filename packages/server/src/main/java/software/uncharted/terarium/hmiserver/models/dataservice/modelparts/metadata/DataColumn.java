@@ -2,12 +2,12 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
-public class DataColumn {
+public class DataColumn extends SupportAdditionalProperties {
 	private String id;
 	private String name;
 	private MetadataDataset dataset;
 }
-

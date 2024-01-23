@@ -1,14 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import java.util.List;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.util.List;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
-public class VariableStatement {
+public class VariableStatement extends SupportAdditionalProperties {
 	private String id;
 	private Variable variable;
 	@TSOptional
@@ -18,4 +19,3 @@ public class VariableStatement {
 	@TSOptional
 	private ProvenanceInfo provenance;
 }
-

@@ -4,13 +4,14 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class State {
+public class State extends SupportAdditionalProperties {
 	private String id;
 	@TSOptional
 	private String name;

@@ -1,13 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
-public class Card {
+public class Card extends SupportAdditionalProperties {
 	@JsonAlias("DESCRIPTION")
 	@TSOptional
 	private String description;

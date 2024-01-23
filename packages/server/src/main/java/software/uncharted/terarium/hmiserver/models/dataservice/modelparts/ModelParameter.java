@@ -3,10 +3,11 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
-public class ModelParameter {
+public class ModelParameter extends SupportAdditionalProperties {
 	private String id;
 
 	@TSOptional
@@ -27,4 +28,3 @@ public class ModelParameter {
 	@TSOptional
 	private ModelUnit unit;
 }
-

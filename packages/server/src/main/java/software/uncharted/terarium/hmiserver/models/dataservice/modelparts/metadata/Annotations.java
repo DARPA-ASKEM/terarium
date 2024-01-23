@@ -1,14 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import java.util.List;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.util.List;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
-public class Annotations {
+public class Annotations extends SupportAdditionalProperties {
 	@TSOptional
 	private String license;
 

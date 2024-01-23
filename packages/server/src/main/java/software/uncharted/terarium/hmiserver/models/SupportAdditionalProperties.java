@@ -6,18 +6,21 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
-import lombok.Data;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
-@Data
 public class SupportAdditionalProperties {
+
+	@TSIgnore
 	private Map<String, Object> additionalProperties = new HashMap<>();
 
 	@JsonAnyGetter
+	@TSIgnore
 	public Map<String, Object> getAdditionalProperties() {
 		return additionalProperties;
 	}
 
 	@JsonAnySetter
+	@TSIgnore
 	public void setAdditionalProperties(String name, Object value) {
 		additionalProperties.put(name, value);
 	}

@@ -2,20 +2,20 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
-
-import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ModelDescription implements Serializable {
+public class ModelDescription extends SupportAdditionalProperties implements Serializable {
 
 	static public ModelDescription fromModel(Model model) {
 
@@ -25,7 +25,7 @@ public class ModelDescription implements Serializable {
 
 		if (model.getId() != null) {
 			desc.setId(model.getId());
-		}		
+		}
 
 		if (model.getHeader() != null) {
 			desc.setHeader(new ModelHeader()
