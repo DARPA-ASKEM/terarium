@@ -40,7 +40,10 @@
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
 				</span>
-				<div v-else-if="slotProps.data.type === ParamType.DISTRIBUTION">
+				<div
+					v-else-if="slotProps.data.type === ParamType.DISTRIBUTION"
+					class="distribution-container"
+				>
 					<label>Min</label>
 					<InputNumber
 						class="p-inputtext-sm"
@@ -117,7 +120,7 @@ import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import { ParamType } from '@/types/common';
+import { ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import InputSwitch from 'primevue/inputswitch';
 import { pythonInstance } from '@/python/PyodideController';
@@ -130,7 +133,7 @@ const typeOptions = [
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
-	data: any[];
+	data: ModelConfigTableData[];
 	stratifiedModelType: StratifiedModel | null;
 	tableType: StratifiedMatrix;
 	hideHeader?: boolean;
@@ -202,5 +205,11 @@ const updateConfigFromMatrix = (configToUpdate: ModelConfiguration) => {
 
 .hide-header :deep(.p-datatable-thead) {
 	display: none;
+}
+
+.distribution-container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-small);
 }
 </style>

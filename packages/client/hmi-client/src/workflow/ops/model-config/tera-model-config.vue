@@ -83,7 +83,7 @@ import {
 	getModelConfigurationById
 } from '@/services/model-configurations';
 import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
-import { ParamType } from '@/types/common';
+import { ModelConfigTableData, ParamType } from '@/types/common';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
 	getUnstratifiedInitials,
@@ -128,7 +128,7 @@ const emit = defineEmits([
 
 const formSteps = ref([{ label: 'Context' }, { label: 'Set values' }]);
 
-const selectedOutputId = ref<string>();
+const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
@@ -175,12 +175,12 @@ const initials = computed<Map<string, string[]>>(() => {
 	return getUnstratifiedInitials(model.value);
 });
 
-const tableFormattedInitials = computed(() => {
-	const formattedInitials: any[] = [];
+const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
+	const formattedInitials: ModelConfigTableData[] = [];
 
 	if (stratifiedModelType.value) {
 		initials.value.forEach((vals, init) => {
-			const tableFormattedMatrix = vals.map((v) => {
+			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const initial = configInitials.value?.find((i) => i.target === v);
 				return {
 					id: v,
@@ -198,7 +198,6 @@ const tableFormattedInitials = computed(() => {
 				value: 'matrix',
 				source: '',
 				visibility: false,
-				values: vals,
 				tableFormattedMatrix
 			});
 		});
@@ -218,12 +217,12 @@ const tableFormattedInitials = computed(() => {
 	return formattedInitials;
 });
 
-const tableFormattedParams = computed(() => {
-	const formattedParams: any[] = [];
+const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
+	const formattedParams: ModelConfigTableData[] = [];
 
 	if (stratifiedModelType.value) {
 		parameters.value.forEach((vals, init) => {
-			const tableFormattedMatrix = vals.map((v) => {
+			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const param = configParams.value?.find((i) => i.id === v);
 				const paramType = param?.distribution ? ParamType.DISTRIBUTION : ParamType.CONSTANT;
 				return {

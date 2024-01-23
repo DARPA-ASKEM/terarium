@@ -41,8 +41,8 @@ import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 
 defineProps<{
-	options?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
-	output?: WorkflowOutput<any>['id'];
+	options: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
+	output: WorkflowOutput<any>['id'];
 	isSelectable?: boolean;
 	isLoading?: boolean;
 }>();

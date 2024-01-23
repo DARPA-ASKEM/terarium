@@ -4,8 +4,9 @@
 			<header v-if="!hideHeader">
 				<h5>{{ title ?? 'Preview' }}</h5>
 				<tera-output-dropdown
+					v-if="options && output"
 					:options="options"
-					:is-selectable="isSelectable"
+					:is-selectable="isSelectable ?? false"
 					:is-loading="isLoading"
 					:output="output"
 					@update:output="(e) => emit('update:output', e)"
