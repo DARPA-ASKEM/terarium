@@ -48,7 +48,6 @@
 				<label>Start time</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					v-model="startTime"
 					@update:model-value="
 						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
@@ -59,7 +58,6 @@
 				<label>End time</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					v-model="endTime"
 					@update:model-value="
 						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
@@ -70,7 +68,6 @@
 				<label>Lower bound</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					mode="decimal"
 					:min-fraction-digits="3"
 					:max-fraction-digits="3"
@@ -84,7 +81,6 @@
 				<label>Upper bound</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					mode="decimal"
 					:min-fraction-digits="3"
 					:max-fraction-digits="3"

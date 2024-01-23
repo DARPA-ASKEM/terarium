@@ -13,21 +13,20 @@
 					<div class="section-row timespan">
 						<div class="button-column">
 							<label>Start time</label>
-							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.start" />
+							<InputNumber v-model="knobs.currentTimespan.start" />
 						</div>
 						<div class="button-column">
 							<label>End time</label>
-							<InputNumber inputId="integeronly" v-model="knobs.currentTimespan.end" />
+							<InputNumber v-model="knobs.currentTimespan.end" />
 						</div>
 						<div class="button-column">
 							<label>Number of steps</label>
-							<InputNumber inputId="integeronly" v-model="knobs.numberOfSteps" />
+							<InputNumber v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
 					<InputText
 						:disabled="true"
 						class="p-inputtext-sm timespan-list"
-						inputId="integeronly"
 						v-model="requestStepListString"
 					/>
 					<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
