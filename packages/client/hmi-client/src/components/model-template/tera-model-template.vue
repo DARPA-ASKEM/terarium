@@ -1,110 +1,143 @@
 <template>
-	<tera-infinite-canvas
-		@save-transform="saveTransform"
-		@mouseenter="setMouseOverCanvas(true)"
-		@mouseleave="setMouseOverCanvas(false)"
-		@drop="onDrop"
-		@dragover.prevent
-		@dragenter.prevent
-		@focus="() => {}"
-		@blur="() => {}"
-	>
-		<template #foreground>
-			<aside>
-				<section v-if="model?.header?.schemaName">
-					<header>Model framework</header>
-					<h5>{{ model.header.schemaName }}<i class="pi pi-info-circle"></i></h5>
-				</section>
-				<section>
-					<header>Model templates</header>
-					<ul>
-						<li v-for="(_, index) in 5" :key="index">
-							<tera-model-template-card :card="newCard" draggable="true" />
-						</li>
-					</ul>
-				</section>
-				<section class="trash">
-					<i class="pi pi-trash"></i>
-					<div>Drag items here to delete</div>
-				</section>
-			</aside>
-		</template>
-		<template #data>
-			<tera-canvas-item
-				v-for="(card, index) in cards"
+	<section class="card-container" :style="{ width: `${cardWidth}px` }">
+		<section class="card" ref="cardRef">
+			<div class="drag-handle"><i class="pi pi-pause" /></div>
+			<main>
+				<header>
+					<span :class="{ 'edit-name': isEditable }" @click="turnOnNameEdit" v-if="!isEditingName">
+						{{ card?.name }}
+					</span>
+					<Textarea
+						v-else
+						ref="nameInputRef"
+						v-model="name"
+						@keyup.enter="updateName()"
+						@keydown.enter="$event.preventDefault()"
+						@focusout="updateName"
+					/>
+				</header>
+				<tera-model-diagram :model="model" :is-editable="isEditable" is-preview />
+			</main>
+			<Button v-if="isEditable" icon="pi pi-ellipsis-v" rounded text />
+		</section>
+		<ul>
+			<li
+				v-for="({ id }, index) in [...model.model.states, ...model.semantics.ode.parameters]"
+				class="port"
+				:class="{ selectable: isEditable }"
 				:key="index"
-				:style="{
-					width: 'fit-content',
-					top: `${card.y}px`,
-					left: `${card.x}px`
-				}"
-				@dragging="(event) => updatePosition(card, event)"
+				@mouseenter="emit('port-mouseover', $event, cardWidth)"
+				@mouseleave="emit('port-mouseleave')"
+				@focus="() => {}"
+				@blur="() => {}"
+				@click.stop="emit('port-selected', id)"
 			>
-				<tera-model-template-card :card="card" />
-			</tera-canvas-item>
-		</template>
-	</tera-infinite-canvas>
+				{{ id }}
+			</li>
+		</ul>
+	</section>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { cloneDeep } from 'lodash';
-import { Model } from '@/types/Types';
-import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
-import TeraModelTemplateCard from './tera-model-template-card.vue';
-import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
+import { ref, computed, nextTick } from 'vue';
+import Button from 'primevue/button';
+import Textarea from 'primevue/textarea';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 
-defineProps<{
-	model?: Model;
-}>();
-
-interface ModelTemplateCard {
-	// Position on canvas
+interface ModelTemplate {
+	id: number;
+	name: string;
 	x: number;
 	y: number;
 }
 
-const newCard: ModelTemplateCard = { x: 0, y: 0 };
-let isMouseOverCanvas: boolean = false;
-let canvasTransform = { x: 0, y: 0, k: 1 };
+const props = defineProps<{ model: any; isEditable: boolean }>();
 
-const cards = ref<ModelTemplateCard[]>([{ x: 300, y: 40 }]);
+const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name']);
 
-const setMouseOverCanvas = (val: boolean) => {
-	isMouseOverCanvas = val;
-};
+// Used to pass card width.
+// Unsure if we want to set widths on certain cards but for now this works
+const cardRef = ref();
+const nameInputRef = ref();
+const isEditingName = ref(false);
+const name = ref(props.model.header.name);
 
-function saveTransform(newTransform: { k: number; x: number; y: number }) {
-	canvasTransform = newTransform;
+const cardWidth = computed(() => cardRef.value?.clientWidth ?? 0);
+
+const card = computed<ModelTemplate>(
+	() =>
+		props.model.metadata.templateCard ?? {
+			id: -1,
+			name: props.model.header.name,
+			x: 0,
+			y: 0
+		}
+);
+
+async function turnOnNameEdit() {
+	if (props.isEditable) {
+		isEditingName.value = true;
+		await nextTick();
+		if (nameInputRef.value) nameInputRef.value.$el.focus();
+	}
 }
 
-function updateNewCardPosition(event) {
-	newCard.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
-	newCard.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
+function updateName() {
+	emit('update-name', name);
+	isEditingName.value = false;
 }
-
-function onDrop(event) {
-	updateNewCardPosition(event);
-	cards.value.push(cloneDeep(newCard));
-}
-
-const updatePosition = (card: ModelTemplateCard, { x, y }) => {
-	if (!isMouseOverCanvas) return;
-	card.x += x / canvasTransform.k;
-	card.y += y / canvasTransform.k;
-};
 </script>
 
 <style scoped>
-aside {
-	width: 15rem;
+.card-container {
 	display: flex;
-	flex-direction: column;
-	height: 100%;
-	background-color: #f4f7fa;
-	border-right: 1px solid var(--surface-border-alt);
-	padding: 1rem;
-	gap: 0.5rem;
+	font-size: var(--font-caption);
+}
+
+.card {
+	display: flex;
+	background-color: var(--surface-section);
+	border-radius: var(--border-radius-medium);
+	outline: 1px solid var(--surface-border-alt);
+	min-width: 12rem;
+	position: relative;
+	box-shadow:
+		0px 1px 3px 0px rgba(0, 0, 0, 0.08),
+		0px 1px 2px 0px rgba(0, 0, 0, 0.04);
+
+	& > main {
+		width: 100%;
+		margin: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		overflow: hidden;
+
+		& > header {
+			text-align: center;
+
+			& > .edit-name {
+				cursor: pointer;
+			}
+
+			& > .p-inputtext {
+				padding: 0.2rem 0.3rem;
+				text-align: center;
+				width: fit-content;
+				font-size: var(--font-caption);
+			}
+		}
+	}
+	& > .p-button {
+		display: none;
+		position: absolute;
+		bottom: 0;
+		right: 0;
+	}
+
+	&:hover > .p-button {
+		display: block;
+	}
 }
 
 ul {
@@ -112,39 +145,41 @@ ul {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	margin-top: 0.5rem;
+	padding: 0.5rem 0;
+	margin: auto 0;
+
+	& > li {
+		background-color: var(--surface-section);
+		border: 1px solid var(--surface-border-alt);
+		border-top-right-radius: var(--border-radius);
+		border-bottom-right-radius: var(--border-radius);
+		padding: 0.15rem 0.25rem;
+		color: var(--text-color-subdued);
+		box-shadow:
+			0px 1px 3px 0px rgba(0, 0, 0, 0.08),
+			0px 1px 2px 0px rgba(0, 0, 0, 0.04);
+		/* Font should be "Latin Modern Math" */
+		font-family: serif;
+		font-style: italic;
+	}
+
+	& > li.selectable:hover {
+		background-color: var(--surface-highlight);
+		cursor: pointer;
+	}
 }
 
-h5 {
+.drag-handle {
+	width: 0.75rem;
+	border-top-left-radius: var(--border-radius-medium);
+	border-bottom-left-radius: var(--border-radius-medium);
+	background-color: var(--surface-highlight);
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
-	font-weight: var(--font-weight);
-}
 
-header {
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
-}
-
-.pi-info-circle {
-	color: var(--text-color-subdued);
-	cursor: help;
-}
-
-.trash {
-	margin-top: auto;
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	border: 1px dashed #9fa9b7;
-	border-radius: var(--border-radius);
-	background-color: #eff2f5;
-	text-align: center;
-	padding: 1rem 0;
-
-	& > .pi-trash {
-		font-size: 1.5rem;
-		margin-bottom: 0.5rem;
+	& > .pi {
+		font-size: 0.75rem;
+		color: var(--text-color-subdued);
 	}
 }
 </style>
