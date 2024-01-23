@@ -52,11 +52,16 @@ public class SnakeCaseRequestControllerAdvice implements RequestBodyAdvice {
 		return body;
 	}
 
+	private boolean containsKeyIgnoreCase(HttpHeaders headers, String key) {
+		return headers.keySet().stream()
+				.anyMatch(k -> k.equalsIgnoreCase(key));
+	}
+
 	@Override
 	public HttpInputMessage beforeBodyRead(HttpInputMessage inputMessage, MethodParameter parameter,
 			Type targetType, Class<? extends HttpMessageConverter<?>> converterType) throws IOException {
 
-		if (!inputMessage.getHeaders().containsKey("X-Enable-Camel-Case")) {
+		if (!containsKeyIgnoreCase(inputMessage.getHeaders(), "X-Enable-Camel-Case")) {
 			JsonNode root = snakecaseMapper.readTree(inputMessage.getBody());
 			String body = camelcaseMapper.writeValueAsString(root);
 			byte[] bytes = body.getBytes(StandardCharsets.UTF_8);

@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.ServerHttpRequest;
@@ -30,12 +31,17 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 		return returnType.getParameterType().isAssignableFrom(ResponseEntity.class);
 	}
 
+	private boolean containsKeyIgnoreCase(HttpHeaders headers, String key) {
+		return headers.keySet().stream()
+				.anyMatch(k -> k.equalsIgnoreCase(key));
+	}
+
 	@Override
 	public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
 			Class selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
 
 		if (body != null && selectedContentType == MediaType.APPLICATION_JSON
-				&& !request.getHeaders().containsKey("X-Enable-Camel-Case")) {
+				&& !containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Camel-Case")) {
 			try {
 				return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
 			} catch (JsonProcessingException ignored) {
