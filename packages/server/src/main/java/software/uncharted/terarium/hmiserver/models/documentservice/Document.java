@@ -17,7 +17,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class Document implements Serializable {
 
-	@JsonAlias("_gddid")
+	@JsonAlias("gdd_id")
 	private String gddId;
 
 	private String title;
