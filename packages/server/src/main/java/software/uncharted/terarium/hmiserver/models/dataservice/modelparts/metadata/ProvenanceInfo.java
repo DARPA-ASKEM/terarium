@@ -2,11 +2,11 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
-public class ProvenanceInfo {
+public class ProvenanceInfo extends SupportAdditionalProperties {
 	private String method;
 	private String description;
 }
-

@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
+import java.sql.Timestamp;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,14 +13,12 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.sql.Timestamp;
-import java.util.UUID;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ModelConfiguration {
+public class ModelConfiguration extends SupportAdditionalProperties {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
