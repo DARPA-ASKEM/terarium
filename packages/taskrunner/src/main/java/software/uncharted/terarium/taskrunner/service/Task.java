@@ -27,7 +27,6 @@ public class Task {
 
 	private ObjectMapper mapper;
 	private TaskRequest req;
-	private Runnable runnable;
 	private ProcessBuilder processBuilder;
 	private Process process;
 
