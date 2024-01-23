@@ -1099,10 +1099,10 @@ export interface Variable {
     id: string;
     name: string;
     metadata: VariableMetadata[];
+    dkg_groundings: DKGConcept[];
     column: DataColumn[];
     paper: Paper;
     equations: EquationVariable[];
-    dkg_groundings: DKGConcept[];
 }
 
 export interface StatementValue {
@@ -1126,6 +1126,12 @@ export interface VariableMetadata {
     value: string;
 }
 
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
+}
+
 export interface DataColumn {
     id: string;
     name: string;
@@ -1142,12 +1148,6 @@ export interface EquationVariable {
     id: string;
     text: string;
     image: string;
-}
-
-export interface DKGConcept {
-    id: string;
-    name: string;
-    score: number;
 }
 
 export interface MetadataDataset {
