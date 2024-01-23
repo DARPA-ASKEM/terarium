@@ -191,7 +191,6 @@ header.shrinked {
 	backdrop-filter: blur(6px);
 	padding: var(--gap-small) var(--gap);
 	border-bottom: 1px solid var(--surface-border-light);
-	/* box-shadow: 0px 4px 8px -7px #b8b8b8; */
 }
 
 header.shrinked h4 {
