@@ -27,6 +27,8 @@ export interface FunmanProcessedData {
 export interface RenderOptions {
 	width: number;
 	height: number;
+
+	constraints?: any[];
 	click?: Function;
 }
 
@@ -304,6 +306,33 @@ export const renderFumanTrajectories = (
 				.style('fill', '#888');
 		}
 	});
+
+	// Render constraints
+	// Since this is variable-vs-time, we can't display constraints that involve more
+	// than one variable, and just the selected variable
+	if (options.constraints && options.constraints.length > 0) {
+		const singleVariableConstraints = options.constraints
+			.filter((d) => d.variable)
+			.filter((d) => d.variable === state);
+
+		svg
+			.selectAll('.constraint-box')
+			.data(singleVariableConstraints)
+			.enter()
+			.append('rect')
+			.classed('constraint-box', true)
+			.attr('x', (d) => xScale(d.timepoints?.lb as number))
+			.attr('y', (d) => yScale(d.interval?.ub as number))
+			.attr('width', (d) => {
+				const w = xScale(d.timepoints?.ub as number) - xScale(d.timepoints?.lb as number);
+				return w;
+			})
+			.attr('height', (d) =>
+				Math.abs(yScale(d.interval?.ub as number) - yScale(d.interval?.lb as number))
+			)
+			.style('fill', '#f80')
+			.style('fill-opacity', 0.3);
+	}
 
 	return svg;
 };

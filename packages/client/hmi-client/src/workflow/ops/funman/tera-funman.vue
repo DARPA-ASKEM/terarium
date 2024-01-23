@@ -202,12 +202,13 @@ const requestConstraints = computed(
 					timepoints: ele.timepoints
 				};
 			}
+
 			return {
 				// Linear Constraint
 				name: ele.name,
 				variables: ele.variables,
 				weights: ele.weights,
-				interval: ele.interval,
+				additive_bounds: ele.interval,
 				timepoints: ele.timepoints
 			};
 		})

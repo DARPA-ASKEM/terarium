@@ -122,6 +122,8 @@ const processedData = ref<FunmanProcessedData>();
 const selectedBoxId = ref('');
 const selectedBox = ref<any>({});
 
+let inputConstraints: any[] = [];
+
 const drilldownChartOptions = ref<RenderOptions>({
 	width: 550,
 	height: 275,
@@ -136,6 +138,7 @@ const drilldownChartOptions = ref<RenderOptions>({
 
 const initalizeParameters = async () => {
 	const funmanResult = await getQueries(props.funModelId);
+	inputConstraints = funmanResult.request.constraints;
 	processedData.value = processFunman(funmanResult);
 	parameterOptions.value = [];
 
@@ -170,6 +173,7 @@ const renderGraph = async (boxId: string) => {
 		selectedTrajState.value,
 		boxId,
 		{
+			constraints: inputConstraints,
 			width,
 			height
 		}
