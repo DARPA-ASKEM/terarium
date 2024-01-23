@@ -106,7 +106,7 @@
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
 			@update-configuration="updateConfigFromMatrix"
-		></tera-stratified-matrix-modal>
+		/>
 	</Teleport>
 </template>
 
@@ -187,14 +187,13 @@ const updateExpression = async (value: Initial) => {
 };
 
 const updateConfigFromMatrix = (configToUpdate: ModelConfiguration) => {
-	const newParams = configToUpdate.configuration?.semantics.ode.parameters;
-	const newInits = configToUpdate.configuration?.semantics.ode.initials;
+	let newValues = [];
 	if (props.tableType === StratifiedMatrix.Parameters) {
-		emit('update-value', newParams);
+		newValues = configToUpdate.configuration?.semantics.ode.parameters;
+	} else if (props.tableType === StratifiedMatrix.Initials) {
+		newValues = configToUpdate.configuration?.semantics.ode.initials;
 	}
-	if (newInits) {
-		emit('update-value', newInits);
-	}
+	emit('update-value', newValues);
 };
 </script>
 
