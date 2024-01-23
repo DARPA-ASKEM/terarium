@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -32,16 +33,17 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @RequestMapping("/knowledge")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class KnowledgeController {
 
-	@Autowired
-	KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
-	@Autowired
-	SkemaUnifiedProxy skemaUnifiedProxy;
+	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
-	@Autowired
-	ProvenanceService provenanceService;
+
+	final SkemaUnifiedProxy skemaUnifiedProxy;
+
+
+	final ProvenanceService provenanceService;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -94,7 +96,7 @@ public class KnowledgeController {
 	 *                     model
 	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
 	 *                     specified dynamics from the code object in TDS
-	 * @param llm_assisted (Boolean): whether amr extraction is llm assisted
+	 * @param llmAssisted (Boolean): whether amr extraction is llm assisted
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code-to-amr")
@@ -142,7 +144,19 @@ public class KnowledgeController {
 	@PostMapping("/pdf-to-cosmos")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") String documentId) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postPDFToCosmos(documentId).getBody());
+
+		try {
+			JsonNode node = knowledgeMiddlewareProxy.postPDFToCosmos(documentId).getBody();
+
+
+			return ResponseEntity.ok(node);
+		} catch (Exception e) {
+			final String error = "Unable to create provenance";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	/**
