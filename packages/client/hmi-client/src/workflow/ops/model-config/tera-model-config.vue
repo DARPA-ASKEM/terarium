@@ -10,8 +10,12 @@
 					@update:output="onUpdateOutput"
 					@update:selection="onUpdateSelection"
 				/>
-				<Steps :model="formSteps" :readonly="false" @update:active-step="activeIndex = $event" />
-				<div v-if="activeIndex === 0" class="form-section">
+				<Accordion multiple :active-index="[0]">
+					<AccordionTab header="Diagram">
+						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
+					</AccordionTab>
+				</Accordion>
+				<div v-show="activeIndex === 0" class="form-section">
 					<h3>Name</h3>
 					<InputText
 						placeholder="Enter a name for this configuration"
@@ -25,7 +29,7 @@
 						@update:model-value="() => debouncedUpdateState({ description: configDescription })"
 					/>
 				</div>
-				<div v-else-if="activeIndex === 1">
+				<div v-show="activeIndex === 1">
 					<Accordion multiple :active-index="[0, 1]">
 						<AccordionTab header="Initials">
 							<tera-model-config-table
@@ -56,13 +60,26 @@
 		</section>
 		<template #footer>
 			<Button
+				v-if="activeIndex === 0"
+				label="Next: Set Values"
+				@click="activeIndex = 1"
+				outlined
+			></Button>
+			<Button
+				v-if="activeIndex === 1"
+				label="Previous: Context"
+				@click="activeIndex = 0"
+				outlined
+			></Button>
+			<Button
+				v-if="activeIndex === 1"
 				outlined
 				:disabled="!configName"
-				label="Run Configuration"
+				label="Run"
 				icon="pi pi-play"
 				@click="createConfiguration"
 			/>
-			<Button label="Close" @click="emit('close')" />
+			<Button style="margin-left: auto" label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -72,7 +89,6 @@ import _, { isEmpty } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import Steps from 'primevue/steps';
 import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -95,6 +111,7 @@ import AccordionTab from 'primevue/accordiontab';
 import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -126,8 +143,6 @@ const emit = defineEmits([
 	'update-output-port',
 	'close'
 ]);
-
-const formSteps = ref([{ label: 'Context' }, { label: 'Set values' }]);
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(

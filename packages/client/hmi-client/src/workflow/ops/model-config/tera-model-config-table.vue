@@ -30,7 +30,7 @@
 				/>
 			</template>
 		</Column>
-		<Column field="value" header="Initial value" style="width: 15%">
+		<Column field="value" header="Value" style="width: 15%">
 			<template #body="slotProps">
 				<span v-if="slotProps.data.type === ParamType.MATRIX">Matrix</span>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
