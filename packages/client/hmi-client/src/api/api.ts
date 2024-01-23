@@ -15,6 +15,7 @@ API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.token}`);
+		config.headers.set('x-enable-camel-case', 'true');
 		return config;
 	},
 	(error) => {
