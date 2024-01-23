@@ -1,9 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -169,19 +166,17 @@ public class KnowledgeController {
 			@PathVariable("model_id") UUID modelId,
 			@RequestParam("document_id") UUID documentId) {
 
-		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
-				ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
 		try {
+			Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
+				ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
 			provenanceService.createProvenance(provenancePayload);
-			return ResponseEntity
-					.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
 		} catch (Exception e) {
-			final String error = "Unable to create provenance";
+			final String error = "Unable to create provenance for profile-model";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
 		}
+
+		return ResponseEntity
+			.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
 	}
 
 	;
@@ -197,22 +192,23 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileDataset(
 			@PathVariable("dataset_id") UUID datasetId,
-			@RequestParam(name = "document_id", required = false) UUID documentId) {
+			@RequestParam(name = "document_id", required = false) Optional<UUID> documentId) {
 
-		Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
-				ProvenanceType.DATASET, documentId, ProvenanceType.DOCUMENT);
-
-		try {
-			provenanceService.createProvenance(provenancePayload);
-			return ResponseEntity.ok(
-					knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), documentId.toString()).getBody());
-		} catch (Exception e) {
-			final String error = "Unable to create provenance";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+		// Provenance call if a document id is provided
+		if (documentId.isPresent()) {
+			try {
+				Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
+				ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
+				provenanceService.createProvenance(provenancePayload);
+			} catch (Exception e) {
+				final String error = "Unable to create provenance for profile-dataset";
+				log.error(error, e);
+			}
 		}
+
+		final String docIdString = documentId.map(UUID::toString).orElse(null);
+		return ResponseEntity.ok(
+				knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), docIdString).getBody());
 	}
 
 	;
