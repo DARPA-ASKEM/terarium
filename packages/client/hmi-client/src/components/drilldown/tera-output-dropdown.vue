@@ -66,7 +66,7 @@ const emit = defineEmits(['update:selection', 'update:output']);
 
 .dropdown-option {
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 	font-size: var(--font-body-small);
 }
 

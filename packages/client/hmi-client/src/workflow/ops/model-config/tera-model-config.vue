@@ -92,8 +92,9 @@ import {
 import { StratifiedMatrix } from '@/types/Model';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import TeraOutputDropdown from '@/components/widgets/tera-output-dropdown.vue';
 import { useToastService } from '@/services/toast';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import { logger } from '@/utils/logger';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -313,7 +314,7 @@ const createConfiguration = async () => {
 	);
 
 	if (!data) {
-		useToastService().error('', 'Failed to create model configuration');
+		logger.error('Failed to create model configuration');
 		return;
 	}
 

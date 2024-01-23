@@ -29,7 +29,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import { useSlots } from 'vue';
 import { WorkflowOutput } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraOutputDropdown from '../widgets/tera-output-dropdown.vue';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 
 defineProps<{
 	title?: string;
