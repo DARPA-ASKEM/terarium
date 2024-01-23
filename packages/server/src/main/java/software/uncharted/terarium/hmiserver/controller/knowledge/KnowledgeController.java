@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
@@ -36,12 +35,9 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @RequiredArgsConstructor
 public class KnowledgeController {
 
-
 	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
-
 	final SkemaUnifiedProxy skemaUnifiedProxy;
-
 
 	final ProvenanceService provenanceService;
 
@@ -79,12 +75,13 @@ public class KnowledgeController {
 	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(@RequestBody Map<String, Object> requestMap) {
 		String format = (String) requestMap.getOrDefault("format", "latex");
 		String framework = (String) requestMap.getOrDefault("framework", "petrinet");
-		String modelId = (String) requestMap.get("modelId");
+		UUID modelId = UUID.fromString((String) requestMap.get("modelId"));
 		List<String> equations = (List<String>) requestMap.getOrDefault("equations", Collections.emptyList());
 
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
 		return ResponseEntity
-				.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId, equations).getBody());
+				.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId.toString(), equations)
+						.getBody());
 	}
 
 	/**
@@ -96,19 +93,20 @@ public class KnowledgeController {
 	 *                     model
 	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
 	 *                     specified dynamics from the code object in TDS
-	 * @param llmAssisted (Boolean): whether amr extraction is llm assisted
+	 * @param llmAssisted  (Boolean): whether amr extraction is llm assisted
 	 * @return (ExtractionResponse)
 	 */
 	@PostMapping("/code-to-amr")
 	@Secured(Roles.USER)
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
-			@RequestParam("code_id") String codeId,
+			@RequestParam("code_id") UUID codeId,
 			@RequestParam(name = "name", required = false) String name,
 			@RequestParam(name = "description", required = false) String description,
 			@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly,
 			@RequestParam(name = "llm_assisted", required = false) Boolean llmAssisted) {
 		return ResponseEntity.ok(
-				knowledgeMiddlewareProxy.postCodeToAMR(codeId, name, description, dynamicsOnly, llmAssisted).getBody());
+				knowledgeMiddlewareProxy.postCodeToAMR(codeId.toString(), name, description, dynamicsOnly, llmAssisted)
+						.getBody());
 	}
 
 	/**
@@ -126,13 +124,13 @@ public class KnowledgeController {
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFExtractions(
-			@RequestParam("document_id") String documentId,
+			@RequestParam("document_id") UUID documentId,
 			@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 			@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
 			@RequestParam(name = "name", required = false) String name,
 			@RequestParam(name = "description", required = false) String description) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy
-				.postPDFExtractions(documentId, annotateSkema, annotateMIT, name, description).getBody());
+				.postPDFExtractions(documentId.toString(), annotateSkema, annotateMIT, name, description).getBody());
 	}
 
 	/**
@@ -143,11 +141,10 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/pdf-to-cosmos")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") String documentId) {
+	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") UUID documentId) {
 
 		try {
-			JsonNode node = knowledgeMiddlewareProxy.postPDFToCosmos(documentId).getBody();
-
+			JsonNode node = knowledgeMiddlewareProxy.postPDFToCosmos(documentId.toString()).getBody();
 
 			return ResponseEntity.ok(node);
 		} catch (Exception e) {
