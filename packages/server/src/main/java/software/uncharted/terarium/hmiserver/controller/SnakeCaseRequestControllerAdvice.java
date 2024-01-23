@@ -56,7 +56,7 @@ public class SnakeCaseRequestControllerAdvice implements RequestBodyAdvice {
 	public HttpInputMessage beforeBodyRead(HttpInputMessage inputMessage, MethodParameter parameter,
 			Type targetType, Class<? extends HttpMessageConverter<?>> converterType) throws IOException {
 
-		if (inputMessage.getHeaders().containsKey("X-Enable-Snake-Case")) {
+		if (!inputMessage.getHeaders().containsKey("X-Enable-Camel-Case")) {
 			JsonNode root = snakecaseMapper.readTree(inputMessage.getBody());
 			String body = camelcaseMapper.writeValueAsString(root);
 			byte[] bytes = body.getBytes(StandardCharsets.UTF_8);

@@ -35,7 +35,7 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 			Class selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
 
 		if (body != null && selectedContentType == MediaType.APPLICATION_JSON
-				&& request.getHeaders().containsKey("X-Enable-Snake-Case")) {
+				&& !request.getHeaders().containsKey("X-Enable-Camel-Case")) {
 			try {
 				return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
 			} catch (JsonProcessingException ignored) {
