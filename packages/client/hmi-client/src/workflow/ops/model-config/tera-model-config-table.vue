@@ -16,7 +16,7 @@
 					text
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					icon="pi pi-table"
-					@click="openMatrixModal(tableType, slotProps.data.id)"
+					@click="openMatrixModal(slotProps.data)"
 				/>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
 				<Dropdown
@@ -89,9 +89,7 @@
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model-configuration="modelConfiguration"
-				:stratified-model-type="stratifiedModelType"
 				:data="slotProps.data.tableFormattedMatrix"
-				:table-type="tableType"
 				@update-value="(val: ModelParameter | Initial) => emit('update-value', [val])"
 			/>
 		</template>
@@ -105,17 +103,19 @@
 			:stratified-matrix-type="matrixModalContext.stratifiedMatrixType"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
-			@update-configuration="updateConfigFromMatrix"
+			@update-configuration="
+				(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
+			"
 		/>
 	</Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import type { ModelConfiguration, ModelParameter, Initial } from '@/types/Types';
-import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
+import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -134,12 +134,10 @@ const typeOptions = [
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	data: ModelConfigTableData[];
-	stratifiedModelType: StratifiedModel | null;
-	tableType: StratifiedMatrix;
 	hideHeader?: boolean;
 }>();
 
-const emit = defineEmits(['update-value']);
+const emit = defineEmits(['update-value', 'update-configuration']);
 
 const matrixModalContext = ref({
 	isOpen: false,
@@ -148,8 +146,14 @@ const matrixModalContext = ref({
 });
 
 const expandedRows = ref([]);
+const isInitial = (obj: Initial | ModelParameter): obj is Initial => 'target' in obj;
 
-const openMatrixModal = (type: StratifiedMatrix, id: string) => {
+const openMatrixModal = (datum: ModelConfigTableData) => {
+	const id = datum.id;
+	if (!datum.tableFormattedMatrix) return;
+	const type = isInitial(datum.tableFormattedMatrix[0].value)
+		? StratifiedMatrix.Initials
+		: StratifiedMatrix.Parameters;
 	matrixModalContext.value = {
 		isOpen: true,
 		stratifiedMatrixType: type,
@@ -160,6 +164,7 @@ const openMatrixModal = (type: StratifiedMatrix, id: string) => {
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
 const changeType = (param: ModelParameter, typeIndex: number) => {
+	// FIXME: changing between parameter types will delete the values of distribution, ideally we would want to keep these.
 	const type = typeOptions[typeIndex];
 	switch (type.value) {
 		case ParamType.CONSTANT:
@@ -180,20 +185,14 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	emit('update-value', [param]);
 };
 
+const stratifiedModelType = computed(() =>
+	getStratificationType(props.modelConfiguration.configuration)
+);
+
 const updateExpression = async (value: Initial) => {
 	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
 	value.expression_mathml = mathml;
 	emit('update-value', [value]);
-};
-
-const updateConfigFromMatrix = (configToUpdate: ModelConfiguration) => {
-	let newValues = [];
-	if (props.tableType === StratifiedMatrix.Parameters) {
-		newValues = configToUpdate.configuration?.semantics.ode.parameters;
-	} else if (props.tableType === StratifiedMatrix.Initials) {
-		newValues = configToUpdate.configuration?.semantics.ode.initials;
-	}
-	emit('update-value', newValues);
 };
 </script>
 

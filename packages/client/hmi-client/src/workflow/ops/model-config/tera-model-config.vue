@@ -38,9 +38,11 @@
 								v-if="modelConfiguration"
 								:model-configuration="modelConfiguration"
 								:data="tableFormattedInitials"
-								:stratified-model-type="stratifiedModelType"
-								:table-type="StratifiedMatrix.Initials"
 								@update-value="updateConfigInitial"
+								@update-configuration="
+									(configToUpdate: ModelConfiguration) =>
+										updateConfigInitial(configToUpdate.configuration?.semantics.ode.initials)
+								"
 							/>
 						</AccordionTab>
 						<AccordionTab header="Parameters">
@@ -48,9 +50,11 @@
 								v-if="modelConfiguration"
 								:model-configuration="modelConfiguration"
 								:data="tableFormattedParams"
-								:stratified-model-type="stratifiedModelType"
-								:table-type="StratifiedMatrix.Parameters"
 								@update-value="updateConfigParam"
+								@update-configuration="
+									(configToUpdate: ModelConfiguration) =>
+										updateConfigInitial(configToUpdate.configuration?.semantics.ode.parameters)
+								"
 							/>
 						</AccordionTab>
 					</Accordion>
@@ -107,7 +111,6 @@ import {
 	getUnstratifiedInitials,
 	getUnstratifiedParameters
 } from '@/model-representation/petrinet/mira-petri';
-import { StratifiedMatrix } from '@/types/Model';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { useToastService } from '@/services/toast';
