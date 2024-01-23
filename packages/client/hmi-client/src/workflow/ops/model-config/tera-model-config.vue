@@ -2,63 +2,62 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<tera-output-dropdown
-					style="margin-left: auto"
-					:output="selectedOutputId"
-					is-selectable
-					:options="outputs"
-					@update:output="onUpdateOutput"
-					@update:selection="onUpdateSelection"
-				/>
-				<Accordion multiple :active-index="[0]">
+				<Accordion multiple :active-index="[0, 1, 2, 3]">
+					<AccordionTab header="Context">
+						<template #header>
+							<tera-output-dropdown
+								@click.stop
+								style="margin-left: auto"
+								:output="selectedOutputId"
+								is-selectable
+								:options="outputs"
+								@update:output="onUpdateOutput"
+								@update:selection="onUpdateSelection"
+							/>
+						</template>
+						<h3>Name</h3>
+						<InputText
+							class="context-item"
+							placeholder="Enter a name for this configuration"
+							v-model="configName"
+							@update:model-value="() => debouncedUpdateState({ name: configName })"
+						/>
+						<h3>Description</h3>
+						<Textarea
+							class="context-item"
+							placeholder="Enter a description"
+							v-model="configDescription"
+							@update:model-value="() => debouncedUpdateState({ description: configDescription })"
+						/>
+					</AccordionTab>
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
+					<AccordionTab header="Initials">
+						<tera-model-config-table
+							v-if="modelConfiguration"
+							:model-configuration="modelConfiguration"
+							:data="tableFormattedInitials"
+							@update-value="updateConfigInitial"
+							@update-configuration="
+								(configToUpdate: ModelConfiguration) =>
+									updateConfigInitial(configToUpdate.configuration?.semantics.ode.initials)
+							"
+						/>
+					</AccordionTab>
+					<AccordionTab header="Parameters">
+						<tera-model-config-table
+							v-if="modelConfiguration"
+							:model-configuration="modelConfiguration"
+							:data="tableFormattedParams"
+							@update-value="updateConfigParam"
+							@update-configuration="
+								(configToUpdate: ModelConfiguration) =>
+									updateConfigParam(configToUpdate.configuration?.semantics.ode.parameters)
+							"
+						/>
+					</AccordionTab>
 				</Accordion>
-				<div v-show="activeIndex === 0" class="form-section">
-					<h3>Step 1: Context</h3>
-					<h3>Name</h3>
-					<InputText
-						placeholder="Enter a name for this configuration"
-						v-model="configName"
-						@update:model-value="() => debouncedUpdateState({ name: configName })"
-					/>
-					<h3>Description</h3>
-					<Textarea
-						placeholder="Enter a description"
-						v-model="configDescription"
-						@update:model-value="() => debouncedUpdateState({ description: configDescription })"
-					/>
-				</div>
-				<div v-show="activeIndex === 1">
-					<h3>Step 2: Set Values</h3>
-					<Accordion multiple :active-index="[0, 1]">
-						<AccordionTab header="Initials">
-							<tera-model-config-table
-								v-if="modelConfiguration"
-								:model-configuration="modelConfiguration"
-								:data="tableFormattedInitials"
-								@update-value="updateConfigInitial"
-								@update-configuration="
-									(configToUpdate: ModelConfiguration) =>
-										updateConfigInitial(configToUpdate.configuration?.semantics.ode.initials)
-								"
-							/>
-						</AccordionTab>
-						<AccordionTab header="Parameters">
-							<tera-model-config-table
-								v-if="modelConfiguration"
-								:model-configuration="modelConfiguration"
-								:data="tableFormattedParams"
-								@update-value="updateConfigParam"
-								@update-configuration="
-									(configToUpdate: ModelConfiguration) =>
-										updateConfigInitial(configToUpdate.configuration?.semantics.ode.parameters)
-								"
-							/>
-						</AccordionTab>
-					</Accordion>
-				</div>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="ConfigTabs.Notebook">
@@ -66,19 +65,6 @@
 		</section>
 		<template #footer>
 			<Button
-				v-if="activeIndex === 0"
-				label="Next: Set Values"
-				@click="activeIndex = 1"
-				outlined
-			></Button>
-			<Button
-				v-if="activeIndex === 1"
-				label="Previous: Context"
-				@click="activeIndex = 0"
-				outlined
-			></Button>
-			<Button
-				v-if="activeIndex === 1"
 				outlined
 				:disabled="!configName"
 				label="Run"
@@ -156,7 +142,6 @@ const selectedConfigId = computed(
 
 const configCache = ref<Record<string, ModelConfiguration>>({});
 
-const activeIndex = ref<number>(0);
 const configName = ref<string>(props.node.state.name);
 const configDescription = ref<string>(props.node.state.description);
 const model = ref<Model>();
@@ -431,5 +416,9 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap);
+}
+
+.context-item {
+	width: 100%;
 }
 </style>
