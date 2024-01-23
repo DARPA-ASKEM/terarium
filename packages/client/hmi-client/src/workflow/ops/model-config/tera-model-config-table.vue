@@ -46,6 +46,7 @@
 				>
 					<label>Min</label>
 					<InputNumber
+						class="distribution-item"
 						size="small"
 						inputId="numericInput"
 						mode="decimal"
@@ -56,6 +57,7 @@
 					/>
 					<label>Max</label>
 					<InputNumber
+						class="distribution-item"
 						size="small"
 						inputId="numericInput"
 						mode="decimal"
@@ -207,7 +209,11 @@ const updateExpression = async (value: Initial) => {
 
 .distribution-container {
 	display: flex;
-	flex-direction: column;
+	align-items: center;
 	gap: var(--gap-small);
+}
+
+.distribution-item > :deep(input) {
+	width: 4rem;
 }
 </style>
