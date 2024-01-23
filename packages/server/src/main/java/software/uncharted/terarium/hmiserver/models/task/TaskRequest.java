@@ -15,6 +15,4 @@ public class TaskRequest {
 	private UUID id;
 	private String taskKey;
 	private byte[] input;
-	private String inputPipe;
-	private String outputPipe;
 }

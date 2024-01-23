@@ -16,11 +16,11 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		req.setId(UUID.randomUUID());
 		req.setTaskKey("ml");
 
-		Task task = new Task(req);
+		Task task = new Task(req.getId(), req.getTaskKey());
 
 		try {
 			task.setup();
-			task.writeInput(task.getRequestBytes());
+			task.writeInput(req.getInput());
 			task.run();
 			byte[] output = task.readOutput();
 

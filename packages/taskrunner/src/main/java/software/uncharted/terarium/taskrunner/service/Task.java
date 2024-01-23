@@ -19,70 +19,65 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 
 @Data
 @Slf4j
 public class Task {
 
+	private UUID id;
+	private String taskKey;
 	private ObjectMapper mapper;
-	private TaskRequest req;
 	private ProcessBuilder processBuilder;
 	private Process process;
+	private String inputPipeName;
+	private String outputPipeName;
 
 	private String script;
 
-	public Task(TaskRequest req) {
+	public Task(UUID id, String taskKey) {
 		mapper = new ObjectMapper();
 
-		this.req = req;
-		if (this.req.getId() == null) {
-			this.req.setId(UUID.randomUUID());
-		}
-		this.req.setInputPipe("/tmp/input-" + UUID.randomUUID());
-		this.req.setOutputPipe("/tmp/output-" + UUID.randomUUID());
-	}
-
-	public byte[] getRequestBytes() throws IOException {
-		return mapper.writeValueAsBytes(req);
+		this.id = id;
+		this.taskKey = taskKey;
+		inputPipeName = "/tmp/input-" + UUID.randomUUID();
+		outputPipeName = "/tmp/output-" + UUID.randomUUID();
 	}
 
 	public void setup() throws IOException, InterruptedException {
 
-		script = getClass().getResource("/" + req.getTaskKey() + ".py").getPath();
+		script = getClass().getResource("/" + taskKey + ".py").getPath();
 
-		log.info("Creating input and output pipes: {} {} for task {}", req.getInputPipe(), req.getOutputPipe(),
-				req.getId());
+		log.info("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, id);
 
 		// Create the named pipes
-		Process inputPipe = new ProcessBuilder("mkfifo", req.getInputPipe()).start();
+		Process inputPipe = new ProcessBuilder("mkfifo", inputPipeName).start();
 		int exitCode = inputPipe.waitFor();
 		if (exitCode != 0) {
 			throw new RuntimeException("Error creating input pipe");
 		}
 
-		Process outputPipe = new ProcessBuilder("mkfifo", req.getOutputPipe()).start();
+		Process outputPipe = new ProcessBuilder("mkfifo", outputPipeName).start();
 		exitCode = outputPipe.waitFor();
 		if (exitCode != 0) {
 			throw new RuntimeException("Error creating input pipe");
 		}
 
-		log.info("Writing request payload to input pipe: {} for task: {}", req.getInputPipe(), req.getId());
+		log.info("Writing request payload to input pipe: {} for task: {}", inputPipeName, id);
 
-		processBuilder = new ProcessBuilder("python", script, "--input_pipe", req.getInputPipe(),
-				"--output_pipe", req.getOutputPipe());
+		processBuilder = new ProcessBuilder("python", script, "--input_pipe", inputPipeName,
+				"--output_pipe", outputPipeName);
 	}
 
 	public void writeInput(byte[] bytes) throws IOException {
 		// Write to the named pipe in a separate thread
-		try (FileOutputStream fos = new FileOutputStream(req.getInputPipe())) {
+		try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
 			fos.write(appendNewline(bytes));
 		}
 	}
 
 	public byte[] readOutput() throws IOException {
 		try (BufferedReader reader = new BufferedReader(
-				new InputStreamReader(new FileInputStream(req.getOutputPipe())))) {
+				new InputStreamReader(new FileInputStream(outputPipeName)))) {
 			return removeNewline(reader.readLine().getBytes());
 		}
 	}
@@ -92,7 +87,7 @@ public class Task {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		Future<byte[]> future = executor.submit(() -> {
 			try (BufferedReader reader = new BufferedReader(
-					new InputStreamReader(new FileInputStream(req.getOutputPipe())))) {
+					new InputStreamReader(new FileInputStream(outputPipeName)))) {
 				return removeNewline(reader.readLine().getBytes());
 			}
 		});
@@ -131,8 +126,8 @@ public class Task {
 
 	public void teardown() {
 		try {
-			Files.deleteIfExists(Paths.get(req.getInputPipe()));
-			Files.deleteIfExists(Paths.get(req.getOutputPipe()));
+			Files.deleteIfExists(Paths.get(inputPipeName));
+			Files.deleteIfExists(Paths.get(outputPipeName));
 		} catch (Exception e) {
 			log.warn("Exception occurred while cleaning up the task pipes:" + e);
 		}

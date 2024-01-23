@@ -98,10 +98,10 @@ public class TaskRunnerService {
 
 	private void dispatchSingleInputSingleOutputTask(TaskRequest req) throws IOException, InterruptedException {
 
-		Task task = new Task(req);
+		Task task = new Task(req.getId(), req.getTaskKey());
 		try {
 			task.setup();
-			task.writeInput(task.getRequestBytes());
+			task.writeInput(req.getInput());
 		} catch (Exception e) {
 			task.teardown();
 		}
@@ -111,7 +111,7 @@ public class TaskRunnerService {
 
 		try {
 			TaskResponse runningResp = new TaskResponse();
-			runningResp.setId(task.getReq().getId());
+			runningResp.setId(task.getId());
 			runningResp.setStatus(TaskStatus.RUNNING);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", runningResp);
 
@@ -119,7 +119,7 @@ public class TaskRunnerService {
 			byte[] output = task.readOutput();
 
 			TaskResponse successResp = new TaskResponse();
-			successResp.setId(task.getReq().getId());
+			successResp.setId(task.getId());
 			successResp.setStatus(TaskStatus.SUCCESS);
 			successResp.setOutput(output);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", successResp);
@@ -128,7 +128,7 @@ public class TaskRunnerService {
 			log.error("Task failed", e);
 
 			TaskResponse failedResp = new TaskResponse();
-			failedResp.setId(task.getReq().getId());
+			failedResp.setId(task.getId());
 			failedResp.setStatus(TaskStatus.FAILED);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedResp);
 		} finally {
@@ -138,8 +138,8 @@ public class TaskRunnerService {
 	}
 
 	private SimpleMessageListenerContainer createCancellationQueueConsumer(Task task) {
-		String queueName = task.getReq().getId().toString();
-		String routingKey = task.getReq().getId().toString();
+		String queueName = task.getId().toString();
+		String routingKey = task.getId().toString();
 
 		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
 
@@ -147,7 +147,7 @@ public class TaskRunnerService {
 				rabbitTemplate.getConnectionFactory());
 		container.setQueueNames(queueName);
 		container.setMessageListener(message -> {
-			log.info("Received cancellation for task {}", task.getReq().getId());
+			log.info("Received cancellation for task {}", task.getId());
 
 			task.cancel();
 		});
