@@ -330,7 +330,7 @@ export const renderFumanTrajectories = (
 			.attr('height', (d) =>
 				Math.abs(yScale(d.interval?.ub as number) - yScale(d.interval?.lb as number))
 			)
-			.style('fill', '#f80')
+			.style('fill', 'teal')
 			.style('fill-opacity', 0.3);
 	}
 
