@@ -150,3 +150,8 @@ export interface PDFExtractionResponseType {
 	text: string;
 	images: string[];
 }
+
+export interface Position {
+	x: number;
+	y: number;
+}

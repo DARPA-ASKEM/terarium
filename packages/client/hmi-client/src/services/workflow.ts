@@ -4,18 +4,17 @@ import _ from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
-import {
+import type { Position } from '@/types/common';
+import type {
 	Operation,
-	Position,
 	Size,
 	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPortStatus,
-	OperatorStatus,
 	WorkflowPort,
 	WorkflowOutput
 } from '@/types/workflow';
+import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are

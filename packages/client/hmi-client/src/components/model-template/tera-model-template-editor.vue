@@ -19,7 +19,10 @@
 				<section class="template-options">
 					<header>Model templates</header>
 					<ul>
-						<li v-for="(modelTemplate, index) in modelTemplateOptions" :key="index">
+						<li
+							v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
+							:key="index"
+						>
 							<tera-model-template
 								:model="modelTemplate"
 								:is-editable="false"
@@ -37,27 +40,28 @@
 		</template>
 		<template #data>
 			<tera-canvas-item
-				v-for="(modelTemplate, index) in modelTemplates"
-				:key="index"
+				v-for="(card, index) in cards"
+				:key="card.id"
 				:style="{
 					width: 'fit-content',
-					top: `${modelTemplate.metadata.templateCard.y}px`,
-					left: `${modelTemplate.metadata.templateCard.x}px`
+					top: `${card.y}px`,
+					left: `${card.x}px`
 				}"
-				@dragging="(event) => updatePosition(event, modelTemplate.metadata.templateCard)"
+				@dragging="(event) => updatePosition(event, card)"
 			>
 				<tera-model-template
-					:model="modelTemplate"
+					:model="modelTemplateEditor.models[index]"
 					is-editable
-					@update-name="(name: string) => updateName(name, index)"
-					@port-selected="
-						(portId: string) => createNewEdge(modelTemplate.metadata.templateCard, portId)
+					@update-name="
+						(name: string) =>
+							modelTemplatingService.updateCardName(modelTemplateEditor, name, card.id)
 					"
+					@port-selected="(portId: string) => createNewEdge(card, portId)"
 					@port-mouseover="
-						(event: MouseEvent, cardWidth: number) =>
-							onPortMouseover(event, modelTemplate.metadata.templateCard, cardWidth)
+						(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 					"
 					@port-mouseleave="onPortMouseleave"
+					@remove="modelTemplatingService.removeCard(modelTemplateEditor, card.id)"
 				/>
 			</tera-canvas-item>
 			<tera-canvas-item
@@ -66,7 +70,7 @@
 				:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
 				@dragging="(event) => updatePosition(event, junction)"
 			>
-				<tera-model-junction :junction="junction" :template-cards="modelTemplateCards" />
+				<tera-model-junction :junction="junction" :template-cards="cards" />
 			</tera-canvas-item>
 		</template>
 		<template #background>
@@ -96,81 +100,37 @@ import { cloneDeep, isEqual } from 'lodash';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
-import { Position } from '@/types/workflow'; // temp
+import type { Position } from '@/types/common';
 import type { Model } from '@/types/Types';
+import type {
+	ModelTemplateEditor,
+	ModelTemplateCard,
+	ModelTemplateJunction
+} from '@/types/model-templating';
+import * as modelTemplatingService from '@/services/model-templating';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
-import naturalConversion from './templates/natural-conversion.json';
-import naturalProduction from './templates/natural-production.json';
-import naturalDegredation from './templates/natural-degradation.json';
-import controlledConversion from './templates/controlled-conversion.json';
-import controlledProduction from './templates/controlled-production.json';
-import controlledDegredation from './templates/controlled-degradation.json';
-import observable from './templates/observable.json';
 
 defineProps<{
 	model?: Model;
 }>();
 
-interface ModelTemplate {
-	id: number;
-	name: string;
-	x: number;
-	y: number;
-	// For collisionFn
-	width: number;
-	height: number;
-}
-
-// Edge sources are always junctions so you'd reference the junction id for that
-interface ModelTemplateEdge {
-	target: {
-		cardId: number;
-		portId: string;
-	};
-	points: Position[];
-}
-
-interface ModelTemplateJunction {
-	id: number;
-	x: number;
-	y: number;
-	edges: ModelTemplateEdge[];
-}
-
-const modelTemplateOptions = [
-	naturalConversion,
-	naturalProduction,
-	naturalDegredation,
-	controlledConversion,
-	controlledProduction,
-	controlledDegredation,
-	observable
-].map((modelTemplate: any) => {
-	// TODO: Add templateCard attribute to Model later
-	modelTemplate.metadata.templateCard = {
-		id: -1,
-		name: modelTemplate.header.name,
-		x: 0,
-		y: 0
-	};
-	return modelTemplate;
-});
-
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
-let junctionIdForNewEdge: number | null = null;
+let junctionIdForNewEdge: string | null = null;
 
-const modelTemplates = ref<any[]>([]);
-const junctions = ref<ModelTemplateJunction[]>([]);
-
-const modelTemplateCards = computed<ModelTemplate[]>(
-	() => modelTemplates.value.map(({ metadata }) => metadata.templateCard) ?? []
+const modelTemplateEditor = ref<ModelTemplateEditor>(
+	modelTemplatingService.emptyModelTemplateEditor()
 );
+
+const cards = computed<ModelTemplateCard[]>(
+	() => modelTemplateEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+);
+const junctions = computed<ModelTemplateJunction[]>(() => modelTemplateEditor.value.junctions);
 
 const newModelTemplate = ref();
 const newEdge = ref();
@@ -180,8 +140,8 @@ const isCreatingNewEdge = computed(
 
 function collisionFn(p: Position) {
 	const buffer = 50;
-	for (let i = 0; i < modelTemplateCards.value.length; i++) {
-		const checkingNode = modelTemplateCards.value[i];
+	for (let i = 0; i < cards.value.length; i++) {
+		const checkingNode = cards.value[i];
 		if (p.x >= checkingNode.x - buffer && p.x <= checkingNode.x + checkingNode.width + buffer) {
 			if (p.y >= checkingNode.y - buffer && p.y <= checkingNode.y + checkingNode.height + buffer) {
 				return true;
@@ -204,11 +164,7 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
-function updateName(name: string, index: number) {
-	modelTemplates.value[index].metadata.templateCard.name = name;
-}
-
-function createNewEdge(card: ModelTemplate, portId: string) {
+function createNewEdge(card: ModelTemplateCard, portId: string) {
 	const target = { cardId: card.id, portId };
 
 	// Handles the edge that goes from port to junction
@@ -225,22 +181,23 @@ function createNewEdge(card: ModelTemplate, portId: string) {
 
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
-			// Draws edge from a port to a newly created junction
-			junctionIdForNewEdge = junctions.value.length + 1;
-			junctions.value.push({
-				id: junctionIdForNewEdge,
+			// Add new junction
+			modelTemplatingService.addJunction(modelTemplateEditor.value, {
 				x: currentPortPosition.x + 500,
-				y: currentPortPosition.y - 10,
-				edges: [
-					{
-						target,
-						points: interpolatePointsForCurve(
-							{ x: currentPortPosition.x + 510, y: currentPortPosition.y },
-							{ x: currentPortPosition.x, y: currentPortPosition.y }
-						)
-					}
-				]
+				y: currentPortPosition.y - 10
 			});
+
+			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
+
+			modelTemplatingService.addEdge(
+				modelTemplateEditor.value,
+				junctionIdForNewEdge,
+				target,
+				interpolatePointsForCurve(
+					{ x: currentPortPosition.x + 510, y: currentPortPosition.y },
+					{ x: currentPortPosition.x, y: currentPortPosition.y }
+				)
+			);
 		}
 
 		const index = junctions.value.findIndex(({ id }) => id === junctionIdForNewEdge);
@@ -257,30 +214,23 @@ function createNewEdge(card: ModelTemplate, portId: string) {
 		junctionIdForNewEdge &&
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting ports of the same card
 	) {
-		// If chosen port already has a junction then use that one
-		// junctions.value.forEach(({ edges, id }) => {
-		// 	for (let i = 0; i < edges.length; i++) {
-		// 		if (isEqual(target, edges[i].target)) {
-		// 			junctionIdForNewEdge = id;
-		// 			console.log(junctionIdForNewEdge);
-		// 		}
-		// 	}
-		// });
-
 		const index = junctions.value.findIndex(({ id }) => id === junctionIdForNewEdge);
-		junctions.value[index].edges.push({
+
+		modelTemplatingService.addEdge(
+			modelTemplateEditor.value,
+			junctionIdForNewEdge,
 			target,
-			points: interpolatePointsForCurve(
+			interpolatePointsForCurve(
 				{ x: junctions.value[index].x + 10, y: junctions.value[index].y + 10 },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
 			)
-		});
+		);
 
 		cancelNewEdge();
 	}
 }
 
-function onPortMouseover(event: MouseEvent, card: ModelTemplate, cardWidth: number) {
+function onPortMouseover(event: MouseEvent, card: ModelTemplateCard, cardWidth: number) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: card.x, y: card.y };
@@ -309,7 +259,7 @@ function cancelNewEdge() {
 	junctionIdForNewEdge = null;
 
 	// Removes junction that doesn't connect to anything
-	junctions.value = junctions.value.filter(({ edges }) => edges.length > 1);
+	// junctions.value = junctions.value.filter(({ edges }) => edges.length > 1);
 }
 
 const setMouseOverCanvas = (val: boolean) => {
@@ -329,9 +279,7 @@ function updateNewCardPosition(event) {
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-
-	newModelTemplate.value.metadata.templateCard.id = modelTemplates.value.length + 1;
-	modelTemplates.value.push(cloneDeep(newModelTemplate.value));
+	modelTemplatingService.addCard(modelTemplateEditor.value, cloneDeep(newModelTemplate.value));
 	newModelTemplate.value = null;
 }
 
