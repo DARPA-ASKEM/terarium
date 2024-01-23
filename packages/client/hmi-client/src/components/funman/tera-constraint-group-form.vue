@@ -4,13 +4,13 @@
 			<i class="trash-button pi pi-trash" @click="emit('delete-self', { index: props.index })" />
 		</div>
 		<div class="button-row">
-			<label for="constraint-name">Name of constraint</label>
+			<label>Name of constraint</label>
 			<InputText
 				v-model="constraintName"
 				placeholder="Add constraint name"
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
 			/>
-			<label for="target">Target</label>
+			<label>Target</label>
 			<MultiSelect
 				v-model="variables"
 				:options="props.modelNodeOptions"
@@ -20,7 +20,9 @@
 					emit('update-self', { index: props.index, updatedConfig: updatedConfig })
 				"
 			></MultiSelect>
+			<!--
 			<label for="weights">Weights</label>
+			-->
 			<div v-for="(variable, index) of variables" :key="index">
 				<div class="button-row">
 					<label v-if="weights">
@@ -43,10 +45,9 @@
 		</div>
 		<div class="section-row">
 			<div class="button-row">
-				<label for="start">Start time</label>
+				<label>Start time</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					v-model="startTime"
 					@update:model-value="
 						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
@@ -54,10 +55,9 @@
 				/>
 			</div>
 			<div class="button-row">
-				<label for="end">End time</label>
+				<label>End time</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					v-model="endTime"
 					@update:model-value="
 						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
@@ -65,10 +65,9 @@
 				/>
 			</div>
 			<div class="button-row">
-				<label for="lower">Lower bound</label>
+				<label>Lower bound</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					mode="decimal"
 					:min-fraction-digits="3"
 					:max-fraction-digits="3"
@@ -79,10 +78,9 @@
 				/>
 			</div>
 			<div class="button-row">
-				<label for="upper">Upper bound</label>
+				<label>Upper bound</label>
 				<InputNumber
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					mode="decimal"
 					:min-fraction-digits="3"
 					:max-fraction-digits="3"
@@ -133,8 +131,10 @@ const updatedConfig = computed<ConstraintGroup>(
 
 watch(
 	() => variables.value,
-	async () => {
-		weights.value = Array<number>(props.config.variables.length).fill(1);
+	() => {
+		if (!weights.value || weights.value.length === 0) {
+			weights.value = Array<number>(props.config.variables.length).fill(1);
+		}
 	},
 	{ immediate: true }
 );
