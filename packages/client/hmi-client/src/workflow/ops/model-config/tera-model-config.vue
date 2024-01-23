@@ -16,6 +16,7 @@
 					</AccordionTab>
 				</Accordion>
 				<div v-show="activeIndex === 0" class="form-section">
+					<h3>Step 1: Context</h3>
 					<h3>Name</h3>
 					<InputText
 						placeholder="Enter a name for this configuration"
@@ -30,6 +31,7 @@
 					/>
 				</div>
 				<div v-show="activeIndex === 1">
+					<h3>Step 2: Set Values</h3>
 					<Accordion multiple :active-index="[0, 1]">
 						<AccordionTab header="Initials">
 							<tera-model-config-table
