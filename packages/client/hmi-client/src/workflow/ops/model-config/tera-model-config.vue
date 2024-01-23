@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -395,7 +395,7 @@ onMounted(async () => {
 		const m = await getModel(input.value[0]);
 		if (m) {
 			model.value = m;
-			if (outputs.value.length === 0) {
+			if (isEmpty(outputs.value)) {
 				const state = _.cloneDeep(props.node.state);
 				state.initials = m.semantics?.ode.initials;
 				state.parameters = m.semantics?.ode.parameters;

@@ -4,7 +4,7 @@
 		v-model:expanded-rows="expandedRows"
 		dataKey="id"
 		:row-class="rowClass"
-		class="p-datatable-sm"
+		size="small"
 		:class="{ 'hide-header': hideHeader }"
 	>
 		<Column expander style="width: 5rem" />
@@ -35,7 +35,7 @@
 				<span v-if="slotProps.data.type === ParamType.MATRIX">Matrix</span>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
 					<InputText
-						class="p-inputtext-sm"
+						size="small"
 						v-model.lazy="slotProps.data.value.expression"
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
@@ -46,7 +46,7 @@
 				>
 					<label>Min</label>
 					<InputNumber
-						class="p-inputtext-sm"
+						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -56,7 +56,7 @@
 					/>
 					<label>Max</label>
 					<InputNumber
-						class="p-inputtext-sm"
+						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -67,7 +67,7 @@
 				</div>
 				<span v-else-if="slotProps.data.type === ParamType.CONSTANT">
 					<InputNumber
-						class="p-inputtext-sm"
+						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
