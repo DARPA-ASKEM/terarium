@@ -3,12 +3,12 @@ import json
 import time
 import signal
 import sys
+import os
 
 def read_input(input_pipe: str):
 	with open(input_pipe, 'rb') as f:
 		line = f.readline().strip()
 		return json.loads(line.decode())
-
 
 def write_output(output_pipe: str, output: dict):
 	bs = (json.dumps(output) + "\n").encode()
@@ -30,6 +30,10 @@ def main():
 	args = parser.parse_args()
 
 	input = read_input(args.input_pipe)
+
+	if "should_fail" in input:
+		print("ML Task: failing")
+		os.exit(1)
 
 	for i in range(5):
 		print("ML Task: {}".format(i))

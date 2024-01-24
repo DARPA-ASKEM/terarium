@@ -9,10 +9,10 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -30,6 +30,7 @@ public class Task {
 	private ObjectMapper mapper;
 	private ProcessBuilder processBuilder;
 	private Process process;
+	CompletableFuture<Integer> processFuture;
 	private String inputPipeName;
 	private String outputPipeName;
 
@@ -85,28 +86,39 @@ public class Task {
 
 	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes) throws IOException {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
-		Future<?> future = executor.submit(() -> {
+
+		CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
 			try {
 				// Write to the named pipe in a separate thread
 				try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
 					fos.write(appendNewline(bytes));
 				}
-				log.info("WROTE THE INPUT!");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-		});
+			return null;
+		}, executor);
 
+		Object result;
 		try {
-			future.get(timeoutMinutes, TimeUnit.MINUTES); // Timeout of 5 minutes
+			result = CompletableFuture.anyOf(future, processFuture).get(timeoutMinutes, TimeUnit.MINUTES);
+		} catch (ExecutionException | InterruptedException e) {
+			throw new RuntimeException("Error while writing to pipe", e);
 		} catch (TimeoutException e) {
 			future.cancel(true);
 			throw new RuntimeException("Writing to pipe took too long", e);
-		} catch (ExecutionException | InterruptedException e) {
-			throw new RuntimeException("Error while writing to pipe", e);
 		} finally {
-			executor.shutdownNow();
+			executor.shutdownNow(); // always stop the executor
 		}
+
+		if (result == null) {
+			return;
+		}
+		if (result instanceof Integer) {
+			// process has exited early
+			throw new RuntimeException("Process for task " + id + " exited early with code " + result);
+		}
+		throw new RuntimeException("Unexpected result type: " + result.getClass());
 	}
 
 	public byte[] readOutput() throws IOException {
@@ -119,16 +131,18 @@ public class Task {
 	public byte[] readOutputWithTimeout(int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
-		Future<byte[]> future = executor.submit(() -> {
+		CompletableFuture<byte[]> future = CompletableFuture.supplyAsync(() -> {
 			try (BufferedReader reader = new BufferedReader(
 					new InputStreamReader(new FileInputStream(outputPipeName)))) {
 				return removeNewline(reader.readLine().getBytes());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
-		});
+		}, executor);
 
-		byte[] result;
+		Object result;
 		try {
-			result = future.get(timeoutMinutes, TimeUnit.MINUTES); // set timeout
+			result = CompletableFuture.anyOf(future, processFuture).get(timeoutMinutes, TimeUnit.MINUTES);
 		} catch (TimeoutException e) {
 			future.cancel(true);
 			throw new RuntimeException("Reading from pipe took too long", e);
@@ -136,7 +150,14 @@ public class Task {
 			executor.shutdownNow(); // always stop the executor
 		}
 
-		return result;
+		if (result instanceof byte[]) {
+			// we got our response
+			return (byte[]) result;
+		} else if (result instanceof Integer) {
+			// process has exited early
+			throw new RuntimeException("Process for task " + id + " exited early with code " + result);
+		}
+		throw new RuntimeException("Unexpected result type: " + result.getClass());
 	}
 
 	private byte[] appendNewline(byte[] original) {
@@ -183,6 +204,19 @@ public class Task {
 
 	public void start() throws IOException {
 		process = processBuilder.start();
+
+		// Create a future to signal when the process has exited
+		processFuture = CompletableFuture.supplyAsync(() -> {
+			try {
+				int exitCode = process.waitFor();
+				log.info("Process exited with code " + exitCode);
+				return exitCode;
+			} catch (InterruptedException e) {
+				log.warn("Process failed to exit cleanly " + e);
+			}
+			return -1;
+		});
+
 		InputStream inputStream = process.getInputStream();
 		InputStream errorStream = process.getErrorStream();
 
@@ -207,6 +241,7 @@ public class Task {
 				log.warn("Error occured while logging stderr for task {}", id);
 			}
 		}).start();
+
 	}
 
 	public void waitFor(int timeoutMinutes) throws InterruptedException, TimeoutException {
