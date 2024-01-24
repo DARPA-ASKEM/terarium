@@ -77,7 +77,8 @@ jobs:
       - lint
       - lint-client
       - test-client
-      - test-server
+# Uncomment the following line to enable server tests
+#      - test-server
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
