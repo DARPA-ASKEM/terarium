@@ -1,6 +1,6 @@
-import axios, { AxiosHeaders } from 'axios';
-import { logger } from '@/utils/logger';
 import { ToastSummaries } from '@/services/toast';
+import { logger } from '@/utils/logger';
+import axios, { AxiosHeaders } from 'axios';
 import useAuthStore from '../stores/auth';
 
 const API = axios.create({
@@ -15,7 +15,6 @@ API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.token}`);
-		config.headers.set('x-enable-camel-case', 'true');
 		return config;
 	},
 	(error) => {
