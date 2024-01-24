@@ -189,34 +189,15 @@ const updateTimeseries = (id: string, value: string) => {
 };
 
 const validateTimeSeries = (values: string) => {
-	let isValid = true;
+	const message = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
 	if (typeof values !== 'string') {
-		isValid = false;
-		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
-		return isValid;
+		errorMessage.value = message;
+		return false;
 	}
-	const timeValuePairs = values.split(',');
 
-	timeValuePairs.forEach((pair) => {
-		const colonCount = pair.split(':').length - 1;
-
-		// If a pair does not contain exactly one colon, return false
-		if (colonCount !== 1) {
-			isValid = false;
-			return;
-		}
-
-		const [time, value] = pair.split(':').map((part) => part.trim());
-
-		if (!/^\d+$/.test(time) || !/^\d+(\.\d+)?$/.test(value)) {
-			isValid = false;
-		}
-	});
-
-	errorMessage.value = '';
-	if (!isValid) {
-		errorMessage.value = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
-	}
+	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
+	const isValid = values.split(',').every(isPairValid);
+	errorMessage.value = isValid ? '' : message;
 	return isValid;
 };
 
@@ -249,6 +230,7 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 			if (!clonedConfig.configuration.metadata?.timeseries) {
 				clonedConfig.configuration.metadata.timeseries = {};
 			}
+			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
 			clonedConfig.configuration.metadata.timeseries[param.id] = '';
 			break;
 		default:

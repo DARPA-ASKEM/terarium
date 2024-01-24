@@ -398,7 +398,7 @@ watch(
 		configParams.value = props.node.state.parameters;
 		configTimeSeries.value = props.node.state.timeseries;
 	},
-	{ immediate: true }
+	{ immediate: true, deep: true }
 );
 
 watch(
@@ -415,7 +415,7 @@ watch(
 		configParams.value = props.node.state.parameters;
 		configTimeSeries.value = props.node.state.timeseries;
 	},
-	{ immediate: true }
+	{ immediate: true, deep: true }
 );
 
 watch(
