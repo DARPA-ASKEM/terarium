@@ -116,7 +116,7 @@ public class TaskRunnerService {
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", runningResp);
 
 			// write the input to the task
-			task.writeInput(req.getInput());
+			task.writeInputWithTimeout(req.getInput(), req.getTimeoutMinutes());
 
 			// block and wait for input
 			byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());

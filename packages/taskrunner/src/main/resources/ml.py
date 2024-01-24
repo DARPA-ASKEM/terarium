@@ -18,7 +18,7 @@ def write_output(output_pipe: str, output: dict):
 
 def signal_handler(sig, frame):
 	print('Process cancelled, cleanup logic goes here')
-	sys.exit(0)
+	sys.exit(1)
 
 def main():
 	signal.signal(signal.SIGINT, signal_handler)
@@ -31,6 +31,7 @@ def main():
 
 	input = read_input(args.input_pipe)
 
+	# Tests use this to simulate a failing task
 	if "should_fail" in input:
 		print("ML Task: failing")
 		os.exit(1)

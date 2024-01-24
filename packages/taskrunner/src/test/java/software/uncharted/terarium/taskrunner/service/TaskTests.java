@@ -39,6 +39,36 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 	@Test
 	public void testTaskFailure() throws Exception {
+		TaskRequest req = new TaskRequest();
+		req.setId(UUID.randomUUID());
+		req.setTaskKey("ml");
+		req.setInput(new String("{\"should_fail\": true}").getBytes());
+
+		int ONE_MINUTE = 1;
+
+		Task task = new Task(req.getId(), req.getTaskKey());
+		try {
+			task.start();
+			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
+
+			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
+
+			System.out.println(output);
+
+			task.waitFor(ONE_MINUTE);
+
+		} catch (Exception e) {
+			// this should happen
+			return;
+		} finally {
+			task.cleanup();
+		}
+
+		throw new Exception("Task should have failed");
+	}
+
+	@Test
+	public void testTaskCancel() throws Exception {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
@@ -51,6 +81,15 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		try {
 			task.start();
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
+
+			new Thread(() -> {
+				try {
+					Thread.sleep(1000);
+					task.cancel();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}).start();
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
 

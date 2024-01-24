@@ -77,13 +77,6 @@ public class Task {
 				"--output_pipe", outputPipeName);
 	}
 
-	public void writeInput(byte[] bytes) throws IOException {
-		// Write to the named pipe in a separate thread
-		try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
-			fos.write(appendNewline(bytes));
-		}
-	}
-
 	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes) throws IOException {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -119,13 +112,6 @@ public class Task {
 			throw new RuntimeException("Process for task " + id + " exited early with code " + result);
 		}
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
-	}
-
-	public byte[] readOutput() throws IOException {
-		try (BufferedReader reader = new BufferedReader(
-				new InputStreamReader(new FileInputStream(outputPipeName)))) {
-			return removeNewline(reader.readLine().getBytes());
-		}
 	}
 
 	public byte[] readOutputWithTimeout(int timeoutMinutes)
