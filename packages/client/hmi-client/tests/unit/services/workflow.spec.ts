@@ -253,68 +253,29 @@ describe('workflow copying branch >- fork', () => {
 	const n2 = wf.nodes[1];
 	const n3 = wf.nodes[2];
 	const n4 = wf.nodes[3];
+	const NC = WorkflowPortStatus.NOT_CONNECTED;
 
-	n1.outputs = [
-		{
-			id: 'n1o',
-			type: 'number',
-			value: [1],
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			isOptional: false
-		}
-	];
-	n2.outputs = [
-		{
-			id: 'n2o',
-			type: 'number',
-			value: [2],
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			isOptional: false
-		}
-	];
+	n1.outputs = [{ id: 'n1o', type: 'number', value: [1], status: NC, isOptional: false }];
+	n2.outputs = [{ id: 'n2o', type: 'number', value: [2], status: NC, isOptional: false }];
 	n3.inputs = [
 		{
 			id: 'n3i_1',
 			type: 'number',
 			value: [1],
-			status: WorkflowPortStatus.NOT_CONNECTED,
+			status: NC,
 			isOptional: false
 		},
 		{
 			id: 'n3i_2',
 			type: 'number',
 			value: [2],
-			status: WorkflowPortStatus.NOT_CONNECTED,
+			status: NC,
 			isOptional: false
 		}
 	];
-	n3.outputs = [
-		{
-			id: 'n3o',
-			type: 'number',
-			value: [3],
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			isOptional: false
-		}
-	];
-	n4.inputs = [
-		{
-			id: 'n4i',
-			type: 'number',
-			value: [3],
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			isOptional: false
-		}
-	];
-	n4.outputs = [
-		{
-			id: 'n4o',
-			type: 'number',
-			value: [4],
-			status: WorkflowPortStatus.NOT_CONNECTED,
-			isOptional: false
-		}
-	];
+	n3.outputs = [{ id: 'n3o', type: 'number', value: [3], status: NC, isOptional: false }];
+	n4.inputs = [{ id: 'n4i', type: 'number', value: [3], status: NC, isOptional: false }];
+	n4.outputs = [{ id: 'n4o', type: 'number', value: [4], status: NC, isOptional: false }];
 
 	workflowService.addEdge(wf, n1.id, 'n1o', n3.id, 'n3i_1', []);
 	workflowService.addEdge(wf, n2.id, 'n2o', n3.id, 'n3i_2', []);

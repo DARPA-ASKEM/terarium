@@ -458,6 +458,7 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 		n.y += offset;
 	});
 	copyEdges.forEach((e) => {
+		if (!e.points) return;
 		e.points[0].y += offset;
 		e.points[e.points.length - 1].y += offset;
 	});
