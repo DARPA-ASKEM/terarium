@@ -400,17 +400,22 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	const copyNodes: WorkflowNode<any>[] = [];
 	const copyEdges: WorkflowEdge[] = [];
 	const stack = [anchor.id]; // working list of nodeIds to crawl
+	const processed: Set<string> = new Set();
 
 	// basically depth-first-search
 	while (stack.length > 0) {
 		const id = stack.pop();
 		const node = wf.nodes.find((n) => n.id === id);
 		if (node) copyNodes.push(_.cloneDeep(node));
+		processed.add(id as string);
 
 		// Grab downstream edges
 		const edges = wf.edges.filter((e) => e.source === id);
 		edges.forEach((edge) => {
-			stack.push(edge.target as string);
+			const newId = edge.target as string;
+			if (!processed.has(newId)) {
+				stack.push(edge.target as string);
+			}
 			copyEdges.push(_.cloneDeep(edge));
 		});
 	}
