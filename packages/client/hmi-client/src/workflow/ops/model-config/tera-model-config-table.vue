@@ -208,7 +208,7 @@ const validateTimeSeries = (values: string) => {
 
 		const [time, value] = pair.split(':').map((part) => part.trim());
 
-		if (!/^\d+$/.test(time) || !/^\d+$/.test(value)) {
+		if (!/^\d+$/.test(time) || !/^\d+(\.\d+)?$/.test(value)) {
 			isValid = false;
 		}
 	});
