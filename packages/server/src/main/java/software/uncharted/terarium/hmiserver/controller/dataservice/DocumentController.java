@@ -350,7 +350,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
-	public ResponseEntity<ResponseStatus> uploadDocumentFromGithub(
+	public ResponseEntity<Void> uploadDocumentFromGithub(
 			@PathVariable("documentId") final UUID documentId,
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
