@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.task;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 import lombok.Data;
@@ -11,7 +12,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @NoArgsConstructor
 @Data
 @TSModel
-public class TaskResponse {
+public class TaskResponse implements Serializable {
 	private UUID id;
 	private TaskStatus status;
 	private byte[] output;

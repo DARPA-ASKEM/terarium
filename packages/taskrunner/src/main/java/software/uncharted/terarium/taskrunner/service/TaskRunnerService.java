@@ -36,19 +36,19 @@ public class TaskRunnerService {
 	private final Config config;
 
 	@Value("${terarium.task-runner-request-exchange}")
-	private String TASK_RUNNER_REQUEST_EXCHANGE;
+	public String TASK_RUNNER_REQUEST_EXCHANGE;
 
 	@Value("${terarium.task-runner-request-queue}")
-	private String TASK_RUNNER_REQUEST_QUEUE;
+	public String TASK_RUNNER_REQUEST_QUEUE;
 
 	@Value("${terarium.task-runner-response-exchange}")
-	private String TASK_RUNNER_RESPONSE_EXCHANGE;
+	public String TASK_RUNNER_RESPONSE_EXCHANGE;
 
 	@Value("${terarium.task-runner-response-queue}")
-	private String TASK_RUNNER_RESPONSE_QUEUE;
+	public String TASK_RUNNER_RESPONSE_QUEUE;
 
 	@Value("${terarium.task-runner-cancellation-exchange}")
-	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
+	public String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
 	private void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
 		// Declare a direct exchange
@@ -66,11 +66,11 @@ public class TaskRunnerService {
 
 	private void declareAndBindQueue(String exchangeName, String queueName) {
 		// Declare a direct exchange
-		DirectExchange exchange = new DirectExchange(exchangeName);
+		DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
 
 		// Declare a queue
-		Queue queue = new Queue(queueName);
+		Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
 		rabbitAdmin.declareQueue(queue);
 
 		// Bind the queue to the exchange with a routing key
