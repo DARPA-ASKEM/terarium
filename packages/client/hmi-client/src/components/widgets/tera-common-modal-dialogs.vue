@@ -1,6 +1,7 @@
 <template>
 	<Teleport to="body">
 		<tera-project-configuration-modal
+			id="project-configuration-modal"
 			v-if="isProjectConfigDialogVisible"
 			:confirm-text="menuProject ? 'Update' : 'Create'"
 			:modal-title="menuProject ? 'Edit project' : 'Create project'"
