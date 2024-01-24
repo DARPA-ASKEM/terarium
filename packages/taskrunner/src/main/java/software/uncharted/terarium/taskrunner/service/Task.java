@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -182,16 +183,28 @@ public class Task {
 
 	public void start() throws IOException {
 		process = processBuilder.start();
+		InputStream inputStream = process.getInputStream();
+		InputStream errorStream = process.getErrorStream();
 
 		new Thread(() -> {
-			log.info("TRACKING LOGS!");
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 				String line;
 				while ((line = reader.readLine()) != null) {
-					log.info(line); // Or use your logger here
+					log.info("[{}] stdout: {}", id, line);
 				}
 			} catch (IOException e) {
-				// Handle exception
+				log.warn("Error occured while logging stdout for task {}", id);
+			}
+		}).start();
+
+		new Thread(() -> {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					log.info("[{}] stderr: {}", id, line);
+				}
+			} catch (IOException e) {
+				log.warn("Error occured while logging stderr for task {}", id);
 			}
 		}).start();
 	}
