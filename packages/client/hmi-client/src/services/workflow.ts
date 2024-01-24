@@ -357,3 +357,117 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
 }
+
+// Check if the current-state matches that of the output-state.
+// Note operatorState subsumes the keys of the outputState
+export const isOperatorStateInSync = (
+	operatorState: Record<string, any>,
+	outputState: Record<string, any>
+) => {
+	const hasKey = Object.prototype.hasOwnProperty;
+
+	const keys = Object.keys(outputState);
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		if (!hasKey.call(operatorState, key)) return false;
+		if (!_.isEqual(operatorState[key], outputState[key])) return false;
+	}
+	return true;
+};
+
+/**
+ * Including the node given by nodeId, copy/branch everything downstream,
+ *
+ * For example:
+ *    P - B - C - D
+ *    Q /
+ *
+ * if we branch at B, we will get
+ *
+ *    P - B  - C  - D
+ *      X
+ *    Q _ B' - C' - D'
+ *
+ * with { B', C', D' } new node entities
+ * */
+export const branchWorkflow = (wf: Workflow, nodeId: string) => {
+	// 1. Find anchor point
+	const anchor = wf.nodes.find((n) => n.id === nodeId);
+	if (!anchor) return;
+
+	// 2. Collect the subgraph that we want to copy
+	const copyNodes: WorkflowNode<any>[] = [];
+	const copyEdges: WorkflowEdge[] = [];
+	const stack = [anchor.id]; // working list of nodeIds to crawl
+	const processed: Set<string> = new Set();
+
+	// basically depth-first-search
+	while (stack.length > 0) {
+		const id = stack.pop();
+		const node = wf.nodes.find((n) => n.id === id);
+		if (node) copyNodes.push(_.cloneDeep(node));
+		processed.add(id as string);
+
+		// Grab downstream edges
+		const edges = wf.edges.filter((e) => e.source === id);
+		edges.forEach((edge) => {
+			const newId = edge.target as string;
+			if (!processed.has(newId)) {
+				stack.push(edge.target as string);
+			}
+			copyEdges.push(_.cloneDeep(edge));
+		});
+	}
+
+	// 3. Collect the upstream edges of the anchor
+	const upstreamEdges = wf.edges.filter((edge) => edge.target === anchor.id);
+	upstreamEdges.forEach((edge) => {
+		copyEdges.push(_.cloneDeep(edge));
+	});
+
+	// 4. Reassign identifiers
+	const registry: Map<string, string> = new Map();
+	copyNodes.forEach((node) => {
+		registry.set(node.id, uuidv4());
+		node.inputs.forEach((port) => {
+			registry.set(port.id, uuidv4());
+		});
+		node.outputs.forEach((port) => {
+			registry.set(port.id, uuidv4());
+		});
+	});
+
+	copyEdges.forEach((edge) => {
+		// Don't replace upstream edge sources, they are still valid
+		if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+			edge.source = registry.get(edge.source as string);
+		}
+		edge.target = registry.get(edge.target as string);
+		edge.sourcePortId = registry.get(edge.sourcePortId as string);
+		edge.targetPortId = registry.get(edge.targetPortId as string);
+	});
+	copyNodes.forEach((node) => {
+		node.id = registry.get(node.id) as string;
+		node.inputs.forEach((port) => {
+			port.id = registry.get(port.id) as string;
+		});
+		node.outputs.forEach((port) => {
+			port.id = registry.get(port.id) as string;
+		});
+	});
+
+	// 5. Reposition new nodes so they don't exaclty overlap
+	const offset = 75;
+	copyNodes.forEach((n) => {
+		n.y += offset;
+	});
+	copyEdges.forEach((e) => {
+		if (!e.points || e.points.length < 2) return;
+		e.points[0].y += offset;
+		e.points[e.points.length - 1].y += offset;
+	});
+
+	// 6. Finally put everything back into the workflow
+	wf.nodes.push(...copyNodes);
+	wf.edges.push(...copyEdges);
+};
