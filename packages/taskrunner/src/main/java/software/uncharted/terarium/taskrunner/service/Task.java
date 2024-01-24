@@ -34,16 +34,23 @@ public class Task {
 
 	private String script;
 
-	public Task(UUID id, String taskKey) {
+	public Task(UUID id, String taskKey) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
 
 		this.id = id;
 		this.taskKey = taskKey;
 		inputPipeName = "/tmp/input-" + UUID.randomUUID();
 		outputPipeName = "/tmp/output-" + UUID.randomUUID();
+
+		try {
+			setup();
+		} catch (Exception e) {
+			cleanup();
+			throw e;
+		}
 	}
 
-	public void setup() throws IOException, InterruptedException {
+	private void setup() throws IOException, InterruptedException {
 
 		script = getClass().getResource("/" + taskKey + ".py").getPath();
 
@@ -75,6 +82,32 @@ public class Task {
 		}
 	}
 
+	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes) throws IOException {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		Future<?> future = executor.submit(() -> {
+			try {
+				// Write to the named pipe in a separate thread
+				try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
+					fos.write(appendNewline(bytes));
+				}
+				log.info("WROTE THE INPUT!");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
+
+		try {
+			future.get(timeoutMinutes, TimeUnit.MINUTES); // Timeout of 5 minutes
+		} catch (TimeoutException e) {
+			future.cancel(true);
+			throw new RuntimeException("Writing to pipe took too long", e);
+		} catch (ExecutionException | InterruptedException e) {
+			throw new RuntimeException("Error while writing to pipe", e);
+		} finally {
+			executor.shutdownNow();
+		}
+	}
+
 	public byte[] readOutput() throws IOException {
 		try (BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(outputPipeName)))) {
@@ -82,7 +115,7 @@ public class Task {
 		}
 	}
 
-	public byte[] readOutput(int timeoutSeconds)
+	public byte[] readOutputWithTimeout(int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		Future<byte[]> future = executor.submit(() -> {
@@ -94,7 +127,10 @@ public class Task {
 
 		byte[] result;
 		try {
-			result = future.get(timeoutSeconds, TimeUnit.SECONDS); // set timeout
+			result = future.get(timeoutMinutes, TimeUnit.MINUTES); // set timeout
+		} catch (TimeoutException e) {
+			future.cancel(true);
+			throw new RuntimeException("Reading from pipe took too long", e);
 		} finally {
 			executor.shutdownNow(); // always stop the executor
 		}
@@ -124,20 +160,51 @@ public class Task {
 		return trimmed;
 	}
 
-	public void teardown() {
+	public void cleanup() {
 		try {
 			Files.deleteIfExists(Paths.get(inputPipeName));
+		} catch (Exception e) {
+			log.warn("Exception occurred while cleaning up the task input pipe:" + e);
+		}
+
+		try {
 			Files.deleteIfExists(Paths.get(outputPipeName));
 		} catch (Exception e) {
-			log.warn("Exception occurred while cleaning up the task pipes:" + e);
+			log.warn("Exception occurred while cleaning up the task output pipe:" + e);
+		}
+
+		try {
+			cancel();
+		} catch (Exception e) {
+			log.warn("Exception occurred while killing any residual process:" + e);
 		}
 	}
 
-	public void run() throws IOException, InterruptedException {
+	public void start() throws IOException {
 		process = processBuilder.start();
-		int exitCode = process.waitFor();
-		if (exitCode != 0) {
-			throw new RuntimeException("Python script exited with non-zero exit code: " + exitCode);
+
+		new Thread(() -> {
+			log.info("TRACKING LOGS!");
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					log.info(line); // Or use your logger here
+				}
+			} catch (IOException e) {
+				// Handle exception
+			}
+		}).start();
+	}
+
+	public void waitFor(int timeoutMinutes) throws InterruptedException, TimeoutException {
+		boolean hasExited = process.waitFor((long) timeoutMinutes, TimeUnit.MINUTES);
+		if (hasExited) {
+			int exitCode = process.exitValue();
+			if (exitCode != 0) {
+				throw new RuntimeException("Python script exited with non-zero exit code: " + exitCode);
+			}
+		} else {
+			throw new TimeoutException("Process did not exit within the timeout");
 		}
 	}
 

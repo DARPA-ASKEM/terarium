@@ -21,10 +21,10 @@ import com.rabbitmq.client.Channel;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.taskrunner.configuration.Config;
+import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
+import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
+import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 
 @Service
 @Slf4j
@@ -80,8 +80,8 @@ public class TaskRunnerService {
 
 	@PostConstruct
 	void init() {
-		declareAndBindQueue(TASK_RUNNER_REQUEST_EXCHANGE, TASK_RUNNER_REQUEST_EXCHANGE);
-		declareAndBindQueue(TASK_RUNNER_RESPONSE_EXCHANGE, TASK_RUNNER_RESPONSE_EXCHANGE);
+		declareAndBindQueue(TASK_RUNNER_REQUEST_EXCHANGE, TASK_RUNNER_REQUEST_QUEUE);
+		declareAndBindQueue(TASK_RUNNER_RESPONSE_EXCHANGE, TASK_RUNNER_RESPONSE_QUEUE);
 	}
 
 	@RabbitListener(queues = {
@@ -99,24 +99,30 @@ public class TaskRunnerService {
 	private void dispatchSingleInputSingleOutputTask(TaskRequest req) throws IOException, InterruptedException {
 
 		Task task = new Task(req.getId(), req.getTaskKey());
-		try {
-			task.setup();
-			task.writeInput(req.getInput());
-		} catch (Exception e) {
-			task.teardown();
-		}
 
 		SimpleMessageListenerContainer cancellationConsumer = createCancellationQueueConsumer(task);
-		cancellationConsumer.start();
 
 		try {
+			// start listening for cancellation requests
+			cancellationConsumer.start();
+
+			// start the task
+			task.start();
+
+			// send that we have started the task
 			TaskResponse runningResp = new TaskResponse();
 			runningResp.setId(task.getId());
 			runningResp.setStatus(TaskStatus.RUNNING);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", runningResp);
 
-			task.run();
-			byte[] output = task.readOutput();
+			// write the input to the task
+			task.writeInput(req.getInput());
+
+			// block and wait for input
+			byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());
+
+			// wait for the process to finish
+			task.waitFor(req.getTimeoutMinutes());
 
 			TaskResponse successResp = new TaskResponse();
 			successResp.setId(task.getId());
@@ -133,7 +139,7 @@ public class TaskRunnerService {
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedResp);
 		} finally {
 			cancellationConsumer.stop();
-			task.teardown();
+			task.cleanup();
 		}
 	}
 

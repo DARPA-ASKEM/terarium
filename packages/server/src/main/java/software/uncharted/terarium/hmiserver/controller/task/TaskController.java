@@ -57,6 +57,9 @@ public class TaskController {
 	@Value("${terarium.task-runner-request-exchange}")
 	private String TASK_RUNNER_REQUEST_EXCHANGE;
 
+	@Value("${terarium.task-runner-request-queue}")
+	private String TASK_RUNNER_REQUEST_QUEUE;
+
 	@Value("${terarium.task-runner-cancellation-exchange}")
 	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
@@ -96,8 +99,8 @@ public class TaskController {
 
 	@PostConstruct
 	void init() {
-		declareAndBindQueue(TASK_RUNNER_REQUEST_EXCHANGE, TASK_RUNNER_REQUEST_EXCHANGE);
-		declareAndBindQueue(TASK_RUNNER_RESPONSE_EXCHANGE, TASK_RUNNER_RESPONSE_EXCHANGE);
+		declareAndBindQueue(TASK_RUNNER_REQUEST_EXCHANGE, TASK_RUNNER_REQUEST_QUEUE);
+		declareAndBindQueue(TASK_RUNNER_RESPONSE_EXCHANGE, TASK_RUNNER_RESPONSE_QUEUE);
 	}
 
 	@PostMapping
