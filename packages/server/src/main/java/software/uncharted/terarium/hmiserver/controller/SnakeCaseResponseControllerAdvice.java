@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
 import jakarta.annotation.PostConstruct;
+import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
 
 @RestControllerAdvice
 public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
@@ -23,7 +24,8 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 	@PostConstruct
 	public void init() {
 		mapper = new ObjectMapper()
-				.setPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy());
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override
@@ -41,7 +43,7 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 			Class selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
 
 		if (body != null && selectedContentType == MediaType.APPLICATION_JSON
-				&& !containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Camel-Case")) {
+				&& containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")) {
 			try {
 				return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
 			} catch (JsonProcessingException ignored) {

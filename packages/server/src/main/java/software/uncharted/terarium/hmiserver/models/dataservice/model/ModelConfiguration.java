@@ -3,7 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model;
 import java.sql.Timestamp;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
@@ -18,7 +18,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ModelConfiguration extends SupportAdditionalProperties {
+public class ModelConfiguration implements SupportAdditionalProperties {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -42,7 +42,7 @@ public class ModelConfiguration extends SupportAdditionalProperties {
 	@TSOptional
 	private String description;
 
-	@JsonAlias("model_id")
+	@JsonProperty("model_id")
 	private UUID modelId;
 
 	private Object configuration;

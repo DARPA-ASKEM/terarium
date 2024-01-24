@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
+@AMRSchemaType
 @Accessors(chain = true)
-public class Paper extends SupportAdditionalProperties {
+public class Paper implements SupportAdditionalProperties {
 	private String id;
 
 	@JsonProperty("file_directory")
