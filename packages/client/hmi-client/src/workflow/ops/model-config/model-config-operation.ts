@@ -14,7 +14,7 @@ export interface ModelConfigOperationState {
 
 export const ModelConfigOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_CONFIG,
-	displayName: 'Model Configuration',
+	displayName: 'Configure model',
 	description: 'Create model configurations.',
 	isRunnable: true,
 	inputs: [{ type: 'modelId' }],

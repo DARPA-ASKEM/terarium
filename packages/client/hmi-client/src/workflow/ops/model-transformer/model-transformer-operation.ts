@@ -9,7 +9,7 @@ export interface ModelTransformerState {
 export const ModelTransformerOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_TRANSFORMER,
 	description: 'Select a model',
-	displayName: 'Model Transformer',
+	displayName: 'Transform model',
 	isRunnable: true,
 	inputs: [{ type: 'modelId', label: 'Model' }],
 	outputs: [],
