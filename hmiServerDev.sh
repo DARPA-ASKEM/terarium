@@ -131,9 +131,21 @@ COMMAND=${COMMAND:-"help"}
 ENVIRONMENT=${ENVIRONMENT:-"remote"}
 SERVER=${SERVER:-"false"}
 
-echo "COMMAND: $COMMAND"
-echo "ENVIRONMENT: $ENVIRONMENT"
-echo "SERVER: $SERVER"
+VALID_ENVIRONMENTS=("remote" "local" "full")
+ENVIRONMENT_IS_VALID=0
+for env in ${VALID_ENVIRONMENTS}; do
+  if [ "${env}" = "${ENVIRONMENT}" ]; then
+    ENVIRONMENT_IS_VALID=1
+  fi
+done
+if [ ${ENVIRONMENT_IS_VALID} -eq 0 ]; then
+  echo "Illegal ENVIRONMENT \"${ENVIRONMENT}\""
+  COMMAND="help"
+else
+  echo "COMMAND: $COMMAND"
+  echo "ENVIRONMENT: $ENVIRONMENT"
+  echo "SERVER: $SERVER"
+fi
 
 case ${COMMAND} in
   start)
@@ -147,10 +159,6 @@ case ${COMMAND} in
         ;;
       full)
         deploy_full
-        ;;
-      *)
-        echo "Illegal ENVIRONMENT"
-        break
         ;;
     esac
     if [ ${SERVER} == "run" ]; then
@@ -173,10 +181,6 @@ case ${COMMAND} in
         ;;
       full)
         stop_full
-        ;;
-      *)
-        echo "Illegal ENVIRONMENT"
-        break
         ;;
     esac
     delete_secrets
