@@ -145,6 +145,37 @@ public class DocumentController {
 		}
 	}
 
+	@PutMapping("/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Update a document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Document updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
+			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the document", content = @Content)
+	})
+	public ResponseEntity<DocumentAsset> updateDocument(
+		@PathVariable("id") final UUID id,
+		@RequestBody final DocumentAsset document) {
+
+		try {
+			Optional<DocumentAsset> originalDocument = documentAssetService.getDocumentAsset(id);
+			if(originalDocument.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			// Preserve ownership. This may be coming from KM which doesn't have an awareness of who owned this document.
+			document.setUserId(originalDocument.get().getUserId());
+
+			Optional<DocumentAsset> updatedDoc = documentAssetService.updateDocumentAsset(document);
+			return updatedDoc.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final IOException e) {
+			final String error = "Unable to update document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets document by ID")
