@@ -60,8 +60,6 @@
 						/>
 					</AccordionTab>
 				</Accordion>
-				<tera-model-semantic-tables :model="modelConfiguration?.configuration">
-				</tera-model-semantic-tables>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="ConfigTabs.Notebook">
@@ -107,7 +105,6 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
