@@ -85,11 +85,11 @@ public class TaskController {
 
 	private void declareAndBindQueue(String exchangeName, String queueName) {
 		// Declare a direct exchange
-		DirectExchange exchange = new DirectExchange(exchangeName);
+		DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
 
 		// Declare a queue
-		Queue queue = new Queue(queueName);
+		Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
 		rabbitAdmin.declareQueue(queue);
 
 		// Bind the queue to the exchange with a routing key
