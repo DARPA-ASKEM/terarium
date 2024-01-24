@@ -8,20 +8,20 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
-public class SupportAdditionalProperties {
+public interface SupportAdditionalProperties {
 
 	@TSIgnore
-	private Map<String, Object> additionalProperties = new HashMap<>();
+	public Map<String, Object> additionalProperties = new HashMap<>();
 
 	@JsonAnyGetter
 	@TSIgnore
-	public Map<String, Object> getAdditionalProperties() {
+	default public Map<String, Object> getAdditionalProperties() {
 		return additionalProperties;
 	}
 
 	@JsonAnySetter
 	@TSIgnore
-	public void setAdditionalProperties(String name, Object value) {
+	default public void setAdditionalProperties(String name, Object value) {
 		additionalProperties.put(name, value);
 	}
 }

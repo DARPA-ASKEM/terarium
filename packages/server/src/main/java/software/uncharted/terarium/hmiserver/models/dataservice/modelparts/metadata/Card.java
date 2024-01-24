@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
+@AMRSchemaType
 @Accessors(chain = true)
-public class Card extends SupportAdditionalProperties {
+public class Card implements SupportAdditionalProperties {
 	@JsonAlias("DESCRIPTION")
 	@TSOptional
 	private String description;

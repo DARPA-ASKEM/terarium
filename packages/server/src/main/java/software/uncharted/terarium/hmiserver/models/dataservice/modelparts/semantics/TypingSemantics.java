@@ -5,13 +5,15 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
+@AMRSchemaType
 @Accessors(chain = true)
 @TSModel
-public class TypingSemantics extends SupportAdditionalProperties implements Serializable {
+public class TypingSemantics implements SupportAdditionalProperties, Serializable {
 	private List<List<String>> map;
 	private Object system;
 }

@@ -15,7 +15,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ModelDescription extends SupportAdditionalProperties implements Serializable {
+public class ModelDescription implements SupportAdditionalProperties, Serializable {
 
 	static public ModelDescription fromModel(Model model) {
 
@@ -41,7 +41,9 @@ public class ModelDescription extends SupportAdditionalProperties implements Ser
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
+
 	private ModelHeader header;
+
 	private Timestamp timestamp;
 
 	@TSOptional

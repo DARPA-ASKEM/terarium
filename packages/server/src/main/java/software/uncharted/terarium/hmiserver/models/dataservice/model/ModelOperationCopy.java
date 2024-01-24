@@ -6,7 +6,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
-public class ModelOperationCopy extends SupportAdditionalProperties {
+public class ModelOperationCopy implements SupportAdditionalProperties {
 	private Long left;
 	private String name;
 	private String description;

@@ -22,7 +22,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Data
 @Accessors(chain = true)
 @TSModel
-public class Model extends SupportAdditionalProperties implements Serializable {
+public class Model implements SupportAdditionalProperties, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 398195277271188277L;

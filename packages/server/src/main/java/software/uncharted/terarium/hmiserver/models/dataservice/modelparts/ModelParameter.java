@@ -2,12 +2,14 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
+@AMRSchemaType
 @Accessors(chain = true)
-public class ModelParameter extends SupportAdditionalProperties {
+public class ModelParameter implements SupportAdditionalProperties {
 	private String id;
 
 	@TSOptional

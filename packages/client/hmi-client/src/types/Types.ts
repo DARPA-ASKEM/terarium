@@ -253,8 +253,8 @@ export interface ModelConfiguration {
     deletedOn?: Date;
     name: string;
     description?: string;
-    modelId: string;
     configuration: any;
+    model_id: string;
 }
 
 export interface ModelDescription {
@@ -463,8 +463,8 @@ export interface RegNetVertex {
     name: string;
     sign: boolean;
     initial?: any;
-    rate_constant?: any;
     grounding?: ModelGrounding;
+    rate_constant?: any;
 }
 
 export interface Simulation {
@@ -851,28 +851,28 @@ export interface ModelHeader {
     modelSchema: string;
     schemaName?: string;
     description: string;
-    modelVersion?: string;
-    extractedFrom?: string;
+    model_version?: string;
+    extracted_from?: string;
 }
 
 export interface ModelSemantics {
-    ode: OdeSemantics;
     span?: any[];
-    typing?: TypingSemantics;
+    odeSemantics: OdeSemantics;
+    typingSemantics?: TypingSemantics;
 }
 
 /**
  * @deprecated
  */
 export interface ModelMetadata {
-    processedAt?: number;
-    processedBy?: string;
-    variableStatements?: VariableStatement[];
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
 }
 
 export interface ModelGrounding {
@@ -982,25 +982,17 @@ export interface OdeSemantics {
     time?: any;
 }
 
-export interface VariableStatement {
-    id: string;
-    variable: Variable;
-    value?: StatementValue;
-    metadata?: VariableStatementMetadata[];
-    provenance?: ProvenanceInfo;
-}
-
 export interface Annotations {
     license?: string;
     authors?: string[];
     references?: string[];
-    time_scale?: string;
-    time_start?: string;
-    time_end?: string;
     locations?: string[];
     pathogens?: string[];
     diseases?: string[];
     hosts?: string[];
+    time_scale?: string;
+    time_start?: string;
+    time_end?: string;
     model_types?: string[];
 }
 
@@ -1016,6 +1008,14 @@ export interface Card {
     complexity?: string;
     usage?: string;
     license?: string;
+}
+
+export interface VariableStatement {
+    id: string;
+    variable: Variable;
+    value?: StatementValue;
+    metadata?: VariableStatementMetadata[];
+    provenance?: ProvenanceInfo;
 }
 
 export interface ModelExpression {
