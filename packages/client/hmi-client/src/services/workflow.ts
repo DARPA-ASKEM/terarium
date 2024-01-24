@@ -376,6 +376,21 @@ export const isOperatorStateInSync = (
 	return true;
 };
 
+/**
+ * Including the node given by nodeId, copy/branch everything downstream,
+ *
+ * For example:
+ *    P - B - C - D
+ *    Q /
+ *
+ * if we branch at B, we will get
+ *
+ *    P - B  - C  - D
+ *      X
+ *    Q _ B' - C' - D'
+ *
+ * with { B', C', D' } new node entities
+ * */
 export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	// 1. Find anchor point
 	const anchor = wf.nodes.find((n) => n.id === nodeId);
@@ -437,7 +452,15 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 		});
 	});
 
-	// 5. Reposition nodes
+	// 5. Reposition new nodes so they don't exaclty overlap
+	const offset = 75;
+	copyNodes.forEach((n) => {
+		n.y += offset;
+	});
+	copyEdges.forEach((e) => {
+		e.points[0].y += offset;
+		e.points[e.points.length - 1].y += offset;
+	});
 
 	// 6. Finally put everything back into the workflow
 	copyNodes.forEach((node) => wf.nodes.push(node));
