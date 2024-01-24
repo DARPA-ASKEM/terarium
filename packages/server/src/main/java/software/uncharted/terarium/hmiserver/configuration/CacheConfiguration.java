@@ -28,8 +28,8 @@ public class CacheConfiguration implements CachingConfigurer {
 	@Bean
 	public CacheManager cacheManager() {
 		SimpleCacheManager cacheManager = new SimpleCacheManager();
-		Cache booksCache = new ConcurrentMapCache("users");
-		cacheManager.setCaches(Arrays.asList(booksCache));
+		Cache usersCache = new ConcurrentMapCache("users");
+		cacheManager.setCaches(Arrays.asList(usersCache));
 		return cacheManager;
 	}
 
