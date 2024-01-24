@@ -375,3 +375,71 @@ export const isOperatorStateInSync = (
 	}
 	return true;
 };
+
+export const branchWorkflow = (wf: Workflow, nodeId: string) => {
+	// 1. Find anchor point
+	const anchor = wf.nodes.find((n) => n.id === nodeId);
+	if (!anchor) return;
+
+	// 2. Collect the subgraph that we want to copy
+	const copyNodes: WorkflowNode<any>[] = [];
+	const copyEdges: WorkflowEdge[] = [];
+	const stack = [anchor.id]; // working list of nodeIds to crawl
+
+	// basically depth-first-search
+	while (stack.length > 0) {
+		const id = stack.pop();
+		const node = wf.nodes.find((n) => n.id === id);
+		if (node) copyNodes.push(_.cloneDeep(node));
+
+		// Grab downstream edges
+		const edges = wf.edges.filter((e) => e.source === id);
+		edges.forEach((edge) => {
+			stack.push(edge.target as string);
+			copyEdges.push(_.cloneDeep(edge));
+		});
+	}
+
+	// 3. Collect the upstream edges of the anchor
+	const upstreamEdges = wf.edges.filter((edge) => edge.target === anchor.id);
+	upstreamEdges.forEach((edge) => {
+		copyEdges.push(_.cloneDeep(edge));
+	});
+
+	// 4. Reassign identifiers
+	const registry: Map<string, string> = new Map();
+	copyNodes.forEach((node) => {
+		registry.set(node.id, uuidv4());
+		node.inputs.forEach((port) => {
+			registry.set(port.id, uuidv4());
+		});
+		node.outputs.forEach((port) => {
+			registry.set(port.id, uuidv4());
+		});
+	});
+
+	copyEdges.forEach((edge) => {
+		// Don't replace upstream edge sources, they are still valid
+		if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+			edge.source = registry.get(edge.source as string);
+		}
+		edge.target = registry.get(edge.target as string);
+		edge.sourcePortId = registry.get(edge.sourcePortId as string);
+		edge.targetPortId = registry.get(edge.targetPortId as string);
+	});
+	copyNodes.forEach((node) => {
+		node.id = registry.get(node.id) as string;
+		node.inputs.forEach((port) => {
+			port.id = registry.get(port.id) as string;
+		});
+		node.outputs.forEach((port) => {
+			port.id = registry.get(port.id) as string;
+		});
+	});
+
+	// 5. Reposition nodes
+
+	// 6. Finally put everything back into the workflow
+	copyNodes.forEach((node) => wf.nodes.push(node));
+	copyEdges.forEach((edge) => wf.edges.push(edge));
+};
