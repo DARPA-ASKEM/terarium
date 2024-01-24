@@ -160,7 +160,3 @@ volumes:
   minio-data:
   terarium-db:
     driver: local
-
-networks:
-  terarium:
-    name: terarium

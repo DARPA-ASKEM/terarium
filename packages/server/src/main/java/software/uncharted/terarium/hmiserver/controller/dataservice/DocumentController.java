@@ -145,6 +145,37 @@ public class DocumentController {
 		}
 	}
 
+	@PutMapping("/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Update a document")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Document updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
+			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the document", content = @Content)
+	})
+	public ResponseEntity<DocumentAsset> updateDocument(
+		@PathVariable("id") final UUID id,
+		@RequestBody final DocumentAsset document) {
+
+		try {
+			Optional<DocumentAsset> originalDocument = documentAssetService.getDocumentAsset(id);
+			if(originalDocument.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			// Preserve ownership. This may be coming from KM which doesn't have an awareness of who owned this document.
+			document.setUserId(originalDocument.get().getUserId());
+
+			Optional<DocumentAsset> updatedDoc = documentAssetService.updateDocumentAsset(document);
+			return updatedDoc.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final IOException e) {
+			final String error = "Unable to update document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets document by ID")
@@ -276,7 +307,7 @@ public class DocumentController {
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<ResponseStatus> uploadDocumentHelper(final UUID documentId, final String fileName,
+	private ResponseEntity<Void> uploadDocumentHelper(final UUID documentId, final String fileName,
 			final HttpEntity fileEntity) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
@@ -300,7 +331,8 @@ public class DocumentController {
 
 				documentAssetService.updateDocumentAsset(document.get());
 			}
-			return ResponseEntity.ok(new ResponseStatus(response.getStatusLine().getStatusCode()));
+
+			return ResponseEntity.status(response.getStatusLine().getStatusCode()).build();
 
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
@@ -320,7 +352,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
-	public ResponseEntity<ResponseStatus> uploadDocument(
+	public ResponseEntity<Void> uploadDocument(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile file) {
@@ -349,7 +381,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "200", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
-	public ResponseEntity<ResponseStatus> uploadDocumentFromGithub(
+	public ResponseEntity<Void> uploadDocumentFromGithub(
 			@PathVariable("documentId") final UUID documentId,
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
