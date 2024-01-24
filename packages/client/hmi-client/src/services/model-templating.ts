@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Position } from '@/types/common';
-import type { ModelTemplateEditor } from '@/types/model-templating';
+import type { ModelTemplateEditor, ModelTemplateEdge } from '@/types/model-templating';
 import naturalConversion from './model-templates/natural-conversion.json';
 import naturalProduction from './model-templates/natural-production.json';
 import naturalDegredation from './model-templates/natural-degradation.json';
@@ -50,21 +50,16 @@ export function addCard(modelTemplateEditor: ModelTemplateEditor, modelTemplate:
 }
 
 export function removeCard(modelTemplateEditor: ModelTemplateEditor, id: string) {
-	const { models, junctions } = modelTemplateEditor;
+	// Remove edges connected to the card
+	modelTemplateEditor.junctions.forEach((junction) => {
+		junction.edges = junction.edges.filter((edge) => edge.target.cardId !== id);
+	});
+	junctionCleanUp(modelTemplateEditor);
 
-	const edgesToRemove = junctions.map(({ edges }) =>
-		edges.filter(({ target }) => target.cardId === id)
+	// Remove card
+	modelTemplateEditor.models = modelTemplateEditor.models.filter(
+		(model) => model.metadata.templateCard.id !== id
 	);
-
-	console.log(edgesToRemove);
-
-	// Find edges to remove
-
-	// Remove edges
-
-	// If a junction ends up having one edge coming out of it, remove it
-
-	modelTemplateEditor.models = models.filter((model) => model.metadata.templateCard.id !== id);
 }
 
 export function updateCardName(modelTemplateEditor: ModelTemplateEditor, name: string, id: string) {
@@ -72,24 +67,38 @@ export function updateCardName(modelTemplateEditor: ModelTemplateEditor, name: s
 	modelTemplateEditor.models[index].metadata.templateCard.name = name;
 }
 
-export function addJunction(modelTemplateEditor: ModelTemplateEditor, position: Position) {
+export function addJunction(modelTemplateEditor: ModelTemplateEditor, portPosition: Position) {
 	modelTemplateEditor.junctions.push({
 		id: uuidv4(),
-		x: position.x,
-		y: position.y,
+		x: portPosition.x + 500,
+		y: portPosition.y - 10,
 		edges: []
 	});
+}
 
-	// Check for edges always?????
+// If a junction ends up having one edge coming out of it, remove it
+export function junctionCleanUp(modelTemplateEditor: ModelTemplateEditor) {
+	modelTemplateEditor.junctions = modelTemplateEditor.junctions.filter(
+		({ edges }) => edges.length > 1
+	);
 }
 
 export function addEdge(
 	modelTemplateEditor: ModelTemplateEditor,
 	junctionId: string,
 	target: { cardId: string; portId: string },
-	points: Position[]
+	portPosition: Position,
+	newEdge?: ModelTemplateEdge
 ) {
-	modelTemplateEditor.junctions
-		.find(({ id }) => id === junctionId)
-		?.edges.push({ id: uuidv4(), target, points });
+	if (target.cardId === newEdge?.target.cardId) return; // Prevents connecting to the same card
+
+	const index = modelTemplateEditor.junctions.findIndex(({ id }) => id === junctionId);
+	const junctionToDrawFrom = modelTemplateEditor.junctions[index];
+
+	const points = [
+		{ x: junctionToDrawFrom.x + 10, y: junctionToDrawFrom.y + 10 },
+		{ x: portPosition.x, y: portPosition.y }
+	];
+
+	modelTemplateEditor.junctions[index].edges.push({ id: uuidv4(), target, points });
 }

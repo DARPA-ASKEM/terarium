@@ -167,7 +167,8 @@ const drawPath = (v: any) => pathFn(v) as string;
 function createNewEdge(card: ModelTemplateCard, portId: string) {
 	const target = { cardId: card.id, portId };
 
-	// Handles the edge that goes from port to junction
+	// Creates the default edge that is first drawn for a new junction
+	// and the new edge the user is in control of
 	if (!isCreatingNewEdge.value) {
 		// Find the junction that we want to draw from
 		junctions.value.forEach(({ edges, id }) => {
@@ -182,10 +183,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
 			// Add new junction
-			modelTemplatingService.addJunction(modelTemplateEditor.value, {
-				x: currentPortPosition.x + 500,
-				y: currentPortPosition.y - 10
-			});
+			modelTemplatingService.addJunction(modelTemplateEditor.value, currentPortPosition);
 
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
@@ -193,39 +191,30 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 				modelTemplateEditor.value,
 				junctionIdForNewEdge,
 				target,
-				interpolatePointsForCurve(
-					{ x: currentPortPosition.x + 510, y: currentPortPosition.y },
-					{ x: currentPortPosition.x, y: currentPortPosition.y }
-				)
+				currentPortPosition
 			);
 		}
 
-		const index = junctions.value.findIndex(({ id }) => id === junctionIdForNewEdge);
-		newEdge.value = {
-			target,
-			points: [
-				{ x: junctions.value[index].x + 10, y: junctions.value[index].y + 10 },
-				{ x: currentPortPosition.x, y: currentPortPosition.y }
-			]
-		};
+		const junctionToDrawFrom = junctions.value.find(({ id }) => id === junctionIdForNewEdge);
+		if (junctionToDrawFrom) {
+			newEdge.value = {
+				target,
+				points: [
+					{ x: junctionToDrawFrom.x + 10, y: junctionToDrawFrom.y + 10 },
+					{ x: currentPortPosition.x, y: currentPortPosition.y }
+				]
+			};
+		}
 	}
-	// Handles the edge going from junction to port
-	else if (
-		junctionIdForNewEdge &&
-		target.cardId !== newEdge.value.target.cardId // Prevents connecting ports of the same card
-	) {
-		const index = junctions.value.findIndex(({ id }) => id === junctionIdForNewEdge);
-
+	// Creates the edge that the user drew
+	else if (junctionIdForNewEdge) {
 		modelTemplatingService.addEdge(
 			modelTemplateEditor.value,
 			junctionIdForNewEdge,
 			target,
-			interpolatePointsForCurve(
-				{ x: junctions.value[index].x + 10, y: junctions.value[index].y + 10 },
-				{ x: currentPortPosition.x, y: currentPortPosition.y }
-			)
+			currentPortPosition,
+			newEdge.value
 		);
-
 		cancelNewEdge();
 	}
 }
@@ -257,9 +246,7 @@ function onCanvasClick() {
 function cancelNewEdge() {
 	newEdge.value = undefined;
 	junctionIdForNewEdge = null;
-
-	// Removes junction that doesn't connect to anything
-	// junctions.value = junctions.value.filter(({ edges }) => edges.length > 1);
+	modelTemplatingService.junctionCleanUp(modelTemplateEditor.value);
 }
 
 const setMouseOverCanvas = (val: boolean) => {
