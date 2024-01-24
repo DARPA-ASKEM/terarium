@@ -135,7 +135,7 @@ public class TaskRunnerService {
 
 			TaskResponse failedResp = new TaskResponse();
 			failedResp.setId(task.getId());
-			failedResp.setStatus(TaskStatus.FAILED);
+			failedResp.setStatus(task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedResp);
 		} finally {
 			cancellationConsumer.stop();
@@ -155,7 +155,12 @@ public class TaskRunnerService {
 		container.setMessageListener(message -> {
 			log.info("Received cancellation for task {}", task.getId());
 
-			task.cancel();
+			if (task.cancel()) {
+				TaskResponse resp = new TaskResponse();
+				resp.setId(task.getId());
+				resp.setStatus(TaskStatus.CANCELLING);
+				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", resp);
+			}
 		});
 		return container;
 	}

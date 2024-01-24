@@ -11,8 +11,6 @@ import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -20,6 +18,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
+import software.uncharted.terarium.taskrunner.util.ScopedLock;
 
 @Data
 @Slf4j
@@ -30,10 +30,11 @@ public class Task {
 	private ObjectMapper mapper;
 	private ProcessBuilder processBuilder;
 	private Process process;
-	CompletableFuture<Integer> processFuture;
+	private CompletableFuture<Integer> processFuture;
 	private String inputPipeName;
 	private String outputPipeName;
-
+	private TaskStatus status = TaskStatus.QUEUED;
+	private ScopedLock lock = new ScopedLock();
 	private String script;
 
 	public Task(UUID id, String taskKey) throws IOException, InterruptedException {
@@ -53,7 +54,6 @@ public class Task {
 	}
 
 	private void setup() throws IOException, InterruptedException {
-
 		script = getClass().getResource("/" + taskKey + ".py").getPath();
 
 		log.info("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, id);
@@ -77,9 +77,7 @@ public class Task {
 				"--output_pipe", outputPipeName);
 	}
 
-	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes) throws IOException {
-		ExecutorService executor = Executors.newSingleThreadExecutor();
-
+	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes) throws IOException, InterruptedException {
 		CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
 			try {
 				// Write to the named pipe in a separate thread
@@ -90,7 +88,7 @@ public class Task {
 				throw new RuntimeException(e);
 			}
 			return null;
-		}, executor);
+		});
 
 		Object result;
 		try {
@@ -100,8 +98,6 @@ public class Task {
 		} catch (TimeoutException e) {
 			future.cancel(true);
 			throw new RuntimeException("Writing to pipe took too long", e);
-		} finally {
-			executor.shutdownNow(); // always stop the executor
 		}
 
 		if (result == null) {
@@ -109,14 +105,16 @@ public class Task {
 		}
 		if (result instanceof Integer) {
 			// process has exited early
-			throw new RuntimeException("Process for task " + id + " exited early with code " + result);
+			if (status == TaskStatus.CANCELLED) {
+				throw new InterruptedException("Process for task " + id + " has been cancelled");
+			}
+			throw new InterruptedException("Process for task " + id + " exited early with code " + result);
 		}
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
 	}
 
 	public byte[] readOutputWithTimeout(int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		ExecutorService executor = Executors.newSingleThreadExecutor();
 		CompletableFuture<byte[]> future = CompletableFuture.supplyAsync(() -> {
 			try (BufferedReader reader = new BufferedReader(
 					new InputStreamReader(new FileInputStream(outputPipeName)))) {
@@ -124,7 +122,7 @@ public class Task {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-		}, executor);
+		});
 
 		Object result;
 		try {
@@ -132,17 +130,24 @@ public class Task {
 		} catch (TimeoutException e) {
 			future.cancel(true);
 			throw new RuntimeException("Reading from pipe took too long", e);
-		} finally {
-			executor.shutdownNow(); // always stop the executor
+		}
+
+		if (result == null) {
+			throw new RuntimeException("Unexpected null result");
 		}
 
 		if (result instanceof byte[]) {
 			// we got our response
 			return (byte[]) result;
-		} else if (result instanceof Integer) {
-			// process has exited early
-			throw new RuntimeException("Process for task " + id + " exited early with code " + result);
 		}
+		if (result instanceof Integer) {
+			// process has exited early
+			if (status == TaskStatus.CANCELLED) {
+				throw new InterruptedException("Process for task " + id + " has been cancelled");
+			}
+			throw new InterruptedException("Process for task " + id + " exited early with code " + result);
+		}
+
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
 	}
 
@@ -188,19 +193,48 @@ public class Task {
 		}
 	}
 
-	public void start() throws IOException {
+	public void start() throws IOException, InterruptedException {
+
+		lock.lock(() -> {
+			if (status == TaskStatus.CANCELLED) {
+				// don't run if we already cancelled
+				throw new InterruptedException("Task has already been cancelled");
+			}
+
+			if (status != TaskStatus.QUEUED) {
+				// has to be in a queued state to be valid to run
+				throw new RuntimeException("Task has already been started");
+			}
+
+			status = TaskStatus.RUNNING;
+		});
+
 		process = processBuilder.start();
 
 		// Create a future to signal when the process has exited
 		processFuture = CompletableFuture.supplyAsync(() -> {
 			try {
 				int exitCode = process.waitFor();
+				lock.lock(() -> {
+					if (exitCode != 0) {
+						if (status == TaskStatus.CANCELLING) {
+							status = TaskStatus.CANCELLED;
+						} else {
+							status = TaskStatus.FAILED;
+						}
+					} else {
+						status = TaskStatus.SUCCESS;
+					}
+				});
 				log.info("Process exited with code " + exitCode);
 				return exitCode;
 			} catch (InterruptedException e) {
 				log.warn("Process failed to exit cleanly " + e);
+				lock.lock(() -> {
+					status = TaskStatus.FAILED;
+				});
 			}
-			return -1;
+			return 1;
 		});
 
 		InputStream inputStream = process.getInputStream();
@@ -227,12 +261,14 @@ public class Task {
 				log.warn("Error occured while logging stderr for task {}", id);
 			}
 		}).start();
-
 	}
 
-	public void waitFor(int timeoutMinutes) throws InterruptedException, TimeoutException {
+	public void waitFor(int timeoutMinutes) throws InterruptedException, TimeoutException, ExecutionException {
 		boolean hasExited = process.waitFor((long) timeoutMinutes, TimeUnit.MINUTES);
 		if (hasExited) {
+			// if we have exited, lets wait on the future to resolve and the status to be
+			// correctly set
+			processFuture.get();
 			int exitCode = process.exitValue();
 			if (exitCode != 0) {
 				throw new RuntimeException("Python script exited with non-zero exit code: " + exitCode);
@@ -242,11 +278,34 @@ public class Task {
 		}
 	}
 
-	public void cancel() {
-		if (process != null) {
+	public boolean cancel() {
+		return lock.lock(() -> {
+			if (status == TaskStatus.QUEUED) {
+				// if we havaen't started yet, flag it as cancelled
+				status = TaskStatus.CANCELLED;
+				return false;
+			}
+			if (status != TaskStatus.RUNNING) {
+				// can't cancel a process if it isn't in a running state
+				return false;
+			}
+
+			status = TaskStatus.CANCELLING;
+
+			if (process == null) {
+				throw new RuntimeException("Process has not been started");
+			}
+
 			// Kill the process forcibly (SIGKILL)
 			process.destroyForcibly();
-		}
+			return true;
+		});
+	}
+
+	TaskStatus getStatus() {
+		return lock.lock(() -> {
+			return status;
+		});
 	}
 
 }

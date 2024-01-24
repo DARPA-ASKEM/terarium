@@ -8,5 +8,6 @@ public enum TaskStatus {
 	RUNNING,
 	SUCCESS,
 	FAILED,
+	CANCELLING,
 	CANCELLED
 }
