@@ -469,6 +469,6 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	});
 
 	// 6. Finally put everything back into the workflow
-	copyNodes.forEach((node) => wf.nodes.push(node));
-	copyEdges.forEach((edge) => wf.edges.push(edge));
+	wf.nodes.push(...copyNodes);
+	wf.edges.push(...copyEdges);
 };
