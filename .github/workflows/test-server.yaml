@@ -45,11 +45,11 @@ jobs:
 
       # Start containers
       - name: Start containers
-        run: cd containers && docker compose --file docker-compose-lean.yml up --detach --wait
+        run: cd containers && docker compose --file docker-compose-actions.yml up --detach --wait
 
       # Run the tests
       - name: Run tests
-        uses: gradle/gradle-build-action@5516b399405349a7d56e45a78a0bd4b3eaa62f9e
+        uses: gradle/gradle-build-action@42452daeb5b454a76f686a8e4de8234afd7b1f44
         with:
           gradle-version: wrapper
           build-root-directory: packages/server
@@ -69,4 +69,4 @@ jobs:
       # Stop containers
       - name: Stop containers
         if: always()
-        run: cd containers && docker compose --file docker-compose-lean.yml down
+        run: cd containers && docker compose --file docker-compose-actions.yml down

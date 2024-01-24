@@ -224,7 +224,36 @@
                 }
             ],
             "properties": {
-                "document": {
+                "id": {
+                    "type": "keyword"
+                },
+                "name": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 256
+                        }
+                    }
+                },
+                "description": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 256
+                        }
+                    }
+                },
+                "transform": {
+                    "type": "object",
+                    "enabled": false
+                },
+                "nodes": {
+                    "type": "object",
+                    "enabled": false
+                },
+                "edges": {
                     "type": "object",
                     "enabled": false
                 },

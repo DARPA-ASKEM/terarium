@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.ServerHttpRequest;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
 import jakarta.annotation.PostConstruct;
+import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
 
 @RestControllerAdvice
 public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
@@ -22,7 +24,8 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 	@PostConstruct
 	public void init() {
 		mapper = new ObjectMapper()
-				.setPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy());
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override
@@ -30,12 +33,17 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 		return returnType.getParameterType().isAssignableFrom(ResponseEntity.class);
 	}
 
+	private boolean containsKeyIgnoreCase(HttpHeaders headers, String key) {
+		return headers.keySet().stream()
+				.anyMatch(k -> k.equalsIgnoreCase(key));
+	}
+
 	@Override
 	public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
 			Class selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
 
 		if (body != null && selectedContentType == MediaType.APPLICATION_JSON
-				&& request.getHeaders().containsKey("X-Enable-Snake-Case")) {
+				&& containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")) {
 			try {
 				return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
 			} catch (JsonProcessingException ignored) {
