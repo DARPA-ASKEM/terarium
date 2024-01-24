@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEqual } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -152,7 +152,7 @@ function collisionFn(p: Position) {
 }
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
-	return getAStarPath(a, b, collisionFn, { w: 20, h: 20 });
+	return getAStarPath(a, b, collisionFn);
 }
 
 const pathFn = d3
@@ -167,8 +167,6 @@ const drawPath = (v: any) => pathFn(v) as string;
 function createNewEdge(card: ModelTemplateCard, portId: string) {
 	const target = { cardId: card.id, portId };
 
-	// Creates the default edge that is first drawn for a new junction
-	// and the new edge the user is in control of
 	if (!isCreatingNewEdge.value) {
 		// Find the junction that we want to draw from
 		junctions.value.forEach(({ edges, id }) => {
@@ -182,19 +180,20 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
-			// Add new junction
 			modelTemplatingService.addJunction(modelTemplateEditor.value, currentPortPosition);
-
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
+			// Add a default edge as well
 			modelTemplatingService.addEdge(
 				modelTemplateEditor.value,
 				junctionIdForNewEdge,
 				target,
-				currentPortPosition
+				currentPortPosition,
+				interpolatePointsForCurve
 			);
 		}
 
+		// Creates the potential edge that the user is drawing
 		const junctionToDrawFrom = junctions.value.find(({ id }) => id === junctionIdForNewEdge);
 		if (junctionToDrawFrom) {
 			newEdge.value = {
@@ -207,13 +206,16 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		}
 	}
 	// Creates the edge that the user drew
-	else if (junctionIdForNewEdge) {
+	else if (
+		junctionIdForNewEdge &&
+		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
+	) {
 		modelTemplatingService.addEdge(
 			modelTemplateEditor.value,
 			junctionIdForNewEdge,
 			target,
 			currentPortPosition,
-			newEdge.value
+			interpolatePointsForCurve
 		);
 		cancelNewEdge();
 	}
@@ -304,6 +306,8 @@ const updatePosition = (
 		});
 	});
 };
+
+// const debouncedUpdatePosition = debounce(updatePosition, 5); // FIXME: Stays on dragged stayed when let go
 
 let prevX = 0;
 let prevY = 0;

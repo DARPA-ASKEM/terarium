@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Position } from '@/types/common';
-import type { ModelTemplateEditor, ModelTemplateEdge } from '@/types/model-templating';
+import type { ModelTemplateEditor } from '@/types/model-templating';
 import naturalConversion from './model-templates/natural-conversion.json';
 import naturalProduction from './model-templates/natural-production.json';
 import naturalDegredation from './model-templates/natural-degradation.json';
@@ -49,6 +49,11 @@ export function addCard(modelTemplateEditor: ModelTemplateEditor, modelTemplate:
 	modelTemplateEditor.models.push(modelTemplate);
 }
 
+export function updateCardName(modelTemplateEditor: ModelTemplateEditor, name: string, id: string) {
+	const index = findCardIndexById(modelTemplateEditor, id);
+	modelTemplateEditor.models[index].metadata.templateCard.name = name;
+}
+
 export function removeCard(modelTemplateEditor: ModelTemplateEditor, id: string) {
 	// Remove edges connected to the card
 	modelTemplateEditor.junctions.forEach((junction) => {
@@ -62,11 +67,6 @@ export function removeCard(modelTemplateEditor: ModelTemplateEditor, id: string)
 	);
 }
 
-export function updateCardName(modelTemplateEditor: ModelTemplateEditor, name: string, id: string) {
-	const index = findCardIndexById(modelTemplateEditor, id);
-	modelTemplateEditor.models[index].metadata.templateCard.name = name;
-}
-
 export function addJunction(modelTemplateEditor: ModelTemplateEditor, portPosition: Position) {
 	modelTemplateEditor.junctions.push({
 		id: uuidv4(),
@@ -76,8 +76,8 @@ export function addJunction(modelTemplateEditor: ModelTemplateEditor, portPositi
 	});
 }
 
-// If a junction ends up having one edge coming out of it, remove it
 export function junctionCleanUp(modelTemplateEditor: ModelTemplateEditor) {
+	// If a junction ends up having one edge coming out of it, remove it
 	modelTemplateEditor.junctions = modelTemplateEditor.junctions.filter(
 		({ edges }) => edges.length > 1
 	);
@@ -88,17 +88,22 @@ export function addEdge(
 	junctionId: string,
 	target: { cardId: string; portId: string },
 	portPosition: Position,
-	newEdge?: ModelTemplateEdge
+	interpolatePointsFn?: Function
 ) {
-	if (target.cardId === newEdge?.target.cardId) return; // Prevents connecting to the same card
-
 	const index = modelTemplateEditor.junctions.findIndex(({ id }) => id === junctionId);
 	const junctionToDrawFrom = modelTemplateEditor.junctions[index];
 
-	const points = [
+	const points: Position[] = [
 		{ x: junctionToDrawFrom.x + 10, y: junctionToDrawFrom.y + 10 },
 		{ x: portPosition.x, y: portPosition.y }
 	];
 
-	modelTemplateEditor.junctions[index].edges.push({ id: uuidv4(), target, points });
+	modelTemplateEditor.junctions[index].edges.push({
+		id: uuidv4(),
+		target,
+		points: interpolatePointsFn ? interpolatePointsFn(...points) : points
+	});
 }
+
+// TODO: There isn't a way to do this in the UI yet
+// export function removeEdge(modelTemplateEditor: ModelTemplateEditor) {}
