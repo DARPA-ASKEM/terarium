@@ -9,6 +9,7 @@ export interface ModelConfigOperationState {
 	description: string;
 	initials?: Initial[];
 	parameters?: ModelParameter[];
+	timeseries?: { [key: string]: string };
 }
 
 export const ModelConfigOperation: Operation = {
