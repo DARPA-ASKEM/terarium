@@ -98,7 +98,7 @@ public class TaskController {
 
 		// create the cancellation queue _BEFORE_ sending the request, because a
 		// cancellation can be send before the request is consumed on the other end if
-		// there is contention.
+		// there is contention. We need this queue to exist to hold the message.
 		String queueName = req.getId().toString();
 		String routingKey = req.getId().toString();
 		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
@@ -122,8 +122,8 @@ public class TaskController {
 	@IgnoreRequestLogging
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		// send the cancellation to the task runner
-		final String jsonStr = "";
-		rabbitTemplate.convertAndSend(TASK_RUNNER_CANCELLATION_EXCHANGE, jsonStr);
+		final String msg = "";
+		rabbitTemplate.convertAndSend(TASK_RUNNER_CANCELLATION_EXCHANGE, msg);
 
 		return ResponseEntity.ok().build();
 	}
@@ -145,22 +145,26 @@ public class TaskController {
 	@RabbitListener(queues = {
 			"${terarium.task-runner-response-queue}" }, concurrency = "1")
 	void onTaskResponse(final Message message, final Channel channel) throws IOException, InterruptedException {
-		TaskResponse resp = decodeMessage(message, TaskResponse.class);
-		if (resp == null) {
-			return;
-		}
-		final SseEmitter emitter = taskIdToEmitter.get(resp.getId());
-		synchronized (taskIdToEmitter) {
-			if (emitter != null) {
-				try {
-					emitter.send(resp);
-				} catch (IllegalStateException | ClientAbortException e) {
-					log.warn("Error sending task message for task {}. User likely disconnected", resp.getId());
-					taskIdToEmitter.remove(resp.getId());
-				} catch (IOException e) {
-					log.error("Error sending task message to for task {}", resp.getId(), e);
+		try {
+			TaskResponse resp = decodeMessage(message, TaskResponse.class);
+			if (resp == null) {
+				return;
+			}
+			final SseEmitter emitter = taskIdToEmitter.get(resp.getId());
+			synchronized (taskIdToEmitter) {
+				if (emitter != null) {
+					try {
+						emitter.send(resp);
+					} catch (IllegalStateException | ClientAbortException e) {
+						log.warn("Error sending task message for task {}. User likely disconnected", resp.getId());
+						taskIdToEmitter.remove(resp.getId());
+					} catch (IOException e) {
+						log.error("Error sending task message to for task {}", resp.getId(), e);
+					}
 				}
 			}
+		} catch (Exception e) {
+			log.error("Error processing task response message", e);
 		}
 	}
 
