@@ -105,7 +105,7 @@ onMounted(async () => {
 		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
-			id: props.amr
+			id: props.amr?.id
 		}
 	};
 
