@@ -1,9 +1,18 @@
 package software.uncharted.terarium.taskrunner.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterEach;
@@ -33,6 +42,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	ObjectMapper mapper = new ObjectMapper();
 
 	private final int REPEAT_COUNT = 1;
+	private final long TIMEOUT_SECONDS = 10;
 
 	@BeforeEach
 	public void setup() {
@@ -44,25 +54,67 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		taskRunnerService.destroyQueues();
 	}
 
-	private SimpleMessageListenerContainer getResponseConsumer(AtomicBoolean isFinished, List<TaskResponse> responses) {
+	private List<TaskResponse> consumeAllResponses() throws InterruptedException {
+		BlockingQueue<TaskResponse> queue = consumeForResponses();
+		List<TaskResponse> responses = new ArrayList<>();
+
+		while (true) {
+			try {
+				TaskResponse resp = queue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+				responses.add(resp);
+				if (resp.getStatus() == TaskStatus.SUCCESS ||
+						resp.getStatus() == TaskStatus.FAILED ||
+						resp.getStatus() == TaskStatus.CANCELLED) {
+					break;
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				break;
+			}
+		}
+		return responses;
+	}
+
+	private BlockingQueue<TaskResponse> consumeForResponses() {
+
+		BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(10);
+
+		CompletableFuture<Void> processFuture = new CompletableFuture<>();
+
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
 				rabbitTemplate.getConnectionFactory());
 		container.setQueueNames(taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
 			try {
 				TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
-				responses.add(resp);
+				queue.put(resp);
 
-				if (resp.getStatus() == TaskStatus.SUCCESS || resp.getStatus() == TaskStatus.FAILED
-						|| resp.getStatus() == TaskStatus.CANCELLED) {
-					isFinished.set(true);
+				if (resp.getStatus() == TaskStatus.SUCCESS ||
+						resp.getStatus() == TaskStatus.FAILED ||
+						resp.getStatus() == TaskStatus.CANCELLED) {
+					// signal we are done
+					processFuture.complete(null);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				isFinished.set(true);
+				processFuture.complete(null);
 			}
 		});
-		return container;
+
+		container.start();
+
+		new Thread(() -> {
+			try {
+				int TIMEOUT_SECONDS = 10;
+				processFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				e.printStackTrace();
+			} finally {
+				container.stop();
+			}
+		}).start();
+
+		return queue;
 	}
 
 	@RepeatedTest(REPEAT_COUNT)
@@ -77,23 +129,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
-		AtomicBoolean isFinished = new AtomicBoolean(false);
-		List<TaskResponse> responses = Collections.synchronizedList(new ArrayList<>());
-
-		SimpleMessageListenerContainer container = getResponseConsumer(isFinished, responses);
-		container.start();
-
-		int MAX_WAIT = 10000;
-		long start = System.currentTimeMillis();
-		while (!isFinished.get()) {
-			Thread.sleep(100);
-
-			if (System.currentTimeMillis() - start > MAX_WAIT) {
-				break;
-			}
-		}
-
-		container.stop();
+		List<TaskResponse> responses = consumeAllResponses();
 
 		Assertions.assertTrue(responses.size() == 2);
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
@@ -112,23 +148,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
-		AtomicBoolean isFinished = new AtomicBoolean(false);
-		List<TaskResponse> responses = Collections.synchronizedList(new ArrayList<>());
-
-		SimpleMessageListenerContainer container = getResponseConsumer(isFinished, responses);
-		container.start();
-
-		int MAX_WAIT = 10000;
-		long start = System.currentTimeMillis();
-		while (!isFinished.get()) {
-			Thread.sleep(100);
-
-			if (System.currentTimeMillis() - start > MAX_WAIT) {
-				break;
-			}
-		}
-
-		container.stop();
+		List<TaskResponse> responses = consumeAllResponses();
 
 		Assertions.assertTrue(responses.size() == 2);
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
@@ -147,30 +167,22 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
-		AtomicBoolean isFinished = new AtomicBoolean(false);
-		List<TaskResponse> responses = Collections.synchronizedList(new ArrayList<>());
+		BlockingQueue<TaskResponse> queue = consumeForResponses();
+		List<TaskResponse> responses = new ArrayList<>();
 
-		SimpleMessageListenerContainer container = getResponseConsumer(isFinished, responses);
-		container.start();
-
-		int MAX_WAIT = 10000;
-		long start = System.currentTimeMillis();
-		while (!isFinished.get()) {
-			Thread.sleep(100);
-
-			if (responses.size() > 0) {
+		while (true) {
+			TaskResponse resp = queue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+			responses.add(resp);
+			if (resp.getStatus() == TaskStatus.RUNNING) {
 				// send the cancellation after we know the task has started
 				rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
 						req.getId().toString(),
 						"");
 			}
-
-			if (System.currentTimeMillis() - start > MAX_WAIT) {
+			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				break;
 			}
 		}
-
-		container.stop();
 
 		Assertions.assertTrue(responses.size() == 3);
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
@@ -205,25 +217,93 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
-		AtomicBoolean isFinished = new AtomicBoolean(false);
-		List<TaskResponse> responses = Collections.synchronizedList(new ArrayList<>());
-
-		SimpleMessageListenerContainer container = getResponseConsumer(isFinished, responses);
-		container.start();
-
-		int MAX_WAIT = 10000;
-		long start = System.currentTimeMillis();
-		while (!isFinished.get()) {
-			Thread.sleep(100);
-
-			if (System.currentTimeMillis() - start > MAX_WAIT) {
-				break;
-			}
-		}
-
-		container.stop();
+		List<TaskResponse> responses = consumeAllResponses();
 
 		Assertions.assertTrue(responses.size() == 1);
 		Assertions.assertEquals(TaskStatus.CANCELLED, responses.get(0).getStatus());
 	}
+
+	@RepeatedTest(REPEAT_COUNT)
+	public void testRunTaskSoakTest()
+			throws InterruptedException, JsonProcessingException, ExecutionException, TimeoutException {
+
+		int NUM_REQUESTS = 8;
+		int NUM_THREADS = 4;
+
+		ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+		List<Future<?>> futures = new ArrayList<>();
+
+		for (int i = 0; i < NUM_REQUESTS; i++) {
+
+			Random rand = new Random();
+			int randomNumber = rand.nextInt(3) + 1;
+
+			TaskRequest req = new TaskRequest();
+			req.setId(UUID.randomUUID());
+			req.setTaskKey("ml");
+			req.setTimeoutMinutes(1);
+
+			// we have to create this queue before sending the cancellation to know that
+			// there is a queue to get the msg
+			String cancelQueue = req.getId().toString();
+			String routingKey = req.getId().toString();
+			taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
+					taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, cancelQueue,
+					routingKey);
+
+			AtomicBoolean shouldCancel = new AtomicBoolean(false);
+
+			switch (randomNumber) {
+				case 0:
+					// success
+					req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+					break;
+				case 1:
+					// failure
+					req.setInput(new String("{\"should_fail\": true}").getBytes());
+					break;
+				case 2:
+					// cancellation
+					req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+					shouldCancel.set(true);
+			}
+
+			Future<?> future = executor.submit(() -> {
+				try {
+
+					String reqStr = mapper.writeValueAsString(req);
+					rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
+
+					BlockingQueue<TaskResponse> queue = consumeForResponses();
+					List<TaskResponse> responses = new ArrayList<>();
+
+					while (true) {
+						TaskResponse resp = queue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+						responses.add(resp);
+						if (shouldCancel.get() && resp.getStatus() == TaskStatus.RUNNING) {
+							// send the cancellation after we know the task has started
+							rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
+									req.getId().toString(),
+									"");
+						}
+						if (resp.getStatus() == TaskStatus.SUCCESS ||
+								resp.getStatus() == TaskStatus.FAILED ||
+								resp.getStatus() == TaskStatus.CANCELLED) {
+							break;
+						}
+					}
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			});
+
+			futures.add(future);
+		}
+
+		for (Future<?> future : futures) {
+			future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+		}
+	}
+
 }
