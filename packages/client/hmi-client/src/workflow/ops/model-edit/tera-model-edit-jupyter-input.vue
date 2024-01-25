@@ -17,9 +17,9 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext';
 import { ref, onUnmounted, onMounted } from 'vue';
-import { KernelState, newSession, KernelSessionManager } from '@/services/jupyter';
+import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import { Model } from '@/types/Types';
-// createMessageId, JupyterMessage,
+// createMessageId, JupyterMessage, newSession
 // import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 // import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 // import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -34,7 +34,7 @@ const queryString = ref('');
 const kernelStatus = ref<string>('');
 
 const manager = new KernelSessionManager();
-const jupyterSession = ref();
+// const jupyterSession = ref();
 
 const submitQuery = async () => {
 	const message = manager.sendMessage('llm_request', {
@@ -109,12 +109,13 @@ onMounted(async () => {
 		}
 	};
 
-	jupyterSession.value = await newSession('beaker_kernel', 'Beaker Kernel');
+	// jupyterSession.value = await newSession('beaker_kernel', 'Beaker Kernel');
 	await manager.init('beaker_kernel', 'Beaker Kernel', context);
 });
 
 onUnmounted(() => {
-	jupyterSession.value.shutdown();
+	// jupyterSession.value.shutdown();
+	manager.shutdown();
 });
 </script>
 
