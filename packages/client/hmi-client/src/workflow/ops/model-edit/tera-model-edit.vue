@@ -10,6 +10,9 @@
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
+				<Suspense>
+					<tera-model-edit-jupyter-input :amr="amr" @append-output="getOutputFromLLM" />
+				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -18,7 +21,6 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
-
 				<template #footer>
 					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
 				</template>
@@ -80,6 +82,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { ModelEditOperationState } from './model-edit-operation';
+import teraModelEditJupyterInput from './tera-model-edit-jupyter-input.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -97,13 +100,18 @@ interface SaveOptions {
 }
 
 const kernelManager = new KernelSessionManager();
-
 const amr = ref<Model | null>(null);
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
-
 let editor: VAceEditorInstance['_editor'] | null;
-const codeText = ref('');
+const codeText = ref(
+	'# This environment contains the variable "model" \n# which is displayed on the right'
+);
+
+const getOutputFromLLM = (data) => {
+	console.log(data);
+	codeText.value.concat(data);
+};
 
 // Reset model, then execute the code
 const runFromCodeWrapper = () => {
@@ -273,6 +281,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.input {
+	width: 95%;
+}
 .code-container {
 	display: flex;
 	flex-direction: column;
