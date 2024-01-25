@@ -378,10 +378,10 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
-	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
+	const initialVars = model.value.semantics?.odeSemantics.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
 
-	model.value.semantics?.ode.parameters?.forEach((param) => {
+	model.value.semantics?.odeSemantics.parameters?.forEach((param) => {
 		if (initialVars?.includes(param.id)) return;
 		modelColumnNameOptions.push(param.id);
 	});
@@ -399,8 +399,8 @@ const setModelOptions = async () => {
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 
-	if (model.value.semantics?.ode.parameters) {
-		setRequestParameters(model.value.semantics?.ode.parameters);
+	if (model.value.semantics?.odeSemantics.parameters) {
+		setRequestParameters(model.value.semantics?.odeSemantics.parameters);
 
 		variablesOfInterest.value = requestParameters.value
 			.filter((d: any) => d.label === 'all')

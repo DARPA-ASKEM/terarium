@@ -271,6 +271,7 @@ const runSimulate = async () => {
 	const state = props.node.state;
 
 	const payload: SimulationRequest = {
+		projectId: '',
 		modelConfigId,
 		timespan: {
 			start: state.currentTimespan.start,
@@ -342,7 +343,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 	const modelConfigId = props.node.inputs[0].value?.[0];
 	const modelConfiguration = await getModelConfigurationById(modelConfigId);
 	if (modelConfiguration) {
-		model.value[runId] = await getModel(modelConfiguration.modelId);
+		model.value[runId] = await getModel(modelConfiguration.model_id);
 		if (model.value[runId]) {
 			modelConfigurations.value = await getModelConfigurations(model.value[runId]!.id);
 		}

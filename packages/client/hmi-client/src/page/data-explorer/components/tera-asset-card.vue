@@ -56,10 +56,13 @@
 			/>
 			<div
 				class="parameters"
-				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
+				v-if="
+					resourceType === ResourceType.MODEL &&
+					(asset as Model).semantics?.odeSemantics?.parameters
+				"
 			>
 				PARAMETERS:
-				{{ (asset as Model).semantics?.ode.parameters }}
+				{{ (asset as Model).semantics?.odeSemantics.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
 			</div>
 			<div class="features" v-else-if="resourceType === ResourceType.DATASET">

@@ -159,14 +159,14 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 				timeseries: {}
 			};
 		}
-		cloneModel.semantics.ode.initials = configInitials.value;
-		cloneModel.semantics.ode.parameters = configParams.value;
+		cloneModel.semantics.odeSemantics.initials = configInitials.value;
+		cloneModel.semantics.odeSemantics.parameters = configParams.value;
 		cloneModel.metadata.timeseries = configTimeSeries.value;
 	}
 	const modelConfig: ModelConfiguration = {
 		id: '',
 		name: '',
-		modelId: cloneModel.id,
+		model_id: cloneModel.id,
 		configuration: cloneModel
 	};
 	return modelConfig;
@@ -434,8 +434,8 @@ onMounted(async () => {
 			model.value = m;
 			if (isEmpty(outputs.value)) {
 				const state = _.cloneDeep(props.node.state);
-				state.initials = m.semantics?.ode.initials;
-				state.parameters = m.semantics?.ode.parameters;
+				state.initials = m.semantics?.odeSemantics.initials;
+				state.parameters = m.semantics?.odeSemantics.parameters;
 				emit('update-state', state);
 			}
 		}

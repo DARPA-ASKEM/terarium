@@ -154,7 +154,7 @@ const modelConfig = computed<ModelConfiguration | null>(() => {
 	return {
 		id: 'temporary config',
 		name: 'temporary config',
-		modelId: amr.value.id,
+		model_id: amr.value.id,
 		configuration: {
 			header: _.cloneDeep(amr.value.header),
 			model: _.cloneDeep(amr.value.model),

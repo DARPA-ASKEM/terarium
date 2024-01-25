@@ -38,11 +38,11 @@
 							</span>
 							<span>
 								<label>Model version</label>
-								<div>{{ model?.header?.modelVersion }}</div>
+								<div>{{ model?.header?.model_version }}</div>
 							</span>
 							<span>
 								<label>Date created</label>
-								<div>{{ model?.metadata?.processedAt ?? card?.date }}</div>
+								<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
 							</span>
 						</li>
 						<li>
@@ -71,7 +71,7 @@
 						</li>
 						<li>
 							<label>Source</label>
-							<div>{{ model?.metadata?.processedBy }}</div>
+							<div>{{ model?.metadata?.processed_by }}</div>
 						</li>
 					</ul>
 				</tera-grey-card>
