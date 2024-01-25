@@ -46,7 +46,7 @@ public class TaskRunnerService {
 	@Value("${terarium.task-runner-cancellation-exchange}")
 	public String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
-	private void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
+	public void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
 		// Declare a direct exchange
 		DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
@@ -60,30 +60,24 @@ public class TaskRunnerService {
 		rabbitAdmin.declareBinding(binding);
 	}
 
-	// private void declareAndBindQueue(String exchangeName, String queueName) {
-	// // Declare a direct exchange
-	// DirectExchange exchange = new DirectExchange(exchangeName,
-	// config.getDurableQueues(), false);
-	// rabbitAdmin.declareExchange(exchange);
-
-	// // Declare a queue
-	// Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
-	// rabbitAdmin.declareQueue(queue);
-
-	// // Bind the queue to the exchange with a routing key
-	// Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
-	// rabbitAdmin.declareBinding(binding);
-	// }
-
-	private void declareQueue(String queueName) {
+	public void declareQueue(String queueName) {
 		Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
 		rabbitAdmin.declareQueue(queue);
 	}
 
-	@PostConstruct
-	void init() {
+	public void declareQueues() {
 		declareQueue(TASK_RUNNER_REQUEST_QUEUE);
 		declareQueue(TASK_RUNNER_RESPONSE_QUEUE);
+	}
+
+	public void destroyQueues() {
+		rabbitAdmin.deleteQueue(TASK_RUNNER_REQUEST_QUEUE);
+		rabbitAdmin.deleteQueue(TASK_RUNNER_RESPONSE_QUEUE);
+	}
+
+	@PostConstruct
+	void init() {
+		declareQueues();
 	}
 
 	@RabbitListener(queues = {
@@ -100,9 +94,34 @@ public class TaskRunnerService {
 
 	private void dispatchSingleInputSingleOutputTask(TaskRequest req) throws IOException, InterruptedException {
 
-		Task task = new Task(req.getId(), req.getTaskKey());
+		Task task;
+		SimpleMessageListenerContainer cancellationConsumer;
 
-		SimpleMessageListenerContainer cancellationConsumer = createCancellationQueueConsumer(task);
+		try {
+			// ensure that the cancellation queue exists
+			declareCancellationQueue(req);
+
+			// lets see if its already been cancelled
+			boolean wasCancelled = checkForCancellation(req);
+			if (wasCancelled) {
+				// send cancellation response and return
+				TaskResponse resp = new TaskResponse();
+				resp.setId(req.getId());
+				resp.setStatus(TaskStatus.CANCELLED);
+				String cancelJson = mapper.writeValueAsString(resp);
+				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, cancelJson);
+				return;
+			}
+
+			// create the task
+			task = new Task(req.getId(), req.getTaskKey());
+
+			// create the cancellation consumer
+			cancellationConsumer = createCancellationQueueConsumer(task);
+		} catch (Exception e) {
+			log.error("Unable to setup task", e);
+			return;
+		}
 
 		try {
 			// start listening for cancellation requests
@@ -136,7 +155,12 @@ public class TaskRunnerService {
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, successJson);
 
 		} catch (Exception e) {
-			log.error("Task failed", e);
+			if (task.getStatus() == TaskStatus.FAILED) {
+				log.error("Task failed");
+			} else if (task.getStatus() != TaskStatus.CANCELLED) {
+				// only log exception if it failed
+				log.error("Unexpected task failure:", e);
+			}
 
 			TaskResponse failedResp = new TaskResponse();
 			failedResp.setId(task.getId());
@@ -149,24 +173,43 @@ public class TaskRunnerService {
 		}
 	}
 
-	private SimpleMessageListenerContainer createCancellationQueueConsumer(Task task) {
-		String queueName = task.getId().toString();
-		String routingKey = task.getId().toString();
+	private void declareCancellationQueue(TaskRequest req) {
+		String queueName = req.getId().toString();
+		String routingKey = req.getId().toString();
 
 		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
+	}
+
+	private boolean checkForCancellation(TaskRequest req) {
+		String queueName = req.getId().toString();
+
+		Object message = rabbitTemplate.receiveAndConvert(queueName);
+		if (message != null) {
+			log.info("Request for task {} has already been cancelled", req.getId());
+			return true;
+		}
+		return false;
+	}
+
+	private SimpleMessageListenerContainer createCancellationQueueConsumer(Task task) {
+		String queueName = task.getId().toString();
 
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
 				rabbitTemplate.getConnectionFactory());
 		container.setQueueNames(queueName);
 		container.setMessageListener(message -> {
-			log.info("Received cancellation for task {}", task.getId());
 			try {
-				if (task.cancel()) {
+				log.info("Received cancellation for task {}", task.getId());
+				if (task.flagAsCancelling()) {
+					// send that we are cancelling
 					TaskResponse resp = new TaskResponse();
 					resp.setId(task.getId());
 					resp.setStatus(TaskStatus.CANCELLING);
 					String cancelJson = mapper.writeValueAsString(resp);
 					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, cancelJson);
+
+					// then cancel
+					task.cancel();
 				}
 			} catch (JsonProcessingException e) {
 				log.error("Error responding after cancelling task {}", task.getId(), e);

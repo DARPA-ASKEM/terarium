@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 import software.uncharted.terarium.taskrunner.util.ScopedLock;
+import software.uncharted.terarium.taskrunner.util.TimeFormatter;
 
 @Data
 @Slf4j
@@ -36,6 +37,8 @@ public class Task {
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
 	private String script;
+
+	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
 	public Task(UUID id, String taskKey) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
@@ -105,7 +108,7 @@ public class Task {
 		}
 		if (result instanceof Integer) {
 			// process has exited early
-			if (status == TaskStatus.CANCELLED) {
+			if (getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Process for task " + id + " has been cancelled");
 			}
 			throw new InterruptedException("Process for task " + id + " exited early with code " + result);
@@ -142,7 +145,7 @@ public class Task {
 		}
 		if (result instanceof Integer) {
 			// process has exited early
-			if (status == TaskStatus.CANCELLED) {
+			if (getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Process for task " + id + " has been cancelled");
 			}
 			throw new InterruptedException("Process for task " + id + " exited early with code " + result);
@@ -226,10 +229,10 @@ public class Task {
 						status = TaskStatus.SUCCESS;
 					}
 				});
-				log.info("Process exited with code " + exitCode);
+				log.info("Process exited with code {} for task {}", exitCode, id);
 				return exitCode;
 			} catch (InterruptedException e) {
-				log.warn("Process failed to exit cleanly " + e);
+				log.warn("Process failed to exit cleanly for task {}: {}", id, e);
 				lock.lock(() -> {
 					status = TaskStatus.FAILED;
 				});
@@ -247,7 +250,7 @@ public class Task {
 					log.info("[{}] stdout: {}", id, line);
 				}
 			} catch (IOException e) {
-				log.warn("Error occured while logging stdout for task {}", id);
+				log.warn("Error occured while logging stdout for task {}: {}", id, getStatus());
 			}
 		}).start();
 
@@ -258,7 +261,7 @@ public class Task {
 					log.info("[{}] stderr: {}", id, line);
 				}
 			} catch (IOException e) {
-				log.warn("Error occured while logging stderr for task {}", id);
+				log.warn("Error occured while logging stderr for task {}: {}", id, getStatus());
 			}
 		}).start();
 	}
@@ -278,7 +281,11 @@ public class Task {
 		}
 	}
 
-	public boolean cancel() {
+	public boolean flagAsCancelling() {
+
+		// Splitting this off as separate method allows us to accept a cancel
+		// request, response that we are cancelling, and then process it.
+
 		return lock.lock(() -> {
 			if (status == TaskStatus.QUEUED) {
 				// if we havaen't started yet, flag it as cancelled
@@ -291,15 +298,39 @@ public class Task {
 			}
 
 			status = TaskStatus.CANCELLING;
-
-			if (process == null) {
-				throw new RuntimeException("Process has not been started");
-			}
-
-			// Kill the process forcibly (SIGKILL)
-			process.destroyForcibly();
 			return true;
 		});
+	}
+
+	public boolean cancel() {
+		flagAsCancelling();
+
+		if (getStatus() != TaskStatus.CANCELLING) {
+			return false;
+		}
+
+		long start = System.currentTimeMillis();
+
+		if (process == null) {
+			throw new RuntimeException("Process is null for task: " + id);
+		}
+
+		// try to kill cleanly
+		process.destroy();
+
+		try {
+			processFuture.get(PROCESS_KILL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+			log.info("Process successfully cancelled in: {} for task {}", id,
+					TimeFormatter.format(System.currentTimeMillis() - start), id);
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			log.warn("Error while waiting for task {} process to exit cleanly in {}, sending SIGKILL", id,
+					TimeFormatter.format(System.currentTimeMillis() - start));
+			// kill the process forcibly (SIGKILL)
+			process.destroyForcibly();
+		}
+
+		return true;
 	}
 
 	TaskStatus getStatus() {

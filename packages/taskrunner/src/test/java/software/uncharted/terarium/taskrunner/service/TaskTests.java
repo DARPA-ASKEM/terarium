@@ -3,7 +3,7 @@ package software.uncharted.terarium.taskrunner.service;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
@@ -11,7 +11,9 @@ import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 
 public class TaskTests extends TaskRunnerApplicationTests {
 
-	@Test
+	private final int REPEAT_COUNT = 1;
+
+	@RepeatedTest(REPEAT_COUNT)
 	public void testTaskSuccess() throws Exception {
 
 		TaskRequest req = new TaskRequest();
@@ -23,10 +25,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		Task task = new Task(req.getId(), req.getTaskKey());
 		try {
-			Assertions.assertEquals(task.getStatus(), TaskStatus.QUEUED);
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(task.getStatus(), TaskStatus.RUNNING);
+			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
@@ -34,7 +36,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertTrue(output.length > 0);
 
 			task.waitFor(ONE_MINUTE);
-			Assertions.assertEquals(task.getStatus(), TaskStatus.SUCCESS);
+			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
 
 		} catch (Exception e) {
 			throw e;
@@ -43,7 +45,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		}
 	}
 
-	@Test
+	@RepeatedTest(REPEAT_COUNT)
 	public void testTaskFailure() throws Exception {
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
@@ -54,10 +56,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		Task task = new Task(req.getId(), req.getTaskKey());
 		try {
-			Assertions.assertEquals(task.getStatus(), TaskStatus.QUEUED);
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(task.getStatus(), TaskStatus.RUNNING);
+			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
@@ -72,10 +74,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(task.getStatus(), TaskStatus.FAILED);
+		Assertions.assertEquals(TaskStatus.FAILED, task.getStatus());
 	}
 
-	@Test
+	@RepeatedTest(REPEAT_COUNT)
 	public void testTaskCancel() throws Exception {
 
 		TaskRequest req = new TaskRequest();
@@ -87,10 +89,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		Task task = new Task(req.getId(), req.getTaskKey());
 		try {
-			Assertions.assertEquals(task.getStatus(), TaskStatus.QUEUED);
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(task.getStatus(), TaskStatus.RUNNING);
+			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			new Thread(() -> {
@@ -115,11 +117,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(task.getStatus(), TaskStatus.CANCELLED);
-
+		Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
 	}
 
-	@Test
+	@RepeatedTest(REPEAT_COUNT)
 	public void testTaskCancelMultipleTimes() throws Exception {
 
 		TaskRequest req = new TaskRequest();
@@ -131,10 +132,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		Task task = new Task(req.getId(), req.getTaskKey());
 		try {
-			Assertions.assertEquals(task.getStatus(), TaskStatus.QUEUED);
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(task.getStatus(), TaskStatus.RUNNING);
+			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			new Thread(() -> {
@@ -167,11 +168,11 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(task.getStatus(), TaskStatus.CANCELLED);
+		Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
 
 	}
 
-	@Test
+	@RepeatedTest(REPEAT_COUNT)
 	public void testTaskCancelBeforeStart() throws Exception {
 
 		TaskRequest req = new TaskRequest();
@@ -181,10 +182,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		Task task = new Task(req.getId(), req.getTaskKey());
 		try {
-			Assertions.assertEquals(task.getStatus(), TaskStatus.QUEUED);
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.cancel();
 
-			Assertions.assertEquals(task.getStatus(), TaskStatus.CANCELLED);
+			Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
 			task.start();
 
 			// we should not each this code
@@ -196,7 +197,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(task.getStatus(), TaskStatus.CANCELLED);
+		Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
 
 	}
 }
