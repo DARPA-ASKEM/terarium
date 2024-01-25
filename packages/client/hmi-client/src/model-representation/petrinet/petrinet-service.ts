@@ -636,11 +636,11 @@ export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typingSemantics) {
 		/* eslint-disable @typescript-eslint/naming-convention */
-		const { name, description, modelSchema, model_version } = amrCopy.header;
+		const { name, description, schema, model_version } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
-			modelSchema,
+			schema,
 			model_version,
 			model: amrCopy.semantics?.typingSemantics?.system
 		};
@@ -696,9 +696,9 @@ export function newAMR(modelName: string) {
 		header: {
 			name: modelName,
 			description: '',
-			modelSchema:
+			schema:
 				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
-			schemaName: 'petrinet',
+			schema_name: 'petrinet',
 			model_version: '0.1'
 		},
 		id: '',
