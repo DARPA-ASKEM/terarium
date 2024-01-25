@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpInputMessage;
@@ -24,12 +23,13 @@ import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrate
 @RestControllerAdvice
 public class SnakeCaseRequestControllerAdvice implements RequestBodyAdvice {
 	private ObjectMapper snakecaseMapper;
-
-	@Autowired
 	private ObjectMapper camelcaseMapper;
 
 	@PostConstruct
 	public void init() {
+		camelcaseMapper = new ObjectMapper()
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
 		snakecaseMapper = new ObjectMapper()
 				.setPropertyNamingStrategy(
 						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));

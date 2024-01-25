@@ -857,8 +857,8 @@ export interface ModelHeader {
 
 export interface ModelSemantics {
     span?: any[];
-    odeSemantics: OdeSemantics;
-    typingSemantics?: TypingSemantics;
+    ode: OdeSemantics;
+    typing?: TypingSemantics;
 }
 
 /**

@@ -34,7 +34,7 @@ export const addDefaultConfiguration = async (model: Model): Promise<void> => {
 export const updateModelConfiguration = async (config: ModelConfiguration) => {
 	// Do a sanity pass to ensure type-safety
 	const model: Model = config.configuration as Model;
-	const parameters = model.semantics?.odeSemantics.parameters;
+	const parameters = model.semantics?.ode.parameters;
 	if (parameters) {
 		parameters.forEach((param) => {
 			if (param.value && typeof param.value === 'string' && _.isNumber(+param.value)) {

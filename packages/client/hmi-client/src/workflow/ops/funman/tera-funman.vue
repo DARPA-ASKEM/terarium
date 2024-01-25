@@ -378,10 +378,10 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
-	const initialVars = model.value.semantics?.odeSemantics.initials?.map((d) => d.expression);
+	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
 
-	model.value.semantics?.odeSemantics.parameters?.forEach((param) => {
+	model.value.semantics?.ode.parameters?.forEach((param) => {
 		if (initialVars?.includes(param.id)) return;
 		modelColumnNameOptions.push(param.id);
 	});
@@ -399,8 +399,8 @@ const setModelOptions = async () => {
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 
-	if (model.value.semantics?.odeSemantics.parameters) {
-		setRequestParameters(model.value.semantics?.odeSemantics.parameters);
+	if (model.value.semantics?.ode.parameters) {
+		setRequestParameters(model.value.semantics?.ode.parameters);
 
 		variablesOfInterest.value = requestParameters.value
 			.filter((d: any) => d.label === 'all')
@@ -490,7 +490,8 @@ onUnmounted(() => {
 	font-size: 1rem;
 	font-style: normal;
 	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
+	line-height: 1.5rem;
+	/* 150% */
 	letter-spacing: 0.03125rem;
 }
 
@@ -500,7 +501,8 @@ onUnmounted(() => {
 	font-size: 0.875rem;
 	font-style: normal;
 	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
+	line-height: 1.3125rem;
+	/* 150% */
 	letter-spacing: 0.01563rem;
 }
 
@@ -540,6 +542,7 @@ div.section-row.timespan > div > span {
 .green-text {
 	color: var(--Primary, #1b8073);
 }
+
 .green-text:hover {
 	color: var(--text-color-subdued);
 }

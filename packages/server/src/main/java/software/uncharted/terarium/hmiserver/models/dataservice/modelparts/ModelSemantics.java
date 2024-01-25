@@ -2,8 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
@@ -16,13 +14,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelSemantics implements SupportAdditionalProperties {
-	@JsonProperty("odeSemantics") // camel case in schema
-	private OdeSemantics odeSemantics;
+	private OdeSemantics ode;
 
 	@TSOptional
 	private List<Object> span;
 
 	@TSOptional
-	@JsonProperty("typingSemantics") // camel case in schema
-	private TypingSemantics typingSemantics;
+	private TypingSemantics typing;
 }
