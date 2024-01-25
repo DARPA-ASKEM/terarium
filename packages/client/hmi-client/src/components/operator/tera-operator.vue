@@ -14,6 +14,7 @@
 			:interaction-status="interactionStatus"
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
+			@duplicate-branch="emit('duplicate-branch')"
 			@bring-to-front="bringToFront"
 		/>
 		<tera-operator-inputs
@@ -65,7 +66,8 @@ const emit = defineEmits([
 	'port-mouseleave',
 	'remove-operator',
 	'remove-edges',
-	'resize'
+	'resize',
+	'duplicate-branch'
 ]);
 
 enum PortDirection {

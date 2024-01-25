@@ -436,14 +436,18 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 			registry.set(port.id, uuidv4());
 		});
 	});
+	copyEdges.forEach((edge) => {
+		registry.set(edge.id, uuidv4());
+	});
 
 	copyEdges.forEach((edge) => {
 		// Don't replace upstream edge sources, they are still valid
 		if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
 			edge.source = registry.get(edge.source as string);
+			edge.sourcePortId = registry.get(edge.sourcePortId as string);
 		}
+		edge.id = registry.get(edge.id) as string;
 		edge.target = registry.get(edge.target as string);
-		edge.sourcePortId = registry.get(edge.sourcePortId as string);
 		edge.targetPortId = registry.get(edge.targetPortId as string);
 	});
 	copyNodes.forEach((node) => {
@@ -454,6 +458,9 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 		node.outputs.forEach((port) => {
 			port.id = registry.get(port.id) as string;
 		});
+		if (node.active) {
+			node.active = registry.get(node.active);
+		}
 	});
 
 	// 5. Reposition new nodes so they don't exaclty overlap
@@ -461,10 +468,12 @@ export const branchWorkflow = (wf: Workflow, nodeId: string) => {
 	copyNodes.forEach((n) => {
 		n.y += offset;
 	});
-	copyEdges.forEach((e) => {
-		if (!e.points || e.points.length < 2) return;
-		e.points[0].y += offset;
-		e.points[e.points.length - 1].y += offset;
+	copyEdges.forEach((edge) => {
+		if (!edge.points || edge.points.length < 2) return;
+		if (upstreamEdges.map((e) => e.source).includes(edge.source) === false) {
+			edge.points[0].y += offset;
+		}
+		edge.points[edge.points.length - 1].y += offset;
 	});
 
 	// 6. Finally put everything back into the workflow
