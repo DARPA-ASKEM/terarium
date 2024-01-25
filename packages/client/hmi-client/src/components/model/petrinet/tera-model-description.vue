@@ -34,7 +34,7 @@
 						<li class="multiple">
 							<span>
 								<label>Framework</label>
-								<div class="framework">{{ model?.header?.schemaName }}</div>
+								<div class="framework">{{ model?.header?.schema_name }}</div>
 							</span>
 							<span>
 								<label>Model version</label>

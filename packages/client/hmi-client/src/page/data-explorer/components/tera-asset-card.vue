@@ -31,7 +31,7 @@
 					</template>
 				</div>
 				<div v-else-if="resourceType === ResourceType.MODEL">
-					{{ (asset as Model).header.schemaName }}
+					{{ (asset as Model).header.schema_name }}
 				</div>
 				<ul>
 					<li v-for="(project, index) in foundInProjects" :key="index">

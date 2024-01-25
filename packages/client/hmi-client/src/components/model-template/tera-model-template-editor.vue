@@ -12,9 +12,9 @@
 	>
 		<template #foreground>
 			<aside>
-				<section v-if="model?.header?.schemaName">
+				<section v-if="model?.header?.schema_name">
 					<header>Model framework</header>
-					<h5>{{ model.header.schemaName }}<i class="pi pi-info-circle"></i></h5>
+					<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
 				</section>
 				<section class="template-options">
 					<header>Model templates</header>
