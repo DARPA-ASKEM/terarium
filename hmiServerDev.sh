@@ -88,7 +88,7 @@ function stop_local_lean() {
 function start_remote() {
   echo "Starting remote server"
   cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,beta'
+  ./gradlew bootRun --args='--spring.profiles.active=default,secrets'
   cd - || exit
 }
 
@@ -228,7 +228,7 @@ case ${COMMAND} in
       start
         ENVIRONMENT
           remote | local | full | ll (default: remote)  Indicate which environment to develop against
-              (ll: local_lean to run local with the absolute minimal support to run hmiServer for development)
+              (ll: local_lean to run local with the absolute minimal support to run hmiServer for developmentstaging)
 
         run (default: null) Indicate whether to run the server after starting the containers
 
