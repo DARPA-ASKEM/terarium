@@ -121,7 +121,13 @@ import _ from 'lodash';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { CsvAsset, Model, ModelConfiguration, SimulationRequest, TimeSpan } from '@/types/Types';
+import type {
+	CsvAsset,
+	Model,
+	ModelConfiguration,
+	SimulationRequest,
+	TimeSpan
+} from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';

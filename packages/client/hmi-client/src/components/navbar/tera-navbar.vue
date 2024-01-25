@@ -104,37 +104,52 @@
 				v-if="isAboutModalVisible"
 				@modal-mask-clicked="isAboutModalVisible = false"
 				@modal-enter-press="isAboutModalVisible = false"
+				class="about-modal"
 			>
-				<template #header>
-					<h4>About Terarium</h4>
-				</template>
 				<article>
 					<img
 						src="@/assets/svg/terarium-logo.svg"
 						alt="Terarium logo"
 						class="about-terarium-logo"
 					/>
-					<p>
-						Terarium is a comprehensive modeling and simulation platform designed to help
-						researchers and analysts find models in academic literature, parameterize and calibrate
-						them, run simulations to test a variety of scenarios, and analyze the results.
+					<p class="text-2xl line-height-3 about-top-line">
+						Terarium is a comprehensive <span class="underlined">modeling</span> and
+						<span class="underlined">simulation</span> platform designed to help researchers and
+						analysts:
+					</p>
+					<p class="about-middle">
+						<span class="pi pi-search about-bullet"></span>Find models in academic literature
+					</p>
+					<p class="about-middle">
+						<span class="pi pi-sliders-h about-bullet"></span>Parameterize and calibrate them
+					</p>
+					<p class="about-middle">
+						<span class="pi pi-cog about-bullet"></span>Run simulations to test a variety of
+						scenarios, and
+					</p>
+					<p class="about-middle">
+						<span class="pi pi-chart-line about-bullet"></span>Analyze the results.
 					</p>
 				</article>
-				<article>
+				<article class="about-uncharted-section">
 					<img
 						src="@/assets/svg/uncharted-logo-official.svg"
 						alt="Uncharted Software logo"
 						class="about-uncharted-logo"
 					/>
-					<p>
+					<p class="about-bottom-line text-sm">
 						Uncharted Software provides design, development and consulting services related to data
 						visualization and analysis software.
 					</p>
 				</article>
 				<template #footer>
 					<div class="modal-footer">
-						<p>&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
-						<Button class="p-button" @click="isAboutModalVisible = false">Close</Button>
+						<p class="text-sm">
+							&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}
+						</p>
+						<Button class="p-button" @click="isAboutModalVisible = false" size="large"
+							>Close</Button
+						>
 					</div>
 				</template>
 			</tera-modal>
@@ -161,6 +176,7 @@ import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
+import { ProjectPages } from '@/types/Project';
 
 defineProps<{
 	active: boolean;
@@ -402,7 +418,11 @@ watch(
 			items.push({
 				label: project.name,
 				icon: 'pi pi-folder',
-				command: () => router.push({ name: RouteName.Project, params: { projectId: project.id } })
+				command: () =>
+					router.push({
+						name: RouteName.Project,
+						params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
+					})
 			});
 		});
 		navMenuItems.value = [homeItem, explorerItem, ...items];
@@ -478,6 +498,10 @@ nav {
 	}
 }
 
+.about-modal {
+	max-width: 800px;
+}
+
 .modal-footer {
 	display: flex;
 	flex-direction: row;
@@ -488,11 +512,53 @@ nav {
 
 .about-terarium-logo {
 	width: 20rem;
+	margin-bottom: 1rem;
 }
-
+.about-bullet {
+	color: var(--text-color-subdued);
+	margin-right: 1rem;
+	/* background-color: var(--primary-color-lighter); */
+	border-radius: 5rem;
+	padding: 0.75rem;
+	font-size: 1.5rem;
+}
+.about-top-line {
+	max-width: 90%;
+	margin-bottom: 1rem;
+}
+.underlined {
+	position: relative;
+	font-weight: 900;
+}
+.underlined:after {
+	content: '';
+	position: absolute;
+	bottom: -8px;
+	left: 0;
+	height: 7px;
+	width: 100%;
+	border: solid 2px var(--primary-color);
+	border-color: var(--primary-color) transparent transparent transparent;
+	border-radius: 50%;
+}
+.about-middle {
+	font-size: 1.25rem;
+	display: flex;
+	align-items: center;
+}
+.about-uncharted-section {
+	padding: 1rem;
+	background: var(--surface-100);
+	border: 1px solid var(--surface-border-light);
+	border-radius: 6px;
+	margin-top: 2rem;
+}
 .about-uncharted-logo {
-	width: 10rem;
-	margin-top: 3rem;
+	width: 8rem;
+	margin-bottom: 0.5rem;
+}
+.about-bottom-line {
+	color: var(--text-color-subdued);
 }
 
 .modal-footer {
@@ -501,5 +567,6 @@ nav {
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
+	color: var(--text-color-subdued);
 }
 </style>

@@ -2,7 +2,7 @@
 	<section>
 		<!--FIXME: See fetchModel()-->
 		<template v-if="model">
-			<tera-model-diagram :model="model" :is-editable="false" nodePreview />
+			<tera-model-diagram :model="model" :is-editable="false" is-preview />
 			<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { getModel } from '@/services/model';
-import { Model } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { onMounted, ref, watch } from 'vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';

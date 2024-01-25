@@ -1,4 +1,4 @@
-import { Artifact } from '@/types/Types';
+import type { Artifact } from '@/types/Types';
 import API from '@/api/api';
 import { Ref } from 'vue';
 import { logger } from '@/utils/logger';

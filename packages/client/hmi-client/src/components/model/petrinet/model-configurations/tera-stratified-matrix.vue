@@ -5,15 +5,15 @@
 	>
 		<div class="p-datatable-wrapper">
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="matrix[0].length > 1" class="p-datatable-thead">
+				<thead v-if="matrix[0].length > 0" class="p-datatable-thead">
 					<tr>
-						<th v-if="matrix.length > 1" class="choose-criteria">&nbsp;</th>
+						<th v-if="matrix.length > 0" class="choose-criteria">&nbsp;</th>
 						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
-						<td v-if="matrix.length > 1" class="p-frozen-column">
+						<td v-if="matrix.length > 0" class="p-frozen-column">
 							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
 								{{ Object.values(row[0].rowCriteria).join(' / ') }}
 							</template>
@@ -67,7 +67,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
-import { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
+import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
 import { StratifiedMatrix } from '@/types/Model';
@@ -233,6 +233,10 @@ function configureMatrix() {
 		}
 	}
 }
+
+watch([() => props.id, () => props.modelConfiguration.configuration], () => {
+	configureMatrix();
+});
 
 onMounted(() => {
 	configureMatrix();

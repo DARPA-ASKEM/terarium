@@ -2,7 +2,7 @@
  * @fileoverview This file contains the utils for the tera-dataset components.
  */
 
-import { Dataset } from '@/types/Types';
+import type { Dataset } from '@/types/Types';
 
 /**
  * Enriches the dataset with additional information from the data-card.

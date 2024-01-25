@@ -1,5 +1,5 @@
 import { DataseriesConfig, RunType } from '@/types/SimulateConfig';
-import { CsvAsset, TimeSpan } from '@/types/Types';
+import type { CsvAsset, TimeSpan } from '@/types/Types';
 
 export const getTimespan = (
 	dataset?: CsvAsset,

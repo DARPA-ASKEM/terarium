@@ -50,7 +50,7 @@ import Menu from 'primevue/menu';
 import { updateModelConfiguration, addDefaultConfiguration } from '@/services/model-configurations';
 import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 
 const props = defineProps({

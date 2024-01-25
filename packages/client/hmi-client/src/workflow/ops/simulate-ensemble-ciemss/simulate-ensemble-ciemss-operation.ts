@@ -1,8 +1,8 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-// import { EnsembleRequest } from '@/types/Types';
+// import type { EnsembleRequest } from '@/types/Types';
 // import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';
-import { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
+import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
 export interface SimulateEnsembleCiemssOperationState {
 	modelConfigIds: string[];

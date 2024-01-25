@@ -1,5 +1,6 @@
 import API from '@/api/api';
-import { EventType, Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
+import { EventType } from '@/types/Types';
 import * as EventService from '@/services/event';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { useProjects } from '@/composables/project';

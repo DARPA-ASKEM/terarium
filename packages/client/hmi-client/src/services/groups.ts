@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { PermissionGroup } from '@/types/Types';
+import type { PermissionGroup } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 export async function getAllGroups(): Promise<PermissionGroup[] | null> {

@@ -136,7 +136,8 @@ import { isEmpty } from 'lodash';
 import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AssetType, DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import type { DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { FeatureConfig, AcceptedExtensions, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -148,6 +149,8 @@ import TeraModelObservable from '@/components/model/petrinet/tera-model-observab
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{

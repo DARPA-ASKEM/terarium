@@ -1,3 +1,8 @@
+<!--
+By default the entire area of tera-canvas-item works as a drag handle.
+To specify a drag handle area add the "drag-handle" class within the component that would be placed in this slot.
+-->
+
 <template>
 	<section ref="canvasItem" :style="style">
 		<slot />
@@ -44,17 +49,22 @@ const stopDrag = (/* evt: MouseEvent */) => {
 };
 
 onMounted(() => {
-	if (!canvasItem.value) return;
-	canvasItem.value.addEventListener('mousedown', startDrag);
-	document.addEventListener('mousemove', drag);
-	canvasItem.value.addEventListener('mouseup', stopDrag);
+	if (canvasItem.value) {
+		const dragHandle = canvasItem.value.querySelector('.drag-handle') ?? canvasItem.value;
+
+		dragHandle.addEventListener('mousedown', startDrag);
+		document.addEventListener('mousemove', drag);
+		dragHandle.addEventListener('mouseup', stopDrag);
+	}
 });
 
 onBeforeUnmount(() => {
 	if (canvasItem.value) {
-		canvasItem.value.removeEventListener('mousedown', startDrag);
+		const dragHandle = canvasItem.value.querySelector('.drag-handle') ?? canvasItem.value;
+
+		dragHandle.removeEventListener('mousedown', startDrag);
 		document.removeEventListener('mousemove', drag);
-		canvasItem.value.removeEventListener('mouseup', stopDrag);
+		dragHandle.removeEventListener('mouseup', stopDrag);
 	}
 });
 </script>

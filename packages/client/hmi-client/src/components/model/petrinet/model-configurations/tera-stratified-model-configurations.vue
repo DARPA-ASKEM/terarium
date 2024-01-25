@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import { ModelConfiguration } from '@/types/Types';
+import type { ModelConfiguration } from '@/types/Types';
 
 defineProps<{
 	editValue: string;

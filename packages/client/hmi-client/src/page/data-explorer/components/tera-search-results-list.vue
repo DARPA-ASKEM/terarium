@@ -55,7 +55,8 @@
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
-import { Document, XDDFacetsItemResponse, Dataset, Model, AssetType } from '@/types/Types';
+import type { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';

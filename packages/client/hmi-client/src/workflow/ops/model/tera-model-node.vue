@@ -13,7 +13,7 @@
 					v-if="view === ModelNodeView.Diagram"
 					:model="model"
 					:is-editable="false"
-					nodePreview
+					is-preview
 				/>
 				<tera-model-equation
 					v-else-if="view === ModelNodeView.Equation"
@@ -41,7 +41,7 @@ import _ from 'lodash';
 import { ref, watch, onMounted, computed } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
-import { Model } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';

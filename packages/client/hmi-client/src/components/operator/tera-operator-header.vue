@@ -17,7 +17,12 @@ import { OperatorStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
-const emit = defineEmits(['remove-operator', 'bring-to-front', 'open-in-new-window']);
+const emit = defineEmits([
+	'remove-operator',
+	'bring-to-front',
+	'open-in-new-window',
+	'duplicate-branch'
+]);
 
 const props = defineProps({
 	name: {
@@ -46,7 +51,7 @@ const toggleMenu = (event) => {
 };
 
 const options = ref([
-	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => emit('bring-to-front') },
+	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => emit('duplicate-branch') },
 	{
 		icon: 'pi pi-external-link',
 		label: 'Open in new window',

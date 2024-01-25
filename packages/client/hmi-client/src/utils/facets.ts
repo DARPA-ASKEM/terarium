@@ -1,6 +1,6 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
-import { Model, Document, XDDFacetsItemResponse, Dataset } from '@/types/Types';
+import type { Model, Document, XDDFacetsItemResponse, Dataset } from '@/types/Types';
 import {
 	FACET_FIELDS as DATASET_FACET_FIELDS,
 	DISPLAY_NAMES as DATASET_DISPLAY_NAMES

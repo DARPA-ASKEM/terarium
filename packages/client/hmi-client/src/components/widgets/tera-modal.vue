@@ -1,6 +1,6 @@
 <template>
 	<Transition name="modal">
-		<main :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
+		<main ref="modal" :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
 			<section>
 				<header>
 					<slot name="header" />
@@ -31,9 +31,29 @@
  * <modal @modal-mask-clicked="closeModal"></modal>
  */
 
+import { onMounted, ref } from 'vue';
+
+const modal = ref(null);
+
 defineProps<{
 	zIndex?: number;
 }>();
+
+onMounted(() => {
+	if (modal.value) {
+		/**
+		 * Dispatch an event `modal-open` when the modal is opened.
+		 * The `detail.id` property of the event is modal id if available.
+		 * This is used by the Guided Tour to help show the user information.
+		 */
+		const element = modal.value as HTMLElement;
+		const event = new CustomEvent('modal-open', {
+			bubbles: true,
+			detail: { id: element.id ?? '' }
+		});
+		element.dispatchEvent(event);
+	}
+});
 </script>
 
 <style scoped>
@@ -60,14 +80,13 @@ aside {
 
 main > section {
 	max-height: 95vh;
-	max-width: 1280px;
 	background-color: #fff;
 	border-radius: var(--modal-border-radius);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	margin: 0px auto;
 	padding: 2rem 0;
-	transition: all 0.1s ease;
-	width: 80vw;
+	transition: all 0.15s ease;
+	width: 65vw;
 	z-index: 2;
 	top: 50%;
 	left: 50%;
