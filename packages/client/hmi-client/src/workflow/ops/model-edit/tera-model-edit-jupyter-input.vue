@@ -102,7 +102,7 @@ const submitQuery = async () => {
 
 onMounted(async () => {
 	const context = {
-		context: 'mira_model',
+		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
 			id: props.amr
