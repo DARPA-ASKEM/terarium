@@ -54,20 +54,14 @@ public class TaskController {
 
 	final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
 
-	@Value("${terarium.task-runner-request-exchange}")
-	private String TASK_RUNNER_REQUEST_EXCHANGE;
-
 	@Value("${terarium.task-runner-request-queue}")
 	private String TASK_RUNNER_REQUEST_QUEUE;
 
-	@Value("${terarium.task-runner-cancellation-exchange}")
-	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
-
-	@Value("${terarium.task-runner-response-exchange}")
-	private String TASK_RUNNER_RESPONSE_EXCHANGE;
-
 	@Value("${terarium.task-runner-response-queue}")
 	private String TASK_RUNNER_RESPONSE_QUEUE;
+
+	@Value("${terarium.task-runner-cancellation-exchange}")
+	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
 	private void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
 		// Declare a direct exchange
@@ -83,24 +77,16 @@ public class TaskController {
 		rabbitAdmin.declareBinding(binding);
 	}
 
-	private void declareAndBindQueue(String exchangeName, String queueName) {
-		// Declare a direct exchange
-		DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
-		rabbitAdmin.declareExchange(exchange);
-
+	private void declareQueue(String queueName) {
 		// Declare a queue
 		Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
 		rabbitAdmin.declareQueue(queue);
-
-		// Bind the queue to the exchange with a routing key
-		Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
-		rabbitAdmin.declareBinding(binding);
 	}
 
 	@PostConstruct
 	void init() {
-		declareAndBindQueue(TASK_RUNNER_REQUEST_EXCHANGE, TASK_RUNNER_REQUEST_QUEUE);
-		declareAndBindQueue(TASK_RUNNER_RESPONSE_EXCHANGE, TASK_RUNNER_RESPONSE_QUEUE);
+		declareQueue(TASK_RUNNER_REQUEST_QUEUE);
+		declareQueue(TASK_RUNNER_RESPONSE_QUEUE);
 	}
 
 	@PostMapping
@@ -120,7 +106,7 @@ public class TaskController {
 		try {
 			// send the request to the task runner
 			final String jsonStr = objectMapper.writeValueAsString(req);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_REQUEST_EXCHANGE, jsonStr);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_REQUEST_QUEUE, jsonStr);
 		} catch (Exception e) {
 			rabbitAdmin.deleteQueue(queueName);
 			return ResponseEntity.badRequest().build();
@@ -157,7 +143,7 @@ public class TaskController {
 	}
 
 	@RabbitListener(queues = {
-			"${terarium.task-runner-response-queue}" })
+			"${terarium.task-runner-response-queue}" }, concurrency = "1")
 	void onTaskResponse(final Message message, final Channel channel) throws IOException, InterruptedException {
 		TaskResponse resp = decodeMessage(message, TaskResponse.class);
 		if (resp == null) {

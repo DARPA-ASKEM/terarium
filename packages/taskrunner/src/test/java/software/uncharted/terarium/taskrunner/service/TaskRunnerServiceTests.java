@@ -13,6 +13,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
@@ -34,13 +35,13 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	public void cleanup() {
 		RabbitAdmin admin = new RabbitAdmin(rabbitTemplate);
 
-		admin.deleteExchange(taskRunnerService.TASK_RUNNER_REQUEST_EXCHANGE);
-		admin.deleteExchange(taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE);
-		admin.deleteExchange(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE);
+		admin.deleteQueue(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE);
+		admin.deleteQueue(taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE);
+		admin.deleteQueue(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE);
 	}
 
 	@Test
-	public void testRunTask() throws InterruptedException {
+	public void testRunTask() throws InterruptedException, JsonProcessingException {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
@@ -48,7 +49,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 		req.setTimeoutMinutes(1);
 
-		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_EXCHANGE, "", req);
+		String reqStr = mapper.writeValueAsString(req);
+		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
 		AtomicBoolean isFinished = new AtomicBoolean(false);
 		List<TaskResponse> responses = new ArrayList<>();
@@ -83,10 +85,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		container.stop();
 
-		Assertions.assertTrue(responses.size() > 0);
-
-		for (TaskResponse resp : responses) {
-			System.out.println(resp);
-		}
+		Assertions.assertTrue(responses.size() == 2);
+		Assertions.assertEquals(responses.get(0).getStatus(), TaskStatus.RUNNING);
+		Assertions.assertEquals(responses.get(1).getStatus(), TaskStatus.SUCCESS);
 	}
 }

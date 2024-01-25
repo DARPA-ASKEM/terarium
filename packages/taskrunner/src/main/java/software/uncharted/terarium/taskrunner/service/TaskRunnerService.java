@@ -14,6 +14,7 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
@@ -31,18 +32,13 @@ import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 @RequiredArgsConstructor
 public class TaskRunnerService {
 
+	private final ObjectMapper mapper;
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
 	private final Config config;
 
-	@Value("${terarium.task-runner-request-exchange}")
-	public String TASK_RUNNER_REQUEST_EXCHANGE;
-
 	@Value("${terarium.task-runner-request-queue}")
 	public String TASK_RUNNER_REQUEST_QUEUE;
-
-	@Value("${terarium.task-runner-response-exchange}")
-	public String TASK_RUNNER_RESPONSE_EXCHANGE;
 
 	@Value("${terarium.task-runner-response-queue}")
 	public String TASK_RUNNER_RESPONSE_QUEUE;
@@ -64,24 +60,30 @@ public class TaskRunnerService {
 		rabbitAdmin.declareBinding(binding);
 	}
 
-	private void declareAndBindQueue(String exchangeName, String queueName) {
-		// Declare a direct exchange
-		DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
-		rabbitAdmin.declareExchange(exchange);
+	// private void declareAndBindQueue(String exchangeName, String queueName) {
+	// // Declare a direct exchange
+	// DirectExchange exchange = new DirectExchange(exchangeName,
+	// config.getDurableQueues(), false);
+	// rabbitAdmin.declareExchange(exchange);
 
-		// Declare a queue
+	// // Declare a queue
+	// Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
+	// rabbitAdmin.declareQueue(queue);
+
+	// // Bind the queue to the exchange with a routing key
+	// Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
+	// rabbitAdmin.declareBinding(binding);
+	// }
+
+	private void declareQueue(String queueName) {
 		Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
 		rabbitAdmin.declareQueue(queue);
-
-		// Bind the queue to the exchange with a routing key
-		Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
-		rabbitAdmin.declareBinding(binding);
 	}
 
 	@PostConstruct
 	void init() {
-		declareAndBindQueue(TASK_RUNNER_REQUEST_EXCHANGE, TASK_RUNNER_REQUEST_QUEUE);
-		declareAndBindQueue(TASK_RUNNER_RESPONSE_EXCHANGE, TASK_RUNNER_RESPONSE_QUEUE);
+		declareQueue(TASK_RUNNER_REQUEST_QUEUE);
+		declareQueue(TASK_RUNNER_RESPONSE_QUEUE);
 	}
 
 	@RabbitListener(queues = {
@@ -113,7 +115,9 @@ public class TaskRunnerService {
 			TaskResponse runningResp = new TaskResponse();
 			runningResp.setId(task.getId());
 			runningResp.setStatus(TaskStatus.RUNNING);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", runningResp);
+
+			String runningJson = mapper.writeValueAsString(runningResp);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, runningJson);
 
 			// write the input to the task
 			task.writeInputWithTimeout(req.getInput(), req.getTimeoutMinutes());
@@ -128,7 +132,8 @@ public class TaskRunnerService {
 			successResp.setId(task.getId());
 			successResp.setStatus(TaskStatus.SUCCESS);
 			successResp.setOutput(output);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", successResp);
+			String successJson = mapper.writeValueAsString(successResp);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, successJson);
 
 		} catch (Exception e) {
 			log.error("Task failed", e);
@@ -136,7 +141,8 @@ public class TaskRunnerService {
 			TaskResponse failedResp = new TaskResponse();
 			failedResp.setId(task.getId());
 			failedResp.setStatus(task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedResp);
+			String failedJson = mapper.writeValueAsString(failedResp);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, failedJson);
 		} finally {
 			cancellationConsumer.stop();
 			task.cleanup();
@@ -154,12 +160,16 @@ public class TaskRunnerService {
 		container.setQueueNames(queueName);
 		container.setMessageListener(message -> {
 			log.info("Received cancellation for task {}", task.getId());
-
-			if (task.cancel()) {
-				TaskResponse resp = new TaskResponse();
-				resp.setId(task.getId());
-				resp.setStatus(TaskStatus.CANCELLING);
-				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", resp);
+			try {
+				if (task.cancel()) {
+					TaskResponse resp = new TaskResponse();
+					resp.setId(task.getId());
+					resp.setStatus(TaskStatus.CANCELLING);
+					String cancelJson = mapper.writeValueAsString(resp);
+					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, cancelJson);
+				}
+			} catch (JsonProcessingException e) {
+				log.error("Error responding after cancelling task {}", task.getId(), e);
 			}
 		});
 		return container;
