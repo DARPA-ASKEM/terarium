@@ -149,6 +149,8 @@ import TeraModelObservable from '@/components/model/petrinet/tera-model-observab
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
