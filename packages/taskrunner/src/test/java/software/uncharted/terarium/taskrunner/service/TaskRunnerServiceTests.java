@@ -37,7 +37,6 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		admin.deleteQueue(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE);
 		admin.deleteQueue(taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE);
-		admin.deleteQueue(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE);
 	}
 
 	@Test
