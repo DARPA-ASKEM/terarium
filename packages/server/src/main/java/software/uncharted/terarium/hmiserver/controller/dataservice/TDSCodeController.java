@@ -24,9 +24,11 @@ import software.uncharted.terarium.hmiserver.models.code.GithubRepo;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.CodeProxy;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
+import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.io.IOException;
@@ -48,6 +50,9 @@ public class TDSCodeController implements SnakeCaseController {
 
 	@Autowired
 	GithubProxy githubProxy;
+
+	@Autowired
+	KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
 
 	@GetMapping
@@ -83,6 +88,38 @@ public class TDSCodeController implements SnakeCaseController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> deleteCode(@PathVariable("id") String codeId) {
 		return ResponseEntity.ok(codeProxy.deleteAsset(codeId).getBody());
+	}
+
+	// Create a model from code blocks
+	@PostMapping("/code-blocks-to-model")
+	@Secured(Roles.USER)
+	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestBody Code code, @RequestPart("file") MultipartFile input) throws IOException {
+
+		try(final CloseableHttpClient httpClient = HttpClients.custom()
+		.build()) {
+		// 1. create code asset from code blocks
+		JsonNode createdCode = codeProxy.createAsset(convertObjectToSnakeCaseJsonNode(code)).getBody();
+
+		String id = createdCode.get("id").asText("");
+		System.out.println(id);
+
+		// 2. upload file to code asset
+		byte[] fileAsBytes = input.getBytes();
+		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+		
+		// we have pre-formatted the files object already so no need to use uploadCode
+		final PresignedURL presignedURL = codeProxy.getUploadUrl(id, "tempfile").getBody();
+		final HttpPut put = new HttpPut(presignedURL.getUrl());
+		put.setEntity(fileEntity);
+		httpClient.execute(put);
+		
+		// 3. create model from code asset
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(id, "temp model", "temp model description", true, false).getBody());
+		} 
+		catch (Exception e) {
+			log.error("unable to upload file", e);
+			return ResponseEntity.internalServerError().build();
+	 }
 	}
 
 	@GetMapping("/{id}/download-code-as-text")

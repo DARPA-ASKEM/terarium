@@ -10,7 +10,7 @@
 						:options="programmingLanguages"
 						@change="setKernelContext"
 					/>
-					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" disabled />
+					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
 				</header>
 				<tera-operator-placeholder
 					v-if="allCodeBlocks.length === 0"
@@ -25,7 +25,7 @@
 						:key="i"
 						:is-editable="asset.type !== CodeBlockType.INPUT"
 						:is-deletable="asset.type !== CodeBlockType.INPUT"
-						@delete="removeCodeBlock(i)"
+						@delete="removeCodeBlock(i - inputCodeBlocks.length)"
 						:is-included="allCodeBlocks[i].includeInProcess"
 						@update:is-included="
 							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
@@ -139,6 +139,7 @@ import { getCodeAsset } from '@/services/code';
 import { codeToAMR } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
+import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
