@@ -34,15 +34,15 @@
 						<li class="multiple">
 							<span>
 								<label>Framework</label>
-								<div class="framework">{{ model?.header?.schemaName }}</div>
+								<div class="framework">{{ model?.header?.schema_name }}</div>
 							</span>
 							<span>
 								<label>Model version</label>
-								<div>{{ model?.header?.modelVersion }}</div>
+								<div>{{ model?.header?.model_version }}</div>
 							</span>
 							<span>
 								<label>Date created</label>
-								<div>{{ model?.metadata?.processedAt ?? card?.date }}</div>
+								<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
 							</span>
 						</li>
 						<li>
@@ -71,7 +71,7 @@
 						</li>
 						<li>
 							<label>Source</label>
-							<div>{{ model?.metadata?.processedBy }}</div>
+							<div>{{ model?.metadata?.processed_by }}</div>
 						</li>
 					</ul>
 				</tera-grey-card>
@@ -149,6 +149,8 @@ import TeraModelObservable from '@/components/model/petrinet/tera-model-observab
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{

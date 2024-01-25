@@ -848,17 +848,17 @@ export interface DocumentExtraction {
 
 export interface ModelHeader {
     name: string;
-    modelSchema: string;
-    schemaName?: string;
     description: string;
+    schema: string;
+    schema_name?: string;
     model_version?: string;
     extracted_from?: string;
 }
 
 export interface ModelSemantics {
     span?: any[];
-    odeSemantics: OdeSemantics;
-    typingSemantics?: TypingSemantics;
+    ode: OdeSemantics;
+    typing?: TypingSemantics;
 }
 
 /**
@@ -1099,10 +1099,10 @@ export interface Variable {
     id: string;
     name: string;
     metadata: VariableMetadata[];
-    dkg_groundings: DKGConcept[];
     column: DataColumn[];
     paper: Paper;
     equations: EquationVariable[];
+    dkg_groundings: DKGConcept[];
 }
 
 export interface StatementValue {
@@ -1126,12 +1126,6 @@ export interface VariableMetadata {
     value: string;
 }
 
-export interface DKGConcept {
-    id: string;
-    name: string;
-    score: number;
-}
-
 export interface DataColumn {
     id: string;
     name: string;
@@ -1148,6 +1142,12 @@ export interface EquationVariable {
     id: string;
     text: string;
     image: string;
+}
+
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
 }
 
 export interface MetadataDataset {

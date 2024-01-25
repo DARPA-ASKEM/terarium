@@ -16,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import type { Model } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
+import { computed } from 'vue';
 
 const props = defineProps<{
 	model: Model;

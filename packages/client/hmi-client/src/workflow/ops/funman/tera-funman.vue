@@ -490,7 +490,8 @@ onUnmounted(() => {
 	font-size: 1rem;
 	font-style: normal;
 	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
+	line-height: 1.5rem;
+	/* 150% */
 	letter-spacing: 0.03125rem;
 }
 
@@ -500,7 +501,8 @@ onUnmounted(() => {
 	font-size: 0.875rem;
 	font-style: normal;
 	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
+	line-height: 1.3125rem;
+	/* 150% */
 	letter-spacing: 0.01563rem;
 }
 
@@ -540,6 +542,7 @@ div.section-row.timespan > div > span {
 .green-text {
 	color: var(--Primary, #1b8073);
 }
+
 .green-text:hover {
 	color: var(--text-color-subdued);
 }

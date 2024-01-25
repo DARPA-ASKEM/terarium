@@ -316,7 +316,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 	const csvData = csvParse(resultCsv);
 
 	if (modelConfiguration) {
-		model.value[runId] = await getModel(modelConfiguration.modelId);
+		model.value[runId] = await getModel(modelConfiguration.model_id);
 
 		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
 		csvData.forEach((row) =>
