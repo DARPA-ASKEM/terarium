@@ -271,7 +271,6 @@ const runSimulate = async () => {
 	const state = props.node.state;
 
 	const payload: SimulationRequest = {
-		projectId: useProjects().activeProject.value?.id as string,
 		modelConfigId,
 		timespan: {
 			start: state.currentTimespan.start,
