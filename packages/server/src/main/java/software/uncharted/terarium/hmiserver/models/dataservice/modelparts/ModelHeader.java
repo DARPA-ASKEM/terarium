@@ -14,9 +14,11 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 public class ModelHeader implements SupportAdditionalProperties {
 	private String name;
 
+	@JsonProperty("schema")
 	private String modelSchema;
 
 	@TSOptional
+	@JsonProperty("schema_name")
 	private String schemaName;
 
 	private String description;
