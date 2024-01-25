@@ -77,6 +77,7 @@
 					@port-mouseover="onPortMouseover"
 					@port-mouseleave="onPortMouseleave"
 					@remove-operator="(event) => removeNode(event)"
+					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
 				>
 					<template #body>
@@ -358,6 +359,10 @@ const openDrilldown = (node: WorkflowNode<any>) => {
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
+};
+
+const duplicateBranch = (id: string) => {
+	workflowService.branchWorkflow(wf.value, id);
 };
 
 const addOperatorToWorkflow: Function =
