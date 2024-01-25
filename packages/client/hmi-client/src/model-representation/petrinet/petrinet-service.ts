@@ -148,7 +148,7 @@ export const convertAMRToACSet = (amr: Model) => {
 
 	// post processing to use expressions rather than ids
 	result.T = result.T.map((transition) => {
-		const foundRate = amr.semantics?.odeSemantics.rates.find(
+		const foundRate = amr.semantics?.odeSemantics?.rates?.find(
 			(rate) => rate.target === transition.tname
 		);
 
@@ -291,7 +291,7 @@ export const addTransition = (amr: Model, id: string, name: string, value?: numb
 			description: ''
 		}
 	});
-	amr.semantics?.odeSemantics.rates?.push({
+	amr.semantics?.odeSemantics?.rates?.push({
 		target: id,
 		expression: `${id}Param`,
 		expression_mathml: `<ci>${id}Param</ci>`
@@ -357,7 +357,7 @@ export const updateRateExpressionWithParam = (
 	parameterId: string,
 	transitionExpression: string
 ) => {
-	const rate = amr.semantics?.odeSemantics.rates.find((d) => d.target === transition.id);
+	const rate = amr.semantics?.odeSemantics?.rates?.find((d) => d.target === transition.id);
 	if (!rate) return;
 
 	let expression = '';
@@ -481,7 +481,7 @@ export const updateTransition = (
 		};
 	}
 
-	const rate = amr.semantics?.odeSemantics.rates?.find((d) => d.target === id);
+	const rate = amr.semantics?.odeSemantics?.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
 
@@ -573,7 +573,7 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 		});
 
 		// update the expression and expression_mathml fields
-		amr.semantics.odeSemantics.rates.forEach((rate) => {
+		amr.semantics.odeSemantics?.rates?.forEach((rate) => {
 			rate.expression = replaceValuesInExpression(rate.expression, id, newId);
 			if (rate.expression_mathml) {
 				rate.expression_mathml = replaceValuesInMathML(rate.expression_mathml, id, newId);

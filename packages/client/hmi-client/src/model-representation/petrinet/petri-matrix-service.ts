@@ -90,7 +90,7 @@ export function createTransitionMatrix(amr: Model, transitionMatrixData: any[]) 
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output, id } = transitions[i];
-		const rate = amr.semantics?.odeSemantics.rates.find((r) => r.target === id);
+		const rate = amr.semantics?.odeSemantics?.rates?.find((r) => r.target === id);
 
 		if (rate) {
 			// Go through inputs and outputs of the current transition id
@@ -118,7 +118,7 @@ export function createParameterMatrix(
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {
 		const { input, output, id } = transitions[i];
-		const rate = amr.semantics?.odeSemantics.rates.find((r) => r.target === id);
+		const rate = amr.semantics?.odeSemantics?.rates?.find((r) => r.target === id);
 
 		if (rate) {
 			// Go through inputs and outputs of the current transition id

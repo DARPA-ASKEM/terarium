@@ -203,7 +203,7 @@ export const filterParameterLocations = (
 ) =>
 	transitionMatrixData.filter((d) => {
 		// Check if the transition's expression include the usage
-		const rate = amr.semantics?.odeSemantics.rates.find((r) => r.target === d.id);
+		const rate = amr.semantics?.odeSemantics?.rates?.find((r) => r.target === d.id);
 		if (!rate) return false;
 		// FIXME: should check through sympy to be more accurate
 		for (let i = 0; i < parameterIds.length; i++) {
