@@ -55,6 +55,12 @@ function deploy_full() {
   docker compose --env-file containers/.env --file containers/docker-compose-full.yml up --detach --wait
 }
 
+function deploy_local_lean() {
+  echo "Deploying containers for development against local services"
+  cat containers/common.env containers/secrets.env > containers/.env
+  docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml up --detach --wait
+}
+
 function stop_remote() {
   echo "stopping local containers used for remote dev"
   cat containers/common.env containers/secrets.env > containers/.env
@@ -71,6 +77,12 @@ function stop_full() {
   echo "Stopping all containers"
   cat containers/common.env containers/secrets.env > containers/.env
   docker compose --env-file containers/.env --file containers/docker-compose-full.yml down
+}
+
+function stop_local_lean() {
+  echo "Stopping local dev containers"
+  cat containers/common.env containers/secrets.env > containers/.env
+  docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml down
 }
 
 function start_remote() {
@@ -131,9 +143,24 @@ COMMAND=${COMMAND:-"help"}
 ENVIRONMENT=${ENVIRONMENT:-"remote"}
 SERVER=${SERVER:-"false"}
 
-echo "COMMAND: $COMMAND"
-echo "ENVIRONMENT: $ENVIRONMENT"
-echo "SERVER: $SERVER"
+VALID_ENVIRONMENTS=("remote" "local" "full" "ll")
+ENVIRONMENT_IS_VALID=0
+for env in ${VALID_ENVIRONMENTS[@]}; do
+  echo "checking $ENVIRONMENT against $env"
+  if [ "${env}" = "${ENVIRONMENT}" ]; then
+    echo "setting ENVIRONMENT_IS_VALID to 1"
+    ENVIRONMENT_IS_VALID=1
+  fi
+done
+echo "value of ENVIRONMENT_IS_VALID is ${ENVIRONMENT_IS_VALID}"
+if [ ${ENVIRONMENT_IS_VALID} -eq 0 ]; then
+  echo "Illegal ENVIRONMENT \"${ENVIRONMENT}\""
+  COMMAND="help"
+else
+  echo "COMMAND: $COMMAND"
+  echo "ENVIRONMENT: $ENVIRONMENT"
+  echo "SERVER: $SERVER"
+fi
 
 case ${COMMAND} in
   start)
@@ -148,9 +175,8 @@ case ${COMMAND} in
       full)
         deploy_full
         ;;
-      *)
-        echo "Illegal ENVIRONMENT"
-        break
+      ll)
+        deploy_local_lean
         ;;
     esac
     if [ ${SERVER} == "run" ]; then
@@ -174,9 +200,8 @@ case ${COMMAND} in
       full)
         stop_full
         ;;
-      *)
-        echo "Illegal ENVIRONMENT"
-        break
+      ll)
+        stop_local_lean
         ;;
     esac
     delete_secrets
@@ -202,7 +227,8 @@ case ${COMMAND} in
 
       start
         ENVIRONMENT
-          remote | local | full (default: remote)  Indicate which environment to develop against
+          remote | local | full | ll (default: remote)  Indicate which environment to develop against
+              (ll: local_lean to run local with the absolute minimal support to run hmiServer for development)
 
         run (default: null) Indicate whether to run the server after starting the containers
 

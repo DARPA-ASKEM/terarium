@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
-import { isDataset, isModel, isDocument } from '@/utils/data-util';
+import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import type { Document } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -60,14 +60,14 @@ const addResourcesToProject = async (projectId: string) => {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = AssetType.Models;
+			const assetsType = AssetType.Model;
 			await useProjects().addAsset(assetsType, modelId, projectId);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = AssetType.Datasets;
+			const assetsType = AssetType.Dataset;
 			if (datasetId) {
 				await useProjects().addAsset(assetsType, datasetId, projectId);
 			}

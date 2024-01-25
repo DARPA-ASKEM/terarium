@@ -2,11 +2,11 @@ import _, { cloneDeep, isEmpty, some } from 'lodash';
 import API from '@/api/api';
 import { IGraph } from '@graph-scaffolder/types';
 import {
-	PetriNetModel,
 	Model,
+	ModelConfiguration,
+	PetriNetModel,
 	PetriNetTransition,
-	TypingSemantics,
-	ModelConfiguration
+	TypingSemantics
 } from '@/types/Types';
 import { updateModelConfiguration } from '@/services/model-configurations';
 import { logger } from '@/utils/logger';
@@ -89,6 +89,7 @@ export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 		if (resp && resp.status === 200 && resp.data && typeof resp.data === 'string') {
 			return resp.data;
 		}
+		if (resp && resp.status === 204) return null;
 
 		logger.error('[Model Service] petriToLatex: Server did not provide a correct response', {
 			showToast: false,
@@ -147,7 +148,9 @@ export const convertAMRToACSet = (amr: Model) => {
 
 	// post processing to use expressions rather than ids
 	result.T = result.T.map((transition) => {
-		const foundRate = amr.semantics?.ode.rates.find((rate) => rate.target === transition.tname);
+		const foundRate = amr.semantics?.odeSemantics?.rates?.find(
+			(rate) => rate.target === transition.tname
+		);
 
 		// default to the id if there is a case where there is no expression
 		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
@@ -172,7 +175,7 @@ export const convertToIGraph = (amr: Model) => {
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.map.find(
+		const typeMap = amr.semantics?.typingSemantics?.map.find(
 			(map) => map.length === 2 && state.id === map[0]
 		);
 		const strataType = typeMap?.[1] ?? '';
@@ -194,7 +197,7 @@ export const convertToIGraph = (amr: Model) => {
 		// The first element is a state or transition id, the second element is the type id.
 		// Find the inner array that matches the current state / transition that we are iterating on
 		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.map.find(
+		const typeMap = amr.semantics?.typingSemantics?.map.find(
 			(map) => map.length === 2 && transition.id === map[0]
 		);
 
@@ -265,12 +268,12 @@ export const addState = (amr: Model, id: string, name: string) => {
 		name,
 		description: ''
 	});
-	amr.semantics?.ode.initials?.push({
+	amr.semantics?.odeSemantics.initials?.push({
 		target: id,
 		expression: `${id}init`,
 		expression_mathml: `<ci>${id}init</ci>`
 	});
-	amr.semantics?.ode.parameters?.push({
+	amr.semantics?.odeSemantics.parameters?.push({
 		id: `${id}init`,
 		name: '',
 		description: '',
@@ -288,12 +291,12 @@ export const addTransition = (amr: Model, id: string, name: string, value?: numb
 			description: ''
 		}
 	});
-	amr.semantics?.ode.rates?.push({
+	amr.semantics?.odeSemantics?.rates?.push({
 		target: id,
 		expression: `${id}Param`,
 		expression_mathml: `<ci>${id}Param</ci>`
 	});
-	amr.semantics?.ode.parameters?.push({
+	amr.semantics?.odeSemantics.parameters?.push({
 		id: `${id}Param`,
 		name: '',
 		description: '',
@@ -312,8 +315,8 @@ export const removeState = (amr: Model, id: string) => {
 	});
 
 	// Remove from semantics
-	if (amr.semantics?.ode) {
-		const ode = amr.semantics.ode;
+	if (amr.semantics?.odeSemantics) {
+		const ode = amr.semantics.odeSemantics;
 		if (ode.initials) {
 			_.remove(ode.initials, (d) => d.target === id);
 		}
@@ -327,8 +330,8 @@ export const removeTransition = (amr: Model, id: string) => {
 	model.transitions = model.transitions.filter((d) => d.id !== id);
 
 	// Remove from semantics
-	if (amr.semantics?.ode) {
-		const ode = amr.semantics.ode;
+	if (amr.semantics?.odeSemantics) {
+		const ode = amr.semantics.odeSemantics;
 		if (ode.rates) {
 			_.remove(ode.rates, (d) => d.target === id);
 		}
@@ -342,7 +345,7 @@ export const updateRateExpression = (
 	transition: PetriNetTransition,
 	transitionExpression: string
 ) => {
-	const param = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
+	const param = amr.semantics?.odeSemantics?.rates?.find((d) => d.target === transition.id);
 	if (!param) return;
 
 	updateRateExpressionWithParam(amr, transition, `${param.target}Param`, transitionExpression);
@@ -354,14 +357,14 @@ export const updateRateExpressionWithParam = (
 	parameterId: string,
 	transitionExpression: string
 ) => {
-	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
+	const rate = amr.semantics?.odeSemantics?.rates?.find((d) => d.target === transition.id);
 	if (!rate) return;
 
 	let expression = '';
 	let expressionMathml = '';
 
 	if (transitionExpression === '') {
-		const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
+		const param = amr.semantics?.odeSemantics?.parameters?.find((d) => d.id === parameterId);
 		const inputStr = transition.input.map((d) => `${d}`);
 		if (!param) return;
 		// eslint-disable-next-line
@@ -440,7 +443,7 @@ export const updateState = (amr: Model, id: string, newId: string, newName: stri
 	state.id = newId;
 	state.name = newName;
 
-	const initial = amr.semantics?.ode.initials?.find((d) => d.target === id);
+	const initial = amr.semantics?.odeSemantics.initials?.find((d) => d.target === id);
 	if (!initial) return;
 	initial.target = newId;
 
@@ -478,7 +481,7 @@ export const updateTransition = (
 		};
 	}
 
-	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
+	const rate = amr.semantics?.odeSemantics?.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
 
@@ -562,15 +565,15 @@ const replaceValuesInMathML = (
 };
 
 export const updateParameterId = (amr: Model, id: string, newId: string) => {
-	if (amr.semantics?.ode.parameters) {
-		amr.semantics.ode.parameters.forEach((param) => {
+	if (amr.semantics?.odeSemantics.parameters) {
+		amr.semantics.odeSemantics.parameters.forEach((param) => {
 			if (param.id === id) {
 				param.id = newId;
 			}
 		});
 
 		// update the expression and expression_mathml fields
-		amr.semantics.ode.rates.forEach((rate) => {
+		amr.semantics.odeSemantics?.rates?.forEach((rate) => {
 			rate.expression = replaceValuesInExpression(rate.expression, id, newId);
 			if (rate.expression_mathml) {
 				rate.expression_mathml = replaceValuesInMathML(rate.expression_mathml, id, newId);
@@ -601,7 +604,7 @@ export const updateConfigFields = async (
 // Replace typing semantics
 export const addTyping = (amr: Model, typing: TypingSemantics) => {
 	if (amr.semantics) {
-		amr.semantics.typing = typing;
+		amr.semantics.typingSemantics = typing;
 	}
 };
 
@@ -631,16 +634,17 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 
 export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
-	if (amrCopy.semantics?.typing) {
-		const { name, description, schema } = amrCopy.header;
+	if (amrCopy.semantics?.typingSemantics) {
+		/* eslint-disable @typescript-eslint/naming-convention */
+		const { name, description, schema, model_version } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
 			schema,
-			model_version: amrCopy.header.model_version,
-			model: amrCopy.semantics?.typing?.system
+			model_version,
+			model: amrCopy.semantics?.typingSemantics?.system
 		};
-		amrCopy.semantics.typing.system = typeSystem;
+		amrCopy.semantics.typingSemantics.system = typeSystem;
 	}
 	return amrCopy;
 };
@@ -649,9 +653,9 @@ function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
 	// Entries in type system need to be in the same order for stratification
 	// They should contain the same state and transition entries for both baseAMR and strataAMR, just in a different order
 	// So just overwrite one with the other instead of sorting
-	const typeSystem = baseAMR.semantics?.typing?.system;
-	if (strataAMR.semantics?.typing?.system) {
-		strataAMR.semantics.typing.system.model = typeSystem.model;
+	const typeSystem = baseAMR.semantics?.typingSemantics?.system;
+	if (strataAMR.semantics?.typingSemantics?.system) {
+		strataAMR.semantics.typingSemantics.system.model = typeSystem.model;
 	}
 }
 
@@ -703,7 +707,7 @@ export function newAMR(modelName: string) {
 			transitions: []
 		},
 		semantics: {
-			ode: {
+			odeSemantics: {
 				rates: [],
 				initials: [],
 				parameters: []

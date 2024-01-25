@@ -54,7 +54,7 @@ const disableSave = computed(() => {
 	return true;
 });
 
-const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
+const observables = computed(() => props.model?.semantics?.odeSemantics?.observables ?? []);
 
 const setNewObservables = (index: number, latexEq: string, mathmlEq: string) => {
 	const id = extractVariablesFromMathML(mathmlEq, EquationSide.Left).join('_');
@@ -94,8 +94,8 @@ const cancelEdit = () => {
 };
 function updateModelFromObservables(observableMathMLList) {
 	const modelClone = cloneDeep(props.model);
-	if (modelClone.semantics?.ode?.observables) {
-		modelClone.semantics.ode.observables = observableMathMLList;
+	if (modelClone.semantics?.odeSemantics?.observables) {
+		modelClone.semantics.odeSemantics.observables = observableMathMLList;
 		emit('update-model', modelClone);
 	}
 }

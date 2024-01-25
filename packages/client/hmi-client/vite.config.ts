@@ -76,6 +76,10 @@ export default defineConfig({
 		svgLoader({ defaultImport: 'url' })
 	],
 	test: {
-		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']
+		include: ['tests/unit/**/*.{test,spec}.{ts,mts}'],
+		reporters: ['junit', 'default'],
+		outputFile: {
+			junit: './tests/unit/reports/junit-report.xml'
+		}
 	}
 });

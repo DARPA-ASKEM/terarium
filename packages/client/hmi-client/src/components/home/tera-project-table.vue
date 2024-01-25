@@ -36,9 +36,8 @@
 					</span>
 					<span><i class="pi pi-share-alt" /> {{ data.metadata?.['models-count'] }}</span>
 				</div>
-				<!--FIXME: There is no 'last updated' property in project yet-->
 				<template v-else-if="col.field === 'timestamp'">
-					{{ formatDdMmmYyyy(data.timestamp) }}
+					{{ formatDdMmmYyyy(data.updatedOn) }}
 				</template>
 			</template>
 		</Column>
@@ -56,11 +55,11 @@ import Column from 'primevue/column';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import { IProject } from '@/types/Project';
+import { Project } from '@/types/Types';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 defineProps<{
-	projects: IProject[];
+	projects: Project[];
 	selectedColumns: { field: string; header: string }[];
 }>();
 

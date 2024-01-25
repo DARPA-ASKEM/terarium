@@ -167,7 +167,7 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
  * For example "beta_1_1", "beta_1_2" will collapse into "beta": ["beta_1_1", "beta_1_2"]
  */
 export const getUnstratifiedParameters = (amr: Model) => {
-	const parameters = amr.semantics?.ode.parameters || [];
+	const parameters = amr.semantics?.odeSemantics.parameters || [];
 	const map = new Map<string, string[]>();
 	parameters.forEach((p) => {
 		const rootName = _.first(p.id.split('_')) as string;
@@ -182,7 +182,7 @@ export const getUnstratifiedParameters = (amr: Model) => {
 };
 
 export const getUnstratifiedInitials = (amr: Model) => {
-	const initials = amr.semantics?.ode.initials || [];
+	const initials = amr.semantics?.odeSemantics.initials || [];
 	const map = new Map<string, string[]>();
 	initials.forEach((i) => {
 		const rootName = _.first(i.target.split('_')) as string;
@@ -203,7 +203,7 @@ export const filterParameterLocations = (
 ) =>
 	transitionMatrixData.filter((d) => {
 		// Check if the transition's expression include the usage
-		const rate = amr.semantics?.ode.rates.find((r) => r.target === d.id);
+		const rate = amr.semantics?.odeSemantics?.rates?.find((r) => r.target === d.id);
 		if (!rate) return false;
 		// FIXME: should check through sympy to be more accurate
 		for (let i = 0; i < parameterIds.length; i++) {

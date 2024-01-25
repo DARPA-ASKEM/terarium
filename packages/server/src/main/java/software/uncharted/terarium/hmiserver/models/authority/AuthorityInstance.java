@@ -25,12 +25,12 @@ public class AuthorityInstance {
 	@ManyToOne(fetch = FetchType.EAGER)
 	private Authority authority;
 
-	public AuthorityInstance(Authority authority, List<AuthorityLevel> authorityLevels) {
+	public AuthorityInstance(final Authority authority, final List<AuthorityLevel> authorityLevels) {
 		this.authority = authority;
 		this.mask = authorityLevelsToMask(authorityLevels);
 	}
 
-	private static byte authorityLevelsToMask(List<AuthorityLevel> authorityLevels) {
+	private static byte authorityLevelsToMask(final List<AuthorityLevel> authorityLevels) {
 		return authorityLevels.stream()
 			.map(AuthorityLevel::getMask)
 			.reduce((l1, l2) -> (byte) (l1 | l2))
@@ -53,7 +53,7 @@ public class AuthorityInstance {
 			.collect(Collectors.toList());
 	}
 
-	private boolean hasAuthorityLevel(AuthorityLevel level) {
+	private boolean hasAuthorityLevel(final AuthorityLevel level) {
 		return (mask & (byte) Math.pow(2, level.getId())) != 0;
 	}
 }

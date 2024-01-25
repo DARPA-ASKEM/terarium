@@ -191,7 +191,7 @@ export const renderFumanTrajectories = (
 	const height = options.height;
 	const topMargin = 10;
 	const rightMargin = 30;
-	const leftMargin = 40;
+	const leftMargin = 30;
 	const bottomMargin = 30;
 	const { trajs, states } = processedData;
 

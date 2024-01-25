@@ -6,32 +6,31 @@
 	Using the resource store for project data is no longer needed.
 */
 
-import { IProject } from '@/types/Project';
 import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
-import type { PermissionRelationships } from '@/types/Types';
+import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;
 
-const activeProject = shallowRef<IProject | null>(null);
+const activeProject = shallowRef<Project | null>(null);
 const projectLoading = shallowRef<boolean>(false);
-const allProjects = shallowRef<IProject[] | null>(null);
+const allProjects = shallowRef<Project[] | null>(null);
 const activeProjectId = computed<string>(() => activeProject.value?.id ?? '');
 
 export function useProjects() {
 	/**
 	 * Refreshes the active project from backend if `projectId` is not defined.
-	 * Otherwise get and set the active project to the one specified by `projectId`.
+	 * Otherwise, get and set the active project to the one specified by `projectId`.
 	 *
-	 * @param {string} projectId Id of the project to set as the active project.
-	 * @returns {Promise<IProject | null>} Active project.
+	 * @param {Project['id']} projectId Id of the project to set as the active project.
+	 * @returns {Promise<Project | null>} Active project.
 	 */
-	async function get(projectId: IProject['id']): Promise<IProject | null> {
+	async function get(projectId: Project['id']): Promise<Project | null> {
 		if (projectId) {
 			projectLoading.value = true;
-			activeProject.value = await ProjectService.get(projectId, true);
+			activeProject.value = await ProjectService.get(projectId);
 			projectLoading.value = false;
 		} else {
 			activeProject.value = null;
@@ -39,21 +38,32 @@ export function useProjects() {
 		return activeProject.value;
 	}
 
-	async function refresh(): Promise<IProject | null> {
-		const projectId: IProject['id'] = activeProjectId.value;
-		if (projectId) {
-			activeProject.value = await ProjectService.get(projectId, true);
+	async function refresh(): Promise<Project | null> {
+		if (activeProjectId.value) {
+			activeProject.value = await ProjectService.get(activeProjectId.value);
 		}
 		return activeProject.value;
 	}
 
 	/**
 	 * Refreshes the list of all projects from backend.
-	 * @returns {Promise<IProject[]>} List of all projects.
+	 * @returns {Promise<Project[]>} List of all projects.
 	 */
-	async function getAll(): Promise<IProject[]> {
-		allProjects.value = (await ProjectService.getAll()) as unknown as IProject[];
+	async function getAll(): Promise<Project[]> {
+		allProjects.value = (await ProjectService.getAll()) as Project[];
 		return allProjects.value;
+	}
+
+	/**
+	 * Return all the asset of a certain AssetType from the active project.
+	 * @param assetType
+	 * @returns ProjectAsset[]
+	 */
+	function getActiveProjectAssets(assetType: AssetType) {
+		return (
+			activeProject.value?.projectAssets.filter((asset) => asset.assetType === assetType) ??
+			([] as ProjectAsset[])
+		);
 	}
 
 	/**
@@ -62,10 +72,10 @@ export function useProjects() {
 	 *
 	 * @param {string} assetType Type of asset to be added, e.g., 'documents'.
 	 * @param {string} assetId Id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections.
-	 * @param {string} [projectId] Id of the project to add the asset to.
+	 * @param {Project['id']} [projectId] Id of the project to add the asset to.
 	 * @returns {Promise<string|null>} Id of the added asset, if successful. Null, otherwise.
 	 */
-	async function addAsset(assetType: string, assetId: string, projectId?: string) {
+	async function addAsset(assetType: string, assetId: string, projectId?: Project['id']) {
 		const newAssetId = await ProjectService.addAsset(
 			projectId ?? activeProjectId.value,
 			assetType,
@@ -73,7 +83,7 @@ export function useProjects() {
 		);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
-				activeProject.value = await ProjectService.get(activeProjectId.value, true);
+				activeProject.value = await ProjectService.get(activeProjectId.value);
 			}, TIMEOUT_MS);
 		}
 		return newAssetId;
@@ -85,10 +95,10 @@ export function useProjects() {
 	 *
 	 * @param {string} assetType Type of asset to be deleted, e.g., 'documents'.
 	 * @param {string} assetId Id of the asset to be deleted. This will be the internal id of some asset stored in one of the data service collections.
-	 * @param {string} [projectId] Id of the project to delete the asset from.
-	 * @returns {Promise<boolean>} True if the asset was successfuly deleted. False, otherwise.
+	 * @param {Project['id']} [projectId] Id of the project to delete the asset from.
+	 * @returns {Promise<boolean>} True if the asset was successfully deleted. False, otherwise.
 	 */
-	async function deleteAsset(assetType: AssetType, assetId: string, projectId?: string) {
+	async function deleteAsset(assetType: AssetType, assetId: string, projectId?: Project['id']) {
 		const deleted = await ProjectService.deleteAsset(
 			projectId ?? activeProjectId.value,
 			assetType,
@@ -96,7 +106,7 @@ export function useProjects() {
 		);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
-				activeProject.value = await ProjectService.get(activeProjectId.value, true);
+				activeProject.value = await ProjectService.get(activeProjectId.value);
 			}, TIMEOUT_MS);
 		}
 		return deleted;
@@ -107,11 +117,11 @@ export function useProjects() {
 	 *
 	 * @param {string} name Name of the project.
 	 * @param {string} description Short description.
-	 * @param {string} username Username of the owner of the project.
+	 * @param {string} userId ID of the owner of the project.
 	 * @returns {Promise<Project|null>} The created project, or null if none returned by the API.
 	 */
-	async function create(name: string, description: string, username: string) {
-		const created = await ProjectService.create(name, description, username);
+	async function create(name: string, description: string, userId: string) {
+		const created = await ProjectService.create(name, description, userId);
 		setTimeout(async () => {
 			getAll();
 		}, TIMEOUT_MS);
@@ -121,14 +131,14 @@ export function useProjects() {
 	/**
 	 * Update a project. If updated project is the active project, refresh it.
 	 *
-	 * @param {Iproject} project Project to update.
+	 * @param {Project} project Project to update.
 	 * @returns {Promise<string>} Id of the updated project.
 	 */
-	async function update(project: IProject) {
+	async function update(project: Project) {
 		const updated = await ProjectService.update(project);
 		if (project.id === activeProjectId.value) {
 			setTimeout(async () => {
-				activeProject.value = await ProjectService.get(project.id, true);
+				activeProject.value = await ProjectService.get(project.id);
 			}, 1000);
 		}
 		return updated;
@@ -137,10 +147,10 @@ export function useProjects() {
 	/**
 	 * Remove a project and refresh the list of all projects. Sets the active project to null.
 	 *
-	 * @param {string} projectId Id of the project to remove.
-	 * @returns {Promise<string>} Id of the project to remove.
+	 * @param projectId Id of the project to remove.
+	 * @returns Id of the project to remove.
 	 */
-	async function remove(projectId: IProject['id']) {
+	async function remove(projectId: Project['id']) {
 		const removed = await ProjectService.remove(projectId);
 		setTimeout(async () => {
 			getAll();
@@ -153,36 +163,20 @@ export function useProjects() {
 		return removed;
 	}
 
-	/**
-	 * Get projects publication assets for a given project per id.
-	 *
-	 * @param {string} projectId Project id to get assets for.
-	 * @return {Promise<DocumentAsset[]>} The documents assets for the project.
-	 */
-	async function getPublicationAssets(projectId: IProject['id']) {
-		return ProjectService.getPublicationAssets(projectId);
-	}
-
-	async function getPermissions(
-		projectId: IProject['id']
-	): Promise<PermissionRelationships | null> {
+	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 		return ProjectService.getPermissions(projectId);
 	}
 
-	async function setPermissions(projectId: IProject['id'], userId: string, relationship: string) {
+	async function setPermissions(projectId: Project['id'], userId: string, relationship: string) {
 		return ProjectService.setPermissions(projectId, userId, relationship);
 	}
 
-	async function removePermissions(
-		projectId: IProject['id'],
-		userId: string,
-		relationship: string
-	) {
+	async function removePermissions(projectId: Project['id'], userId: string, relationship: string) {
 		return ProjectService.removePermissions(projectId, userId, relationship);
 	}
 
 	async function updatePermissions(
-		projectId: IProject['id'],
+		projectId: Project['id'],
 		userId: string,
 		oldRelationship: string,
 		to: string
@@ -190,34 +184,34 @@ export function useProjects() {
 		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
 	}
 
-	async function clone(projectId: IProject['id']) {
-		const username = useAuthStore().user?.name;
-		if (!username) {
+	async function clone(projectId: Project['id']) {
+		const userId = useAuthStore().user?.id;
+		if (!userId) {
 			return null;
 		}
-		const projectToClone = await ProjectService.get(projectId, true);
-		if (!projectToClone || !projectToClone.assets) {
+		const projectToClone = await ProjectService.get(projectId);
+		if (!projectToClone) {
 			return null;
 		}
 		const created = await ProjectService.create(
 			`Copy of ${projectToClone.name}`,
 			projectToClone.description,
-			username
+			userId
 		);
 		if (!created || !created.id) {
 			return null;
 		}
 		// There doesn't seem to be a way to add multiple assets in one call yet
-		Object.entries(projectToClone.assets).forEach(async (projectAsset) => {
-			const [assetType, assets] = projectAsset;
-			if (assets.length) {
-				await Promise.all(
-					assets.map(async (asset) => {
-						await ProjectService.addAsset(created.id!, assetType, asset.id);
-					})
-				);
-			}
-		});
+		// Object.entries(projectToClone.assets).forEach(async (projectAsset) => {
+		// 	const [assetType, assets] = projectAsset;
+		// 	if (assets.length) {
+		// 		await Promise.all(
+		// 			assets.map(async (asset) => {
+		// 				await ProjectService.addAsset(created.id!, assetType, asset.id);
+		// 			})
+		// 		);
+		// 	}
+		// });
 		return created;
 	}
 
@@ -227,13 +221,13 @@ export function useProjects() {
 		projectLoading,
 		get,
 		getAll,
+		getActiveProjectAssets,
 		addAsset,
 		deleteAsset,
 		create,
 		update,
 		remove,
 		refresh,
-		getPublicationAssets,
 		getPermissions,
 		setPermissions,
 		removePermissions,

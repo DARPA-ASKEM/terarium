@@ -98,7 +98,7 @@ async function uploadCodeToProjectFromGithub(
 	if (!newCode || !newCode.id) return null;
 
 	const urlResponse = await API.put(
-		`/code-asset/${newCode.id}/uploadCodeFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/code-asset/${newCode.id}/upload-code-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -131,7 +131,7 @@ async function uploadCodeFromGithubRepo(
 	if (!newCode || !newCode.id) return null;
 
 	const urlResponse = await API.put(
-		`/code-asset/${newCode.id}/uploadCodeFromGithubRepo?repoOwnerAndName=${repoOwnerAndName}&repoName=${repoName}`,
+		`/code-asset/${newCode.id}/upload-code-from-github-repo?repo-owner-and-name=${repoOwnerAndName}&repo-name=${repoName}`,
 		{
 			timeout: 30000
 		}
@@ -159,7 +159,7 @@ async function addFileToCodeAsset(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.put(`/code-asset/${codeAssetId}/uploadFile`, formData, {
+	const response = await API.put(`/code-asset/${codeAssetId}/upload-file`, formData, {
 		params: {
 			filename: file.name
 		},
