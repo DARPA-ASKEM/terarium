@@ -1,11 +1,11 @@
 import API from '@/api/api';
 import type { Model, ModelConfiguration } from '@/types/Types';
-import { EventType } from '@/types/Types';
-import * as EventService from '@/services/event';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import { AssetType, EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { isEmpty } from 'lodash';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import * as EventService from '@/services/event';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -45,7 +45,7 @@ export async function getBulkModels(modelIDs: string[]) {
  * @return Array<Model>|null - the list of all models, or null if none returned by API
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
-	const response = await API.get('/models/descriptions?page_size=500');
+	const response = await API.get('/models/descriptions?page-size=500');
 	return response?.data ?? null;
 }
 
@@ -62,7 +62,7 @@ export async function updateModel(model: Model) {
 }
 
 export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[]> {
-	const response = await API.get(`/models/${modelId}/model_configurations`);
+	const response = await API.get(`/models/${modelId}/model-configurations`);
 	return response?.data ?? ([] as ModelConfiguration[]);
 }
 
@@ -99,10 +99,9 @@ export function isModelEmpty(model: Model) {
 
 // A helper function to check if a model name already exists
 export function validateModelName(name: string): boolean {
-	const existingModelNames: string[] = [];
-	useProjects().activeProject.value?.assets?.models.forEach((item) => {
-		existingModelNames.push(item.header.name);
-	});
+	const existingModelNames: string[] = useProjects()
+		.getActiveProjectAssets(AssetType.Model)
+		.map((item) => item.assetName ?? '');
 
 	if (name.trim().length === 0) {
 		logger.info('Model name cannot be empty - please enter a different name');

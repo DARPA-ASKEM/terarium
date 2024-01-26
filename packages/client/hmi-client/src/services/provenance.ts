@@ -9,9 +9,9 @@ import {
 	DocumentAsset,
 	Model,
 	ProvenanceQueryParam,
+	ProvenanceSearchResult,
 	ProvenanceType
 } from '@/types/Types';
-import { ProvenanceResult } from '@/types/Provenance';
 import { ResultType } from '@/types/common';
 import { getBulkDatasets } from './dataset';
 /* eslint-disable-next-line import/no-cycle */
@@ -40,7 +40,7 @@ async function getConnectedNodes(
 	id: string,
 	rootType: ProvenanceType,
 	types: ProvenanceType[]
-): Promise<ProvenanceResult | null> {
+): Promise<ProvenanceSearchResult | null> {
 	const body: ProvenanceQueryParam = {
 		rootId: id,
 		rootType,
@@ -50,8 +50,8 @@ async function getConnectedNodes(
 		verbose: true,
 		types
 	};
-	const connectedNodesRaw = await API.post('/provenance/connected-nodes', body).catch((error) =>
-		logger.error(`Error: ${error}`)
+	const connectedNodesRaw = await API.post('/provenance/search/connected-nodes', body).catch(
+		(error) => logger.error(`Error: ${error}`)
 	);
 
 	return connectedNodesRaw?.data ?? null;
@@ -71,10 +71,7 @@ async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<Docum
 	const documentAssets: DocumentAsset[] = [];
 
 	try {
-		const response = await API.post(
-			'/provenance/connected-nodes?search_type=models_from_document',
-			query
-		);
+		const response = await API.post('/provenance/search/models-from-document', query);
 
 		// If we get an error returns an empty array
 		if (response.status !== 200) {
@@ -103,7 +100,11 @@ async function getRelatedArtifacts(
 	const response: ResultType[] = [];
 
 	if (!rootType) return response;
-	const connectedNodes = await getConnectedNodes(id, rootType, types);
+	const connectedNodes: ProvenanceSearchResult | null = await getConnectedNodes(
+		id,
+		rootType,
+		types
+	);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
 		const externalPublicationIds: string[] = [];
@@ -120,7 +121,7 @@ async function getRelatedArtifacts(
 		//		Find datasets that reference that document
 
 		// parse the response (sub)graph and extract relevant artifacts
-		connectedNodes.result.nodes.forEach((node) => {
+		connectedNodes.nodes.forEach((node) => {
 			if (rootType !== ProvenanceType.Publication) {
 				if (
 					node.type === ProvenanceType.Publication &&
@@ -224,23 +225,23 @@ async function getProvenance(id: string) {
  */
 export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceType {
 	switch (assetType) {
-		case AssetType.Models:
+		case AssetType.Model:
 			return ProvenanceType.Model;
-		case AssetType.Datasets:
+		case AssetType.Dataset:
 			return ProvenanceType.Dataset;
-		case AssetType.ModelConfigurations:
+		case AssetType.ModelConfiguration:
 			return ProvenanceType.ModelConfiguration;
-		case AssetType.Publications:
+		case AssetType.Publication:
 			return ProvenanceType.Publication;
-		case AssetType.Simulations:
+		case AssetType.Simulation:
 			return ProvenanceType.Simulation;
-		case AssetType.Artifacts:
+		case AssetType.Artifact:
 			return ProvenanceType.Artifact;
 		case AssetType.Code:
 			return ProvenanceType.Code;
-		case AssetType.Workflows:
+		case AssetType.Workflow:
 			return ProvenanceType.Workflow;
-		case AssetType.Documents:
+		case AssetType.Document:
 		default:
 			return ProvenanceType.Document;
 	}

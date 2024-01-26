@@ -166,7 +166,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	const modelConfig: ModelConfiguration = {
 		id: '',
 		name: '',
-		modelId: cloneModel.id,
+		model_id: cloneModel.id,
 		configuration: cloneModel
 	};
 	return modelConfig;

@@ -184,7 +184,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
-import { OperatorNodeSize, OperatorImport } from '@/services/workflow';
+import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
@@ -518,11 +518,11 @@ function onDrop(event) {
 		let state: any = null;
 
 		switch (assetType) {
-			case AssetType.Models:
+			case AssetType.Model:
 				operation = ModelOp.operation;
 				state = { modelId: assetId };
 				break;
-			case AssetType.Datasets:
+			case AssetType.Dataset:
 				operation = DatasetOp.operation;
 				state = { datasetId: assetId };
 				break;
@@ -530,7 +530,7 @@ function onDrop(event) {
 				operation = CodeAssetOp.operation;
 				state = { codeAssetId: assetId };
 				break;
-			case AssetType.Documents:
+			case AssetType.Document:
 				operation = DocumentOp.operation;
 				state = { documentId: assetId };
 				break;
@@ -715,14 +715,7 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	if (!isMouseOverCanvas) return;
-
-	// Update node position
-	node.x += x / canvasTransform.k;
-	node.y += y / canvasTransform.k;
-
-	// Update edge positions
+function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 	wf.value.edges.forEach((edge) => {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
@@ -733,7 +726,13 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 			edge.points[edge.points.length - 1].y += y / canvasTransform.k;
 		}
 	});
+}
 
+const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	if (!isMouseOverCanvas) return;
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
+	updateEdgePositions(node, { x, y });
 	workflowDirty = true;
 };
 

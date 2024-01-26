@@ -2,15 +2,21 @@ package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
+import java.sql.Timestamp;
 import java.util.Map;
-import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
@@ -18,21 +24,40 @@ import java.time.Instant;
 public class Code {
 
 	/* The id of the code. */
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional
-	private String id;
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private UUID id;
 
-	/* Timestamp of creation */
 	@TSOptional
-	private Instant timestamp;
+	@CreationTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	private Timestamp createdOn;
+
+	@TSOptional
+	@UpdateTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	private Timestamp updatedOn;
+
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	private Timestamp deletedOn;
 
 	/* The name of the code. */
+	@Schema(defaultValue = "Default Name")
 	private String name;
 
 	/* The description of the code. */
+	@Schema(defaultValue = "Default Description")
 	private String description;
 
 	/* Files that contain dynamics */
 	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, CodeFile> files;
 
 	/* The optional URL for where this code came from */
@@ -42,7 +67,8 @@ public class Code {
 
 	/* The optional metadata for this code */
 	@TSOptional
-	private JsonNode metadata;
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
+	private Map<String, String> metadata;
 
 
 	public enum ProgrammingLanguage {

@@ -156,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import 'ace-builds/src-noconflict/mode-python';
@@ -164,12 +164,12 @@ import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import Button from 'primevue/button';
 import {
-	getCodeFileAsText,
 	getCodeAsset,
-	updateCodeAsset,
-	uploadCodeToProject,
+	getCodeFileAsText,
+	getProgrammingLanguage,
 	setFileExtension,
-	getProgrammingLanguage
+	updateCodeAsset,
+	uploadCodeToProject
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import type { Code, CodeFile } from '@/types/Types';

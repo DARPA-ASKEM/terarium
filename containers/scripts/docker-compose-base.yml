@@ -11,46 +11,11 @@ services:
       - "6379:6379"
     restart: always
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: "3s"
       timeout: "3s"
       retries: 30
 
-  postgres:
-    container_name: postgres
-    image: postgres:14-alpine
-    networks:
-      - terarium
-    ports:
-      - "5430:5432"
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "pantera"]
-      interval: "3s"
-      timeout: "3s"
-      retries: 30
-    user: postgres
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: "postgres"
-    volumes:
-      - terarium-db:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-
-  db-migration:
-    container_name: db-migration
-    image: ghcr.io/darpa-askem/db-migration:latest
-    networks:
-      - terarium
-    environment:
-      SPRING_PROFILES_ACTIVE: "default, local-docker"
-      TERARIUM_DB_PASSWORD: "postgres"
-      TERARIUM_DB_USERNAME: "postgres"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-volumes:
-  terarium-db:
-    driver: local
+networks:
+  terarium:
+    name: terarium
