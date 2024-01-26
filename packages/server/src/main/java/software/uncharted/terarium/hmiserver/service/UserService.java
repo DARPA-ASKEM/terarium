@@ -8,6 +8,7 @@ import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +25,17 @@ public class UserService {
 		return user;
 	}
 
-	@Cacheable(value="users", key="#user.id")
 	public User createUser(final User user) {
 		final long now = Instant.now().toEpochMilli();
+		// using milliseconds causes User.isDirty() to be true for every single call the user makes, which in turn
+		// results in 3 SQL calls to update the User record.
+		//    UPDATE user SET <all fields>
+		//    DELETE users_roles WHERE user_id=<id>
+		//    INSERT users_roles
+		long nowInDays = TimeUnit.MILLISECONDS.toDays(now);
 		user.setCreatedAtMs(now);
-		user.setLastLoginAtMs(now);
-		return save(user);
+		user.setLastLoginAtMs(TimeUnit.DAYS.toMillis(nowInDays));
+		return user;
 	}
 
 	@Cacheable(value="users", key="#user.id")
