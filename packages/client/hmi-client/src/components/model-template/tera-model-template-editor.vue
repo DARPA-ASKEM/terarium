@@ -140,8 +140,15 @@ const isCreatingNewEdge = computed(
 
 function collisionFn(p: Position) {
 	const buffer = 50;
-	for (let i = 0; i < cards.value.length; i++) {
-		const checkingNode = cards.value[i];
+function collisionFn(p: Position): boolean {
+    const buffer = 50;
+    
+    return cards.value.some(({ x, y, width, height }) => {
+        const withinXRange = p.x >= x - buffer && p.x <= x + width + buffer;
+        const withinYRange = p.y >= y - buffer && p.y <= y + height + buffer;
+        return withinXRange && withinYRange;
+    });
+}
 		if (p.x >= checkingNode.x - buffer && p.x <= checkingNode.x + checkingNode.width + buffer) {
 			if (p.y >= checkingNode.y - buffer && p.y <= checkingNode.y + checkingNode.height + buffer) {
 				return true;
