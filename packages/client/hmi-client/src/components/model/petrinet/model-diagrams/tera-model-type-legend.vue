@@ -16,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import type { Model } from '@/types/Types';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
+import { computed } from 'vue';
 
 const props = defineProps<{
 	model: Model;
@@ -27,11 +27,10 @@ const props = defineProps<{
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 
 const stateTypes = computed<string[]>(
-	() => props.model.semantics?.typingSemantics?.system?.model.states.map((s) => s.name)
+	() => props.model.semantics?.typing?.system?.model.states.map((s) => s.name)
 );
 const transitionTypes = computed<string[]>(
-	() =>
-		props.model.semantics?.typingSemantics?.system?.model.transitions.map((t) => t.properties?.name)
+	() => props.model.semantics?.typing?.system?.model.transitions.map((t) => t.properties?.name)
 );
 
 function getLegendKeyStyle(id: string) {

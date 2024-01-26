@@ -452,10 +452,10 @@ const showExtractions = ref<string | null>();
 const transientTableValue = ref<ModelTableTypes | null>(null);
 const nameOfCurieCache = ref(new Map<string, string>());
 
-const parameters = computed(() => props.model?.semantics?.odeSemantics.parameters ?? []);
-const observables = computed(() => props.model?.semantics?.odeSemantics?.observables ?? []);
+const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
+const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
-	props.model?.semantics?.odeSemantics?.time ? [props.model?.semantics.odeSemantics.time] : []
+	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
 );
 const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
@@ -472,8 +472,8 @@ const transitions = computed(() => {
 				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
 				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
 				expression:
-					props.model?.semantics?.odeSemantics?.rates?.find((rate) => rate.target === t.id)
-						?.expression ?? null,
+					props.model?.semantics?.ode?.rates?.find((rate) => rate.target === t.id)?.expression ??
+					null,
 				extractions: extractions?.[t.id] ?? null
 			});
 		});
@@ -545,12 +545,12 @@ async function confirmEdit() {
 
 		switch (tableType) {
 			case 'parameters':
-				if (props.model.semantics?.odeSemantics.parameters) {
+				if (props.model.semantics?.ode.parameters) {
 					Object.entries(updateProperty).forEach(([key, value]) => {
-						modelClone.semantics!.odeSemantics.parameters![idx][key] = value;
+						modelClone.semantics!.ode.parameters![idx][key] = value;
 
 						if (key === 'id') {
-							const ode = props.model!.semantics!.odeSemantics;
+							const ode = props.model!.semantics!.ode;
 							// update the parameter id in the model (as well as rate expression and expression_mathml)
 							updateParameterId(modelClone, ode.parameters![idx][key], value as string);
 

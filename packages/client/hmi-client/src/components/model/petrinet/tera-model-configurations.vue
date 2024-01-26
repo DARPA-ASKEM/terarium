@@ -283,13 +283,13 @@ const baseModel = computed<any>(() => {
 const headerInitials = computed<any[]>(() =>
 	stratifiedModelType.value
 		? baseModel.value.states.map(({ id }) => id)
-		: configurations.value[0]?.semantics?.odeSemantics.initials?.map(({ target }) => target) ?? []
+		: configurations.value[0]?.semantics?.ode.initials?.map(({ target }) => target) ?? []
 );
 const headerParameters = computed<any[]>(() =>
 	stratifiedModelType.value
 		? // ? baseModel.value.transitions.map(({ id }) => id)
 			[...getUnstratifiedParameters(props.model).keys()]
-		: configurations.value[0]?.semantics?.odeSemantics.parameters?.map(({ id }) => id) ?? []
+		: configurations.value[0]?.semantics?.ode.parameters?.map(({ id }) => id) ?? []
 );
 const headerInitialsAndParameters = computed(() => [
 	...headerInitials.value,
@@ -594,6 +594,7 @@ thead > tr:first-child {
 .model-configuration:deep(.cell-modal-button) {
 	visibility: hidden;
 }
+
 .model-configuration:deep(th:hover > .editable-cell > .cell-modal-button),
 .model-configuration:deep(td:hover > .editable-cell > .cell-modal-button) {
 	visibility: visible;
