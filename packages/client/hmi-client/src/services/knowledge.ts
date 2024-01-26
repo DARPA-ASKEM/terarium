@@ -222,10 +222,14 @@ export async function codeToAMR(
 
 export async function codeBlocksToAmr(code: Code, file: File) {
 	const formData = new FormData();
-	formData.append('code', JSON.stringify(code));
-	formData.append('input', file);
-	const response = await API.post(`/code-asset/code-blocks-to-model`, formData, {
+	const blob = new Blob([JSON.stringify(code)], {
+		type: 'application/json'
+	});
+	formData.append('code', blob);
+	formData.append('file', file);
+	const response = await API.post(`/knowledge/code-blocks-to-model`, formData, {
 		headers: {
+			Accept: 'application/json',
 			'Content-Type': 'multipart/form-data'
 		}
 	});

@@ -2,7 +2,9 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,10 +49,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.CodeProxy;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
-import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 
@@ -65,8 +65,6 @@ public class TDSCodeController {
 	final GithubProxy githubProxy;
 
 	final CodeService codeService;
-
-	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
 	final ObjectMapper objectMapper;
 
@@ -220,37 +218,6 @@ public class TDSCodeController {
 		return ResponseEntity.ok(new ResponseDeleted("Code", id));
 	}
 
-	// Create a model from code blocks
-	@PostMapping("/code-blocks-to-model")
-	@Secured(Roles.USER)
-	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestBody Code code, @RequestPart("file") MultipartFile input) throws IOException {
-
-		try(final CloseableHttpClient httpClient = HttpClients.custom()
-		.build()) {
-		// 1. create code asset from code blocks
-		Code createdCode = codeService.createCode(code);
-
-		System.out.println(createdCode.getId());
-
-		// 2. upload file to code asset
-		byte[] fileAsBytes = input.getBytes();
-		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		
-		// we have pre-formatted the files object already so no need to use uploadCode
-		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), "tempfile");
-		final HttpPut put = new HttpPut(presignedURL.getUrl());
-		put.setEntity(fileEntity);
-		httpClient.execute(put);
-		
-		// 3. create model from code asset
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", true, false).getBody());
-		} 
-		catch (Exception e) {
-			log.error("unable to upload file", e);
-			return ResponseEntity.internalServerError().build();
-	 }
-	}
-
 	/**
 	 * Retrieves the content of a code file as text.
 	 *
@@ -336,19 +303,11 @@ public class TDSCodeController {
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") MultipartFile input) {
+			@RequestPart("file") MultipartFile input) throws IOException {
 
 		log.debug("Uploading code {} to project", codeId);
 
-		byte[] fileAsBytes = new byte[0];
-		try {
-			fileAsBytes = input.getBytes();
-		} catch (IOException e) {
-			log.error("Unable to read file", e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to read file");
-		}
+		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadCodeHelper(codeId, filename, fileEntity);
 
@@ -440,6 +399,19 @@ public class TDSCodeController {
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(codeHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
+
+			final Optional<Code> code = codeService.getCode(codeId);
+			final CodeFile codeFile = new CodeFile();
+			codeFile.setProgrammingLanguageFromFileName(fileName);
+
+			Map<String, CodeFile> fileMap = code.get().getFiles();
+
+			if(fileMap == null){
+				fileMap = new HashMap<>();
+			}
+			fileMap.put(fileName, codeFile);
+			code.get().setFiles(fileMap);
+			codeService.updateCode(code.get());
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 

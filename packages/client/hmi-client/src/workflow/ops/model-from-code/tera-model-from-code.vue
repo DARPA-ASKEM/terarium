@@ -122,8 +122,8 @@ import { VAceEditor } from 'vue3-ace-editor';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import type { Model } from '@/types/Types';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
+import type { Code, Model } from '@/types/Types';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -136,7 +136,7 @@ import { useProjects } from '@/composables/project';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getCodeAsset } from '@/services/code';
-import { codeToAMR } from '@/services/knowledge';
+import { codeBlocksToAmr } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
@@ -277,12 +277,30 @@ async function handleCode() {
 	isProcessing.value = true;
 
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		const modelId = await codeToAMR(
-			props.node.inputs[0].value?.[0],
-			'temp model',
-			'temp model description',
-			true
+		const codeContent = allCodeBlocks.value.reduce(
+			(acc, block) => `${acc}\n${block.asset.codeContent}`,
+			''
 		);
+		const file = new File([codeContent], 'tempFile');
+		const newCode: Code = {
+			name: 'tempCode',
+			description: 'tempDescription',
+			files: {
+				tempFile: {
+					language: clonedState.value.codeLanguage,
+					dynamics: {
+						name: 'dynamic',
+						description: 'dynamic description',
+						block: []
+					}
+				}
+			}
+		};
+		console.log(codeContent);
+		console.log(newCode);
+
+		const modelId = await codeBlocksToAmr(newCode, file);
+
 		clonedState.value.modelId = modelId;
 		emit('append-output-port', {
 			label: `Output - ${props.node.outputs.length + 1}`,
