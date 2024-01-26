@@ -1,3 +1,5 @@
+import type { Position } from '@/types/common';
+
 export enum WorkflowOperationTypes {
 	ADD = 'add', // temp for test to work
 	TEST = 'TestOperation',
@@ -146,11 +148,6 @@ export interface Workflow {
 	};
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
-}
-
-export interface Position {
-	x: number;
-	y: number;
 }
 
 export interface Size {
