@@ -146,7 +146,7 @@ public class KnowledgeController {
 			throw new Exception("Error uploading file");
 		}
 		// 3. create model from code asset
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", true, false).getBody());
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false).getBody());
 		} 
 		catch (Exception e) {
 			log.error("unable to upload file", e);

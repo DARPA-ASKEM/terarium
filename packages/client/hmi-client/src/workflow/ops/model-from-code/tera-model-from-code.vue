@@ -277,10 +277,9 @@ async function handleCode() {
 	isProcessing.value = true;
 
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		const codeContent = allCodeBlocks.value.reduce(
-			(acc, block) => `${acc}\n${block.asset.codeContent}`,
-			''
-		);
+		const codeContent = allCodeBlocks.value
+			.filter((block) => block.includeInProcess)
+			.reduce((acc, block) => `${acc}${block.asset.codeContent}\n`, '');
 		const file = new File([codeContent], 'tempFile');
 		const newCode: Code = {
 			name: 'tempCode',
