@@ -44,7 +44,11 @@
 						style="margin-right: auto"
 						label="Save as new Model"
 						@click="
-							() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
+							() =>
+								saveNewModel(newModelName, {
+									addToProject: true,
+									appendOutputPort: true
+								})
 						"
 					/>
 					<Button label="Close" @click="emit('close')" />
@@ -163,7 +167,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	if (!modelData) return;
 
 	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
 	}
 
 	if (options.appendOutputPort) {

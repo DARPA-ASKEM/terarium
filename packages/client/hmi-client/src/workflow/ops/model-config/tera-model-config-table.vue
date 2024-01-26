@@ -78,6 +78,18 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</span>
+				<span
+					class="timeseries-container"
+					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
+				>
+					<InputText
+						size="small"
+						:placeholder="'(e.g., 0:500, 10:550, 25:700 etc)'"
+						v-model.lazy="slotProps.data.timeseries"
+						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
+					/>
+					<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
+				</span>
 			</template>
 		</Column>
 		<Column field="source" header="Source" style="width: 35%"></Column>
@@ -93,6 +105,7 @@
 				:model-configuration="modelConfiguration"
 				:data="slotProps.data.tableFormattedMatrix"
 				@update-value="(val: ModelParameter | Initial) => emit('update-value', [val])"
+				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
 			/>
 		</template>
 	</Datatable>
@@ -127,6 +140,7 @@ import Dropdown from 'primevue/dropdown';
 import InputSwitch from 'primevue/inputswitch';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
+import { cloneDeep } from 'lodash';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT },
@@ -147,6 +161,8 @@ const matrixModalContext = ref({
 	matrixId: ''
 });
 
+const errorMessage = ref('');
+
 const expandedRows = ref([]);
 const isInitial = (obj: Initial | ModelParameter): obj is Initial => 'target' in obj;
 
@@ -165,14 +181,41 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
+const updateTimeseries = (id: string, value: string) => {
+	if (!validateTimeSeries(value)) return;
+	const clonedConfig = cloneDeep(props.modelConfiguration);
+	clonedConfig.configuration.metadata.timeseries[id] = value;
+	emit('update-configuration', clonedConfig);
+};
+
+const validateTimeSeries = (values: string) => {
+	const message = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+	if (typeof values !== 'string') {
+		errorMessage.value = message;
+		return false;
+	}
+
+	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
+	const isValid = values.split(',').every(isPairValid);
+	errorMessage.value = isValid ? '' : message;
+	return isValid;
+};
+
 const changeType = (param: ModelParameter, typeIndex: number) => {
-	// FIXME: changing between parameter types will delete the values of distribution, ideally we would want to keep these.
+	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
 	const type = typeOptions[typeIndex];
+	const clonedConfig = cloneDeep(props.modelConfiguration);
+	const idx = clonedConfig.configuration.semantics.ode.parameters.findIndex(
+		(p) => p.id === param.id
+	);
 	switch (type.value) {
 		case ParamType.CONSTANT:
 			delete param.distribution;
+			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
+			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
 			break;
 		case ParamType.DISTRIBUTION:
+			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
 			param.distribution = {
 				type: 'Uniform1',
 				parameters: {
@@ -180,11 +223,20 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 					maximum: 0
 				}
 			};
+			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			break;
+		case ParamType.TIME_SERIES:
+			delete param.distribution;
+			if (!clonedConfig.configuration.metadata?.timeseries) {
+				clonedConfig.configuration.metadata.timeseries = {};
+			}
+			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			clonedConfig.configuration.metadata.timeseries[param.id] = '';
 			break;
 		default:
 			break;
 	}
-	emit('update-value', [param]);
+	emit('update-configuration', clonedConfig);
 };
 
 const stratifiedModelType = computed(() =>
@@ -215,5 +267,14 @@ const updateExpression = async (value: Initial) => {
 
 .distribution-item > :deep(input) {
 	width: 4rem;
+}
+.invalid-message {
+	color: var(--text-color-danger);
+	font-size: var(--font-caption);
+}
+
+.timeseries-container {
+	display: flex;
+	flex-direction: column;
 }
 </style>

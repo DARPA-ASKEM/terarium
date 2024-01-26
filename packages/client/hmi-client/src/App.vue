@@ -27,9 +27,9 @@ import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import TeraFooter from '@/components/navbar/tera-footer.vue';
-import { IProject } from '@/types/Project';
 import { ResourceType } from '@/types/common';
 import { useProjects } from '@/composables/project';
+import { Project } from '@/types/Types';
 import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
 import { useCurrentRoute } from './router/index';
 
@@ -77,7 +77,7 @@ API.interceptors.response.use(
 watch(
 	() => route.params.projectId,
 	(projectId) => {
-		useProjects().get(projectId as IProject['id']);
+		useProjects().get(projectId as Project['id']);
 	},
 	{ immediate: true }
 );

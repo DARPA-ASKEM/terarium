@@ -39,11 +39,12 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, shallowRef, watch, computed, ComputedRef, onMounted, onUnmounted } from 'vue';
+import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { OperatorStatus, WorkflowNode } from '@/types/workflow';
+import { ProgressState } from '@/types/Types';
 // import { csvParse } from 'd3';
 // import type { ModelConfiguration } from '@/types/Types';
 // import { getRunResult } from '@/services/models/simulation-service';
-import { ProgressState, WorkflowNode, OperatorStatus } from '@/types/workflow';
 // import { getModelConfigurationById } from '@/services/model-configurations';
 import type {
 	CsvAsset,
@@ -51,10 +52,10 @@ import type {
 	EnsembleModelConfigs
 } from '@/types/Types';
 import {
-	makeEnsembleCiemssCalibration,
 	getRunResultCiemss,
-	simulationPollAction,
-	querySimulationInProgress
+	makeEnsembleCiemssCalibration,
+	querySimulationInProgress,
+	simulationPollAction
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -66,8 +67,8 @@ import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
-	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleCiemssOperation,
+	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 
@@ -93,7 +94,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
 const datasetColumnNames = ref<string[]>();
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 

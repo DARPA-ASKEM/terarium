@@ -1,16 +1,16 @@
-import _, { cloneDeep, isEmpty, some } from 'lodash';
 import API from '@/api/api';
-import { IGraph } from '@graph-scaffolder/types';
-import {
-	PetriNetModel,
-	Model,
-	PetriNetTransition,
-	TypingSemantics,
-	ModelConfiguration
-} from '@/types/Types';
 import { updateModelConfiguration } from '@/services/model-configurations';
+import {
+	Model,
+	ModelConfiguration,
+	PetriNetModel,
+	PetriNetTransition,
+	TypingSemantics
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { IGraph } from '@graph-scaffolder/types';
 import { AxiosError } from 'axios';
+import _, { cloneDeep, isEmpty, some } from 'lodash';
 
 // deprecated section - this is the acset representation, we should do the conversion on model-service
 interface PetriNet {
@@ -89,6 +89,7 @@ export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 		if (resp && resp.status === 200 && resp.data && typeof resp.data === 'string') {
 			return resp.data;
 		}
+		if (resp && resp.status === 204) return null;
 
 		logger.error('[Model Service] petriToLatex: Server did not provide a correct response', {
 			showToast: false,
@@ -147,7 +148,7 @@ export const convertAMRToACSet = (amr: Model) => {
 
 	// post processing to use expressions rather than ids
 	result.T = result.T.map((transition) => {
-		const foundRate = amr.semantics?.ode.rates.find((rate) => rate.target === transition.tname);
+		const foundRate = amr.semantics?.ode?.rates?.find((rate) => rate.target === transition.tname);
 
 		// default to the id if there is a case where there is no expression
 		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
@@ -288,7 +289,7 @@ export const addTransition = (amr: Model, id: string, name: string, value?: numb
 			description: ''
 		}
 	});
-	amr.semantics?.ode.rates?.push({
+	amr.semantics?.ode?.rates?.push({
 		target: id,
 		expression: `${id}Param`,
 		expression_mathml: `<ci>${id}Param</ci>`
@@ -354,7 +355,7 @@ export const updateRateExpressionWithParam = (
 	parameterId: string,
 	transitionExpression: string
 ) => {
-	const rate = amr.semantics?.ode.rates.find((d) => d.target === transition.id);
+	const rate = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
 	if (!rate) return;
 
 	let expression = '';
@@ -478,7 +479,7 @@ export const updateTransition = (
 		};
 	}
 
-	const rate = amr.semantics?.ode.rates?.find((d) => d.target === id);
+	const rate = amr.semantics?.ode?.rates?.find((d) => d.target === id);
 	if (!rate) return;
 	rate.target = newId;
 
@@ -570,7 +571,7 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 		});
 
 		// update the expression and expression_mathml fields
-		amr.semantics.ode.rates.forEach((rate) => {
+		amr.semantics.ode?.rates?.forEach((rate) => {
 			rate.expression = replaceValuesInExpression(rate.expression, id, newId);
 			if (rate.expression_mathml) {
 				rate.expression_mathml = replaceValuesInMathML(rate.expression_mathml, id, newId);
@@ -632,12 +633,13 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
 	const amrCopy = cloneDeep(amr);
 	if (amrCopy.semantics?.typing) {
-		const { name, description, schema } = amrCopy.header;
+		/* eslint-disable @typescript-eslint/naming-convention */
+		const { name, description, schema, model_version } = amrCopy.header;
 		const typeSystem = {
 			name,
 			description,
 			schema,
-			model_version: amrCopy.header.model_version,
+			model_version,
 			model: amrCopy.semantics?.typing?.system
 		};
 		amrCopy.semantics.typing.system = typeSystem;

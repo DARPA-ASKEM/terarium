@@ -12,16 +12,6 @@ import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
 import { ProjectPages } from './Project';
 
-export type Annotation = {
-	id: string;
-	artifact_id: string;
-	artifact_type: string;
-	content: string;
-	timestampMillis: number;
-	username: number;
-	section: string;
-};
-
 export interface FeatureConfig {
 	isPreview: boolean;
 }
@@ -42,6 +32,7 @@ export interface ModelConfigTableData {
 	source: string;
 	visibility: boolean;
 	tableFormattedMatrix?: ModelConfigTableData[];
+	timeseries?: string;
 }
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps

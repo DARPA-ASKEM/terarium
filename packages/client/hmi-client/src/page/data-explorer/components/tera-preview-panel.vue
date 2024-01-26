@@ -29,25 +29,10 @@
 				@close-preview="closePreview"
 			/>
 		</template>
-		<template v-slot:footerButtons>
-			<Button
-				v-if="!previewItemSelected"
-				label="Add to selected resources"
-				@click="emit('toggle-data-item-selected', { item: previewItem })"
-				class="toggle-selection"
-			/>
-			<Button
-				v-else
-				label="Remove from selected resources"
-				@click="emit('toggle-data-item-selected', { item: previewItem })"
-				class="toggle-selection p-button-secondary"
-			/>
-		</template>
 	</tera-slider>
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button';
 import { PropType, computed, ref, watch } from 'vue';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
@@ -101,7 +86,7 @@ const previewItemId = computed(() => {
 	return previewItemState.value.id as string;
 });
 
-const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
+const emit = defineEmits(['update:previewItem']);
 
 watch(
 	() => props.previewItem,
@@ -116,10 +101,6 @@ watch(
 function closePreview() {
 	emit('update:previewItem', null);
 }
-
-const previewItemSelected = computed(() =>
-	props.selectedSearchItems.some((selectedItem) => selectedItem === props.previewItem)
-);
 </script>
 
 <style scoped>

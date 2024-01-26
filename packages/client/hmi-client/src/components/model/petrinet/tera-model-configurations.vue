@@ -594,6 +594,7 @@ thead > tr:first-child {
 .model-configuration:deep(.cell-modal-button) {
 	visibility: hidden;
 }
+
 .model-configuration:deep(th:hover > .editable-cell > .cell-modal-button),
 .model-configuration:deep(td:hover > .editable-cell > .cell-modal-button) {
 	visibility: visible;

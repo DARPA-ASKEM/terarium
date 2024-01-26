@@ -40,8 +40,9 @@
 							:data="tableFormattedInitials"
 							@update-value="updateConfigInitial"
 							@update-configuration="
-								(configToUpdate: ModelConfiguration) =>
-									updateConfigInitial(configToUpdate.configuration?.semantics.ode.initials)
+								(configToUpdate: ModelConfiguration) => {
+									updateFromConfig(configToUpdate);
+								}
 							"
 						/>
 					</AccordionTab>
@@ -52,8 +53,9 @@
 							:data="tableFormattedParams"
 							@update-value="updateConfigParam"
 							@update-configuration="
-								(configToUpdate: ModelConfiguration) =>
-									updateConfigParam(configToUpdate.configuration?.semantics.ode.parameters)
+								(configToUpdate: ModelConfiguration) => {
+									updateFromConfig(configToUpdate);
+								}
 							"
 						/>
 					</AccordionTab>
@@ -77,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { isEmpty } from 'lodash';
+import _, { cloneDeep, isEmpty } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -151,13 +153,20 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 
 	const cloneModel = _.cloneDeep(model.value);
 	if (cloneModel.semantics) {
+		if (!cloneModel.metadata || !cloneModel.metadata.timeseries) {
+			cloneModel.metadata = {
+				...cloneModel.metadata,
+				timeseries: {}
+			};
+		}
 		cloneModel.semantics.ode.initials = configInitials.value;
 		cloneModel.semantics.ode.parameters = configParams.value;
+		cloneModel.metadata.timeseries = configTimeSeries.value;
 	}
 	const modelConfig: ModelConfiguration = {
 		id: '',
 		name: '',
-		modelId: cloneModel.id,
+		model_id: cloneModel.id,
 		configuration: cloneModel
 	};
 	return modelConfig;
@@ -165,6 +174,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 
 const configInitials = ref<Initial[]>();
 const configParams = ref<ModelParameter[]>();
+const configTimeSeries = ref<{ [index: string]: any }>();
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
@@ -230,14 +240,16 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const param = configParams.value?.find((i) => i.id === v);
-				const paramType = param?.distribution ? ParamType.DISTRIBUTION : ParamType.CONSTANT;
+				const paramType = getParamType(param);
+				const timeseriesValue = configTimeSeries.value?.[param!.id];
 				return {
 					id: v,
 					name: v,
 					type: paramType,
 					value: param,
 					source: '',
-					visibility: false
+					visibility: false,
+					timeseries: timeseriesValue
 				};
 			});
 			formattedParams.push({
@@ -253,20 +265,37 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	} else {
 		parameters.value.forEach((vals, init) => {
 			const param = configParams.value?.find((i) => i.id === vals[0]);
-			const paramType = param?.distribution ? ParamType.DISTRIBUTION : ParamType.CONSTANT;
+			const paramType = getParamType(param);
+
+			const timeseriesValue = configTimeSeries.value?.[param!.id];
 			formattedParams.push({
 				id: init,
 				name: init,
 				type: paramType,
 				value: param,
 				source: '',
-				visibility: false
+				visibility: false,
+				timeseries: timeseriesValue
 			});
 		});
 	}
 
 	return formattedParams;
 });
+
+const getParamType = (param: ModelParameter | undefined) => {
+	let type = ParamType.CONSTANT;
+	if (!param) return type;
+	if (
+		modelConfiguration.value?.configuration.metadata?.timeseries?.[param.id] ||
+		modelConfiguration.value?.configuration.metadata.timeseries?.[param.id] === ''
+	) {
+		type = ParamType.TIME_SERIES;
+	} else if (param?.distribution) {
+		type = ParamType.DISTRIBUTION;
+	}
+	return type;
+};
 
 const updateState = (updatedField) => {
 	let state = _.cloneDeep(props.node.state);
@@ -284,7 +313,6 @@ const updateConfigParam = (params: ModelParameter[]) => {
 			state.parameters[i] = foundParam;
 		}
 	}
-	emit('update-state', state);
 };
 
 const updateConfigInitial = (inits: Initial[]) => {
@@ -300,22 +328,24 @@ const updateConfigInitial = (inits: Initial[]) => {
 	emit('update-state', state);
 };
 
+const updateFromConfig = (config: ModelConfiguration) => {
+	const state = cloneDeep(props.node.state);
+	state.initials = config.configuration.semantics?.ode.initials ?? [];
+	state.parameters = config.configuration.semantics?.ode.parameters ?? [];
+	state.timeseries = config.configuration?.metadata?.timeseries ?? {};
+	emit('update-state', state);
+};
+
 const createConfiguration = async () => {
 	if (!model.value) return;
 
 	const state = _.cloneDeep(props.node.state);
 
-	const newModel = _.cloneDeep(model.value);
-	if (newModel.semantics) {
-		newModel.semantics.ode.initials = configInitials.value;
-		newModel.semantics.ode.parameters = configParams.value;
-	}
-
 	const data = await createModelConfiguration(
 		model.value.id,
 		configName.value,
 		configDescription.value,
-		newModel
+		modelConfiguration.value?.configuration
 	);
 
 	if (!data) {
@@ -366,8 +396,9 @@ watch(
 	() => {
 		configInitials.value = props.node.state.initials;
 		configParams.value = props.node.state.parameters;
+		configTimeSeries.value = props.node.state.timeseries;
 	},
-	{ immediate: true }
+	{ immediate: true, deep: true }
 );
 
 watch(
@@ -382,8 +413,9 @@ watch(
 		configDescription.value = props.node.state.description;
 		configInitials.value = props.node.state.initials;
 		configParams.value = props.node.state.parameters;
+		configTimeSeries.value = props.node.state.timeseries;
 	},
-	{ immediate: true }
+	{ immediate: true, deep: true }
 );
 
 watch(

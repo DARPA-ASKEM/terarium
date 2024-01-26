@@ -118,9 +118,10 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import { ProgressState } from '@/types/Types';
 import type {
 	CsvAsset,
 	Model,
@@ -137,13 +138,13 @@ import {
 	getRunResult,
 	getSimulation,
 	makeForecastJob,
-	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	simulationPollAction
 } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
-import { saveDataset, createCsvAssetFromRunResults } from '@/services/dataset';
+import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { ProgressState, WorkflowNode } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -191,7 +192,7 @@ const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const showSpinner = ref(false);
 const completedRunId = ref<string>('');
 const runResults = ref<RunResults>({});
-const progress = ref({ status: ProgressState.RETRIEVING, value: 0 });
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
@@ -243,6 +244,7 @@ const runSimulate = async () => {
 	const state = props.node.state;
 
 	const payload: SimulationRequest = {
+		projectId: useProjects().activeProject.value?.id as string,
 		modelConfigId: configId,
 		timespan: {
 			start: state.currentTimespan.start,
@@ -314,7 +316,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 	const csvData = csvParse(resultCsv);
 
 	if (modelConfiguration) {
-		model.value[runId] = await getModel(modelConfiguration.modelId);
+		model.value[runId] = await getModel(modelConfiguration.model_id);
 
 		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
 		csvData.forEach((row) =>
