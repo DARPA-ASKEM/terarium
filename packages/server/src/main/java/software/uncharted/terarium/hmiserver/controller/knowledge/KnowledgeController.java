@@ -132,10 +132,7 @@ public class KnowledgeController {
 		// 1. create code asset from code blocks
 		Code createdCode = codeService.createCode(code);
 
-		log.info(createdCode.toString());
-
 		// 2. upload file to code asset
-		log.info(input.getBytes().toString());
 		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		
@@ -144,8 +141,10 @@ public class KnowledgeController {
 		final HttpPut put = new HttpPut(presignedURL.getUrl());
 		put.setEntity(fileEntity);
 		final HttpResponse response = httpClient.execute(put);
-		
-		log.info(response.toString());
+
+		if(response.getStatusLine().getStatusCode() != 200) {
+			throw new Exception("Error uploading file");
+		}
 		// 3. create model from code asset
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", true, false).getBody());
 		} 
