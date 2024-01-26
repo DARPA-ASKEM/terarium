@@ -32,9 +32,9 @@ public class UserService {
 		//    UPDATE user SET <all fields>
 		//    DELETE users_roles WHERE user_id=<id>
 		//    INSERT users_roles
-		long nowInMinutes = TimeUnit.MILLISECONDS.toMinutes(now);
+		long nowInDays = TimeUnit.MILLISECONDS.toDays(now);
 		user.setCreatedAtMs(now);
-		user.setLastLoginAtMs(TimeUnit.MINUTES.toMillis(nowInMinutes));
+		user.setLastLoginAtMs(TimeUnit.DAYS.toMillis(nowInDays));
 		return user;
 	}
 
