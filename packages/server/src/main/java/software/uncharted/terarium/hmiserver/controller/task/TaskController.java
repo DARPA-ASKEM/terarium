@@ -91,7 +91,8 @@ public class TaskController {
 
 	@PostMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<TaskResponse> createTask(@RequestBody TaskRequest req) throws JsonProcessingException {
+	public ResponseEntity<TaskResponse> createTask(
+			@RequestBody TaskRequest req) throws JsonProcessingException {
 
 		// generate the id
 		req.setId(java.util.UUID.randomUUID());
@@ -143,13 +144,16 @@ public class TaskController {
 	}
 
 	@RabbitListener(queues = {
-			"${terarium.task-runner-response-queue}" }, concurrency = "1")
+			"${terarium.taskrunner.response-queue}" }, concurrency = "1")
 	void onTaskResponse(final Message message, final Channel channel) throws IOException, InterruptedException {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
 			if (resp == null) {
 				return;
 			}
+
+			log.info("GOT RESPONSE: {}", resp.toString());
+
 			final SseEmitter emitter = taskIdToEmitter.get(resp.getId());
 			synchronized (taskIdToEmitter) {
 				if (emitter != null) {

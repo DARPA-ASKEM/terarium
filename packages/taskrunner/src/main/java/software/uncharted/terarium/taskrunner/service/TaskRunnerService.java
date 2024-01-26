@@ -117,7 +117,7 @@ public class TaskRunnerService {
 			}
 
 			// create the task
-			task = new Task(req.getId(), SCRIPT_DIRECTORY, req.getTaskKey());
+			task = new Task(req.getId(), req.getScript());
 
 			// create the cancellation consumer
 			cancellationConsumer = createCancellationQueueConsumer(task);

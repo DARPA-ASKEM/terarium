@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,7 +31,6 @@ import software.uncharted.terarium.taskrunner.util.TimeFormatter;
 public class Task {
 
 	private UUID id;
-	private String taskKey;
 	private ObjectMapper mapper;
 	private ProcessBuilder processBuilder;
 	private Process process;
@@ -39,19 +39,17 @@ public class Task {
 	private String outputPipeName;
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
-	private String script;
-	private String scriptDir;
+	private String scriptCommand;
 	private int NUM_THREADS = 8;
 	ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
-	public Task(UUID id, String scriptDir, String taskKey) throws IOException, InterruptedException {
+	public Task(UUID id, String scriptCommand) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
 
 		this.id = id;
-		this.scriptDir = scriptDir;
-		this.taskKey = taskKey;
+		this.scriptCommand = scriptCommand;
 		inputPipeName = "/tmp/input-" + id;
 		outputPipeName = "/tmp/output-" + id;
 
@@ -63,22 +61,25 @@ public class Task {
 		}
 	}
 
-	public Task(UUID id, String taskKey) throws IOException, InterruptedException {
-		this(id, "", taskKey);
+	public Task(UUID id) throws IOException, InterruptedException {
+		this(id, "");
 	}
 
 	private void setup() throws IOException, InterruptedException {
-		if (scriptDir == "") {
-			// use resources dir
-			script = getClass().getResource("/" + taskKey + ".py").getPath();
+		if (scriptCommand == "") {
+			// use resources dir for testing
+			scriptCommand = getClass().getResource("/ml.py").getPath();
+			boolean fileExists = Files.exists(Paths.get(scriptCommand));
+			if (!fileExists) {
+				throw new FileNotFoundException("Script file: " + scriptCommand + " not found");
+			}
+			processBuilder = new ProcessBuilder("python", scriptCommand, "--id", id.toString(), "--input_pipe",
+					inputPipeName,
+					"--output_pipe", outputPipeName);
 		} else {
-			// use absolute apth
-			script = Paths.get(scriptDir, taskKey + ".py").toString();
-		}
-		boolean fileExists = Files.exists(Paths.get(script));
-
-		if (!fileExists) {
-			throw new FileNotFoundException("Script file: " + script + " not found");
+			processBuilder = new ProcessBuilder(scriptCommand, "--id", id.toString(), "--input_pipe",
+					inputPipeName,
+					"--output_pipe", outputPipeName);
 		}
 
 		log.debug("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, id);
@@ -95,9 +96,6 @@ public class Task {
 		if (exitCode != 0) {
 			throw new RuntimeException("Error creating input pipe");
 		}
-
-		processBuilder = new ProcessBuilder("python", script, "--id", id.toString(), "--input_pipe", inputPipeName,
-				"--output_pipe", outputPipeName);
 	}
 
 	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes)
@@ -111,7 +109,7 @@ public class Task {
 				log.debug("Opening input pipe: {} for task: {}", inputPipeName, id);
 				try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
 					log.debug("Writing to input pipe: {} for task: {}", inputPipeName, id);
-					fos.write(appendNewline(bytes));
+					fos.write(bytes);
 				}
 				future.complete(null);
 			} catch (IOException e) {
@@ -150,6 +148,18 @@ public class Task {
 		CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
 			log.debug("Opening output pipe: {} for task: {}", outputPipeName, id);
+			try (BufferedReader reader = new BufferedReader(new FileReader(outputPipeName))) {
+				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, id);
+				StringBuilder sb = new StringBuilder();
+				int ch;
+				while ((ch = reader.read()) != -1) {
+					sb.append((char) ch);
+				}
+				future.complete(sb.toString().getBytes());
+			} catch (IOException e) {
+				future.completeExceptionally(e);
+			}
+
 			try (BufferedReader reader = new BufferedReader(
 					new InputStreamReader(new FileInputStream(outputPipeName)))) {
 				log.debug("Reading on output pipe: {} for task {}", outputPipeName, id);
@@ -184,16 +194,6 @@ public class Task {
 		}
 
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
-	}
-
-	private byte[] appendNewline(byte[] original) {
-		byte[] newline = System.lineSeparator().getBytes();
-		byte[] combined = new byte[original.length + newline.length];
-
-		System.arraycopy(original, 0, combined, 0, original.length);
-		System.arraycopy(newline, 0, combined, original.length, newline.length);
-
-		return combined;
 	}
 
 	public void cleanup() {
@@ -232,7 +232,7 @@ public class Task {
 
 			status = TaskStatus.RUNNING;
 
-			log.info("Starting task {} running {}", id, script);
+			log.info("Starting task {} running {}", id, scriptCommand);
 			process = processBuilder.start();
 
 			// Add a shutdown hook to kill the process if the JVM exits

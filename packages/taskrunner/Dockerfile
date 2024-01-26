@@ -1,38 +1,8 @@
-# FROM ghcr.io/graalvm/graalvm-ce:java11-21.3.0 AS taskrunner_builder
-
-# WORKDIR /taskrunner
-# COPY ./packages/taskrunner .
-
-# RUN ./gradlew nativeCompile
-
-# FROM python:3.10-slim
-
-# WORKDIR /
-
-# RUN apt-get update && \
-# 	apt-get install -y --no-install-recommends wget && \
-# 	rm -rf /var/lib/apt/lists/*
-
-# RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/2544-golmm-in-hmi.tar.gz && \
-# 	tar -zxvf gollm.tar.gz && \
-# 	mv GoLLM-* GoLLM
-
-# WORKDIR /GoLLM
-
-# # ENV OPENAI_API_KEY=""
-
-# RUN ls -la /GoLLM
-
-# RUN pip install --no-cache-dir -r requirements.txt
-
-# COPY --from=taskrunner_builder /taskrunner/build/native/nativeCompile .
-
-# CMD ["/taskrunner/build/native/nativeCompile/terarium"]
-
 # Build the Spring Boot application
 FROM eclipse-temurin:17-jdk AS taskrunner_builder
 
 WORKDIR /taskrunner
+
 COPY ./packages/taskrunner .
 
 RUN ./gradlew bootJar
@@ -46,17 +16,14 @@ RUN apt-get update && \
 	apt-get install -y --no-install-recommends wget && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/2544-golmm-in-hmi.tar.gz && \
+RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/a7b21c7ca98b48ea5f6b1d7b0b46f1220dca4b2c.tar.gz && \
 	tar -zxvf gollm.tar.gz && \
 	mv GoLLM-* GoLLM
 
 WORKDIR /GoLLM
 
-# ENV OPENAI_API_KEY=""
-
-RUN ls -la /GoLLM
-
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -e .
 
 # Install OpenJDK JRE
 RUN apt-get update && \

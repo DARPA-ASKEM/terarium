@@ -127,7 +127,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 		req.setTimeoutMinutes(1);
 
@@ -146,7 +146,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"should_fail\": true}").getBytes());
 		req.setTimeoutMinutes(1);
 
@@ -165,7 +165,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 		req.setTimeoutMinutes(1);
 
@@ -200,7 +200,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 		req.setTimeoutMinutes(1);
 
@@ -269,7 +269,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				try {
 					TaskRequest req = new TaskRequest();
 					req.setId(UUID.randomUUID());
-					req.setTaskKey("ml");
+					req.setScript("");
 					req.setTimeoutMinutes(1);
 
 					// allocate the response stuff

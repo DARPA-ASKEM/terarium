@@ -1,5 +1,6 @@
 package software.uncharted.terarium.taskrunner.service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.FileCopyUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
@@ -30,12 +33,46 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getTaskKey());
+		Task task = new Task(req.getId(), req.getScript());
+		try {
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			task.start();
+
+			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
+
+			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
+			Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(), output);
+
+			task.waitFor(ONE_MINUTE);
+			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
+
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			task.cleanup();
+		}
+	}
+
+	@RepeatedTest(REPEAT_COUNT)
+	public void testTaskLargeInput() throws Exception {
+
+		ClassPathResource resource = new ClassPathResource("test_input.json");
+		String input = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()), StandardCharsets.UTF_8);
+
+		TaskRequest req = new TaskRequest();
+		req.setId(UUID.randomUUID());
+		req.setScript("");
+		req.setInput(input.getBytes());
+
+		int ONE_MINUTE = 1;
+
+		Task task = new Task(req.getId(), req.getScript());
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -60,12 +97,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 	public void testTaskFailure() throws Exception {
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"should_fail\": true}").getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getTaskKey());
+		Task task = new Task(req.getId(), req.getScript());
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -92,12 +129,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getTaskKey());
+		Task task = new Task(req.getId(), req.getScript());
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -134,12 +171,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getTaskKey());
+		Task task = new Task(req.getId(), req.getScript());
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -185,10 +222,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setTaskKey("ml");
+		req.setScript("");
 		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
 
-		Task task = new Task(req.getId(), req.getTaskKey());
+		Task task = new Task(req.getId(), req.getScript());
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.cancel();
@@ -229,7 +266,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 				try {
 					TaskRequest req = new TaskRequest();
 					req.setId(UUID.randomUUID());
-					req.setTaskKey("ml");
+					req.setScript("");
 					req.setTimeoutMinutes(1);
 
 					boolean shouldCancelBefore = false;
@@ -265,7 +302,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 					}
 					expectedResponses.put(req.getId(), expected);
 
-					Task task = new Task(req.getId(), req.getTaskKey());
+					Task task = new Task(req.getId(), req.getScript());
 					Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 
 					if (shouldCancelBefore) {

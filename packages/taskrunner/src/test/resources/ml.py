@@ -6,9 +6,14 @@ import sys
 import concurrent.futures
 
 def read_input(input_pipe: str):
+	line = b''
 	with open(input_pipe, 'rb') as f:
-		line = f.readline().strip()
-		return json.loads(line.decode())
+		while True:
+			chunk = f.read(1024)
+			if chunk == b'':
+				break
+			line += chunk
+	return json.loads(line.decode('utf-8'))
 
 def read_input_with_timeout(input_pipe: str, timeout_seconds: int):
 	with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -20,7 +25,7 @@ def read_input_with_timeout(input_pipe: str, timeout_seconds: int):
 			raise TimeoutError('Reading from input pipe timed out')
 
 def write_output(output_pipe: str, output: dict):
-	bs = (json.dumps(output) + "\n").encode()
+	bs = (json.dumps(output)).encode()
 	with open(output_pipe, 'wb') as f_out:
 		f_out.write(bs)
 		return
