@@ -1,5 +1,9 @@
 <template>
-	<tera-modal @modal-mask-clicked="emit('close-modal')" @modal-enter-press="applyConfiguration">
+	<tera-modal
+		@modal-mask-clicked="emit('close-modal')"
+		@modal-enter-press="applyConfiguration"
+		id="create-project-modal"
+	>
 		<template #header>
 			<h4>{{ modalTitle }}</h4>
 		</template>

@@ -14,13 +14,18 @@
 						icon="pi pi-play"
 						icon-pos="right"
 						outlined
-						:disabled="true"
+						@click="startShepherdTour"
 					/>
 				</section>
 			</header>
 			<section class="menu">
-				<TabView>
-					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
+				<TabView id="tab-panel-projects">
+					<TabPanel
+						v-for="(tab, i) in projectsTabs"
+						:header="tab.title"
+						:key="i"
+						:headerClass="tab.id"
+					>
 						<section class="filter-and-sort">
 							<div v-if="!isEmpty(tab.projects)">
 								<!-- TODO: Add project search back in once we are ready
@@ -65,7 +70,12 @@
 										<span class="p-button-label">{{ slotProps.option.value }}</span>
 									</template>
 								</SelectButton>
-								<Button icon="pi pi-plus" label="New project" @click="openCreateProjectModal" />
+								<Button
+									icon="pi pi-plus"
+									label="New project"
+									@click="openCreateProjectModal"
+									id="new-project-button"
+								/>
 							</div>
 						</section>
 						<section class="projects">
@@ -133,6 +143,8 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
+import { useShepherd } from 'vue-shepherd';
+import { offset } from '@floating-ui/dom';
 import { Project } from '@/types/Types';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
@@ -213,10 +225,14 @@ function filterAndSortProjects(projects: Project[]) {
 	return [];
 }
 
-const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
-	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
-	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
-	{ title: TabTitles.SampleProjects, projects: [] }
+const projectsTabs = computed<{ id: string; title: string; projects: IProject[] }[]>(() => [
+	{ id: 'my-projects', title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
+	{
+		id: 'public-projects',
+		title: TabTitles.PublicProjects,
+		projects: publicFilteredSortedProjects.value
+	},
+	{ id: 'sample', title: TabTitles.SampleProjects, projects: [] }
 ]);
 
 // Table view
@@ -243,11 +259,177 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
+/* Shepherd tour */
+const tour = useShepherd({
+	tourName: 'get-started',
+	useModalOverlay: true,
+	defaultStepOptions: {
+		cancelIcon: {
+			enabled: false
+		},
+		scrollTo: {
+			behavior: 'smooth',
+			block: 'center'
+		},
+		modalOverlayOpeningPadding: 8,
+		modalOverlayOpeningRadius: 16,
+		floatingUIOptions: {
+			middleware: [offset({ mainAxis: 0, crossAxis: 12 })]
+		}
+	}
+});
+
+const tourSteps = [
+	{
+		id: 'welcome',
+		attachTo: { element: '', on: 'top' },
+		title: 'Five minute tour',
+		text: '<p class="mb-4">This tour will show you how to answer data driven questions with Terarium. By the end of this tour you will know how to find a model, configure it, run a simulation, and export everything to a report.</p><p>You can exit the tour whenever you like. You can restart it from any screen that has a <b>Get started</b> button.</p>',
+		buttons: [
+			{
+				action() {
+					return this.cancel();
+				},
+				text: 'Exit',
+				secondary: true,
+				classes: 'exit-tour-button'
+			},
+			{
+				action() {
+					return this.next();
+				},
+				text: 'Next'
+			}
+		]
+	},
+	{
+		id: 'show-public-projects',
+		attachTo: { element: '#tab-panel-projects', on: 'top' },
+		title: 'Project selector',
+		text: '<p class="mb-4">This section of the home page is where you can manage your projects. You can also view any of the projects on the <b>Public projects</b> tab.</p><p>If you find something useful, you can fork it and use that as a starting point for your own project.</p>',
+		floatingUIOptions: {
+			middleware: [offset({ mainAxis: 24, crossAxis: 0 })]
+		},
+		modalOverlayOpeningPadding: -8,
+		canClickTarget: false,
+		// advanceOn: { selector: '#tab-panel-projects', event: 'click' },
+		buttons: [
+			{
+				action() {
+					return this.cancel();
+				},
+				text: 'Exit',
+				secondary: true,
+				classes: 'exit-tour-button'
+			},
+			{
+				action() {
+					return this.back();
+				},
+				text: 'Previous',
+				secondary: true
+			},
+			{
+				action() {
+					return this.next();
+				},
+				text: 'Next'
+			}
+		]
+	},
+	{
+		id: 'show-new-project-button',
+		attachTo: { element: '#new-project-button', on: 'left' },
+		title: 'Step 1: Create a new project',
+		text: '<p class="mb-4">Every journey begins with the first step. Let\'s begin by clicking the <b>New project</b> button.</p>',
+		floatingUIOptions: {
+			middleware: [offset({ mainAxis: 24, crossAxis: 0 })]
+		},
+		advanceOn: { selector: '#new-project-button', event: 'click' },
+		buttons: [
+			{
+				action() {
+					return this.cancel();
+				},
+				text: 'Exit',
+				secondary: true,
+				classes: 'exit-tour-button'
+			},
+			{
+				action() {
+					return this.back();
+				},
+				text: 'Previous',
+				secondary: true
+			}
+			// {
+			// 	action() {
+			// 		return this.next();
+			// 	},
+			// 	text: 'Next'
+			// }
+		]
+	},
+	{
+		id: 'show-create-new-project-modal',
+		attachTo: { element: '#create-project-modal', on: 'top' },
+		/* Docs: https://shepherdjs.dev/docs/tutorial-02-usage.html */
+		/* If the element to highlight does not yet exist while instantiating tour steps, you may use lazy evaluation by supplying a function to attachTo.element. The function will be called in the before-show phase.
+			beforeShowPromise: A function that returns a promise. When the promise resolves, the rest of the show code for the step will execute.  */
+		/*
+		beforeShowPromise: function() {
+			return new Promise(function(resolve) {
+				$('#create-project-modal').on('shown.bs.modal', function () {
+				resolve();
+				});
+			});
+			}, 
+		*/
+		text: '<p class="mb-4">Name your project "Test project" and click the <b>Create</b> button.</p>',
+		floatingUIOptions: {
+			middleware: [offset({ mainAxis: 24, crossAxis: 0 })]
+		},
+		buttons: [
+			{
+				action() {
+					return this.cancel();
+				},
+				text: 'Exit',
+				secondary: true,
+				classes: 'exit-tour-button'
+			},
+			{
+				action() {
+					return this.back();
+				},
+				text: 'Previous',
+				secondary: true
+			},
+			{
+				action() {
+					return this.next();
+				},
+				text: 'Next'
+			}
+		]
+	}
+];
+
+function startShepherdTour() {
+	tour.start();
+}
+
 onMounted(() => {
 	// Clear all...
 	queryStore.reset(); // Facets queries.
+
+	tour.addSteps(tourSteps);
 });
 </script>
+
+<style>
+@import '@assets/css/shepherd-overrides.css';
+</style>
 
 <style scoped>
 main > .scrollable {
