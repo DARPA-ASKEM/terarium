@@ -2,6 +2,7 @@ package software.uncharted.terarium.taskrunner.service;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,15 +40,17 @@ public class Task {
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
 	private String script;
+	private String scriptDir;
 	private int NUM_THREADS = 8;
 	ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
-	public Task(UUID id, String taskKey) throws IOException, InterruptedException {
+	public Task(UUID id, String scriptDir, String taskKey) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
 
 		this.id = id;
+		this.scriptDir = scriptDir;
 		this.taskKey = taskKey;
 		inputPipeName = "/tmp/input-" + id;
 		outputPipeName = "/tmp/output-" + id;
@@ -60,8 +63,23 @@ public class Task {
 		}
 	}
 
+	public Task(UUID id, String taskKey) throws IOException, InterruptedException {
+		this(id, "", taskKey);
+	}
+
 	private void setup() throws IOException, InterruptedException {
-		script = getClass().getResource("/" + taskKey + ".py").getPath();
+		if (scriptDir == "") {
+			// use resources dir
+			script = getClass().getResource("/" + taskKey + ".py").getPath();
+		} else {
+			// use absolute apth
+			script = Paths.get(scriptDir, taskKey + ".py").toString();
+		}
+		boolean fileExists = Files.exists(Paths.get(script));
+
+		if (!fileExists) {
+			throw new FileNotFoundException("Script file: " + script + " not found");
+		}
 
 		log.debug("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, id);
 
@@ -214,7 +232,7 @@ public class Task {
 
 			status = TaskStatus.RUNNING;
 
-			log.info("Starting task {}", id);
+			log.info("Starting task {} running {}", id, script);
 			process = processBuilder.start();
 
 			// Add a shutdown hook to kill the process if the JVM exits

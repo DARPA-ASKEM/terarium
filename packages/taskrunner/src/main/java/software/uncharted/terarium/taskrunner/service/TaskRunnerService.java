@@ -37,13 +37,16 @@ public class TaskRunnerService {
 	private final RabbitAdmin rabbitAdmin;
 	private final Config config;
 
-	@Value("${terarium.task-runner-request-queue}")
+	@Value("${terarium.taskrunner.script-directory:}")
+	private String SCRIPT_DIRECTORY = "";
+
+	@Value("${terarium.taskrunner.request-queue}")
 	public String TASK_RUNNER_REQUEST_QUEUE;
 
-	@Value("${terarium.task-runner-response-queue}")
+	@Value("${terarium.taskrunner.response-queue}")
 	public String TASK_RUNNER_RESPONSE_QUEUE;
 
-	@Value("${terarium.task-runner-cancellation-exchange}")
+	@Value("${terarium.taskrunner.cancellation-exchange}")
 	public String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
 	public void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
@@ -81,7 +84,7 @@ public class TaskRunnerService {
 	}
 
 	@RabbitListener(queues = {
-			"${terarium.task-runner-request-queue}" }, concurrency = "${terarium.task-runner-request-concurrency}")
+			"${terarium.taskrunner.request-queue}" }, concurrency = "${terarium.taskrunner.request-concurrency}")
 	void onTaskRequest(final Message message, final Channel channel) throws IOException, InterruptedException {
 		TaskRequest req = decodeMessage(message, TaskRequest.class);
 		if (req == null) {
@@ -114,7 +117,7 @@ public class TaskRunnerService {
 			}
 
 			// create the task
-			task = new Task(req.getId(), req.getTaskKey());
+			task = new Task(req.getId(), SCRIPT_DIRECTORY, req.getTaskKey());
 
 			// create the cancellation consumer
 			cancellationConsumer = createCancellationQueueConsumer(task);

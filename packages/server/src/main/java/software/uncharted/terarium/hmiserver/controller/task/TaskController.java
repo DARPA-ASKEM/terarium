@@ -54,13 +54,13 @@ public class TaskController {
 
 	final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
 
-	@Value("${terarium.task-runner-request-queue}")
+	@Value("${terarium.taskrunner.request-queue}")
 	private String TASK_RUNNER_REQUEST_QUEUE;
 
-	@Value("${terarium.task-runner-response-queue}")
+	@Value("${terarium.taskrunner.response-queue}")
 	private String TASK_RUNNER_RESPONSE_QUEUE;
 
-	@Value("${terarium.task-runner-cancellation-exchange}")
+	@Value("${terarium.taskrunner.cancellation-exchange}")
 	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
 	private void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
