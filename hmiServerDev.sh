@@ -34,12 +34,6 @@ function delete_secrets() {
   done
 }
 
-function deploy_remote() {
-  echo "Deploying containers for development against staging services"
-  cat containers/common.env containers/secrets.env > containers/.env
-  docker compose --env-file containers/.env --file containers/docker-compose-remote.yml pull
-  docker compose --env-file containers/.env --file containers/docker-compose-remote.yml up --detach --wait
-}
 
 function deploy_local() {
   echo "Deploying containers for development against local services"
@@ -55,11 +49,12 @@ function deploy_full() {
   docker compose --env-file containers/.env --file containers/docker-compose-full.yml up --detach --wait
 }
 
-function stop_remote() {
-  echo "stopping local containers used for remote dev"
+function deploy_local_lean() {
+  echo "Deploying containers for development against local services"
   cat containers/common.env containers/secrets.env > containers/.env
-  docker compose --env-file containers/.env --file containers/docker-compose-remote.yml down
+  docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml up --detach --wait
 }
+
 
 function stop_local() {
   echo "Stopping local dev containers"
@@ -73,12 +68,12 @@ function stop_full() {
   docker compose --env-file containers/.env --file containers/docker-compose-full.yml down
 }
 
-function start_remote() {
-  echo "Starting remote server"
-  cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets'
-  cd - || exit
+function stop_local_lean() {
+  echo "Stopping local dev containers"
+  cat containers/common.env containers/secrets.env > containers/.env
+  docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml down
 }
+
 
 function start_local() {
   echo "Starting local server"
@@ -128,35 +123,44 @@ done
 
 # Default COMMAND to start if empty
 COMMAND=${COMMAND:-"help"}
-ENVIRONMENT=${ENVIRONMENT:-"remote"}
+ENVIRONMENT=${ENVIRONMENT:-"local"}
 SERVER=${SERVER:-"false"}
 
-echo "COMMAND: $COMMAND"
-echo "ENVIRONMENT: $ENVIRONMENT"
-echo "SERVER: $SERVER"
+VALID_ENVIRONMENTS=("local" "full" "ll")
+ENVIRONMENT_IS_VALID=0
+for env in ${VALID_ENVIRONMENTS[@]}; do
+  echo "checking $ENVIRONMENT against $env"
+  if [ "${env}" = "${ENVIRONMENT}" ]; then
+    echo "setting ENVIRONMENT_IS_VALID to 1"
+    ENVIRONMENT_IS_VALID=1
+  fi
+done
+echo "value of ENVIRONMENT_IS_VALID is ${ENVIRONMENT_IS_VALID}"
+if [ ${ENVIRONMENT_IS_VALID} -eq 0 ]; then
+  echo "Illegal ENVIRONMENT \"${ENVIRONMENT}\""
+  COMMAND="help"
+else
+  echo "COMMAND: $COMMAND"
+  echo "ENVIRONMENT: $ENVIRONMENT"
+  echo "SERVER: $SERVER"
+fi
 
 case ${COMMAND} in
   start)
     decrypt_secrets
     case ${ENVIRONMENT} in
-      remote)
-        deploy_remote
-        ;;
       local)
         deploy_local
         ;;
       full)
         deploy_full
         ;;
-      *)
-        echo "Illegal ENVIRONMENT"
-        break
+      ll)
+        deploy_local_lean
         ;;
     esac
     if [ ${SERVER} == "run" ]; then
-      if [ ${ENVIRONMENT} == "remote" ]; then
-        start_remote
-      elif [ ${ENVIRONMENT} == "local" ]; then
+      if [ ${ENVIRONMENT} == "local" ]; then
         start_local
       fi
       delete_secrets
@@ -165,18 +169,14 @@ case ${COMMAND} in
   stop)
     decrypt_secrets
     case ${ENVIRONMENT} in
-      remote)
-        stop_remote
-        ;;
       local)
         stop_local
         ;;
       full)
         stop_full
         ;;
-      *)
-        echo "Illegal ENVIRONMENT"
-        break
+      ll)
+        stop_local_lean
         ;;
     esac
     delete_secrets
@@ -202,13 +202,14 @@ case ${COMMAND} in
 
       start
         ENVIRONMENT
-          remote | local | full (default: remote)  Indicate which environment to develop against
+          local | full | ll (default: local)  Indicate which environment to develop against
+              (ll: local_lean to run local with the absolute minimal support to run hmiServer for development)
 
         run (default: null) Indicate whether to run the server after starting the containers
 
       stop
         ENVIRONMENT
-          remote | local | full (default: remote)  Indicate which containers to stop
+          local | full (default: local)  Indicate which containers to stop
 
       OTHER COMMANDS:
         encrypt

@@ -2,15 +2,14 @@ package software.uncharted.terarium.hmiserver.models.dataservice.regnet;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
-import java.util.List;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class RegNetEdge {
+public class RegNetEdge implements SupportAdditionalProperties {
 	private String source;
 	private String target;
 	private String id;

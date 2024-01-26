@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed, ComputedRef } from 'vue';
+import { computed, ComputedRef, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
 import type { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
