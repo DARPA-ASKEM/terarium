@@ -35,7 +35,7 @@ public class UserService {
 		long nowInMinutes = TimeUnit.MILLISECONDS.toMinutes(now);
 		user.setCreatedAtMs(now);
 		user.setLastLoginAtMs(TimeUnit.MINUTES.toMillis(nowInMinutes));
-		return save(user);
+		return user;
 	}
 
 	@Cacheable(value="users", key="#user.id")
