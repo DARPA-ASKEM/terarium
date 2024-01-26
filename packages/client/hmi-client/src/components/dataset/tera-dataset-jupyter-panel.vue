@@ -103,7 +103,6 @@
 import { computed, ref, watch, onMounted, onUnmounted, Ref } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-// import { cloneDeep } from 'lodash';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
@@ -125,9 +124,6 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 
-// import { createNewDataset } from '@/services/dataset';
-
-// const jupyterSession = ref(<SessionContext>newSession('beaker_kernel', 'Beaker Kernel'));
 const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);

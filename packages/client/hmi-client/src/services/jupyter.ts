@@ -18,6 +18,7 @@ import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/service
 import API from '@/api/api';
 import { v4 as uuidv4 } from 'uuid';
 import { createMessage as createMessageWrapper } from '@jupyterlab/services/lib/kernel/messages';
+import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;
@@ -246,7 +247,7 @@ export class KernelSessionManager {
 		session.kernelChanged.connect((_context, kernelInfo) => {
 			if (!kernelInfo.newValue) return;
 
-			const sessionKernel = kernelInfo.newValue;
+			const sessionKernel = kernelInfo.newValue as IKernelConnection;
 			if (sessionKernel.name === kernelName) {
 				session.iopubMessage.connect(iopubMessageHandler);
 
@@ -286,7 +287,7 @@ export class KernelSessionManager {
 			msgId
 		};
 		const contextMessage = createMessageWrapper(messageBody);
-		const sessionKernel = this.jupyterSession.session?.kernel;
+		const sessionKernel = this.jupyterSession.session?.kernel as IKernelConnection;
 		if (sessionKernel) {
 			const kernelMessage = new KernelMessage();
 			this.map.set(msgId, kernelMessage);

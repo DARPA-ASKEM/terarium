@@ -11,6 +11,7 @@ import Button from 'primevue/button';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { newSession, JupyterMessage } from '@/services/jupyter';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 
 const INITIAL_CODE =
 	"from mira.metamodel import ControlledConversion, NaturalConversion, Concept, Template \n infected = Concept(name='infected population', identifiers={'ido': '0000511'}) \n susceptible = Concept(name='susceptible population', identifiers={'ido': '0000514'}) \n immune = Concept(name='immune population', identifiers={'ido': '0000592'}) \n \n t1 = ControlledConversion(controller=infected, subject=susceptible, outcome=infected,) \n t2 = NaturalConversion(subject=infected, outcome=immune) \n t1.dict() \n ";
@@ -32,7 +33,8 @@ async function hitMira() {
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	console.log(jupyterSession.session);
-	jupyterSession.session?.kernel?.sendJupyterMessage(message);
+	const kernel = jupyterSession.session?.kernel as IKernelConnection;
+	kernel?.sendJupyterMessage(message);
 	console.log(jupyterSession.session);
 }
 
