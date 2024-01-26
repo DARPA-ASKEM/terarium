@@ -284,9 +284,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 							taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, cancelQueue,
 							routingKey);
 
-					boolean shouldCancel = false;
+					boolean shouldCancelBefore = false;
+					boolean shouldCancelAfter = false;
 
-					int randomNumber = rand.nextInt(3);
+					int randomNumber = rand.nextInt(4);
 					switch (randomNumber) {
 						case 0:
 							// success
@@ -302,7 +303,15 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 						case 2:
 							// cancellation
 							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
-							shouldCancel = true;
+							shouldCancelBefore = true;
+							expectedResponses.put(req.getId(), List.of(
+									List.of(TaskStatus.CANCELLED) // cancelled before request processed
+							));
+							break;
+						case 3:
+							// cancellation
+							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+							shouldCancelAfter = true;
 							expectedResponses.put(req.getId(), List.of(
 									List.of(TaskStatus.CANCELLED), // cancelled before request processed
 									List.of(TaskStatus.RUNNING, TaskStatus.CANCELLING, TaskStatus.CANCELLED), // cancelled
@@ -315,13 +324,18 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 							throw new RuntimeException("This shouldnt happen");
 					}
 
+					if (shouldCancelBefore) {
+						// send the cancellation before we send the request
+						rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
+								req.getId().toString(),
+								"");
+					}
+
 					// send the request
 					String reqStr = mapper.writeValueAsString(req);
 					rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
-					log.info("SENT REQUEST");
-
-					if (shouldCancel) {
+					if (shouldCancelAfter) {
 						Thread.sleep(1000);
 						// send the cancellation
 						rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
@@ -340,8 +354,6 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		for (Future<?> future : requestFutures) {
 			future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		}
-		log.info(
-				"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALL RESPONSES SENT! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`");
 
 		// wait for all the tasks to complete
 		for (Future<?> future : responseFutures.values()) {
@@ -365,11 +377,14 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				}
 				for (int i = 0; i < expected.size(); i++) {
 					if (expected.get(i) != responses.get(i).getStatus()) {
+						if (responses.get(i).getOutput() != null) {
+							Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(),
+									responses.get(i).getOutput());
+						}
 						break;
 					}
 				}
 				found = true;
-				log.info("Responses for: " + id + " are valid!");
 				break;
 			}
 

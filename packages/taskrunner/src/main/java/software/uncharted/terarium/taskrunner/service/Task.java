@@ -217,6 +217,11 @@ public class Task {
 			log.info("Starting task {}", id);
 			process = processBuilder.start();
 
+			// Add a shutdown hook to kill the process if the JVM exits
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+				process.destroy();
+			}));
+
 			// Create a future to signal when the process has exited
 			processFuture = new CompletableFuture<>();
 			new Thread(() -> {

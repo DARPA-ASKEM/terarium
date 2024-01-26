@@ -336,11 +336,9 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		// check that the responses are valid
 		for (Map.Entry<UUID, TaskStatus> response : responses.entrySet()) {
-
 			UUID id = response.getKey();
 			TaskStatus expected = expectedResponses.get(id);
 
-			log.info("Expected task {} to be: {},  was: {}", id, expected, response.getValue());
 			Assertions.assertEquals(expected, response.getValue());
 		}
 	}
