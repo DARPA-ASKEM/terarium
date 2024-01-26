@@ -1,6 +1,7 @@
 package software.uncharted.terarium.taskrunner.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -27,11 +28,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
 import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 
+@Slf4j
 public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	@Autowired
 	TaskRunnerService taskRunnerService;
@@ -43,10 +46,11 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	ObjectMapper mapper = new ObjectMapper();
 
 	private final int REPEAT_COUNT = 1;
-	private final long TIMEOUT_SECONDS = 10;
+	private final long TIMEOUT_SECONDS = 30;
 
 	@BeforeEach
 	public void setup() {
+		taskRunnerService.destroyQueues();
 		taskRunnerService.declareQueues();
 	}
 
@@ -77,48 +81,6 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	}
 
 	private BlockingQueue<TaskResponse> consumeForResponses() {
-
-		BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(10);
-
-		CompletableFuture<Void> processFuture = new CompletableFuture<>();
-
-		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
-				rabbitTemplate.getConnectionFactory());
-		container.setQueueNames(taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE);
-		container.setMessageListener(message -> {
-			try {
-				TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
-				queue.put(resp);
-
-				if (resp.getStatus() == TaskStatus.SUCCESS ||
-						resp.getStatus() == TaskStatus.FAILED ||
-						resp.getStatus() == TaskStatus.CANCELLED) {
-					// signal we are done
-					processFuture.complete(null);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				processFuture.complete(null);
-			}
-		});
-
-		container.start();
-
-		new Thread(() -> {
-			try {
-				int TIMEOUT_SECONDS = 10;
-				processFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {
-				e.printStackTrace();
-			} finally {
-				container.stop();
-			}
-		}).start();
-
-		return queue;
-	}
-
-	private BlockingQueue<TaskResponse> consumeForResponses(SimpleMessageListenerContainer container) {
 
 		BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(10);
 
@@ -270,14 +232,16 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	public void testRunTaskSoakTest()
 			throws InterruptedException, JsonProcessingException, ExecutionException, TimeoutException {
 
-		int NUM_REQUESTS = 8;
+		int NUM_REQUESTS = 64;
 		int NUM_THREADS = 4;
 
 		ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
-		List<Future<?>> futures = new ArrayList<>();
 
 		ConcurrentHashMap<UUID, List<TaskResponse>> responsesPerReq = new ConcurrentHashMap<>();
 		ConcurrentHashMap<UUID, List<List<TaskStatus>>> expectedResponses = new ConcurrentHashMap<>();
+
+		List<Future<?>> requestFutures = new ArrayList<>();
+		ConcurrentHashMap<UUID, CompletableFuture<Void>> responseFutures = new ConcurrentHashMap<>();
 
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
 				rabbitTemplate.getConnectionFactory());
@@ -286,6 +250,11 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 			try {
 				TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
 				responsesPerReq.get(resp.getId()).add(resp);
+
+				if (resp.getStatus() == TaskStatus.SUCCESS || resp.getStatus() == TaskStatus.CANCELLED
+						|| resp.getStatus() == TaskStatus.FAILED) {
+					responseFutures.get(resp.getId()).complete(null);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -296,8 +265,6 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		for (int i = 0; i < NUM_REQUESTS; i++) {
 
-			int randomNumber = rand.nextInt(3) + 1;
-
 			Future<?> future = executor.submit(() -> {
 				try {
 					TaskRequest req = new TaskRequest();
@@ -305,8 +272,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					req.setTaskKey("ml");
 					req.setTimeoutMinutes(1);
 
-					// allocate the response list
-					responsesPerReq.putIfAbsent(req.getId(), new ArrayList<>());
+					// allocate the response stuff
+					responsesPerReq.put(req.getId(), Collections.synchronizedList(new ArrayList<>()));
+					responseFutures.put(req.getId(), new CompletableFuture<>());
+
 					// we have to create this queue before sending the cancellation to know that
 					// there is a queue to get the msg
 					String cancelQueue = req.getId().toString();
@@ -317,6 +286,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 					boolean shouldCancel = false;
 
+					int randomNumber = rand.nextInt(3);
 					switch (randomNumber) {
 						case 0:
 							// success
@@ -340,11 +310,16 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 																												// processing
 									List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS) // cancelled after processing
 							));
+							break;
+						default:
+							throw new RuntimeException("This shouldnt happen");
 					}
 
 					// send the request
 					String reqStr = mapper.writeValueAsString(req);
 					rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
+
+					log.info("SENT REQUEST");
 
 					if (shouldCancel) {
 						Thread.sleep(1000);
@@ -358,13 +333,22 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				}
 			});
 
-			futures.add(future);
+			requestFutures.add(future);
 		}
 
-		// wait for all the tasks to complete
-		for (Future<?> future : futures) {
+		// wait for all the responses to be send
+		for (Future<?> future : requestFutures) {
 			future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		}
+		log.info(
+				"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALL RESPONSES SENT! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`");
+
+		// wait for all the tasks to complete
+		for (Future<?> future : responseFutures.values()) {
+			future.get(TIMEOUT_SECONDS * 10, TimeUnit.SECONDS);
+		}
+
+		container.stop();
 
 		// check that the responses are valid
 		for (Map.Entry<UUID, List<TaskResponse>> responseEntry : responsesPerReq.entrySet()) {
@@ -385,6 +369,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					}
 				}
 				found = true;
+				log.info("Responses for: " + id + " are valid!");
 				break;
 			}
 

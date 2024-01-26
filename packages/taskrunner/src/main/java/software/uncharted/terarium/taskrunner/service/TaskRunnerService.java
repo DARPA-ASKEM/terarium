@@ -159,7 +159,7 @@ public class TaskRunnerService {
 				log.error("Task failed");
 			} else if (task.getStatus() != TaskStatus.CANCELLED) {
 				// only log exception if it failed
-				log.error("Unexpected task failure:", e);
+				log.error("Unexpected failure for task {}: {}", task.getId(), e);
 			}
 
 			TaskResponse failedResp = new TaskResponse();

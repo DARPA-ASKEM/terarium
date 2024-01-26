@@ -29,4 +29,12 @@ public class ScopedLock {
 			lock.unlock();
 		}
 	}
+
+	public void lock() {
+		lock.lock();
+	}
+
+	public void unlock() {
+		lock.unlock();
+	}
 }

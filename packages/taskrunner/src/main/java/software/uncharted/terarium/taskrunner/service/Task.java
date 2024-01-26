@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -37,6 +39,8 @@ public class Task {
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
 	private String script;
+	private int NUM_THREADS = 8;
+	ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
@@ -45,8 +49,8 @@ public class Task {
 
 		this.id = id;
 		this.taskKey = taskKey;
-		inputPipeName = "/tmp/input-" + UUID.randomUUID();
-		outputPipeName = "/tmp/output-" + UUID.randomUUID();
+		inputPipeName = "/tmp/input-" + id;
+		outputPipeName = "/tmp/output-" + id;
 
 		try {
 			setup();
@@ -59,7 +63,7 @@ public class Task {
 	private void setup() throws IOException, InterruptedException {
 		script = getClass().getResource("/" + taskKey + ".py").getPath();
 
-		log.info("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, id);
+		log.debug("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, id);
 
 		// Create the named pipes
 		Process inputPipe = new ProcessBuilder("mkfifo", inputPipeName).start();
@@ -74,24 +78,28 @@ public class Task {
 			throw new RuntimeException("Error creating input pipe");
 		}
 
-		log.info("Writing request payload to input pipe: {} for task: {}", inputPipeName, id);
-
-		processBuilder = new ProcessBuilder("python", script, "--input_pipe", inputPipeName,
+		processBuilder = new ProcessBuilder("python", script, "--id", id.toString(), "--input_pipe", inputPipeName,
 				"--output_pipe", outputPipeName);
 	}
 
-	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes) throws IOException, InterruptedException {
-		CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes)
+			throws IOException, InterruptedException, TimeoutException {
+		log.debug("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, id);
+
+		CompletableFuture<Void> future = new CompletableFuture<>();
+		new Thread(() -> {
 			try {
 				// Write to the named pipe in a separate thread
+				log.debug("Opening input pipe: {} for task: {}", inputPipeName, id);
 				try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
+					log.debug("Writing to input pipe: {} for task: {}", inputPipeName, id);
 					fos.write(appendNewline(bytes));
 				}
+				future.complete(null);
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				future.completeExceptionally(e);
 			}
-			return null;
-		});
+		}).start();
 
 		Object result;
 		try {
@@ -100,10 +108,11 @@ public class Task {
 			throw new RuntimeException("Error while writing to pipe", e);
 		} catch (TimeoutException e) {
 			future.cancel(true);
-			throw new RuntimeException("Writing to pipe took too long", e);
+			throw new TimeoutException("Writing to pipe took too long for task " + id);
 		}
 
 		if (result == null) {
+			// successful write
 			return;
 		}
 		if (result instanceof Integer) {
@@ -118,25 +127,30 @@ public class Task {
 
 	public byte[] readOutputWithTimeout(int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		CompletableFuture<byte[]> future = CompletableFuture.supplyAsync(() -> {
+		log.debug("Dispatching read thread for input pipe: {} for task: {}", outputPipeName, id);
+
+		CompletableFuture<byte[]> future = new CompletableFuture<>();
+		new Thread(() -> {
+			log.debug("Opening output pipe: {} for task: {}", outputPipeName, id);
 			try (BufferedReader reader = new BufferedReader(
 					new InputStreamReader(new FileInputStream(outputPipeName)))) {
-				return removeNewline(reader.readLine().getBytes());
+				log.debug("Reading on output pipe: {} for task {}", outputPipeName, id);
+				future.complete(reader.readLine().getBytes());
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				future.completeExceptionally(e);
 			}
-		});
+		}).start();
 
 		Object result;
 		try {
 			result = CompletableFuture.anyOf(future, processFuture).get(timeoutMinutes, TimeUnit.MINUTES);
 		} catch (TimeoutException e) {
 			future.cancel(true);
-			throw new RuntimeException("Reading from pipe took too long", e);
+			throw new TimeoutException("Reading from pipe took too long for task " + id);
 		}
 
 		if (result == null) {
-			throw new RuntimeException("Unexpected null result");
+			throw new RuntimeException("Unexpected null result for task " + id);
 		}
 
 		if (result instanceof byte[]) {
@@ -164,18 +178,6 @@ public class Task {
 		return combined;
 	}
 
-	private byte[] removeNewline(byte[] original) {
-		int newlineLength = System.lineSeparator().getBytes().length;
-		if (original.length < newlineLength) {
-			return original;
-		}
-
-		byte[] trimmed = new byte[original.length - newlineLength];
-		System.arraycopy(original, 0, trimmed, 0, trimmed.length);
-
-		return trimmed;
-	}
-
 	public void cleanup() {
 		try {
 			Files.deleteIfExists(Paths.get(inputPipeName));
@@ -198,72 +200,81 @@ public class Task {
 
 	public void start() throws IOException, InterruptedException {
 
-		lock.lock(() -> {
+		lock.lock();
+		try {
 			if (status == TaskStatus.CANCELLED) {
 				// don't run if we already cancelled
-				throw new InterruptedException("Task has already been cancelled");
+				throw new InterruptedException("Task " + id + "has already been cancelled");
 			}
 
 			if (status != TaskStatus.QUEUED) {
 				// has to be in a queued state to be valid to run
-				throw new RuntimeException("Task has already been started");
+				throw new RuntimeException("Task " + id + " has already been started");
 			}
 
 			status = TaskStatus.RUNNING;
-		});
 
-		process = processBuilder.start();
+			log.info("Starting task {}", id);
+			process = processBuilder.start();
 
-		// Create a future to signal when the process has exited
-		processFuture = CompletableFuture.supplyAsync(() -> {
-			try {
-				int exitCode = process.waitFor();
-				lock.lock(() -> {
-					if (exitCode != 0) {
-						if (status == TaskStatus.CANCELLING) {
-							status = TaskStatus.CANCELLED;
+			// Create a future to signal when the process has exited
+			processFuture = new CompletableFuture<>();
+			new Thread(() -> {
+				try {
+					log.debug("Begin waiting for process to exit for task {}");
+					int exitCode = process.waitFor();
+					log.info("Process exited with code {} for task {}", exitCode, id);
+					lock.lock(() -> {
+						if (exitCode != 0) {
+							if (status == TaskStatus.CANCELLING) {
+								status = TaskStatus.CANCELLED;
+							} else {
+								status = TaskStatus.FAILED;
+							}
 						} else {
-							status = TaskStatus.FAILED;
+							status = TaskStatus.SUCCESS;
 						}
-					} else {
-						status = TaskStatus.SUCCESS;
+					});
+					log.debug("Finalized process status for task {}", exitCode, id);
+					processFuture.complete(exitCode);
+				} catch (InterruptedException e) {
+					log.warn("Process failed to exit cleanly for task {}: {}", id, e);
+					lock.lock(() -> {
+						status = TaskStatus.FAILED;
+					});
+					processFuture.completeExceptionally(e);
+				}
+			}).start();
+
+			InputStream inputStream = process.getInputStream();
+			InputStream errorStream = process.getErrorStream();
+
+			new Thread(() -> {
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+					String line;
+					while ((line = reader.readLine()) != null) {
+						log.info("[{}] stdout: {}", id, line);
 					}
-				});
-				log.info("Process exited with code {} for task {}", exitCode, id);
-				return exitCode;
-			} catch (InterruptedException e) {
-				log.warn("Process failed to exit cleanly for task {}: {}", id, e);
-				lock.lock(() -> {
-					status = TaskStatus.FAILED;
-				});
-			}
-			return 1;
-		});
-
-		InputStream inputStream = process.getInputStream();
-		InputStream errorStream = process.getErrorStream();
-
-		new Thread(() -> {
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-				String line;
-				while ((line = reader.readLine()) != null) {
-					log.info("[{}] stdout: {}", id, line);
+				} catch (IOException e) {
+					log.warn("Error occured while logging stdout for task {}: {}", id,
+							getStatus());
 				}
-			} catch (IOException e) {
-				log.warn("Error occured while logging stdout for task {}: {}", id, getStatus());
-			}
-		}).start();
+			}).start();
 
-		new Thread(() -> {
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
-				String line;
-				while ((line = reader.readLine()) != null) {
-					log.info("[{}] stderr: {}", id, line);
+			new Thread(() -> {
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
+					String line;
+					while ((line = reader.readLine()) != null) {
+						log.warn("[{}] stderr: {}", id, line);
+					}
+				} catch (IOException e) {
+					log.warn("Error occured while logging stderr for task {}: {}", id, getStatus());
 				}
-			} catch (IOException e) {
-				log.warn("Error occured while logging stderr for task {}: {}", id, getStatus());
-			}
-		}).start();
+			}).start();
+
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	public void waitFor(int timeoutMinutes) throws InterruptedException, TimeoutException, ExecutionException {
@@ -289,6 +300,7 @@ public class Task {
 		return lock.lock(() -> {
 			if (status == TaskStatus.QUEUED) {
 				// if we havaen't started yet, flag it as cancelled
+				log.debug("Cancelled task {} before starting it", id);
 				status = TaskStatus.CANCELLED;
 				return false;
 			}
@@ -316,6 +328,7 @@ public class Task {
 		}
 
 		// try to kill cleanly
+		log.info("Cancelling task {}", id);
 		process.destroy();
 
 		try {
