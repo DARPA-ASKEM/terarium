@@ -10,7 +10,7 @@
 				<li v-for="document in relatedDocuments" :key="document.id">
 					<tera-asset-link
 						:label="document.name!"
-						:asset-route="{ assetId: document.id!, pageType: AssetType.Documents }"
+						:asset-route="{ assetId: document.id!, pageType: AssetType.Document }"
 					/>
 				</li>
 			</ul>
@@ -19,7 +19,7 @@
 				<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
 				<Button
 					text
-					:disabled="props.assetType != AssetType.Models"
+					:disabled="props.assetType != AssetType.Model"
 					:label="`Align extractions to ${assetType}`"
 					:loading="isLoading"
 					@click="dialogForAlignment"
@@ -57,7 +57,7 @@
 					</div>
 				</div>
 			</div>
-			<aside v-if="dialogType === DialogType.EXTRACT && assetType === AssetType.Models">
+			<aside v-if="dialogType === DialogType.EXTRACT && assetType === AssetType.Model">
 				<p>Which extraction service would you like to use?</p>
 				<RadioButton
 					v-model="extractionService"
@@ -181,10 +181,10 @@ const sendForEnrichment = async () => {
 
 	isLoading.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
-	if (props.assetType === AssetType.Models) {
+	if (props.assetType === AssetType.Model) {
 		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
 		jobIds.push(profileModelJobId);
-	} else if (props.assetType === AssetType.Datasets) {
+	} else if (props.assetType === AssetType.Dataset) {
 		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
 		jobIds.push(profileDatasetJobId);
 	}
@@ -228,7 +228,7 @@ const sendForExtractions = async () => {
 
 const sendToAlignModel = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
-	if (props.assetType === AssetType.Models && selectedResourceId) {
+	if (props.assetType === AssetType.Model && selectedResourceId) {
 		isLoading.value = true;
 
 		const linkAmrJobId = await alignModel(props.assetId, selectedResourceId);

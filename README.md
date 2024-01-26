@@ -11,9 +11,10 @@ machine extracted models.
 1. [Project Status](#project-status)
 1. [Getting Started](#getting-started)
   1. [Dependencies](#dependencies)
-  1. [Running and Debugging](#running-and-debugging)
+  1. [Developing and Debugging](#running-and-debugging)
      1. [Running the Client](#running-the-client)
      1. [Running the Server](#running-the-server)
+     1. [Running only the Data Services](#running-only-the-data-services)
   1. [Testing](#testing)
      1. [Running the Client Tests](#running-the-client-tests)
      1. [Running the Server Tests](#running-the-server-tests)
@@ -106,7 +107,7 @@ Save your configuration, and choose Debug from the Run menu. You will now hit br
 If you don't intend to run the backend with a debugger, you can simply kick off the back end process via the `hmiServerDev.sh` script located in the root of this directory. It will handle decrypting secrets, starting the server, and re-encrypting secrets once you shut the server down. *If you do intend to debug the back end, skip this step and see the below debug instructions*
 
 ```shell
-./hmiServerDev.sh start remote run
+./hmiServerDev.sh start local run
 ```
 
 If you are going to run the server using the Intellij / VSCode debugger, the first step is to decrypt the `application-secrets.properties.encrypted` file:
@@ -153,7 +154,59 @@ There should now be a `application-secrets.properties` file in the `packages/ser
 ```
 </details>
 
+### Running only the Data Services
+
+A functional `docker-compose-lean.yml` with all services necessary to run the `terarium` backend can be spun up with the following:
+
+```shell
+docker compose --file containers/docker-compose-lean.yml pull
+docker compose --file containers/docker-compose-lean.yml up --detach --wait
+```
+
+This will standup a local `terarium` server on port `3000` supporting all data service endpoints.
+
+The `terarium` backend uses `OAuth2.0` via `keycloak` for user authentication. In order to make calls to the data services simpler, a `service-user` can be used by providing a basic auth credential instead.
+
+Please use the following basic auth credential if running `docker-compose-lean.yml`:
+
+```
+'Authorization: Basic YWRhbTphc2RmMUFTREY='
+```
+
+If you prefer the JSON request / response keys to be `snake_case` rather than `camelCase` include the following header in any data service request:
+
+```
+'X-Enable-Snake-Case'
+```
+
+If integrating the `docker-compose-lean.yml` into another repo, the following files and directory structure is expected:
+
+```
+- scripts
+  - init.sql                     // initialize the postgres databases
+  - realm
+    - Terarium-realm.json        // keycloak realm definition
+    - Terarium-users-0.json      // keycloak user definitions
+- docker-compose-lean.yml
+```
+
 ## Testing
+
+## Debugging REST Api
+### Swagger
+For convenience, a [Swagger](https://swagger.io/) UI is provided to experiment with the API. With the server running
+locally (eg, not via Docker), it can be accessed at [http://localhost:3000/swagger-ui/index.html](http://localhost:3000/swagger-ui/index.html).
+To authorize requests, click the `Authorize` button and click `Authorize` on the modal that appears. You can enter the credentials
+of the user you want to use to make requests.
+Note: In order to "logout" from Swagger, you will need to clear your browser's cookies.
+### Postman
+A Postman collection can be imported via the OpenAPI specification at [http://localhost:3000/v3/api-docs](http://localhost:3000/v3/api-docs).
+In Postman:
+1. Click the `Import` button at the top left of the Postman window
+2. Paste in the the URL above and click `Continue`
+3. Click `Import` and you should have a new collection named `Terarium APIs`
+4. Click on the collection and click on the `Authorization` tab
+5. Ensure the `Client ID` is `app` and the `Authorize using browser` checkbox is checked
 
 ### Running the Client Tests
 

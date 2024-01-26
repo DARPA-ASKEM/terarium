@@ -77,7 +77,7 @@
 				</tera-grey-card>
 				<tera-related-documents
 					:documents="documents"
-					:asset-type="AssetType.Models"
+					:asset-type="AssetType.Model"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>
@@ -136,9 +136,9 @@ import { isEmpty } from 'lodash';
 import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import { AcceptedExtensions, FeatureConfig, ResultType } from '@/types/common';
 import type { DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { FeatureConfig, AcceptedExtensions, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
@@ -146,7 +146,7 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
-import { isModel, isDataset, isDocument } from '@/utils/data-util';
+import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Column from 'primevue/column';
@@ -189,7 +189,8 @@ const schema = computed(() => card.value?.schema ?? '');
 const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
+			.getActiveProjectAssets(AssetType.Document)
+			.filter((document: DocumentAsset) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
 					(extension) => {
 						if (document.fileNames && !isEmpty(document.fileNames)) {
