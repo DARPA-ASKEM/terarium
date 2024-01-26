@@ -25,7 +25,7 @@ def read_input_with_timeout(input_pipe: str, timeout_seconds: int):
 			raise TimeoutError('Reading from input pipe timed out')
 
 def write_output(output_pipe: str, output: dict):
-	bs = (json.dumps(output)).encode()
+	bs = json.dumps(output, separators=(',', ':')).encode()
 	with open(output_pipe, 'wb') as f_out:
 		f_out.write(bs)
 		return
@@ -63,6 +63,11 @@ def main():
 	if "should_fail" in input:
 		print("ML Task {} : failing".format(args.id), flush=True)
 		sys.exit(1)
+
+	if "mirror_output" in input:
+		print("ML Task {} mirroring input".format(args.id), flush=True)
+		write_output_with_timeout(args.output_pipe, input, 5)
+		return
 
 	for i in range(5):
 		print("ML Task {}: {}".format(args.id, i), flush=True)

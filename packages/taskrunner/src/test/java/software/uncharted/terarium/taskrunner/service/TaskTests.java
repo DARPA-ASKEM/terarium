@@ -60,7 +60,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 	}
 
 	@RepeatedTest(REPEAT_COUNT)
-	public void testTaskLargeInput() throws Exception {
+	public void testTaskLargeInputOutput() throws Exception {
 
 		ClassPathResource resource = new ClassPathResource("test_input.json");
 		String input = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()), StandardCharsets.UTF_8);
@@ -81,7 +81,9 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
-			Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(), output);
+
+			Assertions.assertEquals(input, new String(output));
+			Assertions.assertArrayEquals(input.getBytes(), output);
 
 			task.waitFor(ONE_MINUTE);
 			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());

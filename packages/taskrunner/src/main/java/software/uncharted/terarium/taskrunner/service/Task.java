@@ -1,10 +1,11 @@
 package software.uncharted.terarium.taskrunner.service;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -148,14 +149,15 @@ public class Task {
 		CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
 			log.debug("Opening output pipe: {} for task: {}", outputPipeName, id);
-			try (BufferedReader reader = new BufferedReader(new FileReader(outputPipeName))) {
+			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputPipeName))) {
 				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, id);
-				StringBuilder sb = new StringBuilder();
-				int ch;
-				while ((ch = reader.read()) != -1) {
-					sb.append((char) ch);
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				byte[] buffer = new byte[1024]; // buffer size
+				int bytesRead;
+				while ((bytesRead = bis.read(buffer)) != -1) {
+					bos.write(buffer, 0, bytesRead);
 				}
-				future.complete(sb.toString().getBytes());
+				future.complete(bos.toByteArray());
 			} catch (IOException e) {
 				future.completeExceptionally(e);
 			}
