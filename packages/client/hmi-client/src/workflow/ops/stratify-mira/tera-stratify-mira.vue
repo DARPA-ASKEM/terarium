@@ -96,33 +96,33 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
-import { computed, watch, ref, onUnmounted, onMounted } from 'vue';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import { getModel, createModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
-import { useProjects } from '@/composables/project';
-import { logger } from '@/utils/logger';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { v4 as uuidv4 } from 'uuid';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useProjects } from '@/composables/project';
+import { createModel, getModel } from '@/services/model';
+import { WorkflowNode } from '@/types/workflow';
+import { logger } from '@/utils/logger';
+import _ from 'lodash';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import { v4 as uuidv4 } from 'uuid';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
 import {
-	StratifyOperationStateMira,
+	blankStratifyGroup,
 	StratifyGroup,
-	blankStratifyGroup
+	StratifyOperationStateMira
 } from './stratify-mira-operation';
 
 const props = defineProps<{
@@ -154,7 +154,7 @@ const modelConfig = computed<ModelConfiguration | null>(() => {
 	return {
 		id: 'temporary config',
 		name: 'temporary config',
-		modelId: amr.value.id,
+		model_id: amr.value.id,
 		configuration: {
 			header: _.cloneDeep(amr.value.header),
 			model: _.cloneDeep(amr.value.model),
@@ -287,7 +287,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	if (!modelData) return;
 
 	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Models, modelData.id, projectId);
+		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
 	}
 
 	if (options.appendOutputPort) {

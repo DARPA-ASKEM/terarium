@@ -14,6 +14,7 @@
 				icon="pi pi-download"
 				text
 				outlined
+				disabled
 			/>
 			<span class="datatable-toolbar-item">
 				<MultiSelect

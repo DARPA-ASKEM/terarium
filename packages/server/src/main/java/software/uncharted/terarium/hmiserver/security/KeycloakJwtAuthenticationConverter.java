@@ -40,24 +40,27 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 	private final AdminClientService adminClientService;
 
 	@Override
-	public AbstractAuthenticationToken convert(Jwt source) {
+	public AbstractAuthenticationToken convert(final Jwt source) {
 		return new JwtAuthenticationToken(source, Stream.concat(new JwtGrantedAuthoritiesConverter().convert(source)
 				.stream(), extractResourceRoles(source).stream())
 			.collect(toSet()));
 	}
 
 	@SuppressWarnings("unchecked")
-	private Collection<SimpleGrantedAuthority> extractResourceRoles(Jwt jwt) {
+	private Collection<SimpleGrantedAuthority> extractResourceRoles(final Jwt jwt) {
 		// Extract the roles from keycloak itself
 		final List<String> realmRoles = (List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>());
-
 
 		// Merge with existing roles (or create the new user if this is first login
 		final String userId = jwt.getClaimAsString(StandardClaimNames.SUB);
 		User databaseUser = userService.getById(userId);
-		User jwtUser = initializeUser(jwt, realmRoles);
+		final User jwtUser = initializeUser(jwt, realmRoles);
 		if (User.isDirty(databaseUser, jwtUser)) {
-			databaseUser = userService.save(jwtUser.merge(databaseUser));
+			if (databaseUser == null) {
+				databaseUser = userService.save(jwtUser);
+			} else {
+				databaseUser = userService.save(jwtUser.merge(databaseUser));
+			}
 		}
 
 		return roleService.getAuthorities(databaseUser.getRoles()).stream()
@@ -66,7 +69,7 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 	}
 
 	@Transactional
-	public User initializeUser(Jwt jwt, final List<String> keycloakRoles) {
+	public User initializeUser(final Jwt jwt, final List<String> keycloakRoles) {
 		final User user = adminClientService.getUserFromJwt(jwt);
 
 		final Set<RoleType> roleTypes = KeycloakRole.get(keycloakRoles).stream()

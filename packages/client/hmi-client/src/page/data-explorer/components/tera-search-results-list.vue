@@ -54,21 +54,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, PropType } from 'vue';
+import { computed, PropType, ref } from 'vue';
 import type { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
-import { SearchResults, ResourceType, ResultType } from '@/types/common';
+import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import {
-	useSearchByExampleOptions,
-	getSearchByExampleOptionsString
+	getSearchByExampleOptionsString,
+	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
 import { useProjects } from '@/composables/project';
 import { createDocumentFromXDD } from '@/services/document-assets';
-import { isDataset, isModel, isDocument } from '@/utils/data-util';
+import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
 import TeraSearchItem from './tera-search-item.vue';
 
@@ -119,7 +119,7 @@ const projectOptions = computed(() => [
 
 					if (isDocument(selectedAsset.value)) {
 						const document = selectedAsset.value as Document;
-						await createDocumentFromXDD(document, project.id);
+						await createDocumentFromXDD(document, project.id as string);
 						// finally add asset to project
 						response = await useProjects().get(project.id);
 						assetName = selectedAsset.value.title;
@@ -128,7 +128,7 @@ const projectOptions = computed(() => [
 						// FIXME: handle cases where assets is already added to the project
 						const modelId = selectedAsset.value.id;
 						// then, link and store in the project assets
-						const assetType = AssetType.Models;
+						const assetType = AssetType.Model;
 						response = await useProjects().addAsset(assetType, modelId, project.id);
 						assetName = selectedAsset.value.header.name;
 					}
@@ -136,7 +136,7 @@ const projectOptions = computed(() => [
 						// FIXME: handle cases where assets is already added to the project
 						const datasetId = selectedAsset.value.id;
 						// then, link and store in the project assets
-						const assetType = AssetType.Datasets;
+						const assetType = AssetType.Dataset;
 						if (datasetId) {
 							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;

@@ -6,7 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.entities.Annotation;
+import software.uncharted.terarium.hmiserver.models.user.Annotation;
 import software.uncharted.terarium.hmiserver.repository.AnnotationRepository;
 
 import java.util.List;

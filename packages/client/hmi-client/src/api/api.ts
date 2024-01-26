@@ -1,6 +1,6 @@
-import axios, { AxiosHeaders } from 'axios';
-import { logger } from '@/utils/logger';
 import { ToastSummaries } from '@/services/toast';
+import { logger } from '@/utils/logger';
+import axios, { AxiosHeaders } from 'axios';
 import useAuthStore from '../stores/auth';
 
 const API = axios.create({

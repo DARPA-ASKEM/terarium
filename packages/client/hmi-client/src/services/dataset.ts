@@ -38,7 +38,7 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
  */
 async function updateDataset(dataset: Dataset) {
 	delete dataset.columns;
-	const response = await API.patch(`/datasets/${dataset.id}`, dataset);
+	const response = await API.put(`/datasets/${dataset.id}`, dataset);
 	return response?.data ?? null;
 }
 
@@ -70,7 +70,7 @@ async function downloadRawFile(
 	filename: string,
 	limit: number = 100
 ): Promise<CsvAsset | null> {
-	const URL = `/datasets/${datasetId}/downloadCSV?filename=${filename}&limit=${limit}`;
+	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
@@ -102,7 +102,7 @@ async function createDataset(dataset: Dataset): Promise<Dataset | null> {
 async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string,
+	userId: string,
 	url: string
 ) {
 	// Find the file name by removing the path portion
@@ -119,14 +119,14 @@ async function createNewDatasetFromGithubFile(
 		datasetUrl: url,
 		description: path,
 		fileNames: [fileName],
-		username: userName
+		userId
 	};
 
 	const newDataset: Dataset | null = await createDataset(dataset);
 	if (!newDataset || !newDataset.id) return null;
 
 	const urlResponse = await API.put(
-		`/datasets/${newDataset.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/datasets/${newDataset.id}/upload-csv-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -151,7 +151,7 @@ async function createNewDatasetFromGithubFile(
 async function createNewDatasetFromCSV(
 	progress: Ref<number>,
 	file: File,
-	userName: string,
+	userId: string,
 	description?: string
 ): Promise<Dataset | null> {
 	// Remove the file extension from the name, if any
@@ -162,7 +162,7 @@ async function createNewDatasetFromCSV(
 		name,
 		description: description || file.name,
 		fileNames: [file.name],
-		username: userName
+		userId
 	};
 
 	const newDataset: Dataset | null = await createDataset(dataset);
@@ -171,7 +171,7 @@ async function createNewDatasetFromCSV(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const urlResponse = await API.put(`/datasets/${newDataset.id}/uploadCSV`, formData, {
+	const urlResponse = await API.put(`/datasets/${newDataset.id}/upload-csv`, formData, {
 		params: {
 			filename: file.name
 		},
@@ -201,7 +201,7 @@ async function createDatasetFromSimulationResult(
 ): Promise<boolean> {
 	try {
 		const response: AxiosResponse<Response> = await API.get(
-			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?datasetName=${datasetName}`
+			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?dataset-name=${datasetName}`
 		);
 		if (response && response.status === 201) {
 			return true;

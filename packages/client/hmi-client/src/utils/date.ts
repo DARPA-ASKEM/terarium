@@ -15,6 +15,10 @@ export function formatLong(timestamp): string {
 	});
 }
 
+export function formatShort(timestamp) {
+	return new Date(timestamp).toLocaleString('en-US');
+}
+
 export function formatLocalTime(timestamp): string {
 	return new Date(timestamp).toLocaleTimeString('en-US', { timeStyle: 'short' });
 }

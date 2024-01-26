@@ -5,6 +5,8 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
+import java.util.UUID;
+
 @Data
 @TSModel
 @Accessors(chain = true)
@@ -12,6 +14,6 @@ public class AddDocumentAssetFromXDDRequest {
 
 	private Document document;
 
-	private String projectId;
+	private UUID projectId;
 
 }

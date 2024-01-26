@@ -63,7 +63,6 @@
 				:resource-type="resourceType"
 				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
-				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 		</section>
 	</main>

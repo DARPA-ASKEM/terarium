@@ -17,7 +17,16 @@ public class Role {
 
 	private String name;
 
+	@Column(length = 512)
+	private String description;
+
 	@OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL})
 	@JoinColumn(name = "ROLE_ID")
 	private Set<AuthorityInstance> authorities = new HashSet<>();
+
+  /**
+   * True if this role is inherited from a group
+   */
+	@Transient
+	private boolean inherited;
 }

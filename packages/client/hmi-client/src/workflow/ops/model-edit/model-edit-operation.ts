@@ -12,7 +12,7 @@ export interface ModelEditOperationState {
 
 export const ModelEditOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_EDIT,
-	displayName: 'Model Edit',
+	displayName: 'Edit model',
 	description: 'Edit a model',
 	isRunnable: false,
 	inputs: [{ type: 'modelId', label: 'Model', acceptMultiple: false }],

@@ -1,16 +1,19 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
 import java.io.Serializable;
 import java.util.List;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+
 @Data
+@AMRSchemaType
 @Accessors(chain = true)
 @TSModel
-public class TypingSemantics implements Serializable {
+public class TypingSemantics implements SupportAdditionalProperties, Serializable {
 	private List<List<String>> map;
 	private Object system;
 }

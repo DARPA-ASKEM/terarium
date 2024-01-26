@@ -37,6 +37,11 @@ public class TransformController {
 	@PostMapping(value = "/acset-to-latex", produces = {"text/plain", "application/*"})
 	@Secured(Roles.USER)
 	public ResponseEntity<String> acset2Latex(@RequestBody final PetriNet content) {
+
+		if(content.getS().isEmpty() && content.getT().isEmpty() && content.getI().isEmpty() && content.getO().isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
 		final ResponseEntity<String> res = modelServiceProxy.petrinetToLatex(content);
 
 		// since the model-service returns headers that are duplicated in the hmi-server response,

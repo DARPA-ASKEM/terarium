@@ -29,12 +29,12 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onUnmounted, onMounted } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import {
+	createMessageId,
 	getSessionManager,
 	JupyterMessage,
-	KernelState,
-	createMessageId
+	KernelState
 } from '@/services/jupyter';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -346,8 +346,7 @@ watch(
 				id: props.notebookSession.id,
 				name: props.notebookSession.name,
 				description: props.notebookSession.description,
-				data: { history: notebookItems.value },
-				timestamp: new Date().toISOString()
+				data: { history: notebookItems.value }
 			});
 		}
 	},

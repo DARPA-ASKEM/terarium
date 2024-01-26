@@ -67,8 +67,8 @@
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
 					<tera-constraint-group-form
-						v-for="(cfg, index) in constraintGroups"
-						:key="index + Date.now()"
+						v-for="(cfg, index) in node.state.constraintGroups"
+						:key="index"
 						:config="cfg"
 						:index="index"
 						:model-node-options="modelNodeOptions"
@@ -179,8 +179,6 @@ const knobs = ref<BasicKnobs>({
 	currentTimespan: { start: 0, end: 0 },
 	numberOfSteps: 0
 });
-
-const constraintGroups = ref(props.node.state.constraintGroups);
 
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
@@ -338,22 +336,19 @@ const addConstraintForm = () => {
 		timepoints: { lb: 0, ub: 100 },
 		variables: []
 	};
-	constraintGroups.value.push(newGroup);
-	state.constraintGroups = constraintGroups.value;
+	state.constraintGroups.push(newGroup);
 	emit('update-state', state);
 };
 
 const deleteConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	constraintGroups.value.splice(data.index, 1);
-	state.constraintGroups = constraintGroups.value;
+	state.constraintGroups.splice(data.index, 1);
 	emit('update-state', state);
 };
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
-	constraintGroups.value[data.index] = data.updatedConfig;
-	state.constraintGroups = constraintGroups.value;
+	state.constraintGroups[data.index] = data.updatedConfig;
 	emit('update-state', state);
 };
 
@@ -404,8 +399,6 @@ const setModelOptions = async () => {
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
 
-	constraintGroups.value = _.cloneDeep(props.node.state.constraintGroups);
-
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
 
@@ -431,8 +424,8 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 		let interval = { lb: ele.value, ub: ele.value };
 		if (ele.distribution) {
 			interval = {
-				lb: +ele.distribution.parameters.minimum,
-				ub: +ele.distribution.parameters.maximum
+				lb: ele.distribution.parameters.minimum,
+				ub: ele.distribution.parameters.maximum
 			};
 		}
 		return {
@@ -497,7 +490,8 @@ onUnmounted(() => {
 	font-size: 1rem;
 	font-style: normal;
 	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
+	line-height: 1.5rem;
+	/* 150% */
 	letter-spacing: 0.03125rem;
 }
 
@@ -507,7 +501,8 @@ onUnmounted(() => {
 	font-size: 0.875rem;
 	font-style: normal;
 	font-weight: 400;
-	line-height: 1.3125rem; /* 150% */
+	line-height: 1.3125rem;
+	/* 150% */
 	letter-spacing: 0.01563rem;
 }
 
@@ -547,6 +542,7 @@ div.section-row.timespan > div > span {
 .green-text {
 	color: var(--Primary, #1b8073);
 }
+
 .green-text:hover {
 	color: var(--text-color-subdued);
 }

@@ -18,27 +18,27 @@
 			</template>
 		</tera-slider-panel>
 		<section class="project-page">
-			<tera-model v-if="pageType === AssetType.Models" :asset-id="assetId" />
+			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
 			<tera-code :asset-id="assetId" v-else-if="pageType === AssetType.Code" />
 			<tera-project-overview
 				v-else-if="pageType === ProjectPages.OVERVIEW"
 				@open-new-asset="openNewAsset"
 			/>
-			<tera-workflow v-else-if="pageType === AssetType.Workflows" :asset-id="assetId" />
+			<tera-workflow v-else-if="pageType === AssetType.Workflow" :asset-id="assetId" />
 			<!--Add new process/asset views here-->
 			<template v-else-if="assetId">
 				<tera-external-publication
-					v-if="pageType === AssetType.Publications"
+					v-if="pageType === AssetType.Publication"
 					:xdd-uri="getXDDuri(assetId)"
 					:previewLineLimit="10"
 					@open-code="openCode"
 				/>
 				<tera-document-asset
-					v-if="pageType === AssetType.Documents"
+					v-if="pageType === AssetType.Document"
 					:assetId="assetId"
 					:previewLineLimit="10"
 				/>
-				<tera-dataset v-else-if="pageType === AssetType.Datasets" :asset-id="assetId" />
+				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
 		</section>
 		<tera-slider-panel
@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { isEqual } from 'lodash';
 import { useRoute, useRouter } from 'vue-router';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -65,7 +65,7 @@ import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar
 import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
 import { RouteName } from '@/router/routes';
 import { AssetRoute } from '@/types/common';
-import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { isProjectAssetTypes, ProjectPages } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { createWorkflow, emptyWorkflow } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
@@ -88,15 +88,13 @@ const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);
 
-const pageType = computed(
-	() => (route.params.pageType as ProjectPages | AssetType) ?? ProjectPages.EMPTY
-);
+const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as string) ?? '');
 const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }));
 const assetName = computed<string>(() => {
 	if (pageType.value === ProjectPages.OVERVIEW) return 'Overview';
 
-	const assets = useProjects().activeProject.value?.assets;
+	const assets = useProjects().activeProject.value?.projectAssets;
 
 	/**
 	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
@@ -150,27 +148,23 @@ async function removeAsset(assetRoute: AssetRoute) {
 
 const openWorkflow = async () => {
 	// Create a new workflow
-	let wfName = 'workflow';
-	const { activeProject } = useProjects();
-	if (activeProject.value && activeProject.value?.assets) {
-		wfName = `workflow ${activeProject.value.assets[AssetType.Workflows].length + 1}`;
-	}
-	const wf = emptyWorkflow(wfName, '');
+	const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
+	const wf = emptyWorkflow(`workflow ${workflows.length + 1}`, '');
 
 	// Add the workflow to the project
 	const response = await createWorkflow(wf);
 	const workflowId = response.id;
-	await useProjects().addAsset(AssetType.Workflows, workflowId);
+	await useProjects().addAsset(AssetType.Workflow, workflowId);
 
-	openAsset({ pageType: AssetType.Workflows, assetId: workflowId });
+	openAsset({ pageType: AssetType.Workflow, assetId: workflowId });
 };
 
 const openNewAsset = (assetType: AssetType) => {
 	switch (assetType) {
-		case AssetType.Models:
+		case AssetType.Model:
 			isNewModelModalVisible.value = true;
 			break;
-		case AssetType.Workflows:
+		case AssetType.Workflow:
 			openWorkflow();
 			break;
 		case AssetType.Code:
@@ -188,10 +182,7 @@ const openNewAsset = (assetType: AssetType) => {
 // This conversion should maybe be done in tera-external-publication.vue - tera-preview-panel.vue does this conversion differently...
 // This should be deleted eventually since publications are deprecated
 // So delete this when we choose to delete tera-external-publication.vue
-const getXDDuri = (docAssetId: string): string =>
-	useProjects().activeProject.value?.assets?.[AssetType.Publications]?.find(
-		(document) => document?.id === Number.parseInt(docAssetId ?? '', 10)
-	)?.xdd_uri ?? '';
+const getXDDuri = (docAssetId: string): string => docAssetId;
 
 async function openCode() {
 	const res: string | null = await getCodeFileAsText(assetId.value!, assetName.value!);

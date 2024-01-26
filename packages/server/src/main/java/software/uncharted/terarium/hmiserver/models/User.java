@@ -13,6 +13,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.authority.Role;
 
+import java.io.Serial;
 import java.util.Collection;
 
 @Data
@@ -23,6 +24,8 @@ import java.util.Collection;
 )
 @TSModel
 public class User implements UserDetails {
+	@Serial
+	private static final long serialVersionUID = 2359680472757828388L;
 	@Id
 	private String id;
 
@@ -46,14 +49,17 @@ public class User implements UserDetails {
 	@JsonIgnore
 	@TSIgnore
 	private String password = "";
+
 	@Transient
 	@JsonIgnore
 	@TSIgnore
 	private boolean accountNonExpired = true;
+
 	@Transient
 	@JsonIgnore
 	@TSIgnore
 	private boolean accountNonLocked = true;
+
 	@Transient
 	@JsonIgnore
 	@TSIgnore
@@ -61,7 +67,7 @@ public class User implements UserDetails {
 
 	private boolean enabled = false;
 
-	public static User fromJwt(Jwt jwt) {
+	public static User fromJwt(final Jwt jwt) {
 		return new User()
 			.setId(jwt.getClaimAsString(StandardClaimNames.SUB))
 			.setUsername(jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME))
@@ -76,9 +82,13 @@ public class User implements UserDetails {
 	 *
 	 * @param a the first user
 	 * @param b the second user
-	 * @return true if the users are different, false otherwise
+	 * @return true if the users are different or either user is null, false otherwise
 	 */
-	public static boolean isDirty(User a, User b) {
+	public static boolean isDirty(final User a, final User b) {
+		if (a == null || b == null) {
+			return true;
+		}
+
 		return hash(a) != hash(b);
 	}
 
@@ -88,7 +98,7 @@ public class User implements UserDetails {
 	 * @param user
 	 * @return
 	 */
-	private static int hash(User user) {
+	private static int hash(final User user) {
 		return (user.id + user.username + user.email + user.givenName + user.familyName + user.name + user.enabled).hashCode();
 	}
 

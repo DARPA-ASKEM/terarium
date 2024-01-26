@@ -1,14 +1,11 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 
-export async function getAnnotations(artifactId, artifactType) {
+export async function getAnnotations(artifactId: String, artifactType: String) {
 	try {
-		const response = await API.get('/annotations', {
-			params: {
-				artifact_type: artifactType,
-				artifact_id: artifactId
-			}
-		});
+		const response = await API.get(
+			`/annotations?artifact-type=${artifactType}&artifact-id=${artifactId}`
+		);
 		return response.data;
 	} catch (error) {
 		logger.error(error);
@@ -16,14 +13,16 @@ export async function getAnnotations(artifactId, artifactType) {
 	}
 }
 
-export async function createAnnotation(section, content, artifactId, artifactType) {
+export async function createAnnotation(
+	section: String,
+	content: String,
+	artifactId: String,
+	artifactType: String
+) {
 	try {
-		const response = await API.post('/annotations', {
-			section,
-			content,
-			artifact_id: artifactId,
-			artifact_type: artifactType
-		});
+		const response = await API.post(
+			`/annotations?artifact-type=${artifactType}&artifact-id=${artifactId}&section=${section}&content=${content}`
+		);
 		return response.data;
 	} catch (error) {
 		logger.error(error);
@@ -31,7 +30,7 @@ export async function createAnnotation(section, content, artifactId, artifactTyp
 	}
 }
 
-export async function updateAnnotation(id, section, content) {
+export async function updateAnnotation(id: String, section: String, content: String) {
 	try {
 		const response = await API.patch('/annotations', {
 			id,
@@ -45,7 +44,7 @@ export async function updateAnnotation(id, section, content) {
 	}
 }
 
-export async function deleteAnnotation(id) {
+export async function deleteAnnotation(id: String) {
 	try {
 		const response = await API.delete('/annotations', {
 			params: {

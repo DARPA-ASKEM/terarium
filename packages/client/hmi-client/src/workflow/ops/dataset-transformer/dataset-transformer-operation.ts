@@ -8,7 +8,7 @@ export interface DatasetTransformerState {
 export const DatasetTransformerOperation: Operation = {
 	name: WorkflowOperationTypes.DATASET_TRANSFORMER,
 	description: 'Select a dataset',
-	displayName: 'Dataset Transformer',
+	displayName: 'Transform dataset',
 	isRunnable: true,
 	inputs: [{ type: 'datasetId', label: 'Dataset' }],
 	outputs: [],

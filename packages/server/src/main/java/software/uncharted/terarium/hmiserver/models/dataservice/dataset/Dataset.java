@@ -1,13 +1,20 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-
-import java.util.List;
 
 /**
  * Represents a dataset document from TDS
@@ -20,21 +27,29 @@ public class Dataset {
 	/**
 	 * Universally unique identifier for the dataset
 	 **/
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional
-	private String id; //Is this a UUID?
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private UUID id;
+
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp createdOn;
+
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp updatedOn;
+
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp deletedOn;
 
 	/**
-	 * Timestamp of when the dataset was created
-	 **/
-	//TODO: This should be "Instant" but there is an issue and a time crunch here...
-	@TSOptional
-	private Object timestamp;
-
-	/**
-	 * Username of the user who created the dataset
+	 * UserId of the user who created the dataset
 	 **/
 	@TSOptional
-	private String username;
+	private String userId;
 
 	/**
 	 * Name of the dataset
@@ -52,7 +67,7 @@ public class Dataset {
 	 **/
 	@TSOptional
 	@JsonAlias("data_source_date")
-	private String dataSourceDate;
+	private Timestamp dataSourceDate;
 
 	/**
 	 * (Optional) list of file names associated with the dataset
@@ -87,7 +102,8 @@ public class Dataset {
 	private String source;
 
 	/**
-	 * (Optional) Grounding of ontological concepts related to the dataset as a whole
+	 * (Optional) Grounding of ontological concepts related to the dataset as a
+	 * whole
 	 **/
 	@TSOptional
 	private Grounding grounding;

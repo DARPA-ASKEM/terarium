@@ -38,7 +38,7 @@ const userInitials = computed(() =>
 const isAuthor = computed(() => props.permission === 'creator');
 
 function isYou() {
-	return auth.user?.name === props.user.firstName ? '(you)' : '';
+	return auth.user?.id === props.user.id ? '(you)' : '';
 }
 
 function selectPermission(event: DropdownChangeEvent) {

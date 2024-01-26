@@ -13,7 +13,7 @@ import { logger } from '@/utils/logger';
 async function createNewArtifactFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string
+	userId: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -25,14 +25,14 @@ async function createNewArtifactFromGithubFile(
 		name: fileName,
 		description: path,
 		fileNames: [fileName],
-		username: userName
+		userId
 	};
 
 	const newArtifact: Artifact | null = await createNewArtifact(artifact);
 	if (!newArtifact || !newArtifact.id) return null;
 
 	const urlResponse = await API.put(
-		`/artifacts/${newArtifact.id}/uploadArtifactFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/artifacts/${newArtifact.id}/upload-artifact-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -56,7 +56,7 @@ async function createNewArtifactFromGithubFile(
  */
 async function uploadArtifactToProject(
 	file: File,
-	userName: string,
+	userId: string,
 	description?: string,
 	progress?: Ref<number>
 ): Promise<Artifact | null> {
@@ -65,7 +65,7 @@ async function uploadArtifactToProject(
 		name: file.name,
 		description: description || file.name,
 		fileNames: [file.name],
-		username: userName
+		userId
 	};
 
 	const newArtifact: Artifact | null = await createNewArtifact(artifact);
@@ -100,7 +100,7 @@ async function addFileToArtifact(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.put(`/artifacts/${artifactId}/uploadFile`, formData, {
+	const response = await API.put(`/artifacts/${artifactId}/upload-file`, formData, {
 		params: {
 			filename: file.name
 		},

@@ -3,12 +3,12 @@ import API from '@/api/api';
 import type { ModelConfiguration, Model } from '@/types/Types';
 
 export const getAllModelConfigurations = async () => {
-	const response = await API.get(`/model_configurations`);
+	const response = await API.get(`/model-configurations`);
 	return (response?.data as ModelConfiguration[]) ?? null;
 };
 
 export const getModelConfigurationById = async (id: string) => {
-	const response = await API.get(`/model_configurations/${id}`);
+	const response = await API.get(`/model-configurations/${id}`);
 	return (response?.data as ModelConfiguration) ?? null;
 };
 
@@ -18,7 +18,7 @@ export const createModelConfiguration = async (
 	description: string,
 	configuration: Model
 ) => {
-	const response = await API.post(`/model_configurations`, {
+	const response = await API.post(`/model-configurations`, {
 		model_id,
 		name,
 		description,
@@ -50,6 +50,6 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 		API.put(`/models/${config.configuration.id}`, config.configuration);
 	}
 
-	const response = await API.put(`/model_configurations/${config.id}`, config);
+	const response = await API.put(`/model-configurations/${config.id}`, config);
 	return response?.data ?? null;
 };

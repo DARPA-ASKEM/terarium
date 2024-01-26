@@ -1,15 +1,19 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+
 @Data
+@AMRSchemaType
 @Accessors(chain = true)
-public class Observable {
+public class Observable implements SupportAdditionalProperties {
 	private String id;
 
 	@TSOptional
@@ -22,6 +26,6 @@ public class Observable {
 	private String expression;
 
 	@TSOptional
-	@JsonAlias("expression_mathml")
-	private String expression_mathml;
+	@JsonProperty("expression_mathml")
+	private String expressionMathml;
 }

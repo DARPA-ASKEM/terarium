@@ -4,8 +4,8 @@ import config from './vite.config';
 // Configuration overrides for running local services via docker-compose
 const localhost = process.env.local_host_name || 'localhost';
 config.preview.port = 8080;
-config.server.port = 80;
-config.server.hmr.port = 80;
+config.server.port = 8080;
+config.server.hmr.port = 8080;
 config.server.hmr.clientPort = 8080;
 config.server.proxy = {
 	'^/api': {

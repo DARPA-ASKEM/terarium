@@ -61,13 +61,12 @@ import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import { watch, ref, computed } from 'vue';
 import Button from 'primevue/button';
-import { IProject } from '@/types/Project';
 import { getUsers } from '@/services/user';
-import type { PermissionRelationships, PermissionUser } from '@/types/Types';
+import type { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraUserCard from './tera-user-card.vue';
 
-const props = defineProps<{ modelValue: boolean; project: IProject }>();
+const props = defineProps<{ modelValue: boolean; project: Project }>();
 
 const visible = ref(props.modelValue);
 const permissions = ref<PermissionRelationships | null>(null);

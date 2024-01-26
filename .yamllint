@@ -3,3 +3,6 @@ extends: default
 
 rules:
   line-length: disable
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1

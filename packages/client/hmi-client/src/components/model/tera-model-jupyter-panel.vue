@@ -94,7 +94,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, Ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 // import { cloneDeep } from 'lodash';
@@ -105,11 +105,11 @@ import { AssetType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import {
-	newSession,
-	JupyterMessage,
+	createMessageId,
 	getServerSettings,
 	getSessionManager,
-	createMessageId
+	JupyterMessage,
+	newSession
 } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -360,7 +360,7 @@ const onNewModelSaved = async (payload) => {
 		return;
 	}
 	const modelId = payload.model_id;
-	await useProjects().addAsset(AssetType.Models, modelId);
+	await useProjects().addAsset(AssetType.Model, modelId);
 	emit('new-model-saved', { id: modelId, name: saveAsName.value });
 	toast.success('Model saved successfully', 'Refresh to see the dataset in the resource explorer');
 };

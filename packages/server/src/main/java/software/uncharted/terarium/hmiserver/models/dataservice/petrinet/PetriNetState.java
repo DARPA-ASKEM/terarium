@@ -2,12 +2,13 @@ package software.uncharted.terarium.hmiserver.models.dataservice.petrinet;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelExpression;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
 @Data
 @Accessors(chain = true)
-public class PetriNetState {
+public class PetriNetState implements SupportAdditionalProperties {
 	private String id;
 
 	private String name;

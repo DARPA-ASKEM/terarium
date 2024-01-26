@@ -14,24 +14,19 @@ public enum KeycloakRole {
 	TEST,
 	SERVICE;
 
-	public static KeycloakRole get(String role) {
+  public static KeycloakRole get(final String role) {
 		try {
 			return valueOf(role.toUpperCase());
-
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			log.debug("Keycloak role {} not found", role);
 			return null;
 		}
 	}
 
-	public static List<KeycloakRole> get(List<String> roles) {
+	public static List<KeycloakRole> get(final List<String> roles) {
 		return roles.stream()
 			.map(KeycloakRole::get)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
-	}
-
-	public String asRole() {
-		return "ROLE_" + super.toString();
 	}
 }

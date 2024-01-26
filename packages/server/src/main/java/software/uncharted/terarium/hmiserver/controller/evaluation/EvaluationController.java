@@ -11,18 +11,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import software.uncharted.terarium.hmiserver.controller.services.AuthenticationFacade;
-import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioStatus;
 import software.uncharted.terarium.hmiserver.models.evaluation.EvaluationScenarioSummary;
+import software.uncharted.terarium.hmiserver.models.user.Event;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.EventService;
@@ -56,7 +54,7 @@ public class EvaluationController {
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EvaluationScenarioSummary>> getScenarios() {
 
-		Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
+		final Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
 
 
 
@@ -82,13 +80,13 @@ public class EvaluationController {
 						.setUserId(userId));
 				}
 				usernameToScenarioNameToSummary.put(userId, scenarioNameToSummary);
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Error parsing event value", e);
 			}
 		});
 
 		// Populate the final model
-		List<EvaluationScenarioSummary> scenarioSummaries = new ArrayList<>();
+		final List<EvaluationScenarioSummary> scenarioSummaries = new ArrayList<>();
 		usernameToScenarioNameToSummary.forEach((username, scenarioNameToSummary) -> {
 			scenarioSummaries.addAll(scenarioNameToSummary.values());
 		});
@@ -103,7 +101,7 @@ public class EvaluationController {
 	 */
 	@GetMapping("/status")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> getStatus(@RequestParam("name") String name) {
+	public ResponseEntity<String> getStatus(@RequestParam("name") final String name) {
 		final List<Event> events = eventService.findEvents(EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
 		final Event latestEvent = events
 			.stream()
@@ -111,7 +109,7 @@ public class EvaluationController {
 				try {
 					final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
 					return value.at("/name").asText().equals(name);
-				} catch (JsonProcessingException e) {
+				} catch (final JsonProcessingException e) {
 					log.error("Error parsing event value", e);
 				}
 				return false;
@@ -122,7 +120,7 @@ public class EvaluationController {
 			try {
 				final JsonNode value = mapper.readValue(latestEvent.getValue(), JsonNode.class);
 				return ResponseEntity.ok(value.at("/action").asText());
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Error parsing event value", e);
 			}
 		}
@@ -131,7 +129,7 @@ public class EvaluationController {
 
 	@GetMapping("/runtime")
 	@Secured(Roles.USER)
-	public ResponseEntity<Long> getRuntime(@RequestParam("name") String name) {
+	public ResponseEntity<Long> getRuntime(@RequestParam("name") final String name) {
 		final List<Event> events = eventService.findEvents(EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
 		final List<Event> scenarioEvents = events
 			.stream()
@@ -139,7 +137,7 @@ public class EvaluationController {
 				try {
 					final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
 					return value.at("/name").asText().equals(name);
-				} catch (JsonProcessingException e) {
+				} catch (final JsonProcessingException e) {
 					log.error("Error parsing event value", e);
 				}
 				return false;
@@ -160,7 +158,7 @@ public class EvaluationController {
 				if (currentValue.at("/action").asText().equals("started") || currentValue.at("/action").asText().equals("resumed")) {
 					runtime += nextEvent.getTimestampMillis() - currentEvent.getTimestampMillis();
 				}
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Error parsing event value", e);
 			}
 		}
@@ -181,7 +179,7 @@ public class EvaluationController {
 				try {
 					final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
 					return value.at("/name").asText().equals(name);
-				} catch (JsonProcessingException e) {
+				} catch (final JsonProcessingException e) {
 					log.error("Error parsing event value", e);
 				}
 				return false;
@@ -206,7 +204,7 @@ public class EvaluationController {
 			try {
 				node = mapper.readTree(event.getValue());
 				node.fieldNames().forEachRemaining(s -> topLevelFields.add("/" + s));
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Error parsing event value", e);
 			}
 
@@ -216,8 +214,8 @@ public class EvaluationController {
 
 
 		final String[] HEADERS = { "timestamp", "projectId", "username", "type", "value"};
-		StringWriter sw = new StringWriter();
-		CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+		final StringWriter sw = new StringWriter();
+		final CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
 			.setHeader(headers.toArray(new String[0]))
 			.build();
 
@@ -245,13 +243,13 @@ public class EvaluationController {
 								values.add(node.asText());
 							}
 						}
-					} catch (Exception ignored) {
+					} catch (final Exception ignored) {
 						for (int i = 5; i < headers.size(); i++) {
 							values.add("");
 						}
 					}
 					printer.printRecord(values);
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					log.error("Error writing event to CSV", e);
 				}
 			});
@@ -266,7 +264,7 @@ public class EvaluationController {
 		private long start;
 		private long end;
 
-		public boolean inRange(long timestamp) {
+		public boolean inRange(final long timestamp) {
 			return timestamp >= start && timestamp <= end;
 		}
 	}
@@ -288,7 +286,7 @@ public class EvaluationController {
 				if (currentValue.at("/action").asText().equals(EvaluationScenarioStatus.STARTED.toString()) || currentValue.at("/action").asText().equals(EvaluationScenarioStatus.RESUMED.toString())) {
 					ranges.add(new Range().setStart(currentEvent.getTimestampMillis()).setEnd(nextEvent.getTimestampMillis()));
 				}
-			} catch (JsonProcessingException e) {
+			} catch (final JsonProcessingException e) {
 				log.error("Error parsing event value", e);
 			}
 		}

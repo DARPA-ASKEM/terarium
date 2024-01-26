@@ -59,13 +59,13 @@ async function createNewModel() {
 	const modelId = await addNewModelToProject(newModelName.value.trim());
 	let newAsset;
 	if (modelId) {
-		newAsset = await useProjects().addAsset(AssetType.Models, modelId);
+		newAsset = await useProjects().addAsset(AssetType.Model, modelId);
 	}
 	if (newAsset) {
 		router.push({
 			name: RouteName.Project,
 			params: {
-				pageType: AssetType.Models,
+				pageType: AssetType.Model,
 				assetId: modelId
 			}
 		});
@@ -86,7 +86,7 @@ async function updateModelName() {
 	// 2. Save asset to project
 	const projectId = useProjects().activeProject.value?.id;
 	if (!projectId) return;
-	const response = await addAsset(projectId, AssetType.Models, props.modelId);
+	const response = await addAsset(projectId, AssetType.Model, props.modelId);
 	await useProjects().refresh();
 
 	if (!response) {

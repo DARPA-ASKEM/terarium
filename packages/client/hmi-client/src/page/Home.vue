@@ -131,9 +131,9 @@ import TeraProjectCard from '@/components/home/tera-project-card.vue';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
-import { IProject } from '@/types/Project';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
+import { Project } from '@/types/Types';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
@@ -182,36 +182,38 @@ function openCreateProjectModal() {
 	menuProject.value = null;
 }
 
-function filterAndSortProjects(projects: IProject[]) {
-	if (!projects) return [];
+type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
-	if (selectedSort.value === 'Alphabetical') {
-		projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-	}
-	// FIXME: Last updated and creation date are the same at the moment
-	else if (
-		selectedSort.value === 'Last updated (descending)' ||
-		selectedSort.value === 'Creation date (descending)'
-	) {
-		projects.sort((a, b) =>
-			a.timestamp && b.timestamp
-				? new Date(b.timestamp).valueOf() - new Date(a.timestamp).valueOf()
-				: -1
-		);
-	} else if (
-		selectedSort.value === 'Last updated (ascending)' ||
-		selectedSort.value === 'Creation date (ascending)'
-	) {
-		projects.sort((a, b) =>
-			a.timestamp && b.timestamp
-				? new Date(a.timestamp).valueOf() - new Date(b.timestamp).valueOf()
-				: -1
-		);
-	}
-	return projects;
+function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'ASC' | 'DESC') {
+	return projects.sort((a, b) => {
+		const dateA = a[dateType]?.valueOf() ?? 0;
+		const dateB = b[dateType]?.valueOf() ?? 0;
+		return sorting === 'ASC' ? dateA - dateB : dateB - dateA;
+	});
 }
 
-const projectsTabs = computed<{ title: string; projects: IProject[] }[]>(() => [
+function filterAndSortProjects(projects: Project[]) {
+	if (projects) {
+		if (selectedSort.value === 'Alphabetical') {
+			return projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+		}
+		if (selectedSort.value === 'Last updated (descending)') {
+			return sortProjectByDates(projects, 'updatedOn', 'DESC');
+		}
+		if (selectedSort.value === 'Last updated (ascending)') {
+			return sortProjectByDates(projects, 'updatedOn', 'ASC');
+		}
+		if (selectedSort.value === 'Creation date (descending)') {
+			return sortProjectByDates(projects, 'createdOn', 'DESC');
+		}
+		if (selectedSort.value === 'Creation date (ascending)') {
+			return sortProjectByDates(projects, 'createdOn', 'ASC');
+		}
+	}
+	return [];
+}
+
+const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
 	{ title: TabTitles.MyProjects, projects: myFilteredSortedProjects.value },
 	{ title: TabTitles.PublicProjects, projects: publicFilteredSortedProjects.value },
 	{ title: TabTitles.SampleProjects, projects: [] }

@@ -2,16 +2,25 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 
+import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Represents a generic artifact that can be stored in the data service. For example,
- * this could be a text file, a code file, a zip file, or anything else. It should not
+ * Represents a generic artifact that can be stored in the data service. For
+ * example,
+ * this could be a text file, a code file, a zip file, or anything else. It
+ * should not
  * be used for a dataset or a model, which have their own classes.
  */
 @Data
@@ -20,15 +29,26 @@ import java.util.List;
 public class Artifact {
 
 	/* The id of the artifact. */
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
 	@TSOptional
-	private String id;
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private UUID id;
 
-	/* Timestamp of creation */
 	@TSOptional
-	private Object timestamp;
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp createdOn;
 
-	/* Username of who created this asset */
-	private String username;
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp updatedOn;
+
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private Timestamp deletedOn;
+
+	/* UserId of who created this asset */
+	private String userId;
 
 	/* The name of the artifact. */
 	private String name;
@@ -37,7 +57,7 @@ public class Artifact {
 	@TSOptional
 	private String description;
 
-	/* The name of the file(s) in this artifact*/
+	/* The name of the file(s) in this artifact */
 	@JsonAlias("file_names")
 	private List<String> fileNames;
 
@@ -47,7 +67,6 @@ public class Artifact {
 
 	/* concepts associated with these files */
 	@TSOptional
-	private List<Concept> concepts;
-
+	private List<OntologyConcept> concepts;
 
 }

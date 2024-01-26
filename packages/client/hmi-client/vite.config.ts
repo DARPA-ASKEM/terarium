@@ -47,9 +47,15 @@ export default defineConfig({
 		},
 		proxy: {
 			'^/api': {
-				target: 'http://localhost:3000',
+				target: 'https://server.staging.terarium.ai',
 				rewrite: (path_str) => path_str.replace(/^\/api/, ''),
 				changeOrigin: true
+			},
+			'^/beaker/(.*)': {
+				target: 'http://beaker.staging.terarium.ai'
+			},
+			'^/beaker_ws/(.*)': {
+				target: 'http://beaker.staging.terarium.ai'
 			}
 		}
 	},
@@ -79,6 +85,10 @@ export default defineConfig({
 		svgLoader({ defaultImport: 'url' })
 	],
 	test: {
-		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']
+		include: ['tests/unit/**/*.{test,spec}.{ts,mts}'],
+		reporters: ['junit', 'default'],
+		outputFile: {
+			junit: './tests/unit/reports/junit-report.xml'
+		}
 	}
 });

@@ -51,7 +51,7 @@
 					</header>
 					<p>{{ annotation.content }}</p>
 					<footer>
-						{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+						{{ formatAuthorTimestamp(annotation.userId, annotation.timestampMillis) }}
 					</footer>
 				</template>
 			</li>
@@ -116,7 +116,6 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
-import { Annotation } from '@/types/common';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
 import {
 	createAnnotation,
@@ -126,7 +125,7 @@ import {
 } from '@/services/models/annotations';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { ProjectPages } from '@/types/Project';
-import { AssetType } from '@/types/Types';
+import { AssetType, Annotation } from '@/types/Types';
 
 const props = defineProps<{
 	assetId: string;
@@ -213,7 +212,7 @@ async function updateNote() {
 	const section =
 		selectedNoteSection.value.length >= selectedNoteIndex.value
 			? selectedNoteSection.value[selectedNoteIndex.value]
-			: null;
+			: '';
 	await updateAnnotation(noteToUpdate.id, section, noteToUpdate.content);
 	await getAndPopulateAnnotations();
 	isEditingNote.value = false;

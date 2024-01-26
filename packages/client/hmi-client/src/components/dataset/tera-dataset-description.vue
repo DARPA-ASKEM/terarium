@@ -29,7 +29,7 @@
 							</span>
 							<span>
 								<label>Date created</label>
-								<div>{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') }}</div>
+								<div>{{ dataset?.createdOn?.toLocaleString('en-US') }}</div>
 							</span>
 						</li>
 						<li>
@@ -48,7 +48,7 @@
 				</tera-grey-card>
 				<tera-related-documents
 					:documents="documents"
-					:asset-type="AssetType.Datasets"
+					:asset-type="AssetType.Dataset"
 					:assetId="dataset?.id ?? ''"
 					@enriched="fetchAsset"
 				/>
@@ -105,7 +105,8 @@ const description = computed(() =>
 const documents = computed(
 	() =>
 		useProjects()
-			.activeProject.value?.assets?.documents?.filter((document: DocumentAsset) =>
+			.getActiveProjectAssets(AssetType.Document)
+			.filter((document: DocumentAsset) =>
 				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
 					(extension) => {
 						if (document.fileNames && !isEmpty(document.fileNames)) {

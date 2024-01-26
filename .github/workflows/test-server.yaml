@@ -23,57 +23,9 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
 
-    # Service containers to run with this job
-    services:
-      # Label used to access the service container
-      postgres:
-        # Docker Hub image
-        image: postgres:14.1-alpine
-        # Env Variables
-        env:
-          POSTGRES_USER: "postgres"
-          POSTGRES_PASSWORD: "postgres"
-          POSTGRES_DB: "terarium"
-        ports:
-          - 5430:5432
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        # Docker Hub image
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      rabbitmq:
-        # Docker Hub image
-        image: rabbitmq:3.9-alpine
-        ports:
-          - 5672:5672
-          - 15672:15672
-        env:
-          RABBITMQ_DEFAULT_USER: "terarium"
-          RABBITMQ_DEFAULT_PASS: "terarium123"
-          RABBITMQ_MANAGEMENT_ENABLED: "true"
-        # Set health checks to wait until rabbitmq has started
-        options: >-
-          --health-cmd "rabbitmq-diagnostics ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     permissions:
       contents: read
+      checks: write
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -84,12 +36,16 @@ jobs:
       - name: Validate GradleW JAR
         uses: gradle/wrapper-validation-action@342dbebe7272035434f9baccc29a816ec6dd2c7b
 
-      # Setup Java
+      # Setup Java 17
       - name: Setup Java v17
         uses: actions/setup-java@v3
         with:
           distribution: "temurin"
           java-version: 17
+
+      # Start containers
+      - name: Start containers
+        run: cd containers && docker compose --file docker-compose-actions.yml up --detach --wait
 
       # Run the tests
       - name: Run tests
@@ -100,3 +56,17 @@ jobs:
           arguments: |
             test
             --info
+
+      # Run test reporter
+      - name: Test Report
+        uses: dorny/test-reporter@v1.7.0
+        if: always()
+        with:
+          name: Server JUnit Tests
+          path: packages/server/build/test-results/test/*.xml    # Path to test results
+          reporter: java-junit        # Format of test results
+
+      # Stop containers
+      - name: Stop containers
+        if: always()
+        run: cd containers && docker compose --file docker-compose-actions.yml down

@@ -1,0 +1,12 @@
+{
+  "description": "For adding an indextime to all documents",
+  "version": 2,
+  "processors": [
+    {
+      "set": {
+        "field": "timestamp",
+        "value": "{{_ingest.timestamp}}"
+      }
+    }
+  ]
+}

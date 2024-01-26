@@ -7,6 +7,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
 import java.util.List;
+import java.util.UUID;
 
 public class RebacUser extends RebacObject {
 	private ReBACService reBACService;
@@ -59,7 +60,7 @@ public class RebacUser extends RebacObject {
 		return "none";
 	}
 
-	public List<String> lookupProjects() throws Exception {
+	public List<UUID> lookupProjects() throws Exception {
 		return reBACService.lookupResources(getSchemaObject(), Schema.Permission.READ, Schema.Type.PROJECT);
 	}
 }

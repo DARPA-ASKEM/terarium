@@ -8,7 +8,6 @@
 		<tera-navbar :active="displayNavBar" :show-suggestions="showSuggestions" />
 	</header>
 	<main>
-		<div id="step1" />
 		<router-view v-slot="{ Component }">
 			<component class="page" ref="pageRef" :is="Component" />
 		</router-view>
@@ -20,20 +19,19 @@
 </template>
 
 <script setup lang="ts">
-import Toast from 'primevue/toast';
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useShepherd } from 'vue-shepherd';
+import Toast from 'primevue/toast';
 
+import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
+import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
-import TeraCommonModalDialogs from '@/components/widgets/tera-common-modal-dialogs.vue';
-import TeraFooter from '@/components/navbar/tera-footer.vue';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
-import { IProject } from '@/types/Project';
+import TeraFooter from '@/components/navbar/tera-footer.vue';
 import { ResourceType } from '@/types/common';
-import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
-import { useCurrentRoute } from '@/router/index';
 import { useProjects } from '@/composables/project';
+import { Project } from '@/types/Types';
+import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
+import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
 
@@ -54,10 +52,6 @@ const pageRef = ref();
 const showSuggestions = computed(() => {
 	const assetType = pageRef.value?.resourceType ?? ResourceType.XDD;
 	return assetType === ResourceType.XDD;
-});
-
-const tour = useShepherd({
-	useModalOverlay: true
 });
 
 /**
@@ -83,18 +77,12 @@ API.interceptors.response.use(
 watch(
 	() => route.params.projectId,
 	(projectId) => {
-		useProjects().get(projectId as IProject['id']);
+		useProjects().get(projectId as Project['id']);
 	},
 	{ immediate: true }
 );
 
 onMounted(async () => {
-	tour.addStep({
-		attachTo: { element: '#step1', on: 'top' },
-		text: 'Test'
-	});
-	tour.start();
-
 	await useProjects().getAll();
 });
 </script>

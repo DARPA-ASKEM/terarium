@@ -55,8 +55,7 @@ onMounted(async () => {
 			id: uuidv4(),
 			name: props.node.id,
 			description: '',
-			data: { history: [] },
-			timestamp: new Date().toISOString()
+			data: { history: [] }
 		});
 		notebookSessionId = response?.id;
 

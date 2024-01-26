@@ -6,6 +6,7 @@ import API from '@/api/api';
 import type { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
+
 /**
  * Get all documents
  * @return Array<DocumentAsset>|null - the list of all document assets, or null if none returned by API
@@ -40,7 +41,7 @@ async function getDocumentAsset(documentId: string): Promise<DocumentAsset | nul
  */
 async function uploadDocumentAssetToProject(
 	file: File,
-	userName: string,
+	userId: string,
 	description?: string,
 	progress?: Ref<number>
 ): Promise<DocumentAsset | null> {
@@ -49,7 +50,7 @@ async function uploadDocumentAssetToProject(
 		name: file.name,
 		description: description || file.name,
 		fileNames: [file.name],
-		username: userName
+		userId
 	};
 
 	const newDocumentAsset: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
@@ -64,7 +65,7 @@ async function uploadDocumentAssetToProject(
 async function createNewDocumentFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userName: string,
+	userId: string,
 	description?: string
 ) {
 	// Find the file name by removing the path portion
@@ -77,14 +78,14 @@ async function createNewDocumentFromGithubFile(
 		name: fileName,
 		description: description || fileName,
 		fileNames: [fileName],
-		username: userName
+		userId
 	};
 
 	const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
 	if (!newDocument || !newDocument.id) return null;
 
 	const urlResponse = await API.put(
-		`/document-asset/${newDocument.id}/uploadDocumentFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		`/document-asset/${newDocument.id}/upload-document-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
 			timeout: 30000
 		}
@@ -121,7 +122,7 @@ async function addFileToDocumentAsset(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.put(`/document-asset/${documentId}/uploadDocument`, formData, {
+	const response = await API.put(`/document-asset/${documentId}/upload-document`, formData, {
 		params: {
 			filename: file.name
 		},
@@ -145,7 +146,7 @@ async function addFileToDocumentAsset(
 async function downloadDocumentAsset(documentId: string, fileName: string): Promise<any> {
 	try {
 		const response = await API.get(
-			`document-asset/${documentId}/downloadDocument?filename=${fileName}`,
+			`document-asset/${documentId}/download-document?filename=${fileName}`,
 			{ responseType: 'arraybuffer' }
 		);
 		const blob = new Blob([response?.data], { type: 'application/pdf' });
@@ -208,7 +209,7 @@ async function createDocumentFromXDD(
 	projectId: string
 ): Promise<AddDocumentAssetFromXDDResponse | null> {
 	if (!document || !projectId) return null;
-	const response = await API.post(`/document-asset/createDocumentFromXDD`, {
+	const response = await API.post(`/document-asset/create-document-from-xdd`, {
 		document,
 		projectId
 	});
