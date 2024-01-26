@@ -27,7 +27,13 @@
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview
+				title="Model Preview"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				:options="outputs"
+				is-selectable
+			>
 				<div>
 					<tera-model-diagram
 						v-if="amr"
@@ -65,14 +71,14 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -88,7 +94,7 @@ import teraModelEditJupyterInput from './tera-model-edit-jupyter-input.vue';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output-port', 'update-state', 'close', 'select-output']);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -99,6 +105,20 @@ interface SaveOptions {
 	addToProject?: boolean;
 	appendOutputPort?: boolean;
 }
+
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+const selectedOutputId = ref<string>();
+const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
@@ -266,6 +286,23 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 
 	emit('update-state', state);
 };
+
+const onUpdateOutput = (id: string) => {
+	emit('select-output', id);
+};
+
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
+			selectedOutputId.value = props.node.active;
+			inputChangeHandler();
+		}
+	},
+	{ immediate: true }
+);
 
 // Set model, modelConfiguration, modelNodeOptions
 watch(
