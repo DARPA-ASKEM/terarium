@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.controller.task;
+package software.uncharted.terarium.hmiserver.controller.gollm;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
@@ -23,6 +24,8 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.TaskResponseHandler;
+import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
@@ -30,8 +33,10 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class GoLLMController extends TaskController {
+public class GoLLMController {
 
+	final private ObjectMapper objectMapper;
+	final private TaskService taskService;
 	final private DocumentAssetService documentAssetService;
 	final private ModelService modelService;
 
@@ -51,7 +56,7 @@ public class GoLLMController extends TaskController {
 
 	@PostConstruct
 	void init() {
-		addResponseHandler(MODEL_CARD_SCRIPT, getModelCardResponseHandler());
+		taskService.addResponseHandler(MODEL_CARD_SCRIPT, getModelCardResponseHandler());
 	}
 
 	private TaskResponseHandler getModelCardResponseHandler() {
@@ -101,7 +106,7 @@ public class GoLLMController extends TaskController {
 
 		try {
 			// send the request
-			sendTaskRequest(req);
+			taskService.sendTaskRequest(req);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().build();
 		}

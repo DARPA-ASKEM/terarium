@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.controller.task;
+package software.uncharted.terarium.hmiserver.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +19,10 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
-public class TaskControllerTests extends TerariumApplicationTests {
+public class TaskServiceTest extends TerariumApplicationTests {
 
 	@Autowired
-	private TaskController taskController;
+	private TaskService taskService;
 
 	@Autowired
 	private ObjectMapper mapper;
@@ -35,15 +35,12 @@ public class TaskControllerTests extends TerariumApplicationTests {
 
 		UUID taskId = UUID.randomUUID();
 
-		BlockingQueue<TaskResponse> responseQueue = taskController.waitforResponses(taskId);
-
 		String jsonString = "{\"input\": \"This is my input string\"}";
 		JsonNode jsonNode = mapper.readTree(jsonString);
 
+		BlockingQueue<TaskResponse> responseQueue = taskService.createEchoTask(taskId, jsonNode);
+
 		List<TaskResponse> responses = new ArrayList<>();
-
-		responses.add(taskController.createEchoTask(taskId, jsonNode));
-
 		while (true) {
 			TaskResponse resp = responseQueue.poll(POLL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 			if (resp == null) {
