@@ -2,7 +2,9 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,6 +47,8 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -300,19 +304,11 @@ public class TDSCodeController {
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") MultipartFile input) {
+			@RequestPart("file") MultipartFile input) throws IOException {
 
 		log.debug("Uploading code {} to project", codeId);
 
-		byte[] fileAsBytes = new byte[0];
-		try {
-			fileAsBytes = input.getBytes();
-		} catch (IOException e) {
-			log.error("Unable to read file", e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to read file");
-		}
+		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadCodeHelper(codeId, filename, fileEntity);
 
@@ -404,6 +400,19 @@ public class TDSCodeController {
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(codeHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
+
+			final Optional<Code> code = codeService.getCode(codeId);
+			final CodeFile codeFile = new CodeFile();
+			codeFile.setProgrammingLanguageFromFileName(fileName);
+
+			Map<String, CodeFile> fileMap = code.get().getFiles();
+
+			if(fileMap == null){
+				fileMap = new HashMap<>();
+			}
+			fileMap.put(fileName, codeFile);
+			code.get().setFiles(fileMap);
+			codeService.updateCode(code.get());
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
