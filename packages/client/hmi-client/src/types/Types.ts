@@ -58,11 +58,7 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
-export interface Artifact {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
+export interface Artifact extends TerariumAsset {
     userId: string;
     name: string;
     description?: string;
@@ -105,11 +101,15 @@ export interface ResponseSuccess {
     success: boolean;
 }
 
-export interface Code {
+export interface TerariumAsset {
     id?: string;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
+    temporary?: boolean;
+}
+
+export interface Code extends TerariumAsset {
     name: string;
     description: string;
     files?: { [index: string]: CodeFile };
@@ -128,32 +128,20 @@ export interface Dynamics {
     block: string[];
 }
 
-export interface ActiveConcept {
-    id: string;
+export interface ActiveConcept extends TerariumAsset {
     curie: string;
     name: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
 }
 
-export interface OntologyConcept {
-    id?: string;
+export interface OntologyConcept extends TerariumAsset {
     curie: string;
     type: TaggableType;
     objectId: string;
     status: OntologicalField;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
     activeConcept: ActiveConcept;
 }
 
-export interface Dataset {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
+export interface Dataset extends TerariumAsset {
     userId?: string;
     name: string;
     description?: string;
@@ -187,13 +175,9 @@ export interface AddDocumentAssetFromXDDResponse {
     extractionJobId: string;
 }
 
-export interface DocumentAsset {
-    id?: string;
+export interface DocumentAsset extends TerariumAsset {
     name?: string;
     description?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
     userId?: string;
     fileNames?: string[];
     documentUrl?: string;
@@ -205,11 +189,7 @@ export interface DocumentAsset {
     assets?: DocumentExtraction[];
 }
 
-export interface Equation {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
+export interface Equation extends TerariumAsset {
     userId?: string;
     name?: string;
     equationType: EquationType;
@@ -224,21 +204,13 @@ export interface EquationSource {
     hmiGenerated?: boolean;
 }
 
-export interface ExternalPublication {
-    id?: string;
+export interface ExternalPublication extends TerariumAsset {
     title: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
     xdd_uri: string;
 }
 
-export interface Model {
-    id: string;
+export interface Model extends TerariumAsset {
     header: ModelHeader;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
     userId?: string;
     model: { [index: string]: any };
     properties?: any;
@@ -246,11 +218,7 @@ export interface Model {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration {
-    id: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
+export interface ModelConfiguration extends TerariumAsset {
     name: string;
     description?: string;
     configuration: any;
@@ -264,11 +232,7 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework {
-    id: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
+export interface ModelFramework extends TerariumAsset {
     name: string;
     version: string;
     semantics: string;
@@ -343,11 +307,7 @@ export interface DecapodesTerm {
     _type: string;
 }
 
-export interface NotebookSession {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
+export interface NotebookSession extends TerariumAsset {
     name: string;
     description?: string;
     data: any;
@@ -372,38 +332,26 @@ export interface Assets {
     document: DocumentAsset[];
 }
 
-export interface Project {
-    id?: string;
+export interface Project extends TerariumAsset {
     name: string;
     userId: string;
     userName?: string;
     description?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
 }
 
-export interface ProjectAsset {
-    id: string;
+export interface ProjectAsset extends TerariumAsset {
     assetId: string;
     assetType: AssetType;
     assetName: string;
     externalRef?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
     project: Project;
 }
 
-export interface Provenance {
-    id: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
+export interface Provenance extends TerariumAsset {
     concept: string;
     relationType: ProvenanceRelationType;
     left: string;
@@ -486,12 +434,8 @@ export interface Simulation {
     deletedOn?: Date;
 }
 
-export interface SimulationResult {
-    id?: string;
+export interface SimulationResult extends TerariumAsset {
     filename: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
     simulation: Simulation;
 }
 
@@ -506,16 +450,12 @@ export interface Transform {
     k: number;
 }
 
-export interface Workflow {
-    id: string;
+export interface Workflow extends TerariumAsset {
     name: string;
     description: string;
     transform: Transform;
     nodes: any;
     edges: any;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
 }
 
 export interface WorkflowEdge {

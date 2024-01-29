@@ -172,7 +172,8 @@ public class TDSCodeController {
 			@RequestBody Code code) {
 
 		try {
-			final Optional<Code> updated = codeService.updateCode(code.setId(codeId));
+			code.setId(codeId);
+			final Optional<Code> updated = codeService.updateCode(code);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

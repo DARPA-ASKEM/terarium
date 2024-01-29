@@ -153,7 +153,8 @@ public class EquationController {
 			@RequestBody Equation equation) {
 
 		try {
-			final Optional<Equation> updated = equationService.updateEquation(equation.setId(id));
+			equation.setId(id);
+			final Optional<Equation> updated = equationService.updateEquation(equation);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
