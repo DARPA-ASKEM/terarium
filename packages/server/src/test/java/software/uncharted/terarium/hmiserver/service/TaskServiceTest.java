@@ -34,11 +34,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	public void testItCanCreateEchoTaskRequest() throws Exception {
 
 		UUID taskId = UUID.randomUUID();
+		String additionalProps = "These are additional properties";
 
 		String jsonString = "{\"input\":\"This is my input string\"}";
 		JsonNode jsonNode = mapper.readTree(jsonString);
 
-		BlockingQueue<TaskResponse> responseQueue = taskService.createEchoTask(taskId, jsonNode);
+		BlockingQueue<TaskResponse> responseQueue = taskService.createEchoTask(taskId, jsonNode, additionalProps);
 
 		List<TaskResponse> responses = new ArrayList<>();
 		while (true) {
@@ -58,6 +59,11 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
 		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(2).getStatus());
+
+		for (TaskResponse resp : responses) {
+			Assertions.assertEquals(taskId, resp.getId());
+			Assertions.assertEquals(additionalProps, resp.getAdditionalProperties(String.class));
+		}
 	}
 
 }

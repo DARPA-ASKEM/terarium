@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
+import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
 import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 import software.uncharted.terarium.taskrunner.util.ScopedLock;
 import software.uncharted.terarium.taskrunner.util.TimeFormatter;
@@ -32,7 +33,7 @@ import software.uncharted.terarium.taskrunner.util.TimeFormatter;
 @Slf4j
 public class Task {
 
-	private UUID id;
+	private TaskRequest req;
 	private ObjectMapper mapper;
 	private ProcessBuilder processBuilder;
 	private Process process;
@@ -41,9 +42,7 @@ public class Task {
 	private String outputPipeName;
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
-	private String script;
 	private int NUM_THREADS = 8;
-	private Object additionalProperties;
 	ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
@@ -51,11 +50,9 @@ public class Task {
 	public Task(TaskRequest req) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
 
-		this.id = req.getId();
-		this.script = req.getScript();
-		this.additionalProperties = req.getAdditionalProperties();
-		inputPipeName = "/tmp/input-" + id;
-		outputPipeName = "/tmp/output-" + id;
+		this.req = req;
+		inputPipeName = "/tmp/input-" + req.getId();
+		outputPipeName = "/tmp/output-" + req.getId();
 
 		try {
 			setup();
@@ -65,8 +62,16 @@ public class Task {
 		}
 	}
 
+	public UUID getId() {
+		return req.getId();
+	}
+
+	public TaskResponse createResponse(TaskStatus status) {
+		return req.createResponse(status);
+	}
+
 	private String getExtension(String input) {
-		int i = script.lastIndexOf('.');
+		int i = input.lastIndexOf('.');
 		if (i > 0) {
 			return input.substring(i + 1);
 		}
@@ -74,23 +79,25 @@ public class Task {
 	}
 
 	private void setup() throws IOException, InterruptedException {
-		if (getExtension(script).equals("py")) {
+		if (getExtension(req.getScript()).equals("py")) {
 			// raw python file, execute it through the runtime
-			boolean fileExists = Files.exists(Paths.get(script));
+			boolean fileExists = Files.exists(Paths.get(req.getScript()));
 			if (!fileExists) {
-				throw new FileNotFoundException("Script file: " + script + " not found");
+				throw new FileNotFoundException("Script file: " + req.getScript() + " not found");
 			}
-			processBuilder = new ProcessBuilder("python", script, "--id", id.toString(), "--input_pipe",
+			processBuilder = new ProcessBuilder("python", req.getScript(), "--id", req.getId().toString(),
+					"--input_pipe",
 					inputPipeName,
 					"--output_pipe", outputPipeName);
 		} else {
 			// executable command, execute it directly
-			processBuilder = new ProcessBuilder(script, "--id", id.toString(), "--input_pipe",
+			processBuilder = new ProcessBuilder(req.getScript(), "--id", req.getId().toString(),
+					"--input_pipe",
 					inputPipeName,
 					"--output_pipe", outputPipeName);
 		}
 
-		log.debug("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, id);
+		log.debug("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, req.getId());
 
 		// Create the named pipes
 		Process inputPipe = new ProcessBuilder("mkfifo", inputPipeName).start();
@@ -108,15 +115,15 @@ public class Task {
 
 	public void writeInputWithTimeout(byte[] bytes, int timeoutMinutes)
 			throws IOException, InterruptedException, TimeoutException {
-		log.debug("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, id);
+		log.debug("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, req.getId());
 
 		CompletableFuture<Void> future = new CompletableFuture<>();
 		new Thread(() -> {
 			try {
 				// Write to the named pipe in a separate thread
-				log.debug("Opening input pipe: {} for task: {}", inputPipeName, id);
+				log.debug("Opening input pipe: {} for task: {}", inputPipeName, req.getId());
 				try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
-					log.debug("Writing to input pipe: {} for task: {}", inputPipeName, id);
+					log.debug("Writing to input pipe: {} for task: {}", inputPipeName, req.getId());
 					fos.write(bytes);
 				}
 				future.complete(null);
@@ -132,7 +139,7 @@ public class Task {
 			throw new RuntimeException("Error while writing to pipe", e);
 		} catch (TimeoutException e) {
 			future.cancel(true);
-			throw new TimeoutException("Writing to pipe took too long for task " + id);
+			throw new TimeoutException("Writing to pipe took too long for task " + req.getId());
 		}
 
 		if (result == null) {
@@ -142,22 +149,22 @@ public class Task {
 		if (result instanceof Integer) {
 			// process has exited early
 			if (getStatus() == TaskStatus.CANCELLED) {
-				throw new InterruptedException("Process for task " + id + " has been cancelled");
+				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
-			throw new InterruptedException("Process for task " + id + " exited early with code " + result);
+			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
 		}
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
 	}
 
 	public byte[] readOutputWithTimeout(int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		log.debug("Dispatching read thread for input pipe: {} for task: {}", outputPipeName, id);
+		log.debug("Dispatching read thread for input pipe: {} for task: {}", outputPipeName, req.getId());
 
 		CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
-			log.debug("Opening output pipe: {} for task: {}", outputPipeName, id);
+			log.debug("Opening output pipe: {} for task: {}", outputPipeName, req.getId());
 			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputPipeName))) {
-				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, id);
+				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, req.getId());
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				byte[] buffer = new byte[1024]; // buffer size
 				int bytesRead;
@@ -171,7 +178,7 @@ public class Task {
 
 			try (BufferedReader reader = new BufferedReader(
 					new InputStreamReader(new FileInputStream(outputPipeName)))) {
-				log.debug("Reading on output pipe: {} for task {}", outputPipeName, id);
+				log.debug("Reading on output pipe: {} for task {}", outputPipeName, req.getId());
 				future.complete(reader.readLine().getBytes());
 			} catch (IOException e) {
 				future.completeExceptionally(e);
@@ -183,11 +190,11 @@ public class Task {
 			result = CompletableFuture.anyOf(future, processFuture).get(timeoutMinutes, TimeUnit.MINUTES);
 		} catch (TimeoutException e) {
 			future.cancel(true);
-			throw new TimeoutException("Reading from pipe took too long for task " + id);
+			throw new TimeoutException("Reading from pipe took too long for task " + req.getId());
 		}
 
 		if (result == null) {
-			throw new RuntimeException("Unexpected null result for task " + id);
+			throw new RuntimeException("Unexpected null result for task " + req.getId());
 		}
 
 		if (result instanceof byte[]) {
@@ -197,9 +204,9 @@ public class Task {
 		if (result instanceof Integer) {
 			// process has exited early
 			if (getStatus() == TaskStatus.CANCELLED) {
-				throw new InterruptedException("Process for task " + id + " has been cancelled");
+				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
-			throw new InterruptedException("Process for task " + id + " exited early with code " + result);
+			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
 		}
 
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
@@ -231,17 +238,17 @@ public class Task {
 		try {
 			if (status == TaskStatus.CANCELLED) {
 				// don't run if we already cancelled
-				throw new InterruptedException("Task " + id + "has already been cancelled");
+				throw new InterruptedException("Task " + req.getId() + "has already been cancelled");
 			}
 
 			if (status != TaskStatus.QUEUED) {
 				// has to be in a queued state to be valid to run
-				throw new RuntimeException("Task " + id + " has already been started");
+				throw new RuntimeException("Task " + req.getId() + " has already been started");
 			}
 
 			status = TaskStatus.RUNNING;
 
-			log.info("Starting task {} running {}", id, script);
+			log.info("Starting task {} running {}", req.getId(), req.getScript());
 			process = processBuilder.start();
 
 			// Add a shutdown hook to kill the process if the JVM exits
@@ -255,7 +262,7 @@ public class Task {
 				try {
 					log.debug("Begin waiting for process to exit for task {}");
 					int exitCode = process.waitFor();
-					log.info("Process exited with code {} for task {}", exitCode, id);
+					log.info("Process exited with code {} for task {}", exitCode, req.getId());
 					lock.lock(() -> {
 						if (exitCode != 0) {
 							if (status == TaskStatus.CANCELLING) {
@@ -267,10 +274,10 @@ public class Task {
 							status = TaskStatus.SUCCESS;
 						}
 					});
-					log.debug("Finalized process status for task {}", exitCode, id);
+					log.debug("Finalized process status for task {}", exitCode, req.getId());
 					processFuture.complete(exitCode);
 				} catch (InterruptedException e) {
-					log.warn("Process failed to exit cleanly for task {}: {}", id, e);
+					log.warn("Process failed to exit cleanly for task {}: {}", req.getId(), e);
 					lock.lock(() -> {
 						status = TaskStatus.FAILED;
 					});
@@ -285,10 +292,10 @@ public class Task {
 				try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 					String line;
 					while ((line = reader.readLine()) != null) {
-						log.info("[{}] stdout: {}", id, line);
+						log.info("[{}] stdout: {}", req.getId(), line);
 					}
 				} catch (IOException e) {
-					log.warn("Error occured while logging stdout for task {}: {}", id,
+					log.warn("Error occured while logging stdout for task {}: {}", req.getId(),
 							getStatus());
 				}
 			}).start();
@@ -297,10 +304,10 @@ public class Task {
 				try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
 					String line;
 					while ((line = reader.readLine()) != null) {
-						log.warn("[{}] stderr: {}", id, line);
+						log.warn("[{}] stderr: {}", req.getId(), line);
 					}
 				} catch (IOException e) {
-					log.warn("Error occured while logging stderr for task {}: {}", id, getStatus());
+					log.warn("Error occured while logging stderr for task {}: {}", req.getId(), getStatus());
 				}
 			}).start();
 
@@ -332,7 +339,7 @@ public class Task {
 		return lock.lock(() -> {
 			if (status == TaskStatus.QUEUED) {
 				// if we havaen't started yet, flag it as cancelled
-				log.debug("Cancelled task {} before starting it", id);
+				log.debug("Cancelled task {} before starting it", req.getId());
 				status = TaskStatus.CANCELLED;
 				return false;
 			}
@@ -356,20 +363,20 @@ public class Task {
 		long start = System.currentTimeMillis();
 
 		if (process == null) {
-			throw new RuntimeException("Process is null for task: " + id);
+			throw new RuntimeException("Process is null for task: " + req.getId());
 		}
 
 		// try to kill cleanly
-		log.info("Cancelling task {}", id);
+		log.info("Cancelling task {}", req.getId());
 		process.destroy();
 
 		try {
 			processFuture.get(PROCESS_KILL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-			log.info("Process successfully cancelled in: {} for task {}", id,
-					TimeFormatter.format(System.currentTimeMillis() - start), id);
+			log.info("Process successfully cancelled in: {} for task {}", req.getId(),
+					TimeFormatter.format(System.currentTimeMillis() - start), req.getId());
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			log.warn("Error while waiting for task {} process to exit cleanly in {}, sending SIGKILL", id,
+			log.warn("Error while waiting for task {} process to exit cleanly in {}, sending SIGKILL", req.getId(),
 					TimeFormatter.format(System.currentTimeMillis() - start));
 			// kill the process forcibly (SIGKILL)
 			process.destroyForcibly();

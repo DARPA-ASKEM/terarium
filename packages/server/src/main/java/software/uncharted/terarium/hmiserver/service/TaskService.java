@@ -190,7 +190,7 @@ public class TaskService {
 		}
 	}
 
-	public BlockingQueue<TaskResponse> createEchoTask(UUID taskId, JsonNode input)
+	public BlockingQueue<TaskResponse> createEchoTask(UUID taskId, JsonNode input, Object additionalProperties)
 			throws JsonProcessingException, IOException, InterruptedException {
 
 		BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(64);
@@ -202,17 +202,12 @@ public class TaskService {
 		req.setId(taskId);
 		req.setScript("/echo.py");
 		req.setInput(bytes);
-
-		String additionalStuff = "Test additional props";
-		req.setAdditionalProperties(additionalStuff);
+		req.setAdditionalProperties(additionalProperties);
 
 		// send the request
 		sendTaskRequest(req);
 
-		TaskResponse resp = new TaskResponse();
-		resp.setId(req.getId());
-		resp.setStatus(TaskStatus.QUEUED);
-
+		TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 		queue.put(resp);
 
 		return queue;

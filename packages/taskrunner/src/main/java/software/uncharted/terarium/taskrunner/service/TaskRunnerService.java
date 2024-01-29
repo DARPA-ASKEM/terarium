@@ -109,11 +109,7 @@ public class TaskRunnerService {
 			boolean wasCancelled = checkForCancellation(req);
 			if (wasCancelled) {
 				// send cancellation response and return
-				TaskResponse resp = new TaskResponse();
-				resp.setId(req.getId());
-				resp.setScript(req.getScript());
-				resp.setStatus(TaskStatus.CANCELLED);
-				resp.setAdditionalProperties(req.getAdditionalProperties());
+				TaskResponse resp = req.createResponse(TaskStatus.CANCELLED);
 				String cancelJson = mapper.writeValueAsString(resp);
 				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", cancelJson);
 				return;
@@ -128,11 +124,7 @@ public class TaskRunnerService {
 			log.error("Unable to setup task", e);
 
 			// send failure and return
-			TaskResponse failedResp = new TaskResponse();
-			failedResp.setId(req.getId());
-			failedResp.setScript(req.getScript());
-			failedResp.setStatus(TaskStatus.FAILED);
-			failedResp.setAdditionalProperties(req.getAdditionalProperties());
+			TaskResponse failedResp = req.createResponse(TaskStatus.FAILED);
 			String failedJson = mapper.writeValueAsString(failedResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
 			return;
@@ -146,11 +138,7 @@ public class TaskRunnerService {
 			task.start();
 
 			// send that we have started the task
-			TaskResponse runningResp = new TaskResponse();
-			runningResp.setId(task.getId());
-			runningResp.setScript(req.getScript());
-			runningResp.setStatus(TaskStatus.RUNNING);
-			runningResp.setAdditionalProperties(req.getAdditionalProperties());
+			TaskResponse runningResp = req.createResponse(TaskStatus.RUNNING);
 
 			String runningJson = mapper.writeValueAsString(runningResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", runningJson);
@@ -164,12 +152,8 @@ public class TaskRunnerService {
 			// wait for the process to finish
 			task.waitFor(req.getTimeoutMinutes());
 
-			TaskResponse successResp = new TaskResponse();
-			successResp.setId(task.getId());
-			successResp.setScript(req.getScript());
-			successResp.setStatus(TaskStatus.SUCCESS);
+			TaskResponse successResp = req.createResponse(TaskStatus.SUCCESS);
 			successResp.setOutput(output);
-			successResp.setAdditionalProperties(req.getAdditionalProperties());
 			String successJson = mapper.writeValueAsString(successResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", successJson);
 
@@ -181,11 +165,8 @@ public class TaskRunnerService {
 				log.error("Unexpected failure for task {}: {}", task.getId(), e);
 			}
 
-			TaskResponse failedResp = new TaskResponse();
-			failedResp.setId(task.getId());
-			failedResp.setScript(req.getScript());
-			failedResp.setStatus(task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
-			failedResp.setAdditionalProperties(req.getAdditionalProperties());
+			TaskResponse failedResp = req.createResponse(
+					task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
 			String failedJson = mapper.writeValueAsString(failedResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
 		} finally {
@@ -223,11 +204,7 @@ public class TaskRunnerService {
 				log.info("Received cancellation for task {}", task.getId());
 				if (task.flagAsCancelling()) {
 					// send that we are cancelling
-					TaskResponse resp = new TaskResponse();
-					resp.setId(task.getId());
-					resp.setScript(task.getScript());
-					resp.setStatus(TaskStatus.CANCELLING);
-					resp.setAdditionalProperties(task.getAdditionalProperties());
+					TaskResponse resp = task.createResponse(TaskStatus.CANCELLING);
 					String cancelJson = mapper.writeValueAsString(resp);
 					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", cancelJson);
 

@@ -16,4 +16,12 @@ public class TaskRequest implements Serializable {
 	private byte[] input;
 	private int timeoutMinutes = 30;
 	private Object additionalProperties;
+
+	public TaskResponse createResponse(TaskStatus status) {
+		return new TaskResponse()
+				.setId(id)
+				.setStatus(status)
+				.setScript(script)
+				.setAdditionalProperties(additionalProperties);
+	}
 }

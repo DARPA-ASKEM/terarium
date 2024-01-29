@@ -116,9 +116,7 @@ public class GoLLMController {
 			return ResponseEntity.badRequest().build();
 		}
 
-		TaskResponse resp = new TaskResponse();
-		resp.setId(req.getId());
-		resp.setStatus(TaskStatus.QUEUED);
+		TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 		return ResponseEntity.ok().body(resp);
 	}
 
