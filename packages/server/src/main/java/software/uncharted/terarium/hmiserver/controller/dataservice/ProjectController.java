@@ -607,6 +607,39 @@ public class ProjectController {
 		}
 	}
 
+	@Operation(summary = "Toggle a project public, or restricted, by ID")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Project visibility has been updated", content = {
+			@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
+		@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+		@ApiResponse(responseCode = "304", description = "The current user does not have delete privileges to this project", content = @Content),
+		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
+	@PutMapping("/{id}/{isPublic}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> makeProjectPublic(
+		@PathVariable("id") final UUID id,
+		@PathVariable("isPublic") final boolean isPublic
+	) {
+		try {
+			// Fetch the project and set/unset it to the public group
+			final RebacProject project = new RebacProject(id, reBACService);
+			final RebacUser user = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+			final String relationship = null;
+			if (user.canAdministrate(project)) {
+				if (isPublic) {
+					return setProjectPermissions(project, who, relationship);
+				} else {
+					return removeProjectPermissions(project, who, relationship);
+				}
+			} else {
+				// Else let the user know they cannot do so.
+			}
+		} catch (final Exception e) {
+			// log error when ready to do so.
+		}
+	}
+
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
