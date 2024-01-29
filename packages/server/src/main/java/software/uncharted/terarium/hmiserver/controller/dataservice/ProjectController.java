@@ -275,8 +275,8 @@ public class ProjectController {
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(id, reBACService))) {
-
-				final Optional<Project> updatedProject = projectService.updateProject(project.setId(id));
+				project.setId(id);
+				final Optional<Project> updatedProject = projectService.updateProject(project);
 				if (updatedProject.isEmpty()) {
 					return ResponseEntity.notFound().build();
 				}

@@ -75,7 +75,12 @@ export function useProjects() {
 	 * @param {Project['id']} [projectId] Id of the project to add the asset to.
 	 * @returns {Promise<string|null>} Id of the added asset, if successful. Null, otherwise.
 	 */
-	async function addAsset(assetType: string, assetId: string, projectId?: Project['id']) {
+	async function addAsset(
+		assetType: string,
+		assetId: ProjectAsset['id'],
+		projectId?: Project['id']
+	): Promise<ProjectAsset['id']> {
+		if (!assetId) return undefined;
 		const newAssetId = await ProjectService.addAsset(
 			projectId ?? activeProjectId.value,
 			assetType,

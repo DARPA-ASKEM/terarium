@@ -125,8 +125,9 @@ public class ModelConfigurationController {
 			@RequestBody ModelConfiguration config) {
 
 		try {
+			config.setId(id);
 			final Optional<ModelConfiguration> updated = modelConfigurationService
-					.updateModelConfiguration(config.setId(id));
+					.updateModelConfiguration(config);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

@@ -156,8 +156,9 @@ public class ExternalPublicationController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final ExternalPublication publication) {
 		try {
+			publication.setId(id);
 			final Optional<ExternalPublication> updated = externalPublicationService
-					.updateExternalPublication(publication.setId(id));
+					.updateExternalPublication(publication);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
