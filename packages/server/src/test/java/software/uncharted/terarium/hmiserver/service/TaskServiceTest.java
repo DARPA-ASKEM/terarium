@@ -35,7 +35,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		UUID taskId = UUID.randomUUID();
 
-		String jsonString = "{\"input\": \"This is my input string\"}";
+		String jsonString = "{\"input\":\"This is my input string\"}";
 		JsonNode jsonNode = mapper.readTree(jsonString);
 
 		BlockingQueue<TaskResponse> responseQueue = taskService.createEchoTask(taskId, jsonNode);

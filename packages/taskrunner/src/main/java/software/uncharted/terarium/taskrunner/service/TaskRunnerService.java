@@ -43,6 +43,9 @@ public class TaskRunnerService {
 	@Value("${terarium.taskrunner.request-queue}")
 	public String TASK_RUNNER_REQUEST_QUEUE;
 
+	@Value("${terarium.taskrunner.response-exchange}")
+	public String TASK_RUNNER_RESPONSE_EXCHANGE;
+
 	@Value("${terarium.taskrunner.response-queue}")
 	public String TASK_RUNNER_RESPONSE_QUEUE;
 
@@ -70,12 +73,10 @@ public class TaskRunnerService {
 
 	public void declareQueues() {
 		declareQueue(TASK_RUNNER_REQUEST_QUEUE);
-		declareQueue(TASK_RUNNER_RESPONSE_QUEUE);
 	}
 
 	public void destroyQueues() {
 		rabbitAdmin.deleteQueue(TASK_RUNNER_REQUEST_QUEUE);
-		rabbitAdmin.deleteQueue(TASK_RUNNER_RESPONSE_QUEUE);
 	}
 
 	@PostConstruct
@@ -114,7 +115,7 @@ public class TaskRunnerService {
 				resp.setStatus(TaskStatus.CANCELLED);
 				resp.setAdditionalProperties(req.getAdditionalProperties());
 				String cancelJson = mapper.writeValueAsString(resp);
-				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, cancelJson);
+				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", cancelJson);
 				return;
 			}
 
@@ -133,7 +134,7 @@ public class TaskRunnerService {
 			failedResp.setStatus(TaskStatus.FAILED);
 			failedResp.setAdditionalProperties(req.getAdditionalProperties());
 			String failedJson = mapper.writeValueAsString(failedResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, failedJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
 			return;
 		}
 
@@ -152,7 +153,7 @@ public class TaskRunnerService {
 			runningResp.setAdditionalProperties(req.getAdditionalProperties());
 
 			String runningJson = mapper.writeValueAsString(runningResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, runningJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", runningJson);
 
 			// write the input to the task
 			task.writeInputWithTimeout(req.getInput(), req.getTimeoutMinutes());
@@ -170,7 +171,7 @@ public class TaskRunnerService {
 			successResp.setOutput(output);
 			successResp.setAdditionalProperties(req.getAdditionalProperties());
 			String successJson = mapper.writeValueAsString(successResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, successJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", successJson);
 
 		} catch (Exception e) {
 			if (task.getStatus() == TaskStatus.FAILED) {
@@ -186,7 +187,7 @@ public class TaskRunnerService {
 			failedResp.setStatus(task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
 			failedResp.setAdditionalProperties(req.getAdditionalProperties());
 			String failedJson = mapper.writeValueAsString(failedResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, failedJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
 		} finally {
 			cancellationConsumer.stop();
 			task.cleanup();
@@ -228,7 +229,7 @@ public class TaskRunnerService {
 					resp.setStatus(TaskStatus.CANCELLING);
 					resp.setAdditionalProperties(task.getAdditionalProperties());
 					String cancelJson = mapper.writeValueAsString(resp);
-					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_QUEUE, cancelJson);
+					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", cancelJson);
 
 					// then cancel
 					task.cancel();

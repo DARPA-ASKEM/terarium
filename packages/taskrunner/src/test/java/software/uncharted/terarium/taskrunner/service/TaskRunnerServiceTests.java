@@ -55,6 +55,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	public void setup() {
 		taskRunnerService.destroyQueues();
 		taskRunnerService.declareQueues();
+		taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
+				taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE,
+				taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE, "");
 	}
 
 	@AfterEach
@@ -93,6 +96,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				rabbitTemplate.getConnectionFactory());
 		container.setQueueNames(taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
+			log.info("DID WE GET SOMETHING?");
 			try {
 				TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
 				queue.put(resp);

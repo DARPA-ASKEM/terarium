@@ -7,6 +7,8 @@ COPY ./packages/taskrunner .
 
 RUN ./gradlew bootJar
 
+# ------------------------------------------------------------------------------
+
 # Set up the Python image with JRE
 FROM python:3.10-slim
 

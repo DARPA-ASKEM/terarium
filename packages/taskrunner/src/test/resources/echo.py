@@ -44,8 +44,6 @@ def signal_handler(sig, frame):
 	sys.exit(1)
 
 def main():
-	print("Task unknown : started", flush=True)
-
 	signal.signal(signal.SIGINT, signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)
 

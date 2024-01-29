@@ -5,10 +5,14 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,6 +22,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -115,5 +120,17 @@ public class GoLLMController {
 		resp.setId(req.getId());
 		resp.setStatus(TaskStatus.QUEUED);
 		return ResponseEntity.ok().body(resp);
+	}
+
+	@PutMapping("/{task-id}")
+	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
+		taskService.cancelTask(taskId);
+		return ResponseEntity.ok().build();
+	}
+
+	@GetMapping("/{task-id}")
+	@IgnoreRequestLogging
+	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
+		return taskService.subscribe(taskId);
 	}
 }
