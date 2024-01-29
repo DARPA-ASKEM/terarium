@@ -176,6 +176,19 @@ async function get(projectId: Project['id']): Promise<Project | null> {
 	}
 }
 
+async function setAccessibility(projectId: Project['id'], isPublic: boolean) {
+	try {
+		const { status, data } = await API.put(`projects/${projectId}/${isPublic}`);
+		if (status !== 200) {
+			return null;
+		}
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
 async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 	try {
 		const { status, data } = await API.get(`projects/${projectId}/permissions`);
@@ -269,6 +282,7 @@ export {
 	deleteAsset,
 	getAssetIcon,
 	getPublicationAssets,
+	setAccessibility,
 	getPermissions,
 	setPermissions,
 	removePermissions,

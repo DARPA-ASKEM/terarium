@@ -171,6 +171,10 @@ export function useProjects() {
 		return removed;
 	}
 
+	async function setAccessibility(projectId: Project['id'], isPublic: boolean) {
+		return ProjectService.setAccessibility(projectId, isPublic);
+	}
+
 	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 		return ProjectService.getPermissions(projectId);
 	}
@@ -236,6 +240,7 @@ export function useProjects() {
 		update,
 		remove,
 		refresh,
+		setAccessibility,
 		getPermissions,
 		setPermissions,
 		removePermissions,

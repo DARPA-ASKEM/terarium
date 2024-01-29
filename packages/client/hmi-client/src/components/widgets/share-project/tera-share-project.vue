@@ -63,7 +63,6 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
 import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import { watch, ref, computed } from 'vue';
@@ -112,11 +111,8 @@ const generalAccessCaption = computed(() => {
 });
 
 async function changeAccessibility({ label }: { label: Accessibility }) {
-	console.log(props.project);
-	const updatedProject = cloneDeep(props.project);
-	updatedProject.publicProject = label === Accessibility.Public;
 	isUpdatingAccessibility.value = true;
-	await useProjects().update(updatedProject);
+	await useProjects().setAccessibility(props.project.id, label === Accessibility.Public);
 	isUpdatingAccessibility.value = false;
 }
 
