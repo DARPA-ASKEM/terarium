@@ -19,10 +19,6 @@ import InputText from 'primevue/inputtext';
 import { ref, onUnmounted, onMounted } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import { Model } from '@/types/Types';
-// createMessageId, JupyterMessage, newSession
-// import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
-// import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-// import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 
 const props = defineProps<{
 	amr: Model | null;
@@ -55,56 +51,6 @@ const submitQuery = async () => {
 		});
 };
 
-// const updateKernelStatus = (statusString: string) => {
-// 	kernelStatus.value = statusString;
-// };
-
-// const iopubMessageHandler = (_session, message) => {
-// 	console.log(message);
-// 	if (message.header.msg_type === 'status') {
-// 		console.log("msg type = status");
-// 		const newState: KernelState = KernelState[KernelState[message.content.execution_state]];
-// 		updateKernelStatus(KernelState[newState]);
-// 		return;
-// 	}
-// 	console.log("Else in handler");
-// 	// newJupyterMessage(message);
-// };
-
-// const submitQuery = async () => {
-// 	console.log("Submit query:");
-// 	// Should have this on mount and use Suspense
-// 	// const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
-// 	console.log(jupyterSession);
-// 	console.log(queryString.value);
-// 	if (jupyterSession && queryString.value !== undefined) {
-// 		console.log("Within If");
-
-// 		const kernel = jupyterSession.session?.kernel as IKernelConnection;
-
-// 		if (kernel === undefined || kernel === null) {
-// 			console.log("No kernel, returning early:");
-// 			return;
-// 		}
-// 		updateKernelStatus(KernelState.busy);
-// 		const msgId = createMessageId('mira_model_edit');
-// 		const message: JupyterMessage = createMessage({
-// 			session: jupyterSession.session?.name || '',
-// 			channel: 'shell',
-// 			content: { context: context, request: queryString.value },
-// 			msgType: 'llm_request',
-// 			msgId
-// 		});
-// 		kernel.sendJupyterMessage(message);
-// 		jupyterSession.iopubMessage.connect(iopubMessageHandler);
-// 		console.log(kernel);
-// 		console.log(jupyterSession);
-// 		// newJupyterMessage(message);
-// 		// isExecutingCode.value = true;
-// 		queryString.value = '';
-// 	}
-// };
-
 onMounted(async () => {
 	const context = {
 		context: 'mira_model_edit',
@@ -114,13 +60,11 @@ onMounted(async () => {
 		}
 	};
 
-	// jupyterSession.value = await newSession('beaker_kernel', 'Beaker Kernel');
 	await manager.init('beaker_kernel', 'Beaker Kernel', context);
 	console.log('Done init');
 });
 
 onUnmounted(() => {
-	// jupyterSession.value.shutdown();
 	manager.shutdown();
 });
 </script>
