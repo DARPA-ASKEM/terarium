@@ -170,7 +170,7 @@ const openNewAsset = (assetType: AssetType) => {
 		case AssetType.Code:
 			openAsset({
 				pageType: AssetType.Code,
-				assetId: 'code' // FIXME: hack to get around weird tab behaviour,
+				assetId: AssetType.Code // FIXME: hack to get around weird tab behaviour,
 			});
 			break;
 		default:

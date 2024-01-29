@@ -2,31 +2,24 @@ package software.uncharted.terarium.hmiserver.models.dataservice.externalpublica
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ExternalPublication implements Serializable {
+public class ExternalPublication extends TerariumAsset implements Serializable {
 
 	@Serial
 	private static final long serialVersionUID = -1717000256225044631L;
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id;
+
 
 	@JsonProperty("xdd_uri")
 	private String xddUri;
@@ -34,15 +27,4 @@ public class ExternalPublication implements Serializable {
 	@Schema(defaultValue = "Article title")
 	private String title;
 
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp createdOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp updatedOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp deletedOn;
 }

@@ -167,18 +167,16 @@ import { cloneDeep, isArray, isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
-
-import {
+import type { Position } from '@/types/common';
+import type {
 	Operation,
-	Position,
 	Workflow,
-	WorkflowDirection,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowOutput,
 	WorkflowPort,
-	WorkflowPortStatus
+	WorkflowOutput
 } from '@/types/workflow';
+import { WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';

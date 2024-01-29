@@ -10,7 +10,15 @@
 						:options="programmingLanguages"
 						@change="setKernelContext"
 					/>
-					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" disabled />
+					<Button
+						label="Add code block"
+						icon="pi pi-plus"
+						text
+						@click="addCodeBlock"
+						:disabled="
+							clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
+						"
+					/>
 				</header>
 				<tera-operator-placeholder
 					v-if="allCodeBlocks.length === 0"
@@ -25,7 +33,7 @@
 						:key="i"
 						:is-editable="asset.type !== CodeBlockType.INPUT"
 						:is-deletable="asset.type !== CodeBlockType.INPUT"
-						@delete="removeCodeBlock(i)"
+						@delete="removeCodeBlock(i - inputCodeBlocks.length)"
 						:is-included="allCodeBlocks[i].includeInProcess"
 						@update:is-included="
 							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
@@ -82,7 +90,7 @@
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
-						<span>Decapodes created: {{ selectedModel?.id }}</span>
+						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
 					</template>
 				</section>
 				<tera-operator-placeholder
@@ -122,8 +130,8 @@ import { VAceEditor } from 'vue3-ace-editor';
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
-import type { Model } from '@/types/Types';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
+import type { Code, Model } from '@/types/Types';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -136,9 +144,10 @@ import { useProjects } from '@/composables/project';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getCodeAsset } from '@/services/code';
-import { codeToAMR } from '@/services/knowledge';
+import { codeBlocksToAmr } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
+import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -170,10 +179,22 @@ const selectedModel = ref<Model | null>(null);
 
 const inputCodeBlocks = ref<AssetBlock<CodeBlock>[]>([]);
 
-const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => [
-	...inputCodeBlocks.value,
-	...clonedState.value.codeBlocks
-]);
+const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => {
+	const blocks: AssetBlock<CodeBlock>[] = [];
+
+	blocks.push(...inputCodeBlocks.value);
+	if (
+		clonedState.value.modelFramework === ModelFramework.Decapodes &&
+		!isEmpty(clonedState.value.codeBlocks)
+	) {
+		// show only first added code block if Decapodes
+		if (isEmpty(inputCodeBlocks.value)) blocks.push(clonedState.value.codeBlocks[0]);
+	} else {
+		blocks.push(...clonedState.value.codeBlocks);
+	}
+
+	return blocks;
+});
 
 const savingAsset = ref(false);
 
@@ -276,12 +297,27 @@ async function handleCode() {
 	isProcessing.value = true;
 
 	if (clonedState.value.modelFramework === ModelFramework.Petrinet) {
-		const modelId = await codeToAMR(
-			props.node.inputs[0].value?.[0],
-			'temp model',
-			'temp model description',
-			true
-		);
+		const codeContent = allCodeBlocks.value
+			.filter((block) => block.includeInProcess)
+			.reduce((acc, block) => `${acc}${block.asset.codeContent}\n`, '');
+		const file = new File([codeContent], 'tempFile');
+		const newCode: Code = {
+			name: 'tempCode',
+			description: 'tempDescription',
+			files: {
+				tempFile: {
+					language: clonedState.value.codeLanguage,
+					dynamics: {
+						name: 'dynamic',
+						description: 'dynamic description',
+						block: []
+					}
+				}
+			}
+		};
+
+		const modelId = await codeBlocksToAmr(newCode, file);
+
 		clonedState.value.modelId = modelId;
 		emit('append-output-port', {
 			label: `Output - ${props.node.outputs.length + 1}`,
@@ -344,9 +380,9 @@ async function handleDecapodesPreview(data: any) {
 	};
 
 	const response = await createModel(amr);
-	if (response) {
+	if (response && response.id) {
 		const m = await getModel(response.id);
-		if (m) {
+		if (m && m.id) {
 			clonedState.value.modelId = m.id;
 			emit('append-output-port', {
 				label: `Output - ${props.node.outputs.length + 1}`,
