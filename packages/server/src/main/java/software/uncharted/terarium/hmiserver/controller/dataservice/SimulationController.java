@@ -112,6 +112,7 @@ public class SimulationController {
 	@Operation(summary = "Update a simulation by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Simulation updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the simulation", content = @Content)
 	})
 	public ResponseEntity<Simulation> updateSimulation(@PathVariable("id") final UUID id,
