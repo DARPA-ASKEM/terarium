@@ -33,9 +33,10 @@
 			<section>
 				<h6>General access</h6>
 				<Dropdown
-					v-model="generalAccess"
+					:model-value="generalAccess"
 					:options="generalAccessOptions"
-					class="p-dropdown-sm"
+					class="p-dropdown-sm accessibility"
+					:loading="isUpdatingAccessibility"
 					@update:model-value="changeAccessibility"
 				>
 					<template #value="slotProps">
@@ -95,9 +96,14 @@ const generalAccessOptions = ref([
 	{ label: Accessibility.Restricted, icon: 'pi pi-lock' },
 	{ label: Accessibility.Public, icon: 'pi pi-users' }
 ]);
-const generalAccess = ref(
-	props.project.publicProject ? generalAccessOptions.value[1] : generalAccessOptions.value[0]
-);
+const isUpdatingAccessibility = ref(false);
+const generalAccess = computed(() => {
+	if (isUpdatingAccessibility.value) return { label: 'Loading...' };
+
+	return props.project.publicProject
+		? generalAccessOptions.value[1]
+		: generalAccessOptions.value[0];
+});
 const generalAccessCaption = computed(() => {
 	if (generalAccess.value.label === Accessibility.Restricted) {
 		return 'Only people with access can view, edit, and copy this project.';
@@ -109,7 +115,9 @@ async function changeAccessibility({ label }: { label: Accessibility }) {
 	console.log(props.project);
 	const updatedProject = cloneDeep(props.project);
 	updatedProject.publicProject = label === Accessibility.Public;
+	isUpdatingAccessibility.value = true;
 	await useProjects().update(updatedProject);
+	isUpdatingAccessibility.value = false;
 }
 
 function addExistingUser(id: string, relationship?: string) {
@@ -222,6 +230,10 @@ section > section {
 
 h6 {
 	margin-bottom: 0.5rem;
+}
+
+.accessibility {
+	width: 10rem;
 }
 
 .selected-users {
