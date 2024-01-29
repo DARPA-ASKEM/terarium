@@ -10,7 +10,8 @@ import {
 	Model,
 	ProvenanceQueryParam,
 	ProvenanceSearchResult,
-	ProvenanceType
+	ProvenanceType,
+	TerariumAsset
 } from '@/types/Types';
 import { ResultType } from '@/types/common';
 import { getBulkDatasets } from './dataset';
@@ -94,7 +95,7 @@ async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<Docum
  * @return AssetType[]|null - the list of all artifacts, or null if none returned by API
  */
 async function getRelatedArtifacts(
-	id: string | undefined,
+	id: TerariumAsset['id'],
 	rootType: ProvenanceType,
 	types: ProvenanceType[] = Object.values(ProvenanceType)
 ): Promise<ResultType[]> {

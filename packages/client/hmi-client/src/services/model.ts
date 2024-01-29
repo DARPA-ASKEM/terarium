@@ -61,9 +61,7 @@ export async function updateModel(model: Model) {
 	return response?.data ?? null;
 }
 
-export async function getModelConfigurations(
-	modelId: string | undefined
-): Promise<ModelConfiguration[]> {
+export async function getModelConfigurations(modelId: Model['id']): Promise<ModelConfiguration[]> {
 	const response = await API.get(`/models/${modelId}/model-configurations`);
 	return response?.data ?? ([] as ModelConfiguration[]);
 }

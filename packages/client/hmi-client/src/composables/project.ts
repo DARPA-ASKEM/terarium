@@ -77,9 +77,10 @@ export function useProjects() {
 	 */
 	async function addAsset(
 		assetType: string,
-		assetId: string | undefined,
+		assetId: ProjectAsset['id'],
 		projectId?: Project['id']
-	) {
+	): Promise<ProjectAsset['id']> {
+		if (!assetId) return undefined;
 		const newAssetId = await ProjectService.addAsset(
 			projectId ?? activeProjectId.value,
 			assetType,

@@ -18,6 +18,9 @@ export const createModelConfiguration = async (
 	description: string,
 	configuration: Model
 ) => {
+	if (!model_id) {
+		return null;
+	}
 	const response = await API.post(`/model-configurations`, {
 		model_id,
 		name,

@@ -99,7 +99,7 @@ import {
 } from '@/services/knowledge';
 import { PollerResult } from '@/api/api';
 import { isEmpty } from 'lodash';
-import type { DocumentAsset } from '@/types/Types';
+import type { DocumentAsset, TerariumAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
 import {
 	createProvenance,
@@ -113,7 +113,7 @@ import TeraAssetLink from './tera-asset-link.vue';
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
 	assetType: AssetType;
-	assetId: string | undefined;
+	assetId: TerariumAsset['id'];
 }>();
 
 enum DialogType {

@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import type { Code, ExtractionResponse } from '@/types/Types';
+import type { Code, Dataset, ExtractionResponse, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -78,10 +78,7 @@ export const equationsToAMR = async (
  * Given a model, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileModel = async (
-	modelId: string | undefined,
-	documentId: string | null = null
-) => {
+export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
 	let response: any = null;
 	if (documentId && modelId) {
 		response = await API.post(`/knowledge/profile-model/${modelId}?document_id=${documentId}`);
@@ -93,7 +90,7 @@ export const profileModel = async (
 };
 
 export const alignModel = async (
-	modelId: string | undefined,
+	modelId: Model['id'],
 	documentId: string
 ): Promise<string | null> => {
 	const response = await API.post(
@@ -106,7 +103,7 @@ export const alignModel = async (
  * Returns a runId used to poll for result
  */
 export const profileDataset = async (
-	datasetId: string | undefined,
+	datasetId: Dataset['id'],
 	documentId: string | null = null
 ) => {
 	let response: any = null;
