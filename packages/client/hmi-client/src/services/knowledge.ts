@@ -78,9 +78,12 @@ export const equationsToAMR = async (
  * Given a model, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileModel = async (modelId: string, documentId: string | null = null) => {
+export const profileModel = async (
+	modelId: string | undefined,
+	documentId: string | null = null
+) => {
 	let response: any = null;
-	if (documentId) {
+	if (documentId && modelId) {
 		response = await API.post(`/knowledge/profile-model/${modelId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-model/${modelId}`);
@@ -89,7 +92,10 @@ export const profileModel = async (modelId: string, documentId: string | null = 
 	return response.data.id;
 };
 
-export const alignModel = async (modelId: string, documentId: string): Promise<string | null> => {
+export const alignModel = async (
+	modelId: string | undefined,
+	documentId: string
+): Promise<string | null> => {
 	const response = await API.post(
 		`/knowledge/link-amr?document_id=${documentId}&model_id=${modelId}`
 	);
@@ -99,9 +105,12 @@ export const alignModel = async (modelId: string, documentId: string): Promise<s
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (datasetId: string, documentId: string | null = null) => {
+export const profileDataset = async (
+	datasetId: string | undefined,
+	documentId: string | null = null
+) => {
 	let response: any = null;
-	if (documentId) {
+	if (documentId && datasetId) {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);

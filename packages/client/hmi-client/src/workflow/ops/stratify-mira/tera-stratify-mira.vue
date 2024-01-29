@@ -150,7 +150,7 @@ const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
 
 const modelConfig = computed<ModelConfiguration | null>(() => {
-	if (!amr.value) return null;
+	if (!amr.value || !amr.value.id) return null;
 	return {
 		id: 'temporary config',
 		name: 'temporary config',

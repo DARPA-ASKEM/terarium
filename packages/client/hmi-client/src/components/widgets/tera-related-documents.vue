@@ -113,7 +113,7 @@ import TeraAssetLink from './tera-asset-link.vue';
 const props = defineProps<{
 	documents?: Array<{ name: string | undefined; id: string | undefined }>;
 	assetType: AssetType;
-	assetId: string;
+	assetId: string | undefined;
 }>();
 
 enum DialogType {

@@ -62,6 +62,7 @@ async function getConnectedNodes(
  * with an EXTRACTED_FROM relationship.
  */
 async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<DocumentAsset[]> {
+	if (!modelId) return [];
 	const query: ProvenanceQueryParam = {
 		rootId: modelId,
 		rootType: ProvenanceType.Model,
@@ -93,13 +94,13 @@ async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<Docum
  * @return AssetType[]|null - the list of all artifacts, or null if none returned by API
  */
 async function getRelatedArtifacts(
-	id: string,
+	id: string | undefined,
 	rootType: ProvenanceType,
 	types: ProvenanceType[] = Object.values(ProvenanceType)
 ): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
-	if (!rootType) return response;
+	if (!rootType || !id) return response;
 	const connectedNodes: ProvenanceSearchResult | null = await getConnectedNodes(
 		id,
 		rootType,

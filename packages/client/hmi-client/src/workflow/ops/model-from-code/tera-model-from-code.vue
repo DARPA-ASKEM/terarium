@@ -82,7 +82,7 @@
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
-						<span>Decapodes created: {{ selectedModel?.id }}</span>
+						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
 					</template>
 				</section>
 				<tera-operator-placeholder
@@ -344,9 +344,9 @@ async function handleDecapodesPreview(data: any) {
 	};
 
 	const response = await createModel(amr);
-	if (response) {
+	if (response && response.id) {
 		const m = await getModel(response.id);
-		if (m) {
+		if (m && m.id) {
 			clonedState.value.modelId = m.id;
 			emit('append-output-port', {
 				label: `Output - ${props.node.outputs.length + 1}`,
