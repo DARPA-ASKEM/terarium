@@ -71,14 +71,14 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';

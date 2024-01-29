@@ -37,9 +37,14 @@ const manager = new KernelSessionManager();
 // const jupyterSession = ref();
 
 const submitQuery = async () => {
+	console.log('Submit Query:');
+	console.log(manager);
+	console.log(queryString.value);
 	const message = manager.sendMessage('llm_request', {
 		request: queryString.value
 	});
+	console.log('Message:');
+	console.log(message);
 	message
 		.register('llm_response', (data) => {
 			console.log('llm_response', data);
@@ -111,6 +116,7 @@ onMounted(async () => {
 
 	// jupyterSession.value = await newSession('beaker_kernel', 'Beaker Kernel');
 	await manager.init('beaker_kernel', 'Beaker Kernel', context);
+	console.log('Done init');
 });
 
 onUnmounted(() => {
