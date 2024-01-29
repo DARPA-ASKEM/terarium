@@ -16,6 +16,7 @@ services:
       JUPYTER_TOKEN: "89f73481102c46c0bc13b2998f9a4fce"
       TDS_USER: "${secret_service_account_username}"
       TDS_PASSWORD: "${secret_service_account_password}"
+      OPENAI_API_KEY: "${secret_mit_openai_key}"
 
   knowledge-middleware-api:
     container_name: knowledge-middleware-api
