@@ -2,45 +2,24 @@ package software.uncharted.terarium.hmiserver.models.dataservice.equation;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 
-import java.sql.Timestamp;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * The Equation Data Model
  */
+@EqualsAndHashCode(callSuper = true)
 @TSModel
 @Data
 @Accessors(chain = true)
-public class Equation {
+public class Equation extends TerariumAsset {
 
-	/** Universally unique identifier for the item **/
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp createdOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp updatedOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp deletedOn;
 
 	/** The userId of the user that created the equation **/
 	@TSOptional

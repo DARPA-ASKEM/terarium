@@ -2,48 +2,26 @@ package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 
 /**
  * Represents a dataset document from TDS
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
-public class Dataset {
+public class Dataset extends TerariumAsset {
 
-	/**
-	 * Universally unique identifier for the dataset
-	 **/
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp createdOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp updatedOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp deletedOn;
 
 	/**
 	 * UserId of the user who created the dataset

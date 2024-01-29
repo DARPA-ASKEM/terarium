@@ -239,7 +239,7 @@ watch(
 
 				// Save name:id mapping for context and comment message
 				const safeName = scrubVariableName(model.header.name);
-				modelMap.value[safeName] = model.id;
+				modelMap.value[safeName] = model.id ?? '';
 				codeText.value += `# - ${safeName}: ${model.header.name}\n`;
 			}
 		}

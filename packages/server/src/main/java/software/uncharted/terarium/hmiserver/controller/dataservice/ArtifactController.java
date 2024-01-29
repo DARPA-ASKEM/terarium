@@ -139,7 +139,8 @@ public class ArtifactController {
 			@RequestBody Artifact artifact) {
 
 		try {
-			Optional<Artifact> updated = artifactService.updateArtifact(artifact.setId(artifactId));
+			artifact.setId(artifactId);
+			Optional<Artifact> updated = artifactService.updateArtifact(artifact);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

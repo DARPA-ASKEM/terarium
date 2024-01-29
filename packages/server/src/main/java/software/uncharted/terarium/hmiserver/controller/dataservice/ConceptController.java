@@ -188,7 +188,8 @@ public class ConceptController {
 			@PathVariable("id") final UUID id,
 			@RequestBody OntologyConcept concept) {
 		try {
-			final Optional<OntologyConcept> updated = conceptService.updateConcept(concept.setId(id));
+			concept.setId(id);
+			final Optional<OntologyConcept> updated = conceptService.updateConcept(concept);
 			if (updated.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}

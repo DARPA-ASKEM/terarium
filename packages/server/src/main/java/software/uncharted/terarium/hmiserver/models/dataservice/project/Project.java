@@ -4,35 +4,30 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
+
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class Project implements Serializable {
+public class Project extends TerariumAsset implements Serializable {
 
 	@Serial
 	private static final long serialVersionUID = -241733670076432802L;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id;
 
 	@Schema(defaultValue = "My New Project")
 	private String name;
@@ -47,23 +42,6 @@ public class Project implements Serializable {
 	@TSOptional
 	@Schema(defaultValue = "My Project Description")
 	private String description;
-
-	@TSOptional
-	@CreationTimestamp
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp createdOn;
-
-	@TSOptional
-	@UpdateTimestamp
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp updatedOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp deletedOn;
 
 	@OneToMany(mappedBy = "project")
 	@Where(clause = "deleted_on IS NULL")
