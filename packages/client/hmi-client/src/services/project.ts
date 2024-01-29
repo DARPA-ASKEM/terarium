@@ -47,11 +47,12 @@ async function create(
 
 async function update(project: Project): Promise<Project | null> {
 	try {
-		const { id, name, description } = project;
+		const { id, name, description, publicProject } = project;
 		const response = await API.put(`/projects/${id}`, {
 			id,
 			name,
-			description
+			description,
+			publicProject
 		});
 		const { status, data } = response;
 		if (status !== 200) {

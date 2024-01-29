@@ -32,7 +32,12 @@
 			</section>
 			<section>
 				<h6>General access</h6>
-				<Dropdown v-model="generalAccess" :options="generalAccessOptions" class="p-dropdown-sm">
+				<Dropdown
+					v-model="generalAccess"
+					:options="generalAccessOptions"
+					class="p-dropdown-sm"
+					@update:model-value="changeAccessibility"
+				>
 					<template #value="slotProps">
 						<div class="general-access-option">
 							<i :class="slotProps.value.icon" />
@@ -57,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep } from 'lodash';
 import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import { watch, ref, computed } from 'vue';
@@ -65,6 +71,11 @@ import { getUsers } from '@/services/user';
 import type { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraUserCard from './tera-user-card.vue';
+
+enum Accessibility {
+	Restricted = 'Restricted',
+	Public = 'Public'
+}
 
 const props = defineProps<{ modelValue: boolean; project: Project }>();
 
@@ -81,16 +92,25 @@ const selectedUsers = computed(() => new Set([...existingUsers.value, ...newSele
 const existingUserPermissions: Map<string, string> = new Map();
 const newSelectedUserPermissions: Map<string, string> = new Map();
 const generalAccessOptions = ref([
-	{ label: 'Restricted', icon: 'pi pi-lock' },
-	{ label: 'Public', icon: 'pi pi-users' }
+	{ label: Accessibility.Restricted, icon: 'pi pi-lock' },
+	{ label: Accessibility.Public, icon: 'pi pi-users' }
 ]);
-const generalAccess = ref(generalAccessOptions.value[0]);
+const generalAccess = ref(
+	props.project.publicProject ? generalAccessOptions.value[1] : generalAccessOptions.value[0]
+);
 const generalAccessCaption = computed(() => {
-	if (generalAccess.value.label === 'Restricted') {
+	if (generalAccess.value.label === Accessibility.Restricted) {
 		return 'Only people with access can view, edit, and copy this project.';
 	}
 	return 'Anyone can view and copy this project.';
 });
+
+async function changeAccessibility({ label }: { label: Accessibility }) {
+	console.log(props.project);
+	const updatedProject = cloneDeep(props.project);
+	updatedProject.publicProject = label === Accessibility.Public;
+	await useProjects().update(updatedProject);
+}
 
 function addExistingUser(id: string, relationship?: string) {
 	const user = users.value.find((u) => u.id === id);
