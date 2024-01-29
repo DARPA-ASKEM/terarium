@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -71,11 +72,13 @@ public class Simulation implements Serializable {
 	@JsonAlias("start_time")
 	@TSOptional
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss.SSS")
 	private Timestamp startTime;
 
 	@JsonAlias("completed_time")
 	@TSOptional
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss.SSS")
 	private Timestamp completedTime;
 
 	@Enumerated(EnumType.STRING)
