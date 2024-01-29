@@ -10,7 +10,15 @@
 						:options="programmingLanguages"
 						@change="setKernelContext"
 					/>
-					<Button label="Add code block" icon="pi pi-plus" text @click="addCodeBlock" />
+					<Button
+						label="Add code block"
+						icon="pi pi-plus"
+						text
+						@click="addCodeBlock"
+						:disabled="
+							clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
+						"
+					/>
 				</header>
 				<tera-operator-placeholder
 					v-if="allCodeBlocks.length === 0"
@@ -171,10 +179,22 @@ const selectedModel = ref<Model | null>(null);
 
 const inputCodeBlocks = ref<AssetBlock<CodeBlock>[]>([]);
 
-const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => [
-	...inputCodeBlocks.value,
-	...clonedState.value.codeBlocks
-]);
+const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => {
+	const blocks: AssetBlock<CodeBlock>[] = [];
+
+	blocks.push(...inputCodeBlocks.value);
+	if (
+		clonedState.value.modelFramework === ModelFramework.Decapodes &&
+		!isEmpty(clonedState.value.codeBlocks)
+	) {
+		// show only first added code block if Decapodes
+		if (isEmpty(inputCodeBlocks.value)) blocks.push(clonedState.value.codeBlocks[0]);
+	} else {
+		blocks.push(...clonedState.value.codeBlocks);
+	}
+
+	return blocks;
+});
 
 const savingAsset = ref(false);
 
@@ -295,8 +315,6 @@ async function handleCode() {
 				}
 			}
 		};
-		console.log(codeContent);
-		console.log(newCode);
 
 		const modelId = await codeBlocksToAmr(newCode, file);
 
