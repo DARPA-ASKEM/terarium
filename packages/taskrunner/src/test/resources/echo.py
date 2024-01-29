@@ -44,37 +44,32 @@ def signal_handler(sig, frame):
 	sys.exit(1)
 
 def main():
-	print("ML Task unknown : started", flush=True)
+	print("Task unknown : started", flush=True)
 
 	signal.signal(signal.SIGINT, signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)
 
-	parser = argparse.ArgumentParser(description='Advanced Blockchain ML Task')
+	parser = argparse.ArgumentParser(description='Echo Task')
 	parser.add_argument('--id', type=str, required=True, help='The request id')
 	parser.add_argument('--input_pipe', type=str, required=True, help='The name of the input pipe')
 	parser.add_argument('--output_pipe', type=str, required=True, help='The name of the output pipe')
 	args = parser.parse_args()
 
-	print("ML Task {} : attemping to read input from {}".format(args.id, args.input_pipe), flush=True)
+	print("Task {} : attemping to read input from {}".format(args.id, args.input_pipe), flush=True)
 
 	input = read_input_with_timeout(args.input_pipe, 5)
 
 	# Tests use this to simulate a failing task
 	if "should_fail" in input:
-		print("ML Task {} : failing".format(args.id), flush=True)
+		print("Task {} : failing".format(args.id), flush=True)
 		sys.exit(1)
 
-	if "mirror_output" in input:
-		print("ML Task {} mirroring input".format(args.id), flush=True)
-		write_output_with_timeout(args.output_pipe, input, 5)
-		return
-
 	for i in range(5):
-		print("ML Task {}: {}".format(args.id, i), flush=True)
+		print("Task {}: {}".format(args.id, i), flush=True)
 		time.sleep(1)
 
-	print("ML Task {} : attemping to write output to {}".format(args.id, args.output_pipe), flush=True)
-	write_output_with_timeout(args.output_pipe, {"result": "ok"}, 5)
+	print("Task {} : attemping to write output to {}".format(args.id, args.output_pipe), flush=True)
+	write_output_with_timeout(args.output_pipe, input, 5)
 
 if __name__ == "__main__":
 	main()

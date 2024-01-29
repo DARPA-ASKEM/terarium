@@ -12,6 +12,8 @@ import lombok.experimental.Accessors;
 @Data
 public class TaskResponse implements Serializable {
 	private UUID id;
+	private String script;
 	private TaskStatus status;
 	private byte[] output;
+	private Object additionalProperties;
 }

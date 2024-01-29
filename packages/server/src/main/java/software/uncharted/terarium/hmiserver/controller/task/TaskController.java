@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.controller.task;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.catalina.connector.ClientAbortException;
@@ -14,16 +16,12 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,27 +30,33 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
-import software.uncharted.terarium.hmiserver.security.Roles;
 
-@RequestMapping("/task")
-@RestController
 @Slf4j
-@RequiredArgsConstructor
 public class TaskController {
 
-	private final RabbitTemplate rabbitTemplate;
-	private final RabbitAdmin rabbitAdmin;
-	private final Config config;
-	final ObjectMapper objectMapper;
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
 
-	final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
+	@Autowired
+	private RabbitAdmin rabbitAdmin;
+
+	@Autowired
+	protected Config config;
+
+	@Autowired
+	protected ObjectMapper objectMapper;
+
+	Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
+	Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
+
+	// NOTE: these are used for TESTS ONLY, DON'T USE THESE IN CODE!
+	Map<UUID, BlockingQueue<TaskResponse>> responseQueues = new ConcurrentHashMap<>();
 
 	@Value("${terarium.taskrunner.request-queue}")
 	private String TASK_RUNNER_REQUEST_QUEUE;
@@ -89,14 +93,7 @@ public class TaskController {
 		declareQueue(TASK_RUNNER_RESPONSE_QUEUE);
 	}
 
-	@PostMapping
-	@Secured(Roles.USER)
-	public ResponseEntity<TaskResponse> createTask(
-			@RequestBody TaskRequest req) throws JsonProcessingException {
-
-		// generate the id
-		req.setId(java.util.UUID.randomUUID());
-
+	public void sendTaskRequest(TaskRequest req) throws JsonProcessingException {
 		// create the cancellation queue _BEFORE_ sending the request, because a
 		// cancellation can be send before the request is consumed on the other end if
 		// there is contention. We need this queue to exist to hold the message.
@@ -110,13 +107,12 @@ public class TaskController {
 			rabbitTemplate.convertAndSend(TASK_RUNNER_REQUEST_QUEUE, jsonStr);
 		} catch (Exception e) {
 			rabbitAdmin.deleteQueue(queueName);
-			return ResponseEntity.badRequest().build();
+			throw e;
 		}
+	}
 
-		TaskResponse resp = new TaskResponse();
-		resp.setId(req.getId());
-		resp.setStatus(TaskStatus.QUEUED);
-		return ResponseEntity.ok().body(resp);
+	public void addResponseHandler(String script, TaskResponseHandler handler) {
+		responseHandlers.put(script, handler);
 	}
 
 	@PutMapping("/{task-id}")
@@ -143,6 +139,12 @@ public class TaskController {
 		return emitter;
 	}
 
+	public BlockingQueue<TaskResponse> waitforResponses(UUID taskId) {
+		BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(64);
+		responseQueues.put(taskId, queue);
+		return queue;
+	}
+
 	@RabbitListener(queues = {
 			"${terarium.taskrunner.response-queue}" }, concurrency = "1")
 	void onTaskResponse(final Message message, final Channel channel) throws IOException, InterruptedException {
@@ -152,7 +154,20 @@ public class TaskController {
 				return;
 			}
 
-			log.info("GOT RESPONSE: {}", resp.toString());
+			try {
+				if (responseQueues.containsKey(resp.getId())) {
+					BlockingQueue<TaskResponse> queue = responseQueues.get(resp.getId());
+					queue.put(resp);
+				}
+			} catch (Exception e) {
+				log.error("Error occured while writing to response queue for task {}", resp.getId(), e);
+			}
+
+			try {
+				responseHandlers.get(resp.getScript()).handle(resp);
+			} catch (Exception e) {
+				log.error("Error occured while executing response handler for task {}", resp.getId(), e);
+			}
 
 			final SseEmitter emitter = taskIdToEmitter.get(resp.getId());
 			synchronized (taskIdToEmitter) {
@@ -160,10 +175,10 @@ public class TaskController {
 					try {
 						emitter.send(resp);
 					} catch (IllegalStateException | ClientAbortException e) {
-						log.warn("Error sending task message for task {}. User likely disconnected", resp.getId());
+						log.warn("Error sending task response for task {}. User likely disconnected", resp.getId());
 						taskIdToEmitter.remove(resp.getId());
 					} catch (IOException e) {
-						log.error("Error sending task message to for task {}", resp.getId(), e);
+						log.error("Error sending task response for task {}", resp.getId(), e);
 					}
 				}
 			}
@@ -189,6 +204,28 @@ public class TaskController {
 				return null;
 			}
 		}
+	}
+
+	public TaskResponse createEchoTask(UUID taskId, JsonNode input)
+			throws JsonProcessingException, IOException {
+
+		byte[] bytes = objectMapper.writeValueAsBytes(input);
+
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript("/echo.py");
+		req.setInput(bytes);
+
+		String additionalStuff = "Test additional props";
+		req.setAdditionalProperties(additionalStuff);
+
+		// send the request
+		sendTaskRequest(req);
+
+		TaskResponse resp = new TaskResponse();
+		resp.setId(req.getId());
+		resp.setStatus(TaskStatus.QUEUED);
+		return resp;
 	}
 
 }

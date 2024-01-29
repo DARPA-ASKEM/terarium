@@ -16,7 +16,7 @@ RUN apt-get update && \
 	apt-get install -y --no-install-recommends wget && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/a7b21c7ca98b48ea5f6b1d7b0b46f1220dca4b2c.tar.gz && \
+RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/7da55440b18a9984fc0d063e943f221cee62643e.tar.gz && \
 	tar -zxvf gollm.tar.gz && \
 	mv GoLLM-* GoLLM
 
@@ -32,6 +32,9 @@ RUN apt-get update && \
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
+
+# Copy the echo script for testing
+COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 
 WORKDIR /
 

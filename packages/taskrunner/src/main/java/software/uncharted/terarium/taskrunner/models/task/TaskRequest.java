@@ -15,4 +15,5 @@ public class TaskRequest implements Serializable {
 	private String script;
 	private byte[] input;
 	private int timeoutMinutes = 30;
+	private Object additionalProperties;
 }

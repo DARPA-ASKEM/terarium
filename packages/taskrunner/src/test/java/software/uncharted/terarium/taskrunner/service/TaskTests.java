@@ -27,18 +27,21 @@ import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 public class TaskTests extends TaskRunnerApplicationTests {
 
 	private final int REPEAT_COUNT = 1;
+	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
+	private final String FAILURE_INPUT = "{\"should_fail\":true}";
+	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 
 	@RepeatedTest(REPEAT_COUNT)
 	public void testTaskSuccess() throws Exception {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getScript());
+		Task task = new Task(req);
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -47,7 +50,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
-			Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(), output);
+			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
 			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
@@ -67,12 +70,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
+		req.setScript(SCRIPT_PATH);
 		req.setInput(input.getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getScript());
+		Task task = new Task(req);
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -99,12 +102,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 	public void testTaskFailure() throws Exception {
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"should_fail\": true}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(FAILURE_INPUT).getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getScript());
+		Task task = new Task(req);
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -113,7 +116,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
-			Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(), output);
+			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
 
@@ -131,12 +134,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getScript());
+		Task task = new Task(req);
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -155,7 +158,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			}).start();
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
-			Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(), output);
+			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
 
@@ -173,12 +176,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
 
 		int ONE_MINUTE = 1;
 
-		Task task = new Task(req.getId(), req.getScript());
+		Task task = new Task(req);
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.start();
@@ -205,7 +208,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			}).start();
 
 			byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
-			Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(), output);
+			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
 
@@ -224,10 +227,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
 
-		Task task = new Task(req.getId(), req.getScript());
+		Task task = new Task(req);
 		try {
 			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 			task.cancel();
@@ -268,7 +271,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 				try {
 					TaskRequest req = new TaskRequest();
 					req.setId(UUID.randomUUID());
-					req.setScript("");
+					req.setScript(SCRIPT_PATH);
 					req.setTimeoutMinutes(1);
 
 					boolean shouldCancelBefore = false;
@@ -279,23 +282,23 @@ public class TaskTests extends TaskRunnerApplicationTests {
 					switch (randomNumber) {
 						case 0:
 							// success
-							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+							req.setInput(new String(TEST_INPUT).getBytes());
 							expected = TaskStatus.SUCCESS;
 							break;
 						case 1:
 							// failure
-							req.setInput(new String("{\"should_fail\": true}").getBytes());
+							req.setInput(new String(FAILURE_INPUT).getBytes());
 							expected = TaskStatus.FAILED;
 							break;
 						case 2:
 							// cancellation
-							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+							req.setInput(new String(TEST_INPUT).getBytes());
 							expected = TaskStatus.CANCELLED;
 							shouldCancelBefore = true;
 							break;
 						case 3:
 							// cancellation
-							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+							req.setInput(new String(TEST_INPUT).getBytes());
 							expected = TaskStatus.CANCELLED;
 							shouldCancelAfter = true;
 							break;
@@ -304,7 +307,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 					}
 					expectedResponses.put(req.getId(), expected);
 
-					Task task = new Task(req.getId(), req.getScript());
+					Task task = new Task(req);
 					Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
 
 					if (shouldCancelBefore) {
@@ -344,7 +347,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 						task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 						byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
-						Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(), output);
+						Assertions.assertArrayEquals(req.getInput(), output);
 
 						task.waitFor(ONE_MINUTE);
 

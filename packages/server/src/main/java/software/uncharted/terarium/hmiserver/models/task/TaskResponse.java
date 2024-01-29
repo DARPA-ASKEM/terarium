@@ -14,6 +14,16 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class TaskResponse implements Serializable {
 	private UUID id;
+	private String script;
 	private TaskStatus status;
 	private byte[] output;
+	private Object additionalProperties;
+
+	public <T> T getAdditionalProperties(Class<T> type) {
+		if (type.isInstance(additionalProperties)) {
+			return type.cast(additionalProperties);
+		} else {
+			throw new IllegalArgumentException("Value is not of type " + type.getName());
+		}
+	}
 }

@@ -51,6 +51,8 @@ public class Model implements SupportAdditionalProperties, Serializable {
 
 	private Map<String, Object> model;
 
+	private String modelCard;
+
 	@TSOptional
 	private Object properties;
 

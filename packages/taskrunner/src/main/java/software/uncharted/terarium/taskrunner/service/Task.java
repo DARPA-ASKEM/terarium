@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 import software.uncharted.terarium.taskrunner.util.ScopedLock;
 import software.uncharted.terarium.taskrunner.util.TimeFormatter;
@@ -40,17 +41,19 @@ public class Task {
 	private String outputPipeName;
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
-	private String scriptCommand;
+	private String script;
 	private int NUM_THREADS = 8;
+	private Object additionalProperties;
 	ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
-	public Task(UUID id, String scriptCommand) throws IOException, InterruptedException {
+	public Task(TaskRequest req) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
 
-		this.id = id;
-		this.scriptCommand = scriptCommand;
+		this.id = req.getId();
+		this.script = req.getScript();
+		this.additionalProperties = req.getAdditionalProperties();
 		inputPipeName = "/tmp/input-" + id;
 		outputPipeName = "/tmp/output-" + id;
 
@@ -62,23 +65,27 @@ public class Task {
 		}
 	}
 
-	public Task(UUID id) throws IOException, InterruptedException {
-		this(id, "");
+	private String getExtension(String input) {
+		int i = script.lastIndexOf('.');
+		if (i > 0) {
+			return input.substring(i + 1);
+		}
+		return "";
 	}
 
 	private void setup() throws IOException, InterruptedException {
-		if (scriptCommand == "") {
-			// use resources dir for testing
-			scriptCommand = getClass().getResource("/ml.py").getPath();
-			boolean fileExists = Files.exists(Paths.get(scriptCommand));
+		if (getExtension(script).equals("py")) {
+			// raw python file, execute it through the runtime
+			boolean fileExists = Files.exists(Paths.get(script));
 			if (!fileExists) {
-				throw new FileNotFoundException("Script file: " + scriptCommand + " not found");
+				throw new FileNotFoundException("Script file: " + script + " not found");
 			}
-			processBuilder = new ProcessBuilder("python", scriptCommand, "--id", id.toString(), "--input_pipe",
+			processBuilder = new ProcessBuilder("python", script, "--id", id.toString(), "--input_pipe",
 					inputPipeName,
 					"--output_pipe", outputPipeName);
 		} else {
-			processBuilder = new ProcessBuilder(scriptCommand, "--id", id.toString(), "--input_pipe",
+			// executable command, execute it directly
+			processBuilder = new ProcessBuilder(script, "--id", id.toString(), "--input_pipe",
 					inputPipeName,
 					"--output_pipe", outputPipeName);
 		}
@@ -234,7 +241,7 @@ public class Task {
 
 			status = TaskStatus.RUNNING;
 
-			log.info("Starting task {} running {}", id, scriptCommand);
+			log.info("Starting task {} running {}", id, script);
 			process = processBuilder.start();
 
 			// Add a shutdown hook to kill the process if the JVM exits

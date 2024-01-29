@@ -47,6 +47,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 	private final int REPEAT_COUNT = 1;
 	private final long TIMEOUT_SECONDS = 30;
+	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
+	private final String FAILURE_INPUT = "{\"should_fail\":true}";
+	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 
 	@BeforeEach
 	public void setup() {
@@ -127,8 +130,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
 		req.setTimeoutMinutes(1);
 
 		String reqStr = mapper.writeValueAsString(req);
@@ -146,8 +149,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"should_fail\": true}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(FAILURE_INPUT).getBytes());
 		req.setTimeoutMinutes(1);
 
 		String reqStr = mapper.writeValueAsString(req);
@@ -165,8 +168,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
 		req.setTimeoutMinutes(1);
 
 		String reqStr = mapper.writeValueAsString(req);
@@ -200,8 +203,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
-		req.setScript("");
-		req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
 		req.setTimeoutMinutes(1);
 
 		// we have to create this queue before sending the cancellation to know that
@@ -269,7 +272,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				try {
 					TaskRequest req = new TaskRequest();
 					req.setId(UUID.randomUUID());
-					req.setScript("");
+					req.setScript(SCRIPT_PATH);
 					req.setTimeoutMinutes(1);
 
 					// allocate the response stuff
@@ -291,18 +294,18 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					switch (randomNumber) {
 						case 0:
 							// success
-							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+							req.setInput(new String(TEST_INPUT).getBytes());
 							expectedResponses.put(req.getId(),
 									List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS)));
 							break;
 						case 1:
 							// failure
-							req.setInput(new String("{\"should_fail\": true}").getBytes());
+							req.setInput(new String(FAILURE_INPUT).getBytes());
 							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.FAILED)));
 							break;
 						case 2:
 							// cancellation
-							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+							req.setInput(new String(TEST_INPUT).getBytes());
 							shouldCancelBefore = true;
 							expectedResponses.put(req.getId(), List.of(
 									List.of(TaskStatus.CANCELLED) // cancelled before request processed
@@ -310,7 +313,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 							break;
 						case 3:
 							// cancellation
-							req.setInput(new String("{\"research_paper\": \"Test research paper\"}").getBytes());
+							req.setInput(new String(TEST_INPUT).getBytes());
 							shouldCancelAfter = true;
 							expectedResponses.put(req.getId(), List.of(
 									List.of(TaskStatus.CANCELLED), // cancelled before request processed
@@ -378,7 +381,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				for (int i = 0; i < expected.size(); i++) {
 					if (expected.get(i) != responses.get(i).getStatus()) {
 						if (responses.get(i).getOutput() != null) {
-							Assertions.assertArrayEquals("{\"result\": \"ok\"}".getBytes(),
+							Assertions.assertArrayEquals("{\"result\":\"ok\"}".getBytes(),
 									responses.get(i).getOutput());
 						}
 						break;
