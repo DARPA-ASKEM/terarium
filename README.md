@@ -107,7 +107,7 @@ Save your configuration, and choose Debug from the Run menu. You will now hit br
 If you don't intend to run the backend with a debugger, you can simply kick off the back end process via the `hmiServerDev.sh` script located in the root of this directory. It will handle decrypting secrets, starting the server, and re-encrypting secrets once you shut the server down. *If you do intend to debug the back end, skip this step and see the below debug instructions*
 
 ```shell
-./hmiServerDev.sh start remote run
+./hmiServerDev.sh start local run
 ```
 
 If you are going to run the server using the Intellij / VSCode debugger, the first step is to decrypt the `application-secrets.properties.encrypted` file:

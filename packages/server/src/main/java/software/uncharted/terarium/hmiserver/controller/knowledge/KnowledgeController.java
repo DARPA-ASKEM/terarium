@@ -1,7 +1,16 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
+import java.io.IOException;
 import java.util.*;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,13 +19,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -24,6 +41,7 @@ import software.uncharted.terarium.hmiserver.models.extractionservice.Extraction
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @RequestMapping("/knowledge")
@@ -37,6 +55,8 @@ public class KnowledgeController {
 	final SkemaUnifiedProxy skemaUnifiedProxy;
 
 	final ProvenanceService provenanceService;
+
+	final CodeService codeService;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -104,6 +124,45 @@ public class KnowledgeController {
 		return ResponseEntity.ok(
 				knowledgeMiddlewareProxy.postCodeToAMR(codeId.toString(), name, description, dynamicsOnly, llmAssisted)
 						.getBody());
+	}
+
+	// Create a model from code blocks
+	@Operation(summary = "Create a model from code blocks")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Return the extraction job for code to amr", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExtractionResponse.class))),
+			@ApiResponse(responseCode = "500", description = "Error running code blocks to model", content = @Content)
+	})
+	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
+	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart Code code, @RequestPart("file") MultipartFile input) throws IOException {
+
+		try(final CloseableHttpClient httpClient = HttpClients.custom()
+		.build()) {
+		// 1. create code asset from code blocks
+		Code createdCode = codeService.createCode(code);
+
+		// 2. upload file to code asset
+		byte[] fileAsBytes = input.getBytes();
+		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+
+		// we have pre-formatted the files object already so no need to use uploadCode
+		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), "tempFile");
+		final HttpPut put = new HttpPut(presignedURL.getUrl());
+		put.setEntity(fileEntity);
+		final HttpResponse response = httpClient.execute(put);
+
+		if(response.getStatusLine().getStatusCode() != 200) {
+			throw new Exception("Error uploading file");
+		}
+		// 3. create model from code asset
+		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false).getBody());
+		}
+		catch (Exception e) {
+			log.error("unable to upload file", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error creating running code to model");
+	 }
 	}
 
 	/**
