@@ -26,6 +26,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -122,7 +126,12 @@ public class KnowledgeController {
 						.getBody());
 	}
 
-		// Create a model from code blocks
+	// Create a model from code blocks
+	@Operation(summary = "Create a model from code blocks")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Return the extraction job for code to amr", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExtractionResponse.class))),
+			@ApiResponse(responseCode = "500", description = "Error running code blocks to model", content = @Content)
+	})
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart Code code, @RequestPart("file") MultipartFile input) throws IOException {
@@ -150,7 +159,9 @@ public class KnowledgeController {
 		} 
 		catch (Exception e) {
 			log.error("unable to upload file", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error creating running code to model");
 	 }
 	}
 
