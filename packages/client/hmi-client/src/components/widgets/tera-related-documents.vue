@@ -211,7 +211,7 @@ const sendForExtractions = async () => {
 	isLoading.value = true;
 
 	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId, extractionService.value);
-	if (!pdfExtractionsJobId) return;
+	if (!pdfExtractionsJobId || !props.assetId) return;
 	await createProvenance({
 		relation_type: RelationshipType.EXTRACTED_FROM,
 		left: props.assetId,
