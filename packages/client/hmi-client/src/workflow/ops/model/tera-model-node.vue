@@ -72,7 +72,7 @@ const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
 async function getModelById(modelId: string) {
 	model.value = await getModel(modelId);
 
-	if (model.value) {
+	if (model.value && model.value.id) {
 		const state = _.cloneDeep(props.node.state);
 		state.modelId = model.value?.id;
 		emit('update-state', state);

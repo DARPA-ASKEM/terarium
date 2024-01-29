@@ -82,7 +82,8 @@ public class FrameworkController {
 			@PathVariable("id") UUID id,
 			@RequestBody ModelFramework framework) {
 
-		final Optional<ModelFramework> updated = frameworkService.updateFramework(framework.setId(id));
+		framework.setId(id);
+		final Optional<ModelFramework> updated = frameworkService.updateFramework(framework);
 		if (updated.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}

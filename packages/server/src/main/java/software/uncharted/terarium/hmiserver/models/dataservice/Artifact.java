@@ -2,19 +2,14 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 
-import java.sql.Timestamp;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Represents a generic artifact that can be stored in the data service. For
@@ -23,29 +18,14 @@ import java.util.UUID;
  * should not
  * be used for a dataset or a model, which have their own classes.
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
-public class Artifact {
+public class Artifact extends TerariumAsset{
 
 	/* The id of the artifact. */
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id;
 
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp createdOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp updatedOn;
-
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Timestamp deletedOn;
 
 	/* UserId of who created this asset */
 	private String userId;
