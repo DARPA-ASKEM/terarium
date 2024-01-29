@@ -18,7 +18,7 @@ RUN apt-get update && \
 	apt-get install -y --no-install-recommends wget && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/7da55440b18a9984fc0d063e943f221cee62643e.tar.gz && \
+RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/main.tar.gz && \
 	tar -zxvf gollm.tar.gz && \
 	mv GoLLM-* GoLLM
 
