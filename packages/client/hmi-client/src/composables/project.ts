@@ -141,6 +141,9 @@ export function useProjects() {
 				activeProject.value = await ProjectService.get(project.id);
 			}, 1000);
 		}
+		setTimeout(async () => {
+			getAll();
+		}, TIMEOUT_MS);
 		return updated;
 	}
 
