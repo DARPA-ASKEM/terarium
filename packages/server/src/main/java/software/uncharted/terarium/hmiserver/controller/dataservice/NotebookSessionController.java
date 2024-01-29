@@ -153,7 +153,8 @@ public class NotebookSessionController {
 			@RequestBody NotebookSession session) {
 
 		try {
-			final Optional<NotebookSession> updated = sessionService.updateNotebookSession(session.setId(id));
+			session.setId(id);
+			final Optional<NotebookSession> updated = sessionService.updateNotebookSession(session);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

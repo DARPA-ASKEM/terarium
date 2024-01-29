@@ -166,7 +166,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	const modelConfig: ModelConfiguration = {
 		id: '',
 		name: '',
-		model_id: cloneModel.id,
+		model_id: cloneModel.id ?? '',
 		configuration: cloneModel
 	};
 	return modelConfig;
@@ -366,7 +366,7 @@ const createConfiguration = async () => {
 		const modelConfig = await getModelConfigurationById(data.id);
 		// TODO: do we need to cache here at all?
 		// model configs aren't too large so we could potentially just fetch each time
-		configCache.value[modelConfig.id] = modelConfig;
+		configCache.value[modelConfig.id ?? ''] = modelConfig;
 	}, 1000);
 };
 

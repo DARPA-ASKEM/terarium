@@ -73,7 +73,7 @@ const addOutputPort = async (data) => {
 	// get model
 	const model = await getModel(data.id);
 
-	if (!model) return;
+	if (!model || !model.id) return;
 
 	const state = cloneDeep(props.node.state);
 	state.modelId = model?.id;

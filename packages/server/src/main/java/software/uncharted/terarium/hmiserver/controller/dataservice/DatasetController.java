@@ -179,7 +179,8 @@ public class DatasetController {
 			@RequestBody Dataset dataset) {
 
 		try {
-			final Optional<Dataset> updated = datasetService.updateDataset(dataset.setId(id));
+			dataset.setId(id);
+			final Optional<Dataset> updated = datasetService.updateDataset(dataset);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

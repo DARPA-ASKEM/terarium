@@ -120,7 +120,8 @@ public class WorkflowController {
 			@PathVariable("id") final UUID id,
 			@RequestBody Workflow workflow) {
 		try {
-			final Optional<Workflow> updated = workflowService.updateWorkflow(workflow.setId(id));
+			workflow.setId(id);
+			final Optional<Workflow> updated = workflowService.updateWorkflow(workflow);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
