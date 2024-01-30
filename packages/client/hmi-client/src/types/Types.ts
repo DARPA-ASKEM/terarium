@@ -214,6 +214,7 @@ export interface Model extends TerariumAsset {
     header: ModelHeader;
     userId?: string;
     model: { [index: string]: any };
+    modelCard: string;
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
@@ -710,6 +711,14 @@ export interface TimeSpan {
     end: number;
 }
 
+export interface TaskResponse {
+    id: string;
+    script: string;
+    status: TaskStatus;
+    output: any;
+    additionalProperties: any;
+}
+
 export interface Annotation {
     id: string;
     timestampMillis: number;
@@ -1146,6 +1155,15 @@ export enum EvaluationScenarioStatus {
     Paused = "PAUSED",
     Resumed = "RESUMED",
     Stopped = "STOPPED",
+}
+
+export enum TaskStatus {
+    Queued = "QUEUED",
+    Running = "RUNNING",
+    Success = "SUCCESS",
+    Failed = "FAILED",
+    Cancelling = "CANCELLING",
+    Cancelled = "CANCELLED",
 }
 
 export enum ClientEventType {
