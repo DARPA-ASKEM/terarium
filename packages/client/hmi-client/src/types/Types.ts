@@ -214,7 +214,7 @@ export interface Model extends TerariumAsset {
     header: ModelHeader;
     userId?: string;
     model: { [index: string]: any };
-    modelCard: string;
+    modelCard?: string;
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
