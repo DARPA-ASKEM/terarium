@@ -34,7 +34,7 @@ jobs:
 
       # Validate Gradle JAR
       - name: Validate GradleW JAR
-        uses: gradle/wrapper-validation-action@342dbebe7272035434f9baccc29a816ec6dd2c7b
+        uses: gradle/wrapper-validation-action@1ff5a18cc396177ebd27c4250f7132e72af93462
 
       # Setup Java 17
       - name: Setup Java v17
@@ -49,7 +49,7 @@ jobs:
 
       # Run the tests
       - name: Run tests
-        uses: gradle/gradle-build-action@42452daeb5b454a76f686a8e4de8234afd7b1f44
+        uses: gradle/gradle-build-action@d4bd442194a6478e8ac205108cae29e76bf9b787
         with:
           gradle-version: wrapper
           build-root-directory: packages/server
