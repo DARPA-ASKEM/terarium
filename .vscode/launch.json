@@ -1,31 +1,28 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "java",
-            "name": "Current File",
-            "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
-            "name": "DbMigration",
-            "request": "launch",
-            "mainClass": "software.uncharted.terarium.db.migration.DbMigration",
-            "projectName": "db-migration"
-        },
-        {
-            "type": "java",
-            "name": "TerariumApplication",
-            "request": "launch",
-            "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
-            "projectName": "server",
-            "args": [
-                "--spring.profiles.active=default,secrets,local"
-            ]
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "TerariumApplication",
+      "request": "launch",
+      "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
+      "projectName": "server",
+      "args": [
+        "--spring.profiles.active=default,secrets,local"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "TaskRunnerApplication",
+      "request": "launch",
+      "mainClass": "software.uncharted.terarium.taskrunner.TaskRunnerApplication",
+      "projectName": "taskrunner",
+      "args": [
+        "--spring.profiles.active=default,local"
+      ]
+    }
+  ]
 }
