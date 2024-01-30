@@ -2,1346 +2,1346 @@
 /* eslint-disable */
 
 export interface ClientConfig {
-	baseUrl: string;
-	clientLogShippingEnabled: boolean;
-	clientLogShippingIntervalMillis: number;
-	sseHeartbeatIntervalMillis: number;
+    baseUrl: string;
+    clientLogShippingEnabled: boolean;
+    clientLogShippingIntervalMillis: number;
+    sseHeartbeatIntervalMillis: number;
 }
 
 export interface ClientEvent<T> {
-	id: string;
-	createdAtMs: number;
-	type: ClientEventType;
-	data: T;
+    id: string;
+    createdAtMs: number;
+    type: ClientEventType;
+    data: T;
 }
 
 export interface ClientLog {
-	level: string;
-	timestampMillis: number;
-	message: string;
-	args?: string[];
+    level: string;
+    timestampMillis: number;
+    message: string;
+    args?: string[];
 }
 
 export interface User {
-	id: string;
-	createdAtMs: number;
-	lastLoginAtMs: number;
-	roles: Role[];
-	username: string;
-	email: string;
-	givenName: string;
-	familyName: string;
-	name: string;
-	enabled: boolean;
+    id: string;
+    createdAtMs: number;
+    lastLoginAtMs: number;
+    roles: Role[];
+    username: string;
+    email: string;
+    givenName: string;
+    familyName: string;
+    name: string;
+    enabled: boolean;
 }
 
 export interface GithubFile {
-	type: FileType;
-	encoding: string;
-	size: number;
-	name: string;
-	path: string;
-	content: string;
-	sha: string;
-	url: string;
-	gitUrl: string;
-	htmlUrl: string;
-	downloadUrl: string;
-	links: Links;
-	submoduleGitUrl: string;
-	target: string;
-	fileCategory: FileCategory;
+    type: FileType;
+    encoding: string;
+    size: number;
+    name: string;
+    path: string;
+    content: string;
+    sha: string;
+    url: string;
+    gitUrl: string;
+    htmlUrl: string;
+    downloadUrl: string;
+    links: Links;
+    submoduleGitUrl: string;
+    target: string;
+    fileCategory: FileCategory;
 }
 
 export interface GithubRepo {
-	files: { [P in FileCategory]?: GithubFile[] };
-	totalFiles: number;
+    files: { [P in FileCategory]?: GithubFile[] };
+    totalFiles: number;
 }
 
 export interface Artifact extends TerariumAsset {
-	userId: string;
-	name: string;
-	description?: string;
-	fileNames: string[];
-	metadata?: any;
-	concepts?: OntologyConcept[];
+    userId: string;
+    name: string;
+    description?: string;
+    fileNames: string[];
+    metadata?: any;
+    concepts?: OntologyConcept[];
 }
 
 export interface CsvAsset {
-	csv: string[][];
-	stats?: CsvColumnStats[];
-	headers: string[];
-	rowCount: number;
-	data: { [index: string]: string }[];
+    csv: string[][];
+    stats?: CsvColumnStats[];
+    headers: string[];
+    rowCount: number;
+    data: { [index: string]: string }[];
 }
 
 export interface CsvColumnStats {
-	bins: number[];
-	minValue: number;
-	maxValue: number;
-	mean: number;
-	median: number;
-	sd: number;
+    bins: number[];
+    minValue: number;
+    maxValue: number;
+    mean: number;
+    median: number;
+    sd: number;
 }
 
 export interface Grounding {
-	identifiers: { [index: string]: string };
-	context?: { [index: string]: any };
+    identifiers: { [index: string]: string };
+    context?: { [index: string]: any };
 }
 
 export interface ResponseDeleted {
-	message: string;
+    message: string;
 }
 
 export interface ResponseStatus {
-	status: number;
+    status: number;
 }
 
 export interface ResponseSuccess {
-	success: boolean;
+    success: boolean;
 }
 
 export interface TerariumAsset {
-	id?: string;
-	createdOn?: Date;
-	updatedOn?: Date;
-	deletedOn?: Date;
-	temporary?: boolean;
-	publicAsset?: boolean;
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    temporary?: boolean;
+    publicAsset?: boolean;
 }
 
 export interface Code extends TerariumAsset {
-	name: string;
-	description: string;
-	files?: { [index: string]: CodeFile };
-	repoUrl?: string;
-	metadata?: { [index: string]: string };
+    name: string;
+    description: string;
+    files?: { [index: string]: CodeFile };
+    repoUrl?: string;
+    metadata?: { [index: string]: string };
 }
 
 export interface CodeFile {
-	language: ProgrammingLanguage;
-	dynamics: Dynamics;
+    language: ProgrammingLanguage;
+    dynamics: Dynamics;
 }
 
 export interface Dynamics {
-	name: string;
-	description: string;
-	block: string[];
+    name: string;
+    description: string;
+    block: string[];
 }
 
 export interface ActiveConcept extends TerariumAsset {
-	curie: string;
-	name: string;
+    curie: string;
+    name: string;
 }
 
 export interface OntologyConcept extends TerariumAsset {
-	curie: string;
-	type: TaggableType;
-	objectId: string;
-	status: OntologicalField;
-	activeConcept: ActiveConcept;
+    curie: string;
+    type: TaggableType;
+    objectId: string;
+    status: OntologicalField;
+    activeConcept: ActiveConcept;
 }
 
 export interface Dataset extends TerariumAsset {
-	userId?: string;
-	name: string;
-	description?: string;
-	dataSourceDate?: Date;
-	fileNames?: string[];
-	datasetUrl?: string;
-	columns?: DatasetColumn[];
-	metadata?: any;
-	source?: string;
-	grounding?: Grounding;
+    userId?: string;
+    name: string;
+    description?: string;
+    dataSourceDate?: Date;
+    fileNames?: string[];
+    datasetUrl?: string;
+    columns?: DatasetColumn[];
+    metadata?: any;
+    source?: string;
+    grounding?: Grounding;
 }
 
 export interface DatasetColumn {
-	name: string;
-	dataType: ColumnType;
-	formatStr?: string;
-	annotations: string[];
-	metadata?: { [index: string]: any };
-	grounding?: Grounding;
-	description?: string;
+    name: string;
+    dataType: ColumnType;
+    formatStr?: string;
+    annotations: string[];
+    metadata?: { [index: string]: any };
+    grounding?: Grounding;
+    description?: string;
 }
 
 export interface AddDocumentAssetFromXDDRequest {
-	document: Document;
-	projectId: string;
+    document: Document;
+    projectId: string;
 }
 
 export interface AddDocumentAssetFromXDDResponse {
-	documentAssetId: string;
-	pdfUploadError: boolean;
-	extractionJobId: string;
+    documentAssetId: string;
+    pdfUploadError: boolean;
+    extractionJobId: string;
 }
 
 export interface DocumentAsset extends TerariumAsset {
-	name?: string;
-	description?: string;
-	userId?: string;
-	fileNames?: string[];
-	documentUrl?: string;
-	metadata?: { [index: string]: any };
-	source?: string;
-	text?: string;
-	grounding?: Grounding;
-	concepts?: OntologyConcept[];
-	assets?: DocumentExtraction[];
+    name?: string;
+    description?: string;
+    userId?: string;
+    fileNames?: string[];
+    documentUrl?: string;
+    metadata?: { [index: string]: any };
+    source?: string;
+    text?: string;
+    grounding?: Grounding;
+    concepts?: OntologyConcept[];
+    assets?: DocumentExtraction[];
 }
 
 export interface Equation extends TerariumAsset {
-	userId?: string;
-	name?: string;
-	equationType: EquationType;
-	content: string;
-	metadata?: { [index: string]: any };
-	source?: EquationSource;
+    userId?: string;
+    name?: string;
+    equationType: EquationType;
+    content: string;
+    metadata?: { [index: string]: any };
+    source?: EquationSource;
 }
 
 export interface EquationSource {
-	extractedFrom?: string;
-	documentAssetName?: string;
-	hmiGenerated?: boolean;
+    extractedFrom?: string;
+    documentAssetName?: string;
+    hmiGenerated?: boolean;
 }
 
 export interface ExternalPublication extends TerariumAsset {
-	title: string;
-	xdd_uri: string;
+    title: string;
+    xdd_uri: string;
 }
 
 export interface Model extends TerariumAsset {
-	header: ModelHeader;
-	userId?: string;
-	model: { [index: string]: any };
-	modelCard?: string;
-	properties?: any;
-	semantics?: ModelSemantics;
-	metadata?: ModelMetadata;
+    header: ModelHeader;
+    userId?: string;
+    model: { [index: string]: any };
+    modelCard?: string;
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
 }
 
 export interface ModelConfiguration extends TerariumAsset {
-	name: string;
-	description?: string;
-	configuration: any;
-	model_id: string;
+    name: string;
+    description?: string;
+    configuration: any;
+    model_id: string;
 }
 
 export interface ModelDescription {
-	id: string;
-	header: ModelHeader;
-	timestamp: Date;
-	userId?: string;
+    id: string;
+    header: ModelHeader;
+    timestamp: Date;
+    userId?: string;
 }
 
 export interface ModelFramework extends TerariumAsset {
-	name: string;
-	version: string;
-	semantics: string;
+    name: string;
+    version: string;
+    semantics: string;
 }
 
 export interface State {
-	id: string;
-	name?: string;
-	description?: string;
-	grounding?: ModelGrounding;
-	units?: ModelUnit;
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+    units?: ModelUnit;
 }
 
 export interface Transition {
-	id: string;
-	input: string[];
-	output: string[];
-	grounding?: ModelGrounding;
-	properties?: Properties;
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
 }
 
 export interface TypeSystem {
-	states: State[];
-	transitions: Transition[];
+    states: State[];
+    transitions: Transition[];
 }
 
 export interface TypeSystemExtended {
-	name: string;
-	description: string;
-	schema: string;
-	model_version: string;
-	model: { [index: string]: any };
-	properties?: any;
-	semantics?: ModelSemantics;
-	metadata?: ModelMetadata;
+    name: string;
+    description: string;
+    schema: string;
+    model_version: string;
+    model: { [index: string]: any };
+    properties?: any;
+    semantics?: ModelSemantics;
+    metadata?: ModelMetadata;
 }
 
 export interface TypingSemantics {
-	map: string[][];
-	system: any;
+    map: string[][];
+    system: any;
 }
 
 export interface DecapodesComponent {
-	modelInterface: string[];
-	model: DecapodesExpression;
-	_type: string;
+    modelInterface: string[];
+    model: DecapodesExpression;
+    _type: string;
 }
 
 export interface DecapodesEquation {
-	lhs: any;
-	rhs: any;
-	_type: string;
+    lhs: any;
+    rhs: any;
+    _type: string;
 }
 
 export interface DecapodesExpression {
-	context: any[];
-	equations: DecapodesEquation[];
-	_type: string;
+    context: any[];
+    equations: DecapodesEquation[];
+    _type: string;
 }
 
 export interface DecapodesTerm {
-	name?: string;
-	var?: DecapodesTerm;
-	symbol?: string;
-	space?: string;
-	fs?: string[];
-	arg?: DecapodesTerm;
-	f?: string;
-	arg1?: DecapodesTerm;
-	arg2?: DecapodesTerm;
-	args?: DecapodesTerm[];
-	_type: string;
+    name?: string;
+    var?: DecapodesTerm;
+    symbol?: string;
+    space?: string;
+    fs?: string[];
+    arg?: DecapodesTerm;
+    f?: string;
+    arg1?: DecapodesTerm;
+    arg2?: DecapodesTerm;
+    args?: DecapodesTerm[];
+    _type: string;
 }
 
 export interface NotebookSession extends TerariumAsset {
-	name: string;
-	description?: string;
-	data: any;
+    name: string;
+    description?: string;
+    data: any;
 }
 
 export interface PetriNetModel {
-	states: PetriNetState[];
-	transitions: PetriNetTransition[];
+    states: PetriNetState[];
+    transitions: PetriNetTransition[];
 }
 
 /**
  * @deprecated
  */
 export interface Assets {
-	dataset: Dataset[];
-	extraction: Extraction[];
-	model: Model[];
-	publication: ExternalPublication[];
-	workflow: Workflow[];
-	artifact: Artifact[];
-	code: Code[];
-	document: DocumentAsset[];
+    dataset: Dataset[];
+    extraction: Extraction[];
+    model: Model[];
+    publication: ExternalPublication[];
+    workflow: Workflow[];
+    artifact: Artifact[];
+    code: Code[];
+    document: DocumentAsset[];
 }
 
 export interface Project extends TerariumAsset {
-	name: string;
-	userId: string;
-	userName?: string;
-	description?: string;
-	projectAssets: ProjectAsset[];
-	metadata?: { [index: string]: string };
-	publicProject?: boolean;
-	userPermission?: string;
+    name: string;
+    userId: string;
+    userName?: string;
+    description?: string;
+    projectAssets: ProjectAsset[];
+    metadata?: { [index: string]: string };
+    publicProject?: boolean;
+    userPermission?: string;
 }
 
 export interface ProjectAsset extends TerariumAsset {
-	assetId: string;
-	assetType: AssetType;
-	assetName: string;
-	externalRef?: string;
-	project: Project;
+    assetId: string;
+    assetType: AssetType;
+    assetName: string;
+    externalRef?: string;
+    project: Project;
 }
 
 export interface Provenance extends TerariumAsset {
-	concept: string;
-	relationType: ProvenanceRelationType;
-	left: string;
-	leftType: ProvenanceType;
-	right: string;
-	rightType: ProvenanceType;
-	userId: string;
+    concept: string;
+    relationType: ProvenanceRelationType;
+    left: string;
+    leftType: ProvenanceType;
+    right: string;
+    rightType: ProvenanceType;
+    userId: string;
 }
 
 export interface ProvenanceQueryParam {
-	rootId: string;
-	rootType: ProvenanceType;
-	nodes?: boolean;
-	edges?: boolean;
-	versions?: boolean;
-	types?: ProvenanceType[];
-	hops?: number;
-	limit?: number;
-	verbose?: boolean;
+    rootId: string;
+    rootType: ProvenanceType;
+    nodes?: boolean;
+    edges?: boolean;
+    versions?: boolean;
+    types?: ProvenanceType[];
+    hops?: number;
+    limit?: number;
+    verbose?: boolean;
 }
 
 export interface ProvenanceSearchResult {
-	nodes: ProvenanceNode[];
-	edges: ProvenanceEdge[];
+    nodes: ProvenanceNode[];
+    edges: ProvenanceEdge[];
 }
 
 export interface RegNetBaseProperties {
-	name: string;
-	grounding: ModelGrounding;
-	rate_constant: any;
+    name: string;
+    grounding: ModelGrounding;
+    rate_constant: any;
 }
 
 export interface RegNetEdge {
-	source: string;
-	target: string;
-	id: string;
-	sign: boolean;
-	properties?: RegNetBaseProperties;
+    source: string;
+    target: string;
+    id: string;
+    sign: boolean;
+    properties?: RegNetBaseProperties;
 }
 
 export interface RegNetModel {
-	vertices: RegNetVertex[];
-	edges: RegNetEdge[];
-	parameters?: RegNetParameter[];
+    vertices: RegNetVertex[];
+    edges: RegNetEdge[];
+    parameters?: RegNetParameter[];
 }
 
 export interface RegNetParameter {
-	id: string;
-	description?: string;
-	value?: number;
-	grounding?: ModelGrounding;
-	distribution?: ModelDistribution;
+    id: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
 }
 
 export interface RegNetVertex {
-	id: string;
-	name: string;
-	sign: boolean;
-	initial?: any;
-	grounding?: ModelGrounding;
-	rate_constant?: any;
+    id: string;
+    name: string;
+    sign: boolean;
+    initial?: any;
+    grounding?: ModelGrounding;
+    rate_constant?: any;
 }
 
 export interface Simulation {
-	id?: string;
-	executionPayload: any;
-	name?: string;
-	description?: string;
-	resultFiles?: string[];
-	type: SimulationType;
-	status: ProgressState;
-	startTime?: Date;
-	completedTime?: Date;
-	engine: SimulationEngine;
-	workflowId: string;
-	userId?: string;
-	projectId?: string;
-	createdOn?: Date;
-	updatedOn?: Date;
-	deletedOn?: Date;
+    id?: string;
+    executionPayload: any;
+    name?: string;
+    description?: string;
+    resultFiles?: string[];
+    type: SimulationType;
+    status: ProgressState;
+    startTime?: Date;
+    completedTime?: Date;
+    engine: SimulationEngine;
+    workflowId: string;
+    userId?: string;
+    projectId?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
 }
 
 export interface Position {
-	x: number;
-	y: number;
+    x: number;
+    y: number;
 }
 
 export interface Transform {
-	x: number;
-	y: number;
-	k: number;
+    x: number;
+    y: number;
+    k: number;
 }
 
 export interface Workflow extends TerariumAsset {
-	name: string;
-	description: string;
-	transform: Transform;
-	nodes: any;
-	edges: any;
+    name: string;
+    description: string;
+    transform: Transform;
+    nodes: any;
+    edges: any;
 }
 
 export interface WorkflowEdge {
-	id: string;
-	workflowId: string;
-	points: Position[];
-	source: WorkflowNode<any>;
-	sourcePortId: string;
-	target: WorkflowNode<any>;
-	targetPortId: string;
-	direction: WorkflowDirection;
+    id: string;
+    workflowId: string;
+    points: Position[];
+    source: WorkflowNode<any>;
+    sourcePortId: string;
+    target: WorkflowNode<any>;
+    targetPortId: string;
+    direction: WorkflowDirection;
 }
 
 export interface WorkflowNode<S> {
-	id: string;
-	displayName: string;
-	workflowId: string;
-	operationType: WorkflowOperationTypes;
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-	state: S;
-	active?: WorkflowOutput<S>;
-	inputs: WorkflowPort[];
-	outputs: WorkflowOutput<S>[];
-	status: OperatorStatus;
+    id: string;
+    displayName: string;
+    workflowId: string;
+    operationType: WorkflowOperationTypes;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    state: S;
+    active?: WorkflowOutput<S>;
+    inputs: WorkflowPort[];
+    outputs: WorkflowOutput<S>[];
+    status: OperatorStatus;
 }
 
 export interface WorkflowOutput<S> extends WorkflowPort {
-	operatorStatus?: OperatorStatus;
-	state: S;
-	timestamp?: Date;
-	selected: boolean;
+    operatorStatus?: OperatorStatus;
+    state: S;
+    timestamp?: Date;
+    selected: boolean;
 }
 
 export interface WorkflowPort {
-	id: string;
-	type: string;
-	status: WorkflowPortStatus;
-	label?: string;
-	value?: any[];
-	acceptMultiple?: boolean;
-	optional: boolean;
+    id: string;
+    type: string;
+    status: WorkflowPortStatus;
+    label?: string;
+    value?: any[];
+    acceptMultiple?: boolean;
+    optional: boolean;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
-	data: Document[];
-	nextPage: string;
-	scrollId: string;
-	hits: number;
-	facets: { [index: string]: XDDFacetsItemResponse };
+    data: Document[];
+    nextPage: string;
+    scrollId: string;
+    hits: number;
+    facets: { [index: string]: XDDFacetsItemResponse };
 }
 
 export interface EvaluationScenarioSummary {
-	name: string;
-	userId: string;
-	task: string;
-	description: string;
-	notes: string;
-	timestampMillis: number;
+    name: string;
+    userId: string;
+    task: string;
+    description: string;
+    notes: string;
+    timestampMillis: number;
 }
 
 export interface ExtractionResponse {
-	id: string;
-	status: string;
-	result: ExtractionResponseResult;
+    id: string;
+    status: string;
+    result: ExtractionResponseResult;
 }
 
 export interface ExtractionResponseResult {
-	created_at: Date;
-	enqueued_at: Date;
-	started_at: Date;
-	job_error: string;
-	job_result: any;
+    created_at: Date;
+    enqueued_at: Date;
+    started_at: Date;
+    job_error: string;
+    job_result: any;
 }
 
 export interface FunmanPostQueriesRequest {
-	model: Model;
-	request: FunmanWorkRequest;
+    model: Model;
+    request: FunmanWorkRequest;
 }
 
 export interface FunmanConfig {
-	tolerance?: number;
-	queueTimeout?: number;
-	numberOfProcesses?: number;
-	waitTimeout?: number;
-	waitActionTimeout?: number;
-	solver?: string;
-	numSteps?: number;
-	stepSize?: number;
-	numInitialBoxes?: number;
-	saveSmtlib?: boolean;
-	drealPrecision?: number;
-	drealLogLevel?: string;
-	constraintNoise?: number;
-	initialStateTolerance?: number;
-	drealMcts?: boolean;
-	substituteSubformulas?: boolean;
-	use_compartmental_constraints?: boolean;
-	normalize?: boolean;
-	normalization_constant?: number;
+    tolerance?: number;
+    queueTimeout?: number;
+    numberOfProcesses?: number;
+    waitTimeout?: number;
+    waitActionTimeout?: number;
+    solver?: string;
+    numSteps?: number;
+    stepSize?: number;
+    numInitialBoxes?: number;
+    saveSmtlib?: boolean;
+    drealPrecision?: number;
+    drealLogLevel?: string;
+    constraintNoise?: number;
+    initialStateTolerance?: number;
+    drealMcts?: boolean;
+    substituteSubformulas?: boolean;
+    use_compartmental_constraints?: boolean;
+    normalize?: boolean;
+    normalization_constant?: number;
 }
 
 export interface FunmanInterval {
-	ub?: number;
-	lb?: number;
-	closed_upper_bound?: boolean;
+    ub?: number;
+    lb?: number;
+    closed_upper_bound?: boolean;
 }
 
 export interface FunmanParameter {
-	name: string;
-	interval: FunmanInterval;
-	label: string;
+    name: string;
+    interval: FunmanInterval;
+    label: string;
 }
 
 export interface FunmanWorkRequest {
-	query?: any;
-	constraints?: any;
-	parameters?: FunmanParameter[];
-	config?: FunmanConfig;
-	structure_parameters?: any;
+    query?: any;
+    constraints?: any;
+    parameters?: FunmanParameter[];
+    config?: FunmanConfig;
+    structure_parameters?: any;
 }
 
 export interface Curies {
-	sources: string[];
-	targets: string[];
+    sources: string[];
+    targets: string[];
 }
 
 export interface DKG {
-	curie: string;
-	name: string;
-	description: string;
-	link: string;
+    curie: string;
+    name: string;
+    description: string;
+    link: string;
 }
 
 export interface EntitySimilarityResult {
-	source: string;
-	target: string;
-	distance: number;
+    source: string;
+    target: string;
+    distance: number;
 }
 
 export interface PermissionGroup {
-	id: string;
-	name: string;
-	relationship?: string;
-	permissionRelationships?: PermissionRelationships;
+    id: string;
+    name: string;
+    relationship?: string;
+    permissionRelationships?: PermissionRelationships;
 }
 
 export interface PermissionProject {
-	id: string;
-	relationship: string;
+    id: string;
+    relationship: string;
 }
 
 export interface PermissionRelationships {
-	permissionGroups: PermissionGroup[];
-	permissionUsers: PermissionUser[];
-	permissionProjects: PermissionProject[];
+    permissionGroups: PermissionGroup[];
+    permissionUsers: PermissionUser[];
+    permissionProjects: PermissionProject[];
 }
 
 export interface PermissionUser {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	roles?: PermissionRole[];
-	relationship?: string;
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    roles?: PermissionRole[];
+    relationship?: string;
 }
 
 export interface S3Object {
-	key: string;
-	lastModifiedMillis?: number;
-	sizeInBytes?: number;
-	etag: string;
+    key: string;
+    lastModifiedMillis?: number;
+    sizeInBytes?: number;
+    etag: string;
 }
 
 export interface S3ObjectListing {
-	contents: S3Object[];
-	truncated: boolean;
+    contents: S3Object[];
+    truncated: boolean;
 }
 
 export interface UploadProgress {
-	uploadId: string;
-	percentComplete: number;
+    uploadId: string;
+    percentComplete: number;
 }
 
 export interface CalibrationRequestCiemss {
-	modelConfigId: string;
-	extra: any;
-	timespan?: TimeSpan;
-	dataset: DatasetLocation;
-	engine: string;
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
 }
 
 export interface CalibrationRequestJulia {
-	modelConfigId: string;
-	extra: any;
-	timespan?: TimeSpan;
-	dataset: DatasetLocation;
-	engine: string;
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
 }
 
 export interface EnsembleCalibrationCiemssRequest {
-	modelConfigs: EnsembleModelConfigs[];
-	dataset: DatasetLocation;
-	timespan: TimeSpan;
-	extra: any;
-	engine: string;
+    modelConfigs: EnsembleModelConfigs[];
+    dataset: DatasetLocation;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
 }
 
 export interface EnsembleSimulationCiemssRequest {
-	modelConfigs: EnsembleModelConfigs[];
-	timespan: TimeSpan;
-	extra: any;
-	engine: string;
+    modelConfigs: EnsembleModelConfigs[];
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
 }
 
 export interface ScimlStatusUpdate {
-	loss: number;
-	iter: number;
-	params: { [index: string]: number };
-	id: string;
-	solData: { [index: string]: any };
-	timesteps: number[];
+    loss: number;
+    iter: number;
+    params: { [index: string]: number };
+    id: string;
+    solData: { [index: string]: any };
+    timesteps: number[];
 }
 
 export interface SimulationRequest {
-	modelConfigId: string;
-	timespan: TimeSpan;
-	extra: any;
-	engine: string;
-	projectId: string;
-	interventions?: Intervention[];
+    modelConfigId: string;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+    projectId: string;
+    interventions?: Intervention[];
 }
 
 export interface DatasetLocation {
-	id: string;
-	filename: string;
-	mappings?: any;
+    id: string;
+    filename: string;
+    mappings?: any;
 }
 
 export interface EnsembleModelConfigs {
-	id: string;
-	solutionMappings: { [index: string]: string };
-	weight: number;
+    id: string;
+    solutionMappings: { [index: string]: string };
+    weight: number;
 }
 
 export interface Intervention {
-	name: string;
-	timestep: number;
-	value: number;
+    name: string;
+    timestep: number;
+    value: number;
 }
 
 export interface TimeSpan {
-	start: number;
-	end: number;
+    start: number;
+    end: number;
 }
 
 export interface TaskResponse {
-	id: string;
-	script: string;
-	status: TaskStatus;
-	output: any;
-	additionalProperties: any;
+    id: string;
+    script: string;
+    status: TaskStatus;
+    output: any;
+    additionalProperties: any;
 }
 
 export interface Annotation {
-	id: string;
-	timestampMillis: number;
-	projectId: string;
-	content: string;
-	userId: string;
-	artifactId: string;
-	artifactType: string;
-	section: string;
+    id: string;
+    timestampMillis: number;
+    projectId: string;
+    content: string;
+    userId: string;
+    artifactId: string;
+    artifactType: string;
+    section: string;
 }
 
 export interface Event {
-	id?: string;
-	timestampMillis?: number;
-	projectId?: string;
-	userId?: string;
-	type: EventType;
-	value?: string;
+    id?: string;
+    timestampMillis?: number;
+    projectId?: string;
+    userId?: string;
+    type: EventType;
+    value?: string;
 }
 
 export interface UserEvent {
-	type: EventType;
-	user: UserOld;
-	id: string;
-	message: any;
+    type: EventType;
+    user: UserOld;
+    id: string;
+    message: any;
 }
 
 export interface Role {
-	id: number;
-	name: string;
-	description: string;
-	authorities: AuthorityInstance[];
-	inherited: boolean;
+    id: number;
+    name: string;
+    description: string;
+    authorities: AuthorityInstance[];
+    inherited: boolean;
 }
 
 export interface Links {
-	html: string;
-	git: string;
-	self: string;
+    html: string;
+    git: string;
+    self: string;
 }
 
 export interface Document {
-	gddId: string;
-	title: string;
-	abstractText: string;
-	journal: string;
-	type: string;
-	number: string;
-	pages: string;
-	publisher: string;
-	volume: string;
-	year: string;
-	link: { [index: string]: string }[];
-	author: { [index: string]: string }[];
-	identifier: { [index: string]: string }[];
-	githubUrls: string[];
-	knownTerms: { [index: string]: string[] };
-	highlight: string[];
-	relatedDocuments: Document[];
-	relatedExtractions: Extraction[];
-	knownEntities: KnownEntities;
-	knownEntitiesCounts: KnownEntitiesCounts;
-	citationList: { [index: string]: string }[];
-	citedBy: { [index: string]: any }[];
+    gddId: string;
+    title: string;
+    abstractText: string;
+    journal: string;
+    type: string;
+    number: string;
+    pages: string;
+    publisher: string;
+    volume: string;
+    year: string;
+    link: { [index: string]: string }[];
+    author: { [index: string]: string }[];
+    identifier: { [index: string]: string }[];
+    githubUrls: string[];
+    knownTerms: { [index: string]: string[] };
+    highlight: string[];
+    relatedDocuments: Document[];
+    relatedExtractions: Extraction[];
+    knownEntities: KnownEntities;
+    knownEntitiesCounts: KnownEntitiesCounts;
+    citationList: { [index: string]: string }[];
+    citedBy: { [index: string]: any }[];
 }
 
 export interface DocumentExtraction {
-	fileName: string;
-	assetType: ExtractionAssetType;
-	metadata: { [index: string]: any };
+    fileName: string;
+    assetType: ExtractionAssetType;
+    metadata: { [index: string]: any };
 }
 
 export interface ModelHeader {
-	name: string;
-	description: string;
-	schema: string;
-	schema_name?: string;
-	model_version?: string;
-	extracted_from?: string;
+    name: string;
+    description: string;
+    schema: string;
+    schema_name?: string;
+    model_version?: string;
+    extracted_from?: string;
 }
 
 export interface ModelSemantics {
-	ode: OdeSemantics;
-	span?: any[];
-	typing?: TypingSemantics;
+    ode: OdeSemantics;
+    span?: any[];
+    typing?: TypingSemantics;
 }
 
 /**
  * @deprecated
  */
 export interface ModelMetadata {
-	annotations?: Annotations;
-	attributes?: any[];
-	timeseries?: { [index: string]: any };
-	card?: Card;
-	provenance?: string[];
-	processed_at?: number;
-	processed_by?: string;
-	variable_statements?: VariableStatement[];
+    annotations?: Annotations;
+    attributes?: any[];
+    timeseries?: { [index: string]: any };
+    card?: Card;
+    provenance?: string[];
+    processed_at?: number;
+    processed_by?: string;
+    variable_statements?: VariableStatement[];
 }
 
 export interface ModelGrounding {
-	identifiers: { [index: string]: any };
-	context?: { [index: string]: any };
-	modifiers?: any;
+    identifiers: { [index: string]: any };
+    context?: { [index: string]: any };
+    modifiers?: any;
 }
 
 export interface ModelUnit {
-	expression: string;
-	expression_mathml: string;
+    expression: string;
+    expression_mathml: string;
 }
 
 export interface Properties {
-	name: string;
-	grounding?: ModelGrounding;
-	description?: string;
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface PetriNetState {
-	id: string;
-	name: string;
-	grounding: ModelGrounding;
-	initial: ModelExpression;
+    id: string;
+    name: string;
+    grounding: ModelGrounding;
+    initial: ModelExpression;
 }
 
 export interface PetriNetTransition {
-	id: string;
-	input: string[];
-	output: string[];
-	grounding?: ModelGrounding;
-	properties: PetriNetTransitionProperties;
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties: PetriNetTransitionProperties;
 }
 
 export interface Extraction {
-	id: number;
-	askemClass: string;
-	properties: ExtractionProperties;
-	askemId: string;
-	xddCreated: Date;
-	xddRegistrant: number;
-	highlight: string[];
+    id: number;
+    askemClass: string;
+    properties: ExtractionProperties;
+    askemId: string;
+    xddCreated: Date;
+    xddRegistrant: number;
+    highlight: string[];
 }
 
 export interface ProvenanceNode {
-	id: string;
-	type: ProvenanceType;
-	uuid: string;
+    id: string;
+    type: ProvenanceType;
+    uuid: string;
 }
 
 export interface ProvenanceEdge {
-	id: string;
-	relationType: ProvenanceRelationType;
-	left: ProvenanceNode;
-	right: ProvenanceNode;
+    id: string;
+    relationType: ProvenanceRelationType;
+    left: ProvenanceNode;
+    right: ProvenanceNode;
 }
 
 export interface ModelDistribution {
-	type: string;
-	parameters: { [index: string]: any };
+    type: string;
+    parameters: { [index: string]: any };
 }
 
 export interface XDDFacetsItemResponse {
-	buckets: XDDFacetBucket[];
-	doc_count_error_upper_bound: number;
-	sum_other_doc_count: number;
+    buckets: XDDFacetBucket[];
+    doc_count_error_upper_bound: number;
+    sum_other_doc_count: number;
 }
 
 export interface XDDResponseOK {
-	v: number;
-	license: string;
+    v: number;
+    license: string;
 }
 
 export interface PermissionRole {
-	id: string;
-	name: string;
-	users: PermissionUser[];
+    id: string;
+    name: string;
+    users: PermissionUser[];
 }
 
 export interface UserOld {
-	username: string;
-	roles: string[];
+    username: string;
+    roles: string[];
 }
 
 export interface AuthorityInstance {
-	id: number;
-	mask: number;
-	authority: Authority;
+    id: number;
+    mask: number;
+    authority: Authority;
 }
 
 export interface KnownEntities {
-	urlExtractions: XDDUrlExtraction[];
-	askemObjects: Extraction[];
-	summaries: string[];
+    urlExtractions: XDDUrlExtraction[];
+    askemObjects: Extraction[];
+    summaries: string[];
 }
 
 export interface KnownEntitiesCounts {
-	askemObjectCount: number;
-	urlExtractionCount: number;
+    askemObjectCount: number;
+    urlExtractionCount: number;
 }
 
 export interface OdeSemantics {
-	rates: Rate[];
-	initials?: Initial[];
-	parameters?: ModelParameter[];
-	observables?: Observable[];
-	time?: any;
+    rates: Rate[];
+    initials?: Initial[];
+    parameters?: ModelParameter[];
+    observables?: Observable[];
+    time?: any;
 }
 
 export interface Annotations {
-	license?: string;
-	authors?: string[];
-	references?: string[];
-	locations?: string[];
-	pathogens?: string[];
-	diseases?: string[];
-	hosts?: string[];
-	time_scale?: string;
-	time_start?: string;
-	time_end?: string;
-	model_types?: string[];
+    license?: string;
+    authors?: string[];
+    references?: string[];
+    locations?: string[];
+    pathogens?: string[];
+    diseases?: string[];
+    hosts?: string[];
+    time_scale?: string;
+    time_start?: string;
+    time_end?: string;
+    model_types?: string[];
 }
 
 export interface Card {
-	description?: string;
-	authorInst?: string;
-	authorAuthor?: string;
-	authorEmail?: string;
-	date?: string;
-	schema?: string;
-	provenance?: string;
-	dataset?: string;
-	complexity?: string;
-	usage?: string;
-	license?: string;
+    description?: string;
+    authorInst?: string;
+    authorAuthor?: string;
+    authorEmail?: string;
+    date?: string;
+    schema?: string;
+    provenance?: string;
+    dataset?: string;
+    complexity?: string;
+    usage?: string;
+    license?: string;
 }
 
 export interface VariableStatement {
-	id: string;
-	variable: Variable;
-	value?: StatementValue;
-	metadata?: VariableStatementMetadata[];
-	provenance?: ProvenanceInfo;
+    id: string;
+    variable: Variable;
+    value?: StatementValue;
+    metadata?: VariableStatementMetadata[];
+    provenance?: ProvenanceInfo;
 }
 
 export interface ModelExpression {
-	expression: string;
-	expression_mathml: string;
+    expression: string;
+    expression_mathml: string;
 }
 
 export interface PetriNetTransitionProperties {
-	name: string;
-	description: string;
-	grounding?: ModelGrounding;
+    name: string;
+    description: string;
+    grounding?: ModelGrounding;
 }
 
 export interface ExtractionProperties {
-	title: string;
-	trustScore: string;
-	abstractText: string;
-	xddId: string;
-	documentId: string;
-	documentTitle: string;
-	contentText: string;
-	indexInDocument: number;
-	contentJSON: any;
-	image: string;
-	relevantSentences: string;
-	sectionID: string;
-	sectionTitle: string;
-	caption: string;
-	documentBibjson: Document;
-	doi: string;
+    title: string;
+    trustScore: string;
+    abstractText: string;
+    xddId: string;
+    documentId: string;
+    documentTitle: string;
+    contentText: string;
+    indexInDocument: number;
+    contentJSON: any;
+    image: string;
+    relevantSentences: string;
+    sectionID: string;
+    sectionTitle: string;
+    caption: string;
+    documentBibjson: Document;
+    doi: string;
 }
 
 export interface XDDFacetBucket {
-	key: string;
-	docCount: string;
+    key: string;
+    docCount: string;
 }
 
 export interface Authority {
-	id: number;
-	name: string;
-	description: string;
+    id: number;
+    name: string;
+    description: string;
 }
 
 export interface XDDUrlExtraction {
-	url: string;
-	resourceTitle: string;
-	extractedFrom: string[];
+    url: string;
+    resourceTitle: string;
+    extractedFrom: string[];
 }
 
 export interface Rate {
-	target: string;
-	expression: string;
-	expression_mathml?: string;
+    target: string;
+    expression: string;
+    expression_mathml?: string;
 }
 
 export interface Initial {
-	target: string;
-	expression: string;
-	expression_mathml: string;
+    target: string;
+    expression: string;
+    expression_mathml: string;
 }
 
 export interface ModelParameter {
-	id: string;
-	name?: string;
-	description?: string;
-	value?: number;
-	grounding?: ModelGrounding;
-	distribution?: ModelDistribution;
-	unit?: ModelUnit;
+    id: string;
+    name?: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
+    unit?: ModelUnit;
 }
 
 export interface Observable {
-	id: string;
-	name?: string;
-	states?: string[];
-	expression?: string;
-	expression_mathml?: string;
+    id: string;
+    name?: string;
+    states?: string[];
+    expression?: string;
+    expression_mathml?: string;
 }
 
 export interface Variable {
-	id: string;
-	name: string;
-	metadata: VariableMetadata[];
-	column: DataColumn[];
-	paper: Paper;
-	equations: EquationVariable[];
-	dkg_groundings: DKGConcept[];
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: EquationVariable[];
+    dkg_groundings: DKGConcept[];
 }
 
 export interface StatementValue {
-	value: string;
-	type: string;
-	dkg_grounding?: DKGConcept;
+    value: string;
+    type: string;
+    dkg_grounding?: DKGConcept;
 }
 
 export interface VariableStatementMetadata {
-	type: string;
-	value: string;
+    type: string;
+    value: string;
 }
 
 export interface ProvenanceInfo {
-	method: string;
-	description: string;
+    method: string;
+    description: string;
 }
 
 export interface VariableMetadata {
-	type: string;
-	value: string;
+    type: string;
+    value: string;
 }
 
 export interface DataColumn {
-	id: string;
-	name: string;
-	dataset: MetadataDataset;
+    id: string;
+    name: string;
+    dataset: MetadataDataset;
 }
 
 export interface Paper {
-	id: string;
-	doi: string;
-	file_directory: string;
+    id: string;
+    doi: string;
+    file_directory: string;
 }
 
 export interface EquationVariable {
-	id: string;
-	text: string;
-	image: string;
+    id: string;
+    text: string;
+    image: string;
 }
 
 export interface DKGConcept {
-	id: string;
-	name: string;
-	score: number;
+    id: string;
+    name: string;
+    score: number;
 }
 
 export interface MetadataDataset {
-	id: string;
-	name: string;
-	metadata: string;
+    id: string;
+    name: string;
+    metadata: string;
 }
 
 export enum EventType {
-	Search = "SEARCH",
-	EvaluationScenario = "EVALUATION_SCENARIO",
-	RouteTiming = "ROUTE_TIMING",
-	ProxyTiming = "PROXY_TIMING",
-	AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
-	ExtractModel = "EXTRACT_MODEL",
-	PersistModel = "PERSIST_MODEL",
-	TransformPrompt = "TRANSFORM_PROMPT",
-	AddCodeCell = "ADD_CODE_CELL",
-	RunSimulation = "RUN_SIMULATION",
-	RunCalibrate = "RUN_CALIBRATE",
-	GithubImport = "GITHUB_IMPORT",
-	TestType = "TEST_TYPE",
+    Search = "SEARCH",
+    EvaluationScenario = "EVALUATION_SCENARIO",
+    RouteTiming = "ROUTE_TIMING",
+    ProxyTiming = "PROXY_TIMING",
+    AddResourcesToProject = "ADD_RESOURCES_TO_PROJECT",
+    ExtractModel = "EXTRACT_MODEL",
+    PersistModel = "PERSIST_MODEL",
+    TransformPrompt = "TRANSFORM_PROMPT",
+    AddCodeCell = "ADD_CODE_CELL",
+    RunSimulation = "RUN_SIMULATION",
+    RunCalibrate = "RUN_CALIBRATE",
+    GithubImport = "GITHUB_IMPORT",
+    TestType = "TEST_TYPE",
 }
 
 export enum AuthorityLevel {
-	Read = "READ",
-	Create = "CREATE",
-	Update = "UPDATE",
-	Delete = "DELETE",
+    Read = "READ",
+    Create = "CREATE",
+    Update = "UPDATE",
+    Delete = "DELETE",
 }
 
 export enum AuthorityType {
-	GrantAuthority = "GRANT_AUTHORITY",
-	Users = "USERS",
+    GrantAuthority = "GRANT_AUTHORITY",
+    Users = "USERS",
 }
 
 export enum RoleType {
-	Admin = "ADMIN",
-	User = "USER",
-	Group = "GROUP",
-	Test = "TEST",
-	Service = "SERVICE",
-	Special = "SPECIAL",
+    Admin = "ADMIN",
+    User = "USER",
+    Group = "GROUP",
+    Test = "TEST",
+    Service = "SERVICE",
+    Special = "SPECIAL",
 }
 
 export enum AssetType {
-	Dataset = "DATASET",
-	ModelConfiguration = "MODEL_CONFIGURATION",
-	Model = "MODEL",
-	Publication = "PUBLICATION",
-	Simulation = "SIMULATION",
-	Workflow = "WORKFLOW",
-	Artifact = "ARTIFACT",
-	Code = "CODE",
-	Document = "DOCUMENT",
+    Dataset = "DATASET",
+    ModelConfiguration = "MODEL_CONFIGURATION",
+    Model = "MODEL",
+    Publication = "PUBLICATION",
+    Simulation = "SIMULATION",
+    Workflow = "WORKFLOW",
+    Artifact = "ARTIFACT",
+    Code = "CODE",
+    Document = "DOCUMENT",
 }
 
 export enum EvaluationScenarioStatus {
-	Started = "STARTED",
-	Paused = "PAUSED",
-	Resumed = "RESUMED",
-	Stopped = "STOPPED",
+    Started = "STARTED",
+    Paused = "PAUSED",
+    Resumed = "RESUMED",
+    Stopped = "STOPPED",
 }
 
 export enum TaskStatus {
-	Queued = "QUEUED",
-	Running = "RUNNING",
-	Success = "SUCCESS",
-	Failed = "FAILED",
-	Cancelling = "CANCELLING",
-	Cancelled = "CANCELLED",
+    Queued = "QUEUED",
+    Running = "RUNNING",
+    Success = "SUCCESS",
+    Failed = "FAILED",
+    Cancelling = "CANCELLING",
+    Cancelled = "CANCELLED",
 }
 
 export enum ClientEventType {
-	Heartbeat = "HEARTBEAT",
-	Notification = "NOTIFICATION",
-	SimulationSciml = "SIMULATION_SCIML",
-	SimulationPyciemss = "SIMULATION_PYCIEMSS",
-	FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Heartbeat = "HEARTBEAT",
+    Notification = "NOTIFICATION",
+    SimulationSciml = "SIMULATION_SCIML",
+    SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    FileUploadProgress = "FILE_UPLOAD_PROGRESS",
 }
 
 export enum FileType {
-	File = "file",
-	Dir = "dir",
-	Symlink = "symlink",
-	Submodule = "submodule",
+    File = "file",
+    Dir = "dir",
+    Symlink = "symlink",
+    Submodule = "submodule",
 }
 
 export enum FileCategory {
-	Directory = "Directory",
-	Code = "Code",
-	Data = "Data",
-	Documents = "Documents",
-	Other = "Other",
+    Directory = "Directory",
+    Code = "Code",
+    Data = "Data",
+    Documents = "Documents",
+    Other = "Other",
 }
 
 export enum ProgrammingLanguage {
-	Python = "python",
-	R = "r",
-	Julia = "julia",
-	Zip = "zip",
+    Python = "python",
+    R = "r",
+    Julia = "julia",
+    Zip = "zip",
 }
 
 export enum TaggableType {
-	Datasets = "DATASETS",
-	Features = "FEATURES",
-	Intermediates = "INTERMEDIATES",
-	ModelParameters = "MODEL_PARAMETERS",
-	Models = "MODELS",
-	Projects = "PROJECTS",
-	Publications = "PUBLICATIONS",
-	Qualifiers = "QUALIFIERS",
-	SimulationParameters = "SIMULATION_PARAMETERS",
-	SimulationPlans = "SIMULATION_PLANS",
-	SimulationRuns = "SIMULATION_RUNS",
+    Datasets = "DATASETS",
+    Features = "FEATURES",
+    Intermediates = "INTERMEDIATES",
+    ModelParameters = "MODEL_PARAMETERS",
+    Models = "MODELS",
+    Projects = "PROJECTS",
+    Publications = "PUBLICATIONS",
+    Qualifiers = "QUALIFIERS",
+    SimulationParameters = "SIMULATION_PARAMETERS",
+    SimulationPlans = "SIMULATION_PLANS",
+    SimulationRuns = "SIMULATION_RUNS",
 }
 
 export enum OntologicalField {
-	Object = "OBJECT",
-	Unit = "UNIT",
+    Object = "OBJECT",
+    Unit = "UNIT",
 }
 
 export enum ColumnType {
-	Unknown = "UNKNOWN",
-	Boolean = "BOOLEAN",
-	String = "STRING",
-	Char = "CHAR",
-	Integer = "INTEGER",
-	Int = "INT",
-	Float = "FLOAT",
-	Double = "DOUBLE",
-	Timestamp = "TIMESTAMP",
-	Datetime = "DATETIME",
-	Date = "DATE",
-	Time = "TIME",
+    Unknown = "UNKNOWN",
+    Boolean = "BOOLEAN",
+    String = "STRING",
+    Char = "CHAR",
+    Integer = "INTEGER",
+    Int = "INT",
+    Float = "FLOAT",
+    Double = "DOUBLE",
+    Timestamp = "TIMESTAMP",
+    Datetime = "DATETIME",
+    Date = "DATE",
+    Time = "TIME",
 }
 
 export enum EquationType {
-	Mathml = "mathml",
-	Latex = "latex",
+    Mathml = "mathml",
+    Latex = "latex",
 }
 
 export enum ProvenanceRelationType {
-	BeginsAt = "BEGINS_AT",
-	Cites = "CITES",
-	CombinedFrom = "COMBINED_FROM",
-	Contains = "CONTAINS",
-	CopiedFrom = "COPIED_FROM",
-	DecomposedFrom = "DECOMPOSED_FROM",
-	DerivedFrom = "DERIVED_FROM",
-	EditedFrom = "EDITED_FROM",
-	EquivalentOf = "EQUIVALENT_OF",
-	ExtractedFrom = "EXTRACTED_FROM",
-	GeneratedBy = "GENERATED_BY",
-	GluedFrom = "GLUED_FROM",
-	IsConceptOf = "IS_CONCEPT_OF",
-	ParameterOf = "PARAMETER_OF",
-	Reinterprets = "REINTERPRETS",
-	StratifiedFrom = "STRATIFIED_FROM",
-	Uses = "USES",
+    BeginsAt = "BEGINS_AT",
+    Cites = "CITES",
+    CombinedFrom = "COMBINED_FROM",
+    Contains = "CONTAINS",
+    CopiedFrom = "COPIED_FROM",
+    DecomposedFrom = "DECOMPOSED_FROM",
+    DerivedFrom = "DERIVED_FROM",
+    EditedFrom = "EDITED_FROM",
+    EquivalentOf = "EQUIVALENT_OF",
+    ExtractedFrom = "EXTRACTED_FROM",
+    GeneratedBy = "GENERATED_BY",
+    GluedFrom = "GLUED_FROM",
+    IsConceptOf = "IS_CONCEPT_OF",
+    ParameterOf = "PARAMETER_OF",
+    Reinterprets = "REINTERPRETS",
+    StratifiedFrom = "STRATIFIED_FROM",
+    Uses = "USES",
 }
 
 export enum ProvenanceType {
-	Concept = "Concept",
-	Dataset = "Dataset",
-	Model = "Model",
-	ModelRevision = "ModelRevision",
-	ModelConfiguration = "ModelConfiguration",
-	Project = "Project",
-	Publication = "Publication",
-	Simulation = "Simulation",
-	SimulationRun = "SimulationRun",
-	Plan = "Plan",
-	Artifact = "Artifact",
-	Code = "Code",
-	Document = "Document",
-	Workflow = "Workflow",
-	Equation = "Equation",
+    Concept = "Concept",
+    Dataset = "Dataset",
+    Model = "Model",
+    ModelRevision = "ModelRevision",
+    ModelConfiguration = "ModelConfiguration",
+    Project = "Project",
+    Publication = "Publication",
+    Simulation = "Simulation",
+    SimulationRun = "SimulationRun",
+    Plan = "Plan",
+    Artifact = "Artifact",
+    Code = "Code",
+    Document = "Document",
+    Workflow = "Workflow",
+    Equation = "Equation",
 }
 
 export enum SimulationType {
-	Ensemble = "ENSEMBLE",
-	Simulation = "SIMULATION",
-	Calibration = "CALIBRATION",
+    Ensemble = "ENSEMBLE",
+    Simulation = "SIMULATION",
+    Calibration = "CALIBRATION",
 }
 
 export enum ProgressState {
-	Cancelled = "CANCELLED",
-	Complete = "COMPLETE",
-	Error = "ERROR",
-	Failed = "FAILED",
-	Queued = "QUEUED",
-	Retrieving = "RETRIEVING",
-	Running = "RUNNING",
+    Cancelled = "CANCELLED",
+    Complete = "COMPLETE",
+    Error = "ERROR",
+    Failed = "FAILED",
+    Queued = "QUEUED",
+    Retrieving = "RETRIEVING",
+    Running = "RUNNING",
 }
 
 export enum SimulationEngine {
-	Sciml = "SCIML",
-	Ciemss = "CIEMSS",
+    Sciml = "SCIML",
+    Ciemss = "CIEMSS",
 }
 
 export enum WorkflowDirection {
-	FromInput = "FROM_INPUT",
-	FromOutput = "FROM_OUTPUT",
+    FromInput = "FROM_INPUT",
+    FromOutput = "FROM_OUTPUT",
 }
 
 export enum WorkflowOperationTypes {
-	Add = "ADD",
-	Test = "TEST",
-	CalibrationJulia = "CALIBRATION_JULIA",
-	CalibrationCiemss = "CALIBRATION_CIEMSS",
-	Dataset = "DATASET",
-	Model = "MODEL",
-	SimulateJulia = "SIMULATE_JULIA",
-	SimulateCiemss = "SIMULATE_CIEMSS",
-	StratifyJulia = "STRATIFY_JULIA",
-	StratifyMira = "STRATIFY_MIRA",
-	SimulateEnsembleCiemss = "SIMULATE_ENSEMBLE_CIEMSS",
-	CalibrateEnsembleCiemss = "CALIBRATE_ENSEMBLE_CIEMSS",
-	DatasetTransformer = "DATASET_TRANSFORMER",
-	ModelTransformer = "MODEL_TRANSFORMER",
-	ModelFromCode = "MODEL_FROM_CODE",
-	Funman = "FUNMAN",
-	Code = "CODE",
-	ModelConfig = "MODEL_CONFIG",
-	ModelOptimize = "MODEL_OPTIMIZE",
-	ModelCoupling = "MODEL_COUPLING",
-	ModelEdit = "MODEL_EDIT",
-	Document = "DOCUMENT",
+    Add = "ADD",
+    Test = "TEST",
+    CalibrationJulia = "CALIBRATION_JULIA",
+    CalibrationCiemss = "CALIBRATION_CIEMSS",
+    Dataset = "DATASET",
+    Model = "MODEL",
+    SimulateJulia = "SIMULATE_JULIA",
+    SimulateCiemss = "SIMULATE_CIEMSS",
+    StratifyJulia = "STRATIFY_JULIA",
+    StratifyMira = "STRATIFY_MIRA",
+    SimulateEnsembleCiemss = "SIMULATE_ENSEMBLE_CIEMSS",
+    CalibrateEnsembleCiemss = "CALIBRATE_ENSEMBLE_CIEMSS",
+    DatasetTransformer = "DATASET_TRANSFORMER",
+    ModelTransformer = "MODEL_TRANSFORMER",
+    ModelFromCode = "MODEL_FROM_CODE",
+    Funman = "FUNMAN",
+    Code = "CODE",
+    ModelConfig = "MODEL_CONFIG",
+    ModelOptimize = "MODEL_OPTIMIZE",
+    ModelCoupling = "MODEL_COUPLING",
+    ModelEdit = "MODEL_EDIT",
+    Document = "DOCUMENT",
 }
 
 export enum OperatorStatus {
-	Default = "DEFAULT",
-	InProgress = "IN_PROGRESS",
-	Success = "SUCCESS",
-	Invalid = "INVALID",
-	Warning = "WARNING",
-	Failed = "FAILED",
-	Error = "ERROR",
-	Disabled = "DISABLED",
+    Default = "DEFAULT",
+    InProgress = "IN_PROGRESS",
+    Success = "SUCCESS",
+    Invalid = "INVALID",
+    Warning = "WARNING",
+    Failed = "FAILED",
+    Error = "ERROR",
+    Disabled = "DISABLED",
 }
 
 export enum WorkflowPortStatus {
-	Connected = "CONNECTED",
-	NotConnected = "NOT_CONNECTED",
+    Connected = "CONNECTED",
+    NotConnected = "NOT_CONNECTED",
 }
 
 export enum ExtractionAssetType {
-	Figure = "FIGURE",
-	Table = "TABLE",
-	Equation = "EQUATION",
+    Figure = "FIGURE",
+    Table = "TABLE",
+    Equation = "EQUATION",
 }
