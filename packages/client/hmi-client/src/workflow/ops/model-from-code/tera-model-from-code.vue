@@ -86,6 +86,7 @@
 			>
 				<section v-if="selectedModel">
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
+						<tera-model-card :model="selectedModel" />
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
@@ -144,10 +145,11 @@ import { useProjects } from '@/composables/project';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getCodeAsset } from '@/services/code';
-import { codeBlocksToAmr } from '@/services/knowledge';
+import { codeBlocksToAmr, fetchExtraction, profileModel } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -176,6 +178,7 @@ const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 
 const selectedModel = ref<Model | null>(null);
+const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
 
 const inputCodeBlocks = ref<AssetBlock<CodeBlock>[]>([]);
 
@@ -319,6 +322,11 @@ async function handleCode() {
 		const modelId = await codeBlocksToAmr(newCode, file);
 
 		clonedState.value.modelId = modelId;
+
+		if (documentId.value && modelId) {
+			// handle this synchronously so that we can see the model while the model card is generating
+			profile(modelId);
+		}
 		emit('append-output-port', {
 			label: `Output - ${props.node.outputs.length + 1}`,
 			state: cloneDeep(clonedState.value),
@@ -346,6 +354,12 @@ async function handleCode() {
 	}
 }
 
+async function profile(modelId: string) {
+	const profileModelJobId = await profileModel(modelId, documentId.value);
+	await fetchExtraction(profileModelJobId);
+	const model = await getModel(clonedState.value.modelId);
+	selectedModel.value = model;
+}
 function openModal() {
 	isNewModelModalVisible.value = true;
 }
