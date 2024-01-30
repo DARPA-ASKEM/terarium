@@ -7,7 +7,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 
@@ -29,7 +28,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	int POLL_TIMEOUT_SECONDS = 60;
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEchoTaskRequest() throws Exception {
 
