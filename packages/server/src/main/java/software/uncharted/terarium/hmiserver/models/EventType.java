@@ -17,7 +17,6 @@ public enum EventType {
 	RUN_SIMULATION(true),
 	RUN_CALIBRATE(true),
 	GITHUB_IMPORT(true),
-	BREAK(false),
 	TEST_TYPE(true);
 
 	EventType(boolean persistent) {
