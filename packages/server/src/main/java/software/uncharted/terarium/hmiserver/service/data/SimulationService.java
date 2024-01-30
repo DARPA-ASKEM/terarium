@@ -18,7 +18,6 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationResult;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
@@ -127,8 +126,7 @@ public class SimulationService {
 		dataset.setName(simName + " Result Dataset");
 		dataset.setDescription(simulation.getDescription());
 		dataset.setMetadata(Map.of("simulationId", simId));
-		dataset.setFileNames(
-				simulation.getResultFiles().stream().map(f -> f.getFilename()).toList());
+		dataset.setFileNames(simulation.getResultFiles());
 		dataset.setDataSourceDate(simulation.getCompletedTime());
 		dataset.setColumns(new ArrayList<>());
 
@@ -138,8 +136,7 @@ public class SimulationService {
 		}
 
 		if (simulation.getResultFiles() != null) {
-			for (SimulationResult result : simulation.getResultFiles()) {
-				String resultFile = result.getFilename();
+			for (String resultFile : simulation.getResultFiles()) {
 				String filename = s3ClientService.getS3Service().parseFilename(resultFile);
 				String srcPath = getResultsPath(simId, filename);
 				String destPath = getDatasetPath(dataset.getId(), filename);

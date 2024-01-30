@@ -57,11 +57,8 @@ public class Simulation implements Serializable {
 
 	@JsonAlias("result_files")
 	@TSOptional
-	@OneToMany(mappedBy = "simulation")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
-	@JsonManagedReference
-	private List<SimulationResult> resultFiles;
+	private List<String> resultFiles;
 
 	@Enumerated(EnumType.STRING)
 	private SimulationType type;
