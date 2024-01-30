@@ -612,7 +612,7 @@ public class ProjectController {
 		@ApiResponse(responseCode = "200", description = "Project visibility has been updated", content = {
 			@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
 		@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
-		@ApiResponse(responseCode = "304", description = "The current user does not have delete privileges to this project", content = @Content),
+		@ApiResponse(responseCode = "304", description = "The current user does not have privileges to modify this project.", content = @Content),
 		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	@PutMapping("/{id}/{isPublic}")
 	@Secured(Roles.USER)
@@ -633,7 +633,7 @@ public class ProjectController {
 					return removeProjectPermissions(project, who, relationship);
 				}
 			} else {
-				// Else let the user know they cannot do so.
+				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 			}
 		} catch (final Exception e) {
 			// log error when ready to do so.
