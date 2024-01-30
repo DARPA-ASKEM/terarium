@@ -635,7 +635,7 @@ public class ProjectController {
 				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 			}
 		} catch (final Exception e) {
-			// log error when ready to do so.
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
