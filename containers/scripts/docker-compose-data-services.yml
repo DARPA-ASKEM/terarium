@@ -15,8 +15,8 @@ services:
       JUPYTER_SERVER: "http://${local_host_name}:3050"
       SIMULATION_SCHEDULER_URL: "http://${local_host_name}:3030"
       JUPYTER_TOKEN: "89f73481102c46c0bc13b2998f9a4fce"
-      TDS_USER: "${secret_service_account_username}"
-      TDS_PASSWORD: "${secret_service_account_password}"
+      AUTH_USERNAME: "${secret_service_account_username}"
+      AUTH_PASSWORD: "${secret_service_account_password}"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
     extra_hosts:
       - "host.docker.internal:host-gateway"

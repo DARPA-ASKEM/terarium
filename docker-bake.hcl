@@ -71,3 +71,13 @@ target "db-migration-base" {
 target "db-migration" {
   inherits = ["_platforms", "db-migration-base"]
 }
+
+target "gollm-taskrunner-base" {
+	context = "." # root of the repo
+	dockerfile = "./packages/taskrunner/docker/Dockerfile.GoLLM"
+	tags = tag("gollm-taskrunner-base", "", "")
+}
+
+target "gollm-taskrunner" {
+  inherits = ["_platforms", "gollm-taskrunner-base"]
+}

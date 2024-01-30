@@ -51,9 +51,7 @@ services:
       TERARIUM_KEYCLOAK_ADMIN-USERNAME: "admin"
       TERARIUM_KEYCLOAK_ADMIN-PASSWORD: "admin123"
       TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ-HOST: "rabbitmq"
       TERARIUM_MQ-PASSWORD: "terarium123"
-      TERARIUM_MQ-POST: "5672"
       TERARIUM_MQ-USERNAME: "terarium"
       TERARIUM_ELASTICSEARCH_URL: "http://elasticsearch:9200"
       TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
