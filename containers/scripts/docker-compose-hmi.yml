@@ -47,9 +47,7 @@ services:
       TERARIUM_KEYCLOAK_REALM: "${secret_terarium_keycloak_realm}"
       TERARIUM_KEYCLOAK_URL: "${secret_terarium_keycloak_url}"
       TERARIUM_MQ-ADDRESSES: "amqp://${local_host_name}:5672"
-      TERARIUM_MQ-HOST: "${local_host_name}"
       TERARIUM_MQ-PASSWORD: "terarium123"
-      TERARIUM_MQ-POST: "5672"
       TERARIUM_MQ-USERNAME: "terarium"
       TERARIUM_ELASTICSEARCH_URL: "http://${local_host_name}:9200"
       TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
