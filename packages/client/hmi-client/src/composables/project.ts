@@ -172,7 +172,20 @@ export function useProjects() {
 	}
 
 	async function setAccessibility(projectId: Project['id'], isPublic: boolean) {
-		return ProjectService.setAccessibility(projectId, isPublic);
+		const accessibilityChanged = await ProjectService.setAccessibility(projectId, isPublic);
+
+		// update the project accordingly
+		if (accessibilityChanged) {
+			if (activeProject.value) {
+				activeProject.value = { ...activeProject.value, publicProject: isPublic };
+			}
+			if (allProjects.value) {
+				allProjects.value = allProjects.value.map((project) => ({
+					...project,
+					publicProject: project.id === projectId ? isPublic : project.publicProject
+				}));
+			}
+		}
 	}
 
 	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
