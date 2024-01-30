@@ -613,22 +613,29 @@ public class ProjectController {
 			@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
 		@ApiResponse(responseCode = "304", description = "The current user does not have privileges to modify this project.", content = @Content),
 		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
-	@PutMapping("/{id}/{isPublic}")
+	@PutMapping("/set-public/{id}/{isPublic}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectPublic(
 		@PathVariable("id") final UUID id,
 		@PathVariable("isPublic") final boolean isPublic
 	) {
 		try {
-			// Fetch the project and set/unset it to the public group
+			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
+			// Getting the user permissions
 			final RebacUser user = new RebacUser(currentUserService.get().getId(), reBACService);
+			// Getting the Public group permissions
 			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
-			final String relationship = null;
+			// Setting the relationship to be of a reader
+			final String relationship = Schema.Relationship.READER.toString();
+
+			// If the current user is an admin of the project
 			if (user.canAdministrate(project)) {
 				if (isPublic) {
+					// Set the Public Group permissions to READ the Project
 					return setProjectPermissions(project, who, relationship);
 				} else {
+					// Remove the Public Group permissions to READ the Project
 					return removeProjectPermissions(project, who, relationship);
 				}
 			} else {
