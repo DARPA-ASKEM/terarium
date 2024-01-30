@@ -155,16 +155,13 @@ async function get(projectId: Project['id']): Promise<Project | null> {
 	}
 }
 
-async function setAccessibility(projectId: Project['id'], isPublic: boolean) {
+async function setAccessibility(projectId: Project['id'], isPublic: boolean): Promise<boolean> {
 	try {
-		const { status, data } = await API.put(`projects/${projectId}/${isPublic}`);
-		if (status !== 200) {
-			return null;
-		}
-		return data ?? null;
+		const response = await API.put(`projects/set-public/${projectId}/${isPublic}`);
+		return response?.status === 200;
 	} catch (error) {
-		logger.error(error);
-		return null;
+		logger.error(`The project was not made ${isPublic ? 'public' : 'restricted'}, ${error}`);
+		return false;
 	}
 }
 
