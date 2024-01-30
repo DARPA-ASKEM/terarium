@@ -45,14 +45,10 @@ const submitQuery = async () => {
 	});
 	console.log('Message:');
 	console.log(message);
-	message
-		.register('llm_response', (data) => {
-			console.log('llm_response', data);
-			emit('append-output', { value: data });
-		})
-		.register('model_preview', (data) => {
-			console.log('model_preview', data);
-		});
+	message.register('code_cell', (data) => {
+		console.log('Code cell');
+		emit('append-output', { value: data });
+	});
 };
 
 onMounted(async () => {
