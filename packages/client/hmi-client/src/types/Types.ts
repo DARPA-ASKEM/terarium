@@ -12,6 +12,7 @@ export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
     type: ClientEventType;
+		breakme: string;
     data: T;
 }
 
