@@ -10,11 +10,12 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { SubsetDataState } from './subset-data-operation';
+import { WorkflowNode } from '@/types/workflow';
+import { SubsetDataOperationState } from './subset-data-operation';
 
 const emit = defineEmits(['append-input-port', 'open-drilldown']);
 
 defineProps<{
-	node: WorkflowNode<SubsetDataState>;
+	node: WorkflowNode<SubsetDataOperationState>;
 }>();
 </script>

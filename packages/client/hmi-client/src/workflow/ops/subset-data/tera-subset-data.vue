@@ -11,11 +11,12 @@
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { SubsetDataState } from './subset-data-operation';
+import { WorkflowNode } from '@/types/workflow';
+import { SubsetDataOperationState } from './subset-data-operation';
 
 // const props =
 defineProps<{
-	node: WorkflowNode<SubsetDataState>;
+	node: WorkflowNode<SubsetDataOperationState>;
 }>();
 
 const emit = defineEmits(['append-output-port', 'update-state', 'close']);
