@@ -133,8 +133,8 @@ services:
       postgres:
         condition: service_healthy
 
-  taskrunner:
-    container_name: taskrunner
+  gollm-taskrunner:
+    container_name: gollm-taskrunner
     image: ghcr.io/darpa-askem/taskrunner:latest
     networks:
       - terarium

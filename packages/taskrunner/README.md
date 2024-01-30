@@ -7,5 +7,5 @@ This is the async task runner for the Terarium Application
 From `terarium` root:
 
 ```sh
-docker build --tag=ghcr.io/darpa-askem/taskrunner:latest --file=./packages/taskrunner/docker/Dockerfile.GoLLM .
+docker build --tag=ghcr.io/darpa-askem/gollm-taskrunner:latest --file=./packages/taskrunner/docker/Dockerfile.GoLLM .
 ```
