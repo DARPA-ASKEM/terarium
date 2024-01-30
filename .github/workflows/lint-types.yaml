@@ -1,0 +1,40 @@
+name: Lint Generated Types
+on:
+  workflow_call:
+  push:
+    paths:
+      - 'packages/client/**'
+      - 'packages/server/**'
+    branches: ['main']
+  pull_request:
+    paths:
+        - 'packages/client/**'
+        - 'packages/server/**'
+    branches: ['main']
+jobs:
+  lintTypes:
+    name: Lint Generated Types
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      # Debugging purposes to verify branch being worked on
+      - run: git branch
+
+      - name: Setup Java v17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: gradle
+
+      - name: Check Generated Types
+        run: |
+          ./gradlew generateTypeScript
+
+          MODIFIED_FILES=`git status -s | grep "Types.ts" | wc -l`
+          if (( MODIFIED_FILES > 0 )); then
+            echo "Error! Generated file Types.ts must be generated and committed"
+            git status -s
+            exit 1
+          fi

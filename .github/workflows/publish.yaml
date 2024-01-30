@@ -20,6 +20,9 @@ jobs:
   lint:
     uses: ./.github/workflows/lint.yaml
 
+  lint-types:
+    uses: ./.github/workflows/lint-types.yaml
+
   # Lint Client Code
   lint-client:
     uses: ./.github/workflows/lint-client.yaml
