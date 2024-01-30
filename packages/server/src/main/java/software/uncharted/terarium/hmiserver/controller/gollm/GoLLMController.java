@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -12,12 +13,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -83,50 +88,73 @@ public class GoLLMController {
 
 	@PostMapping("/model_card")
 	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Model Card task")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
 			@RequestParam(name = "document-id", required = true) UUID documentId,
-			@RequestParam(name = "model-id", required = true) UUID modelId)
-			throws JsonProcessingException, IOException {
-
-		// Ensure the model is valid
-		modelService.getModel(modelId).orElseThrow();
-
-		// Grab the document
-		DocumentAsset document = documentAssetService.getDocumentAsset(documentId)
-				.orElseThrow();
-
-		ModelCardInput input = new ModelCardInput();
-		input.setResearchPaper(document.getText());
-
-		// Create the task
-		TaskRequest req = new TaskRequest();
-		req.setId(java.util.UUID.randomUUID());
-		req.setScript(MODEL_CARD_SCRIPT);
-		req.setInput(objectMapper.writeValueAsBytes(input));
-
-		ModelCardProperties props = new ModelCardProperties();
-		props.setModelId(modelId);
-		props.setDocumentId(documentId);
-		req.setAdditionalProperties(props);
+			@RequestParam(name = "model-id", required = true) UUID modelId) {
 
 		try {
+			// Ensure the model is valid
+			Optional<Model> model = modelService.getModel(modelId);
+			if (!model.isPresent()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			// Grab the document
+			Optional<DocumentAsset> document = documentAssetService.getDocumentAsset(documentId);
+			if (!document.isPresent()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			ModelCardInput input = new ModelCardInput();
+			input.setResearchPaper(document.get().getText());
+
+			// Create the task
+			TaskRequest req = new TaskRequest();
+			req.setId(java.util.UUID.randomUUID());
+			req.setScript(MODEL_CARD_SCRIPT);
+			req.setInput(objectMapper.writeValueAsBytes(input));
+
+			ModelCardProperties props = new ModelCardProperties();
+			props.setModelId(modelId);
+			props.setDocumentId(documentId);
+			req.setAdditionalProperties(props);
+
 			// send the request
 			taskService.sendTaskRequest(req);
-		} catch (Exception e) {
-			return ResponseEntity.badRequest().build();
-		}
 
-		TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
-		return ResponseEntity.ok().body(resp);
+			TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
+			return ResponseEntity.ok().body(resp);
+
+		} catch (Exception e) {
+			final String error = "Unable to dispatch task request";
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@PutMapping("/{task-id}")
+	@Operation(summary = "Cancel a GoLLM task")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched cancellation successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Void.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the cancellation", content = @Content)
+	})
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/{task-id}")
+	@Operation(summary = "Subscribe for updates on a GoLLM task")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Subscribed successfully", content = @Content(mediaType = "text/event-stream", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+	})
 	@IgnoreRequestLogging
 	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
 		return taskService.subscribe(taskId);
