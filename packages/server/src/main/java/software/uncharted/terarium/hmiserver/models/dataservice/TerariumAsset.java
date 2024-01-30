@@ -42,10 +42,8 @@ public abstract class TerariumAsset implements Serializable {
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
 
-	@TSOptional
 	private Boolean temporary;
 
-	@TSOptional
 	private Boolean publicAsset;
 
 

@@ -46,9 +46,15 @@ public class ProjectAssetService {
 		return projectAssetRepository.findAllByProjectId(projectId);
 	}
 
+	/**
+	 * Find all active assets for a project.  Active assets are defined as those that are not deleted and not temporary.
+	 * @param projectId
+	 * @param types
+	 * @return
+	 */
 	public List<ProjectAsset> findActiveAssetsForProject(@NotNull final UUID projectId,
 			final Collection<@NotNull AssetType> types) {
-		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNull(projectId, types);
+		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(projectId, types);
 	}
 
 	public ProjectAsset save(final ProjectAsset asset) {

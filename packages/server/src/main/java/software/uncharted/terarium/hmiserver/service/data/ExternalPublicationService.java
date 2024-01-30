@@ -64,7 +64,9 @@ public class ExternalPublicationService {
 				.index(elasticConfig.getExternalPublicationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b
+					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.build();
 		return elasticService.search(req, ExternalPublication.class);
 	}

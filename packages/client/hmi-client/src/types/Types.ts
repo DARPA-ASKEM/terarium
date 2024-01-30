@@ -106,8 +106,8 @@ export interface TerariumAsset {
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
-    temporary?: boolean;
-    publicAsset?: boolean;
+    temporary: boolean;
+    publicAsset: boolean;
 }
 
 export interface Code extends TerariumAsset {
