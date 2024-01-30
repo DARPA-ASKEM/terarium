@@ -29,52 +29,7 @@
 				</AccordionTab>
 			</Accordion>
 			<section class="details-column">
-				<tera-grey-card class="details">
-					<ul>
-						<li class="multiple">
-							<span>
-								<label>Framework</label>
-								<div class="framework">{{ model?.header?.schema_name }}</div>
-							</span>
-							<span>
-								<label>Model version</label>
-								<div>{{ model?.header?.model_version }}</div>
-							</span>
-							<span>
-								<label>Date created</label>
-								<div>{{ model?.metadata?.processed_at ?? card?.date }}</div>
-							</span>
-						</li>
-						<li>
-							<label>Created by</label>
-							<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
-						</li>
-						<li>
-							<label>Author email</label>
-							<div>{{ card?.authorEmail }}</div>
-						</li>
-						<li>
-							<label>Institution</label>
-							<div>
-								<tera-show-more-text v-if="card?.authorInst" :text="card?.authorInst" :lines="2" />
-							</div>
-						</li>
-						<li class="multiple">
-							<span>
-								<label>License</label>
-								<div>{{ card?.license }}</div>
-							</span>
-							<span>
-								<label>Complexity</label>
-								<div>{{ card?.complexity }}</div>
-							</span>
-						</li>
-						<li>
-							<label>Source</label>
-							<div>{{ model?.metadata?.processed_by }}</div>
-						</li>
-					</ul>
-				</tera-grey-card>
+				<tera-model-card :model="model" />
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Model"
@@ -147,10 +102,10 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
-import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
+import TeraModelCard from './tera-model-card.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
@@ -205,14 +160,6 @@ const documents = computed(
 				id: document.id
 			})) ?? []
 );
-
-const authors = computed(() => {
-	const authorsArray = props.model?.metadata?.annotations?.authors ?? [];
-
-	if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
-
-	return authorsArray.join(', ');
-});
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -269,32 +216,6 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
-	> .details {
-		> ul {
-			list-style: none;
-			padding: 0.5rem 1rem;
-			display: flex;
-			flex-direction: column;
-			gap: var(--gap-small);
-
-			& > li.multiple {
-				display: flex;
-
-				& > span {
-					flex: 1 0 0;
-				}
-			}
-
-			& > li label {
-				color: var(--text-color-subdued);
-				font-size: var(--font-caption);
-
-				& + *:empty:before {
-					content: '--';
-				}
-			}
-		}
-	}
 }
 
 .framework {
