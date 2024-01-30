@@ -51,6 +51,8 @@ services:
       - ./realm/:/data/
     ports:
       - '8081:8081'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   keycloak-init:
     image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0

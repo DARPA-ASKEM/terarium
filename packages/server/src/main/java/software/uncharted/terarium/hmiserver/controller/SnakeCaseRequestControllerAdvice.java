@@ -1,27 +1,28 @@
 package software.uncharted.terarium.hmiserver.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpInputMessage;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAdapter;
+import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
-import org.springframework.core.MethodParameter;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpInputMessage;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdvice;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-
-import jakarta.annotation.PostConstruct;
-import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
-
 @RestControllerAdvice
-public class SnakeCaseRequestControllerAdvice implements RequestBodyAdvice {
+@Slf4j
+public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
 	private ObjectMapper snakecaseMapper;
 	private ObjectMapper camelcaseMapper;
 
@@ -39,19 +40,6 @@ public class SnakeCaseRequestControllerAdvice implements RequestBodyAdvice {
 	public boolean supports(MethodParameter methodParameter, Type targetType,
 			Class<? extends HttpMessageConverter<?>> converterType) {
 		return true;
-	}
-
-	@Override
-	public Object afterBodyRead(Object body, HttpInputMessage inputMessage, MethodParameter parameter,
-			Type targetType, Class<? extends HttpMessageConverter<?>> converterType) {
-		return body;
-	}
-
-	@Override
-	public Object handleEmptyBody(Object body, HttpInputMessage inputMessage,
-			MethodParameter parameter, Type targetType,
-			Class<? extends HttpMessageConverter<?>> converterType) {
-		return body;
 	}
 
 	private boolean containsKeyIgnoreCase(HttpHeaders headers, String key) {

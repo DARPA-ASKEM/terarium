@@ -1,16 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -26,38 +23,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
@@ -72,6 +46,12 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -158,14 +138,14 @@ public class DocumentController {
 		@RequestBody final DocumentAsset document) {
 
 		try {
-			Optional<DocumentAsset> originalDocument = documentAssetService.getDocumentAsset(id);
+			final Optional<DocumentAsset> originalDocument = documentAssetService.getDocumentAsset(id);
 			if(originalDocument.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 			// Preserve ownership. This may be coming from KM which doesn't have an awareness of who owned this document.
 			document.setUserId(originalDocument.get().getUserId());
 
-			Optional<DocumentAsset> updatedDoc = documentAssetService.updateDocumentAsset(document);
+			final Optional<DocumentAsset> updatedDoc = documentAssetService.updateDocumentAsset(document);
 			return updatedDoc.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
@@ -201,7 +181,7 @@ public class DocumentController {
 			document.get().getAssets().forEach(asset -> {
 				try {
 					// Add the S3 bucket url to each asset metadata
-					Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
+					final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
 					if (url.isEmpty()) {
 						return;
 					}
@@ -261,7 +241,7 @@ public class DocumentController {
 			@RequestParam("filename") final String filename) {
 
 		try {
-			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
+			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -481,7 +461,7 @@ public class DocumentController {
 				.disableRedirectHandling()
 				.build()) {
 
-			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
+			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -518,7 +498,7 @@ public class DocumentController {
 				.disableRedirectHandling()
 				.build()) {
 
-			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
+			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -556,7 +536,7 @@ public class DocumentController {
 	public ResponseEntity<String> postImageToEquation(@PathVariable("id") final UUID documentId,
 			@RequestParam("filename") final String filename) {
 		try {
-			Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
+			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
