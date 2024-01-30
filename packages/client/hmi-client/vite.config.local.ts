@@ -12,17 +12,6 @@ config.server.proxy = {
 		target: `http://${localhost}:3000`,
 		rewrite: (path_str) => path_str.replace(/^\/api/, ''),
 		changeOrigin: true
-	},
-	'^/beaker_ws': {
-		target: `ws://${localhost}:3050`,
-		rewrite: (path_str) => path_str.replace(/^\/beaker_ws/, ''),
-		changeOrigin: true,
-		ws: true
-	},
-	'^/beaker': {
-		target: `http://${localhost}:3050`,
-		rewrite: (path_str) => path_str.replace(/^\/beaker/, ''),
-		changeOrigin: true
 	}
 };
 
