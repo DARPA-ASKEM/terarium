@@ -1,5 +1,5 @@
 <template>
-	<span>
+	<div>
 		<!-- <i class="pi pi-magic" /> -->
 		<InputText
 			class="input"
@@ -13,7 +13,7 @@
 		<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<i v-else class="pi pi-send" />
-	</span>
+	</div>
 </template>
 
 <script setup lang="ts">

@@ -11,7 +11,7 @@
 			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
 				<Suspense>
-					<tera-model-edit-jupyter-input
+					<tera-notebook-jupyter-input
 						context="mira_model_edit"
 						:contextInfo="contextInfo"
 						@append-output="getOutputFromLLM"
@@ -92,8 +92,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
+import teraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { ModelEditOperationState } from './model-edit-operation';
-import teraModelEditJupyterInput from './tera-model-edit-jupyter-input.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
