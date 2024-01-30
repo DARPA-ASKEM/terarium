@@ -394,7 +394,9 @@ watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
 watch(
 	() => selectedRunId.value,
 	() => {
-		lazyLoadSimulationData(selectedRunId.value);
+		if (selectedRunId.value) {
+			lazyLoadSimulationData(selectedRunId.value);
+		}
 	},
 	{ immediate: true }
 );
