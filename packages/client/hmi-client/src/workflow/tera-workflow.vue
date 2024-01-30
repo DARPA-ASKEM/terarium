@@ -156,6 +156,7 @@
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
+			@expose-output-port="(event: any) => updateExposedOutputPort(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
 		>
 		</component>
@@ -347,6 +348,18 @@ function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) 
 function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
 	workflowService.updateOutputPort(node, workflowOutput);
+	workflowDirty = true;
+}
+
+function updateExposedOutputPort(node: WorkflowNode<any> | null, id: WorkflowOutput<any>['id']) {
+	if (!node) return;
+	const outputPort = cloneDeep(node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	workflowService.updateOutputPort(node, outputPort);
+	if (outputPort.status === WorkflowPortStatus.CONNECTED) {
+		removeEdges(outputPort.id);
+	}
 	workflowDirty = true;
 }
 

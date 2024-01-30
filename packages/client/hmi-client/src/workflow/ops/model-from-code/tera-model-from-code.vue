@@ -159,7 +159,8 @@ const emit = defineEmits([
 	'update-state',
 	'select-output',
 	'append-output-port',
-	'update-output-port'
+	'update-output-port',
+	'expose-output-port'
 ]);
 
 enum ModelFramework {
@@ -478,12 +479,9 @@ function updateNodeLabel(id: string, label: string) {
 	emit('update-output-port', outputPort);
 }
 
-function onUpdateSelection(id) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-}
+const onUpdateSelection = (id) => {
+	emit('expose-output-port', id);
+};
 </script>
 
 <style scoped>

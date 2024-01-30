@@ -146,7 +146,8 @@ const emit = defineEmits([
 	'update-state',
 	'append-output-port',
 	'select-output',
-	'update-output-port'
+	'update-output-port',
+	'expose-output-port'
 ]);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromDocumentState>;
@@ -287,13 +288,9 @@ function onUpdateOutput(id) {
 	emit('select-output', id);
 }
 
-function onUpdateSelection(id) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-}
-
+const onUpdateSelection = (id) => {
+	emit('expose-output-port', id);
+};
 async function onRun() {
 	const equations = clonedState.value.equations
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)

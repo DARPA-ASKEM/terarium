@@ -184,7 +184,8 @@ const emit = defineEmits([
 	'update-state',
 	'select-output',
 	'update-output-port',
-	'close'
+	'close',
+	'expose-output-port'
 ]);
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
@@ -359,10 +360,7 @@ const onUpdateOutput = (id) => {
 };
 
 const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
+	emit('expose-output-port', id);
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
