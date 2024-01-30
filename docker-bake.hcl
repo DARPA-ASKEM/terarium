@@ -26,15 +26,15 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "db-migration"]
+  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner"]
 }
 
 group "staging" {
-  targets = ["hmi-client", "hmi-server", "db-migration"]
+  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "ollm-taskrunner-base"]
 }
 
 # ---------------------------------
