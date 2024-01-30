@@ -8,8 +8,8 @@ on:
     branches: ['main']
   pull_request:
     paths:
-        - 'packages/client/**'
-        - 'packages/server/**'
+      - 'packages/client/**'
+      - 'packages/server/**'
     branches: ['main']
 jobs:
   lintTypes:
