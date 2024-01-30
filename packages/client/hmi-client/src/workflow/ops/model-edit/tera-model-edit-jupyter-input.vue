@@ -1,5 +1,6 @@
 <template>
 	<span>
+		<!-- <i class="pi pi-magic" /> -->
 		<InputText
 			class="input"
 			ref="inputElement"
@@ -9,6 +10,7 @@
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
 			@keydown.enter="submitQuery"
 		></InputText>
+		<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<i v-else class="pi pi-send" />
 	</span>
@@ -19,6 +21,7 @@ import InputText from 'primevue/inputtext';
 import { ref, onUnmounted, onMounted } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import { Model } from '@/types/Types';
+import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
 	amr: Model | null;
@@ -28,9 +31,10 @@ const emit = defineEmits(['append-output']);
 
 const queryString = ref('');
 const kernelStatus = ref<string>('');
+const contextLanguage = ref<string>('python3');
+const contextLanguageOptions = ref<string[]>(['python3']);
 
 const manager = new KernelSessionManager();
-// const jupyterSession = ref();
 
 const submitQuery = async () => {
 	console.log('Submit Query:');
@@ -54,7 +58,7 @@ const submitQuery = async () => {
 onMounted(async () => {
 	const context = {
 		context: 'mira_model_edit',
-		language: 'python3',
+		language: contextLanguage.value,
 		context_info: {
 			id: props.amr?.id
 		}
