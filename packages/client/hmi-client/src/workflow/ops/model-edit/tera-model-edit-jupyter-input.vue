@@ -20,11 +20,11 @@
 import InputText from 'primevue/inputtext';
 import { ref, onUnmounted, onMounted } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
-import { Model } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
-	amr: Model | null;
+	context: string;
+	contextInfo: any;
 }>();
 
 const emit = defineEmits(['append-output']);
@@ -57,11 +57,9 @@ const submitQuery = async () => {
 
 onMounted(async () => {
 	const context = {
-		context: 'mira_model_edit',
+		context: props.context,
 		language: contextLanguage.value,
-		context_info: {
-			id: props.amr?.id
-		}
+		context_info: props.contextInfo
 	};
 
 	await manager.init('beaker_kernel', 'Beaker Kernel', context);

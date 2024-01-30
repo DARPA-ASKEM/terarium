@@ -11,7 +11,11 @@
 			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
 				<Suspense>
-					<tera-model-edit-jupyter-input :amr="amr" @append-output="getOutputFromLLM" />
+					<tera-model-edit-jupyter-input
+						context="mira_model_edit"
+						:contextInfo="contextInfo"
+						@append-output="getOutputFromLLM"
+					/>
 				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -122,6 +126,7 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
+const contextInfo = { id: amr.value?.id }; // context for jupyter-input
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
