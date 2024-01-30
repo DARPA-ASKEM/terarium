@@ -34,7 +34,7 @@ group "staging" {
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "ollm-taskrunner-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "gollm-taskrunner-base"]
 }
 
 # ---------------------------------
