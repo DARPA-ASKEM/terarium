@@ -611,7 +611,6 @@ public class ProjectController {
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "Project visibility has been updated", content = {
 			@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
-		@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 		@ApiResponse(responseCode = "304", description = "The current user does not have privileges to modify this project.", content = @Content),
 		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
 	@PutMapping("/{id}/{isPublic}")
