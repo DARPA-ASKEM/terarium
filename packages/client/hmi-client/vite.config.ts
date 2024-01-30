@@ -47,12 +47,6 @@ export default defineConfig({
 				target: 'https://server.staging.terarium.ai',
 				rewrite: (path_str) => path_str.replace(/^\/api/, ''),
 				changeOrigin: true
-			},
-			'^/beaker/(.*)': {
-				target: 'http://beaker.staging.terarium.ai'
-			},
-			'^/beaker_ws/(.*)': {
-				target: 'http://beaker.staging.terarium.ai'
 			}
 		}
 	},
