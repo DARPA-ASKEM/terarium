@@ -421,7 +421,7 @@ export interface Simulation {
     executionPayload: any;
     name?: string;
     description?: string;
-    resultFiles?: SimulationResult[];
+    resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
     startTime?: Date;
@@ -433,11 +433,6 @@ export interface Simulation {
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
-}
-
-export interface SimulationResult extends TerariumAsset {
-    filename: string;
-    simulation: Simulation;
 }
 
 export interface Position {
