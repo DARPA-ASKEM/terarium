@@ -18,7 +18,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 @Data
 @AMRSchemaType
 @Accessors(chain = true)
-@Deprecated
 public class ModelMetadata implements SupportAdditionalProperties {
 	@TSOptional
 	@JsonProperty("processed_at")
@@ -43,6 +42,10 @@ public class ModelMetadata implements SupportAdditionalProperties {
 
 	@TSOptional
 	private Card card;
+
+	@TSOptional
+	@JsonProperty("gollm_card")
+	private Object gollmCard;
 
 	@TSOptional
 	private List<String> provenance;

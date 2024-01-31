@@ -214,7 +214,6 @@ export interface Model extends TerariumAsset {
     header: ModelHeader;
     userId?: string;
     model: { [index: string]: any };
-    modelCard?: string;
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
@@ -806,9 +805,6 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
-/**
- * @deprecated
- */
 export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
@@ -818,6 +814,7 @@ export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
+    gollm_card?: any;
 }
 
 export interface ModelGrounding {

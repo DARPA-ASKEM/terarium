@@ -32,9 +32,6 @@ public class Model extends TerariumAsset implements SupportAdditionalProperties,
 	private Map<String, Object> model;
 
 	@TSOptional
-	private String modelCard;
-
-	@TSOptional
 	private Object properties;
 
 	@TSOptional
