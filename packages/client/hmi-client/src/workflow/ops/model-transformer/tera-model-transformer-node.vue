@@ -33,8 +33,8 @@ const model = ref<Model | null>(null);
 
 const fetchModel = async () => {
 	// FIXME: The state now holds a modelConfigIds - so this may have to be updated to support that
-	if (!props.node?.state?.modelId) return;
-	model.value = await getModel(props.node?.state?.modelId);
+	if (!props.node.inputs[0].value?.[0]) return;
+	model.value = await getModel(props.node.inputs[0].value[0]);
 };
 
 onMounted(async () => {
