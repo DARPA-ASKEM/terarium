@@ -11,32 +11,40 @@
 		@blur="() => {}"
 	>
 		<template #foreground>
-			<aside>
-				<section v-if="model?.header?.schema_name">
-					<header>Model framework</header>
-					<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
-				</section>
-				<section class="template-options">
-					<header>Model templates</header>
-					<ul>
-						<li
-							v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
-							:key="index"
-						>
-							<tera-model-template
-								:model="modelTemplate"
-								:is-editable="false"
-								draggable="true"
-								@dragstart="newModelTemplate = modelTemplate"
-							/>
-						</li>
-					</ul>
-				</section>
-				<section class="trash">
-					<i class="pi pi-trash"></i>
-					<div>Drag items here to delete</div>
-				</section>
-			</aside>
+			<section class="toolbar">
+				<aside>
+					<!--TODO: Move this later to the top-right-->
+					<SelectButton
+						:model-value="modelFormat"
+						@change="if ($event.value) modelFormat = $event.value;"
+						:options="modelFormatOptions"
+					/>
+					<section v-if="model?.header?.schema_name">
+						<header>Model framework</header>
+						<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
+					</section>
+					<section class="template-options">
+						<header>Model templates</header>
+						<ul>
+							<li
+								v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
+								:key="index"
+							>
+								<tera-model-template
+									:model="modelTemplate"
+									:is-editable="false"
+									draggable="true"
+									@dragstart="newModelTemplate = modelTemplate"
+								/>
+							</li>
+						</ul>
+					</section>
+					<section class="trash">
+						<i class="pi pi-trash"></i>
+						<div>Drag items here to delete</div>
+					</section>
+				</aside>
+			</section>
 		</template>
 		<template #data>
 			<tera-canvas-item
@@ -108,14 +116,24 @@ import type {
 	ModelTemplateJunction
 } from '@/types/model-templating';
 import * as modelTemplatingService from '@/services/model-templating';
+import SelectButton from 'primevue/selectbutton';
+import { KernelSessionManager } from '@/services/jupyter';
+import { logger } from '@/utils/logger';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 
-defineProps<{
+const props = defineProps<{
 	model?: Model;
 }>();
+
+enum ModelFormat {
+	Template = 'Template',
+	Flat = 'Flat'
+}
+
+const kernelManager = new KernelSessionManager();
 
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
@@ -124,13 +142,23 @@ let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
 const modelTemplateEditor = ref<ModelTemplateEditor>(
-	modelTemplatingService.emptyModelTemplateEditor()
+	modelTemplatingService.initializeModelTemplateEditor(props.model)
 );
+const flatModelTemplateEditor = ref<ModelTemplateEditor>(
+	modelTemplatingService.initializeModelTemplateEditor(props.model)
+);
+const modelFormatOptions = ref([ModelFormat.Template, ModelFormat.Flat]);
+const modelFormat = ref(ModelFormat.Template);
 
-const cards = computed<ModelTemplateCard[]>(
-	() => modelTemplateEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+const currentEditor = computed(() =>
+	modelFormat.value === ModelFormat.Template
+		? modelTemplateEditor.value
+		: flatModelTemplateEditor.value
 );
-const junctions = computed<ModelTemplateJunction[]>(() => modelTemplateEditor.value.junctions);
+const cards = computed<ModelTemplateCard[]>(
+	() => currentEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+);
+const junctions = computed<ModelTemplateJunction[]>(() => currentEditor.value.junctions);
 
 const newModelTemplate = ref();
 const newEdge = ref();
@@ -325,20 +353,62 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-onMounted(() => {
+function amrToTemplates() {
+	kernelManager.sendMessage('amr_to_templates', {}).on('amr_to_templates_response', (d) => {
+		// FIXME: Model templates are passed no junctions yet
+		modelTemplateEditor.value.models = d.content.templates;
+	});
+}
+
+onMounted(async () => {
 	document.addEventListener('mousemove', mouseUpdate);
+
+	if (props.model) {
+		// Create flattened view of model
+		const flattenedModel: any = cloneDeep(props.model);
+		flattenedModel.metadata.templateCard = {
+			id: props.model.id,
+			name: props.model.header.name,
+			x: 0,
+			y: 0
+		};
+		modelTemplatingService.addCard(flatModelTemplateEditor.value, flattenedModel);
+
+		// Initialize beaker kernel
+		try {
+			const context = {
+				context: 'mira_model',
+				language: 'python3',
+				context_info: {
+					id: props.model.id
+				}
+			};
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
+			// Create template view of model
+			amrToTemplates();
+		} catch (error) {
+			logger.error(`Error initializing Jupyter session: ${error}`);
+		}
+	}
 });
+
 onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
+	kernelManager.shutdown();
 });
 </script>
 
 <style scoped>
+.toolbar {
+	height: 100%;
+	display: flex;
+	overflow: scroll;
+}
+
 aside {
 	width: 15rem;
 	display: flex;
 	flex-direction: column;
-	height: 100%;
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-alt);
 	padding: var(--gap) 0;

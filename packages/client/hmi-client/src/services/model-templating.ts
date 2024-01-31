@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Position } from '@/types/common';
-import type { ModelTemplateEditor } from '@/types/model-templating';
+import type { Model } from '@/types/Types';
+import type { ModelTemplateCard, ModelTemplateEditor } from '@/types/model-templating';
 import naturalConversion from './model-templates/natural-conversion.json';
 import naturalProduction from './model-templates/natural-production.json';
 import naturalDegredation from './model-templates/natural-degradation.json';
@@ -8,6 +9,18 @@ import controlledConversion from './model-templates/controlled-conversion.json';
 import controlledProduction from './model-templates/controlled-production.json';
 import controlledDegredation from './model-templates/controlled-degradation.json';
 import observable from './model-templates/observable.json';
+// import { KernelSessionManager } from '@/services/jupyter';
+
+// const context = {
+// 	context: 'mira_model',
+// 	language: 'python3',
+// 	context_info: {
+// 		id: '8f1b00a3-00bd-47b1-925a-3e1227a0af9a'
+// 	}
+// };
+
+// const manager = new KernelSessionManager();
+// await manager.init('beaker_kernel', 'Beaker Kernel', context);
 
 export const modelTemplateOptions = [
 	naturalConversion,
@@ -20,15 +33,18 @@ export const modelTemplateOptions = [
 ].map((modelTemplate: any) => {
 	// TODO: Add templateCard attribute to Model later
 	modelTemplate.metadata.templateCard = {
-		id: -1,
+		id: modelTemplate.header.name,
 		name: modelTemplate.header.name,
 		x: 0,
 		y: 0
-	};
+	} as ModelTemplateCard;
 	return modelTemplate;
 });
 
-export function emptyModelTemplateEditor(name = 'name', description = '') {
+export function initializeModelTemplateEditor(model: Model | null = null) {
+	const name = model?.header?.name ?? 'name';
+	const description = model?.header?.description ?? 'description';
+
 	const modelTemplateEditor: ModelTemplateEditor = {
 		id: uuidv4(),
 		name,
