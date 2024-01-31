@@ -3,12 +3,12 @@ on:
   workflow_call:
   push:
     paths:
-      - 'packages/client/**'
+      - 'packages/client/hmi-client/src/types/Types.ts'
       - 'packages/server/**'
     branches: ['main']
   pull_request:
     paths:
-      - 'packages/client/**'
+      - 'packages/client/hmi-client/src/types/Types.ts'
       - 'packages/server/**'
     branches: ['main']
 jobs:
