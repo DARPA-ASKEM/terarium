@@ -1,0 +1,216 @@
+package software.uncharted.terarium.hmiserver.service;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.catalina.connector.ClientAbortException;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.ExchangeTypes;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.annotation.Exchange;
+import org.springframework.amqp.rabbit.annotation.QueueBinding;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class TaskService {
+
+	private final RabbitTemplate rabbitTemplate;
+	private final RabbitAdmin rabbitAdmin;
+	private final Config config;
+	private final ObjectMapper objectMapper;
+
+	private Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
+	private Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
+
+	// TESTING ONLY!
+	private Map<UUID, BlockingQueue<TaskResponse>> responseQueues = new ConcurrentHashMap<>();
+
+	@Value("${terarium.taskrunner.request-queue}")
+	private String TASK_RUNNER_REQUEST_QUEUE;
+
+	@Value("${terarium.taskrunner.response-exchange}")
+	private String TASK_RUNNER_RESPONSE_EXCHANGE;
+
+	@Value("${terarium.taskrunner.cancellation-exchange}")
+	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
+
+	private void declareAndBindTransientQueueWithRoutingKey(String exchangeName, String queueName, String routingKey) {
+		// Declare a direct exchange
+		DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
+		rabbitAdmin.declareExchange(exchange);
+
+		// Declare a queue
+		Queue queue = new Queue(queueName, config.getDurableQueues(), false, true);
+		rabbitAdmin.declareQueue(queue);
+
+		// Bind the queue to the exchange with a routing key
+		Binding binding = BindingBuilder.bind(queue).to(exchange).with(routingKey);
+		rabbitAdmin.declareBinding(binding);
+	}
+
+	private void declareQueue(String queueName) {
+		// Declare a queue
+		Queue queue = new Queue(queueName, config.getDurableQueues(), false, false);
+		rabbitAdmin.declareQueue(queue);
+	}
+
+	@PostConstruct
+	void init() {
+		declareQueue(TASK_RUNNER_REQUEST_QUEUE);
+	}
+
+	public void sendTaskRequest(TaskRequest req) throws JsonProcessingException {
+		// create the cancellation queue _BEFORE_ sending the request, because a
+		// cancellation can be send before the request is consumed on the other end if
+		// there is contention. We need this queue to exist to hold the message.
+		String queueName = req.getId().toString();
+		String routingKey = req.getId().toString();
+		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
+
+		try {
+			// send the request to the task runner
+			final String jsonStr = objectMapper.writeValueAsString(req);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_REQUEST_QUEUE, jsonStr);
+		} catch (Exception e) {
+			rabbitAdmin.deleteQueue(queueName);
+			throw e;
+		}
+	}
+
+	public void addResponseHandler(String script, TaskResponseHandler handler) {
+		responseHandlers.put(script, handler);
+	}
+
+	public void cancelTask(final UUID taskId) {
+		// send the cancellation to the task runner
+		final String msg = "";
+		rabbitTemplate.convertAndSend(TASK_RUNNER_CANCELLATION_EXCHANGE, msg);
+	}
+
+	public SseEmitter subscribe(final UUID taskId) {
+		final SseEmitter emitter = new SseEmitter();
+		if (taskIdToEmitter.containsKey(taskId)) {
+			try {
+				taskIdToEmitter.get(taskId).complete();
+			} catch (IllegalStateException ignored) {
+			}
+		}
+		taskIdToEmitter.put(taskId, emitter);
+		return emitter;
+	}
+
+	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""))
+	void onTaskResponse(final Message message) {
+		try {
+			TaskResponse resp = decodeMessage(message, TaskResponse.class);
+			if (resp == null) {
+				return;
+			}
+
+			try {
+				if (responseQueues.containsKey(resp.getId())) {
+					BlockingQueue<TaskResponse> queue = responseQueues.get(resp.getId());
+					queue.put(resp);
+				}
+			} catch (Exception e) {
+				log.error("Error occured while writing to response queue for task {}",
+						resp.getId(), e);
+			}
+
+			try {
+				if (responseHandlers.containsKey(resp.getScript())) {
+					responseHandlers.get(resp.getScript()).handle(resp);
+				}
+			} catch (Exception e) {
+				log.error("Error occured while executing response handler for task {}",
+						resp.getId(), e);
+			}
+
+			final SseEmitter emitter = taskIdToEmitter.get(resp.getId());
+			synchronized (taskIdToEmitter) {
+				if (emitter != null) {
+					try {
+						emitter.send(resp);
+					} catch (IllegalStateException | ClientAbortException e) {
+						log.warn("Error sending task response for task {}. User likely disconnected",
+								resp.getId());
+						taskIdToEmitter.remove(resp.getId());
+					} catch (IOException e) {
+						log.error("Error sending task response for task {}", resp.getId(), e);
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error processing task response message", e);
+		}
+	}
+
+	public static <T> T decodeMessage(final Message message, Class<T> clazz) {
+		ObjectMapper mapper = new ObjectMapper();
+
+		try {
+			return mapper.readValue(message.getBody(), clazz);
+		} catch (Exception e) {
+			try {
+				JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
+				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
+				return null;
+			} catch (Exception e1) {
+				log.error("Error decoding message as either {} or {}. Raw message is: {}", clazz.getName(),
+						JsonNode.class.getName(), message.getBody());
+				log.error("", e1);
+				return null;
+			}
+		}
+	}
+
+	public BlockingQueue<TaskResponse> createEchoTask(UUID taskId, JsonNode input, Object additionalProperties)
+			throws JsonProcessingException, IOException, InterruptedException {
+
+		BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(64);
+		responseQueues.put(taskId, queue);
+
+		byte[] bytes = objectMapper.writeValueAsBytes(input);
+
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript("/echo.py");
+		req.setInput(bytes);
+		req.setAdditionalProperties(additionalProperties);
+
+		// send the request
+		sendTaskRequest(req);
+
+		TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
+		queue.put(resp);
+
+		return queue;
+	}
+
+}

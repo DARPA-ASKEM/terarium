@@ -14,7 +14,10 @@ export const ModelFromCodeOperation: Operation = {
 	description: 'Create model',
 	displayName: 'Create model from code',
 	isRunnable: true,
-	inputs: [{ type: 'codeAssetId', label: 'Code' }],
+	inputs: [
+		{ type: 'codeAssetId', label: 'Code' },
+		{ type: 'documentId', label: 'Text' }
+	],
 	outputs: [],
 	action: () => {},
 

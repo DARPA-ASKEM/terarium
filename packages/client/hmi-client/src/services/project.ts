@@ -10,7 +10,6 @@ import * as EventService from '@/services/event';
 import {
 	AssetType,
 	EventType,
-	ExternalPublication,
 	PermissionRelationships,
 	Project,
 	ProjectAsset
@@ -96,25 +95,6 @@ async function getAll(): Promise<Project[] | null> {
 }
 
 /**
- * Get projects publication assets for a given project per id
- * @param projectId project id to get assets for
- * @return ExternalPublication[] the documents assets for the project
- */
-async function getPublicationAssets(projectId: string): Promise<ExternalPublication[]> {
-	try {
-		const url = `/projects/${projectId}/assets?types=${AssetType.Publication}`;
-		const response = await API.get(url);
-		const { status, data } = response;
-		if (status === 200) {
-			return data?.[AssetType.Publication] ?? ([] as ExternalPublication[]);
-		}
-	} catch (error) {
-		logger.error(error);
-	}
-	return [] as ExternalPublication[];
-}
-
-/**
  * Add project asset
  * @projectId string - represents the project id wherein the asset will be added
  * @assetType string - represents the type of asset to be added, e.g., 'documents'
@@ -172,6 +152,16 @@ async function get(projectId: Project['id']): Promise<Project | null> {
 	} catch (error) {
 		logger.error(error);
 		return null;
+	}
+}
+
+async function setAccessibility(projectId: Project['id'], isPublic: boolean): Promise<boolean> {
+	try {
+		const response = await API.put(`projects/set-public/${projectId}/${isPublic}`);
+		return response?.status === 200;
+	} catch (error) {
+		logger.error(`The project was not made ${isPublic ? 'public' : 'restricted'}, ${error}`);
+		return false;
 	}
 }
 
@@ -267,7 +257,7 @@ export {
 	addAsset,
 	deleteAsset,
 	getAssetIcon,
-	getPublicationAssets,
+	setAccessibility,
 	getPermissions,
 	setPermissions,
 	removePermissions,

@@ -112,7 +112,11 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.SCIML);
 
 		try {
-			return ResponseEntity.ok(simulationService.createSimulation(sim));
+			final Optional<Simulation> updated = simulationService.updateSimulation(sim);
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);
@@ -154,7 +158,11 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.CIEMSS);
 
 		try {
-			return ResponseEntity.ok(simulationService.createSimulation(sim));
+			final Optional<Simulation> updated = simulationService.updateSimulation(sim);
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(updated.get());
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);

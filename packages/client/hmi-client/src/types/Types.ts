@@ -421,7 +421,7 @@ export interface Simulation {
     executionPayload: any;
     name?: string;
     description?: string;
-    resultFiles?: SimulationResult[];
+    resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
     startTime?: Date;
@@ -433,11 +433,6 @@ export interface Simulation {
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
-}
-
-export interface SimulationResult extends TerariumAsset {
-    filename: string;
-    simulation: Simulation;
 }
 
 export interface Position {
@@ -715,6 +710,14 @@ export interface TimeSpan {
     end: number;
 }
 
+export interface TaskResponse {
+    id: string;
+    script: string;
+    status: TaskStatus;
+    output: any;
+    additionalProperties: any;
+}
+
 export interface Annotation {
     id: string;
     timestampMillis: number;
@@ -802,9 +805,6 @@ export interface ModelSemantics {
     typing?: TypingSemantics;
 }
 
-/**
- * @deprecated
- */
 export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
@@ -814,6 +814,7 @@ export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
+    gollm_card?: any;
 }
 
 export interface ModelGrounding {
@@ -1151,6 +1152,15 @@ export enum EvaluationScenarioStatus {
     Paused = "PAUSED",
     Resumed = "RESUMED",
     Stopped = "STOPPED",
+}
+
+export enum TaskStatus {
+    Queued = "QUEUED",
+    Running = "RUNNING",
+    Success = "SUCCESS",
+    Failed = "FAILED",
+    Cancelling = "CANCELLING",
+    Cancelled = "CANCELLED",
 }
 
 export enum ClientEventType {

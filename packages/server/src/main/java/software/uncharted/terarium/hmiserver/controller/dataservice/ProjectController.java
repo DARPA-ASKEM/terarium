@@ -607,6 +607,45 @@ public class ProjectController {
 		}
 	}
 
+	@Operation(summary = "Toggle a project public, or restricted, by ID")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Project visibility has been updated", content = {
+			@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)) }),
+		@ApiResponse(responseCode = "304", description = "The current user does not have privileges to modify this project.", content = @Content),
+		@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
+	@PutMapping("/set-public/{id}/{isPublic}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> makeProjectPublic(
+		@PathVariable("id") final UUID id,
+		@PathVariable("isPublic") final boolean isPublic
+	) {
+		try {
+			// Getting the project permissions
+			final RebacProject project = new RebacProject(id, reBACService);
+			// Getting the user permissions
+			final RebacUser user = new RebacUser(currentUserService.get().getId(), reBACService);
+			// Getting the Public group permissions
+			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+			// Setting the relationship to be of a reader
+			final String relationship = Schema.Relationship.READER.toString();
+
+			// If the current user is an admin of the project
+			if (user.canAdministrate(project)) {
+				if (isPublic) {
+					// Set the Public Group permissions to READ the Project
+					return setProjectPermissions(project, who, relationship);
+				} else {
+					// Remove the Public Group permissions to READ the Project
+					return removeProjectPermissions(project, who, relationship);
+				}
+			} else {
+				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+			}
+		} catch (final Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
