@@ -40,8 +40,8 @@
 			<template #foreground>
 				<!--FIXME: This container holding the toggles overlaps the top of the canvas so the drag area is slightly cutoff-->
 				<section class="view-toggles">
-					<!-- TODO: There will be a Diagram/Equation toggle here. There may be plans to make a component for this 
-						toggle specifically though since in some designs it is used outside of tera-model-diagram and others are inside -->
+					<!-- TODO: There will be a Diagram/Equation toggle here. There may be plans to make a component for this specific
+						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
 						:model-value="modelFormat"
 						@change="if ($event.value) modelFormat = $event.value;"
