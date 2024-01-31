@@ -92,12 +92,15 @@ public class KnowledgeController {
 	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(@RequestBody Map<String, Object> requestMap) {
 		String format = (String) requestMap.getOrDefault("format", "latex");
 		String framework = (String) requestMap.getOrDefault("framework", "petrinet");
-		UUID modelId = UUID.fromString((String) requestMap.get("modelId"));
+		UUID modelId = null;
+		if (requestMap.containsKey("modelId")) {
+			modelId = UUID.fromString((String) requestMap.get("modelId"));
+		} 
 		List<String> equations = (List<String>) requestMap.getOrDefault("equations", Collections.emptyList());
 
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
 		return ResponseEntity
-				.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId.toString(), equations)
+				.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId != null ? modelId.toString() : null, equations)
 						.getBody());
 	}
 

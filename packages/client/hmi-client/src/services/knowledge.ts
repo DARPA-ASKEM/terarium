@@ -226,7 +226,7 @@ export async function codeToAMR(
 	return null;
 }
 
-export async function codeBlocksToAmr(code: Code, file: File) {
+export async function codeBlocksToAmr(code: Code, file: File): Promise<string | null> {
 	const formData = new FormData();
 	const blob = new Blob([JSON.stringify(code)], {
 		type: 'application/json'

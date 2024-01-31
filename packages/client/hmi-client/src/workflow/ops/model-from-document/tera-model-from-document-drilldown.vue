@@ -78,6 +78,7 @@
 				is-selectable
 			>
 				<section v-if="selectedModel">
+					<tera-model-card :model="selectedModel" />
 					<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 					<tera-model-semantic-tables :model="selectedModel" readonly />
 				</section>
@@ -124,7 +125,7 @@ import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
-import { getModel } from '@/services/model';
+import { getModel, profile } from '@/services/model';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -134,6 +135,7 @@ import InputText from 'primevue/inputtext';
 import Steps from 'primevue/steps';
 import Textarea from 'primevue/textarea';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -309,6 +311,10 @@ async function onRun() {
 	const modelId = res.job_result?.tds_model_id;
 
 	if (!modelId) return;
+
+	if (document.value?.id) {
+		await profile(modelId, document.value.id);
+	}
 
 	clonedState.value.modelId = modelId;
 	emit('append-output-port', {

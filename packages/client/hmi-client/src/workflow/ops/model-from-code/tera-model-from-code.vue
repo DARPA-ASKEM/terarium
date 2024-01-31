@@ -140,12 +140,12 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { createModel, getModel } from '@/services/model';
+import { createModel, getModel, profile } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getCodeAsset } from '@/services/code';
-import { codeBlocksToAmr, fetchExtraction, profileModel } from '@/services/knowledge';
+import { codeBlocksToAmr } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
@@ -321,12 +321,14 @@ async function handleCode() {
 
 		const modelId = await codeBlocksToAmr(newCode, file);
 
+		if (!modelId) return;
+
+		if (documentId.value) {
+			await profile(modelId, documentId.value);
+		}
+
 		clonedState.value.modelId = modelId;
 
-		if (documentId.value && modelId) {
-			// handle this synchronously so that we can see the model while the model card is generating
-			profile(modelId);
-		}
 		emit('append-output-port', {
 			label: `Output - ${props.node.outputs.length + 1}`,
 			state: cloneDeep(clonedState.value),
@@ -354,12 +356,6 @@ async function handleCode() {
 	}
 }
 
-async function profile(modelId: string) {
-	const profileModelJobId = await profileModel(modelId, documentId.value);
-	await fetchExtraction(profileModelJobId);
-	const model = await getModel(clonedState.value.modelId);
-	selectedModel.value = model;
-}
 function openModal() {
 	isNewModelModalVisible.value = true;
 }
