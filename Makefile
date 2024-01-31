@@ -42,11 +42,11 @@ image-hmi-client: clean-hmi-client yarn-install
 
 TARGETS += db-migration
 clean-db-migration: clean-db-migration-base
-	rm -rf $(PROJECT_DIR)/packages/server/docker/build
+	rm -rf $(PROJECT_DIR)/packages/db-migration/docker/build
 
 image-db-migration: clean-db-migration
 	./gradlew :packages:db-migration:build -x test
-	mv $(PROJECT_DIR)/packages/server/build $(PROJECT_DIR)/packages/server/docker/build
+	mv $(PROJECT_DIR)/packages/db-migration/build $(PROJECT_DIR)/packages/db-migration/docker/build
 
 TARGETS += gollm-taskrunner
 clean-gollm-taskrunner: clean-gollm-taskrunner-base
