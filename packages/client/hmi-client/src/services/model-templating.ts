@@ -9,18 +9,6 @@ import controlledConversion from './model-templates/controlled-conversion.json';
 import controlledProduction from './model-templates/controlled-production.json';
 import controlledDegredation from './model-templates/controlled-degradation.json';
 import observable from './model-templates/observable.json';
-// import { KernelSessionManager } from '@/services/jupyter';
-
-// const context = {
-// 	context: 'mira_model',
-// 	language: 'python3',
-// 	context_info: {
-// 		id: '8f1b00a3-00bd-47b1-925a-3e1227a0af9a'
-// 	}
-// };
-
-// const manager = new KernelSessionManager();
-// await manager.init('beaker_kernel', 'Beaker Kernel', context);
 
 export const modelTemplateOptions = [
 	naturalConversion,
