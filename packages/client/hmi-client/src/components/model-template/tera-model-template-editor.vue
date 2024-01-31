@@ -1,106 +1,110 @@
 <template>
-	<tera-infinite-canvas
-		@click="onCanvasClick"
-		@save-transform="saveTransform"
-		@mouseenter="setMouseOverCanvas(true)"
-		@mouseleave="setMouseOverCanvas(false)"
-		@drop="onDrop"
-		@dragover.prevent
-		@dragenter.prevent
-		@focus="() => {}"
-		@blur="() => {}"
-	>
-		<template #foreground>
-			<section class="toolbar">
-				<aside>
-					<!--TODO: Move this later to the top-right-->
+	<section>
+		<aside>
+			<section v-if="model?.header?.schema_name">
+				<header>Model framework</header>
+				<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
+			</section>
+			<section class="template-options">
+				<header>Model templates</header>
+				<ul>
+					<li
+						v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
+						:key="index"
+					>
+						<tera-model-template
+							:model="modelTemplate"
+							:is-editable="false"
+							draggable="true"
+							@dragstart="newModelTemplate = modelTemplate"
+						/>
+					</li>
+				</ul>
+			</section>
+			<section class="trash">
+				<i class="pi pi-trash"></i>
+				<div>Drag items here to delete</div>
+			</section>
+		</aside>
+		<tera-infinite-canvas
+			@click="onCanvasClick"
+			@save-transform="saveTransform"
+			@mouseenter="setMouseOverCanvas(true)"
+			@mouseleave="setMouseOverCanvas(false)"
+			@drop="onDrop"
+			@dragover.prevent
+			@dragenter.prevent
+			@focus="() => {}"
+			@blur="() => {}"
+		>
+			<template #foreground>
+				<!--FIXME: This container holding the toggles overlaps the top of the canvas so the drag area is slightly cutoff-->
+				<section class="view-toggles">
+					<!-- TODO: There will be a Diagram/Equation toggle here. There may be plans to make a component for this 
+						toggle specifically though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
 						:model-value="modelFormat"
 						@change="if ($event.value) modelFormat = $event.value;"
 						:options="modelFormatOptions"
 					/>
-					<section v-if="model?.header?.schema_name">
-						<header>Model framework</header>
-						<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
-					</section>
-					<section class="template-options">
-						<header>Model templates</header>
-						<ul>
-							<li
-								v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
-								:key="index"
-							>
-								<tera-model-template
-									:model="modelTemplate"
-									:is-editable="false"
-									draggable="true"
-									@dragstart="newModelTemplate = modelTemplate"
-								/>
-							</li>
-						</ul>
-					</section>
-					<section class="trash">
-						<i class="pi pi-trash"></i>
-						<div>Drag items here to delete</div>
-					</section>
-				</aside>
-			</section>
-		</template>
-		<template #data>
-			<tera-canvas-item
-				v-for="(card, index) in cards"
-				:key="card.id"
-				:style="{
-					width: 'fit-content',
-					top: `${card.y}px`,
-					left: `${card.x}px`
-				}"
-				@dragging="(event) => updatePosition(event, card)"
-			>
-				<tera-model-template
-					:model="modelTemplateEditor.models[index]"
-					is-editable
-					@update-name="
-						(name: string) =>
-							modelTemplatingService.updateCardName(modelTemplateEditor, name, card.id)
-					"
-					@port-selected="(portId: string) => createNewEdge(card, portId)"
-					@port-mouseover="
-						(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
-					"
-					@port-mouseleave="onPortMouseleave"
-					@remove="modelTemplatingService.removeCard(modelTemplateEditor, card.id)"
-				/>
-			</tera-canvas-item>
-			<tera-canvas-item
-				v-for="(junction, index) in junctions"
-				:key="index"
-				:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
-				@dragging="(event) => updatePosition(event, junction)"
-			>
-				<tera-model-junction :junction="junction" :template-cards="cards" />
-			</tera-canvas-item>
-		</template>
-		<template #background>
-			<path
-				v-if="newEdge?.points"
-				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
-				stroke="var(--text-color-subdued)"
-				stroke-width="2"
-				fill="none"
-			/>
-			<template v-for="{ edges } in junctions">
+				</section>
+			</template>
+			<template #data>
+				<tera-canvas-item
+					v-for="(card, index) in cards"
+					:key="card.id"
+					:style="{
+						width: 'fit-content',
+						top: `${card.y}px`,
+						left: `${card.x}px`
+					}"
+					@dragging="(event) => updatePosition(event, card)"
+				>
+					<tera-model-template
+						:model="modelTemplateEditor.models[index]"
+						is-editable
+						@update-name="
+							(name: string) =>
+								modelTemplatingService.updateCardName(modelTemplateEditor, name, card.id)
+						"
+						@port-selected="(portId: string) => createNewEdge(card, portId)"
+						@port-mouseover="
+							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
+						"
+						@port-mouseleave="onPortMouseleave"
+						@remove="modelTemplatingService.removeCard(modelTemplateEditor, card.id)"
+					/>
+				</tera-canvas-item>
+				<tera-canvas-item
+					v-for="(junction, index) in junctions"
+					:key="index"
+					:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
+					@dragging="(event) => updatePosition(event, junction)"
+				>
+					<tera-model-junction :junction="junction" :template-cards="cards" />
+				</tera-canvas-item>
+			</template>
+			<template #background>
 				<path
-					v-for="(edge, index) in edges"
-					:d="drawPath(edge.points)"
+					v-if="newEdge?.points"
+					:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
 					stroke="var(--text-color-subdued)"
 					stroke-width="2"
-					:key="index"
 					fill="none"
 				/>
+				<template v-for="{ edges } in junctions">
+					<path
+						v-for="(edge, index) in edges"
+						:d="drawPath(edge.points)"
+						stroke="var(--text-color-subdued)"
+						stroke-width="2"
+						:key="index"
+						fill="none"
+					/>
+				</template>
 			</template>
-		</template>
-	</tera-infinite-canvas>
+		</tera-infinite-canvas>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -128,7 +132,7 @@ const props = defineProps<{
 	model?: Model;
 }>();
 
-enum ModelFormat {
+enum EditorView {
 	Template = 'Template',
 	Flat = 'Flat'
 }
@@ -147,11 +151,11 @@ const modelTemplateEditor = ref<ModelTemplateEditor>(
 const flatModelTemplateEditor = ref<ModelTemplateEditor>(
 	modelTemplatingService.initializeModelTemplateEditor(props.model)
 );
-const modelFormatOptions = ref([ModelFormat.Template, ModelFormat.Flat]);
-const modelFormat = ref(ModelFormat.Template);
+const modelFormatOptions = ref([EditorView.Template, EditorView.Flat]);
+const modelFormat = ref(EditorView.Template);
 
 const currentEditor = computed(() =>
-	modelFormat.value === ModelFormat.Template
+	modelFormat.value === EditorView.Template
 		? modelTemplateEditor.value
 		: flatModelTemplateEditor.value
 );
@@ -399,13 +403,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.toolbar {
-	height: 100%;
-	display: flex;
+.view-toggles {
+	padding: 0.5rem;
 }
 
 aside {
-	width: 15rem;
+	min-width: 15rem;
 	display: flex;
 	flex-direction: column;
 	background-color: #f4f7fa;
@@ -413,6 +416,7 @@ aside {
 	padding: var(--gap) 0;
 	gap: 0.5rem;
 	overflow: hidden;
+	z-index: 1;
 }
 
 ul {
