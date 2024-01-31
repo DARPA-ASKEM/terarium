@@ -75,7 +75,7 @@ target "db-migration" {
 target "gollm-taskrunner-base" {
 	context = "." # root of the repo
 	dockerfile = "./packages/taskrunner/docker/Dockerfile.GoLLM"
-	tags = tag("gollm-taskrunner-base", "", "")
+	tags = tag("gollm-taskrunner", "", "")
 }
 
 target "gollm-taskrunner" {
