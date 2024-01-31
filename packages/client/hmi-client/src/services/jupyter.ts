@@ -226,12 +226,16 @@ export class KernelSessionManager {
 
 	async init(kernelName: string, name: string, context: any) {
 		const session = await newSession(kernelName, name);
+		console.log('SESSION:');
+		console.log(session);
 
 		// Dispatch
 		const iopubMessageHandler = (_session: any, message: any) => {
 			if (message.header.msg_type === 'status') {
 				return;
 			}
+			console.log('iopubMessageHandler: ');
+			console.log(message);
 			const msgType = message.header.msg_type;
 			const msgId = message.parent_header.msg_id;
 

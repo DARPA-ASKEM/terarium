@@ -45,13 +45,20 @@ const submitQuery = async () => {
 	});
 	console.log('Message:');
 	console.log(message);
-	message.register('code_cell', (data) => {
-		console.log('Code cell');
-		emit('append-output', { value: data });
-	});
+	message
+		.register('code_cell', (data) => {
+			console.log('Code cell');
+			emit('append-output', { value: data });
+		})
+		.register('llm_response', (data) => {
+			console.log('llm_response:');
+			console.log(data);
+		});
 };
 
 onMounted(async () => {
+	console.log(props.context);
+	console.log(props.contextInfo);
 	const context = {
 		context: props.context,
 		language: contextLanguage.value,

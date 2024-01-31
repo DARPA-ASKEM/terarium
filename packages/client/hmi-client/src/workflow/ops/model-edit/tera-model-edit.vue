@@ -126,7 +126,7 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
-const contextInfo = { id: amr.value?.id }; // context for jupyter-input
+const contextInfo = { id: props.node.inputs[0].value?.[0] }; // context for jupyter-input
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
