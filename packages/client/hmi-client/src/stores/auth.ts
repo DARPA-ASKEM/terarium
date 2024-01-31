@@ -5,7 +5,7 @@ import axios, { AxiosHeaders } from 'axios';
 import { computed, ref } from 'vue';
 
 /**
- * Main store used for authentication test edit
+ * Main store used for authentication
  */
 const useAuthStore = defineStore('auth', () => {
 	// keycloak
