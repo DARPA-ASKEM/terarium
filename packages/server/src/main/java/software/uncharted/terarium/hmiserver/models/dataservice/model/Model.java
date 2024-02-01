@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import java.util.Map;
 
 import lombok.Data;
@@ -31,8 +30,6 @@ public class Model extends TerariumAsset implements SupportAdditionalProperties,
 	private String userId;
 
 	private Map<String, Object> model;
-
-	private String modelCard;
 
 	@TSOptional
 	private Object properties;

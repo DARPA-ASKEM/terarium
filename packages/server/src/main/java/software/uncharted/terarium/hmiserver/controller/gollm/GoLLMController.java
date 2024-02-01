@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -77,7 +78,8 @@ public class GoLLMController {
 			try {
 				Model model = modelService.getModel(props.getModelId())
 						.orElseThrow();
-				model.setModelCard(new String(resp.getOutput()));
+				JsonNode card = objectMapper.readTree(resp.getOutput());
+				model.getMetadata().setGollmCard(card);
 				modelService.updateModel(model);
 			} catch (IOException e) {
 				log.error("Failed to write model card to database", e);

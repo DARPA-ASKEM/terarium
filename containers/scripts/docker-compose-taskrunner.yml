@@ -4,7 +4,7 @@ version: "3.8"
 services:
   gollm-taskrunner:
     container_name: gollm-taskrunner
-    image: ghcr.io/darpa-askem/taskrunner:latest
+    image: ghcr.io/darpa-askem/gollm-taskrunner:latest
     networks:
       - terarium
     environment:
