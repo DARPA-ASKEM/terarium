@@ -12,8 +12,8 @@ services:
       - "3030:8080"
     environment:
       SIMSERVICE_TDS_URL: "http://${local_host_name}:3000"
-      SIMSERVICE_USERNAME: "${secret_service_account_username}"
-      SIMSERVICE_PASSWORD: "${secret_service_account_password}"
+      SIMSERVICE_TDS_USER: "${secret_service_account_username}"
+      SIMSERVICE_TDS_PASSWORD: "${secret_service_account_password}"
       SIMSERVICE_RABBITMQ_ENABLED: "false"
       SIMSERVICE_RABBITMQ_LOGIN: "terarium"
       SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"

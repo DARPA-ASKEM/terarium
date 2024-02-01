@@ -61,3 +61,5 @@ services:
     depends_on:
       redis:
         condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
