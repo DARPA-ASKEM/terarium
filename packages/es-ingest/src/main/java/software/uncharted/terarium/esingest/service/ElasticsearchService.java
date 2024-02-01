@@ -449,9 +449,7 @@ public class ElasticsearchService {
 		// Add the BulkOperation to the BulkRequest
 		bulkRequest.operations(operations);
 
-		log.info("Sending bulk scripted update request");
 		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
-		log.info("Received bulk scripted update response");
 
 		List<String> errors = new ArrayList<>();
 		if (bulkResponse.errors()) {
