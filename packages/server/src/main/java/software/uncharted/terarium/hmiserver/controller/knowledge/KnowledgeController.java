@@ -147,7 +147,7 @@ public class KnowledgeController {
 		// 2. upload file to code asset
 		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		
+
 		// we have pre-formatted the files object already so no need to use uploadCode
 		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), "tempFile");
 		final HttpPut put = new HttpPut(presignedURL.getUrl());
@@ -159,7 +159,7 @@ public class KnowledgeController {
 		}
 		// 3. create model from code asset
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false).getBody());
-		} 
+		}
 		catch (Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
