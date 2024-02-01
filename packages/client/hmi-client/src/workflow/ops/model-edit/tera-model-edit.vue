@@ -14,7 +14,7 @@
 					<tera-notebook-jupyter-input
 						context="mira_model_edit"
 						:contextInfo="contextInfo"
-						@append-output="getOutputFromLLM"
+						@llm-output="getOutputFromLLM"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -126,7 +126,8 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
-const contextInfo = { id: props.node.inputs[0].value?.[0] }; // context for jupyter-input
+const modelId = props.node.inputs[0].value?.[0];
+const contextInfo = { id: modelId }; // context for jupyter-input
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
@@ -229,7 +230,6 @@ const buildJupyterContext = () => {
 };
 
 const inputChangeHandler = async () => {
-	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
