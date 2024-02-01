@@ -1,5 +1,5 @@
 ---
-version: "3.8"
+version: "3.9"
 
 services:
   minio:
@@ -19,8 +19,11 @@ services:
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: admin123
+      MINIO_BUCKET: askem-local-storage
     volumes:
       - minio-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   elasticsearch:
     container_name: elasticsearch
@@ -53,6 +56,8 @@ services:
         hard: -1
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   neo4j:
     container_name: neo4j
@@ -77,6 +82,8 @@ services:
       - PG_PORT=5432
     depends_on:
       - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   rabbitmq:
     container_name: rabbitmq
@@ -96,6 +103,8 @@ services:
       RABBITMQ_DEFAULT_USER: "terarium"
       RABBITMQ_DEFAULT_PASS: "terarium123"
       RABBITMQ_MANAGEMENT_ENABLED: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   spicedb:
     container_name: spicedb
@@ -118,6 +127,8 @@ services:
     depends_on:
       migrate-spicedb:
         condition: service_completed_successfully
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   migrate-spicedb:
     container_name: migrate-spicedb
@@ -154,6 +165,8 @@ services:
     volumes:
       - terarium-db:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   elasticsearch-data:
