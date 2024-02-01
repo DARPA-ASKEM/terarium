@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="container">
 		<!-- <i class="pi pi-magic" /> -->
 		<InputText
 			class="input"
@@ -60,4 +60,17 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.container {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	gap: 0.5rem;
+}
+.input {
+	flex: 1;
+}
+.p-dropdown {
+	width: 8rem;
+}
+</style>
