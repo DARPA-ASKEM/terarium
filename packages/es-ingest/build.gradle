@@ -20,7 +20,6 @@ repositories {
 
 dependencies {
     implementation 'org.springframework:spring-web'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'co.elastic.clients:elasticsearch-java:8.8.1'
     implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.1'
     implementation 'org.springframework.boot:spring-boot-starter'

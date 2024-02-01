@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -13,14 +11,14 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Data
-public class Document implements Serializable {
+public class Document implements OutputInterface, Serializable {
 
 	@Data
 	static public class Paragraph implements Serializable {
 
 		private String paragraphId;
 		private double[] vector;
-		Pair<Long, Long> spans;
+		private long[] spans;
 	}
 
 	private UUID id;

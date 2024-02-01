@@ -55,6 +55,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.esingest.models.output.OutputInterface;
 
 @Service
 @Data
@@ -342,22 +343,14 @@ public class ElasticsearchService {
 		return null;
 	}
 
-	public List<String> bulkIndex(String index, List<Object> docs) throws IOException {
+	public <Output extends OutputInterface> List<String> bulkIndex(String index, List<Output> docs) throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
-		for (Object doc : docs) {
-
-			// generic way to extract the id
-			JsonNode json = mapper.valueToTree(doc);
-			if (!json.has("id")) {
-				throw new RuntimeException("Document does not have an id");
-			}
-			final String idString = json.get("id").asText();
-
+		for (Output doc : docs) {
 			bulkRequest.operations(op -> op
 					.index(idx -> idx
 							.index(index)
-							.id(idString)
+							.id(doc.getId().toString())
 							.document(doc)));
 		}
 
@@ -425,6 +418,8 @@ public class ElasticsearchService {
 		for (ScriptedUpdatedDoc doc : docs) {
 			BulkOperation operation = new BulkOperation.Builder().update(u -> u
 					.id(doc.getId())
+					.index(index)
+					.retryOnConflict(3)
 					.action(action -> action
 							.script(s -> s
 									.inline(inlineScript -> inlineScript
@@ -439,7 +434,9 @@ public class ElasticsearchService {
 		// Add the BulkOperation to the BulkRequest
 		bulkRequest.operations(operations);
 
+		log.info("Sending bulk scripted update request");
 		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
+		log.info("Received bulk scripted update response");
 
 		List<String> errors = new ArrayList<>();
 		if (bulkResponse.errors()) {

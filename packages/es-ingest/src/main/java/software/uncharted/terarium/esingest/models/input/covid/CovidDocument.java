@@ -3,6 +3,7 @@ package software.uncharted.terarium.esingest.models.input.covid;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -10,12 +11,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.esingest.models.input.InputInterface;
 
 @Accessors(chain = true)
 @NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CovidDocument implements Serializable {
+public class CovidDocument implements InputInterface, Serializable {
 
 	@Data
 	@JsonIgnoreProperties(ignoreUnknown = true)
@@ -48,7 +50,7 @@ public class CovidDocument implements Serializable {
 	}
 
 	@JsonAlias("_id")
-	String id;
+	UUID id;
 
 	@JsonAlias("_source")
 	Source source;

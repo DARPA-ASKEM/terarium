@@ -224,9 +224,27 @@
         }
       ],
       "properties": {
-        "timestamp": {
-          "type": "date",
-          "format": "yyyy-MM-dd HH:mm:ss"
+        "title": {
+          "type": "text"
+        },
+        "fullText": {
+          "type": "text",
+          "index": false
+        },
+        "paragraphs": {
+          "type": "nested",
+          "properties": {
+            "vector": {
+              "type": "dense_vector",
+              "dims": 2
+            },
+            "paragraphId": {
+              "type": "keyword"
+            },
+            "span": {
+              "type": "long"
+            }
+          }
         }
       }
     }

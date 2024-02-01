@@ -1,6 +1,6 @@
 package software.uncharted.terarium.esingest;
 
-import java.util.UUID;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -16,6 +16,7 @@ import software.uncharted.terarium.esingest.models.input.covid.CovidDocument;
 import software.uncharted.terarium.esingest.models.input.covid.CovidEmbedding;
 import software.uncharted.terarium.esingest.models.output.Document;
 import software.uncharted.terarium.esingest.models.output.Document.Paragraph;
+import software.uncharted.terarium.esingest.models.output.Embedding;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 import software.uncharted.terarium.esingest.service.ElasticIngestService;
 
@@ -45,11 +46,11 @@ public class ElasticIngestApplication {
 				params.setInputDir("/home/kbirk/Downloads/covid");
 				params.setOutputIndex(esConfig.getCovidIndex());
 
-				esIngestService.ingestData(params,
+				List<String> errs = esIngestService.ingestData(params,
 						(CovidDocument input) -> {
 
 							Document doc = new Document();
-							doc.setId(UUID.fromString(input.getId()));
+							doc.setId(input.getId());
 							doc.setTitle(input.getSource().getTitle());
 							doc.setFullText(input.getSource().getBody());
 
@@ -62,8 +63,17 @@ public class ElasticIngestApplication {
 							paragraph.setSpans(input.getSpans());
 							paragraph.setVector(input.getEmbedding());
 
-							return paragraph;
+							Embedding<Paragraph> embedding = new Embedding<>();
+							embedding.setId(input.getId());
+							embedding.setEmbedding(paragraph);
+
+							return embedding;
+
 						}, CovidDocument.class, CovidEmbedding.class);
+
+				for (String err : errs) {
+					log.error(err);
+				}
 
 				// Shut down the application gracefully
 				SpringApplication.exit(context, () -> 0);

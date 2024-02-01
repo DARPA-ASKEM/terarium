@@ -15,40 +15,60 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.json.JsonData;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.esingest.models.input.InputInterface;
+import software.uncharted.terarium.esingest.models.output.OutputInterface;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ElasticIngestService {
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	@Value("${terarium.esingest.workQueueSize:36}")
+	private int WORK_QUEUE_SIZE;
 
-	private BlockingQueue<List<String>> workQueue = new LinkedBlockingQueue<>();
+	@Value("${terarium.esingest.errorThreshold:10}")
+	private int ERROR_THRESHOLD;
+
+	@Value("${terarium.esingest.bulkSize:100}")
+	private int BULK_SIZE;
+
+	@Value("${terarium.esingest.workerPoolSize:4}")
+	private int POOL_SIZE;
+
+	@Value("${terarium.esingest.workTimeoutSeconds:5}")
+	private int WORK_TIMEOUT_SECONDS;
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ElasticsearchService esService;
 
 	private List<String> errors = Collections.synchronizedList(new ArrayList<>());
 
-	private final int ERROR_THRESHOLD = 10;
-
-	private final int BULK_SIZE = 100;
-
-	private final int POOL_SIZE = 8;
-
-	private final ElasticsearchService esService;
-
-	private ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
+	private BlockingQueue<List<String>> workQueue;// = new LinkedBlockingQueue<>(WORK_QUEUE_SIZE);
+	private ExecutorService executor;// = Executors.newFixedThreadPool(POOL_SIZE);
 	private List<Future<Void>> futures = new ArrayList<>();
 
 	private ElasticIngestParams params;
+
+	private AtomicBoolean shouldStop = new AtomicBoolean(false);
+
+	@PostConstruct
+	void init() {
+		workQueue = new LinkedBlockingQueue<>(WORK_QUEUE_SIZE);
+		executor = Executors.newFixedThreadPool(POOL_SIZE);
+	}
 
 	private List<Path> getFilesInDir(Path dir) {
 		List<Path> files = new ArrayList<>();
@@ -65,7 +85,8 @@ public class ElasticIngestService {
 		return files;
 	}
 
-	private <InputType, OutputType> void startIngestDocumentWorkers(Function<InputType, OutputType> processor,
+	private <InputType extends InputInterface, OutputType extends OutputInterface> void startIngestDocumentWorkers(
+			Function<InputType, OutputType> processor,
 			Class<InputType> inputType) {
 		for (int i = 0; i < POOL_SIZE; i++) {
 			futures.add(executor.submit(() -> {
@@ -76,7 +97,7 @@ public class ElasticIngestService {
 							break;
 						}
 
-						List<Object> output = new ArrayList<>();
+						List<OutputType> output = new ArrayList<>();
 						for (String item : items) {
 							InputType input = objectMapper.readValue(item, inputType);
 							OutputType out = processor.apply(input);
@@ -89,13 +110,16 @@ public class ElasticIngestService {
 						if (errs.size() > 0) {
 							errors.addAll(errs);
 							if (errors.size() > ERROR_THRESHOLD) {
-								log.error("Too many errors, stopping ingest");
-								break;
+								for (String err : errors) {
+									log.error(err);
+								}
+								throw new InterruptedException("Too many errors, stopping ingest");
 							}
 						}
 
 					} catch (Exception e) {
 						log.error("Error processing documents", e);
+						shouldStop.set(true);
 						break;
 					}
 				}
@@ -104,7 +128,8 @@ public class ElasticIngestService {
 		}
 	}
 
-	private <InputType, OutputType> void startIngestEmbeddingsWorkers(Function<InputType, OutputType> processor,
+	private <InputType extends InputInterface, OutputType extends OutputInterface> void startIngestEmbeddingsWorkers(
+			Function<InputType, OutputType> processor,
 			Class<InputType> inputType) {
 		for (int i = 0; i < POOL_SIZE; i++) {
 			futures.add(executor.submit(() -> {
@@ -117,37 +142,44 @@ public class ElasticIngestService {
 
 						List<ElasticsearchService.ScriptedUpdatedDoc> output = new ArrayList<>();
 						for (String item : items) {
+							log.info("Read embedding");
 							InputType input = objectMapper.readValue(item, inputType);
+							log.info("Deserialized embedding");
 							OutputType out = processor.apply(input);
+							log.info("Processed embedding");
 							if (out != null) {
 
 								// generic way to extract the id
-								JsonNode json = objectMapper.valueToTree(out);
 								String jsonString = objectMapper.writeValueAsString(out);
-
-								final String idString = json.get("id").asText();
 								JsonData jsonData = JsonData.fromJson(jsonString);
 
 								ElasticsearchService.ScriptedUpdatedDoc doc = new ElasticsearchService.ScriptedUpdatedDoc();
-								doc.setId(idString);
+								doc.setId(out.getId().toString());
 								doc.setParams(Map.of("paragraph", jsonData));
 								output.add(doc);
 							}
 						}
 
-						String script = "ctx._source.paragrams.add(params.paragraph)";
+						String script = """
+								if (ctx._source.paragraphs == null) {
+									ctx._source.paragraphs = new ArrayList();
+								}
+								ctx._source.paragraphs.add(params.paragraph);""";
 
 						List<String> errs = esService.bulkScriptedUpdate(params.getOutputIndex(), script, output);
 						if (errs.size() > 0) {
 							errors.addAll(errs);
 							if (errors.size() > ERROR_THRESHOLD) {
-								log.error("Too many errors, stopping ingest");
-								break;
+								for (String err : errors) {
+									log.error(err);
+								}
+								throw new InterruptedException("Too many errors, stopping ingest");
 							}
 						}
 
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
+					} catch (Exception e) {
+						log.error("Error processing documents", e);
+						shouldStop.set(true);
 						break;
 					}
 				}
@@ -160,7 +192,7 @@ public class ElasticIngestService {
 
 		// now lets dispatch the worker kill signals (empty lists)
 		for (int i = 0; i < POOL_SIZE; i++) {
-			workQueue.put(new ArrayList<>());
+			workQueue.offer(new ArrayList<>(), WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		}
 
 		// now we wait for them to finish
@@ -177,22 +209,29 @@ public class ElasticIngestService {
 
 	private void readLinesIntoWorkQueue(Path p) throws InterruptedException {
 		List<Path> paths = getFilesInDir(p);
+		long lineCount = 0;
 		for (Path path : paths) {
 			// read the file and put the lines into the work queue
 			try (BufferedReader reader = Files.newBufferedReader(path)) {
 				List<String> lines = new ArrayList<>();
 				for (String line; (line = reader.readLine()) != null;) {
+					if (shouldStop.get()) {
+						throw new InterruptedException("Worker encountered an error, stopping ingest");
+					}
 					lines.add(line);
 					if (lines.size() == BULK_SIZE) {
-						log.info("DISPATCHING LINES TO WORK QUEUE");
-						workQueue.put(lines);
+						lineCount += lines.size();
+						log.info("Dispatching {} of {} total lines to work queue", lines.size(), lineCount);
+						workQueue.offer(lines, WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 						lines = new ArrayList<>();
 					}
 				}
 				// process the remaining lines if there are any
 				if (!lines.isEmpty()) {
-					log.info("DISPATCHING REMAINING LINES TO WORK QUEUE");
-					workQueue.put(lines);
+					lineCount += lines.size();
+					log.info("Dispatching remaining {} of {} total lines to work queue", lines.size(), lineCount);
+					lineCount += lines.size();
+					workQueue.offer(lines, WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				}
 			} catch (IOException e) {
 				log.error("Error reading file", e);
@@ -200,7 +239,7 @@ public class ElasticIngestService {
 		}
 	}
 
-	public <DocInputType, EmbeddingInputType, DocOutputType, EmbeddingOutputType> void ingestData(
+	public <DocInputType extends InputInterface, EmbeddingInputType extends InputInterface, DocOutputType extends OutputInterface, EmbeddingOutputType extends OutputInterface> List<String> ingestData(
 			ElasticIngestParams params,
 			Function<DocInputType, DocOutputType> docProcessor,
 			Function<EmbeddingInputType, EmbeddingOutputType> embeddingProcessor,
@@ -212,11 +251,11 @@ public class ElasticIngestService {
 
 		// first we insert the documents
 
-		startIngestDocumentWorkers(docProcessor, docInputType);
+		// startIngestDocumentWorkers(docProcessor, docInputType);
 
-		readLinesIntoWorkQueue(Paths.get(params.getInputDir()).resolve("documents"));
+		// readLinesIntoWorkQueue(Paths.get(params.getInputDir()).resolve("documents"));
 
-		waitUntilWorkersAreDone();
+		// waitUntilWorkersAreDone();
 
 		// then we insert the embeddings
 
@@ -225,6 +264,8 @@ public class ElasticIngestService {
 		readLinesIntoWorkQueue(Paths.get(params.getInputDir()).resolve("embeddings"));
 
 		waitUntilWorkersAreDone();
+
+		return errors;
 
 	}
 
