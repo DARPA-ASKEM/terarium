@@ -8,10 +8,17 @@ group = 'software.uncharted'
 version = '1.0.0-SNAPSHOT'
 sourceCompatibility = '17'
 
+apply plugin: 'idea'
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+}
+
+project.ext {
+    artifactName = 'es-ingest'
+    description = 'imports models into es'
 }
 
 repositories {
