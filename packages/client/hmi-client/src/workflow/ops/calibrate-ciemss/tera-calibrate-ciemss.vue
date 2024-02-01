@@ -147,10 +147,11 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import {
-	getRunResultCiemss,
+	/* getRunResultCiemss, */
 	makeCalibrateJobCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	getCalibrateBlobURL
 } from '@/services/models/simulation-service';
 import {
 	CalibrationRequestCiemss,
@@ -325,6 +326,8 @@ const getStatus = async (simulationId: string) => {
 		throw Error('Failed Runs');
 	}
 
+	console.log('hihi');
+
 	completedRunId.value = simulationId;
 	updateOutputPorts(completedRunId);
 	showSpinner.value = false;
@@ -440,8 +443,14 @@ watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
+
+		const dillURL = await getCalibrateBlobURL(simulationIds.value[0].runId);
+		console.log('dill URL is', dillURL);
+
+		/*
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, result.csv');
 		runResults.value = output.runResults;
+		*/
 	},
 	{ immediate: true }
 );
