@@ -6,6 +6,7 @@ import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
+import { fetchExtraction, profileModel } from './knowledge';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -113,4 +114,11 @@ export function validateModelName(name: string): boolean {
 	}
 
 	return true;
+}
+
+export async function profile(modelId: string, documentId: string): Promise<Model | null> {
+	const profileModelJobId = await profileModel(modelId, documentId);
+	await fetchExtraction(profileModelJobId);
+	const model = await getModel(modelId);
+	return model;
 }
