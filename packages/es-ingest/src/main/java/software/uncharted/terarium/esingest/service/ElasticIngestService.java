@@ -297,4 +297,8 @@ public class ElasticIngestService {
 
 	}
 
+	public void shutdown() {
+		executor.shutdown();
+	}
+
 }

@@ -53,6 +53,7 @@ public class ElasticIngestApplication {
 				params.setInputDir(inputDir);
 				params.setOutputIndex(outputIndex);
 
+				log.info("Beginning ingest...");
 				List<String> errs = esIngestService.ingestData(params,
 						(CovidDocument input) -> {
 
@@ -78,18 +79,23 @@ public class ElasticIngestApplication {
 
 						}, CovidDocument.class, CovidEmbedding.class);
 
+				log.info("Ingest completed successfully");
 				for (String err : errs) {
 					log.error(err);
 				}
 
+				log.info("Shutting down the application gracefully...");
 				// Shut down the application gracefully
-				SpringApplication.exit(context, () -> 0);
+				esIngestService.shutdown();
+				System.exit(0);
 			} catch (Exception e) {
+				log.info("Ingest failed");
 				e.printStackTrace();
 
-				SpringApplication.exit(context, () -> 1);
+				log.info("Shutting down the application gracefully...");
+				esIngestService.shutdown();
+				System.exit(1);
 			}
-
 		};
 	}
 }
