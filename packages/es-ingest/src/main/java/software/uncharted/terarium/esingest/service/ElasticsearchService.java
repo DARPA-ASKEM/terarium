@@ -343,7 +343,14 @@ public class ElasticsearchService {
 		return null;
 	}
 
-	public <Output extends OutputInterface> List<String> bulkIndex(String index, List<Output> docs) throws IOException {
+	@Data
+	static public class BulkOpResponse {
+		private List<String> errors;
+		private long took;
+	}
+
+	public <Output extends OutputInterface> BulkOpResponse bulkIndex(String index, List<Output> docs)
+			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
 		for (Output doc : docs) {
@@ -365,10 +372,14 @@ public class ElasticsearchService {
 				}
 			}
 		}
-		return errors;
+
+		BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
 	}
 
-	public List<String> bulkUpdate(String index, List<Object> docs) throws IOException {
+	public BulkOpResponse bulkUpdate(String index, List<Object> docs) throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
 		List<BulkOperation> operations = new ArrayList<>();
@@ -400,7 +411,11 @@ public class ElasticsearchService {
 				}
 			}
 		}
-		return errors;
+
+		BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
 	}
 
 	@Data
@@ -409,7 +424,7 @@ public class ElasticsearchService {
 		Map<String, JsonData> params;
 	}
 
-	public List<String> bulkScriptedUpdate(String index, String script, List<ScriptedUpdatedDoc> docs)
+	public BulkOpResponse bulkScriptedUpdate(String index, String script, List<ScriptedUpdatedDoc> docs)
 			throws IOException {
 
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
@@ -447,7 +462,11 @@ public class ElasticsearchService {
 				}
 			}
 		}
-		return errors;
+
+		BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
 	}
 
 }

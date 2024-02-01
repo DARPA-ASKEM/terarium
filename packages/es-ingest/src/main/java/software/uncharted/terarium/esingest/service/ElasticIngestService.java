@@ -91,8 +91,10 @@ public class ElasticIngestService {
 			Class<InputType> inputType) {
 		for (int i = 0; i < POOL_SIZE; i++) {
 			futures.add(executor.submit(() -> {
+				long lastTook = 0;
 				while (true) {
 					try {
+						long start = System.currentTimeMillis();
 						List<String> items = workQueue.take();
 						if (items.size() == 0) {
 							break;
@@ -107,9 +109,16 @@ public class ElasticIngestService {
 							}
 						}
 
-						List<String> errs = esService.bulkIndex(params.getOutputIndex(), output);
-						if (errs.size() > 0) {
-							errors.addAll(errs);
+						long sinceLastTook = System.currentTimeMillis() - start;
+						long backpressureWait = lastTook - sinceLastTook;
+						if (backpressureWait > 0) {
+							// apply backpressure
+							Thread.sleep(backpressureWait);
+						}
+
+						ElasticsearchService.BulkOpResponse res = esService.bulkIndex(params.getOutputIndex(), output);
+						if (res.getErrors().size() > 0) {
+							errors.addAll(res.getErrors());
 							if (errors.size() > ERROR_THRESHOLD) {
 								for (String err : errors) {
 									log.error(err);
@@ -117,6 +126,7 @@ public class ElasticIngestService {
 								throw new InterruptedException("Too many errors, stopping ingest");
 							}
 						}
+						lastTook = res.getTook();
 
 					} catch (Exception e) {
 						log.error("Error processing documents", e);
@@ -137,8 +147,10 @@ public class ElasticIngestService {
 
 		for (int i = 0; i < POOL_SIZE; i++) {
 			futures.add(executor.submit(() -> {
+				long lastTook = 0;
 				while (true) {
 					try {
+						long start = System.currentTimeMillis();
 						List<String> items = workQueue.take();
 						if (items.size() == 0) {
 							break;
@@ -167,9 +179,17 @@ public class ElasticIngestService {
 								}
 								ctx._source.paragraphs.add(params.paragraph);""";
 
-						List<String> errs = esService.bulkScriptedUpdate(params.getOutputIndex(), script, output);
-						if (errs.size() > 0) {
-							errors.addAll(errs);
+						long sinceLastTook = System.currentTimeMillis() - start;
+						long backpressureWait = lastTook - sinceLastTook;
+						if (backpressureWait > 0) {
+							// apply backpressure
+							Thread.sleep(backpressureWait);
+						}
+
+						ElasticsearchService.BulkOpResponse res = esService.bulkScriptedUpdate(params.getOutputIndex(),
+								script, output);
+						if (res.getErrors().size() > 0) {
+							errors.addAll(res.getErrors());
 							if (errors.size() > ERROR_THRESHOLD) {
 								for (String err : errors) {
 									log.error(err);
@@ -177,6 +197,7 @@ public class ElasticIngestService {
 								throw new InterruptedException("Too many errors, stopping ingest");
 							}
 						}
+						lastTook = res.getTook();
 
 					} catch (Exception e) {
 						log.error("Error processing documents", e);
