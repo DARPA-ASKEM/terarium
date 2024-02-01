@@ -1,5 +1,5 @@
 <template>
-	<section>
+	<section class="template-editor-wrapper">
 		<aside>
 			<section v-if="model?.header?.schema_name">
 				<header>Model framework</header>
@@ -61,18 +61,17 @@
 					@dragging="(event) => updatePosition(event, card)"
 				>
 					<tera-model-template
-						:model="modelTemplateEditor.models[index]"
+						:model="currentEditor.models[index]"
 						is-editable
 						@update-name="
-							(name: string) =>
-								modelTemplatingService.updateCardName(modelTemplateEditor, name, card.id)
+							(name: string) => modelTemplatingService.updateCardName(currentEditor, name, card.id)
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
 						@port-mouseover="
 							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 						"
 						@port-mouseleave="onPortMouseleave"
-						@remove="modelTemplatingService.removeCard(modelTemplateEditor, card.id)"
+						@remove="modelTemplatingService.removeCard(currentEditor, card.id)"
 					/>
 				</tera-canvas-item>
 				<tera-canvas-item
@@ -109,7 +108,7 @@
 
 <script setup lang="ts">
 import { cloneDeep, isEqual } from 'lodash'; // debounce
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
 import type { Position } from '@/types/common';
@@ -360,40 +359,63 @@ function mouseUpdate(event: MouseEvent) {
 function amrToTemplates() {
 	kernelManager.sendMessage('amr_to_templates', {}).on('amr_to_templates_response', (d) => {
 		// FIXME: Model templates are passed no junctions yet
-		modelTemplateEditor.value.models = d.content.templates;
+
+		// Insert template card data into template models
+		let yPos = 100;
+		const templateModelsWithCards = d.content.templates.map((modelTemplate: any) => {
+			modelTemplate.metadata.templateCard = {
+				id: modelTemplate.header.name,
+				name: modelTemplate.header.name,
+				x: 100,
+				y: yPos
+			} as ModelTemplateCard;
+
+			yPos += 200;
+			return modelTemplate;
+		});
+
+		templateModelsWithCards.forEach((templateModel: any) =>
+			modelTemplatingService.addCard(modelTemplateEditor.value, templateModel)
+		);
 	});
 }
 
-onMounted(async () => {
-	document.addEventListener('mousemove', mouseUpdate);
-
-	if (props.model) {
-		// Create flattened view of model
-		const flattenedModel: any = cloneDeep(props.model);
-		flattenedModel.metadata.templateCard = {
-			id: props.model.id,
-			name: props.model.header.name,
-			x: 0,
-			y: 0
-		};
-		modelTemplatingService.addCard(flatModelTemplateEditor.value, flattenedModel);
-
-		// Initialize beaker kernel
-		try {
-			const context = {
-				context: 'mira_model',
-				language: 'python3',
-				context_info: {
-					id: props.model.id
-				}
+watch(
+	() => props.model,
+	async () => {
+		if (props.model) {
+			// Create flattened view of model
+			const flattenedModel: any = cloneDeep(props.model);
+			flattenedModel.metadata.templateCard = {
+				id: props.model.id,
+				name: props.model.header.name,
+				x: 100,
+				y: 100
 			};
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
-			// Create template view of model
-			amrToTemplates();
-		} catch (error) {
-			logger.error(`Error initializing Jupyter session: ${error}`);
+			console.log(flattenedModel);
+			modelTemplatingService.addCard(flatModelTemplateEditor.value, flattenedModel);
+
+			// Initialize beaker kernel
+			try {
+				const context = {
+					context: 'mira_model',
+					language: 'python3',
+					context_info: {
+						id: props.model.id
+					}
+				};
+				await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
+				// Create template view of model
+				amrToTemplates();
+			} catch (error) {
+				logger.error(`Error initializing Jupyter session: ${error}`);
+			}
 		}
 	}
+);
+
+onMounted(async () => {
+	document.addEventListener('mousemove', mouseUpdate);
 });
 
 onUnmounted(() => {
@@ -403,6 +425,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.template-editor-wrapper {
+	display: flex;
+	flex: 1;
+}
+
 .view-toggles {
 	padding: 0.5rem;
 }
@@ -439,6 +466,11 @@ header {
 	font-size: var(--font-caption);
 }
 
+h5,
+header {
+	padding: 0 var(--gap);
+}
+
 .pi-info-circle {
 	color: var(--text-color-subdued);
 	cursor: help;
@@ -446,10 +478,6 @@ header {
 
 .template-options {
 	overflow: hidden;
-
-	& > header {
-		padding: 0 var(--gap);
-	}
 
 	& > ul {
 		height: 85%;
