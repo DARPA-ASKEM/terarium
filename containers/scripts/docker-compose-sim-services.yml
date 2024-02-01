@@ -29,7 +29,7 @@ services:
 
   pyciemss-api:
     container_name: pyciemss-api
-    image: ghcr.io/darpa-askem/pyciemss-api:tds-migration
+    image: ghcr.io/darpa-askem/pyciemss-api:latest
     networks:
       - terarium
     ports:
@@ -50,7 +50,7 @@ services:
 
   pyciemss-worker:
     container_name: pyciemss-worker
-    image: ghcr.io/darpa-askem/pyciemss-worker:tds-migration
+    image: ghcr.io/darpa-askem/pyciemss-worker:latest
     networks:
       - terarium
     environment:
