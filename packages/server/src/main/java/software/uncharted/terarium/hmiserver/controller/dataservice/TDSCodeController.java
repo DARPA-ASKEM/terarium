@@ -308,15 +308,7 @@ public class TDSCodeController {
 
 		log.debug("Uploading code {} to project", codeId);
 
-		byte[] fileAsBytes = new byte[0];
-		try {
-			fileAsBytes = input.getBytes();
-		} catch (IOException e) {
-			log.error("Unable to read file", e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to read file");
-		}
+		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadCodeHelper(codeId, filename, fileEntity);
 
