@@ -9,7 +9,7 @@
 			:disabled="kernelStatus === KernelState.busy"
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
 			@keydown.enter="submitQuery"
-		></InputText>
+		/>
 		<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<Button v-else icon="pi pi-send" />
