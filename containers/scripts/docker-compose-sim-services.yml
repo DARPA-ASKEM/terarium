@@ -1,10 +1,11 @@
 ---
-version: "3.8"
+version: "3.9"
 
 services:
   sciml-service:
     container_name: sciml-service
     image: ghcr.io/darpa-askem/sciml-service:tds-migration
+    platform: linux/amd64
     networks:
       - terarium
     ports:
@@ -17,15 +18,18 @@ services:
       SIMSERVICE_RABBITMQ_LOGIN: "terarium"
       SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"
       SIMSERVICE_RABBITMQ_ROUTE: "sciml-queue"
-      SIMSERVICE_RABBITMQ_HOST: "${local_host_name}"
+      SIMSERVICE_RABBITMQ_HOST: "rabbitmq"
       SIMSERVICE_RABBITMQ_PORT: "5672"
+      SIMSERVICE_RABBITMQ_SSL: "false"
     depends_on:
       rabbitmq:
         condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   pyciemss-api:
     container_name: pyciemss-api
-    image: ghcr.io/darpa-askem/pyciemss-api:latest
+    image: ghcr.io/darpa-askem/pyciemss-api:tds-migration
     networks:
       - terarium
     ports:
@@ -41,10 +45,12 @@ services:
     depends_on:
       redis:
         condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   pyciemss-worker:
     container_name: pyciemss-worker
-    image: ghcr.io/darpa-askem/pyciemss-worker:latest
+    image: ghcr.io/darpa-askem/pyciemss-worker:tds-migration
     networks:
       - terarium
     environment:
@@ -58,3 +64,5 @@ services:
     depends_on:
       redis:
         condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

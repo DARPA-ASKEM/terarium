@@ -1,10 +1,11 @@
 ---
-version: "3.8"
+version: "3.9"
 
 services:
   model-service:
     container_name: model-service
     image: ghcr.io/darpa-askem/model-service:latest
+    platform: linux/amd64
     networks:
       - terarium
     ports:
