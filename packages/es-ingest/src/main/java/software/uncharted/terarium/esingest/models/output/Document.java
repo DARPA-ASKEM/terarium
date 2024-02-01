@@ -17,7 +17,7 @@ public class Document implements Serializable {
 
 	@Data
 	static public class Paragraph implements Serializable {
-		private String text;
+
 		private String paragraphId;
 		private double[] vector;
 		Pair<Long, Long> spans;

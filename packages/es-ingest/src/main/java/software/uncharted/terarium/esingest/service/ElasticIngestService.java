@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,8 +20,10 @@ import java.util.function.Function;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -112,25 +115,37 @@ public class ElasticIngestService {
 							break;
 						}
 
-						List<Object> output = new ArrayList<>();
+						List<ElasticsearchService.ScriptedUpdatedDoc> output = new ArrayList<>();
 						for (String item : items) {
 							InputType input = objectMapper.readValue(item, new TypeReference<InputType>() {
 							});
 							OutputType out = processor.apply(input);
 							if (out != null) {
-								output.add(out);
+
+								// generic way to extract the id
+								JsonNode json = objectMapper.valueToTree(out);
+								String jsonString = objectMapper.writeValueAsString(out);
+
+								final String idString = json.get("id").asText();
+								JsonData jsonData = JsonData.fromJson(jsonString);
+
+								ElasticsearchService.ScriptedUpdatedDoc doc = new ElasticsearchService.ScriptedUpdatedDoc();
+								doc.setId(idString);
+								doc.setParams(Map.of("paragraph", jsonData));
+								output.add(doc);
 							}
 						}
 
-						// TODO: implement bulk update
-						// List<String> errs = esService.bulkUpdate(output);
-						// if (errs.size() > 0) {
-						// errors.addAll(errs);
-						// if (errors.size() > ERROR_THRESHOLD) {
-						// log.error("Too many errors, stopping ingest");
-						// break;
-						// }
-						// }
+						String script = "ctx._source.paragrams.add(params.paragraph)";
+
+						List<String> errs = esService.bulkScriptedUpdate(params.getOutputIndex(), script, output);
+						if (errs.size() > 0) {
+							errors.addAll(errs);
+							if (errors.size() > ERROR_THRESHOLD) {
+								log.error("Too many errors, stopping ingest");
+								break;
+							}
+						}
 
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
@@ -184,7 +199,7 @@ public class ElasticIngestService {
 		}
 	}
 
-	public <DocInputType, DocOutputType, EmbeddingInputType, EmbeddingOutputType> void ingestData(
+	public <DocInputType, EmbeddingInputType, DocOutputType, EmbeddingOutputType> void ingestData(
 			ElasticIngestParams params,
 			Function<DocInputType, DocOutputType> docProcessor,
 			Function<EmbeddingInputType, EmbeddingOutputType> embeddingProcessor)

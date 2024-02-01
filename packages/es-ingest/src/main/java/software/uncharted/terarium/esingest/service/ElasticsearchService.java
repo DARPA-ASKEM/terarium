@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.http.Header;
@@ -36,7 +37,9 @@ import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.elasticsearch.core.bulk.UpdateOperation;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -44,6 +47,7 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsIndexTemplateRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -353,6 +357,84 @@ public class ElasticsearchService {
 							.id(idString)
 							.document(doc)));
 		}
+
+		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
+
+		List<String> errors = new ArrayList<>();
+		if (bulkResponse.errors()) {
+			for (BulkResponseItem item : bulkResponse.items()) {
+				ErrorCause error = item.error();
+				if (error != null) {
+					errors.add(error.reason());
+				}
+			}
+		}
+		return errors;
+	}
+
+	public List<String> bulkUpdate(String index, List<Object> docs) throws IOException {
+		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+		List<BulkOperation> operations = new ArrayList<>();
+		for (Object doc : docs) {
+			// generic way to extract the id
+			JsonNode json = mapper.valueToTree(doc);
+			final String idString = json.has("id") ? json.get("id").asText() : UUID.randomUUID().toString();
+
+			UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<Object, Object>()
+					.index(index)
+					.id(idString)
+					.action(a -> a.doc(doc))
+					.build();
+
+			BulkOperation operation = new BulkOperation.Builder().update(updateOperation).build();
+			operations.add(operation);
+		}
+		// Add the BulkOperation to the BulkRequest
+		bulkRequest.operations(operations);
+
+		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
+
+		List<String> errors = new ArrayList<>();
+		if (bulkResponse.errors()) {
+			for (BulkResponseItem item : bulkResponse.items()) {
+				ErrorCause error = item.error();
+				if (error != null) {
+					errors.add(error.reason());
+				}
+			}
+		}
+		return errors;
+	}
+
+	@Data
+	static public class ScriptedUpdatedDoc {
+		String id;
+		Map<String, JsonData> params;
+	}
+
+	public List<String> bulkScriptedUpdate(String index, String script, List<ScriptedUpdatedDoc> docs)
+			throws IOException {
+
+		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+		List<BulkOperation> operations = new ArrayList<>();
+		for (ScriptedUpdatedDoc doc : docs) {
+			BulkOperation operation = new BulkOperation.Builder().update(u -> u
+					.id(doc.getId())
+					.action(action -> action
+							.script(s -> s
+									.inline(inlineScript -> inlineScript
+											.lang("painless")
+											.params(doc.getParams())
+											.source(script)))))
+					.build();
+
+			operations.add(operation);
+		}
+
+		// Add the BulkOperation to the BulkRequest
+		bulkRequest.operations(operations);
 
 		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
 

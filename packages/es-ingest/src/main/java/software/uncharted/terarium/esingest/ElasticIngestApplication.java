@@ -12,7 +12,7 @@ import software.uncharted.terarium.esingest.configuration.ElasticsearchConfigura
 import software.uncharted.terarium.esingest.models.input.covid.CovidDocument;
 import software.uncharted.terarium.esingest.models.input.covid.CovidEmbedding;
 import software.uncharted.terarium.esingest.models.output.Document;
-import software.uncharted.terarium.esingest.models.output.Embedding;
+import software.uncharted.terarium.esingest.models.output.Document.Paragraph;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 import software.uncharted.terarium.esingest.service.ElasticIngestService;
 
@@ -53,16 +53,12 @@ public class ElasticIngestApplication {
 						},
 						(CovidEmbedding input) -> {
 
-							Embedding embedding = new Embedding();
-							embedding.setDocumentId(input.getDocumentId());
-							embedding.setEmbeddingChunkId(input.getEmbeddingChunkId());
+							Paragraph paragraph = new Paragraph();
+							paragraph.setParagraphId(input.getEmbeddingChunkId().toString());
+							paragraph.setSpans(input.getSpans());
+							paragraph.setVector(input.getEmbedding());
 
-							// TODO: fix this
-							embedding.setTitle(null);
-							embedding.setSpans(null);
-							embedding.setVector(null);
-
-							return embedding;
+							return paragraph;
 						});
 
 				// Shut down the application gracefully
