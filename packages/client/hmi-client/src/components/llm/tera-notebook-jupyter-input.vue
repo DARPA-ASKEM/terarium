@@ -12,12 +12,13 @@
 		></InputText>
 		<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-		<i v-else class="pi pi-send" />
+		<Button v-else icon="pi pi-send" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
 import { ref, onUnmounted, onMounted } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import Dropdown from 'primevue/dropdown';
@@ -72,5 +73,8 @@ onUnmounted(() => {
 }
 .p-dropdown {
 	width: 8rem;
+}
+.p-button {
+	background-color: var(--surface-200);
 }
 </style>
