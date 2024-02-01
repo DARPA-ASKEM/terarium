@@ -135,8 +135,6 @@ const codeText = ref(
 );
 
 const getOutputFromLLM = (data) => {
-	console.log('in get output from llm');
-	console.log(data);
 	codeText.value = codeText.value.concat(' \n', data.value.content.code as string);
 };
 

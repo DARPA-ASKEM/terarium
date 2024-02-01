@@ -37,22 +37,15 @@ const contextLanguageOptions = ref<string[]>(['python3']);
 const manager = new KernelSessionManager();
 
 const submitQuery = async () => {
-	console.log('Submit Query:');
-	console.log(manager);
-	console.log(queryString.value);
 	const message = manager.sendMessage('llm_request', {
 		request: queryString.value
 	});
-	console.log('Message:');
-	console.log(message);
 	message.register('code_cell', (data) => {
 		emit('append-output', { value: data });
 	});
 };
 
 onMounted(async () => {
-	console.log(props.context);
-	console.log(props.contextInfo);
 	const context = {
 		context: props.context,
 		language: contextLanguage.value,
@@ -60,7 +53,6 @@ onMounted(async () => {
 	};
 
 	await manager.init('beaker_kernel', 'Beaker Kernel', context);
-	console.log('Done init');
 });
 
 onUnmounted(() => {
