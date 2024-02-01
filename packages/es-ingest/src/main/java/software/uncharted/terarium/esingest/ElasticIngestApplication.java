@@ -3,6 +3,7 @@ package software.uncharted.terarium.esingest;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -34,6 +35,12 @@ public class ElasticIngestApplication {
 	@Autowired
 	ApplicationContext context;
 
+	@Value("${terarium.esingest.input-dir}")
+	String inputDir;
+
+	@Value("${terarium.esingest.output-index}")
+	String outputIndex;
+
 	public static void main(String[] args) {
 		SpringApplication.run(ElasticIngestApplication.class, args);
 	}
@@ -43,8 +50,8 @@ public class ElasticIngestApplication {
 		return args -> {
 			try {
 				ElasticIngestParams params = new ElasticIngestParams();
-				params.setInputDir("/home/kbirk/Downloads/covid");
-				params.setOutputIndex(esConfig.getCovidIndex());
+				params.setInputDir(inputDir);
+				params.setOutputIndex(outputIndex);
 
 				List<String> errs = esIngestService.ingestData(params,
 						(CovidDocument input) -> {
