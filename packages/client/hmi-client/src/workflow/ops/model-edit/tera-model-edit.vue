@@ -10,6 +10,13 @@
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
+				<Suspense>
+					<tera-notebook-jupyter-input
+						context="mira_model_edit"
+						:contextInfo="contextInfo"
+						@llm-output="getOutputFromLLM"
+					/>
+				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -18,14 +25,19 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
-
 				<template #footer>
 					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
 				</template>
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview
+				title="Model Preview"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				:options="outputs"
+				is-selectable
+			>
 				<div>
 					<tera-model-diagram
 						v-if="amr"
@@ -63,14 +75,14 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -80,12 +92,13 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
+import teraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output-port', 'update-state', 'close', 'select-output']);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -97,14 +110,34 @@ interface SaveOptions {
 	appendOutputPort?: boolean;
 }
 
-const kernelManager = new KernelSessionManager();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+const selectedOutputId = ref<string>();
+const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
+const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
+const modelId = props.node.inputs[0].value?.[0];
+const contextInfo = { id: modelId }; // context for jupyter-input
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
-
 let editor: VAceEditorInstance['_editor'] | null;
-const codeText = ref('');
+const codeText = ref(
+	'# This environment contains the variable "model" \n# which is displayed on the right'
+);
+
+const getOutputFromLLM = (data) => {
+	codeText.value = codeText.value.concat(' \n', data.value.content.code as string);
+};
 
 // Reset model, then execute the code
 const runFromCodeWrapper = () => {
@@ -197,7 +230,6 @@ const buildJupyterContext = () => {
 };
 
 const inputChangeHandler = async () => {
-	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -259,6 +291,23 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
+const onUpdateOutput = (id: string) => {
+	emit('select-output', id);
+};
+
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
+			selectedOutputId.value = props.node.active;
+			inputChangeHandler();
+		}
+	},
+	{ immediate: true }
+);
+
 // Set model, modelConfiguration, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
@@ -274,6 +323,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.input {
+	width: 95%;
+}
 .code-container {
 	display: flex;
 	flex-direction: column;
