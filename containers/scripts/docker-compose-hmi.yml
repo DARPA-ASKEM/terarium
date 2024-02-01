@@ -104,6 +104,8 @@ services:
     depends_on:
       hmi-server:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   terarium-docs:
     image: ghcr.io/darpa-askem/terarium-docs:latest
@@ -118,3 +120,5 @@ services:
       interval: "3s"
       timeout: "3s"
       retries: 30
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

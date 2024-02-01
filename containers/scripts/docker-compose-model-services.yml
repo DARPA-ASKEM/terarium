@@ -9,3 +9,5 @@ services:
       - terarium
     ports:
       - "3010:8888"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -15,6 +15,8 @@ services:
       interval: "3s"
       timeout: "3s"
       retries: 30
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   terarium:

@@ -17,6 +17,8 @@ services:
       AUTH_USERNAME: "${secret_service_account_username}"
       AUTH_PASSWORD: "${secret_service_account_password}"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   knowledge-middleware-api:
     container_name: knowledge-middleware-api
@@ -36,6 +38,8 @@ services:
       TDS_PASSWORD: "${secret_service_account_password}"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   knowledge-middleware-worker:
     container_name: knowledge-middleware-worker
@@ -56,3 +60,5 @@ services:
     depends_on:
       redis:
         condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
