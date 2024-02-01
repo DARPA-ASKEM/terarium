@@ -19,7 +19,6 @@ import java.util.function.Function;
 
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -40,7 +39,7 @@ public class ElasticIngestService {
 
 	private final int ERROR_THRESHOLD = 10;
 
-	private final int BULK_SIZE = 1000;
+	private final int BULK_SIZE = 100;
 
 	private final int POOL_SIZE = 8;
 
@@ -66,7 +65,8 @@ public class ElasticIngestService {
 		return files;
 	}
 
-	private <InputType, OutputType> void startIngestDocumentWorkers(Function<InputType, OutputType> processor) {
+	private <InputType, OutputType> void startIngestDocumentWorkers(Function<InputType, OutputType> processor,
+			Class<InputType> inputType) {
 		for (int i = 0; i < POOL_SIZE; i++) {
 			futures.add(executor.submit(() -> {
 				while (true) {
@@ -78,8 +78,7 @@ public class ElasticIngestService {
 
 						List<Object> output = new ArrayList<>();
 						for (String item : items) {
-							InputType input = objectMapper.readValue(item, new TypeReference<InputType>() {
-							});
+							InputType input = objectMapper.readValue(item, inputType);
 							OutputType out = processor.apply(input);
 							if (out != null) {
 								output.add(out);
@@ -95,8 +94,8 @@ public class ElasticIngestService {
 							}
 						}
 
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
+					} catch (Exception e) {
+						log.error("Error processing documents", e);
 						break;
 					}
 				}
@@ -105,7 +104,8 @@ public class ElasticIngestService {
 		}
 	}
 
-	private <InputType, OutputType> void startIngestEmbeddingsWorkers(Function<InputType, OutputType> processor) {
+	private <InputType, OutputType> void startIngestEmbeddingsWorkers(Function<InputType, OutputType> processor,
+			Class<InputType> inputType) {
 		for (int i = 0; i < POOL_SIZE; i++) {
 			futures.add(executor.submit(() -> {
 				while (true) {
@@ -117,8 +117,7 @@ public class ElasticIngestService {
 
 						List<ElasticsearchService.ScriptedUpdatedDoc> output = new ArrayList<>();
 						for (String item : items) {
-							InputType input = objectMapper.readValue(item, new TypeReference<InputType>() {
-							});
+							InputType input = objectMapper.readValue(item, inputType);
 							OutputType out = processor.apply(input);
 							if (out != null) {
 
@@ -185,12 +184,14 @@ public class ElasticIngestService {
 				for (String line; (line = reader.readLine()) != null;) {
 					lines.add(line);
 					if (lines.size() == BULK_SIZE) {
+						log.info("DISPATCHING LINES TO WORK QUEUE");
 						workQueue.put(lines);
 						lines = new ArrayList<>();
 					}
 				}
 				// process the remaining lines if there are any
 				if (!lines.isEmpty()) {
+					log.info("DISPATCHING REMAINING LINES TO WORK QUEUE");
 					workQueue.put(lines);
 				}
 			} catch (IOException e) {
@@ -202,14 +203,16 @@ public class ElasticIngestService {
 	public <DocInputType, EmbeddingInputType, DocOutputType, EmbeddingOutputType> void ingestData(
 			ElasticIngestParams params,
 			Function<DocInputType, DocOutputType> docProcessor,
-			Function<EmbeddingInputType, EmbeddingOutputType> embeddingProcessor)
+			Function<EmbeddingInputType, EmbeddingOutputType> embeddingProcessor,
+			Class<DocInputType> docInputType,
+			Class<EmbeddingInputType> embeddingInputType)
 			throws InterruptedException {
 
 		this.params = params;
 
 		// first we insert the documents
 
-		startIngestDocumentWorkers(docProcessor);
+		startIngestDocumentWorkers(docProcessor, docInputType);
 
 		readLinesIntoWorkQueue(Paths.get(params.getInputDir()).resolve("documents"));
 
@@ -217,7 +220,7 @@ public class ElasticIngestService {
 
 		// then we insert the embeddings
 
-		startIngestEmbeddingsWorkers(embeddingProcessor);
+		startIngestEmbeddingsWorkers(embeddingProcessor, embeddingInputType);
 
 		readLinesIntoWorkQueue(Paths.get(params.getInputDir()).resolve("embeddings"));
 

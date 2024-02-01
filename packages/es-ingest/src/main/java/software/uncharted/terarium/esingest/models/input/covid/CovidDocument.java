@@ -3,7 +3,9 @@ package software.uncharted.terarium.esingest.models.input.covid;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,9 +14,21 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CovidDocument implements Serializable {
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	static public class Source implements Serializable {
+		private String title;
+
+		private String body;
+
+		private Feature feature;
+	}
+
+	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	static public class Feature implements Serializable {
 		private List<Timestamp> date;
 
@@ -33,12 +47,9 @@ public class CovidDocument implements Serializable {
 		private List<String> name;
 	}
 
-	private UUID id;
+	@JsonAlias("_id")
+	String id;
 
-	private String title;
-
-	private String body;
-
-	private Feature feature;
-
+	@JsonAlias("_source")
+	Source source;
 }

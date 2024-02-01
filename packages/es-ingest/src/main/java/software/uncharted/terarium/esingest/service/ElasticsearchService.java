@@ -349,7 +349,10 @@ public class ElasticsearchService {
 
 			// generic way to extract the id
 			JsonNode json = mapper.valueToTree(doc);
-			final String idString = json.has("id") ? json.get("id").asText() : UUID.randomUUID().toString();
+			if (!json.has("id")) {
+				throw new RuntimeException("Document does not have an id");
+			}
+			final String idString = json.get("id").asText();
 
 			bulkRequest.operations(op -> op
 					.index(idx -> idx

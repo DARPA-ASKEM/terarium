@@ -1,5 +1,7 @@
 package software.uncharted.terarium.esingest;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -8,6 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.esingest.models.input.covid.CovidDocument;
 import software.uncharted.terarium.esingest.models.input.covid.CovidEmbedding;
@@ -17,6 +20,7 @@ import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 import software.uncharted.terarium.esingest.service.ElasticIngestService;
 
 @SpringBootApplication
+@Slf4j
 @PropertySource("classpath:application.properties")
 public class ElasticIngestApplication {
 
@@ -45,9 +49,9 @@ public class ElasticIngestApplication {
 						(CovidDocument input) -> {
 
 							Document doc = new Document();
-							doc.setId(input.getId());
-							doc.setTitle(input.getTitle());
-							doc.setFullText(input.getBody());
+							doc.setId(UUID.fromString(input.getId()));
+							doc.setTitle(input.getSource().getTitle());
+							doc.setFullText(input.getSource().getBody());
 
 							return doc;
 						},
@@ -59,7 +63,7 @@ public class ElasticIngestApplication {
 							paragraph.setVector(input.getEmbedding());
 
 							return paragraph;
-						});
+						}, CovidDocument.class, CovidEmbedding.class);
 
 				// Shut down the application gracefully
 				SpringApplication.exit(context, () -> 0);
