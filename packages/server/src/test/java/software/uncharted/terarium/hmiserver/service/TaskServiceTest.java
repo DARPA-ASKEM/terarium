@@ -1,20 +1,15 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
@@ -23,11 +18,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@Autowired
 	private TaskService taskService;
 
-	@Autowired
-	private ObjectMapper mapper;
-
-	int POLL_TIMEOUT_SECONDS = 60;
-
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEchoTaskRequest() throws Exception {
@@ -35,24 +25,15 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		UUID taskId = UUID.randomUUID();
 		String additionalProps = "These are additional properties";
 
-		String jsonString = "{\"input\":\"This is my input string\"}";
-		JsonNode jsonNode = mapper.readTree(jsonString);
+		byte[] input = "{\"input\":\"This is my input string\"}".getBytes();
 
-		BlockingQueue<TaskResponse> responseQueue = taskService.createEchoTask(taskId, jsonNode, additionalProps);
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript("/echo.py");
+		req.setInput(input);
+		req.setAdditionalProperties(additionalProps);
 
-		List<TaskResponse> responses = new ArrayList<>();
-		while (true) {
-			TaskResponse resp = responseQueue.poll(POLL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-			if (resp == null) {
-				break;
-			}
-			responses.add(resp);
-
-			if (resp.getStatus() == TaskStatus.SUCCESS || resp.getStatus() == TaskStatus.FAILED
-					|| resp.getStatus() == TaskStatus.CANCELLED) {
-				break;
-			}
-		}
+		List<TaskResponse> responses = taskService.runTaskBlocking(req);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());

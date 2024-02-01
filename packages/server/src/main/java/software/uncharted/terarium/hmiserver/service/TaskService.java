@@ -1,11 +1,14 @@
 package software.uncharted.terarium.hmiserver.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.amqp.core.Binding;
@@ -48,7 +51,6 @@ public class TaskService {
 	private Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	private Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
 
-	// TESTING ONLY!
 	private Map<UUID, BlockingQueue<TaskResponse>> responseQueues = new ConcurrentHashMap<>();
 
 	@Value("${terarium.taskrunner.request-queue}")
@@ -190,27 +192,52 @@ public class TaskService {
 		}
 	}
 
-	public BlockingQueue<TaskResponse> createEchoTask(UUID taskId, JsonNode input, Object additionalProperties)
+	public List<TaskResponse> runTaskBlocking(TaskRequest req, long timeoutSeconds)
 			throws JsonProcessingException, IOException, InterruptedException {
 
-		BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(64);
-		responseQueues.put(taskId, queue);
+		if (req.getId() == null) {
+			req.setId(UUID.randomUUID());
+		}
 
-		byte[] bytes = objectMapper.writeValueAsBytes(input);
+		try {
+			// add to queue to wait on responses
+			BlockingQueue<TaskResponse> queue = new ArrayBlockingQueue<>(8);
+			responseQueues.put(req.getId(), queue);
 
-		TaskRequest req = new TaskRequest();
-		req.setId(taskId);
-		req.setScript("/echo.py");
-		req.setInput(bytes);
-		req.setAdditionalProperties(additionalProperties);
+			// send the request
+			sendTaskRequest(req);
 
-		// send the request
-		sendTaskRequest(req);
+			// add the queued response
+			List<TaskResponse> responses = new ArrayList<>();
+			TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
+			queue.put(resp);
 
-		TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
-		queue.put(resp);
+			while (true) {
+				// wait for responses
+				TaskResponse response = queue.poll(timeoutSeconds, TimeUnit.SECONDS);
+				if (response == null) {
+					throw new InterruptedException("Task did not complete within " + timeoutSeconds + " seconds");
+				}
 
-		return queue;
+				responses.add(response);
+
+				if (response.getStatus() == TaskStatus.SUCCESS) {
+					return responses;
+				}
+
+				if (response.getStatus() == TaskStatus.CANCELLED || response.getStatus() == TaskStatus.FAILED) {
+					throw new IOException("Task failed with status " + response.getStatus());
+				}
+			}
+		} finally {
+			// ensure we remove it from the queue when done
+			responseQueues.remove(req.getId());
+		}
+	}
+
+	public List<TaskResponse> runTaskBlocking(TaskRequest req)
+			throws JsonProcessingException, IOException, InterruptedException {
+		return runTaskBlocking(req, 60);
 	}
 
 }

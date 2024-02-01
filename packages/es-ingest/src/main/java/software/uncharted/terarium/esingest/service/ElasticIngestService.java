@@ -57,8 +57,8 @@ public class ElasticIngestService {
 
 	private List<String> errors = Collections.synchronizedList(new ArrayList<>());
 
-	private BlockingQueue<List<String>> workQueue;// = new LinkedBlockingQueue<>(WORK_QUEUE_SIZE);
-	private ExecutorService executor;// = Executors.newFixedThreadPool(POOL_SIZE);
+	private BlockingQueue<List<String>> workQueue;
+	private ExecutorService executor;
 	private List<Future<Void>> futures = new ArrayList<>();
 
 	private ElasticIngestParams params;
