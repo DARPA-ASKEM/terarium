@@ -1,10 +1,11 @@
 ---
-version: "3.8"
+version: "3.9"
 
 services:
   beaker:
     container_name: beaker
     image: ghcr.io/darpa-askem/beaker-kernel:latest
+    platform: linux/amd64
     networks:
       - terarium
     ports:
@@ -17,10 +18,12 @@ services:
       AUTH_USERNAME: "${secret_service_account_username}"
       AUTH_PASSWORD: "${secret_service_account_password}"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   knowledge-middleware-api:
     container_name: knowledge-middleware-api
-    image: ghcr.io/darpa-askem/knowledge-middleware-api:latest
+    image: ghcr.io/darpa-askem/knowledge-middleware-api:tds-migration
     networks:
       - terarium
     ports:
@@ -36,23 +39,25 @@ services:
       TDS_PASSWORD: "${secret_service_account_password}"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   knowledge-middleware-worker:
     container_name: knowledge-middleware-worker
-    image: ghcr.io/darpa-askem/knowledge-middleware-worker:latest
+    image: ghcr.io/darpa-askem/knowledge-middleware-worker:tds-migration
     networks:
       - terarium
     environment:
-      TDS_URL: "http://${local_host_name}:3000"
-      SKEMA_RS_URL: "https://skema-rs.staging.terarium.ai"
-      SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
       MIT_TR_URL: "https://mit-tr.staging.terarium.ai"
-      TA1_UNIFIED_URL: "https://skema-unified.staging.terarium.ai"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
-      TDS_USER: "${secret_service_account_username}"
-      TDS_PASSWORD: "${secret_service_account_password}"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+      SKEMA_RS_URL: "https://skema-rs.staging.terarium.ai"
+      SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
+      TA1_UNIFIED_URL: "https://skema-unified.staging.terarium.ai"
+      TDS_USER: "${secret_service_account_username}"
+      TDS_PASSWORD: "${secret_service_account_password}"
+      TDS_URL: "http://${local_host_name}:3000"
     depends_on:
       redis:
         condition: service_started
