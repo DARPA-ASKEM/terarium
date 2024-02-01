@@ -44,6 +44,7 @@
 						</template>
 						<v-ace-editor
 							v-model:value="allCodeBlocks[i].asset.codeContent"
+							@update:value="emit('update-state', clonedState)"
 							:lang="asset.codeLanguage"
 							theme="chrome"
 							style="height: 10rem; width: 100%"
@@ -132,7 +133,7 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import type { Code, Model } from '@/types/Types';
+import type { Card, Code, Model } from '@/types/Types';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -140,7 +141,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { createModel, getModel, profile } from '@/services/model';
+import { createModel, getModel, profile, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -250,6 +251,8 @@ const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
 	() => props.node.outputs?.find((output) => selectedOutputId.value === output.id)
 );
 
+const card = ref<Card | null>(null);
+
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
@@ -294,6 +297,7 @@ function setKernelContext() {
 	if (jupyterContext) {
 		kernelManager.sendMessage('context_setup_request', jupyterContext);
 	}
+	emit('update-state', clonedState.value);
 }
 
 async function handleCode() {
@@ -323,8 +327,9 @@ async function handleCode() {
 
 		if (!modelId) return;
 
-		if (documentId.value) {
-			await profile(modelId, documentId.value);
+		if (documentId.value && !card.value) {
+			const profiledModel = await profile(modelId, documentId.value);
+			if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
 		}
 
 		clonedState.value.modelId = modelId;
@@ -425,10 +430,12 @@ function addCodeBlock() {
 		}
 	};
 	clonedState.value.codeBlocks.push(codeBlock);
+	emit('update-state', clonedState.value);
 }
 
 function removeCodeBlock(index: number) {
 	clonedState.value.codeBlocks.splice(index, 1);
+	emit('update-state', clonedState.value);
 }
 
 async function fetchModel() {
@@ -437,7 +444,16 @@ async function fetchModel() {
 		return;
 	}
 	isProcessing.value = true;
-	const model = await getModel(clonedState.value.modelId);
+	let model = await getModel(clonedState.value.modelId);
+	if (model && !model.metadata?.card && card.value) {
+		if (!model.metadata) {
+			model.metadata = {};
+		}
+
+		model.metadata.card = card.value;
+		model = await updateModel(model);
+	}
+	card.value = model?.metadata?.card ?? null;
 	selectedModel.value = model;
 	isProcessing.value = false;
 }

@@ -38,7 +38,10 @@
 										<label>Interpreted As:</label>
 										<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false">
 										</tera-math-editor>
-										<InputText v-model="equation.asset.text" />
+										<InputText
+											v-model="equation.asset.text"
+											@update:model-value="emit('update-state', clonedState)"
+										/>
 									</template>
 									<span v-else>Could not extract LaTeX for image</span>
 								</div>
@@ -118,14 +121,14 @@ import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-assets';
 import { AssetType } from '@/types/Types';
-import type { DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
+import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
 import { cloneDeep, isEmpty, unionBy } from 'lodash';
 import Image from 'primevue/image';
 import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
-import { getModel, profile } from '@/services/model';
+import { getModel, profile, updateModel } from '@/services/model';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -211,6 +214,7 @@ const document = ref<DocumentAsset | null>();
 const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
+const card = ref<Card | null>(null);
 
 const formSteps = ref([
 	{
@@ -312,8 +316,9 @@ async function onRun() {
 
 	if (!modelId) return;
 
-	if (document.value?.id) {
-		await profile(modelId, document.value.id);
+	if (document.value?.id && !card.value) {
+		const profiledModel = await profile(modelId, document.value.id);
+		if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
 	}
 
 	clonedState.value.modelId = modelId;
@@ -336,7 +341,16 @@ async function fetchModel() {
 		return;
 	}
 	loadingModel.value = true;
-	const model = await getModel(clonedState.value.modelId);
+	let model = await getModel(clonedState.value.modelId);
+	if (model && !model.metadata?.card && card.value) {
+		if (!model.metadata) {
+			model.metadata = {};
+		}
+
+		model.metadata.card = card.value;
+		model = await updateModel(model);
+	}
+	card.value = model?.metadata?.card ?? null;
 	selectedModel.value = model;
 	loadingModel.value = false;
 }
@@ -371,10 +385,12 @@ function addEquation() {
 			text: ''
 		}
 	});
+	emit('update-state', clonedState.value);
 }
 
 function removeEquation(index: number) {
 	clonedState.value.equations.splice(index, 1);
+	emit('update-state', clonedState.value);
 }
 
 watch(
@@ -427,6 +443,7 @@ watch(
 	display: flex;
 	gap: var(--gap-small);
 	flex-direction: column;
+	overflow-y: hidden;
 }
 
 :deep(.math-editor) {
