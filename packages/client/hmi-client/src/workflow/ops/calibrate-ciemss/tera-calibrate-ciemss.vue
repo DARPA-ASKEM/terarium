@@ -158,7 +158,8 @@ import {
 	makeCalibrateJobCiemss,
 	simulationPollAction,
 	querySimulationInProgress,
-	getCalibrateBlobURL
+	getCalibrateBlobURL,
+	makeForecastJobCiemss
 } from '@/services/models/simulation-service';
 import {
 	CalibrationRequestCiemss,
@@ -341,6 +342,28 @@ const getCalibrateStatus = async (simulationId: string) => {
 		throw Error('Failed Runs');
 	}
 
+	// Run a sample simulation with the calibrated result
+	const dillURL = await getCalibrateBlobURL(simulationIds.value[0]);
+	console.log('dill URL is', dillURL);
+
+	const resp = await makeForecastJobCiemss({
+		projectId: '',
+		modelConfigId: modelConfigId.value as string,
+		timespan: {
+			start: 0,
+			end: 100
+			// start: state.currentTimespan.start,
+			// end: state.currentTimespan.end
+		},
+		extra: {
+			num_samples: 50,
+			method: 'dopri5',
+			inferred_parameters: simulationId
+		},
+		engine: 'ciemss'
+	});
+	console.log(resp.id);
+
 	updateOutputPorts(simulationId);
 	showSpinner.value = false;
 };
@@ -462,11 +485,7 @@ onUnmounted(() => {
 watch(
 	() => simulationIds.value,
 	async () => {
-		if (!simulationIds.value) return;
-
-		const dillURL = await getCalibrateBlobURL(simulationIds.value[0]);
-		console.log('dill URL is', dillURL);
-
+		// if (!simulationIds.value) return;
 		/*
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, result.csv');
 		runResults.value = output.runResults;
