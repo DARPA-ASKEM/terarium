@@ -154,7 +154,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import {
-	/* getRunResultCiemss, */
+	getRunResultCiemss,
 	makeCalibrateJobCiemss,
 	simulationPollAction,
 	querySimulationInProgress,
@@ -342,8 +342,8 @@ const getCalibrateStatus = async (simulationId: string) => {
 		throw Error('Failed Runs');
 	}
 
-	// Run a sample simulation with the calibrated result
-	const dillURL = await getCalibrateBlobURL(simulationIds.value[0]);
+	// Start 2nd simulation to get sample simulation from dill
+	const dillURL = await getCalibrateBlobURL(simulationId);
 	console.log('dill URL is', dillURL);
 
 	const resp = await makeForecastJobCiemss({
@@ -362,7 +362,34 @@ const getCalibrateStatus = async (simulationId: string) => {
 		},
 		engine: 'ciemss'
 	});
+
+	const sampleSimulateId = resp.id;
 	console.log(resp.id);
+
+	poller.stop();
+	poller
+		.setInterval(3000)
+		.setThreshold(100)
+		.setPollAction(async () =>
+			simulationPollAction([sampleSimulateId], props.node, progress, emit)
+		);
+	const sampleSimulateResults = await poller.start();
+
+	if (sampleSimulateResults.state === PollerState.Cancelled) {
+		showSpinner.value = false;
+		return;
+	}
+	if (sampleSimulateResults.state !== PollerState.Done || !sampleSimulateResults.data) {
+		// throw if there are any failed runs for now
+		showSpinner.value = false;
+		logger.error(`Simulation: ${sampleSimulateId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+		throw Error('Failed Runs');
+	}
+
+	const output = await getRunResultCiemss(sampleSimulateId, 'result.csv');
+	runResults.value = output.runResults;
 
 	updateOutputPorts(simulationId);
 	showSpinner.value = false;
