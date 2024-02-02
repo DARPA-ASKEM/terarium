@@ -130,7 +130,7 @@ public interface KnowledgeMiddlewareProxy {
 	ResponseEntity<ExtractionResponse> postEquationsToAMR(
 		@RequestParam("equation_type") String equationType,
 		@RequestParam("model") String framework,
-		@RequestParam("model_id") String modelId,
+		@RequestParam(name = "model_id", required = false) String modelId,
 		@RequestBody List<String> equations
 	);
 
