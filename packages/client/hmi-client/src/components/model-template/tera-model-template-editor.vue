@@ -388,7 +388,7 @@ watch(
 				x: 100,
 				y: 100
 			};
-			console.log(flattenedModel);
+
 			modelTemplatingService.addCard(flattenedTemplates.value, flattenedModel);
 
 			// Initialize beaker kernel
