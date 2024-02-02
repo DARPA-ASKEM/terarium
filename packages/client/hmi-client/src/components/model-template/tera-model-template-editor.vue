@@ -292,7 +292,11 @@ function updateNewCardPosition(event) {
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-	modelTemplatingService.addCard(decomposedTemplates.value, cloneDeep(newModelTemplate.value));
+	modelTemplatingService.addCard(
+		decomposedTemplates.value,
+		kernelManager,
+		cloneDeep(newModelTemplate.value)
+	);
 	newModelTemplate.value = null;
 }
 
@@ -352,33 +356,30 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function amrToTemplates() {
-	kernelManager.sendMessage('amr_to_templates', {}).on('amr_to_templates_response', (d) => {
-		// FIXME: Model templates are passed no junctions yet
+async function initializeBeakerKernel() {
+	if (kernelManager.jupyterSession) kernelManager.shutdown();
 
-		// Insert template card data into template models
-		let yPos = 100;
-		const templateModelsWithCards = d.content.templates.map((modelTemplate: any) => {
-			modelTemplate.metadata.templateCard = {
-				id: modelTemplate.header.name,
-				name: modelTemplate.header.name,
-				x: 100,
-				y: yPos
-			} as ModelTemplateCard;
-
-			yPos += 200;
-			return modelTemplate;
-		});
-
-		templateModelsWithCards.forEach((templateModel: any) =>
-			modelTemplatingService.addCard(decomposedTemplates.value, templateModel)
-		);
-	});
+	try {
+		const context = {
+			context: 'mira_model_edit',
+			language: 'python3',
+			context_info: {
+				id: props.model?.id ?? ''
+			}
+		};
+		await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
+		// Create decomposed view from model
+		if (props.model) {
+			modelTemplatingService.flattenedToDecomposed(decomposedTemplates.value, kernelManager);
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
 }
 
 watch(
 	() => props.model,
-	async () => {
+	() => {
 		if (props.model) {
 			// Create flattened view of model
 			const flattenedModel: any = cloneDeep(props.model);
@@ -389,30 +390,14 @@ watch(
 				y: 100
 			};
 
-			modelTemplatingService.addCard(flattenedTemplates.value, flattenedModel);
-
-			// Initialize beaker kernel
-			try {
-				if (kernelManager.jupyterSession) kernelManager.shutdown();
-
-				const context = {
-					context: 'mira_model',
-					language: 'python3',
-					context_info: {
-						id: props.model.id
-					}
-				};
-				await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
-				// Create template view of model
-				amrToTemplates();
-			} catch (error) {
-				logger.error(`Error initializing Jupyter session: ${error}`);
-			}
+			modelTemplatingService.addCard(flattenedTemplates.value, kernelManager, flattenedModel);
 		}
-	}
+		initializeBeakerKernel();
+	},
+	{ immediate: true }
 );
 
-onMounted(async () => {
+onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 });
 

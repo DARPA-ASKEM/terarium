@@ -1,5 +1,15 @@
 import type { Position } from '@/types/common';
 
+export enum DecomposedModelTemplateTypes {
+	ControlledConversion = 'Controlled conversion',
+	ControlledDegradation = 'Controlled degradation',
+	ControlledProduction = 'Controlled production',
+	NaturalConversion = 'Natural conversion',
+	NaturalDegradation = 'Natural degradation',
+	NaturalProduction = 'Natural production',
+	Observable = 'Observable'
+}
+
 export interface ModelTemplates {
 	id: string;
 	transform: {

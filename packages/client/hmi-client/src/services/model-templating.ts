@@ -1,6 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
+import { snakeCase } from 'lodash';
 import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
+import { DecomposedModelTemplateTypes } from '@/types/model-templating';
+import { KernelSessionManager } from '@/services/jupyter';
 import naturalConversion from './model-templates/natural-conversion.json';
 import naturalProduction from './model-templates/natural-production.json';
 import naturalDegredation from './model-templates/natural-degradation.json';
@@ -42,7 +45,18 @@ function findCardIndexById(modelTemplates: ModelTemplates, id: string) {
 	return modelTemplates.models.findIndex(({ metadata }) => metadata.templateCard.id === id);
 }
 
-export function addCard(modelTemplates: ModelTemplates, modelTemplate: any) {
+export function addCard(
+	modelTemplates: ModelTemplates,
+	kernelManager: KernelSessionManager,
+	modelTemplate: any
+) {
+	if (Object.values(DecomposedModelTemplateTypes).includes(modelTemplate.header.name)) {
+		kernelManager
+			.sendMessage(`add_${snakeCase(modelTemplate.header.name)}_template_request`, {})
+			.on(`add_${snakeCase(modelTemplate.header.name)}_template_response`, (d) => {
+				console.log(d);
+			});
+	}
 	modelTemplate.metadata.templateCard.id = uuidv4();
 	modelTemplates.models.push(modelTemplate);
 }
@@ -101,5 +115,27 @@ export function addEdge(
 	});
 }
 
-// TODO: There isn't a way to do this in the UI yet
+// TODO: There isn't a way to remove edges in the UI yet
 // export function removeEdge(modelTemplates: ModelTemplates) {}
+
+export function flattenedToDecomposed(
+	decomposedTemplates: ModelTemplates,
+	kernelManager: KernelSessionManager
+) {
+	kernelManager.sendMessage('amr_to_templates', {}).on('amr_to_templates_response', (d) => {
+		// Insert template card data into decomposed models
+		let yPos = 100;
+
+		d.content.templates.forEach((modelTemplate: any) => {
+			modelTemplate.metadata.templateCard = {
+				id: modelTemplate.header.name,
+				name: modelTemplate.header.name,
+				x: 100,
+				y: yPos
+			} as ModelTemplateCard;
+			yPos += 200;
+
+			addCard(decomposedTemplates, kernelManager, modelTemplate);
+		});
+	});
+}

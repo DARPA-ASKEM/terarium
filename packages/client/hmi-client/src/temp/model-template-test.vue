@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<tera-model-template-editor :model="model" />
+		<suspense> <tera-model-template-editor :model="model" /></suspense>
 	</div>
 </template>
 
