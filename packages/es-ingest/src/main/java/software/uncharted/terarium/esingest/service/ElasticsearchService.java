@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -349,7 +348,7 @@ public class ElasticsearchService {
 		private long took;
 	}
 
-	public <Output extends IOutputDocument> BulkOpResponse bulkIndex(String index, List<Output> docs)
+	public <Output extends IOutputDocument<?>> BulkOpResponse bulkIndex(String index, List<Output> docs)
 			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -379,18 +378,15 @@ public class ElasticsearchService {
 		return r;
 	}
 
-	public BulkOpResponse bulkUpdate(String index, List<Object> docs) throws IOException {
+	public <Output extends IOutputDocument<?>> BulkOpResponse bulkUpdate(String index, List<Output> docs)
+			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
 		List<BulkOperation> operations = new ArrayList<>();
-		for (Object doc : docs) {
-			// generic way to extract the id
-			JsonNode json = mapper.valueToTree(doc);
-			final String idString = json.has("id") ? json.get("id").asText() : UUID.randomUUID().toString();
-
+		for (Output doc : docs) {
 			UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<Object, Object>()
 					.index(index)
-					.id(idString)
+					.id(doc.getId().toString())
 					.action(a -> a.doc(doc))
 					.build();
 
@@ -434,7 +430,7 @@ public class ElasticsearchService {
 			BulkOperation operation = new BulkOperation.Builder().update(u -> u
 					.id(doc.getId())
 					.index(index)
-					.retryOnConflict(3)
+					.retryOnConflict(10)
 					.action(action -> action
 							.script(s -> s
 									.inline(inlineScript -> inlineScript

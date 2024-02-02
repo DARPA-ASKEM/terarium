@@ -107,14 +107,15 @@
           "type": "text",
           "index": false
         },
-        "paragraphs": {
+        "embeddings": {
           "type": "nested",
           "properties": {
             "vector": {
               "type": "dense_vector",
+              "element_type": "float",
               "dims": 1536
             },
-            "paragraphId": {
+            "embeddingId": {
               "type": "keyword"
             },
             "span": {

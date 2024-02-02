@@ -1,5 +1,6 @@
 package software.uncharted.terarium.esingest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +17,13 @@ import software.uncharted.terarium.esingest.configuration.ElasticsearchConfigura
 import software.uncharted.terarium.esingest.models.input.covid.CovidDocument;
 import software.uncharted.terarium.esingest.models.input.covid.CovidEmbedding;
 import software.uncharted.terarium.esingest.models.output.Document;
-import software.uncharted.terarium.esingest.models.output.Document.Paragraph;
 import software.uncharted.terarium.esingest.models.output.Embedding;
+import software.uncharted.terarium.esingest.models.output.EmbeddingChunk;
+import software.uncharted.terarium.esingest.service.ElasticDocumentIngestService;
+import software.uncharted.terarium.esingest.service.ElasticEmbeddingIngestService;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
-import software.uncharted.terarium.esingest.service.ElasticIngestService;
+import software.uncharted.terarium.esingest.service.ElasticsearchService;
+import software.uncharted.terarium.esingest.util.TimeFormatter;
 
 @SpringBootApplication
 @Slf4j
@@ -30,7 +34,13 @@ public class ElasticIngestApplication {
 	ElasticsearchConfiguration esConfig;
 
 	@Autowired
-	ElasticIngestService esIngestService;
+	ElasticDocumentIngestService esDocumentIngestService;
+
+	@Autowired
+	ElasticEmbeddingIngestService esEmbeddingIngestService;
+
+	@Autowired
+	ElasticsearchService esService;
 
 	@Autowired
 	ApplicationContext context;
@@ -53,47 +63,70 @@ public class ElasticIngestApplication {
 				params.setInputDir(inputDir);
 				params.setOutputIndex(outputIndex);
 
-				log.info("Beginning ingest...");
-				List<String> errs = esIngestService.ingestData(params,
+				// ensure the index is empty
+				esService.createOrEnsureIndexIsEmpty(outputIndex);
+
+				long start = System.currentTimeMillis();
+
+				long documentStart = System.currentTimeMillis();
+				log.info("Ingesting documents");
+
+				List<String> errs = new ArrayList<>();
+				errs.addAll(esDocumentIngestService.ingestData(params,
 						(CovidDocument input) -> {
 
-							Document doc = new Document();
+							Document<Embedding> doc = new Document<>();
 							doc.setId(input.getId());
 							doc.setTitle(input.getSource().getTitle());
 							doc.setFullText(input.getSource().getBody());
 
 							return doc;
-						},
+						}, CovidDocument.class));
+
+				esDocumentIngestService.shutdown();
+
+				log.info("Ingested documents successfully in {}",
+						TimeFormatter.format(System.currentTimeMillis() - documentStart));
+
+				long embeddingStart = System.currentTimeMillis();
+				log.info("Ingesting embeddings");
+
+				errs.addAll(esEmbeddingIngestService.ingestData(params,
 						(CovidEmbedding input) -> {
 
-							Paragraph paragraph = new Paragraph();
-							paragraph.setParagraphId(input.getEmbeddingChunkId().toString());
-							paragraph.setSpans(input.getSpans());
-							paragraph.setVector(input.getEmbedding());
+							Embedding embedding = new Embedding();
+							embedding.setEmbeddingId(input.getEmbeddingChunkId());
+							embedding.setSpans(input.getSpans());
+							embedding.setVector(input.getEmbedding());
 
-							Embedding<Paragraph> embedding = new Embedding<>();
-							embedding.setId(input.getId());
-							embedding.setEmbedding(paragraph);
+							EmbeddingChunk<Embedding> chunk = new EmbeddingChunk<>();
+							chunk.setId(input.getId());
+							chunk.setEmbedding(embedding);
 
-							return embedding;
+							return chunk;
 
-						}, CovidDocument.class, CovidEmbedding.class);
+						}, CovidEmbedding.class));
 
-				log.info("Ingest completed successfully");
+				esEmbeddingIngestService.shutdown();
+
+				log.info("Ingested embeddings successfully in {}",
+						TimeFormatter.format(System.currentTimeMillis() - embeddingStart));
+
+				log.info(
+						"Ingest completed successfully in {}",
+						TimeFormatter.format(System.currentTimeMillis() - start));
 				for (String err : errs) {
 					log.error(err);
 				}
 
 				log.info("Shutting down the application gracefully...");
 				// Shut down the application gracefully
-				esIngestService.shutdown();
 				System.exit(0);
 			} catch (Exception e) {
 				log.info("Ingest failed");
 				e.printStackTrace();
 
 				log.info("Shutting down the application gracefully...");
-				esIngestService.shutdown();
 				System.exit(1);
 			}
 		};

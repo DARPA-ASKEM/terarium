@@ -5,14 +5,13 @@ import java.util.UUID;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
-@Accessors(chain = true)
 @NoArgsConstructor
 @Data
-public class Embedding<T> implements IOutputEmbedding<T>, Serializable {
+public class Embedding implements Serializable {
 
-	private UUID id;
-	private T embedding;
+	private UUID embeddingId;
+	private double[] vector;
+	private long[] spans;
 
 }

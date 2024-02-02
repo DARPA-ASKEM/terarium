@@ -10,10 +10,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import software.uncharted.terarium.esingest.models.input.IInputDocument;
 
-@Accessors(chain = true)
 @NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)

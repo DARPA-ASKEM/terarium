@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -51,7 +52,7 @@ public class KNNSearchController {
 	final private long CACHE_TTL_SECONDS = 60 * 60 * 24;
 	final private long REQUEST_TIMEOUT_SECONDS = 10;
 	final private String EMBEDDING_MODEL = "text-embedding-ada-002";
-	final private int NUM_RESULTS = 10;
+	final private int NUM_RESULTS = 0;
 	final private int NUM_CANDIDATES = 10;
 
 	@Data
@@ -120,20 +121,32 @@ public class KNNSearchController {
 				queryVectorCache.put(hash, vector, CACHE_TTL_SECONDS, TimeUnit.SECONDS);
 			}
 
-			KnnQuery query = new KnnQuery.Builder().field("paragraphs.vector").queryVector(vector)
-					.k(NUM_RESULTS).numCandidates(NUM_CANDIDATES)
+			KnnQuery query = new KnnQuery.Builder()
+					.field("paragraphs.vector")
+					.queryVector(vector)
+					.k(NUM_RESULTS)
+					.numCandidates(NUM_CANDIDATES)
 					.build();
 
 			List<JsonNode> docs = elasticsearchService.knnSearch(index, query, JsonNode.class);
 
 			return ResponseEntity.ok(docs);
+
+		} catch (ElasticsearchException e) {
+			final String error = "Unable to get execute knn search: " + e.response().error().reason();
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		} catch (Exception e) {
+
 			final String error = "Unable to get execute knn search";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
+
 	}
 
 }

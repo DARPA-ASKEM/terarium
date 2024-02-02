@@ -1,25 +1,16 @@
 package software.uncharted.terarium.esingest.models.output;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
-@Accessors(chain = true)
 @NoArgsConstructor
 @Data
-public class Document implements IOutputDocument, Serializable {
-
-	@Data
-	static public class Paragraph implements Serializable {
-
-		private String paragraphId;
-		private double[] vector;
-		private long[] spans;
-	}
+public class Document<EmbeddingType> implements IOutputDocument<EmbeddingType>, Serializable {
 
 	private UUID id;
 
@@ -27,6 +18,13 @@ public class Document implements IOutputDocument, Serializable {
 
 	private String fullText;
 
-	private List<Paragraph> paragraphs;
+	private List<EmbeddingType> embeddings;
+
+	public void addEmbedding(EmbeddingType embedding) {
+		if (embeddings == null) {
+			embeddings = new ArrayList<>();
+		}
+		embeddings.add(embedding);
+	}
 
 }
