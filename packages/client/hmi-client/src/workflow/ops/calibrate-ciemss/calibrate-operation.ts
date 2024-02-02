@@ -8,7 +8,10 @@ import { CalibrateMap } from '@/services/calibrate-workflow';
 export interface CalibrationOperationStateCiemss {
 	chartConfigs: ChartConfig[];
 	mapping: CalibrateMap[];
-	simulationsInProgress: string[];
+	// simulationsInProgress: string[];
+
+	calibrationId: string;
+	simulationId: string;
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -20,7 +23,7 @@ export const CalibrationOperationCiemss: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset' }
 	],
-	outputs: [{ type: 'number' }],
+	outputs: [{ type: 'calibrateDill' }],
 	isRunnable: true,
 
 	// TODO: Figure out mapping
@@ -50,7 +53,9 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
-			simulationsInProgress: []
+			// simulationsInProgress: [],
+			calibrationId: '',
+			simulationId: ''
 		};
 		return init;
 	}

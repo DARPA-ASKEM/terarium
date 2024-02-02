@@ -182,7 +182,7 @@ import { Poller, PollerState } from '@/api/api';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import { useToastService } from '@/services/toast';
-import { CalibrationOperationCiemss, CalibrationOperationStateCiemss } from './calibrate-operation';
+import { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -209,7 +209,6 @@ const currentDatasetFileName = ref<string>();
 const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.value);
 
 const runResults = ref<RunResults>({});
-const completedRunId = ref<string>();
 
 const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.Retrieving, value: 0 });
@@ -326,14 +325,11 @@ const getStatus = async (simulationId: string) => {
 		throw Error('Failed Runs');
 	}
 
-	console.log('hihi');
-
-	completedRunId.value = simulationId;
-	updateOutputPorts(completedRunId);
+	updateOutputPorts(simulationId);
 	showSpinner.value = false;
 };
 
-const updateOutputPorts = async (runId) => {
+const updateOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({
@@ -343,11 +339,9 @@ const updateOutputPorts = async (runId) => {
 	emit('update-state', state);
 
 	emit('append-output-port', {
-		type: CalibrationOperationCiemss.outputs[0].type,
+		type: 'calibrateDill',
 		label: `${portLabel} Result`,
-		value: {
-			runId
-		}
+		value: runId
 	});
 };
 
