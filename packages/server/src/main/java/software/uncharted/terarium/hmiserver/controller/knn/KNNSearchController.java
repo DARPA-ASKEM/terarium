@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -133,7 +134,11 @@ public class KNNSearchController {
 			return ResponseEntity.ok(docs);
 
 		} catch (ElasticsearchException e) {
-			final String error = "Unable to get execute knn search: " + e.response().error().reason();
+			String error = "Unable to get execute knn search: " + e.response().error().reason();
+			ErrorCause causedBy = e.response().error().causedBy();
+			if (causedBy != null) {
+				error += ", caused by: " + causedBy.reason();
+			}
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
