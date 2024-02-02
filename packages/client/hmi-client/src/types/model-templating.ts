@@ -1,9 +1,7 @@
 import type { Position } from '@/types/common';
 
-export interface ModelTemplateEditor {
+export interface ModelTemplates {
 	id: string;
-	name: string;
-	description: string;
 	transform: {
 		x: number;
 		y: number;
