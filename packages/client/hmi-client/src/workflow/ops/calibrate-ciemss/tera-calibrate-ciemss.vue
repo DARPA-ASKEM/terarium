@@ -105,7 +105,7 @@
 					<section v-if="modelConfig && node.state.chartConfigs.length">
 						<tera-simulate-chart
 							v-for="(cfg, index) of node.state.chartConfigs"
-							:key="index"
+							:key="cfg.selectedRun"
 							:run-results="runResults"
 							:chartConfig="cfg"
 							:initial-data="csvAsset"
@@ -356,7 +356,7 @@ const getCalibrateStatus = async (simulationId: string) => {
 			// end: state.currentTimespan.end
 		},
 		extra: {
-			num_samples: 50,
+			num_samples: 5,
 			method: 'dopri5',
 			inferred_parameters: simulationId
 		},
@@ -398,10 +398,18 @@ const getCalibrateStatus = async (simulationId: string) => {
 const updateOutputPorts = async (calibrationId: string, simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push({
-		selectedRun: simulationId,
-		selectedVariable: []
-	});
+
+	// state.chartConfigs.push({
+	// 	selectedRun: simulationId,
+	// 	selectedVariable: []
+	// });
+
+	state.chartConfigs = [
+		{
+			selectedRun: simulationId,
+			selectedVariable: []
+		}
+	];
 
 	state.calibrationId = calibrationId;
 	state.simulationId = simulationId;
@@ -531,6 +539,8 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
+
+			console.log('hihihi', props.node.active);
 
 			// FIXME: could still be running
 			const state = props.node.state;
