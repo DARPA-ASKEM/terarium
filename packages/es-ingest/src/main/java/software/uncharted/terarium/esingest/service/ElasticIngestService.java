@@ -29,8 +29,10 @@ import co.elastic.clients.json.JsonData;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.esingest.models.input.InputInterface;
-import software.uncharted.terarium.esingest.models.output.OutputInterface;
+import software.uncharted.terarium.esingest.models.input.IInputDocument;
+import software.uncharted.terarium.esingest.models.input.IInputEmbedding;
+import software.uncharted.terarium.esingest.models.output.IOutputDocument;
+import software.uncharted.terarium.esingest.models.output.IOutputEmbedding;
 
 @Service
 @Slf4j
@@ -86,7 +88,7 @@ public class ElasticIngestService {
 		return files;
 	}
 
-	private <InputType extends InputInterface, OutputType extends OutputInterface> void startIngestDocumentWorkers(
+	private <InputType extends IInputDocument, OutputType extends IOutputDocument> void startIngestDocumentWorkers(
 			Function<InputType, OutputType> processor,
 			Class<InputType> inputType) {
 		for (int i = 0; i < POOL_SIZE; i++) {
@@ -139,7 +141,7 @@ public class ElasticIngestService {
 		}
 	}
 
-	private <InputType extends InputInterface, OutputType extends OutputInterface> void startIngestEmbeddingsWorkers(
+	private <InputType extends IInputEmbedding, OutputType extends IOutputEmbedding<?>> void startIngestEmbeddingsWorkers(
 			Function<InputType, OutputType> processor,
 			Class<InputType> inputType) {
 
@@ -163,7 +165,7 @@ public class ElasticIngestService {
 							if (out != null) {
 
 								// generic way to extract the id
-								String jsonString = objectMapper.writeValueAsString(out);
+								String jsonString = objectMapper.writeValueAsString(out.getEmbedding());
 								JsonData jsonData = JsonData.fromJson(jsonString);
 
 								ElasticsearchService.ScriptedUpdatedDoc doc = new ElasticsearchService.ScriptedUpdatedDoc();
@@ -263,7 +265,7 @@ public class ElasticIngestService {
 		}
 	}
 
-	public <DocInputType extends InputInterface, EmbeddingInputType extends InputInterface, DocOutputType extends OutputInterface, EmbeddingOutputType extends OutputInterface> List<String> ingestData(
+	public <DocInputType extends IInputDocument, EmbeddingInputType extends IInputEmbedding, DocOutputType extends IOutputDocument, EmbeddingOutputType extends IOutputEmbedding> List<String> ingestData(
 			ElasticIngestParams params,
 			Function<DocInputType, DocOutputType> docProcessor,
 			Function<EmbeddingInputType, EmbeddingOutputType> embeddingProcessor,

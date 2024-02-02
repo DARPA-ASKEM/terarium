@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Data
-public class Document implements OutputInterface, Serializable {
+public class Document implements IOutputDocument, Serializable {
 
 	@Data
 	static public class Paragraph implements Serializable {

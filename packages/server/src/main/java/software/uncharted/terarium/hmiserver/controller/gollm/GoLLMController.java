@@ -60,6 +60,11 @@ public class GoLLMController {
 	};
 
 	@Data
+	private static class ModelCardResponse {
+		JsonNode response;
+	}
+
+	@Data
 	private static class ModelCardProperties {
 		UUID modelId;
 		UUID documentId;
@@ -78,7 +83,7 @@ public class GoLLMController {
 			try {
 				Model model = modelService.getModel(props.getModelId())
 						.orElseThrow();
-				JsonNode card = objectMapper.readTree(resp.getOutput());
+				ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);
 				model.getMetadata().setGollmCard(card);
 				modelService.updateModel(model);
 			} catch (IOException e) {

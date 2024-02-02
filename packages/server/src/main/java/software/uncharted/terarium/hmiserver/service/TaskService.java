@@ -219,14 +219,19 @@ public class TaskService {
 					throw new InterruptedException("Task did not complete within " + timeoutSeconds + " seconds");
 				}
 
+				log.info("Response id: {} status {}", response.getId(), response.getStatus());
 				responses.add(response);
 
 				if (response.getStatus() == TaskStatus.SUCCESS) {
 					return responses;
 				}
 
+				if (response.getStatus() == TaskStatus.CANCELLED) {
+					throw new InterruptedException("Task was cancelled");
+				}
+
 				if (response.getStatus() == TaskStatus.CANCELLED || response.getStatus() == TaskStatus.FAILED) {
-					throw new IOException("Task failed with status " + response.getStatus());
+					throw new IOException("Task failed: " + new String(response.getOutput()));
 				}
 			}
 		} finally {

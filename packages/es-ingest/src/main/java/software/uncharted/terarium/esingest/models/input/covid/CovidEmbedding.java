@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.esingest.models.input.InputInterface;
+import software.uncharted.terarium.esingest.models.input.IInputEmbedding;
 
 @Accessors(chain = true)
 @NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CovidEmbedding implements InputInterface, Serializable {
+public class CovidEmbedding implements IInputEmbedding, Serializable {
 
 	@JsonProperty("doc_id")
 	private UUID id;

@@ -55,7 +55,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.esingest.models.output.OutputInterface;
+import software.uncharted.terarium.esingest.models.output.IOutputDocument;
 
 @Service
 @Data
@@ -349,7 +349,7 @@ public class ElasticsearchService {
 		private long took;
 	}
 
-	public <Output extends OutputInterface> BulkOpResponse bulkIndex(String index, List<Output> docs)
+	public <Output extends IOutputDocument> BulkOpResponse bulkIndex(String index, List<Output> docs)
 			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 

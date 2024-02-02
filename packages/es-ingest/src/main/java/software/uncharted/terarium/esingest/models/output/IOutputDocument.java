@@ -2,7 +2,7 @@ package software.uncharted.terarium.esingest.models.output;
 
 import java.util.UUID;
 
-public interface OutputInterface {
+public interface IOutputDocument {
 
 	UUID getId();
 

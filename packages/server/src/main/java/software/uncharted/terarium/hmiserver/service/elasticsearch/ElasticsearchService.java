@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
@@ -331,6 +332,21 @@ public class ElasticsearchService {
 			return res.source();
 		}
 		return null;
+	}
+
+	public <T> List<T> knnSearch(String index, KnnQuery query, final Class<T> tClass)
+			throws IOException {
+		log.info("KNN search on: {}", index);
+
+		final List<T> docs = new ArrayList<>();
+		final SearchResponse<T> res = client.search(s -> s.index(index)
+				.size((int) query.k())
+				.knn(query), tClass);
+
+		for (final Hit<T> hit : res.hits().hits()) {
+			docs.add(hit.source());
+		}
+		return docs;
 	}
 
 }

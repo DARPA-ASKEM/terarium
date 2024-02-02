@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Data
-public class Embedding<T> implements OutputInterface, Serializable {
+public class Embedding<T> implements IOutputEmbedding<T>, Serializable {
 
 	private UUID id;
 	private T embedding;
