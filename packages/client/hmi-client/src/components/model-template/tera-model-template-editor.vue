@@ -114,7 +114,7 @@ import * as d3 from 'd3';
 import type { Position } from '@/types/common';
 import type { Model } from '@/types/Types';
 import type {
-	ModelTemplateEditor,
+	ModelTemplates,
 	ModelTemplateCard,
 	ModelTemplateJunction
 } from '@/types/model-templating';
@@ -144,19 +144,19 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
-const modelTemplateEditor = ref<ModelTemplateEditor>(
-	modelTemplatingService.initializeModelTemplateEditor(props.model)
+const decomposedTemplates = ref<ModelTemplates>(
+	modelTemplatingService.initializeModelTemplates(props.model)
 );
-const flatModelTemplateEditor = ref<ModelTemplateEditor>(
-	modelTemplatingService.initializeModelTemplateEditor(props.model)
+const flattenedTemplates = ref<ModelTemplates>(
+	modelTemplatingService.initializeModelTemplates(props.model)
 );
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
 const currentEditor = computed(() =>
 	currentModelFormat.value === EditorFormat.Decomposed
-		? modelTemplateEditor.value
-		: flatModelTemplateEditor.value
+		? decomposedTemplates.value
+		: flattenedTemplates.value
 );
 const cards = computed<ModelTemplateCard[]>(
 	() => currentEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
@@ -208,12 +208,12 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
-			modelTemplatingService.addJunction(modelTemplateEditor.value, currentPortPosition);
+			modelTemplatingService.addJunction(decomposedTemplates.value, currentPortPosition);
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
 			// Add a default edge as well
 			modelTemplatingService.addEdge(
-				modelTemplateEditor.value,
+				decomposedTemplates.value,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -239,7 +239,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
 		modelTemplatingService.addEdge(
-			modelTemplateEditor.value,
+			decomposedTemplates.value,
 			junctionIdForNewEdge,
 			target,
 			currentPortPosition,
@@ -276,7 +276,7 @@ function onCanvasClick() {
 function cancelNewEdge() {
 	newEdge.value = undefined;
 	junctionIdForNewEdge = null;
-	modelTemplatingService.junctionCleanUp(modelTemplateEditor.value);
+	modelTemplatingService.junctionCleanUp(decomposedTemplates.value);
 }
 
 const setMouseOverCanvas = (val: boolean) => {
@@ -296,7 +296,7 @@ function updateNewCardPosition(event) {
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-	modelTemplatingService.addCard(modelTemplateEditor.value, cloneDeep(newModelTemplate.value));
+	modelTemplatingService.addCard(decomposedTemplates.value, cloneDeep(newModelTemplate.value));
 	newModelTemplate.value = null;
 }
 
@@ -375,7 +375,7 @@ function amrToTemplates() {
 		});
 
 		templateModelsWithCards.forEach((templateModel: any) =>
-			modelTemplatingService.addCard(modelTemplateEditor.value, templateModel)
+			modelTemplatingService.addCard(decomposedTemplates.value, templateModel)
 		);
 	});
 }
@@ -393,10 +393,12 @@ watch(
 				y: 100
 			};
 			console.log(flattenedModel);
-			modelTemplatingService.addCard(flatModelTemplateEditor.value, flattenedModel);
+			modelTemplatingService.addCard(flattenedTemplates.value, flattenedModel);
 
 			// Initialize beaker kernel
 			try {
+				if (kernelManager.jupyterSession) kernelManager.shutdown();
+
 				const context = {
 					context: 'mira_model',
 					language: 'python3',

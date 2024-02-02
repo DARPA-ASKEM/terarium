@@ -1,6 +1,7 @@
 import type { Position } from '@/types/common';
 
-export interface ModelTemplateEditor {
+// FIXME: Not sure if we want name/description properties
+export interface ModelTemplates {
 	id: string;
 	name: string;
 	description: string;
