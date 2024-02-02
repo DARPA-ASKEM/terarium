@@ -43,8 +43,8 @@
 					<!-- TODO: There will be a Diagram/Equation toggle here. There may be plans to make a component for this specific
 						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
-						:model-value="modelFormat"
-						@change="if ($event.value) modelFormat = $event.value;"
+						:model-value="currentModelFormat"
+						@change="if ($event.value) currentModelFormat = $event.value;"
 						:options="modelFormatOptions"
 					/>
 				</section>
@@ -131,9 +131,9 @@ const props = defineProps<{
 	model?: Model;
 }>();
 
-enum EditorView {
-	Template = 'Template',
-	Flat = 'Flat'
+enum EditorFormat {
+	Decomposed = 'Decomposed',
+	Flattened = 'Flattened'
 }
 
 const kernelManager = new KernelSessionManager();
@@ -150,11 +150,11 @@ const modelTemplateEditor = ref<ModelTemplateEditor>(
 const flatModelTemplateEditor = ref<ModelTemplateEditor>(
 	modelTemplatingService.initializeModelTemplateEditor(props.model)
 );
-const modelFormatOptions = ref([EditorView.Template, EditorView.Flat]);
-const modelFormat = ref(EditorView.Template);
+const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
+const currentModelFormat = ref(EditorFormat.Decomposed);
 
 const currentEditor = computed(() =>
-	modelFormat.value === EditorView.Template
+	currentModelFormat.value === EditorFormat.Decomposed
 		? modelTemplateEditor.value
 		: flatModelTemplateEditor.value
 );
