@@ -5,6 +5,36 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "node",
+      "request": "launch",
+      "name": "HMI Client",
+      "runtimeExecutable": "yarn",
+      "cwd": "${workspaceFolder}/packages/client",
+      "runtimeArgs": ["dev"],
+      // Run vite dev server using `yarn dev` and then luanch the chrome browser
+      "serverReadyAction": {
+        "action": "debugWithChrome",
+        "pattern": "Local:[ ]+http://.+:([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "webRoot": "${workspaceFolder}/packages/client"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "HMI Client (Local)",
+      "runtimeExecutable": "yarn",
+      "cwd": "${workspaceFolder}/packages/client",
+      "runtimeArgs": ["local"],
+      // Run vite dev server using `yarn local` and then luanch the chrome browser
+      "serverReadyAction": {
+        "action": "debugWithChrome",
+        "pattern": "Local:[ ]+http://.+:([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "webRoot": "${workspaceFolder}/packages/client"
+      }
+    },
+    {
       "type": "java",
       "name": "TerariumApplication",
       "request": "launch",
