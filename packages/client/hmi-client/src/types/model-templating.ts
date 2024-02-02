@@ -1,10 +1,7 @@
 import type { Position } from '@/types/common';
 
-// FIXME: Not sure if we want name/description properties
 export interface ModelTemplates {
 	id: string;
-	name: string;
-	description: string;
 	transform: {
 		x: number;
 		y: number;

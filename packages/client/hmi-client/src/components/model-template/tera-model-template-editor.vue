@@ -144,12 +144,8 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
-const decomposedTemplates = ref<ModelTemplates>(
-	modelTemplatingService.initializeModelTemplates(props.model)
-);
-const flattenedTemplates = ref<ModelTemplates>(
-	modelTemplatingService.initializeModelTemplates(props.model)
-);
+const decomposedTemplates = ref<ModelTemplates>(modelTemplatingService.initializeModelTemplates());
+const flattenedTemplates = ref<ModelTemplates>(modelTemplatingService.initializeModelTemplates());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
 

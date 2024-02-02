@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Position } from '@/types/common';
-import type { Model } from '@/types/Types';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import naturalConversion from './model-templates/natural-conversion.json';
 import naturalProduction from './model-templates/natural-production.json';
@@ -29,14 +28,9 @@ export const modelTemplateOptions = [
 	return modelTemplate;
 });
 
-export function initializeModelTemplates(model: Model | null = null) {
-	const name = model?.header?.name ?? 'name';
-	const description = model?.header?.description ?? 'description';
-
+export function initializeModelTemplates() {
 	const modelTemplates: ModelTemplates = {
 		id: uuidv4(),
-		name,
-		description,
 		transform: { x: 0, y: 0, k: 1 },
 		models: [],
 		junctions: []
