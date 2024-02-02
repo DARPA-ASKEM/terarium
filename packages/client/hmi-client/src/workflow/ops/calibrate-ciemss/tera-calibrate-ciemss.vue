@@ -391,23 +391,27 @@ const getCalibrateStatus = async (simulationId: string) => {
 	const output = await getRunResultCiemss(sampleSimulateId, 'result.csv');
 	runResults.value = output.runResults;
 
-	updateOutputPorts(simulationId);
+	updateOutputPorts(simulationId, sampleSimulateId);
 	showSpinner.value = false;
 };
 
-const updateOutputPorts = async (runId: string) => {
+const updateOutputPorts = async (calibrationId: string, simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({
-		selectedRun: runId,
+		selectedRun: simulationId,
 		selectedVariable: []
 	});
+
+	state.calibrationId = calibrationId;
+	state.simulationId = simulationId;
+
 	emit('update-state', state);
 
 	emit('append-output-port', {
 		type: 'simulationId',
 		label: `${portLabel} Result`,
-		value: [runId]
+		value: [calibrationId]
 	});
 };
 
@@ -523,10 +527,15 @@ watch(
 
 watch(
 	() => props.node.active,
-	() => {
+	async () => {
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
+
+			// FIXME: could still be running
+			const state = props.node.state;
+			const output = await getRunResultCiemss(state.simulationId, 'result.csv');
+			runResults.value = output.runResults;
 		}
 	},
 	{ immediate: true }
