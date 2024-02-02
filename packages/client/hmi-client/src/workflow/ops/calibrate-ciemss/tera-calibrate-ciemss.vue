@@ -92,7 +92,14 @@
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview title="Preview">
+			<tera-drilldown-preview
+				title="Preview"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				is-selectable
+			>
 				<div v-if="!showSpinner" class="form-section">
 					<h4>Variables</h4>
 					<section v-if="modelConfig && node.state.chartConfigs.length">
@@ -187,7 +194,13 @@ import { CalibrationOperationStateCiemss } from './calibrate-operation';
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits([
+	'append-output-port',
+	'close',
+	'select-output',
+	'update-output-port',
+	'update-state'
+]);
 const toast = useToastService();
 
 enum CalibrateTabs {
@@ -232,15 +245,17 @@ const disableRunButton = computed(
 		!datasetId.value
 );
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds[0]);
+const selectedOutputId = ref<string>();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
 	}
-});
-
-onUnmounted(() => {
-	poller.stop();
+	return [];
 });
 
 const runCalibrate = async () => {
@@ -278,7 +293,7 @@ const runCalibrate = async () => {
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	if (response?.simulationId) {
-		getStatus(response.simulationId);
+		getCalibrateStatus(response.simulationId);
 	}
 };
 
@@ -292,7 +307,7 @@ function getMessageHandler(event: ClientEvent<any>) {
 	}
 }
 
-const getStatus = async (simulationId: string) => {
+const getCalibrateStatus = async (simulationId: string) => {
 	showSpinner.value = true;
 	if (!simulationId) {
 		console.log('No sim id');
@@ -301,6 +316,7 @@ const getStatus = async (simulationId: string) => {
 	const runIds = [simulationId];
 
 	// open a connection for each run id and handle the messages
+	// FIXME: Show progress and loss
 	await subscribe(ClientEventType.SimulationPyciemss, getMessageHandler);
 
 	poller
@@ -339,9 +355,9 @@ const updateOutputPorts = async (runId: string) => {
 	emit('update-state', state);
 
 	emit('append-output-port', {
-		type: 'calibrateDill',
+		type: 'simulationId',
 		label: `${portLabel} Result`,
-		value: runId
+		value: [runId]
 	});
 };
 
@@ -357,6 +373,17 @@ const addChart = () => {
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	emit('update-state', state);
+};
+
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
+};
+
+const onUpdateSelection = (id) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
 };
 
 // Used from button to add new entry to the mapping object
@@ -407,30 +434,29 @@ async function getAutoMapping() {
 	emit('update-state', state);
 }
 
-// Set up model config + dropdown names
-// Note: Same as calibrate-node
-watch(
-	() => modelConfigId.value,
-	async () => {
-		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
-		modelConfig.value = modelConfiguration;
-		modelStateOptions.value = modelOptions;
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	const runIds = querySimulationInProgress(props.node);
 
-// Set up csv + dropdown names
-// Note: Same as calibrate-node
-watch(
-	() => datasetId.value,
-	async () => {
-		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
-		datasetColumns.value = datasetOptions;
-	},
-	{ immediate: true }
-);
+	// Model configuration input
+	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	modelConfig.value = modelConfiguration;
+	modelStateOptions.value = modelOptions;
+
+	// dataset input
+	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
+	currentDatasetFileName.value = filename;
+	csvAsset.value = csv;
+	datasetColumns.value = datasetOptions;
+
+	// currently in progress
+	if (runIds.length > 0) {
+		getCalibrateStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 // Fetch simulation run results whenever output changes
 watch(
@@ -438,13 +464,24 @@ watch(
 	async () => {
 		if (!simulationIds.value) return;
 
-		const dillURL = await getCalibrateBlobURL(simulationIds.value[0].runId);
+		const dillURL = await getCalibrateBlobURL(simulationIds.value[0]);
 		console.log('dill URL is', dillURL);
 
 		/*
 		const output = await getRunResultCiemss(simulationIds.value[0].runId, result.csv');
 		runResults.value = output.runResults;
 		*/
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
 	},
 	{ immediate: true }
 );
