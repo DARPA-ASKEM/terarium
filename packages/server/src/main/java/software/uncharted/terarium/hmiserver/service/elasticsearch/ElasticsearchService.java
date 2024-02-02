@@ -3,9 +3,6 @@ package software.uncharted.terarium.hmiserver.service.elasticsearch;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -341,22 +338,19 @@ public class ElasticsearchService {
 			throws IOException {
 		log.info("KNN search on: {}", index);
 
-		SearchRequest ss = new SearchRequest.Builder().index(index)
-				.query(q -> q.matchAll(m -> m))
+		if (query.numCandidates() < query.k()) {
+			throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
+		}
+
+		SearchRequest req = new SearchRequest.Builder()
+				.index(index)
 				.size((int) query.k())
 				.source(src -> src.filter(v -> v.includes("title")))
-				.knn(query).build();
-
-		String prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ss);
-
-		Files.write(Paths.get("src/main/resources/knn.txt"), prettyJson.getBytes(), StandardOpenOption.CREATE);
+				.knn(query)
+				.build();
 
 		final List<T> docs = new ArrayList<>();
-		final SearchResponse<T> res = client.search(s -> s.index(index)
-				.query(q -> q.matchAll(m -> m))
-				.size((int) query.k())
-				.source(src -> src.filter(v -> v.includes("title")))
-				.knn(query), tClass);
+		final SearchResponse<T> res = client.search(req, tClass);
 
 		for (final Hit<T> hit : res.hits().hits()) {
 			docs.add(hit.source());

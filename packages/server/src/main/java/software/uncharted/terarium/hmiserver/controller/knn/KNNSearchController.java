@@ -52,8 +52,8 @@ public class KNNSearchController {
 	final private long CACHE_TTL_SECONDS = 60 * 60 * 24;
 	final private long REQUEST_TIMEOUT_SECONDS = 10;
 	final private String EMBEDDING_MODEL = "text-embedding-ada-002";
-	final private int NUM_RESULTS = 0;
-	final private int NUM_CANDIDATES = 10;
+	final private int NUM_RESULTS = 5;
+	final private int NUM_CANDIDATES = 5;
 
 	@Data
 	static public class KNNSearchRequest {
@@ -122,7 +122,7 @@ public class KNNSearchController {
 			}
 
 			KnnQuery query = new KnnQuery.Builder()
-					.field("paragraphs.vector")
+					.field("embeddings.vector")
 					.queryVector(vector)
 					.k(NUM_RESULTS)
 					.numCandidates(NUM_CANDIDATES)
