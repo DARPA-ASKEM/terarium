@@ -11,11 +11,11 @@ import java.util.Map;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ConfigurationHeader implements Serializable {
+public class ContextHeader implements Serializable {
 	private String id;
 	private String description;
 	private String name;
 
-	@JsonAlias("parent_context")
+	@JsonAlias("parent_model")
 	private String parentContext;
 }

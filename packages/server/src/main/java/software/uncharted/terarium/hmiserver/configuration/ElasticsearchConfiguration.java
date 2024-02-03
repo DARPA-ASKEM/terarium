@@ -36,7 +36,9 @@ public class ElasticsearchConfiguration {
 			String notebookSessionRoot,
 			String simulationRoot,
 			String workflowRoot,
-			String externalPublicationRoot) {
+			String externalPublicationRoot,
+			String decapodesConfigurationRoot,
+			String decapodesContext) {
 	}
 
 	public String getCodeIndex() {
@@ -82,4 +84,13 @@ public class ElasticsearchConfiguration {
 	public String getExternalPublicationIndex() {
 		return String.join("_", index.prefix, index.externalPublicationRoot, index.suffix);
 	}
+
+	public String getDecapodesConfigurationIndex() {
+		return String.join("_", index.prefix, index.decapodesConfigurationRoot, index.suffix);
+	}
+
+	public String getDecapodesContext() {
+		return String.join("_", index.prefix, index.decapodesContext, index.suffix);
+	}
+
 }
