@@ -9,11 +9,8 @@ import java.io.Serializable;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ConfigurationCondition implements Serializable {
-	private String _type;
-	private String type;
-	private String value;
-
-	@JsonAlias("domain_mesh")
-	private String domainMesh;
+public class ContextPrimalDualRelation implements Serializable {
+	private String primal;
+	private String dual;
+	private Object method;
 }

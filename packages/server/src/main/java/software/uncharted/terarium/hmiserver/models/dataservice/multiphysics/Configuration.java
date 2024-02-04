@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;

@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -14,7 +13,7 @@ import java.util.List;
 @TSModel
 public class Context implements Serializable {
 
-	private Object constants;
+	private Map<String, ContextConstant> constants;
 
 	@JsonAlias("spatial_constraints")
 	private Object spatialConstraints;
@@ -23,10 +22,10 @@ public class Context implements Serializable {
 	private Object temporalConstraints;
 
 	@JsonAlias("primal_dual_relations")
-	private List<Object> primalDualRelations;
+	private List<ContextPrimalDualRelation> primalDualRelations;
 
 	@JsonAlias("mesh_submesh_relations")
-	private List<Object> meshSubmeshRelations;
+	private List<ContextMeshSubmeshRelation> meshSubmeshRelations;
 
-	private List<Object> meshes;
+	private List<ContextMesh> meshes;
 }
