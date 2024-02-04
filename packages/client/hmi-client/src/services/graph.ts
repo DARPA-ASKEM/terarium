@@ -18,8 +18,8 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	const g = new dagre.graphlib.Graph({ compound: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
-	let nodeWidth;
-	let nodeHeight;
+	let nodeWidth: number = 0;
+	let nodeHeight: number = 0;
 
 	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
 		if (node.width && node.height) {
@@ -101,10 +101,17 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		let maxY = Number.MIN_VALUE;
 		graphData.nodes.forEach((node) => {
 			if (node.x < minX) minX = node.x;
-			if (node.x > maxX) maxX = node.x;
+			if (node.x + node.width > maxX) maxX = node.x + node.width;
 			if (node.y < minY) minY = node.y;
-			if (node.y > maxY) maxY = node.y;
+			if (node.y + node.height > maxY) maxY = node.y + node.height;
 		});
+
+		// Give the bounds a little extra buffer
+		const buffer = 5;
+		maxX += buffer;
+		maxY += buffer;
+		minX -= buffer;
+		minY -= buffer;
 
 		graphData.width = Math.abs(maxX - minX) + 2 * nodeWidth;
 		graphData.height = Math.abs(maxY - minY) + 2 * nodeHeight;
