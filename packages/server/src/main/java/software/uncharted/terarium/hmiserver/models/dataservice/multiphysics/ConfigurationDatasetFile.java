@@ -15,6 +15,7 @@ import java.io.Serializable;
 @Accessors(chain = true)
 @TSModel
 public class ConfigurationDatasetFile implements Serializable {
+	private String _type;
 	private String uri;
 	private String format;
 	private List<Number> shape;

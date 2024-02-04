@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -11,6 +10,7 @@ import java.io.Serializable;
 @Accessors(chain = true)
 @TSModel
 public class ConfigurationParameter implements Serializable {
+	private String _type;
 	private String type;
 	private Object value;
 }
