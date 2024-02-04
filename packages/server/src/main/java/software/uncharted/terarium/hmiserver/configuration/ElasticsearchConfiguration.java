@@ -89,8 +89,7 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.decapodesConfigurationRoot, index.suffix);
 	}
 
-	public String getDecapodesContext() {
+	public String getDecapodesContextIndex() {
 		return String.join("_", index.prefix, index.decapodesContext, index.suffix);
 	}
-
 }
