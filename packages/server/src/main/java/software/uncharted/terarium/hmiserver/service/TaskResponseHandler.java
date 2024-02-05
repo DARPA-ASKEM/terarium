@@ -16,19 +16,19 @@ public class TaskResponseHandler {
 	}
 
 	public void onCancelling(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.CANCELLING, callback);
 	}
 
 	public void onCancelled(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.CANCELLED, callback);
 	}
 
 	public void onSuccess(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.SUCCESS, callback);
 	}
 
 	public void onFailure(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.FAILED, callback);
 	}
 
 	public void handle(TaskResponse response) {
