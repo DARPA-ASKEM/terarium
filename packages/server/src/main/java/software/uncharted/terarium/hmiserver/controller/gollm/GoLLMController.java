@@ -118,6 +118,18 @@ public class GoLLMController {
 				return ResponseEntity.notFound().build();
 			}
 
+			// make sure there is text in the document
+			if (document.get().getText() == null || document.get().getText().isEmpty()) {
+				log.warn("Document {} has no text to send", documentId);
+				return ResponseEntity.badRequest().build();
+			}
+
+			// check for input length
+			if (document.get().getText().length() > 600000) {
+				log.warn("Document {} text too long for GoLLM model card task", documentId);
+				return ResponseEntity.badRequest().build();
+			}
+
 			ModelCardInput input = new ModelCardInput();
 			input.setResearchPaper(document.get().getText());
 

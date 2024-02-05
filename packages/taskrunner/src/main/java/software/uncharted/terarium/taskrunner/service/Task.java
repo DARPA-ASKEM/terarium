@@ -47,6 +47,8 @@ public class Task {
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
+	private int BYTES_PER_READ = 1024 * 1024;
+
 	public Task(TaskRequest req) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
 
@@ -166,7 +168,7 @@ public class Task {
 			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputPipeName))) {
 				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, req.getId());
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				byte[] buffer = new byte[1024]; // buffer size
+				byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
 					log.debug("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName,
