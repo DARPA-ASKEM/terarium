@@ -2,12 +2,12 @@ package software.uncharted.terarium.esingest.models.output;
 
 import java.util.UUID;
 
-public interface IOutputEmbeddingChunk<T> {
+public interface IOutputEmbeddingChunk {
 
 	UUID getId();
 
-	T getEmbedding();
+	Embedding getEmbedding();
 
-	IOutputDocument<T> createPartial();
+	IOutputDocument createPartial();
 
 }

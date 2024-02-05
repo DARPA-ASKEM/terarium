@@ -1,6 +1,5 @@
 package software.uncharted.terarium.esingest.models.output;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -9,12 +8,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 @Data
 @JsonInclude(Include.NON_NULL)
-public class Document<EmbeddingType> implements IOutputDocument<EmbeddingType>, Serializable {
+public class Document implements IOutputDocument {
 
 	private UUID id;
 
@@ -22,9 +19,9 @@ public class Document<EmbeddingType> implements IOutputDocument<EmbeddingType>, 
 
 	private String fullText;
 
-	private List<EmbeddingType> embeddings;
+	private List<Embedding> embeddings;
 
-	public void addEmbedding(EmbeddingType embedding) {
+	public void addEmbedding(Embedding embedding) {
 		if (embeddings == null) {
 			embeddings = new ArrayList<>();
 		}

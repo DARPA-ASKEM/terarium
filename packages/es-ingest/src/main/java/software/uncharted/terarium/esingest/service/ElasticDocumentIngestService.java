@@ -9,53 +9,58 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.esingest.ingests.IElasticIngest;
 import software.uncharted.terarium.esingest.models.input.IInputDocument;
+import software.uncharted.terarium.esingest.models.input.IInputEmbeddingChunk;
 import software.uncharted.terarium.esingest.models.output.IOutputDocument;
+import software.uncharted.terarium.esingest.models.output.IOutputEmbeddingChunk;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ElasticDocumentIngestService extends ConcurrentWorkerService {
 
-	@Value("${terarium.esingest.workQueueSize:36}")
-	private int WORK_QUEUE_SIZE;
-
-	@Value("${terarium.esingest.errorThreshold:10}")
-	private int ERROR_THRESHOLD;
-
-	@Value("${terarium.esingest.documentBatchSize:500}")
-	private int DOCUMENT_BATCH_SIZE;
-
-	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final ElasticsearchService esService;
-	private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
+	private final ElasticsearchConfiguration esConfig;
 
-	public <DocInputType extends IInputDocument, DocOutputType extends IOutputDocument<?>> List<String> ingestData(
+	/**
+	 * Ingests document data from source directory into elasticsearch.
+	 *
+	 * Iterates over each file in the source directory. Each line is a single
+	 * document. Lines are sent to workers to be processed and ingested.
+	 *
+	 * @param params - The ingest parameters.
+	 * @param ingest - The ingest class implementation.
+	 *
+	 * @return - A list of errors encountered during ingest.
+	 *
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 */
+	public List<String> ingestData(
 			ElasticIngestParams params,
-			Function<DocInputType, DocOutputType> docProcessor,
-			Class<DocInputType> docInputType)
+			IElasticIngest<IInputDocument, IOutputDocument, IInputEmbeddingChunk, IOutputEmbeddingChunk> ingest)
 			throws IOException, InterruptedException, ExecutionException {
 
-		BlockingQueue<List<String>> workQueue = new LinkedBlockingQueue<>(WORK_QUEUE_SIZE);
+		List<String> errors = Collections.synchronizedList(new ArrayList<>());
+		BlockingQueue<List<String>> workQueue = new LinkedBlockingQueue<>(params.getWorkQueueSize());
 
 		AtomicLong lastTookMs = new AtomicLong(0);
 
 		startWorkers(workQueue, (List<String> items, Long timeWaitingOnQueue) -> {
 			try {
 				long start = System.currentTimeMillis();
-				List<DocOutputType> output = new ArrayList<>();
+				List<IOutputDocument> output = new ArrayList<>();
 				for (String item : items) {
-					DocInputType input = objectMapper.readValue(item, docInputType);
-					DocOutputType out = docProcessor.apply(input);
+					IInputDocument input = ingest.deserializeDocument(item);
+					IOutputDocument out = ingest.processDocument(input);
 					if (out != null) {
 						output.add(out);
 					}
@@ -68,10 +73,11 @@ public class ElasticDocumentIngestService extends ConcurrentWorkerService {
 					Thread.sleep(backpressureWait);
 				}
 
-				ElasticsearchService.BulkOpResponse res = esService.bulkIndex(params.getOutputIndex(), output);
+				ElasticsearchService.BulkOpResponse res = esService
+						.bulkIndex(esConfig.getIndex(params.getOutputIndexRoot()), output);
 				if (res.getErrors().size() > 0) {
 					errors.addAll(res.getErrors());
-					if (errors.size() > ERROR_THRESHOLD) {
+					if (errors.size() > params.getErrorsThreshold()) {
 						for (String err : errors) {
 							log.error(err);
 						}
@@ -84,7 +90,8 @@ public class ElasticDocumentIngestService extends ConcurrentWorkerService {
 			}
 		});
 
-		readLinesIntoQueue(workQueue, DOCUMENT_BATCH_SIZE, Paths.get(params.getInputDir()).resolve("documents"));
+		readLinesIntoQueue(workQueue, params.getDocumentBatchSize(),
+				Paths.get(params.getInputDir()).resolve("documents"));
 
 		waitUntilWorkersAreDone(workQueue);
 

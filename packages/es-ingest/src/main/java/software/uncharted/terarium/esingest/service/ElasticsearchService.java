@@ -348,7 +348,7 @@ public class ElasticsearchService {
 		private long took;
 	}
 
-	public <Output extends IOutputDocument<?>> BulkOpResponse bulkIndex(String index, List<Output> docs)
+	public <Output extends IOutputDocument> BulkOpResponse bulkIndex(String index, List<Output> docs)
 			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -378,7 +378,7 @@ public class ElasticsearchService {
 		return r;
 	}
 
-	public <Output extends IOutputDocument<?>> BulkOpResponse bulkUpdate(String index, List<Output> docs)
+	public <Output extends IOutputDocument> BulkOpResponse bulkUpdate(String index, List<Output> docs)
 			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 

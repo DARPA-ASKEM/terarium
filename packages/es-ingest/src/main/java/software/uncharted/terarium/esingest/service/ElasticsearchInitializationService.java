@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +22,6 @@ public class ElasticsearchInitializationService {
 	private final ElasticsearchService elasticsearchService;
 
 	private final ObjectMapper objectMapper;
-
-	private final ElasticsearchConfiguration config;
 
 	private final Environment env;
 
@@ -38,7 +35,6 @@ public class ElasticsearchInitializationService {
 	void init() throws IOException {
 		pushMissingPipelines();
 		pushMissingIndexTemplates();
-		pushMissingIndices();
 	}
 
 	private boolean isRunningLocalProfile() {
@@ -102,25 +98,6 @@ public class ElasticsearchInitializationService {
 					} catch (final IOException e) {
 						log.error("Error parsing pipeline: {}", resource.getFilename(), e);
 					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * For each index in the ElasticsearchConfiguration, add it to the cluster if it
-	 * doesn't exist
-	 */
-	private void pushMissingIndices() throws IOException {
-		final String[] indices = new String[] {
-				config.getCovidIndex(),
-		};
-		for (String index : indices) {
-			if (!elasticsearchService.containsIndex(index)) {
-				try {
-					elasticsearchService.createIndex(index);
-				} catch (final IOException e) {
-					log.error("Error creating index {}", index, e);
 				}
 			}
 		}

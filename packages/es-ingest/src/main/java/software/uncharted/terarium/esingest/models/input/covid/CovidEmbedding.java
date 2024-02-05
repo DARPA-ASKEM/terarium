@@ -1,6 +1,5 @@
 package software.uncharted.terarium.esingest.models.input.covid;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
@@ -8,13 +7,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import software.uncharted.terarium.esingest.models.input.IInputEmbedding;
+import software.uncharted.terarium.esingest.models.input.IInputEmbeddingChunk;
 
-@NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CovidEmbedding implements IInputEmbedding, Serializable {
+public class CovidEmbedding implements IInputEmbeddingChunk {
 
 	@JsonProperty("doc_id")
 	private UUID id;

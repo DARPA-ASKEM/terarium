@@ -29,7 +29,7 @@ public class ElasticsearchConfiguration {
 			String covidRoot) {
 	}
 
-	public String getCovidIndex() {
-		return String.join("_", index.prefix, index.covidRoot, index.suffix);
+	public String getIndex(String root) {
+		return String.join("_", index.prefix, root, index.suffix);
 	}
 }
