@@ -102,7 +102,7 @@
 			>
 				<div v-if="!showSpinner" class="form-section">
 					<h4>Variables</h4>
-					<section v-if="modelConfig && node.state.chartConfigs.length">
+					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset">
 						<tera-simulate-chart
 							v-for="(cfg, index) of node.state.chartConfigs"
 							:key="cfg.selectedRun"
@@ -539,8 +539,6 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-
-			console.log('hihihi', props.node.active);
 
 			// FIXME: could still be running
 			const state = props.node.state;
