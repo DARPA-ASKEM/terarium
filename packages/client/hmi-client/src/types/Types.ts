@@ -341,7 +341,7 @@ export interface ContextHeader {
     id: string;
     description: string;
     name: string;
-    parentContext: string;
+    parentModel: string;
 }
 
 export interface ContextMesh {
