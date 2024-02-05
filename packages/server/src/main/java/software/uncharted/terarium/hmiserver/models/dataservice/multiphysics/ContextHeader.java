@@ -15,5 +15,5 @@ public class ContextHeader implements Serializable {
 	private String name;
 
 	@JsonAlias("parent_model")
-	private String parentContext;
+	private String parentModel;
 }

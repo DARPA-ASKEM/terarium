@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
@@ -26,6 +27,6 @@ public class ModelConfiguration extends TerariumAsset implements SupportAddition
 	@JsonProperty("model_id")
 	private UUID modelId;
 
-	private Object configuration;
+	private JsonNode configuration;
 
 }

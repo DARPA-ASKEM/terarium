@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import java.io.Serializable;
 import java.util.Map;
@@ -16,10 +17,10 @@ public class Context implements Serializable {
 	private Map<String, ContextConstant> constants;
 
 	@JsonAlias("spatial_constraints")
-	private Object spatialConstraints;
+	private JsonNode spatialConstraints;
 
 	@JsonAlias("temporal_constraints")
-	private Object temporalConstraints;
+	private JsonNode temporalConstraints;
 
 	@JsonAlias("primal_dual_relations")
 	private List<ContextPrimalDualRelation> primalDualRelations;
