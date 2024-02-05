@@ -42,7 +42,7 @@ const submitQuery = async () => {
 		request: queryString.value
 	});
 	message.register('code_cell', (data) => {
-		emit('output-code', { value: data });
+		emit('output-code', data);
 	});
 };
 

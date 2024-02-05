@@ -1,7 +1,10 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="ModelEditTabs.Wizard">
-			<tera-model-template-editor :model="amr ?? undefined" @output-code="getOutputFromLLM" />
+			<tera-model-template-editor
+				:model="amr ?? undefined"
+				@output-code="(data: any) => appendCode(data, 'executed_code')"
+			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
@@ -10,7 +13,7 @@
 					<tera-notebook-jupyter-input
 						context="mira_model_edit"
 						:contextInfo="contextInfo"
-						@output-code="getOutputFromLLM"
+						@output-code="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -131,8 +134,8 @@ const codeText = ref(
 	'# This environment contains the variable "model" \n# which is displayed on the right'
 );
 
-const getOutputFromLLM = (data) => {
-	codeText.value = codeText.value.concat(' \n', data.value.content.code as string);
+const appendCode = (data: any, property: string) => {
+	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
 };
 
 // Reset model, then execute the code

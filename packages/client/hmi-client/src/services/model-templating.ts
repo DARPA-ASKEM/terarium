@@ -48,14 +48,13 @@ function findCardIndexById(modelTemplates: ModelTemplates, id: string) {
 export function addCard(
 	modelTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
+	outputCode: Function,
 	modelTemplate: any
 ) {
 	if (Object.values(DecomposedModelTemplateTypes).includes(modelTemplate.header.name)) {
 		kernelManager
 			.sendMessage(`add_${snakeCase(modelTemplate.header.name)}_template_request`, {})
-			.on(`add_${snakeCase(modelTemplate.header.name)}_template_response`, (d) => {
-				console.log(d);
-			});
+			.on(`add_${snakeCase(modelTemplate.header.name)}_template_response`, (d) => outputCode(d));
 	}
 	modelTemplate.metadata.templateCard.id = uuidv4();
 	modelTemplates.models.push(modelTemplate);
@@ -120,7 +119,8 @@ export function addEdge(
 
 export function flattenedToDecomposed(
 	decomposedTemplates: ModelTemplates,
-	kernelManager: KernelSessionManager
+	kernelManager: KernelSessionManager,
+	outputCode: Function
 ) {
 	kernelManager.sendMessage('amr_to_templates', {}).on('amr_to_templates_response', (d) => {
 		// Insert template card data into decomposed models
@@ -135,7 +135,7 @@ export function flattenedToDecomposed(
 			} as ModelTemplateCard;
 			yPos += 200;
 
-			addCard(decomposedTemplates, kernelManager, modelTemplate);
+			addCard(decomposedTemplates, kernelManager, outputCode, modelTemplate);
 		});
 	});
 }

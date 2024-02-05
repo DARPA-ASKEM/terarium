@@ -131,7 +131,7 @@ const props = defineProps<{
 	model?: Model;
 }>();
 
-// const emit = defineEmits(['output-code']);
+const emit = defineEmits(['output-code']);
 
 enum EditorFormat {
 	Decomposed = 'Decomposed',
@@ -292,11 +292,16 @@ function updateNewCardPosition(event) {
 		(event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
+function outputCode(data: any) {
+	emit('output-code', data);
+}
+
 function onDrop(event) {
 	updateNewCardPosition(event);
 	modelTemplatingService.addCard(
 		decomposedTemplates.value,
 		kernelManager,
+		outputCode,
 		cloneDeep(newModelTemplate.value)
 	);
 	newModelTemplate.value = null;
@@ -372,7 +377,11 @@ async function initializeBeakerKernel() {
 		await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
 		// Create decomposed view from model
 		if (props.model) {
-			modelTemplatingService.flattenedToDecomposed(decomposedTemplates.value, kernelManager);
+			modelTemplatingService.flattenedToDecomposed(
+				decomposedTemplates.value,
+				kernelManager,
+				outputCode
+			);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -392,7 +401,12 @@ watch(
 				y: 100
 			};
 
-			modelTemplatingService.addCard(flattenedTemplates.value, kernelManager, flattenedModel);
+			modelTemplatingService.addCard(
+				flattenedTemplates.value,
+				kernelManager,
+				outputCode,
+				flattenedModel
+			);
 		}
 		initializeBeakerKernel();
 	},
@@ -413,7 +427,7 @@ onUnmounted(() => {
 .template-editor-wrapper {
 	display: flex;
 	flex: 1;
-	height: 50%;
+	overflow: hidden;
 }
 
 .view-toggles {
