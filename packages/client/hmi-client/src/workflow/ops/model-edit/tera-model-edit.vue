@@ -1,11 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="ModelEditTabs.Wizard">
-			<tera-drilldown-section>
-				<template #footer>
-					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
-				</template>
-			</tera-drilldown-section>
+			<tera-model-template-editor :model="amr ?? undefined" @output-code="getOutputFromLLM" />
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
@@ -14,7 +10,7 @@
 					<tera-notebook-jupyter-input
 						context="mira_model_edit"
 						:contextInfo="contextInfo"
-						@llm-output="getOutputFromLLM"
+						@output-code="getOutputFromLLM"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -25,12 +21,11 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
-				<template #footer>
+				<template #footer
+					><Button style="margin-right: auto" label="Reset" @click="resetModel" />
 					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
 				</template>
 			</tera-drilldown-section>
-		</div>
-		<template #preview>
 			<tera-drilldown-preview
 				title="Model Preview"
 				v-model:output="selectedOutputId"
@@ -69,7 +64,7 @@
 					<Button label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
-		</template>
+		</div>
 	</tera-drilldown>
 </template>
 
@@ -92,7 +87,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
-import teraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{

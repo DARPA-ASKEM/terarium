@@ -131,6 +131,8 @@ const props = defineProps<{
 	model?: Model;
 }>();
 
+// const emit = defineEmits(['output-code']);
+
 enum EditorFormat {
 	Decomposed = 'Decomposed',
 	Flattened = 'Flattened'
@@ -411,6 +413,7 @@ onUnmounted(() => {
 .template-editor-wrapper {
 	display: flex;
 	flex: 1;
+	height: 50%;
 }
 
 .view-toggles {
