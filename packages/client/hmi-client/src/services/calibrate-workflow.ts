@@ -124,7 +124,7 @@ export const autoCalibrationMapping = async (
 	const result = [] as CalibrateMap[];
 	const allModelGroundings: string[] = [];
 	const allDataGroundings: string[] = [];
-	const acceptableDistance = 0.7;
+	const acceptableDistance = 0.5;
 	// Get all model groundings
 	modelOptions.forEach((state) => {
 		if (state.grounding?.identifiers) {
@@ -145,7 +145,7 @@ export const autoCalibrationMapping = async (
 	const allSimilarity = await getEntitySimilarity(distinctModelGroundings, distinctDataGroundings);
 	if (!allSimilarity) return result;
 
-	const filteredSim = allSimilarity.filter((ele) => ele.distance < acceptableDistance);
+	const filteredSim = allSimilarity.filter((ele) => ele.similarity < acceptableDistance);
 	filteredSim.forEach((sim) => {
 		// Find all states assosiated with this sim
 		const validStates = modelOptions.filter((state) => {
