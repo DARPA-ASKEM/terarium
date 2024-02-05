@@ -84,7 +84,7 @@ public class GoLLMController {
 				Model model = modelService.getModel(props.getModelId())
 						.orElseThrow();
 				ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);
-				model.getMetadata().setGollmCard(card);
+				model.getMetadata().setGollmCard(card.response);
 				modelService.updateModel(model);
 			} catch (IOException e) {
 				log.error("Failed to write model card to database", e);
