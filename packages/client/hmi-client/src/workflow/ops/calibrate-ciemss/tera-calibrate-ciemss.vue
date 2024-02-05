@@ -417,7 +417,7 @@ const updateOutputPorts = async (calibrationId: string, simulationId: string) =>
 	emit('update-state', state);
 
 	emit('append-output-port', {
-		type: 'simulationId',
+		type: 'calibrateSimulationId',
 		label: `${portLabel} Result`,
 		value: [calibrationId]
 	});
