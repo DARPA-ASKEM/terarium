@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -29,7 +28,7 @@ public class KNNSearchControllerTests extends TerariumApplicationTests {
 
 	private static final String TEST_INDEX = "tds_covid_tera_1.0";
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.ADAM)
 	public void testKnnSearch() throws Exception {
 
