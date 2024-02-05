@@ -5,15 +5,19 @@ import signal
 import sys
 import concurrent.futures
 
+
+READ_CHUNK_SIZE = 1024*1024
+
+
 def read_input(input_pipe: str):
-	line = b''
-	with open(input_pipe, 'rb') as f:
+	chunks = []
+	with open(input_pipe, "rb") as f:
 		while True:
-			chunk = f.read(1024)
-			if chunk == b'':
+			chunk = f.read(READ_CHUNK_SIZE)
+			if chunk == b"":
 				break
-			line += chunk
-	return json.loads(line.decode('utf-8'))
+			chunks.append(chunk)
+	return json.loads(b"".join(chunks).decode("utf-8"))
 
 def read_input_with_timeout(input_pipe: str, timeout_seconds: int):
 	with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
