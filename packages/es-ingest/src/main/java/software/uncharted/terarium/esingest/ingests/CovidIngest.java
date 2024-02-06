@@ -6,7 +6,7 @@ import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.iterators.IInputIterator;
-import software.uncharted.terarium.esingest.iterators.JSONLineReaderIterator;
+import software.uncharted.terarium.esingest.iterators.JSONLineIterator;
 import software.uncharted.terarium.esingest.models.input.covid.CovidDocument;
 import software.uncharted.terarium.esingest.models.input.covid.CovidEmbedding;
 import software.uncharted.terarium.esingest.models.output.Document;
@@ -23,13 +23,13 @@ public class CovidIngest
 	public IInputIterator<CovidDocument> getDocumentInputIterator(Path inputPath, long batchSize) throws IOException {
 		Path documentPath = inputPath.resolve(DOCUMENT_PATH);
 
-		return new JSONLineReaderIterator<>(documentPath, CovidDocument.class, batchSize);
+		return new JSONLineIterator<>(documentPath, CovidDocument.class, batchSize);
 	}
 
 	public IInputIterator<CovidEmbedding> getEmbeddingInputIterator(Path inputPath, long batchSize) throws IOException {
 		Path embeddingsPath = inputPath.resolve(EMBEDDING_PATH);
 
-		return new JSONLineReaderIterator<>(embeddingsPath, CovidEmbedding.class,
+		return new JSONLineIterator<>(embeddingsPath, CovidEmbedding.class,
 
 				// NOTE: we want to upload _all_ embedding chunks in a single payload, so we
 				// need to ensure that when a worker receives the embeddings, it has all the
