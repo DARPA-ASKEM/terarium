@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class JSONLineReaderIterator<T> implements IInputIterator<T> {
+public class JSONLineIterator<T> implements IInputIterator<T> {
 
 	ObjectMapper mapper = new ObjectMapper();
 	Queue<Path> files;
@@ -24,10 +24,9 @@ public class JSONLineReaderIterator<T> implements IInputIterator<T> {
 	long batchSize;
 	BiFunction<List<T>, T, Boolean> batcher;
 	List<T> results = new ArrayList<>();
-
 	Class<T> classType;
 
-	public JSONLineReaderIterator(Path inputPath, Class<T> classType, long batchSize) throws IOException {
+	public JSONLineIterator(Path inputPath, Class<T> classType, long batchSize) throws IOException {
 		this.batchSize = batchSize;
 		this.classType = classType;
 		this.files = getFilesInDir(inputPath);
@@ -37,7 +36,7 @@ public class JSONLineReaderIterator<T> implements IInputIterator<T> {
 		this.reader = Files.newBufferedReader(files.poll());
 	}
 
-	public JSONLineReaderIterator(Path inputPath, Class<T> classType, BiFunction<List<T>, T, Boolean> batcher)
+	public JSONLineIterator(Path inputPath, Class<T> classType, BiFunction<List<T>, T, Boolean> batcher)
 			throws IOException {
 		this.classType = classType;
 		this.batcher = batcher;
