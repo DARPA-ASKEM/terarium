@@ -1,9 +1,8 @@
 import API from '@/api/api';
 import useAuthStore from '@/stores/auth';
 import { TaskStatus } from '@/types/Types';
+import { logger } from '@/utils/logger';
 import { EventSourceMessage, fetchEventSource } from '@microsoft/fetch-event-source';
-
-const controller = new AbortController();
 
 export async function modelCard(documentId: string, modelId: string): Promise<any> {
 	const response = await API.post('/gollm/model_card', null, {
@@ -18,14 +17,16 @@ export async function modelCard(documentId: string, modelId: string): Promise<an
 
 export async function handleTaskById(id: string, successHandler: (message: any) => void) {
 	const authStore = useAuthStore();
+	const controller = new AbortController();
 	const options = {
 		headers: {
 			Authorization: `Bearer ${authStore.token}`
 		},
 		onmessage(message: EventSourceMessage) {
+			console.log(message);
 			const data = JSON.parse(message.data);
 			if (data?.status === TaskStatus.Failed) {
-				console.log('Task failed');
+				logger.error('Failed to generate model card.');
 				controller.abort();
 			}
 
