@@ -1,5 +1,16 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-action-row>
+			<label style="margin-left: auto">Output</label>
+			<tera-output-dropdown
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:is-loading="assetLoading"
+				is-selectable
+			/>
+		</template>
 		<div>
 			<tera-drilldown-section :is-loading="assetLoading">
 				<Steps
@@ -53,7 +64,7 @@
 					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
 				</div>
 				<template #footer>
-					<span style="margin-right: auto"
+					<span
 						><label>Model framework:</label
 						><Dropdown
 							class="w-full md:w-14rem"
@@ -61,25 +72,20 @@
 							:options="modelFrameworks"
 							@change="onChangeModelFramework"
 					/></span>
-					<Button
-						label="Run"
-						@click="onRun"
-						:diabled="assetLoading"
-						:loading="loadingModel"
-						outlined
-					></Button>
+					<span style="margin-right: auto">
+						<label>Service</label>
+						<Dropdown
+							size="small"
+							v-model="clonedState.modelService"
+							:options="modelServices"
+							@change="emit('update-state', clonedState)"
+						></Dropdown>
+					</span>
 				</template>
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:is-loading="loadingModel"
-				is-selectable
-			>
+			<tera-drilldown-preview>
 				<section v-if="selectedModel">
 					<tera-model-card :model="selectedModel" />
 					<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
@@ -99,7 +105,13 @@
 						:loading="savingAsset"
 						@click="isNewModelModalVisible = true"
 					></Button>
-					<Button label="Close" @click="emit('close')"></Button>
+					<Button label="Close" @click="emit('close')" outlined></Button>
+					<Button
+						label="Run"
+						@click="onRun"
+						:diabled="assetLoading"
+						:loading="loadingModel"
+					></Button>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -139,6 +151,9 @@ import Steps from 'primevue/steps';
 import Textarea from 'primevue/textarea';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
+import { ModelServiceType } from '@/types/common';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import { handleTaskById, modelCard } from '@/services/goLLM';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -200,15 +215,16 @@ const outputs = computed(() => {
 	return groupedOutputs;
 });
 
-const selectedOutputId = ref<string>();
+const selectedOutputId = ref<string>('');
 
 const modelFrameworks = Object.values(ModelFramework);
-
+const modelServices = Object.values(ModelServiceType);
 const clonedState = ref<ModelFromDocumentState>({
 	equations: [],
 	text: '',
 	modelFramework: ModelFramework.Petrinet,
-	modelId: null
+	modelId: null,
+	modelService: ModelServiceType.TA1
 });
 const document = ref<DocumentAsset | null>();
 const assetLoading = ref(false);
@@ -235,7 +251,7 @@ onMounted(async () => {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
-	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
+	const documentId = props.node.inputs?.[1]?.value?.[0];
 	const equations: AssetBlock<DocumentExtraction>[] =
 		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
 	assetLoading.value = true;
@@ -252,28 +268,24 @@ onMounted(async () => {
 			return !foundEquation;
 		});
 
-		if (isEmpty(nonRunEquations)) {
-			assetLoading.value = false;
-			return;
-		}
-		const promises = nonRunEquations?.map(async (e) => {
-			const equationText = await getEquationFromImageUrl(documentId, e.asset.fileName);
-			const equationBlock: EquationFromImageBlock = {
-				...e.asset,
-				text: equationText ?? '',
-				extractionError: !equationText
-			};
+		const equationsDocumentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
+		const promises =
+			nonRunEquations?.map(async (e) => {
+				const equationText = await getEquationFromImageUrl(equationsDocumentId, e.asset.fileName);
+				const equationBlock: EquationFromImageBlock = {
+					...e.asset,
+					text: equationText ?? '',
+					extractionError: !equationText
+				};
 
-			const assetBlock: AssetBlock<EquationFromImageBlock> = {
-				name: e.name,
-				includeInProcess: e.includeInProcess,
-				asset: equationBlock
-			};
+				const assetBlock: AssetBlock<EquationFromImageBlock> = {
+					name: e.name,
+					includeInProcess: e.includeInProcess,
+					asset: equationBlock
+				};
 
-			return assetBlock;
-		});
-
-		if (!promises) return;
+				return assetBlock;
+			}) ?? [];
 
 		const newEquations = await Promise.all(promises);
 
@@ -317,8 +329,7 @@ async function onRun() {
 	if (!modelId) return;
 
 	if (document.value?.id && !card.value) {
-		const profiledModel = await profile(modelId, document.value.id);
-		if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
+		generateModelCard(document.value.id, modelId);
 	}
 
 	clonedState.value.modelId = modelId;
@@ -391,6 +402,22 @@ function addEquation() {
 function removeEquation(index: number) {
 	clonedState.value.equations.splice(index, 1);
 	emit('update-state', clonedState.value);
+}
+
+async function generateModelCard(documentId, modelId) {
+	const modelServiceType = clonedState.value.modelService;
+
+	if (modelServiceType === ModelServiceType.TA1) {
+		const profiledModel = await profile(modelId, documentId);
+		if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
+	}
+
+	if (modelServiceType === ModelServiceType.TA4) {
+		const goLLMId = await modelCard(documentId, modelId);
+		handleTaskById(goLLMId?.id, (data) => {
+			console.log(data);
+		});
+	}
 }
 
 watch(

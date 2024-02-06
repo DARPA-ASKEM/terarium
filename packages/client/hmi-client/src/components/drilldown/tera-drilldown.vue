@@ -7,8 +7,11 @@
 				:tooltip="tooltip"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
-				>{{ props.title }}</tera-drilldown-header
-			>
+				>{{ props.title }}
+				<template #action-row>
+					<slot name="header-action-row"></slot>
+				</template>
+			</tera-drilldown-header>
 			<tera-columnar-panel>
 				<template v-for="(tab, index) in tabs" :key="index">
 					<component :is="tab" v-show="selectedViewIndex === index" />

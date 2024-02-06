@@ -85,8 +85,9 @@ public class GoLLMController {
 				log.error("Failed to write model card to database", e);
 			}
 		});
-		handler.onRunning((TaskResponse response) -> {
-			log.info(response.toString());
+
+		handler.onRunning((TaskResponse resp) -> {
+			log.info(resp.toString());
 		});
 		return handler;
 	}

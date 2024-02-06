@@ -1,5 +1,16 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-action-row>
+			<label>Output</label>
+			<tera-output-dropdown
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:is-loading="isProcessing"
+				is-selectable
+			/>
+		</template>
 		<div tabName="Wizard">
 			<tera-drilldown-section :isLoading="fetchingInputBlocks">
 				<header>
@@ -54,22 +65,23 @@
 					</tera-asset-block>
 				</template>
 				<template #footer>
-					<span style="margin-right: auto"
-						><label>Model framework:</label
+					<span
+						><label>Model framework</label
 						><Dropdown
-							class="w-full md:w-14rem"
+							size="small"
 							v-model="clonedState.modelFramework"
 							:options="modelFrameworks"
 							@change="setKernelContext"
 					/></span>
-					<Button
-						:disabled="isProcessing || allCodeBlocks.length === 0"
-						label="Run"
-						icon="pi pi-play"
-						severity="secondary"
-						outlined
-						@click="handleCode"
-					/>
+					<span style="margin-right: auto">
+						<label>Service</label>
+						<Dropdown
+							size="small"
+							v-model="clonedState.modelService"
+							:options="modelServices"
+							@change="emit('update-state', clonedState)"
+						></Dropdown>
+					</span>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -77,14 +89,7 @@
 			<!--Notebook section if we decide we need one-->
 		</div>
 		<template #preview>
-			<tera-drilldown-preview
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:is-loading="isProcessing"
-				is-selectable
-			>
+			<tera-drilldown-preview :is-loading="isProcessing">
 				<section v-if="selectedModel">
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
 						<tera-model-card :model="selectedModel" />
@@ -111,6 +116,12 @@
 						style="margin-right: auto"
 					/>
 					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
+					<Button
+						:disabled="isProcessing || allCodeBlocks.length === 0"
+						label="Run"
+						icon="pi pi-play"
+						@click="handleCode"
+					/>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -151,6 +162,9 @@ import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
+import { handleTaskById, modelCard } from '@/services/goLLM';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import { ModelServiceType } from '@/types/common';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -175,6 +189,7 @@ const fetchingInputBlocks = ref(false);
 
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const modelFrameworks = Object.values(ModelFramework);
+const modelServices = Object.values(ModelServiceType);
 const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 
@@ -206,7 +221,8 @@ const clonedState = ref<ModelFromCodeState>({
 	codeLanguage: ProgrammingLanguage.Python,
 	modelFramework: ModelFramework.Petrinet,
 	codeBlocks: [],
-	modelId: ''
+	modelId: '',
+	modelService: ModelServiceType.TA1
 });
 
 const outputs = computed(() => {
@@ -246,7 +262,7 @@ const outputs = computed(() => {
 
 	return groupedOutputs;
 });
-const selectedOutputId = ref<string>();
+const selectedOutputId = ref<string>('');
 const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
 	() => props.node.outputs?.find((output) => selectedOutputId.value === output.id)
 );
@@ -325,11 +341,13 @@ async function handleCode() {
 
 		const modelId = await codeBlocksToAmr(newCode, file);
 
-		if (!modelId) return;
+		if (!modelId) {
+			isProcessing.value = false;
+			return;
+		}
 
 		if (documentId.value && !card.value) {
-			const profiledModel = await profile(modelId, documentId.value);
-			if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
+			generateModelCard(documentId.value, modelId);
 		}
 
 		clonedState.value.modelId = modelId;
@@ -464,6 +482,22 @@ function isSaveModelDisabled(): boolean {
 		.map((model) => model.id);
 
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
+}
+
+async function generateModelCard(docId, modelId) {
+	const modelServiceType = clonedState.value.modelService;
+
+	if (modelServiceType === ModelServiceType.TA1) {
+		const profiledModel = await profile(modelId, docId);
+		if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
+	}
+
+	if (modelServiceType === ModelServiceType.TA4) {
+		const goLLMId = await modelCard(docId, modelId);
+		handleTaskById(goLLMId?.id, (data) => {
+			console.log(data);
+		});
+	}
 }
 
 watch(
