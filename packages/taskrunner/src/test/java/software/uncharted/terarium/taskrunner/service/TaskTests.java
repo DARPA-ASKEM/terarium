@@ -196,7 +196,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 					for (int i = 0; i < 10; i++) {
 						boolean res = task.cancel();
 						if (cancelled) {
-							Assertions.assertTrue(false);
+							Assertions.assertFalse(res);
 						} else {
 							Assertions.assertTrue(res);
 							cancelled = true;
