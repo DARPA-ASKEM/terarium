@@ -151,6 +151,7 @@ import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
+import { extensionFromProgrammingLanguage } from '@/utils/data-util';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -307,12 +308,14 @@ async function handleCode() {
 		const codeContent = allCodeBlocks.value
 			.filter((block) => block.includeInProcess)
 			.reduce((acc, block) => `${acc}${block.asset.codeContent}\n`, '');
-		const file = new File([codeContent], 'tempFile');
+
+		const fileName = `tempFile.${extensionFromProgrammingLanguage(clonedState.value.codeLanguage)}`;
+		const file = new File([codeContent], fileName);
 		const newCode: Code = {
 			name: 'tempCode',
 			description: 'tempDescription',
 			files: {
-				tempFile: {
+				[fileName]: {
 					language: clonedState.value.codeLanguage,
 					dynamics: {
 						name: 'dynamic',
