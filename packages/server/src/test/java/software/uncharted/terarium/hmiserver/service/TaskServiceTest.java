@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
 
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
+@Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
 
 	@Autowired
@@ -106,7 +108,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setScript("gollm:model_card");
 		req.setInput(content.getBytes());
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, 300);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -116,6 +118,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		for (TaskResponse resp : responses) {
 			Assertions.assertEquals(taskId, resp.getId());
 		}
+
+		log.info(new String(responses.get(responses.size() - 1).getOutput()));
 	}
 
 	// @Test
