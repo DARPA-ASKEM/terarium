@@ -27,7 +27,7 @@ services:
 
   elasticsearch:
     container_name: elasticsearch
-    image: elasticsearch:8.7.0
+    image: elasticsearch:8.11.4
     networks:
       - terarium
     ports:
@@ -48,7 +48,7 @@ services:
       - cluster.name=elasticsearch
       - discovery.type=single-node
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx4096m"
       - xpack.security.enabled=false
     ulimits:
       memlock:
