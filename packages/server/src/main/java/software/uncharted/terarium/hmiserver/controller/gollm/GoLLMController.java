@@ -60,6 +60,11 @@ public class GoLLMController {
 	};
 
 	@Data
+	private static class ModelCardResponse {
+		JsonNode response;
+	}
+
+	@Data
 	private static class ModelCardProperties {
 		UUID modelId;
 		UUID documentId;
@@ -78,8 +83,8 @@ public class GoLLMController {
 			try {
 				Model model = modelService.getModel(props.getModelId())
 						.orElseThrow();
-				JsonNode card = objectMapper.readTree(resp.getOutput());
-				model.getMetadata().setGollmCard(card);
+				ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);
+				model.getMetadata().setGollmCard(card.response);
 				modelService.updateModel(model);
 			} catch (IOException e) {
 				log.error("Failed to write model card to database", e);
