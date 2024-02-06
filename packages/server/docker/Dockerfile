@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17.0.10_7-jre-focal AS builder
+FROM eclipse-temurin:17.0.10_7-jdk-focal AS builder
 
 WORKDIR /app
 COPY /packages/server .
