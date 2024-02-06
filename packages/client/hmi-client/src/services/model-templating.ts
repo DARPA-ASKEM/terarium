@@ -12,6 +12,24 @@ import controlledProduction from './model-templates/controlled-production.json';
 import controlledDegredation from './model-templates/controlled-degradation.json';
 import observable from './model-templates/observable.json';
 
+interface AddTemplateArguments {
+	subject_name?: string;
+	subject_initial_value?: string;
+	outcome_name?: string;
+	outcome_initial_value?: string;
+	controller_name?: string;
+	controller_initial_value?: string;
+	parameter_name?: string;
+	parameter_value?: number;
+	parameter_units?: string;
+	parameter_description?: string;
+	template_expression?: string;
+	template_name?: string;
+	new_id?: string;
+	new_name?: string;
+	new_expression?: string;
+}
+
 export const modelTemplateOptions = [
 	naturalConversion,
 	naturalProduction,
@@ -67,65 +85,69 @@ export function addCard(
 ) {
 	const { name } = modelTemplate.header;
 
+	// If a decomposed card is added, add it to the kernel
 	if (Object.values(DecomposedModelTemplateTypes).includes(name)) {
-		const { transitions } = modelTemplate.model;
-		const { rates, initials, parameters } = cloneDeep(modelTemplate.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
+		const addTemplateArguments: AddTemplateArguments = {};
 
-		const addTemplateArguments = {
-			subject_name: '',
-			subject_initial_value: '',
-			outcome_name: '',
-			outcome_initial_value: '',
-			controller_name: '',
-			controller_initial_value: '',
-			parameter_name: parameters[0].id,
-			parameter_value: parameters[0].value,
-			parameter_units: parameters[0].units,
-			parameter_description: parameters[0].description,
-			template_expression: rates[0].expression,
-			template_name: name
-		};
+		if (name !== DecomposedModelTemplateTypes.Observable) {
+			const { transitions } = modelTemplate.model;
+			const { rates, initials, parameters } = cloneDeep(modelTemplate.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
 
-		// Extract controller
-		if (
-			name === DecomposedModelTemplateTypes.ControlledConversion ||
-			name === DecomposedModelTemplateTypes.ControlledDegradation ||
-			name === DecomposedModelTemplateTypes.ControlledProduction
-		) {
-			const { input, output } = transitions[0];
-			if (input?.[0] === output?.[0]) {
-				const index = initials.findIndex((initial) => initial.target === input[0]);
-				const controller = initials[index];
+			// Add parameters to the arguments
+			addTemplateArguments.parameter_name = parameters[0].id;
+			addTemplateArguments.parameter_value = parameters[0].value;
+			addTemplateArguments.parameter_units = parameters[0].units;
+			addTemplateArguments.parameter_description = parameters[0].description;
+			addTemplateArguments.template_expression = rates[0].expression;
+			addTemplateArguments.template_name = name;
 
-				addTemplateArguments.controller_name = controller.target;
-				addTemplateArguments.controller_initial_value = controller.expression;
+			// Extract controller from initials and add it to the arguments
+			if (
+				name === DecomposedModelTemplateTypes.ControlledConversion ||
+				name === DecomposedModelTemplateTypes.ControlledDegradation ||
+				name === DecomposedModelTemplateTypes.ControlledProduction
+			) {
+				const { input, output } = transitions[0];
+				if (input?.[0] === output?.[0]) {
+					const index = initials.findIndex((initial) => initial.target === input[0]);
+					const controller = initials[index];
 
-				// Remove controller from initials
-				initials.splice(index, 1);
+					// Add controller to the arguments
+					addTemplateArguments.controller_name = controller.target;
+					addTemplateArguments.controller_initial_value = controller.expression;
+
+					// Remove controller from initials
+					initials.splice(index, 1);
+				}
 			}
-		}
 
-		// Now that there are no controllers we can add subject/outcome to the arguments
-		if (
-			name === DecomposedModelTemplateTypes.NaturalConversion ||
-			name === DecomposedModelTemplateTypes.ControlledConversion
-		) {
-			// If it's a conversion template, the first two initials are the subject then outcome
-			addTemplateArguments.subject_name = initials[0].target;
-			addTemplateArguments.subject_initial_value = initials[0].expression;
-			addTemplateArguments.outcome_name = initials[1].target;
-			addTemplateArguments.outcome_initial_value = initials[1].expression;
-		} else if (
-			name === DecomposedModelTemplateTypes.NaturalProduction ||
-			name === DecomposedModelTemplateTypes.ControlledProduction
-		) {
-			// If it's a production template, the first initial is the outcome
-			addTemplateArguments.outcome_name = initials[0].target;
-			addTemplateArguments.outcome_initial_value = initials[0].expression;
+			// Now that there are no controllers in initals we can add subject/outcome to the arguments
+			if (
+				name === DecomposedModelTemplateTypes.NaturalConversion ||
+				name === DecomposedModelTemplateTypes.ControlledConversion
+			) {
+				// If it's a conversion template, the first two initials are the subject then outcome
+				addTemplateArguments.subject_name = initials[0].target;
+				addTemplateArguments.subject_initial_value = initials[0].expression;
+				addTemplateArguments.outcome_name = initials[1].target;
+				addTemplateArguments.outcome_initial_value = initials[1].expression;
+			} else if (
+				name === DecomposedModelTemplateTypes.NaturalProduction ||
+				name === DecomposedModelTemplateTypes.ControlledProduction
+			) {
+				// If it's a production template, the first initial is the outcome
+				addTemplateArguments.outcome_name = initials[0].target;
+				addTemplateArguments.outcome_initial_value = initials[0].expression;
+			} else {
+				// If it's a degradation template, the first initial is the subject
+				addTemplateArguments.subject_name = initials[0].target;
+				addTemplateArguments.subject_initial_value = initials[0].expression;
+			}
 		} else {
-			// If it's a degradation template, the first initial is the subject
-			addTemplateArguments.subject_name = initials[0].target;
-			addTemplateArguments.subject_initial_value = initials[0].expression;
+			addTemplateArguments.new_id = modelTemplate.semantics.ode.observables[0].id;
+			addTemplateArguments.new_name = modelTemplate.header.name;
+			addTemplateArguments.new_expression =
+				modelTemplate.semantics.ode.observables[0].expression_mathml;
 		}
 
 		kernelManager
@@ -135,7 +157,7 @@ export function addCard(
 			});
 	}
 	// FIXME: There is some lag when placing a card if these are put in the register callback which feels off
-	// Perhaps there can be some sort of transition state to show the card is being placed
+	// Perhaps there can be some sort of transition state to show the card is being placed?
 	modelTemplate.metadata.templateCard.id = uuidv4();
 	modelTemplates.models.push(modelTemplate);
 }
