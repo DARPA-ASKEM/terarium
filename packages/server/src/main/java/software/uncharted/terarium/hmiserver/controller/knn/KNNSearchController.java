@@ -53,12 +53,11 @@ public class KNNSearchController {
 	final private long CACHE_TTL_SECONDS = 60 * 60 * 24;
 	final private long REQUEST_TIMEOUT_SECONDS = 10;
 	final private String EMBEDDING_MODEL = "text-embedding-ada-002";
-	final private int NUM_RESULTS = 5;
-	final private int NUM_CANDIDATES = 5;
 
 	@Data
-	static public class KNNSearchRequest {
+	static public class GoLLMSearchRequest {
 		private String text;
+
 		@JsonProperty("embedding_model")
 		private String embeddingModel;
 	}
@@ -66,6 +65,13 @@ public class KNNSearchController {
 	@Data
 	private static class EmbeddingsResponse {
 		List<Float> response;
+	}
+
+	@Data
+	static public class KNNSearchRequest {
+		private String text;
+		private int numCandidates = 100;
+		private int k = 10;
 	}
 
 	@PostConstruct
@@ -86,6 +92,11 @@ public class KNNSearchController {
 			@RequestBody KNNSearchRequest body) {
 
 		try {
+
+			if (body.getK() > body.getNumCandidates()) {
+				return ResponseEntity.badRequest().build();
+			}
+
 			// sha256 the text to use as a cache key
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			byte[] hash = md.digest(body.getText().getBytes(StandardCharsets.UTF_8));
@@ -95,10 +106,13 @@ public class KNNSearchController {
 			if (vector == null) {
 
 				// set the embedding model
-				body.setEmbeddingModel(EMBEDDING_MODEL);
+
+				GoLLMSearchRequest embeddingRequest = new GoLLMSearchRequest();
+				embeddingRequest.setText(body.getText());
+				embeddingRequest.setEmbeddingModel(EMBEDDING_MODEL);
 
 				TaskRequest req = new TaskRequest();
-				req.setInput(body);
+				req.setInput(embeddingRequest);
 				req.setScript("gollm:embedding");
 
 				List<TaskResponse> responses = taskService.runTaskBlocking(req, REQUEST_TIMEOUT_SECONDS);
@@ -125,8 +139,8 @@ public class KNNSearchController {
 			KnnQuery query = new KnnQuery.Builder()
 					.field("embeddings.vector")
 					.queryVector(vector)
-					.k(NUM_RESULTS)
-					.numCandidates(NUM_CANDIDATES)
+					.k(body.getK())
+					.numCandidates(body.getNumCandidates())
 					.build();
 
 			List<JsonNode> docs = elasticsearchService.knnSearch(index, query, JsonNode.class);
