@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.NetCDF;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -41,6 +42,7 @@ public class ProjectAssetService {
 	final ExternalPublicationService publicationService;
 	final CodeService codeService;
 	final ArtifactService artifactService;
+	final NetCDFService netCDFService;
 
 	public List<ProjectAsset> findAllByProjectId(@NotNull final UUID projectId) {
 		return projectAssetRepository.findAllByProjectId(projectId);
@@ -126,6 +128,12 @@ public class ProjectAssetService {
 					projectAsset.setAssetName(artifact.get().getName());
 				}
 				return artifact.isPresent();
+			case NETCDF:
+				final Optional<NetCDF> netCDF = netCDFService.getNetCDF(id);
+				if (netCDF.isPresent()) {
+					projectAsset.setAssetName(netCDF.get().getName());
+				}
+				return netCDF.isPresent();
 			default:
 				break;
 		}

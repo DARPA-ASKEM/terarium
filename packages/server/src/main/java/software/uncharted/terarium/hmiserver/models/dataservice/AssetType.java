@@ -12,5 +12,6 @@ public enum AssetType {
 	WORKFLOW,
 	ARTIFACT,
 	CODE,
-	DOCUMENT
+	DOCUMENT,
+	NETCDF
 }

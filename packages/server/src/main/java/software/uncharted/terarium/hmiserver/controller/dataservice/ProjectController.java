@@ -37,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.NetCDF;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -50,15 +51,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.data.CodeService;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ExternalPublicationService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.service.data.*;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
@@ -92,6 +85,7 @@ public class ProjectController {
 	final ExternalPublicationService publicationService;
 	final CodeService codeService;
 	final ArtifactService artifactService;
+	final NetCDFService netCDFService;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -412,6 +406,18 @@ public class ProjectController {
 								}
 							}
 							assetsResponse.setArtifact(artifacts);
+							break;
+						case NETCDF:
+							List<NetCDF> netcdfs = new ArrayList<>();
+							for (UUID id : assetTypeListMap.get(type)) {
+								try {
+									Optional<NetCDF> netcdf = netCDFService.getNetCDF(id);
+									netcdf.ifPresent(netcdfs::add);
+								} catch (final IOException e) {
+									log.error("Error getting netCDF", e);
+								}
+							}
+							assetsResponse.setNetcdf(netcdfs);
 							break;
 						default:
 							break;

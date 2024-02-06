@@ -28,6 +28,7 @@ public class ElasticsearchConfiguration {
 			String suffix,
 			String codeRoot,
 			String artifactRoot,
+			String netCDFRoot,
 			String datasetRoot,
 			String documentRoot,
 			String equationRoot,
@@ -47,6 +48,10 @@ public class ElasticsearchConfiguration {
 
 	public String getArtifactIndex() {
 		return String.join("_", index.prefix, index.artifactRoot, index.suffix);
+	}
+
+	public String getNetCDFIndex() {
+		return String.join("_", index.prefix, index.netCDFRoot, index.suffix);
 	}
 
 	public String getDatasetIndex() {
