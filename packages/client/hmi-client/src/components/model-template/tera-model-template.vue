@@ -47,7 +47,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import type { ModelTemplateCard } from '@/types/model-templating';
 import Menu from 'primevue/menu';
 
-const props = defineProps<{ model: any; isEditable: boolean }>();
+const props = defineProps<{ model: any; isEditable: boolean; isDecomposed: boolean }>();
 
 const emit = defineEmits([
 	'port-mouseover',
@@ -89,7 +89,7 @@ const card = computed<ModelTemplateCard>(
 );
 
 async function turnOnNameEdit() {
-	if (props.isEditable) {
+	if (props.isEditable && props.isDecomposed) {
 		isEditingName.value = true;
 		await nextTick();
 		if (nameInputRef.value) nameInputRef.value.$el.focus();

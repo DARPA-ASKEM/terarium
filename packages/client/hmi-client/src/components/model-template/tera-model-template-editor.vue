@@ -15,6 +15,7 @@
 						<tera-model-template
 							:model="modelTemplate"
 							:is-editable="false"
+							is-decomposed
 							draggable="true"
 							@dragstart="newModelTemplate = modelTemplate"
 						/>
@@ -63,9 +64,15 @@
 					<tera-model-template
 						:model="currentEditor.models[index]"
 						is-editable
+						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						@update-name="
 							(name: string) =>
-								modelTemplatingService.updateCardName(currentEditor, kernelManager, name, card.id)
+								modelTemplatingService.updateDecomposedCardName(
+									currentEditor,
+									kernelManager,
+									name,
+									card.id
+								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
 						@port-mouseover="

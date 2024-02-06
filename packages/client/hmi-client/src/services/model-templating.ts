@@ -144,10 +144,10 @@ export function addCard(
 				addTemplateArguments.subject_initial_value = initials[0].expression;
 			}
 		} else {
-			addTemplateArguments.new_id = modelTemplate.semantics.ode.observables[0].id;
+			const { observables } = modelTemplate.semantics.ode;
+			addTemplateArguments.new_id = observables[0].id;
 			addTemplateArguments.new_name = modelTemplate.header.name;
-			addTemplateArguments.new_expression =
-				modelTemplate.semantics.ode.observables[0].expression_mathml;
+			addTemplateArguments.new_expression = observables[0].expression_mathml;
 		}
 
 		kernelManager
@@ -162,22 +162,30 @@ export function addCard(
 	modelTemplates.models.push(modelTemplate);
 }
 
-export function updateCardName(
+export function updateDecomposedCardName(
 	modelTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
 	name: string,
 	id: string
 ) {
 	const index = findCardIndexById(modelTemplates, id);
+	const model = modelTemplates.models[index];
 
 	kernelManager
 		.sendMessage('replace_template_name_request', {
-			old_name: modelTemplates.models[index].header.name,
+			old_name: model.header.name,
 			new_name: name
 		})
 		.register('replace_template_name_response', (d) => {
 			console.log(d);
-			modelTemplates.models[index].metadata.templateCard.name = name;
+
+			model.header.name = name;
+			model.metadata.templateCard.name = name;
+			if (model.model.transitions[0] && model.semantics.ode.rates[0]) {
+				model.model.transitions[0].id = name;
+				model.model.transitions[0].properties.name = name;
+				model.semantics.ode.rates[0].target = name;
+			}
 		});
 }
 
