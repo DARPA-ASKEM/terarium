@@ -165,6 +165,7 @@ import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import { handleTaskById, modelCard } from '@/services/goLLM';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { ModelServiceType } from '@/types/common';
+import { extensionFromProgrammingLanguage } from '@/utils/data-util';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -323,12 +324,14 @@ async function handleCode() {
 		const codeContent = allCodeBlocks.value
 			.filter((block) => block.includeInProcess)
 			.reduce((acc, block) => `${acc}${block.asset.codeContent}\n`, '');
-		const file = new File([codeContent], 'tempFile');
+
+		const fileName = `tempFile.${extensionFromProgrammingLanguage(clonedState.value.codeLanguage)}`;
+		const file = new File([codeContent], fileName);
 		const newCode: Code = {
 			name: 'tempCode',
 			description: 'tempDescription',
 			files: {
-				tempFile: {
+				[fileName]: {
 					language: clonedState.value.codeLanguage,
 					dynamics: {
 						name: 'dynamic',
