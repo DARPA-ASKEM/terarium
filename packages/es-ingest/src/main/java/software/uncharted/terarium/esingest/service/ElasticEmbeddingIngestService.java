@@ -108,31 +108,8 @@ public class ElasticEmbeddingIngestService extends ConcurrentWorkerService {
 			}
 		});
 
-		// NOTE: we want to upload _all_ embedding chunks in a single payload, so we
-		// need to ensure when a worker receives the embeddings, it has all the
-		// embeddings for a single document and it is not split between workers.
-
-		readLinesIntoQueue(workQueue, Paths.get(params.getInputDir()).resolve("embeddings"),
-				(String item) -> {
-					try {
-						return ingest.deserializeEmbedding(item);
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
-				},
-				(List<IInputEmbeddingChunk> chunk, IInputEmbeddingChunk latestToAdd) -> {
-					// if we are under the batch size, don't chunk
-					if (chunk.size() < params.getEmbeddingsBatchSize()) {
-						return false;
-					}
-
-					// if we are over, only chunk if the newest item is for a different doc
-
-					IInputEmbeddingChunk last = chunk.get(chunk.size() - 1);
-
-					// do not chunk unless we have different doc ids
-					return !last.getId().equals(latestToAdd.getId());
-				});
+		readWorkIntoQueue(workQueue,
+				ingest.getEmbeddingInputIterator(Paths.get(params.getInputDir()), params.getEmbeddingsBatchSize()));
 
 		waitUntilWorkersAreDone(workQueue);
 

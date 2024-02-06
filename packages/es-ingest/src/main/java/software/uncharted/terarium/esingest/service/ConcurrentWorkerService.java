@@ -1,10 +1,6 @@
 package software.uncharted.terarium.esingest.service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -15,8 +11,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +18,7 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.esingest.iterators.IInputIterator;
 
 @Service
 @Slf4j
@@ -43,21 +38,6 @@ public class ConcurrentWorkerService {
 	@PostConstruct
 	void init() {
 		executor = Executors.newFixedThreadPool(POOL_SIZE);
-	}
-
-	protected List<Path> getFilesInDir(Path dir) {
-		List<Path> files = new ArrayList<>();
-		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-			for (Path file : stream) {
-				// Process the file here
-				// For example, you can print the filename
-				System.out.println(file.getFileName());
-				files.add(file);
-			}
-		} catch (IOException e) {
-			log.error("Error reading directory", e);
-		}
-		return files;
 	}
 
 	protected <T> void startWorkers(BlockingQueue<List<T>> queue, BiConsumer<List<T>, Long> task) {
@@ -104,79 +84,23 @@ public class ConcurrentWorkerService {
 		futures.clear();
 	}
 
-	protected void readLinesIntoQueue(BlockingQueue<List<String>> queue, int batchSize, Path p)
-			throws InterruptedException {
-		List<Path> paths = getFilesInDir(p);
+	protected <T> void readWorkIntoQueue(BlockingQueue<List<T>> queue, IInputIterator<T> iterator)
+			throws IOException, InterruptedException {
 		long lineCount = 0;
-		for (Path path : paths) {
-			// read the file and put the lines into the work queue
-			try (BufferedReader reader = Files.newBufferedReader(path)) {
-				List<String> lines = new ArrayList<>();
-				for (String line; (line = reader.readLine()) != null;) {
-					if (shouldStop.get()) {
-						throw new InterruptedException("Worker encountered an error, stopping ingest");
-					}
-					lines.add(line);
-					if (lines.size() == batchSize) {
-						lineCount += lines.size();
-						log.info("Dispatching {} of {} total lines to work queue", lines.size(), lineCount);
-						queue.offer(lines, WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-						lines = new ArrayList<>();
-					}
-				}
-				// process the remaining lines if there are any
-				if (!lines.isEmpty()) {
-					lineCount += lines.size();
-					log.info("Dispatching remaining {} of {} total lines to work queue", lines.size(), lineCount);
-					lineCount += lines.size();
-					queue.offer(lines, WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-				}
-			} catch (IOException e) {
-				log.error("Error reading file", e);
+		while (true) {
+			List<T> next = iterator.getNext();
+			if (next == null) {
+				// we are done
+				log.info("No more work for queue");
+				break;
 			}
-		}
-	}
-
-	public <T> void readLinesIntoQueue(BlockingQueue<List<T>> queue, Path p,
-			Function<String, T> processor, BiFunction<List<T>, T, Boolean> chunker)
-			throws InterruptedException {
-		List<Path> paths = getFilesInDir(p);
-		long lineCount = 0;
-		for (Path path : paths) {
-			// read the file and put the lines into the work queue
-			try (BufferedReader reader = Files.newBufferedReader(path)) {
-				List<T> chunk = new ArrayList<>();
-				for (String line; (line = reader.readLine()) != null;) {
-					if (shouldStop.get()) {
-						throw new InterruptedException("Worker encountered an error, stopping ingest");
-					}
-
-					// process the line
-					T processed = processor.apply(line);
-
-					// check if we need to split the chunk
-					boolean splitChunk = chunker.apply(chunk, processed);
-
-					if (splitChunk) {
-						lineCount += chunk.size();
-						log.info("Dispatching {} of {} total lines to work queue", chunk.size(),
-								lineCount);
-						queue.offer(chunk, WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-						chunk = new ArrayList<>();
-					}
-					chunk.add(processed);
-				}
-				// process the remaining lines if there are any
-				if (!chunk.isEmpty()) {
-					lineCount += chunk.size();
-					log.info("Dispatching remaining {} of {} total lines to work queue",
-							chunk.size(), lineCount);
-					lineCount += chunk.size();
-					queue.offer(chunk, WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-				}
-			} catch (IOException e) {
-				log.error("Error reading file", e);
+			if (shouldStop.get()) {
+				throw new InterruptedException("Worker encountered an error, stopping ingest");
 			}
+			// push work to queue
+			lineCount += next.size();
+			log.info("Dispatching {} of {} total lines to work queue", next.size(), lineCount);
+			queue.offer(next, WORK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		}
 	}
 

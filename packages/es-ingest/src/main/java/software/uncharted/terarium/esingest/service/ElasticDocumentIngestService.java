@@ -50,16 +50,15 @@ public class ElasticDocumentIngestService extends ConcurrentWorkerService {
 			throws IOException, InterruptedException, ExecutionException {
 
 		List<String> errors = Collections.synchronizedList(new ArrayList<>());
-		BlockingQueue<List<String>> workQueue = new LinkedBlockingQueue<>(params.getWorkQueueSize());
+		BlockingQueue<List<IInputDocument>> workQueue = new LinkedBlockingQueue<>(params.getWorkQueueSize());
 
 		AtomicLong lastTookMs = new AtomicLong(0);
 
-		startWorkers(workQueue, (List<String> items, Long timeWaitingOnQueue) -> {
+		startWorkers(workQueue, (List<IInputDocument> items, Long timeWaitingOnQueue) -> {
 			try {
 				long start = System.currentTimeMillis();
 				List<IOutputDocument> output = new ArrayList<>();
-				for (String item : items) {
-					IInputDocument input = ingest.deserializeDocument(item);
+				for (IInputDocument input : items) {
 					IOutputDocument out = ingest.processDocument(input);
 					if (out != null) {
 						out.addTopics(params.getTopics());
@@ -91,8 +90,8 @@ public class ElasticDocumentIngestService extends ConcurrentWorkerService {
 			}
 		});
 
-		readLinesIntoQueue(workQueue, params.getDocumentBatchSize(),
-				Paths.get(params.getInputDir()).resolve("documents"));
+		readWorkIntoQueue(workQueue,
+				ingest.getDocumentInputIterator(Paths.get(params.getInputDir()), params.getDocumentBatchSize()));
 
 		waitUntilWorkersAreDone(workQueue);
 

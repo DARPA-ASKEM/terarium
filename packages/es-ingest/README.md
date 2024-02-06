@@ -56,22 +56,16 @@ public class ExampleIngest implements IElasticIngest<ExampleDocument, Document, 
 		return chunk;
 	}
 
-	public ExampleDocument deserializeDocument(String line) {
-		try {
-			return mapper.readValue(line, CovidDocument.class);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+	public IInputIterator<ExampleDocument> getDocumentInputIterator(Path inputPath, long batchSize) throws IOException {
+		Path documentPath = inputPath.resolve("example_documents");
+
+		return new JSONLineReaderIterator<>(documentPath, ExampleDocument.class, batchSize);
 	}
 
-	public ExampleEmbedding deserializeEmbedding(String line) {
-		try {
-			return mapper.readValue(line, CovidEmbedding.class);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+	public IInputIterator<ExampleEmbedding> getEmbeddingInputIterator(Path inputPath, long batchSize) throws IOException {
+		Path embeddingsPath = inputPath.resolve("example_embeddings");
 
+		return new JSONLineReaderIterator<>(embeddingsPath, ExampleEmbedding.class, batchSize);
 }
 ```
 
@@ -82,6 +76,7 @@ Add an ingest entry to the `application.properties`:
 ```
 terarium.esingest.ingestParams[0].name="A sample ingest"
 terarium.esingest.ingestParams[0].inputDir=/path/to/source/dir
+terarium.esingest.ingestParams[0].topics=some,topics,to,add,to,each,doc
 terarium.esingest.ingestParams[0].outputIndexRoot=example
 terarium.esingest.ingestParams[0].ingestClass=software.uncharted.terarium.esingest.ingests.CovidIngest
 terarium.esingest.ingestParams[0].clearBeforeIngest=true

@@ -49,7 +49,6 @@ public class ElasticIngestService extends ConcurrentWorkerService {
 					esService.createIndex(indexName);
 				}
 			}
-			esService.createOrEnsureIndexIsEmpty(indexName);
 
 			long start = System.currentTimeMillis();
 
