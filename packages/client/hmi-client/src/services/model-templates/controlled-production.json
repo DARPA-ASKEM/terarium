@@ -28,7 +28,7 @@
         ],
         "transitions": [
             {
-                "id": "ControlledProduction",
+                "id": "Controlled production",
                 "input": [
                     "C"
                 ],
@@ -37,7 +37,7 @@
                     "A"
                 ],
                 "properties": {
-                    "name": "ControlledProduction"
+                    "name": "Controlled production"
                 }
             }
         ]
@@ -46,7 +46,7 @@
         "ode": {
             "rates": [
                 {
-                    "target": "ControlledProduction",
+                    "target": "Controlled production",
                     "expression": "C*p",
                     "expression_mathml": "<apply><times/><ci>C</ci><ci>p</ci></apply>"
                 }

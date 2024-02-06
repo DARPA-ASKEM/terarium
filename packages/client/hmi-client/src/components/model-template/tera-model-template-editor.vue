@@ -70,6 +70,7 @@
 								modelTemplatingService.updateDecomposedCardName(
 									currentEditor,
 									kernelManager,
+									outputCode,
 									name,
 									card.id
 								)
@@ -79,7 +80,9 @@
 							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 						"
 						@port-mouseleave="onPortMouseleave"
-						@remove="modelTemplatingService.removeCard(currentEditor, kernelManager, card.id)"
+						@remove="
+							modelTemplatingService.removeCard(currentEditor, kernelManager, outputCode, card.id)
+						"
 					/>
 				</tera-canvas-item>
 				<tera-canvas-item
@@ -221,6 +224,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			modelTemplatingService.addEdge(
 				decomposedTemplates.value,
 				kernelManager,
+				outputCode,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -248,6 +252,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		modelTemplatingService.addEdge(
 			decomposedTemplates.value,
 			kernelManager,
+			outputCode,
 			junctionIdForNewEdge,
 			target,
 			currentPortPosition,

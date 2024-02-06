@@ -165,6 +165,7 @@ export function addCard(
 export function updateDecomposedCardName(
 	modelTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
+	outputCode: Function,
 	name: string,
 	id: string
 ) {
@@ -177,7 +178,7 @@ export function updateDecomposedCardName(
 			new_name: name
 		})
 		.register('replace_template_name_response', (d) => {
-			console.log(d);
+			outputCode(d);
 
 			model.header.name = name;
 			model.metadata.templateCard.name = name;
@@ -192,6 +193,7 @@ export function updateDecomposedCardName(
 export function removeCard(
 	modelTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
+	outputCode: Function,
 	id: string
 ) {
 	const index = findCardIndexById(modelTemplates, id);
@@ -201,7 +203,9 @@ export function removeCard(
 		.sendMessage('remove_template_request', {
 			template_name: modelTemplates.models[index].metadata.templateCard.name
 		})
-		.register('remove_template_response', () => {
+		.register('remove_template_response', (d) => {
+			outputCode(d);
+
 			// Remove edges connected to the card
 			modelTemplates.junctions.forEach((junction) => {
 				junction.edges = junction.edges.filter((edge) => edge.target.cardId !== id);
@@ -215,30 +219,40 @@ export function removeCard(
 export function addEdge(
 	modelTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
+	outputCode: Function,
 	junctionId: string,
 	target: { cardId: string; portId: string },
 	portPosition: Position,
 	interpolatePointsFn?: Function
 ) {
-	kernelManager
-		.sendMessage('replace_state_name_request', { template_name: 'Natural conversion' })
-		.register('replace_state_name_response', (d) => {
-			const index = modelTemplates.junctions.findIndex(({ id }) => id === junctionId);
-			const junctionToDrawFrom = modelTemplates.junctions[index];
+	const templateName = modelTemplates.models.find(
+		(model) => model.metadata.templateCard.id === target.cardId
+	).metadata.templateCard.name;
 
-			const points: Position[] = [
-				{ x: junctionToDrawFrom.x + 10, y: junctionToDrawFrom.y + 10 },
-				{ x: portPosition.x, y: portPosition.y }
-			];
+	const index = modelTemplates.junctions.findIndex(({ id }) => id === junctionId);
+	const junctionToDrawFrom = modelTemplates.junctions[index];
 
-			modelTemplates.junctions[index].edges.push({
-				id: uuidv4(),
-				target,
-				points: interpolatePointsFn ? interpolatePointsFn(...points) : points
+	if (junctionToDrawFrom.edges.length >= 1) {
+		kernelManager
+			.sendMessage('replace_state_name_request', {
+				template_name: templateName,
+				old_name: target.portId,
+				new_name: junctionToDrawFrom.edges[0].target.portId
+			})
+			.register('replace_state_name_response', (d) => {
+				outputCode(d);
 			});
+	}
+	const points: Position[] = [
+		{ x: junctionToDrawFrom.x + 10, y: junctionToDrawFrom.y + 10 },
+		{ x: portPosition.x, y: portPosition.y }
+	];
 
-			console.log(d);
-		});
+	modelTemplates.junctions[index].edges.push({
+		id: uuidv4(),
+		target,
+		points: interpolatePointsFn ? interpolatePointsFn(...points) : points
+	});
 }
 
 // TODO: There isn't a way to remove edges in the UI yet

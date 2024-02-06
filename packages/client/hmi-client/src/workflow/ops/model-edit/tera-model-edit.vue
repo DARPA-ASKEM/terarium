@@ -227,7 +227,7 @@ const buildJupyterContext = () => {
 	}
 
 	return {
-		context: 'mira_model',
+		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
 			id: amr.value.id
