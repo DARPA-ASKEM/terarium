@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.service.elasticsearch;
+package software.uncharted.terarium.esingest.service;
 
 import java.io.IOException;
 import java.net.URI;
@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -25,14 +26,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.elasticsearch.core.bulk.UpdateOperation;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -40,13 +46,15 @@ import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsIndexTemplateRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.esingest.models.output.IOutputDocument;
 
 @Service
 @Data
@@ -334,28 +342,125 @@ public class ElasticsearchService {
 		return null;
 	}
 
-	public <T> List<T> knnSearch(String index, KnnQuery query, final Class<T> tClass)
+	@Data
+	static public class BulkOpResponse {
+		private List<String> errors;
+		private long took;
+	}
+
+	public <Output extends IOutputDocument> BulkOpResponse bulkIndex(String index, List<Output> docs)
 			throws IOException {
-		log.info("KNN search on: {}", index);
+		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
-		if (query.numCandidates() < query.k()) {
-			throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
+		for (Output doc : docs) {
+			bulkRequest.operations(op -> op
+					.index(idx -> idx
+							.index(index)
+							.id(doc.getId().toString())
+							.document(doc)));
 		}
 
-		SearchRequest req = new SearchRequest.Builder()
-				.index(index)
-				.size((int) query.k())
-				.source(src -> src.filter(v -> v.includes("title")))
-				.knn(query)
-				.build();
+		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
 
-		final List<T> docs = new ArrayList<>();
-		final SearchResponse<T> res = client.search(req, tClass);
-
-		for (final Hit<T> hit : res.hits().hits()) {
-			docs.add(hit.source());
+		List<String> errors = new ArrayList<>();
+		if (bulkResponse.errors()) {
+			for (BulkResponseItem item : bulkResponse.items()) {
+				ErrorCause error = item.error();
+				if (error != null) {
+					errors.add(error.reason());
+				}
+			}
 		}
-		return docs;
+
+		BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
+	}
+
+	public <Output extends IOutputDocument> BulkOpResponse bulkUpdate(String index, List<Output> docs)
+			throws IOException {
+		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+		List<BulkOperation> operations = new ArrayList<>();
+		for (Output doc : docs) {
+			UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<Object, Object>()
+					.index(index)
+					.id(doc.getId().toString())
+					.action(a -> a.doc(doc))
+					.build();
+
+			BulkOperation operation = new BulkOperation.Builder().update(updateOperation).build();
+			operations.add(operation);
+		}
+		// Add the BulkOperation to the BulkRequest
+		bulkRequest.operations(operations);
+
+		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
+
+		List<String> errors = new ArrayList<>();
+		if (bulkResponse.errors()) {
+			for (BulkResponseItem item : bulkResponse.items()) {
+				ErrorCause error = item.error();
+				if (error != null) {
+					errors.add(error.reason());
+				}
+			}
+		}
+
+		BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
+	}
+
+	@Data
+	static public class ScriptedUpdatedDoc {
+		String id;
+		Map<String, JsonData> params;
+	}
+
+	public BulkOpResponse bulkScriptedUpdate(String index, String script, List<ScriptedUpdatedDoc> docs)
+			throws IOException {
+
+		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+		List<BulkOperation> operations = new ArrayList<>();
+		for (ScriptedUpdatedDoc doc : docs) {
+			BulkOperation operation = new BulkOperation.Builder().update(u -> u
+					.id(doc.getId())
+					.index(index)
+					.retryOnConflict(10)
+					.action(action -> action
+							.script(s -> s
+									.inline(inlineScript -> inlineScript
+											.lang("painless")
+											.params(doc.getParams())
+											.source(script)))))
+					.build();
+
+			operations.add(operation);
+		}
+
+		// Add the BulkOperation to the BulkRequest
+		bulkRequest.operations(operations);
+
+		BulkResponse bulkResponse = client.bulk(bulkRequest.build());
+
+		List<String> errors = new ArrayList<>();
+		if (bulkResponse.errors()) {
+			for (BulkResponseItem item : bulkResponse.items()) {
+				ErrorCause error = item.error();
+				if (error != null) {
+					errors.add(error.reason());
+				}
+			}
+		}
+
+		BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
 	}
 
 }
