@@ -34,7 +34,7 @@ jobs:
 
       # Validate Gradle JAR
       - name: Validate GradleW JAR
-        uses: gradle/wrapper-validation-action@1ff5a18cc396177ebd27c4250f7132e72af93462
+        uses: gradle/wrapper-validation-action@83cf5fdbbf627c8da6fec32f28db58967a3136ac
 
       # Setup Java 17
       - name: Setup Java v17
