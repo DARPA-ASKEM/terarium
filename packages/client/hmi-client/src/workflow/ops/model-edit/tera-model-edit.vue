@@ -35,6 +35,7 @@
 				title="Model Preview"
 				v-model:output="selectedOutputId"
 				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
 				:options="outputs"
 				is-selectable
 			>
@@ -98,7 +99,13 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close', 'select-output']);
+const emit = defineEmits([
+	'append-output-port',
+	'update-state',
+	'close',
+	'select-output',
+	'update-output-port'
+]);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -293,6 +300,13 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 
 const onUpdateOutput = (id: string) => {
 	emit('select-output', id);
+};
+
+const onUpdateSelection = (id) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
 };
 
 watch(
