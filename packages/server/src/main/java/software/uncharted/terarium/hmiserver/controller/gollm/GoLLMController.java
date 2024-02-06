@@ -78,9 +78,10 @@ public class GoLLMController {
 	private TaskResponseHandler getModelCardResponseHandler() {
 		TaskResponseHandler handler = new TaskResponseHandler();
 		handler.onSuccess((TaskResponse resp) -> {
-			ModelCardProperties props = resp.getAdditionalProperties(ModelCardProperties.class);
-			log.info("Writing model card to database for model {}", props.getModelId());
 			try {
+				String serializedString = objectMapper.writeValueAsString(resp.getAdditionalProperties());
+				ModelCardProperties props = objectMapper.readValue(serializedString, ModelCardProperties.class);
+				log.info("Writing model card to database for model {}", props.getModelId());
 				Model model = modelService.getModel(props.getModelId())
 						.orElseThrow();
 				ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);

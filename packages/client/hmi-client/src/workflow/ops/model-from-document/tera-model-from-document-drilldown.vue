@@ -408,14 +408,15 @@ async function generateModelCard(documentId, modelId) {
 	const modelServiceType = clonedState.value.modelService;
 
 	if (modelServiceType === ModelServiceType.TA1) {
-		const profiledModel = await profile(modelId, documentId);
-		if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
+		await profile(modelId, documentId);
+		fetchModel();
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
 		const goLLMId = await modelCard(documentId, modelId);
 		handleTaskById(goLLMId?.id, (data) => {
 			console.log(data);
+			fetchModel();
 		});
 	}
 }
