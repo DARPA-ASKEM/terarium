@@ -1,5 +1,7 @@
 package software.uncharted.terarium.esingest.service;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -16,21 +18,24 @@ public class ElasticIngestParams {
 	// The output index root to ingest into
 	String outputIndexRoot;
 
+	// topics to add to each document
+	List<String> topics;
+
 	// Whether or not to clear the index before ingesting
-	private boolean clearBeforeIngest = false;
+	boolean clearBeforeIngest = false;
 
 	// The work queue size, determines how many documents / embeddings can queue up
 	// while workers are busy
-	private int workQueueSize = 36;
+	int workQueueSize = 36;
 
 	// The number of documents to fail to ingest before the entire ingest is failed.
-	private int errorsThreshold = 10;
+	int errorsThreshold = 10;
 
 	// The number of documents to ingest in a single batch
-	private int documentBatchSize = 500;
+	int documentBatchSize = 500;
 
 	// The number of embedding chunks to ingest in a single batch
-	private int embeddingsBatchSize = 500;
+	int embeddingsBatchSize = 500;
 
 	// The classname used for the ingest.
 	String ingestClass;

@@ -21,6 +21,15 @@ public class Document implements IOutputDocument {
 
 	private List<Embedding> embeddings;
 
+	private List<String> topics;
+
+	public void addTopics(List<String> ts) {
+		if (topics == null) {
+			topics = new ArrayList<>();
+		}
+		topics.addAll(ts);
+	}
+
 	public void addEmbedding(Embedding embedding) {
 		if (embeddings == null) {
 			embeddings = new ArrayList<>();

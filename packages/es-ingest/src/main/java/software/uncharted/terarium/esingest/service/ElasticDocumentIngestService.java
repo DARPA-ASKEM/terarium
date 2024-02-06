@@ -62,6 +62,7 @@ public class ElasticDocumentIngestService extends ConcurrentWorkerService {
 					IInputDocument input = ingest.deserializeDocument(item);
 					IOutputDocument out = ingest.processDocument(input);
 					if (out != null) {
+						out.addTopics(params.getTopics());
 						output.add(out);
 					}
 				}
