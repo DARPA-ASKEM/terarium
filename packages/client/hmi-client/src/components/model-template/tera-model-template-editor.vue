@@ -64,14 +64,15 @@
 						:model="currentEditor.models[index]"
 						is-editable
 						@update-name="
-							(name: string) => modelTemplatingService.updateCardName(currentEditor, name, card.id)
+							(name: string) =>
+								modelTemplatingService.updateCardName(currentEditor, kernelManager, name, card.id)
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
 						@port-mouseover="
 							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 						"
 						@port-mouseleave="onPortMouseleave"
-						@remove="modelTemplatingService.removeCard(currentEditor, card.id)"
+						@remove="modelTemplatingService.removeCard(currentEditor, kernelManager, card.id)"
 					/>
 				</tera-canvas-item>
 				<tera-canvas-item
@@ -212,6 +213,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			// Add a default edge as well
 			modelTemplatingService.addEdge(
 				decomposedTemplates.value,
+				kernelManager,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -238,6 +240,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 	) {
 		modelTemplatingService.addEdge(
 			decomposedTemplates.value,
+			kernelManager,
 			junctionIdForNewEdge,
 			target,
 			currentPortPosition,
