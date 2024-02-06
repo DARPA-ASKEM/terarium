@@ -1,8 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
-import java.io.IOException;
-import java.util.*;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPut;
@@ -13,25 +17,9 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -43,6 +31,9 @@ import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+
+import java.io.IOException;
+import java.util.*;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -92,12 +83,15 @@ public class KnowledgeController {
 	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(@RequestBody Map<String, Object> requestMap) {
 		String format = (String) requestMap.getOrDefault("format", "latex");
 		String framework = (String) requestMap.getOrDefault("framework", "petrinet");
-		UUID modelId = UUID.fromString((String) requestMap.get("modelId"));
+		UUID modelId = null;
+		if (requestMap.containsKey("modelId")) {
+			modelId = UUID.fromString((String) requestMap.get("modelId"));
+		} 
 		List<String> equations = (List<String>) requestMap.getOrDefault("equations", Collections.emptyList());
 
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
 		return ResponseEntity
-				.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId.toString(), equations)
+				.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId != null ? modelId.toString() : null, equations)
 						.getBody());
 	}
 
@@ -116,11 +110,11 @@ public class KnowledgeController {
 	@PostMapping("/code-to-amr")
 	@Secured(Roles.USER)
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
-			@RequestParam("code_id") UUID codeId,
-			@RequestParam(name = "name", required = false) String name,
-			@RequestParam(name = "description", required = false) String description,
-			@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly,
-			@RequestParam(name = "llm_assisted", required = false) Boolean llmAssisted) {
+			@RequestParam("code_id") final UUID codeId,
+			@RequestParam(name = "name", required = false) final String name,
+			@RequestParam(name = "description", required = false) final String description,
+			@RequestParam(name = "dynamics_only", required = false) final Boolean dynamicsOnly,
+			@RequestParam(name = "llm_assisted", required = false) final Boolean llmAssisted) {
 		return ResponseEntity.ok(
 				knowledgeMiddlewareProxy.postCodeToAMR(codeId.toString(), name, description, dynamicsOnly, llmAssisted)
 						.getBody());
@@ -144,7 +138,7 @@ public class KnowledgeController {
 		// 2. upload file to code asset
 		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		
+
 		// we have pre-formatted the files object already so no need to use uploadCode
 		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), "tempFile");
 		final HttpPut put = new HttpPut(presignedURL.getUrl());
@@ -156,7 +150,7 @@ public class KnowledgeController {
 		}
 		// 3. create model from code asset
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false).getBody());
-		} 
+		}
 		catch (Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
@@ -180,11 +174,11 @@ public class KnowledgeController {
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFExtractions(
-			@RequestParam("document_id") UUID documentId,
-			@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
-			@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
-			@RequestParam(name = "name", required = false) String name,
-			@RequestParam(name = "description", required = false) String description) {
+			@RequestParam("document_id") final UUID documentId,
+			@RequestParam(name = "annotate_skema", defaultValue = "true") final Boolean annotateSkema,
+			@RequestParam(name = "annotate_mit", defaultValue = "true") final Boolean annotateMIT,
+			@RequestParam(name = "name", required = false) final String name,
+			@RequestParam(name = "description", required = false) final String description) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy
 				.postPDFExtractions(documentId.toString(), annotateSkema, annotateMIT, name, description).getBody());
 	}
@@ -197,13 +191,13 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/pdf-to-cosmos")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") UUID documentId) {
+	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") final UUID documentId) {
 
 		try {
-			JsonNode node = knowledgeMiddlewareProxy.postPDFToCosmos(documentId.toString()).getBody();
+			final JsonNode node = knowledgeMiddlewareProxy.postPDFToCosmos(documentId.toString()).getBody();
 
 			return ResponseEntity.ok(node);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to create provenance";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -222,14 +216,14 @@ public class KnowledgeController {
 	@PostMapping("/profile-model/{model_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileModel(
-			@PathVariable("model_id") UUID modelId,
-			@RequestParam("document_id") UUID documentId) {
+			@PathVariable("model_id") final UUID modelId,
+			@RequestParam("document_id") final UUID documentId) {
 
 		try {
-			Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
+			final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
 				ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
 			provenanceService.createProvenance(provenancePayload);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to create provenance for profile-model";
 			log.error(error, e);
 		}
@@ -237,8 +231,6 @@ public class KnowledgeController {
 		return ResponseEntity
 			.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
 	}
-
-	;
 
 	/**
 	 * Profile a dataset
@@ -250,16 +242,16 @@ public class KnowledgeController {
 	@PostMapping("/profile-dataset/{dataset_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileDataset(
-			@PathVariable("dataset_id") UUID datasetId,
-			@RequestParam(name = "document_id", required = false) Optional<UUID> documentId) {
+			@PathVariable("dataset_id") final UUID datasetId,
+			@RequestParam(name = "document_id", required = false) final Optional<UUID> documentId) {
 
 		// Provenance call if a document id is provided
 		if (documentId.isPresent()) {
 			try {
-				Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
+				final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
 				ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
 				provenanceService.createProvenance(provenancePayload);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				final String error = "Unable to create provenance for profile-dataset";
 				log.error(error, e);
 			}
@@ -269,8 +261,6 @@ public class KnowledgeController {
 		return ResponseEntity.ok(
 				knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), docIdString).getBody());
 	}
-
-	;
 
 	/**
 	 * Profile a model
@@ -282,11 +272,9 @@ public class KnowledgeController {
 	@PostMapping("/link-amr")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postLinkAmr(
-			@RequestParam("document_id") String documentId,
-			@RequestParam("model_id") String modelId) {
+			@RequestParam("document_id") final String documentId,
+			@RequestParam("model_id") final String modelId) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postLinkAmr(documentId, modelId).getBody());
 	}
-
-	;
 
 }

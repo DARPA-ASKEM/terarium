@@ -7,13 +7,16 @@
 # precedence.
 
 # Global Owners. Unless a later match takes precedence
-* @dgauldie @chris-dickson @mwdchang @YohannParis
+* @dgauldie @mwdchang @YohannParis
 
 # Client code owners
 /packages/client/ @YohannParis @mwdchang
 
 # Backend services owners
 /packages/server/ @dgauldie @dvince2
+/packages/db-mirgation/ @dgauldie @dvince2
+/packages/taskrunner/ @kbirk @YohannParis @j2whiting
+/packages/esingest/ @kbirk @j2whiting
 
 # Documentation owners
 docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2

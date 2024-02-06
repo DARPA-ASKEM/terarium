@@ -92,13 +92,20 @@
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview title="Preview">
+			<tera-drilldown-preview
+				title="Preview"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				is-selectable
+			>
 				<div v-if="!showSpinner" class="form-section">
 					<h4>Variables</h4>
-					<section v-if="modelConfig && node.state.chartConfigs.length">
+					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset">
 						<tera-simulate-chart
 							v-for="(cfg, index) of node.state.chartConfigs"
-							:key="index"
+							:key="cfg.selectedRun"
 							:run-results="runResults"
 							:chartConfig="cfg"
 							:initial-data="csvAsset"
@@ -150,7 +157,9 @@ import {
 	getRunResultCiemss,
 	makeCalibrateJobCiemss,
 	simulationPollAction,
-	querySimulationInProgress
+	querySimulationInProgress,
+	getCalibrateBlobURL,
+	makeForecastJobCiemss
 } from '@/services/models/simulation-service';
 import {
 	CalibrationRequestCiemss,
@@ -181,12 +190,18 @@ import { Poller, PollerState } from '@/api/api';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import { useToastService } from '@/services/toast';
-import { CalibrationOperationCiemss, CalibrationOperationStateCiemss } from './calibrate-operation';
+import { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits([
+	'append-output-port',
+	'close',
+	'select-output',
+	'update-output-port',
+	'update-state'
+]);
 const toast = useToastService();
 
 enum CalibrateTabs {
@@ -208,7 +223,6 @@ const currentDatasetFileName = ref<string>();
 const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.value);
 
 const runResults = ref<RunResults>({});
-const completedRunId = ref<string>();
 
 const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.Retrieving, value: 0 });
@@ -232,15 +246,17 @@ const disableRunButton = computed(
 		!datasetId.value
 );
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds[0]);
+const selectedOutputId = ref<string>();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
 	}
-});
-
-onUnmounted(() => {
-	poller.stop();
+	return [];
 });
 
 const runCalibrate = async () => {
@@ -278,7 +294,7 @@ const runCalibrate = async () => {
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	if (response?.simulationId) {
-		getStatus(response.simulationId);
+		getCalibrateStatus(response.simulationId);
 	}
 };
 
@@ -292,7 +308,7 @@ function getMessageHandler(event: ClientEvent<any>) {
 	}
 }
 
-const getStatus = async (simulationId: string) => {
+const getCalibrateStatus = async (simulationId: string) => {
 	showSpinner.value = true;
 	if (!simulationId) {
 		console.log('No sim id');
@@ -301,6 +317,7 @@ const getStatus = async (simulationId: string) => {
 	const runIds = [simulationId];
 
 	// open a connection for each run id and handle the messages
+	// FIXME: Show progress and loss
 	await subscribe(ClientEventType.SimulationPyciemss, getMessageHandler);
 
 	poller
@@ -325,26 +342,84 @@ const getStatus = async (simulationId: string) => {
 		throw Error('Failed Runs');
 	}
 
-	completedRunId.value = simulationId;
-	updateOutputPorts(completedRunId);
+	// Start 2nd simulation to get sample simulation from dill
+	const dillURL = await getCalibrateBlobURL(simulationId);
+	console.log('dill URL is', dillURL);
+
+	const resp = await makeForecastJobCiemss({
+		projectId: '',
+		modelConfigId: modelConfigId.value as string,
+		timespan: {
+			start: 0,
+			end: 100
+			// start: state.currentTimespan.start,
+			// end: state.currentTimespan.end
+		},
+		extra: {
+			num_samples: 5,
+			method: 'dopri5',
+			inferred_parameters: simulationId
+		},
+		engine: 'ciemss'
+	});
+
+	const sampleSimulateId = resp.id;
+	console.log(resp.id);
+
+	poller.stop();
+	poller
+		.setInterval(3000)
+		.setThreshold(100)
+		.setPollAction(async () =>
+			simulationPollAction([sampleSimulateId], props.node, progress, emit)
+		);
+	const sampleSimulateResults = await poller.start();
+
+	if (sampleSimulateResults.state === PollerState.Cancelled) {
+		showSpinner.value = false;
+		return;
+	}
+	if (sampleSimulateResults.state !== PollerState.Done || !sampleSimulateResults.data) {
+		// throw if there are any failed runs for now
+		showSpinner.value = false;
+		logger.error(`Simulation: ${sampleSimulateId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+		throw Error('Failed Runs');
+	}
+
+	const output = await getRunResultCiemss(sampleSimulateId, 'result.csv');
+	runResults.value = output.runResults;
+
+	updateOutputPorts(simulationId, sampleSimulateId);
 	showSpinner.value = false;
 };
 
-const updateOutputPorts = async (runId) => {
+const updateOutputPorts = async (calibrationId: string, simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push({
-		selectedRun: runId,
-		selectedVariable: []
-	});
+
+	// state.chartConfigs.push({
+	// 	selectedRun: simulationId,
+	// 	selectedVariable: []
+	// });
+
+	state.chartConfigs = [
+		{
+			selectedRun: simulationId,
+			selectedVariable: []
+		}
+	];
+
+	state.calibrationId = calibrationId;
+	state.simulationId = simulationId;
+
 	emit('update-state', state);
 
 	emit('append-output-port', {
-		type: CalibrationOperationCiemss.outputs[0].type,
+		type: 'simulationId',
 		label: `${portLabel} Result`,
-		value: {
-			runId
-		}
+		value: [calibrationId]
 	});
 };
 
@@ -360,6 +435,17 @@ const addChart = () => {
 	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	emit('update-state', state);
+};
+
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
+};
+
+const onUpdateSelection = (id) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
 };
 
 // Used from button to add new entry to the mapping object
@@ -410,38 +496,55 @@ async function getAutoMapping() {
 	emit('update-state', state);
 }
 
-// Set up model config + dropdown names
-// Note: Same as calibrate-node
-watch(
-	() => modelConfigId.value,
-	async () => {
-		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
-		modelConfig.value = modelConfiguration;
-		modelStateOptions.value = modelOptions;
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	const runIds = querySimulationInProgress(props.node);
 
-// Set up csv + dropdown names
-// Note: Same as calibrate-node
-watch(
-	() => datasetId.value,
-	async () => {
-		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
-		datasetColumns.value = datasetOptions;
-	},
-	{ immediate: true }
-);
+	// Model configuration input
+	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	modelConfig.value = modelConfiguration;
+	modelStateOptions.value = modelOptions;
+
+	// dataset input
+	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
+	currentDatasetFileName.value = filename;
+	csvAsset.value = csv;
+	datasetColumns.value = datasetOptions;
+
+	// currently in progress
+	if (runIds.length > 0) {
+		getCalibrateStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 // Fetch simulation run results whenever output changes
 watch(
 	() => simulationIds.value,
 	async () => {
-		if (!simulationIds.value) return;
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
+		// if (!simulationIds.value) return;
+		/*
+		const output = await getRunResultCiemss(simulationIds.value[0].runId, result.csv');
 		runResults.value = output.runResults;
+		*/
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
+	async () => {
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+
+			// FIXME: could still be running
+			const state = props.node.state;
+			const output = await getRunResultCiemss(state.simulationId, 'result.csv');
+			runResults.value = output.runResults;
+		}
 	},
 	{ immediate: true }
 );

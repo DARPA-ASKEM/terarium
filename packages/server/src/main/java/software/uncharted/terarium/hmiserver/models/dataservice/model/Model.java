@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import java.util.Map;
 
 import lombok.Data;
