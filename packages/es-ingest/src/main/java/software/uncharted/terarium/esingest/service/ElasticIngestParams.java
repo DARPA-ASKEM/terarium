@@ -31,11 +31,8 @@ public class ElasticIngestParams {
 	// The number of documents to fail to ingest before the entire ingest is failed.
 	int errorsThreshold = 10;
 
-	// The number of documents to ingest in a single batch
-	int documentBatchSize = 500;
-
-	// The number of embedding chunks to ingest in a single batch
-	int embeddingsBatchSize = 500;
+	// The number of documents to process in a single batch.
+	int batchSize = 500;
 
 	// The classname used for the ingest.
 	String ingestClass;

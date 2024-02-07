@@ -41,14 +41,14 @@ public class ElasticIngestApplication {
 				System.exit(1);
 			}
 
-			List<IElasticIngest<?, ?, ?, ?>> ingests = new ArrayList<>();
+			List<IElasticIngest> ingests = new ArrayList<>();
 
 			for (ElasticIngestParams params : config.getIngestParams()) {
 				log.info("Loading ingest class: {}", params.getIngestClass());
 
 				Class<?> ingestClass = Class.forName(params.getIngestClass());
 				Constructor<?> constructor = ingestClass.getConstructor();
-				IElasticIngest<?, ?, ?, ?> ingest = (IElasticIngest<?, ?, ?, ?>) constructor.newInstance();
+				IElasticIngest ingest = (IElasticIngest) constructor.newInstance();
 				ingests.add(ingest);
 			}
 

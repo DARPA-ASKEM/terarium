@@ -26,7 +26,7 @@ public class ElasticsearchConfiguration {
 	public record Index(
 			String prefix,
 			String suffix,
-			String covidRoot) {
+			String epidemiologyRoot) {
 	}
 
 	public String getIndex(String root) {

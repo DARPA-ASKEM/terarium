@@ -1,6 +1,6 @@
 {
   "index_patterns": [
-    "*_covid_tera_1.0"
+    "*_epidemiology_tera_1.0"
   ],
   "version": 1,
   "priority": 500,

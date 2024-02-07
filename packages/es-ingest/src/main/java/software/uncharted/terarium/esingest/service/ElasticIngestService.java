@@ -2,7 +2,9 @@ package software.uncharted.terarium.esingest.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.stereotype.Service;
@@ -11,10 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.esingest.ingests.IElasticIngest;
+import software.uncharted.terarium.esingest.ingests.IElasticPass;
 import software.uncharted.terarium.esingest.models.input.IInputDocument;
-import software.uncharted.terarium.esingest.models.input.IInputEmbeddingChunk;
 import software.uncharted.terarium.esingest.models.output.IOutputDocument;
-import software.uncharted.terarium.esingest.models.output.IOutputEmbeddingChunk;
 import software.uncharted.terarium.esingest.util.TimeFormatter;
 
 @Service
@@ -22,16 +23,15 @@ import software.uncharted.terarium.esingest.util.TimeFormatter;
 @RequiredArgsConstructor
 public class ElasticIngestService extends ConcurrentWorkerService {
 
-	private final ElasticDocumentIngestService esDocumentIngestService;
+	private final ElasticInsertService esInsertService;
 
-	private final ElasticEmbeddingIngestService esEmbeddingIngestService;
+	private final ElasticUpdateService esUpdateService;
 
 	private final ElasticsearchService esService;
 
 	private final ElasticsearchConfiguration esConfig;
 
-	public void ingest(ElasticIngestParams params,
-			IElasticIngest<IInputDocument, IOutputDocument, IInputEmbeddingChunk, IOutputEmbeddingChunk> ingest)
+	public void ingest(ElasticIngestParams params, IElasticIngest ingest)
 			throws IOException, InterruptedException, ExecutionException {
 
 		log.info("Running ingest: {}", params.getName());
@@ -50,29 +50,45 @@ public class ElasticIngestService extends ConcurrentWorkerService {
 				}
 			}
 
-			long start = System.currentTimeMillis();
+			// setup ingest
+			ingest.setup(params);
 
-			long documentStart = System.currentTimeMillis();
+			Queue<IElasticPass<? extends IInputDocument, ? extends IOutputDocument>> passes = new LinkedList<>(
+					ingest.getPasses());
+
+			if (passes.isEmpty()) {
+				throw new RuntimeException("No passes found in ingest");
+			}
+
+			long start = System.currentTimeMillis();
+			List<String> errs = new ArrayList<>();
+
+			IElasticPass<? extends IInputDocument, ? extends IOutputDocument> insertPass = passes.poll();
 
 			log.info("Ingesting documents from {} into {}", params.getInputDir(), indexName);
 
-			List<String> errs = new ArrayList<>();
-			errs.addAll(esDocumentIngestService.ingestData(params, ingest));
+			long insertStart = System.currentTimeMillis();
 
-			esDocumentIngestService.shutdown();
+			insertPass.setup(params);
+			errs.addAll(esInsertService.insertDocuments(params, insertPass));
+			insertPass.teardown(params);
+			esInsertService.shutdown();
 
 			log.info("Ingested documents successfully in {}",
-					TimeFormatter.format(System.currentTimeMillis() - documentStart));
+					TimeFormatter.format(System.currentTimeMillis() - insertStart));
 
-			long embeddingStart = System.currentTimeMillis();
+			for (IElasticPass<? extends IInputDocument, ? extends IOutputDocument> updatePass : passes) {
+				long updateStart = System.currentTimeMillis();
+				updatePass.setup(params);
+				errs.addAll(esUpdateService.updateDocuments(params, updatePass));
+				updatePass.teardown(params);
+				log.info("Updated documents successfully in {}",
+						TimeFormatter.format(System.currentTimeMillis() - updateStart));
+			}
+			esUpdateService.shutdown();
 
-			log.info("Ingesting embeddings");
-			errs.addAll(esEmbeddingIngestService.ingestData(params, ingest));
-
-			esEmbeddingIngestService.shutdown();
-
-			log.info("Ingested embeddings successfully in {}",
-					TimeFormatter.format(System.currentTimeMillis() - embeddingStart));
+			// teardown ingest
+			ingest.setup(params);
 
 			log.info(
 					"Ingest completed successfully in {}",

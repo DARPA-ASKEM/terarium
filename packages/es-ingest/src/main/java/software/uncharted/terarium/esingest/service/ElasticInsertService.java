@@ -1,7 +1,6 @@
 package software.uncharted.terarium.esingest.service;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,55 +14,39 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.esingest.ingests.IElasticIngest;
+import software.uncharted.terarium.esingest.ingests.IElasticPass;
 import software.uncharted.terarium.esingest.models.input.IInputDocument;
-import software.uncharted.terarium.esingest.models.input.IInputEmbeddingChunk;
 import software.uncharted.terarium.esingest.models.output.IOutputDocument;
-import software.uncharted.terarium.esingest.models.output.IOutputEmbeddingChunk;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ElasticDocumentIngestService extends ConcurrentWorkerService {
+public class ElasticInsertService extends ConcurrentWorkerService {
 
 	private final ElasticsearchService esService;
 	private final ElasticsearchConfiguration esConfig;
 
-	/**
-	 * Ingests document data from source directory into elasticsearch.
-	 *
-	 * Iterates over each file in the source directory. Each line is a single
-	 * document. Lines are sent to workers to be processed and ingested.
-	 *
-	 * @param params - The ingest parameters.
-	 * @param ingest - The ingest class implementation.
-	 *
-	 * @return - A list of errors encountered during ingest.
-	 *
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws ExecutionException
-	 */
-	public List<String> ingestData(
+	public <Input extends IInputDocument, Output extends IOutputDocument> List<String> insertDocuments(
 			ElasticIngestParams params,
-			IElasticIngest<IInputDocument, IOutputDocument, IInputEmbeddingChunk, IOutputEmbeddingChunk> ingest)
+			IElasticPass<Input, Output> ingest)
 			throws IOException, InterruptedException, ExecutionException {
 
 		List<String> errors = Collections.synchronizedList(new ArrayList<>());
-		BlockingQueue<List<IInputDocument>> workQueue = new LinkedBlockingQueue<>(params.getWorkQueueSize());
+		BlockingQueue<List<Input>> workQueue = new LinkedBlockingQueue<>(params.getWorkQueueSize());
 
 		AtomicLong lastTookMs = new AtomicLong(0);
 
-		startWorkers(workQueue, (List<IInputDocument> items, Long timeWaitingOnQueue) -> {
+		startWorkers(workQueue, (List<Input> items, Long timeWaitingOnQueue) -> {
 			try {
 				long start = System.currentTimeMillis();
-				List<IOutputDocument> output = new ArrayList<>();
-				for (IInputDocument input : items) {
-					IOutputDocument out = ingest.processDocument(input);
-					if (out != null) {
-						out.addTopics(params.getTopics());
-						output.add(out);
-					}
+				List<Output> output = ingest.process(items);
+				for (Output out : output) {
+					out.addTopics(params.getTopics());
+				}
+
+				if (output.isEmpty()) {
+					log.warn("Batch had not processed output, skipping");
+					return;
 				}
 
 				long sinceLastTook = (System.currentTimeMillis() - start) + timeWaitingOnQueue;
@@ -90,8 +73,7 @@ public class ElasticDocumentIngestService extends ConcurrentWorkerService {
 			}
 		});
 
-		readWorkIntoQueue(workQueue,
-				ingest.getDocumentInputIterator(Paths.get(params.getInputDir()), params.getDocumentBatchSize()));
+		readWorkIntoQueue(workQueue, ingest.getIterator(params));
 
 		waitUntilWorkersAreDone(workQueue);
 
