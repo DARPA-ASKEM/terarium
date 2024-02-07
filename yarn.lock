@@ -8205,6 +8205,7 @@ __metadata:
     vue-tsc: "npm:1.8.27"
     vue3-ace-editor: "npm:2.2.4"
     vue3-draggable-resizable: "npm:1.6.5"
+    vue3-lottie: "npm:3.2.0"
   languageName: unknown
   linkType: soft
 
@@ -10158,6 +10159,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash-es@npm:^4.17.21":
+  version: 4.17.21
+  resolution: "lodash-es@npm:4.17.21"
+  checksum: 03f39878ea1e42b3199bd3f478150ab723f93cc8730ad86fec1f2804f4a07c6e30deaac73cad53a88e9c3db33348bb8ceeb274552390e7a75d7849021c02df43
+  languageName: node
+  linkType: hard
+
 "lodash.clonedeep@npm:^4.5.0":
   version: 4.5.0
   resolution: "lodash.clonedeep@npm:4.5.0"
@@ -10230,6 +10238,13 @@ __metadata:
   bin:
     loose-envify: cli.js
   checksum: 6517e24e0cad87ec9888f500c5b5947032cdfe6ef65e1c1936a0c48a524b81e65542c9c3edc91c97d5bddc806ee2a985dbc79be89215d613b1de5db6d1cfe6f4
+  languageName: node
+  linkType: hard
+
+"lottie-web@npm:5.12.2":
+  version: 5.12.2
+  resolution: "lottie-web@npm:5.12.2"
+  checksum: cd377d54a675b37ac9359306b84097ea402dff3d74a2f45e6e0dbcff1df94b3a978e92e48fd34765754bdbb94bd2d8d4da31954d95f156e77489596b235cac91
   languageName: node
   linkType: hard
 
@@ -14111,6 +14126,18 @@ __metadata:
   version: 1.6.5
   resolution: "vue3-draggable-resizable@npm:1.6.5"
   checksum: ac02a58453c217c2fb1577f67dd4fcf2138dff4391384be0689737bdc58a19cda011388d14ba68aaff0ec26daa93605dbfa5e716aeaf121bdc14c056d3f67b4c
+  languageName: node
+  linkType: hard
+
+"vue3-lottie@npm:3.2.0":
+  version: 3.2.0
+  resolution: "vue3-lottie@npm:3.2.0"
+  dependencies:
+    lodash-es: "npm:^4.17.21"
+    lottie-web: "npm:5.12.2"
+  peerDependencies:
+    vue: ^3.2
+  checksum: 3518a74fd5d32381bc49e7041365783a0e710e04ed7446eefde69b8a40f20b045e8a83556a6f10065a1398437295ec2e77822323da23fa1ea7b3bedaefe7a3e0
   languageName: node
   linkType: hard
 

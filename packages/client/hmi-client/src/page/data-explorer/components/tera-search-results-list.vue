@@ -29,12 +29,18 @@
 			</Chip>
 		</template>
 	</div>
+
+	<!-- Loading animation -->
 	<div v-if="isLoading" class="explorer-status loading-spinner">
-		<div><i class="pi pi-spin pi-spinner" /></div>
+		<!-- <div><i class="pi pi-spin pi-spinner" /></div> -->
+		<Vue3Lottie :animationData="LoadingWateringCan" :height="200" :width="200"></Vue3Lottie>
 	</div>
-	<div v-else-if="resultsCount === 0" class="explorer-status">
-		<img src="@assets/svg/seed.svg" alt="Seed" />
-		<h2 class="no-results-found">No results found</h2>
+
+	<!-- Nothing found -->
+	<div v-else-if="resultsCount === 0" class="empty-state-image">
+		<!-- <img src="@assets/svg/seed.svg" alt="Seed" /> -->
+		<Vue3Lottie :animationData="EmptySeed" :height="150"></Vue3Lottie>
+		<h4 class="no-results-found">No results found</h4>
 		<span>Try adjusting your search or filters and try again.</span>
 	</div>
 	<ul v-else>
@@ -70,6 +76,9 @@ import { useProjects } from '@/composables/project';
 import { createDocumentFromXDD } from '@/services/document-assets';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
+import { Vue3Lottie } from 'vue3-lottie';
+import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
@@ -264,9 +273,19 @@ ul {
 	font-size: var(--font-body-small);
 	color: var(--text-color-subdued);
 }
+.empty-state-image {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 0.25rem;
+	align-items: center;
+	margin-bottom: 8rem;
+	flex-grow: 1;
+	font-size: var(--font-body-small);
+	color: var(--text-color-subdued);
+}
 
 .loading-spinner {
-	color: var(--surface-highlight);
 }
 
 .pi-spinner {
@@ -275,7 +294,8 @@ ul {
 
 .no-results-found {
 	font-weight: var(--font-weight);
-	margin-top: 1.5rem;
+	margin-top: 0.25rem;
+	font-size: 1.5rem;
 }
 
 .result-details {
