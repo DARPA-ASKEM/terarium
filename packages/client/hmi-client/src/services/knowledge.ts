@@ -1,6 +1,6 @@
 import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import type { ExtractionResponse } from '@/types/Types';
+import type { Code, Dataset, ExtractionResponse, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
@@ -78,9 +78,9 @@ export const equationsToAMR = async (
  * Given a model, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileModel = async (modelId: string, documentId: string | null = null) => {
+export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
 	let response: any = null;
-	if (documentId) {
+	if (documentId && modelId) {
 		response = await API.post(`/knowledge/profile-model/${modelId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-model/${modelId}`);
@@ -89,7 +89,10 @@ export const profileModel = async (modelId: string, documentId: string | null = 
 	return response.data.id;
 };
 
-export const alignModel = async (modelId: string, documentId: string): Promise<string | null> => {
+export const alignModel = async (
+	modelId: Model['id'],
+	documentId: string
+): Promise<string | null> => {
 	const response = await API.post(
 		`/knowledge/link-amr?document_id=${documentId}&model_id=${modelId}`
 	);
@@ -99,9 +102,12 @@ export const alignModel = async (modelId: string, documentId: string): Promise<s
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (datasetId: string, documentId: string | null = null) => {
+export const profileDataset = async (
+	datasetId: Dataset['id'],
+	documentId: string | null = null
+) => {
 	let response: any = null;
-	if (documentId) {
+	if (documentId && datasetId) {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document_id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
@@ -203,6 +209,36 @@ export async function codeToAMR(
 	const response = await API.post(
 		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}&llm_assisted=${llmAssisted}`
 	);
+	if (response?.status === 200) {
+		const { id, status } = response.data;
+		if (status === 'queued') {
+			const extraction = await fetchExtraction(id);
+			if (extraction?.state === PollerState.Done) {
+				const data = extraction.data as any; // fix linting
+				return data?.job_result.tds_model_id;
+			}
+		}
+		if (status === 'finished') {
+			return response.data.result?.job_result.tds_model.id;
+		}
+	}
+	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
+	return null;
+}
+
+export async function codeBlocksToAmr(code: Code, file: File): Promise<string | null> {
+	const formData = new FormData();
+	const blob = new Blob([JSON.stringify(code)], {
+		type: 'application/json'
+	});
+	formData.append('code', blob);
+	formData.append('file', file);
+	const response = await API.post(`/knowledge/code-blocks-to-model`, formData, {
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'multipart/form-data'
+		}
+	});
 	if (response?.status === 200) {
 		const { id, status } = response.data;
 		if (status === 'queued') {

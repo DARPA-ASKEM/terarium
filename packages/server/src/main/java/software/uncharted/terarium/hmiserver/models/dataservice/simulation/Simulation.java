@@ -1,33 +1,22 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import lombok.Data;
-import lombok.ToString;
-import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @Data
 @Accessors(chain = true)
@@ -56,11 +45,8 @@ public class Simulation implements Serializable {
 
 	@JsonAlias("result_files")
 	@TSOptional
-	@OneToMany(mappedBy = "simulation")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
-	@JsonManagedReference
-	private List<SimulationResult> resultFiles;
+	private List<String> resultFiles;
 
 	@Enumerated(EnumType.STRING)
 	private SimulationType type;
@@ -71,11 +57,13 @@ public class Simulation implements Serializable {
 	@JsonAlias("start_time")
 	@TSOptional
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.S")
 	private Timestamp startTime;
 
 	@JsonAlias("completed_time")
 	@TSOptional
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.S")
 	private Timestamp completedTime;
 
 	@Enumerated(EnumType.STRING)

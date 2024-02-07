@@ -75,7 +75,12 @@ export function useProjects() {
 	 * @param {Project['id']} [projectId] Id of the project to add the asset to.
 	 * @returns {Promise<string|null>} Id of the added asset, if successful. Null, otherwise.
 	 */
-	async function addAsset(assetType: string, assetId: string, projectId?: Project['id']) {
+	async function addAsset(
+		assetType: string,
+		assetId: ProjectAsset['id'],
+		projectId?: Project['id']
+	): Promise<ProjectAsset['id']> {
+		if (!assetId) return undefined;
 		const newAssetId = await ProjectService.addAsset(
 			projectId ?? activeProjectId.value,
 			assetType,
@@ -141,6 +146,9 @@ export function useProjects() {
 				activeProject.value = await ProjectService.get(project.id);
 			}, 1000);
 		}
+		setTimeout(async () => {
+			getAll();
+		}, TIMEOUT_MS);
 		return updated;
 	}
 
@@ -161,6 +169,23 @@ export function useProjects() {
 			activeProject.value = null;
 		}
 		return removed;
+	}
+
+	async function setAccessibility(projectId: Project['id'], isPublic: boolean) {
+		const accessibilityChanged = await ProjectService.setAccessibility(projectId, isPublic);
+
+		// update the project accordingly
+		if (accessibilityChanged) {
+			if (activeProject.value) {
+				activeProject.value = { ...activeProject.value, publicProject: isPublic };
+			}
+			if (allProjects.value) {
+				allProjects.value = allProjects.value.map((project) => ({
+					...project,
+					publicProject: project.id === projectId ? isPublic : project.publicProject
+				}));
+			}
+		}
 	}
 
 	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
@@ -228,6 +253,7 @@ export function useProjects() {
 		update,
 		remove,
 		refresh,
+		setAccessibility,
 		getPermissions,
 		setPermissions,
 		removePermissions,

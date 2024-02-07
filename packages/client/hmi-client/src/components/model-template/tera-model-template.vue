@@ -18,7 +18,8 @@
 				</header>
 				<tera-model-diagram :model="model" :is-editable="isEditable" is-preview />
 			</main>
-			<Button v-if="isEditable" icon="pi pi-ellipsis-v" rounded text />
+			<Button v-if="isEditable" @click="toggle" icon="pi pi-ellipsis-v" rounded text />
+			<Menu ref="menu" :model="cardOptions" :popup="true" />
 		</section>
 		<ul>
 			<li
@@ -43,17 +44,18 @@ import { ref, computed, nextTick } from 'vue';
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-
-interface ModelTemplate {
-	id: number;
-	name: string;
-	x: number;
-	y: number;
-}
+import type { ModelTemplateCard } from '@/types/model-templating';
+import Menu from 'primevue/menu';
 
 const props = defineProps<{ model: any; isEditable: boolean }>();
 
-const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name']);
+const emit = defineEmits([
+	'port-mouseover',
+	'port-mouseleave',
+	'port-selected',
+	'update-name',
+	'remove'
+]);
 
 // Used to pass card width.
 // Unsure if we want to set widths on certain cards but for now this works
@@ -62,12 +64,24 @@ const nameInputRef = ref();
 const isEditingName = ref(false);
 const name = ref(props.model.header.name);
 
+const menu = ref();
+const cardOptions = ref([
+	{
+		label: 'Remove',
+		icon: 'pi pi-trash',
+		command: () => emit('remove')
+	}
+]);
+const toggle = (event) => {
+	menu.value.toggle(event);
+};
+
 const cardWidth = computed(() => cardRef.value?.clientWidth ?? 0);
 
-const card = computed<ModelTemplate>(
+const card = computed<ModelTemplateCard>(
 	() =>
 		props.model.metadata.templateCard ?? {
-			id: -1,
+			id: '',
 			name: props.model.header.name,
 			x: 0,
 			y: 0

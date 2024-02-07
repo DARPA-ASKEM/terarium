@@ -14,35 +14,11 @@
 </template>
 
 <script setup lang="ts">
-import { Position } from '@/types/workflow'; // temp
-
-interface ModelTemplate {
-	id: number;
-	name: string;
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-}
-
-interface ModelTemplateEdge {
-	target: {
-		cardId: number;
-		portId: string;
-	};
-	points: Position[];
-}
-
-interface ModelTemplateJunction {
-	id: number;
-	x: number;
-	y: number;
-	edges: ModelTemplateEdge[];
-}
+import type { ModelTemplateCard, ModelTemplateJunction } from '@/types/model-templating';
 
 defineProps<{
 	junction: ModelTemplateJunction;
-	templateCards: ModelTemplate[];
+	templateCards: ModelTemplateCard[];
 }>();
 </script>
 

@@ -44,7 +44,9 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowDirection, WorkflowPort } from '@/types/workflow';
+import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
+import { WorkflowDirection } from '@/types/workflow';
+import type { Position } from '@/types/common';
 import { addHover, removeHover, addDrag, removeDrag } from '@/services/operator-bitmask';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import floatingWindow from '@/utils/floating-window';

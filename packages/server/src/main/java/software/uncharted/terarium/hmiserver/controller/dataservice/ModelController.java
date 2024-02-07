@@ -207,7 +207,8 @@ public class ModelController {
 			@RequestBody Model model) {
 
 		try {
-			final Optional<Model> updated = modelService.updateModel(model.setId(id));
+			model.setId(id);
+			final Optional<Model> updated = modelService.updateModel(model);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

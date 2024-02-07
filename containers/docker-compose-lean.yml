@@ -8,7 +8,7 @@ include:
 
 services:
   hmi-server:
-    image: ghcr.io/darpa-askem/hmi-server:lean-test
+    image: ghcr.io/darpa-askem/hmi-server:latest
     container_name: hmi-server
     networks:
       - terarium
@@ -31,6 +31,7 @@ services:
       AWS_URL: "http://minio:9000"
       AWS_ACCESS_KEY_ID: "admin"
       AWS_SECRET_ACCESS_KEY: "admin123"
+      TERARIUM_FILE-STORAGE-S3-BUCKET-NAME: "askem-local-storage"
       SPICEDB_LAUNCHMODE: "PLAINTEXT"
       SPICEDB_SHARED-KEY: "dev"
       SPICEDB_TARGET: "spicedb:50051"
@@ -50,9 +51,7 @@ services:
       TERARIUM_KEYCLOAK_ADMIN-USERNAME: "admin"
       TERARIUM_KEYCLOAK_ADMIN-PASSWORD: "admin123"
       TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ-HOST: "rabbitmq"
       TERARIUM_MQ-PASSWORD: "terarium123"
-      TERARIUM_MQ-POST: "5672"
       TERARIUM_MQ-USERNAME: "terarium"
       TERARIUM_ELASTICSEARCH_URL: "http://elasticsearch:9200"
       TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
