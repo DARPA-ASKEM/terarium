@@ -109,7 +109,7 @@ export const renderLossGraph = (
 	xAxisGroup.attr('transform', `translate(0, ${height - marginBottom})`).call(xAxis);
 
 	// Add y-axis
-	const yAxis = d3.axisLeft(yScale);
+	const yAxis = d3.axisLeft(yScale).ticks(3).tickFormat(d3.format('.1e'));
 	let yAxisGroup = svg.select('.y-axis');
 	if (yAxisGroup.empty()) {
 		yAxisGroup = svg.append('g').attr('class', 'y-axis');
