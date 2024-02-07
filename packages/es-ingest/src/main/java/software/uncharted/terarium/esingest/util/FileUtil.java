@@ -11,13 +11,16 @@ import java.util.stream.Stream;
 
 public class FileUtil {
 
-	public static String getFilenameWithoutExtension(Path filePath) {
-		String filename = filePath.getFileName().toString();
+	public static String getFilenameWithoutExtension(String filename) {
 		int dotIndex = filename.lastIndexOf('.');
 		if (dotIndex > 0) {
 			filename = filename.substring(0, dotIndex);
 		}
 		return filename;
+	}
+
+	public static String getFilenameWithoutExtension(Path path) {
+		return getFilenameWithoutExtension(path.getFileName().toString());
 	}
 
 	public static List<Path> getJSONLineFilesInDir(Path dir) throws IOException {

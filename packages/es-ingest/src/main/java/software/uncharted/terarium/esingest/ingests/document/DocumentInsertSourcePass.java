@@ -11,7 +11,7 @@ import software.uncharted.terarium.esingest.ingests.IElasticPass;
 import software.uncharted.terarium.esingest.iterators.IInputIterator;
 import software.uncharted.terarium.esingest.iterators.JSONLineIterator;
 import software.uncharted.terarium.esingest.models.input.document.DocumentSource;
-import software.uncharted.terarium.esingest.models.output.Document;
+import software.uncharted.terarium.esingest.models.output.document.Document;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 
 @Slf4j

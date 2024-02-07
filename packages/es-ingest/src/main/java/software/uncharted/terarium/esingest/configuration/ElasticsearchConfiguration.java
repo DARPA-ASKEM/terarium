@@ -26,7 +26,8 @@ public class ElasticsearchConfiguration {
 	public record Index(
 			String prefix,
 			String suffix,
-			String epidemiologyRoot) {
+			String searchableDocumentRoot,
+			String searchableModelRoot) {
 	}
 
 	public String getIndex(String root) {

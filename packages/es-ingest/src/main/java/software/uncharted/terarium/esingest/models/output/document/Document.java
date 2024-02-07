@@ -1,4 +1,4 @@
-package software.uncharted.terarium.esingest.models.output;
+package software.uncharted.terarium.esingest.models.output.document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import lombok.Data;
+import software.uncharted.terarium.esingest.models.output.Embedding;
+import software.uncharted.terarium.esingest.models.output.IOutputDocument;
 
 @Data
 @JsonInclude(Include.NON_NULL)
@@ -27,13 +29,6 @@ public class Document implements IOutputDocument {
 			topics = new ArrayList<>();
 		}
 		topics.addAll(ts);
-	}
-
-	public void addEmbedding(Embedding embedding) {
-		if (embeddings == null) {
-			embeddings = new ArrayList<>();
-		}
-		embeddings.add(embedding);
 	}
 
 }

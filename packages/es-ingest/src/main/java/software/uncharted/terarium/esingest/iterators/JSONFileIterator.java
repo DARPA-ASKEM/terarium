@@ -12,10 +12,11 @@ import java.util.function.BiFunction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.esingest.models.input.IInputDocument;
 import software.uncharted.terarium.esingest.util.FileUtil;
 
 @Slf4j
-public class JSONFileIterator<T> implements IInputIterator<T> {
+public class JSONFileIterator<T extends IInputDocument> implements IInputIterator<T> {
 
 	ObjectMapper mapper = new ObjectMapper();
 	Queue<Path> files;
@@ -35,8 +36,8 @@ public class JSONFileIterator<T> implements IInputIterator<T> {
 
 	public JSONFileIterator(Path inputPath, Class<T> classType, BiFunction<List<T>, T, Boolean> batcher)
 			throws IOException {
-		this.classType = classType;
 		this.batcher = batcher;
+		this.classType = classType;
 		this.files = new LinkedList<>(FileUtil.getJSONLineFilesInDir(inputPath));
 		if (files.isEmpty()) {
 			throw new IOException("No input files found for path: " + inputPath.toString());
@@ -66,9 +67,13 @@ public class JSONFileIterator<T> implements IInputIterator<T> {
 				return returnAndClearResults();
 			}
 
-			String content = Files.readString(files.poll());
+			Path file = files.poll();
+			String content = Files.readString(file);
 
-			T doc = mapper.readValue(content, this.classType);
+			T doc = mapper.readValue(content, classType);
+			if (doc.getId() == null || doc.getId().isEmpty()) {
+				doc.setId(file.getFileName().toString());
+			}
 			if (batcher != null) {
 				// check if we need to split the batch yet
 

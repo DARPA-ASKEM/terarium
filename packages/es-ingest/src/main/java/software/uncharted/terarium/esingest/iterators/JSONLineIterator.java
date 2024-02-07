@@ -9,15 +9,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.esingest.models.input.IInputDocument;
 import software.uncharted.terarium.esingest.util.FileUtil;
 
 @Slf4j
-public class JSONLineIterator<T> implements IInputIterator<T> {
+public class JSONLineIterator<T extends IInputDocument> implements IInputIterator<T> {
 
 	ObjectMapper mapper = new ObjectMapper();
 	Queue<Path> files;
@@ -26,7 +26,6 @@ public class JSONLineIterator<T> implements IInputIterator<T> {
 	BiFunction<List<T>, T, Boolean> batcher;
 	List<T> results = new ArrayList<>();
 	Class<T> classType;
-	List<Function<T, T>> functions = new ArrayList<>();
 
 	public JSONLineIterator(Path inputPath, Class<T> classType, long batchSize) throws IOException {
 		this.batchSize = batchSize;

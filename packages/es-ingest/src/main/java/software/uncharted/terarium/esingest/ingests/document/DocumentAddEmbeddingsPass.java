@@ -11,8 +11,8 @@ import software.uncharted.terarium.esingest.ingests.IElasticPass;
 import software.uncharted.terarium.esingest.iterators.IInputIterator;
 import software.uncharted.terarium.esingest.iterators.JSONLineIterator;
 import software.uncharted.terarium.esingest.models.input.document.DocumentEmbedding;
-import software.uncharted.terarium.esingest.models.output.Document;
 import software.uncharted.terarium.esingest.models.output.Embedding;
+import software.uncharted.terarium.esingest.models.output.document.Document;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 
 @Slf4j
@@ -65,25 +65,30 @@ public class DocumentAddEmbeddingsPass
 
 	public List<Document> process(List<DocumentEmbedding> input) {
 		List<Document> output = new ArrayList<>();
-		Document partial = null;
+		List<Embedding> embeddings = new ArrayList<>();
+		String currentId = null;
+
 		for (DocumentEmbedding in : input) {
 			Embedding embedding = process(in);
-			if (embedding != null) {
-				if (partial == null) {
-					// create a new partial
-					partial = new Document();
-					partial.setId(in.getId());
-				} else if (!partial.getId().equals(in.getId())) {
-					// embedding references a new doc, add existing partial to output, create next
-					// one
-					output.add(partial);
-					partial = new Document();
-					partial.setId(in.getId());
-				} else {
-					// add to existing partial
-					partial.addEmbedding(embedding);
-				}
+			if (embedding == null) {
+				continue;
 			}
+
+			if (currentId == null) {
+				// create a new partial
+				currentId = in.getId();
+			} else if (!currentId.equals(in.getId())) {
+				// embedding references a new doc, add existing partial to output, create next
+				// one
+				Document doc = new Document();
+				doc.setEmbeddings(embeddings);
+				output.add(doc);
+
+				currentId = in.getId();
+				embeddings = new ArrayList<>();
+			}
+
+			embeddings.add(embedding);
 		}
 		return output;
 	}

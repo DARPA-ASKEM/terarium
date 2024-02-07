@@ -1,0 +1,46 @@
+{
+  "index_patterns": [
+    "*_searchable_document_tera_1.0"
+  ],
+  "version": 1,
+  "priority": 501,
+  "_meta": {
+    "description": "Description"
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 16,
+        "number_of_replicas": 1,
+        "refresh_interval": "1s"
+      }
+    },
+    "mappings": {
+      "properties": {
+        "title": {
+          "type": "text"
+        },
+        "fullText": {
+          "type": "text",
+          "index": false
+        },
+        "embeddings": {
+          "type": "nested",
+          "properties": {
+            "vector": {
+              "type": "dense_vector",
+              "element_type": "float",
+              "dims": 1536
+            },
+            "embeddingId": {
+              "type": "keyword"
+            },
+            "span": {
+              "type": "long"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -378,7 +378,8 @@ public class ElasticsearchService {
 		return r;
 	}
 
-	public <Output extends IOutputDocument> BulkOpResponse bulkUpdate(String index, List<Output> docs)
+	public <Output extends IOutputDocument> BulkOpResponse bulkUpdate(String index, List<Output> docs,
+			boolean ignoreMissing)
 			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -403,7 +404,13 @@ public class ElasticsearchService {
 			for (BulkResponseItem item : bulkResponse.items()) {
 				ErrorCause error = item.error();
 				if (error != null) {
-					errors.add(error.reason());
+					String reason = error.reason();
+					if (reason != null) {
+						if (ignoreMissing && reason.contains("document missing")) {
+							continue;
+						}
+						errors.add(error.reason());
+					}
 				}
 			}
 		}

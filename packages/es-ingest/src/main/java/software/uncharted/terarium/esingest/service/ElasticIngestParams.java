@@ -37,4 +37,7 @@ public class ElasticIngestParams {
 	// The classname used for the ingest.
 	String ingestClass;
 
+	// Whether to ignore missing documents during updates or not
+	boolean ignoreMissingDocumentsDuringUpdates = false;
+
 }

@@ -54,7 +54,8 @@ public class ElasticUpdateService extends ConcurrentWorkerService {
 				}
 
 				ElasticsearchService.BulkOpResponse res = esService
-						.bulkUpdate(esConfig.getIndex(params.getOutputIndexRoot()), output);
+						.bulkUpdate(esConfig.getIndex(params.getOutputIndexRoot()), output,
+								params.isIgnoreMissingDocumentsDuringUpdates());
 				if (res.getErrors().size() > 0) {
 					errors.addAll(res.getErrors());
 					if (errors.size() > params.getErrorsThreshold()) {

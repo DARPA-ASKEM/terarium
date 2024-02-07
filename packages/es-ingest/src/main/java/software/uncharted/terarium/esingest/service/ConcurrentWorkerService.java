@@ -19,6 +19,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.iterators.IInputIterator;
+import software.uncharted.terarium.esingest.models.input.IInputDocument;
 
 @Service
 @Slf4j
@@ -40,7 +41,8 @@ public class ConcurrentWorkerService {
 		executor = Executors.newFixedThreadPool(POOL_SIZE);
 	}
 
-	protected <T> void startWorkers(BlockingQueue<List<T>> queue, BiConsumer<List<T>, Long> task) {
+	protected <T extends IInputDocument> void startWorkers(BlockingQueue<List<T>> queue,
+			BiConsumer<List<T>, Long> task) {
 		for (int i = 0; i < POOL_SIZE; i++) {
 			futures.add(executor.submit(() -> {
 				while (true) {
@@ -63,7 +65,7 @@ public class ConcurrentWorkerService {
 		}
 	}
 
-	protected <T> void waitUntilWorkersAreDone(BlockingQueue<List<T>> queue)
+	protected <T extends IInputDocument> void waitUntilWorkersAreDone(BlockingQueue<List<T>> queue)
 			throws InterruptedException, ExecutionException {
 
 		// now lets dispatch the worker kill signals (empty lists)
@@ -84,7 +86,8 @@ public class ConcurrentWorkerService {
 		futures.clear();
 	}
 
-	protected <T> void readWorkIntoQueue(BlockingQueue<List<T>> queue, IInputIterator<T> iterator)
+	protected <T extends IInputDocument> void readWorkIntoQueue(BlockingQueue<List<T>> queue,
+			IInputIterator<T> iterator)
 			throws IOException, InterruptedException {
 		long lineCount = 0;
 		while (true) {
