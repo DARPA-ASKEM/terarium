@@ -225,10 +225,10 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			modelTemplatingService.addEdge(
 				decomposedTemplates.value,
 				kernelManager,
-				outputCode,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
+				outputCode,
 				interpolatePointsForCurve
 			);
 		}
@@ -253,10 +253,10 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		modelTemplatingService.addEdge(
 			decomposedTemplates.value,
 			kernelManager,
-			outputCode,
 			junctionIdForNewEdge,
 			target,
 			currentPortPosition,
+			outputCode,
 			interpolatePointsForCurve
 		);
 		cancelNewEdge();

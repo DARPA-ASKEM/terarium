@@ -272,10 +272,10 @@ export function removeCard(
 export function addEdge(
 	modelTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
-	outputCode: Function,
 	junctionId: string,
 	target: { cardId: string; portId: string },
 	portPosition: Position,
+	outputCode?: Function, // This is not used within flattenedToDecomposed
 	interpolatePointsFn?: Function
 ) {
 	const templateName = modelTemplates.models.find(
@@ -285,7 +285,7 @@ export function addEdge(
 	const index = modelTemplates.junctions.findIndex(({ id }) => id === junctionId);
 	const junctionToDrawFrom = modelTemplates.junctions[index];
 
-	if (junctionToDrawFrom.edges.length >= 1) {
+	if (junctionToDrawFrom.edges.length >= 1 && outputCode) {
 		kernelManager
 			.sendMessage('replace_state_name_request', {
 				template_name: templateName,
@@ -372,7 +372,6 @@ export function flattenedToDecomposed(
 				addEdge(
 					decomposedTemplates,
 					kernelManager,
-					outputCode,
 					junctionId,
 					target,
 					portPosition,
