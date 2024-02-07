@@ -133,6 +133,7 @@ public class EquationController {
 	@Operation(summary = "Update a equation")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Equation updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
+			@ApiResponse(responseCode = "404", description = "Equation could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the equation", content = @Content)
 	})
 	ResponseEntity<Equation> updateEquation(

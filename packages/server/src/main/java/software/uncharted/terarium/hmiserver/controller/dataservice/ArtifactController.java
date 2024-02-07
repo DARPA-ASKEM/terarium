@@ -118,6 +118,7 @@ public class ArtifactController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Artifact updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
 			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the artifact", content = @Content)
 	})
 	public ResponseEntity<Artifact> updateArtifact(
@@ -186,6 +187,7 @@ public class ArtifactController {
 	@Operation(summary = "Gets a presigned url to download the document")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "Presigned url not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(

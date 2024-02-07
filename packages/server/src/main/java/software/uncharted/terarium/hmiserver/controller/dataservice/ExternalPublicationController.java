@@ -138,6 +138,7 @@ public class ExternalPublicationController {
 	@Operation(summary = "updates an external publication by object id")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "publication updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExternalPublication.class))),
+			@ApiResponse(responseCode = "404", description = "There was no publication found with the given ID", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the publication", content = @Content)
 	})
 	public ResponseEntity<ExternalPublication> updatePublication(

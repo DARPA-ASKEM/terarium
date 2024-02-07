@@ -102,6 +102,7 @@ public class WorkflowController {
 	@Operation(summary = "Update a workflow")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Workflow updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
 	})
 	public ResponseEntity<Workflow> updateWorkflow(

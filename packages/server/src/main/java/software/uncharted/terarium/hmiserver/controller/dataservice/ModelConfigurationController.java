@@ -105,6 +105,7 @@ public class ModelConfigurationController {
 	@Operation(summary = "Update a model configuration")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model configuration updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class))),
+			@ApiResponse(responseCode = "404", description = "Model configuration could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the configuration", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> updateModelConfiguration(

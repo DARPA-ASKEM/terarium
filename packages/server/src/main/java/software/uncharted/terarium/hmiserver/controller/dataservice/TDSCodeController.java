@@ -150,6 +150,7 @@ public class TDSCodeController {
 	@Operation(summary = "Update a code resource")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Code resource updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "404", description = "Code resource could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the code resource", content = @Content)
 	})
 	public ResponseEntity<Code> updateCode(

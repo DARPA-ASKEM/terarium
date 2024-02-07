@@ -149,6 +149,7 @@ public class DatasetController {
 	@Operation(summary = "Update a dataset")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dataset updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
+			@ApiResponse(responseCode = "404", description = "Dataset could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 	})
 	ResponseEntity<Dataset> updateDataset(
@@ -259,6 +260,7 @@ public class DatasetController {
 	@Operation(summary = "Gets a presigned url to download the dataset file")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "Dataset could not be found to create a URL for", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(

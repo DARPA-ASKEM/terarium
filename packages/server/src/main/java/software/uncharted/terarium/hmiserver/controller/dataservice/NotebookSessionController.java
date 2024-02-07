@@ -133,6 +133,7 @@ public class NotebookSessionController {
 	@Operation(summary = "Update a session")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "NotebookSession updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
+			@ApiResponse(responseCode = "404", description = "NotebookSession could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the session", content = @Content)
 	})
 	ResponseEntity<NotebookSession> updateNotebookSession(

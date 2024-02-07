@@ -185,6 +185,7 @@ public class SimulationController {
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Dataset created and added to project.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class))),
+			@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset or adding it to the project", content = @Content)
 	})
 	public ResponseEntity<ProjectAsset> createFromSimulationResult(
@@ -257,6 +258,7 @@ public class SimulationController {
 	@Operation(summary = "Gets a presigned url to download the simulation results")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "There was no simulation found with the given ID", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
