@@ -117,7 +117,6 @@ public class SimulationEventService {
 
 				if (simulationIdToUserIds.containsKey(id)) {
 					simulationIdToUserIds.get(id).forEach(userId -> {
-							System.out.println("Processing ID on MQ = " + id + " " + userId);
 							clientEventService.sendToUser(status, userId);
 					});
 				}

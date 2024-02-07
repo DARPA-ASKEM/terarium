@@ -297,7 +297,7 @@ const runCalibrate = async () => {
 		},
 		extra: {
 			num_samples: 100,
-			num_iterations: 100
+			num_iterations: 200
 			/*
 			num_samples: numSamples.value,
 			num_iterations: numIterations.value,
