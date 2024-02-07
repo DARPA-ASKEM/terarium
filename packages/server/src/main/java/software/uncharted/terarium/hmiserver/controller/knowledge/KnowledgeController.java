@@ -140,7 +140,7 @@ public class KnowledgeController {
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 		// we have pre-formatted the files object already so no need to use uploadCode
-		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), "tempFile");
+		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), input.getOriginalFilename());
 		final HttpPut put = new HttpPut(presignedURL.getUrl());
 		put.setEntity(fileEntity);
 		final HttpResponse response = httpClient.execute(put);
