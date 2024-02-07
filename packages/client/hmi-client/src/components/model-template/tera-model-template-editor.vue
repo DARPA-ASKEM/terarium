@@ -47,6 +47,7 @@
 						:model-value="currentModelFormat"
 						@change="if ($event.value) currentModelFormat = $event.value;"
 						:options="modelFormatOptions"
+						loading
 					/>
 				</section>
 			</template>
@@ -378,7 +379,7 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-async function initializeBeakerKernel() {
+async function initializeBeakerKernel(isModelLoaded = false) {
 	if (kernelManager.jupyterSession) kernelManager.shutdown();
 
 	try {
@@ -386,16 +387,17 @@ async function initializeBeakerKernel() {
 			context: 'mira_model_edit',
 			language: 'python3',
 			context_info: {
-				id: props.model?.id ?? ''
+				id: isModelLoaded ? props.model?.id ?? '' : ''
 			}
 		};
 		await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
 		// Create decomposed view from model
-		if (props.model) {
+		if (isModelLoaded && props.model) {
 			modelTemplatingService.flattenedToDecomposed(
 				decomposedTemplates.value,
 				kernelManager,
-				outputCode
+				outputCode,
+				interpolatePointsForCurve
 			);
 		}
 	} catch (error) {
@@ -423,7 +425,8 @@ watch(
 				flattenedModel
 			);
 		}
-		initializeBeakerKernel();
+		// If the model is loaded here then we'll allow it in initializeBeakerKernel
+		initializeBeakerKernel(props.model !== undefined);
 	},
 	{ immediate: true }
 );

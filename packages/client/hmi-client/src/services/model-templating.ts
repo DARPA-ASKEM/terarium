@@ -1,16 +1,16 @@
 import { v4 as uuidv4 } from 'uuid';
-import { snakeCase, cloneDeep } from 'lodash';
+import { snakeCase, cloneDeep, uniq } from 'lodash';
 import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
-import naturalConversion from './model-templates/natural-conversion.json';
-import naturalProduction from './model-templates/natural-production.json';
-import naturalDegredation from './model-templates/natural-degradation.json';
-import controlledConversion from './model-templates/controlled-conversion.json';
-import controlledProduction from './model-templates/controlled-production.json';
-import controlledDegredation from './model-templates/controlled-degradation.json';
-import observable from './model-templates/observable.json';
+import naturalConversionTemplate from './model-templates/natural-conversion.json';
+import naturalProductionTemplate from './model-templates/natural-production.json';
+import naturalDegredationTemplate from './model-templates/natural-degradation.json';
+import controlledConversionTemplate from './model-templates/controlled-conversion.json';
+import controlledProductionTemplate from './model-templates/controlled-production.json';
+import controlledDegredationTemplate from './model-templates/controlled-degradation.json';
+import observableTemplate from './model-templates/observable.json';
 
 interface AddTemplateArguments {
 	subject_name?: string;
@@ -31,13 +31,13 @@ interface AddTemplateArguments {
 }
 
 export const modelTemplateOptions = [
-	naturalConversion,
-	naturalProduction,
-	naturalDegredation,
-	controlledConversion,
-	controlledProduction,
-	controlledDegredation,
-	observable
+	naturalConversionTemplate,
+	naturalProductionTemplate,
+	naturalDegredationTemplate,
+	controlledConversionTemplate,
+	controlledProductionTemplate,
+	controlledDegredationTemplate,
+	observableTemplate
 ].map((modelTemplate: any) => {
 	// TODO: Add templateCard attribute to Model later
 	modelTemplate.metadata.templateCard = {
@@ -77,6 +77,47 @@ export function junctionCleanUp(modelTemplates: ModelTemplates) {
 	modelTemplates.junctions = modelTemplates.junctions.filter(({ edges }) => edges.length > 1);
 }
 
+// Designed to work with the decomposed model templates
+function appendNumberToModelVariables(model: any, number: number) {
+	const newModel = cloneDeep(model);
+	const { states, transitions } = newModel.model;
+	const { rates, initials, parameters, observables } = newModel.semantics.ode;
+
+	states.forEach((state) => {
+		state.id += number;
+		state.name += number;
+	});
+
+	transitions.forEach((transition) => {
+		transition.input = transition.input.map((input) => input + number);
+		transition.output = transition.output.map((output) => output + number);
+	});
+
+	initials.forEach((initial) => {
+		initial.target += number;
+	});
+
+	parameters.forEach((parameter) => {
+		parameter.id += number;
+	});
+
+	rates.forEach((rate) => {
+		// Within the expression attributes update the targets to match the new ones
+		rate.expression = rate.expression.replace(/([a-zA-Z])/g, (match) => match + number);
+		rate.expression_mathml = rate.expression_mathml.replace(
+			/<ci>([a-zA-Z])<\/ci>/g,
+			(_, letter: string) => `<ci>${letter + number}</ci>`
+		);
+	});
+
+	observables.forEach((observable) => {
+		observable.id += number;
+		observable.name += number;
+	});
+
+	return newModel;
+}
+
 export function addCard(
 	modelTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
@@ -88,6 +129,9 @@ export function addCard(
 	// If a decomposed card is added, add it to the kernel
 	if (Object.values(DecomposedModelTemplateTypes).includes(name)) {
 		const addTemplateArguments: AddTemplateArguments = {};
+		modelTemplate = appendNumberToModelVariables(modelTemplate, modelTemplates.models.length);
+
+		console.log(modelTemplate);
 
 		if (name !== DecomposedModelTemplateTypes.Observable) {
 			const { transitions } = modelTemplate.model;
@@ -261,11 +305,13 @@ export function addEdge(
 export function flattenedToDecomposed(
 	decomposedTemplates: ModelTemplates,
 	kernelManager: KernelSessionManager,
-	outputCode: Function
+	outputCode: Function,
+	interpolatePointsFn?: Function
 ) {
 	kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
 		// Insert template card data into decomposed models
 		let yPos = 100;
+		const allInitals: any[] = [];
 
 		d.content.templates.forEach((modelTemplate: any) => {
 			modelTemplate.metadata.templateCard = {
@@ -277,6 +323,51 @@ export function flattenedToDecomposed(
 			yPos += 200;
 
 			addCard(decomposedTemplates, kernelManager, outputCode, modelTemplate);
+			allInitals.push(...modelTemplate.semantics.ode.initials);
 		});
+
+		// Add junctions and edges based on initials
+		// If an initial is repeated create a junction and two edges to connect them
+		yPos = 100;
+		const repeatedInitialTargets = uniq(
+			allInitals
+				// Remove initials that are not repeated
+				.filter((initial) => {
+					const repeated = allInitals.filter((i) => i.target === initial.target);
+					return repeated.length > 1;
+				})
+				.map((initial) => initial.target)
+		);
+
+		for (let i = 0; i < repeatedInitialTargets.length; i++) {
+			const junctionPosition = { x: 100, y: yPos };
+			addJunction(decomposedTemplates, junctionPosition);
+			yPos += 200;
+
+			// Find cards that have the repeated initial and add edges to its junction
+			const templatesWithRepeatedInitial = decomposedTemplates.models.filter((model) =>
+				model.semantics.ode.initials.some((initial) => initial.target !== repeatedInitialTargets[i])
+			);
+
+			templatesWithRepeatedInitial.forEach((modelTemplate: any) => {
+				const templateCard = modelTemplate.metadata.templateCard;
+				const junctionId =
+					decomposedTemplates.junctions[decomposedTemplates.junctions.length - 1].id;
+				const target = {
+					cardId: templateCard.id,
+					portId: repeatedInitialTargets[i]
+				};
+				const portPosition = { x: templateCard.x, y: templateCard.y };
+				addEdge(
+					decomposedTemplates,
+					kernelManager,
+					outputCode,
+					junctionId,
+					target,
+					portPosition,
+					interpolatePointsFn
+				);
+			});
+		}
 	});
 }
