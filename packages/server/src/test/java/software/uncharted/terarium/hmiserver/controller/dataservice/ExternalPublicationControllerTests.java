@@ -1,10 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.io.IOException;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,15 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
 import software.uncharted.terarium.hmiserver.service.data.ExternalPublicationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
+import java.io.IOException;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ExternalPublicationControllerTests extends TerariumApplicationTests {
 
@@ -65,7 +63,7 @@ public class ExternalPublicationControllerTests extends TerariumApplicationTests
 	public void testItCanGetExternalPublication() throws Exception {
 
 		final ExternalPublication externalPublication = externalPublicationService
-				.createExternalPublication(new ExternalPublication()
+				.createAsset(new ExternalPublication()
 						.setTitle("test-publication-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/external/publications/" + externalPublication.getId())
@@ -78,13 +76,13 @@ public class ExternalPublicationControllerTests extends TerariumApplicationTests
 	public void testItCanGetExternalPublications() throws Exception {
 
 		externalPublicationService
-				.createExternalPublication(new ExternalPublication()
+				.createAsset(new ExternalPublication()
 						.setTitle("test-publication-name"));
 		externalPublicationService
-				.createExternalPublication(new ExternalPublication()
+				.createAsset(new ExternalPublication()
 						.setTitle("test-publication-name"));
 		externalPublicationService
-				.createExternalPublication(new ExternalPublication()
+				.createAsset(new ExternalPublication()
 						.setTitle("test-publication-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/external/publications")
@@ -98,14 +96,14 @@ public class ExternalPublicationControllerTests extends TerariumApplicationTests
 	public void testItCanDeleteExternalPublication() throws Exception {
 
 		final ExternalPublication externalPublication = externalPublicationService
-				.createExternalPublication(new ExternalPublication()
+				.createAsset(new ExternalPublication()
 						.setTitle("test-publication-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/external/publications/" + externalPublication.getId())
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(externalPublicationService.getExternalPublication(externalPublication.getId()).isEmpty());
+		Assertions.assertTrue(externalPublicationService.getAsset(externalPublication.getId()).isEmpty());
 	}
 
 }

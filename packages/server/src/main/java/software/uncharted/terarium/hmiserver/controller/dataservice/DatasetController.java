@@ -1,17 +1,14 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import com.google.common.math.Quantiles;
+import com.google.common.math.Stats;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -29,41 +26,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import com.google.common.math.Quantiles;
-import com.google.common.math.Stats;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
-import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
+import software.uncharted.terarium.hmiserver.models.dataservice.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RequestMapping("/datasets")
 @RestController
@@ -89,8 +69,8 @@ public class DatasetController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(datasetService.getDatasets(page, pageSize));
-		} catch (IOException e) {
+			return ResponseEntity.ok(datasetService.getAssets(page, pageSize));
+		} catch (final IOException e) {
 			final String error = "Unable to get datasets";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -106,11 +86,11 @@ public class DatasetController {
 			@ApiResponse(responseCode = "201", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 	})
-	public ResponseEntity<Dataset> createDataset(@RequestBody Dataset dataset) {
+	public ResponseEntity<Dataset> createDataset(@RequestBody final Dataset dataset) {
 
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createDataset(dataset));
-		} catch (IOException e) {
+			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset));
+		} catch (final IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -129,12 +109,9 @@ public class DatasetController {
 	})
 	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
 		try {
-			Optional<Dataset> dataset = datasetService.getDataset(id);
-			if (dataset.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(dataset.get());
-		} catch (IOException e) {
+			final Optional<Dataset> dataset = datasetService.getAsset(id);
+			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+		} catch (final IOException e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -156,9 +133,9 @@ public class DatasetController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			datasetService.deleteDataset(id);
+			datasetService.deleteAsset(id);
 			return ResponseEntity.ok(new ResponseDeleted("Dataset", id));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to delete dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -175,17 +152,14 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 	})
 	ResponseEntity<Dataset> updateDataset(
-			@PathVariable("id") UUID id,
-			@RequestBody Dataset dataset) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final Dataset dataset) {
 
 		try {
 			dataset.setId(id);
-			final Optional<Dataset> updated = datasetService.updateDataset(dataset);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
-		} catch (IOException e) {
+			final Optional<Dataset> updated = datasetService.updateAsset(dataset);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final IOException e) {
 			final String error = "Unable to update a dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -196,7 +170,7 @@ public class DatasetController {
 
 	@ExceptionHandler
 	@org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.BAD_REQUEST)
-	public void handle(Exception e) {
+	public void handle(final Exception e) {
 		log.info("Returning HTTP 400 Bad Request", e);
 	}
 
@@ -219,7 +193,7 @@ public class DatasetController {
 				.disableRedirectHandling()
 				.build()) {
 
-			Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
+			final Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -236,10 +210,10 @@ public class DatasetController {
 					error);
 		}
 
-		List<List<String>> csv;
+		final List<List<String>> csv;
 		try {
 			csv = csvToRecords(rawCSV);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to parse CSV";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -292,11 +266,8 @@ public class DatasetController {
 			@RequestParam("filename") final String filename) {
 
 		try {
-			Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
-			if (url.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(url.get());
+			final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
+			return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
@@ -327,6 +298,14 @@ public class DatasetController {
 
 		// download CSV from github
 		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+
+		if(csvString == null) {
+			final String error = "Unable to download csv from github";
+			log.error(error);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 
 		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
 		final String[] csvRows = csvString.split("\\R");
@@ -365,7 +344,7 @@ public class DatasetController {
 			final String[] csvRows = csvString.split("\\R");
 			final String[] headers = csvRows[0].split(",");
 			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -389,21 +368,29 @@ public class DatasetController {
 		try {
 			log.debug("Uploading file to dataset {}", datasetId);
 
-			ResponseEntity<Void> res = datasetService.getUploadStream(datasetId, filename, input);
+			final ResponseEntity<Void> res = datasetService.getUploadStream(datasetId, filename, input);
 			if (res.getStatusCode() == HttpStatus.OK) {
 				// add the filename to existing file names
-				Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
+				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
+				if(updatedDataset.isEmpty()) {
+					final String error = "Failed to get dataset after upload";
+					log.error(error);
+					throw new ResponseStatusException(
+							org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+							error);
+				}
+
 				if (updatedDataset.get().getFileNames() == null) {
 					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
 				} else {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
-				datasetService.updateDataset(updatedDataset.get());
+				datasetService.updateAsset(updatedDataset.get());
 			}
 
 			return res;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to upload file to dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -460,7 +447,7 @@ public class DatasetController {
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(csvEntity);
 			final HttpResponse response = httpclient.execute(put);
-			int status = response.getStatusLine().getStatusCode();
+			final int status = response.getStatusLine().getStatusCode();
 
 			// update dataset with headers if the previous upload was successful
 			if (status == HttpStatus.OK.value()) {
@@ -470,7 +457,7 @@ public class DatasetController {
 				for (final String header : headers) {
 					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
 				}
-				final Optional<Dataset> updatedDataset = datasetService.getDataset(datasetId);
+				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
 				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
@@ -492,7 +479,7 @@ public class DatasetController {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
-				datasetService.updateDataset(updatedDataset.get());
+				datasetService.updateAsset(updatedDataset.get());
 			}
 
 			return ResponseEntity.ok(new ResponseStatus(status));
@@ -504,11 +491,11 @@ public class DatasetController {
 	}
 
 	private static List<List<String>> csvToRecords(final String rawCsvString) throws IOException {
-		List<List<String>> records = new ArrayList<>();
-		try (CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
-			for (CSVRecord record : parser) {
-				List<String> values = new ArrayList<>();
-				record.forEach(cell -> values.add(cell));
+		final List<List<String>> records = new ArrayList<>();
+		try (final CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
+			for (final CSVRecord record : parser) {
+				final List<String> values = new ArrayList<>();
+				record.forEach(values::add);
 				records.add(values);
 			}
 		}

@@ -1,19 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -22,6 +15,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+
+import java.util.UUID;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 public class AssetControllerTests extends TerariumApplicationTests {
@@ -132,7 +130,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 		project = projectService.createProject(new Project()
 				.setName("test-proj-1"));
 
-		final DocumentAsset documentAsset = documentAssetService.createDocumentAsset(new DocumentAsset()
+		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
 				.setName(TEST_ASSET_NAME_1)
 				.setDescription("my description"));
 
@@ -152,7 +150,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 		project2 = projectService.createProject(new Project()
 				.setName("test-proj-2"));
 
-		final DocumentAsset documentAsset2 = documentAssetService.createDocumentAsset(new DocumentAsset()
+		final DocumentAsset documentAsset2 = documentAssetService.createAsset(new DocumentAsset()
 				.setName(TEST_ASSET_NAME_2)
 				.setDescription("my description"));
 

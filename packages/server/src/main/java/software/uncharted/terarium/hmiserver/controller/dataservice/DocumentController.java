@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -94,7 +95,7 @@ public class DocumentController {
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		try {
-			return ResponseEntity.ok(documentAssetService.getDocumentAssets(page, pageSize));
+			return ResponseEntity.ok(documentAssetService.getAssets(page, pageSize));
 		} catch (final IOException e) {
 			final String error = "Unable to get documents";
 			log.error(error, e);
@@ -116,7 +117,7 @@ public class DocumentController {
 	) {
 
 		try {
-			document = documentAssetService.createDocumentAsset(document);
+			document = documentAssetService.createAsset(document);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
@@ -146,14 +147,14 @@ public class DocumentController {
 		}
 
 		try {
-			final Optional<DocumentAsset> originalDocument = documentAssetService.getDocumentAsset(id);
+			final Optional<DocumentAsset> originalDocument = documentAssetService.getAsset(id);
 			if(originalDocument.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 			// Preserve ownership. This may be coming from KM which doesn't have an awareness of who owned this document.
 			document.setUserId(originalDocument.get().getUserId());
 
-			final Optional<DocumentAsset> updatedDoc = documentAssetService.updateDocumentAsset(document);
+			final Optional<DocumentAsset> updatedDoc = documentAssetService.updateAsset(document);
 			return updatedDoc.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
@@ -177,7 +178,7 @@ public class DocumentController {
 	) {
 
 		try {
-			final Optional<DocumentAsset> document = documentAssetService.getDocumentAsset(id);
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(id);
 			if (document.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -203,7 +204,7 @@ public class DocumentController {
 			});
 
 			// Update data-service with the updated metadata
-			documentAssetService.updateDocumentAsset(document.get());
+			documentAssetService.updateAsset(document.get());
 
 			// Return the updated document
 			return ResponseEntity.ok(document.get());
@@ -277,7 +278,7 @@ public class DocumentController {
 	) {
 
 		try {
-			documentAssetService.deleteDocumentAsset(id);
+			documentAssetService.deleteAsset(id);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete document";
@@ -311,14 +312,14 @@ public class DocumentController {
 			// if the fileEntity is not a PDF, then we need to extract the text and update
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				final Optional<DocumentAsset> document = documentAssetService.getDocumentAsset(documentId);
+				final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 				if (document.isEmpty()) {
 					return ResponseEntity.notFound().build();
 				}
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
 
-				documentAssetService.updateDocumentAsset(document.get());
+				documentAssetService.updateAsset(document.get());
 			}
 
 			return ResponseEntity.status(response.getStatusLine().getStatusCode()).build();
@@ -382,6 +383,13 @@ public class DocumentController {
 
 		// download file from GitHub
 		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		if(fileString == null) {
+			final String error = "Unable to download document from github";
+			log.error(error);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadDocumentHelper(documentId, filename, fileEntity);
 	}
@@ -407,8 +415,12 @@ public class DocumentController {
 			// get preliminary info to build document asset
 			final Document document = body.getDocument();
 			final UUID projectId = body.getProjectId();
-			final String doi = documentAssetService.getDocumentDoi(document);
-			final String userId = projectService.getProject(projectId).get().getUserId();
+			final String doi = DocumentAsset.getDocumentDoi(document);
+			final Optional<Project> project = projectService.getProject(projectId);
+			if(project.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final String userId = project.get().getUserId();
 
 			// get pdf url and filename
 			final String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
@@ -427,7 +439,7 @@ public class DocumentController {
 
 			// Upload the document to TDS in order to get a new ID to pair our files we want
 			// to upload with.
-			final UUID newDocumentAssetId = documentAssetService.createDocumentAsset(documentAsset).getId();
+			final UUID newDocumentAssetId = documentAssetService.createAsset(documentAsset).getId();
 			response.setDocumentAssetId(newDocumentAssetId);
 
 			// Upload the PDF from unpaywall
@@ -441,11 +453,8 @@ public class DocumentController {
 			uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
 
 			// add asset to project
-			final Optional<Project> project = projectService.getProject(projectId);
-			if (project.isPresent()) {
-				projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT,
-						newDocumentAssetId);
-			}
+			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, newDocumentAssetId);
+
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
@@ -697,7 +706,16 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			return knowledgeMiddlewareProxy.postPDFToCosmos(docId.toString()).getBody().get("id").asText();
+			final JsonNode res = knowledgeMiddlewareProxy.postPDFToCosmos(docId.toString()).getBody();
+
+			if(res == null || res.get("id") == null) {
+				final String error = "Returned response from knowledge middleware is null";
+				log.error(error);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						error);
+			}
+			return res.get("id").asText();
 
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);

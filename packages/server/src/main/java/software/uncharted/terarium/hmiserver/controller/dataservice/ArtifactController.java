@@ -1,11 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -20,33 +21,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/artifacts")
 @RestController
@@ -71,8 +60,8 @@ public class ArtifactController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(artifactService.getArtifacts(page, pageSize));
-		} catch (Exception e) {
+			return ResponseEntity.ok(artifactService.getAssets(page, pageSize));
+		} catch (final Exception e) {
 			final String error = "Unable to get artifacts";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -89,10 +78,10 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "201", description = "Artifact created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the artifact", content = @Content)
 	})
-	public ResponseEntity<Artifact> createArtifact(@RequestBody Artifact artifact) {
+	public ResponseEntity<Artifact> createArtifact(@RequestBody final Artifact artifact) {
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createArtifact(artifact));
-		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact));
+		} catch (final Exception e) {
 			final String error = "Unable to create artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -110,14 +99,11 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
 	})
-	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") UUID artifactId) {
+	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId) {
 		try {
-			Optional<Artifact> artifact = artifactService.getArtifact(artifactId);
-			if (artifact.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(artifact.get());
-		} catch (Exception e) {
+			final Optional<Artifact> artifact = artifactService.getAsset(artifactId);
+			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+		} catch (final Exception e) {
 			final String error = "Unable to get artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -135,17 +121,14 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the artifact", content = @Content)
 	})
 	public ResponseEntity<Artifact> updateArtifact(
-			@PathVariable("id") UUID artifactId,
-			@RequestBody Artifact artifact) {
+			@PathVariable("id") final UUID artifactId,
+			@RequestBody final Artifact artifact) {
 
 		try {
 			artifact.setId(artifactId);
-			Optional<Artifact> updated = artifactService.updateArtifact(artifact);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
-		} catch (Exception e) {
+			final Optional<Artifact> updated = artifactService.updateAsset(artifact);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final Exception e) {
 			final String error = "Unable to update artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -161,12 +144,12 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "200", description = "Artifact deleted.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the artifact", content = @Content)
 	})
-	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") UUID artifactId) {
+	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") final UUID artifactId) {
 
 		try {
-			artifactService.deleteArtifact(artifactId);
+			artifactService.deleteAsset(artifactId);
 			return ResponseEntity.ok(new ResponseDeleted("artifact", artifactId));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to delete artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -189,7 +172,7 @@ public class ArtifactController {
 
 		try {
 			return ResponseEntity.ok(artifactService.getUploadUrl(id, filename));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -210,12 +193,9 @@ public class ArtifactController {
 			@RequestParam("filename") final String filename) {
 
 		try {
-			Optional<PresignedURL> url = artifactService.getDownloadUrl(id, filename);
-			if (url.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(url.get());
-		} catch (Exception e) {
+			final Optional<PresignedURL> url = artifactService.getDownloadUrl(id, filename);
+			return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -231,14 +211,14 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "200", description = "File downloaded.", content = @Content(mediaType = "text/plain")),
 			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
 	})
-	public ResponseEntity<String> downloadFileAsText(@PathVariable("id") UUID artifactId,
-			@RequestParam("filename") String filename) {
+	public ResponseEntity<String> downloadFileAsText(@PathVariable("id") final UUID artifactId,
+			@RequestParam("filename") final String filename) {
 
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
 
-			Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
+			final Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -249,7 +229,7 @@ public class ArtifactController {
 
 			return ResponseEntity.ok(textFileAsString);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -265,16 +245,16 @@ public class ArtifactController {
 			@ApiResponse(responseCode = "200", description = "File downloaded.", content = @Content(mediaType = "application/octet-stream")),
 			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
 	})
-	public ResponseEntity<byte[]> downloadFile(@PathVariable("id") UUID artifactId,
-			@RequestParam("filename") String filename) {
+	public ResponseEntity<byte[]> downloadFile(@PathVariable("id") final UUID artifactId,
+			@RequestParam("filename") final String filename) {
 
 		log.debug("Downloading artifact {} from project", artifactId);
 
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
 
-			Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
+			final Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -282,12 +262,12 @@ public class ArtifactController {
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
-				byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
+				final byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
 				return ResponseEntity.ok(fileAsBytes);
 			}
 			return ResponseEntity.status(response.getStatusLine().getStatusCode()).build();
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to GET artifact data", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -306,12 +286,12 @@ public class ArtifactController {
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("id") final UUID artifactId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") MultipartFile input) throws IOException {
+			@RequestPart("file") final MultipartFile input) throws IOException {
 
 		log.debug("Uploading artifact {} to project", artifactId);
 
-		byte[] fileAsBytes = input.getBytes();
-		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+		final byte[] fileAsBytes = input.getBytes();
+		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadArtifactHelper(artifactId, filename, fileEntity);
 
 	}
@@ -325,6 +305,7 @@ public class ArtifactController {
 	@Operation(summary = "Uploads a file from GitHub to the artifact")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
+			@ApiResponse(responseCode = "404", description = "File not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 	})
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
@@ -335,8 +316,11 @@ public class ArtifactController {
 		log.debug("Uploading artifact file from github to dataset {}", artifactId);
 
 		// download file from GitHub
-		String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		if(fileString == null) {
+			return ResponseEntity.notFound().build();
+		}
+		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadArtifactHelper(artifactId, filename, fileEntity);
 
 	}
@@ -349,10 +333,10 @@ public class ArtifactController {
 	 * @param artifactHttpEntity The entity containing the artifact to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadArtifactHelper(UUID artifactId, String fileName,
-			HttpEntity artifactHttpEntity) {
+	private ResponseEntity<Integer> uploadArtifactHelper(final UUID artifactId, final String fileName,
+                                                         final HttpEntity artifactHttpEntity) {
 
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
 
@@ -361,11 +345,10 @@ public class ArtifactController {
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(artifactHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
-			;
 
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
+            return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to PUT artifact data", e);
 			return ResponseEntity.internalServerError().build();
 		}
