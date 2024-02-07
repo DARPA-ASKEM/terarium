@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatusUpdate;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CiemssStatusUpdate;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -87,10 +88,13 @@ public class SimulationEventService {
 				if(update == null)
 					return;
         final ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder().type(ClientEventType.SIMULATION_SCIML).data(update).build();
-        simulationIdToUserIds.get(update.getId()).forEach(userId -> {
-            clientEventService.sendToUser(status, userId);
-        });
+				final String id = update.getId();
 
+				if (simulationIdToUserIds.containsKey(id)) {
+					simulationIdToUserIds.get(id).forEach(userId -> {
+							clientEventService.sendToUser(status, userId);
+					});
+				}
     }
 
     /**
@@ -104,20 +108,19 @@ public class SimulationEventService {
             queues = "${terarium.simulation-status}",
             concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
-
-			/*
-				//TODO implement PyciemssStatusUpdate
-				final PyciemssStatusUpdate update = ClientEventService.decodeMessage(message, PyciemssStatusUpdate.class);
+				final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
 				if(update == null)
 					return;
-        ClientEvent<PyciemssStatusUpdate> status = ClientEvent.<PyciemssStatusUpdate>builder().type(ClientEventType.SIMULATION_PYCIEMSS).data(update).build();
-        simulationIdToUserIds.get(update.getId()).forEach(userId -> {
-            clientEventService.sendToUser(status, userId);
-        });
-			 */
+        final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder().type(ClientEventType.SIMULATION_PYCIEMSS).data(update).build();
+				final String id = update.getJobId();
 
+
+				if (simulationIdToUserIds.containsKey(id)) {
+					simulationIdToUserIds.get(id).forEach(userId -> {
+							System.out.println("Processing ID on MQ = " + id + " " + userId);
+							clientEventService.sendToUser(status, userId);
+					});
+				}
     }
-
-
 
 }

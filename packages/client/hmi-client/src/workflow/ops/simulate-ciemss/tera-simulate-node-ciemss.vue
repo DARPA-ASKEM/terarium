@@ -1,5 +1,13 @@
 <template>
 	<main>
+		{{ selectedRunId }}
+		<tera-simulate-chart
+			v-if="hasData"
+			:run-results="runResults[selectedRunId]"
+			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: ['S_state'] }"
+			has-mean-line
+		/>
+
 		<Button
 			v-if="areInputsFilled"
 			label="Configure"
@@ -14,10 +22,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
+import { RunResults } from '@/types/SimulateConfig';
+import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -25,8 +36,26 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown']);
+const runResults = ref<{ [runId: string]: RunResults }>({});
+
+const selectedOutputId = ref<string>(props.node.active as string);
+const selectedRunId = computed(
+	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
+);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value);
+
+const hasData = ref(false);
+
+watch(
+	() => selectedRunId.value,
+	async () => {
+		const output = await getRunResultCiemss(selectedRunId.value);
+		runResults.value[selectedRunId.value] = output.runResults;
+		hasData.value = true;
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped></style>

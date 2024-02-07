@@ -159,7 +159,9 @@ import {
 	simulationPollAction,
 	querySimulationInProgress,
 	getCalibrateBlobURL,
-	makeForecastJobCiemss
+	makeForecastJobCiemss,
+	subscribeToUpdateMessages,
+	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
 import {
 	CalibrationRequestCiemss,
@@ -185,7 +187,7 @@ import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { subscribe, unsubscribe } from '@/services/ClientEventService';
+// import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { Poller, PollerState } from '@/api/api';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
@@ -298,7 +300,10 @@ const runCalibrate = async () => {
 	}
 };
 
-function getMessageHandler(event: ClientEvent<any>) {
+const getMessageHandler = (event: ClientEvent<any>) => {
+	console.log('msg', event.data);
+
+	/*
 	const runIds: string[] = querySimulationInProgress(props.node);
 	if (runIds.length === 0) return;
 
@@ -306,7 +311,8 @@ function getMessageHandler(event: ClientEvent<any>) {
 		// perform some action here
 		console.log(`Event received for: ${event.data.id}`);
 	}
-}
+	*/
+};
 
 const getCalibrateStatus = async (simulationId: string) => {
 	showSpinner.value = true;
@@ -317,8 +323,11 @@ const getCalibrateStatus = async (simulationId: string) => {
 	const runIds = [simulationId];
 
 	// open a connection for each run id and handle the messages
-	// FIXME: Show progress and loss
-	await subscribe(ClientEventType.SimulationPyciemss, getMessageHandler);
+	await subscribeToUpdateMessages(
+		[simulationId],
+		ClientEventType.SimulationPyciemss,
+		getMessageHandler
+	);
 
 	poller
 		.setInterval(3000)
@@ -328,7 +337,11 @@ const getCalibrateStatus = async (simulationId: string) => {
 	const pollerResults = await poller.start();
 
 	// closing event source connections
-	await unsubscribe(ClientEventType.SimulationPyciemss, getMessageHandler);
+	await unsubscribeToUpdateMessages(
+		[simulationId],
+		ClientEventType.SimulationPyciemss,
+		getMessageHandler
+	);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		return;
@@ -364,7 +377,6 @@ const getCalibrateStatus = async (simulationId: string) => {
 	});
 
 	const sampleSimulateId = resp.id;
-	console.log(resp.id);
 
 	poller.stop();
 	poller
