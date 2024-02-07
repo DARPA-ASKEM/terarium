@@ -201,8 +201,6 @@ export function addCard(
 			addTemplateArguments.new_expression = observables[0].expression_mathml;
 		}
 
-		console.log(addTemplateArguments);
-
 		kernelManager
 			.sendMessage(`add_${snakeCase(name)}_template_request`, addTemplateArguments)
 			.register(`add_${snakeCase(name)}_template_response`, (d) => {
@@ -375,6 +373,7 @@ export function flattenedToDecomposed(
 					junctionId,
 					target,
 					portPosition,
+					undefined,
 					interpolatePointsFn
 				);
 			});
