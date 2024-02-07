@@ -316,6 +316,9 @@ public class Task {
 				}
 			}).start();
 
+		} catch (Exception e) {
+			status = TaskStatus.FAILED;
+			throw e;
 		} finally {
 			lock.unlock();
 		}
