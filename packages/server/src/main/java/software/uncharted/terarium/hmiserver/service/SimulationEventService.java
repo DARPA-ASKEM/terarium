@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,10 @@ import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatusUpdate;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -39,12 +40,6 @@ public class SimulationEventService {
 		@Value("${terarium.simulation-status}")
 		private String PYCIEMSS_QUEUE;
 
-		@Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
-		private String queueSuffix;
-
-		@Value("${terarium.queue.suffix:#{null}}")
-		private String isUserDev;
-
 
     Queue scimlQueue;
     Queue pyciemssQueue;
@@ -52,16 +47,16 @@ public class SimulationEventService {
 
     @PostConstruct
     void init() {
-        scimlQueue = new Queue(SCIML_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
+        scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues(), false, false);
         rabbitAdmin.declareQueue(scimlQueue);
 
-        pyciemssQueue = new Queue(PYCIEMSS_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
+        pyciemssQueue = new Queue(PYCIEMSS_QUEUE, config.getDurableQueues(), false, false);
         rabbitAdmin.declareQueue(pyciemssQueue);
 
     }
 
-    public void subscribe(List<String> simulationIds, User user) {
-        for (String simulationId : simulationIds) {
+    public void subscribe(final List<String> simulationIds, final User user) {
+        for (final String simulationId : simulationIds) {
             if (!simulationIdToUserIds.containsKey(simulationId)) {
                 simulationIdToUserIds.put(simulationId, new HashSet<>());
             }
@@ -70,8 +65,8 @@ public class SimulationEventService {
 
     }
 
-    public void unsubscribe(List<String> simulationIds, User user) {
-        for (String simulationId : simulationIds)
+    public void unsubscribe(final List<String> simulationIds, final User user) {
+        for (final String simulationId : simulationIds)
             simulationIdToUserIds.get(simulationId).remove(user.getId());
     }
 
@@ -83,15 +78,16 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-    @RabbitListener(
-            queues = "${terarium.sciml-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
+		//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+		@RabbitListener(
+            queues = "${terarium.sciml-queue}",
             concurrency = "1")
     private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
 
         final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
 				if(update == null)
 					return;
-        ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder().type(ClientEventType.SIMULATION_SCIML).data(update).build();
+        final ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder().type(ClientEventType.SIMULATION_SCIML).data(update).build();
         simulationIdToUserIds.get(update.getId()).forEach(userId -> {
             clientEventService.sendToUser(status, userId);
         });
@@ -105,8 +101,9 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-    @RabbitListener(
-            queues = "${terarium.simulation-status}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
+		//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+		@RabbitListener(
+            queues = "${terarium.simulation-status}",
             concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
 
