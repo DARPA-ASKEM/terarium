@@ -495,9 +495,9 @@ public class DatasetController {
 	private static List<List<String>> csvToRecords(final String rawCsvString) throws IOException {
 		final List<List<String>> records = new ArrayList<>();
 		try (final CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
-			for (final CSVRecord record : parser) {
+			for (final CSVRecord csvRecord : parser) {
 				final List<String> values = new ArrayList<>();
-				record.forEach(values::add);
+				csvRecord.forEach(values::add);
 				records.add(values);
 			}
 		}
