@@ -98,8 +98,10 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	 * @throws IOException If there is an error creating the asset
 	 */
 	public T createAsset(final T asset) throws IOException {
+		final UUID id = UUID.randomUUID();
+		asset.setId(id);
 		asset.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(getAssetIndex(), asset.setId(UUID.randomUUID()).getId().toString(), asset);
+		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
 		return asset;
 	}
 
