@@ -366,7 +366,9 @@ export function flattenedToDecomposed(
 					cardId: templateCard.id,
 					portId: repeatedInitialTargets[i]
 				};
-				const portPosition = { x: templateCard.x, y: templateCard.y };
+
+				// Port position is now card position + 168 (width of the card)
+				const portPosition = { x: templateCard.x + 168, y: templateCard.y };
 				addEdge(
 					decomposedTemplates,
 					kernelManager,
