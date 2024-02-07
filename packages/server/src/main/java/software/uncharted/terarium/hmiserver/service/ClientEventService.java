@@ -123,7 +123,8 @@ public class ClientEventService{
    * @param message the message to send
    * @param channel the channel to send the message on
    */
-  @RabbitListener(
+	//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	@RabbitListener(
           queues = "${terarium.client-all-user-event-queue}",
           concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
@@ -156,7 +157,8 @@ public class ClientEventService{
    * @param channel       the channel to send the message on
    * @throws IOException  if there was an error sending the message
    */
-  @RabbitListener(
+	//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	@RabbitListener(
           queues = {"${terarium.client-user-event-queue}"},
           concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
