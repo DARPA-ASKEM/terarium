@@ -261,7 +261,7 @@ export async function subscribeToUpdateMessages(
 	eventType: ClientEventType,
 	messageHandler: (data: ClientEvent<any>) => void
 ) {
-	await API.get(`/simulations/subscribe?simulationIds=${simulationIds}`);
+	await API.get(`/simulations/subscribe?simulation-ids=${simulationIds}`);
 	await subscribe(eventType, messageHandler);
 }
 
@@ -270,7 +270,7 @@ export async function unsubscribeToUpdateMessages(
 	eventType: ClientEventType,
 	messageHandler: (data: ClientEvent<any>) => void
 ) {
-	await API.get(`/simulations/unsubscribe?simulationIds=${simulationIds}`);
+	await API.get(`/simulations/unsubscribe?simulation-ids=${simulationIds}`);
 	await unsubscribe(eventType, messageHandler);
 }
 
