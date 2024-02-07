@@ -81,6 +81,7 @@ public class DocumentAddEmbeddingsPass
 				// embedding references a new doc, add existing partial to output, create next
 				// one
 				Document doc = new Document();
+				doc.setId(in.getId());
 				doc.setEmbeddings(embeddings);
 				output.add(doc);
 

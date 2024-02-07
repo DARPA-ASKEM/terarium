@@ -60,6 +60,8 @@ public class ElasticIngestApplication {
 				esIngestService.ingest(params, ingest);
 			}
 
+			esIngestService.shutdown();
+
 			log.info("Shutting down the application...");
 			System.exit(0);
 		};

@@ -353,10 +353,13 @@ public class ElasticsearchService {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
 		for (Output doc : docs) {
+			if (doc.getId() == null) {
+				throw new RuntimeException("Document id cannot be null");
+			}
 			bulkRequest.operations(op -> op
 					.index(idx -> idx
 							.index(index)
-							.id(doc.getId().toString())
+							.id(doc.getId())
 							.document(doc)));
 		}
 
@@ -385,9 +388,12 @@ public class ElasticsearchService {
 
 		List<BulkOperation> operations = new ArrayList<>();
 		for (Output doc : docs) {
+			if (doc.getId() == null) {
+				throw new RuntimeException("Document id cannot be null");
+			}
 			UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<Object, Object>()
 					.index(index)
-					.id(doc.getId().toString())
+					.id(doc.getId())
 					.action(a -> a.doc(doc))
 					.build();
 

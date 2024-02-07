@@ -72,7 +72,6 @@ public class ElasticIngestService extends ConcurrentWorkerService {
 			insertPass.setup(params);
 			errs.addAll(esInsertService.insertDocuments(params, insertPass));
 			insertPass.teardown(params);
-			esInsertService.shutdown();
 
 			log.info("Ingested documents successfully in {}",
 					TimeFormatter.format(System.currentTimeMillis() - insertStart));
@@ -85,7 +84,6 @@ public class ElasticIngestService extends ConcurrentWorkerService {
 				log.info("Updated documents successfully in {}",
 						TimeFormatter.format(System.currentTimeMillis() - updateStart));
 			}
-			esUpdateService.shutdown();
 
 			// teardown ingest
 			ingest.setup(params);
@@ -105,5 +103,10 @@ public class ElasticIngestService extends ConcurrentWorkerService {
 		} catch (Exception e) {
 			log.error("Ingest failed", e);
 		}
+	}
+
+	public void shutdown() {
+		esInsertService.shutdown();
+		esUpdateService.shutdown();
 	}
 }
