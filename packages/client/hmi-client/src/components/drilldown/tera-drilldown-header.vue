@@ -18,7 +18,7 @@
 				v-if="views.length > 1"
 				:active-index="activeIndex"
 				@tab-change="onTabChange"
-				style="margin-right: auto"
+				class="mr-auto"
 			>
 				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 			</TabView>

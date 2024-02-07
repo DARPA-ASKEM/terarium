@@ -9,7 +9,7 @@
 				@close="emit('on-close-clicked')"
 				>{{ props.title }}
 				<template #action-row>
-					<slot name="header-action-row"></slot>
+					<slot name="header-action-row" />
 				</template>
 			</tera-drilldown-header>
 			<tera-columnar-panel>

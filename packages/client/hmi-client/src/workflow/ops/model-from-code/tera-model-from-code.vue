@@ -47,7 +47,8 @@
 						@delete="removeCodeBlock(i - inputCodeBlocks.length)"
 						:is-included="allCodeBlocks[i].includeInProcess"
 						@update:is-included="
-							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
+							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess;
+							emit('update-state', clonedState);
 						"
 					>
 						<template #header>
@@ -73,14 +74,14 @@
 							:options="modelFrameworks"
 							@change="setKernelContext"
 					/></span>
-					<span style="margin-right: auto">
+					<span class="mr-auto">
 						<label>Service</label>
 						<Dropdown
 							size="small"
 							v-model="clonedState.modelService"
 							:options="modelServices"
 							@change="emit('update-state', clonedState)"
-						></Dropdown>
+						/>
 					</span>
 				</template>
 			</tera-drilldown-section>
@@ -120,7 +121,7 @@
 						severity="secondary"
 						outlined
 						@click="openModal"
-						style="margin-right: auto"
+						class="mr-auto"
 					/>
 					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
 					<Button
@@ -512,9 +513,10 @@ async function generateModelCard(docId, modelId) {
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
-		const goLLMId = await modelCard(docId, modelId);
+		const goLLMTask = await modelCard(docId, modelId);
+		if (!goLLMTask) return;
 		// fetch model on success
-		handleTaskById(goLLMId?.id, (data) => {
+		handleTaskById(goLLMTask.id, (data) => {
 			console.log(data);
 			fetchModel();
 		});

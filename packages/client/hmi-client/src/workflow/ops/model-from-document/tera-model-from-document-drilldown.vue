@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<template #header-action-row>
-			<label style="margin-left: auto">Output</label>
+			<label class="ml-auto">Output</label>
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -72,7 +72,7 @@
 							:options="modelFrameworks"
 							@change="onChangeModelFramework"
 					/></span>
-					<span style="margin-right: auto">
+					<span class="mr-auto">
 						<label>Service</label>
 						<Dropdown
 							size="small"
@@ -105,7 +105,7 @@
 				/>
 				<template #footer>
 					<Button
-						style="margin-right: auto"
+						class="mr-auto"
 						label="Save as new model"
 						:disabled="!selectedModel"
 						outlined
@@ -429,8 +429,9 @@ async function generateModelCard(documentId, modelId) {
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
-		const goLLMId = await modelCard(documentId, modelId);
-		handleTaskById(goLLMId?.id, (data) => {
+		const goLLMTask = await modelCard(documentId, modelId);
+		if (!goLLMTask) return;
+		handleTaskById(goLLMTask.id, (data) => {
 			console.log(data);
 			fetchModel();
 		});

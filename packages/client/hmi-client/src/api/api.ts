@@ -1,6 +1,11 @@
 import { ToastSummaries } from '@/services/toast';
 import { logger } from '@/utils/logger';
 import axios, { AxiosHeaders } from 'axios';
+import {
+	EventSourceMessage,
+	FetchEventSourceInit,
+	fetchEventSource
+} from '@microsoft/fetch-event-source';
 import useAuthStore from '../stores/auth';
 
 const API = axios.create({
@@ -178,6 +183,84 @@ export class Poller<T> {
 	// Not really a fluent API, but convienent
 	stop() {
 		this.keepGoing = false;
+	}
+}
+
+/**
+ * Interface defining handlers for Server-Sent Events (SSE).
+ */
+export interface SSEHandlers {
+	/**
+	 * Handler for incoming SSE messages.
+	 * @param {any} message The received message.
+	 * @param {() => void} abort Function to abort the SSE connection.
+	 */
+	onMessage: (message: any, abort: () => void) => void;
+	/**
+	 * Handler for SSE connection open event.
+	 * @param {Response} response The response object.
+	 */
+	onOpen?: (response: Response) => void;
+	/**
+	 * Handler for SSE connection error.
+	 * @param {Error} error The error object.
+	 */
+	onError: (error: Error) => void;
+	/**
+	 * Handler for SSE connection close event.
+	 */
+	onClose?: () => void;
+}
+
+/**
+ * Function to handle Server-Sent Events (SSE) connections.
+ * @param {string} url The URL to connect to.
+ * @param {SSEHandlers} handlers Object containing SSE event handlers.
+ * @param {FetchEventSourceInit} options Additional options for the SSE connection.
+ */
+export async function handleSSE(
+	url: string,
+	handlers: SSEHandlers,
+	options?: FetchEventSourceInit
+) {
+	const authStore = useAuthStore();
+	const controller = new AbortController();
+	const fetchEventSourceOptions: FetchEventSourceInit = {
+		...options,
+		headers: {
+			...options?.headers,
+			Authorization: `Bearer ${authStore.token}`
+		},
+		onmessage(message: EventSourceMessage) {
+			const data = message?.data;
+			const abort = () => controller.abort();
+			handlers.onMessage(data, abort);
+		},
+		onerror(error: Error) {
+			handlers.onError(error);
+			controller.abort();
+		},
+		async onopen(response: Response) {
+			logger.info('Connection opened', { showToast: false });
+			if (handlers.onOpen) handlers.onOpen(response);
+		},
+		onclose() {
+			if (handlers.onClose) handlers.onClose();
+		},
+		signal: controller.signal,
+		openWhenHidden: true
+	};
+
+	try {
+		await fetchEventSource(url, fetchEventSourceOptions);
+	} catch (error: unknown) {
+		if (!(error instanceof Error)) {
+			throw error;
+		}
+		handlers.onError(error);
+		controller.abort();
+	} finally {
+		if (handlers.onClose) handlers.onClose();
 	}
 }
 
