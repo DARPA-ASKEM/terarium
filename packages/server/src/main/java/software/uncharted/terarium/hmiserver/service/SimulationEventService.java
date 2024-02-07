@@ -78,7 +78,8 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-    @RabbitListener(
+		//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+		@RabbitListener(
             queues = "${terarium.sciml-queue}",
             concurrency = "1")
     private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
@@ -100,7 +101,8 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-    @RabbitListener(
+		//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+		@RabbitListener(
             queues = "${terarium.simulation-status}",
             concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
