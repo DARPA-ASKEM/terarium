@@ -83,12 +83,17 @@ function appendNumberToModelVariables(model: any, number: number) {
 	const { states, transitions } = newModel.model;
 	const { rates, initials, parameters, observables } = newModel.semantics.ode;
 
+	newModel.header.name += number;
+	newModel.metadata.templateCard.name += number;
+
 	states.forEach((state) => {
 		state.id += number;
 		state.name += number;
 	});
 
 	transitions.forEach((transition) => {
+		transition.id += number;
+		transition.properties.name += number;
 		transition.input = transition.input.map((input) => input + number);
 		transition.output = transition.output.map((output) => output + number);
 	});
@@ -102,6 +107,7 @@ function appendNumberToModelVariables(model: any, number: number) {
 	});
 
 	rates.forEach((rate) => {
+		rate.target += number;
 		// Within the expression attributes update the targets to match the new ones
 		rate.expression = rate.expression.replace(/([a-zA-Z])/g, (match) => match + number);
 		rate.expression_mathml = rate.expression_mathml.replace(
@@ -129,11 +135,12 @@ export function addCard(
 	// If a decomposed card is added, add it to the kernel
 	if (Object.values(DecomposedModelTemplateTypes).includes(name)) {
 		const addTemplateArguments: AddTemplateArguments = {};
+
+		// Append a number to the model variables to avoid conflicts
 		modelTemplate = appendNumberToModelVariables(modelTemplate, modelTemplates.models.length);
 
-		console.log(modelTemplate);
-
 		if (name !== DecomposedModelTemplateTypes.Observable) {
+			const uniqueName = modelTemplate.header.name; // Now save a version of the name with the number appended
 			const { transitions } = modelTemplate.model;
 			const { rates, initials, parameters } = cloneDeep(modelTemplate.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
 
@@ -143,7 +150,7 @@ export function addCard(
 			addTemplateArguments.parameter_units = parameters[0].units;
 			addTemplateArguments.parameter_description = parameters[0].description;
 			addTemplateArguments.template_expression = rates[0].expression;
-			addTemplateArguments.template_name = name;
+			addTemplateArguments.template_name = uniqueName;
 
 			// Extract controller from initials and add it to the arguments
 			if (
@@ -193,6 +200,8 @@ export function addCard(
 			addTemplateArguments.new_name = modelTemplate.header.name;
 			addTemplateArguments.new_expression = observables[0].expression_mathml;
 		}
+
+		console.log(addTemplateArguments);
 
 		kernelManager
 			.sendMessage(`add_${snakeCase(name)}_template_request`, addTemplateArguments)
