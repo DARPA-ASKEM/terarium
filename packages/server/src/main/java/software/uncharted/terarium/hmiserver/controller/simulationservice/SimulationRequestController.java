@@ -51,8 +51,6 @@ public class SimulationRequestController implements SnakeCaseController {
 	@Value("${terarium.sciml-queue}")
 	private String SCIML_QUEUE;
 
-	@Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
-	private String queueSuffix;
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
@@ -165,7 +163,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeCalibrateJob(
 			@RequestBody final CalibrationRequestJulia request) {
 		return ResponseEntity.ok(simulationServiceProxy
-				.makeCalibrateJob(SCIML_QUEUE + queueSuffix, convertObjectToSnakeCaseJsonNode(request)).getBody());
+				.makeCalibrateJob(SCIML_QUEUE, convertObjectToSnakeCaseJsonNode(request)).getBody());
 	}
 
 	@PostMapping("ciemss/calibrate")
