@@ -11,7 +11,7 @@ import { logger } from '@/utils/logger';
  */
 export async function modelCard(documentId: string, modelId: string): Promise<TaskResponse | null> {
 	try {
-		const response = await API.post('/gollm/model_card', {
+		const response = await API.post('/gollm/model_card', null, {
 			params: {
 				'document-id': documentId,
 				'model-id': modelId
@@ -50,7 +50,7 @@ export async function handleTaskById(id: string, successHandler: (message: any) 
 		onMessage(message, abort) {
 			const data = JSON.parse(message);
 			if (data?.status === TaskStatus.Failed) {
-				logger.error('Failed to generate model card.');
+				logger.error('Task Failed.');
 				abort();
 			}
 			if (data.status === TaskStatus.Success) {
