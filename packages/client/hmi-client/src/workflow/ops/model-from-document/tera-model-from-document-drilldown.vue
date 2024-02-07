@@ -231,6 +231,7 @@ const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
+const goLLMCard = ref<any>(null);
 
 const formSteps = ref([
 	{
@@ -353,12 +354,20 @@ async function fetchModel() {
 	}
 	loadingModel.value = true;
 	let model = await getModel(clonedState.value.modelId);
-	if (model && !model.metadata?.card && card.value) {
+
+	if (model) {
 		if (!model.metadata) {
 			model.metadata = {};
 		}
 
-		model.metadata.card = card.value;
+		if (!model.metadata?.card && card.value) {
+			model.metadata.card = card.value;
+		}
+
+		if (!model.metadata?.gollm_card && goLLMCard.value) {
+			model.metadata.gollm_card = goLLMCard.value;
+		}
+
 		model = await updateModel(model);
 	}
 	card.value = model?.metadata?.card ?? null;
