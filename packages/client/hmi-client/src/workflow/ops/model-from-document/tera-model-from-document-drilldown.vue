@@ -87,7 +87,14 @@
 		<template #preview>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
-					<tera-model-card :model="selectedModel" />
+					<!--FIXME: currently not parsing the goLLM card so just printing its JSON for now-->
+					<ul v-if="goLLMCard">
+						<li v-for="(key, index) in Object.keys(goLLMCard)" :key="index">
+							<h3>{{ key }}</h3>
+							<p>{{ goLLMCard[key] }}</p>
+						</li>
+					</ul>
+					<tera-model-card v-else :model="selectedModel" />
 					<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 					<tera-model-semantic-tables :model="selectedModel" readonly />
 				</section>
