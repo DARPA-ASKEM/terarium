@@ -42,9 +42,11 @@ public abstract class TerariumAsset implements Serializable {
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
 
+	@TSOptional
 	private Boolean temporary = false;
 
-	private Boolean publicAsset;
+	@TSOptional
+	private Boolean publicAsset = false;
 
 
 }
