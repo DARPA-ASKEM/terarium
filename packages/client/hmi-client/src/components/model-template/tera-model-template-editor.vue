@@ -63,13 +63,13 @@
 					@dragging="(event) => updatePosition(event, card)"
 				>
 					<tera-model-template
-						:model="currentEditor.models[index]"
+						:model="currentTemplates.models[index]"
 						is-editable
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						@update-name="
 							(name: string) =>
 								modelTemplatingService.updateDecomposedCardName(
-									currentEditor,
+									currentTemplates,
 									kernelManager,
 									outputCode,
 									name,
@@ -82,7 +82,12 @@
 						"
 						@port-mouseleave="onPortMouseleave"
 						@remove="
-							modelTemplatingService.removeCard(currentEditor, kernelManager, outputCode, card.id)
+							modelTemplatingService.removeCard(
+								currentTemplates,
+								kernelManager,
+								outputCode,
+								card.id
+							)
 						"
 					/>
 				</tera-canvas-item>
@@ -163,15 +168,15 @@ const flattenedTemplates = ref<ModelTemplates>(modelTemplatingService.initialize
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
-const currentEditor = computed(() =>
+const currentTemplates = computed(() =>
 	currentModelFormat.value === EditorFormat.Decomposed
 		? decomposedTemplates.value
 		: flattenedTemplates.value
 );
 const cards = computed<ModelTemplateCard[]>(
-	() => currentEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+	() => currentTemplates.value.models.map(({ metadata }) => metadata.templateCard) ?? []
 );
-const junctions = computed<ModelTemplateJunction[]>(() => currentEditor.value.junctions);
+const junctions = computed<ModelTemplateJunction[]>(() => currentTemplates.value.junctions);
 
 const newModelTemplate = ref();
 const newEdge = ref();
@@ -218,12 +223,12 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
-			modelTemplatingService.addJunction(decomposedTemplates.value, currentPortPosition);
+			modelTemplatingService.addJunction(currentTemplates.value, currentPortPosition);
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
 			// Add a default edge as well
 			modelTemplatingService.addEdge(
-				decomposedTemplates.value,
+				currentTemplates.value,
 				kernelManager,
 				junctionIdForNewEdge,
 				target,
@@ -251,7 +256,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
 		modelTemplatingService.addEdge(
-			decomposedTemplates.value,
+			currentTemplates.value,
 			kernelManager,
 			junctionIdForNewEdge,
 			target,
@@ -290,7 +295,7 @@ function onCanvasClick() {
 function cancelNewEdge() {
 	newEdge.value = undefined;
 	junctionIdForNewEdge = null;
-	modelTemplatingService.junctionCleanUp(decomposedTemplates.value);
+	modelTemplatingService.junctionCleanUp(currentTemplates.value);
 }
 
 const setMouseOverCanvas = (val: boolean) => {
@@ -315,7 +320,7 @@ function outputCode(data: any) {
 function onDrop(event) {
 	updateNewCardPosition(event);
 	modelTemplatingService.addCard(
-		decomposedTemplates.value,
+		currentTemplates.value,
 		kernelManager,
 		outputCode,
 		cloneDeep(newModelTemplate.value)
