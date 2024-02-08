@@ -70,11 +70,11 @@ const emit = defineEmits(['open-project']);
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
 		case 'description':
-			return 60;
+			return 40;
 		case 'name':
-			return 20;
+			return 40;
 		default:
-			return 5;
+			return 100;
 	}
 }
 </script>
