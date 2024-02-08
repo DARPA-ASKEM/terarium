@@ -62,8 +62,8 @@ $padding: .5rem !default;
 
 //selected state
 $highlightBg: #E9FFFC;
-$highlightTextColor: $primaryColor !default;
-$highlightFocusBg: transparent;
+$highlightTextColor: var(--text-color-primary) !default;
+$highlightFocusBg: var(--surface-highlight);
 
 //scale
 $scaleSM: 0.875 !default;
