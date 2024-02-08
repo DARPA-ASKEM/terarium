@@ -139,8 +139,8 @@ const formattedFacets = computed(() => {
 	padding-top: 0.5rem;
 }
 .skeleton-facet-header {
-	height: 1.25rem;
-	width: 10rem;
+	height: 1rem;
+	width: 8rem;
 	background-color: var(--gray-100);
 	margin-bottom: 0.5rem;
 	border-radius: 3px;
@@ -150,12 +150,12 @@ const formattedFacets = computed(() => {
 	width: 100;
 	height: 0.5rem;
 	background-color: var(--gray-100);
-	margin-bottom: 0.5rem;
+	margin-bottom: 0.25rem;
 	border-radius: 3px;
 }
 .skeleton-facet-label {
-	height: 1rem;
-	width: 8rem;
+	height: 0.75rem;
+	width: 6rem;
 	margin-bottom: 0.5rem;
 	background-color: var(--gray-100);
 	border-radius: 3px;
