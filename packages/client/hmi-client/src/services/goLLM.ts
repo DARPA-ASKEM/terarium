@@ -47,7 +47,7 @@ export async function modelCard(documentId: string, modelId: string): Promise<Ta
  */
 export async function handleTaskById(id: string) {
 	const sseHandler = new SSEHandler(`/api/gollm/${id}`, {
-		onMessage(message) {
+		onmessage(message) {
 			const data = JSON.parse(message);
 			if (data?.status === TaskStatus.Failed) {
 				throw Error('Task failed');

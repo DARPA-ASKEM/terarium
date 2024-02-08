@@ -194,21 +194,21 @@ export interface SSEHandlers {
 	 * Handler for incoming SSE messages.
 	 * @param {any} message The received message.
 	 */
-	onMessage: (message: any) => void;
+	onmessage: (message: any) => void;
 	/**
 	 * Handler for SSE connection open event.
 	 * @param {Response} response The response object.
 	 */
-	onOpen?: (response: Response) => void;
+	onopen?: (response: Response) => void;
 	/**
 	 * Handler for SSE connection error.
 	 * @param {Error} error The error object.
 	 */
-	onError?: (error: Error) => void;
+	onerror?: (error: Error) => void;
 	/**
 	 * Handler for SSE connection close event.
 	 */
-	onClose?: () => void;
+	onclose?: () => void;
 }
 
 /**
@@ -255,7 +255,7 @@ export class SSEHandler {
 	 */
 	public closeConnection() {
 		this.controller.abort();
-		if (this.handlers.onClose) this.handlers.onClose();
+		if (this.handlers.onclose) this.handlers.onclose();
 		logger.info('Connection closed', { showToast: false });
 	}
 
@@ -291,15 +291,15 @@ export class SSEHandler {
 			},
 			onmessage: (message: EventSourceMessage) => {
 				const data = message?.data;
-				this.handlers.onMessage(data);
+				this.handlers.onmessage(data);
 			},
 			onerror: (error: Error) => {
-				if (this.handlers.onError) this.handlers.onError(error);
+				if (this.handlers.onerror) this.handlers.onerror(error);
 				throw error;
 			},
 			async onopen(response: Response) {
 				logger.info('Connection opened', { showToast: false });
-				if (handlers.onOpen) handlers.onOpen(response);
+				if (handlers.onopen) handlers.onopen(response);
 			},
 			signal: this.controller.signal,
 			openWhenHidden: true
