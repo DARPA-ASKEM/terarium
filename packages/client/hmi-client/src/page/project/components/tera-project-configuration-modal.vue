@@ -1,5 +1,9 @@
 <template>
-	<tera-modal @modal-mask-clicked="emit('close-modal')" @modal-enter-press="applyConfiguration">
+	<tera-modal
+		@modal-mask-clicked="emit('close-modal')"
+		@modal-enter-press="applyConfiguration"
+		class="create-project-modal"
+	>
 		<template #header>
 			<h4>{{ modalTitle }}</h4>
 		</template>
@@ -210,5 +214,6 @@ Should probably switch everything to use gap (like here) at some point
 	border: 1px solid var(--surface-border-light);
 	max-height: 100%;
 	overflow-y: scroll;
+	width: 40vw;
 }
 </style>
