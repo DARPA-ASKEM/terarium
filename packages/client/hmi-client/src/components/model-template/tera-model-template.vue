@@ -16,7 +16,7 @@
 						@focusout="updateName"
 					/>
 				</header>
-				<tera-model-diagram :model="model" :is-editable="isEditable" is-preview />
+				<tera-model-diagram :model="model" :is-editable="false" is-preview />
 			</main>
 			<Button v-if="isEditable" @click="toggle" icon="pi pi-ellipsis-v" rounded text />
 			<Menu ref="menu" :model="cardOptions" :popup="true" />
