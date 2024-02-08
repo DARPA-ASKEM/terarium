@@ -126,9 +126,7 @@ public class ModelController {
 								.getAsset(UUID.fromString(documentId));
 						if (document.isPresent()) {
 							final List<JsonNode> extractions = objectMapper.convertValue(
-									document.get().getMetadata().get("attributes"),
-                                    new TypeReference<>() {
-                                    });
+								document.get().getMetadata().get("attributes"), new TypeReference<>() {});
 
 							// Append the Document extractions to the Model extractions, just for the
 							// front-end.
