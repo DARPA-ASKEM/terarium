@@ -86,6 +86,14 @@ To generate the typescript models as a single command:
 yarn workspace @uncharted/server-type-generator run generateTypes
 ```
 
+The client, when running with the command `yarn dev`, connects to the server in the staging environment, enabling client-side development without the need to spin up the server locally.
+
+To run the client while connecting to the server running locally, use the following command:
+
+```shell
+yarn local
+```
+
 <details>
 <summary><b>Debugging the Client in IntelliJ</b></summary>
 
@@ -100,6 +108,30 @@ Save your configuration, and choose Debug from the Run menu. You will now hit br
 
   ![debug Front End](docs/debugFrontEnd.png)
 
+</details>
+
+<details>
+<summary><b>Debugging the Client in VSCode</b></summary>
+
+Ensure the following configuration is in the `.vscode/launch.json` directory:
+
+```json
+{
+  "type": "node",
+  "request": "launch",
+  "name": "HMI Client",
+  "runtimeExecutable": "yarn",
+  "cwd": "${workspaceFolder}/packages/client",
+  "runtimeArgs": ["dev"],
+  // Run vite dev server using `yarn dev` and then launch the chrome browser
+  "serverReadyAction": {
+    "action": "debugWithChrome",
+    "pattern": "Local:[ ]+http://.+:([0-9]+)",
+    "uriFormat": "http://localhost:%s",
+    "webRoot": "${workspaceFolder}/packages/client"
+  }
+},
+```
 </details>
 
 ### Running the Server
