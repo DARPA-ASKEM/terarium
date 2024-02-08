@@ -17,12 +17,18 @@
     },
     "mappings": {
       "properties": {
+        "id": {
+          "type": "keyword"
+        },
         "title": {
           "type": "text"
         },
         "fullText": {
           "type": "text",
           "index": false
+        },
+        "topics": {
+          "type": "keyword"
         },
         "embeddings": {
           "type": "nested",
@@ -42,6 +48,34 @@
         },
         "modelCard": {
           "type": "text"
+        },
+        "author": {
+          "properties": {
+            "family": {
+              "type": "keyword"
+            },
+            "given": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "doi": {
+          "type": "keyword"
+        },
+        "issn": {
+          "type": "keyword"
+        },
+        "journal": {
+          "type": "keyword"
+        },
+        "publisher": {
+          "type": "keyword"
+        },
+        "year": {
+          "type": "keyword"
         }
       }
     }

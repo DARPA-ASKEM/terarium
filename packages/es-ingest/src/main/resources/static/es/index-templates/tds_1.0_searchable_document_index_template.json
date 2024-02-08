@@ -17,12 +17,18 @@
     },
     "mappings": {
       "properties": {
+        "id": {
+          "type": "keyword"
+        },
         "title": {
           "type": "text"
         },
         "fullText": {
           "type": "text",
           "index": false
+        },
+        "topics": {
+          "type": "keyword"
         },
         "embeddings": {
           "type": "nested",
