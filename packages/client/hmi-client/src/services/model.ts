@@ -144,9 +144,9 @@ export async function generateModelCard(
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
-		const goLLMTask = await modelCard(documentId, modelId);
-		if (!goLLMTask) return null;
-		const response = await handleTaskById(goLLMTask.id);
+		const task = await modelCard(documentId, modelId);
+		if (!task) return null;
+		const response = await handleTaskById(task.id);
 		return response === SSEStatus.DONE ? modelId : null;
 	}
 	return null;
