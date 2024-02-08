@@ -5,7 +5,7 @@
 				v-if="amr && isKernelReady"
 				:model="amr"
 				:kernel-manager="kernelManager"
-				@output-code="(data: any) => appendCode(data, 'executed_code')"
+				@output-code="(data: any) => appendCode(data, 'executed_code', true)"
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
@@ -38,17 +38,15 @@
 				:options="outputs"
 				is-selectable
 			>
-				<div>
-					<tera-model-diagram
-						v-if="amr"
-						ref="teraModelDiagramRef"
-						:model="amr"
-						:is-editable="false"
-					/>
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
-					</div>
+				<tera-model-diagram
+					v-if="amr"
+					ref="teraModelDiagramRef"
+					:model="amr"
+					:is-editable="false"
+				/>
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+					<h4>No Model Provided</h4>
 				</div>
 				<template #footer>
 					<InputText
@@ -142,8 +140,9 @@ const codeText = ref(
 	'# This environment contains the variable "model" \n# which is displayed on the right'
 );
 
-const appendCode = (data: any, property: string) => {
+const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+	if (runUpdatedCode) runFromCodeWrapper();
 };
 
 // Reset model, then execute the code

@@ -4,6 +4,7 @@ import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
+import { Model } from '@/types/Types';
 import naturalConversionTemplate from './model-templates/natural-conversion.json';
 import naturalProductionTemplate from './model-templates/natural-production.json';
 import naturalDegredationTemplate from './model-templates/natural-degradation.json';
@@ -379,4 +380,21 @@ export function flattenedToDecomposed(
 			});
 		}
 	});
+}
+
+export function updateFlattenedTemplate(
+	model: Model,
+	flattenedTemplates: ModelTemplates,
+	kernelManager: KernelSessionManager,
+	outputCode: Function
+) {
+	const flattenedModel: any = cloneDeep(model);
+	flattenedModel.metadata.templateCard = {
+		id: model.id,
+		name: model.header.name,
+		x: 100,
+		y: 100
+	};
+
+	addCard(flattenedTemplates, kernelManager, outputCode, flattenedModel);
 }

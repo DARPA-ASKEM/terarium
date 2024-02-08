@@ -47,8 +47,15 @@
 						:model-value="currentModelFormat"
 						@change="if ($event.value) currentModelFormat = $event.value;"
 						:options="modelFormatOptions"
-						loading
-					/>
+					>
+						<template #option="{ option }">
+							<i
+								v-if="isDecomposedLoading && option === EditorFormat.Decomposed"
+								class="pi pi-spin pi-spinner p-button-icon-left"
+							/>
+							<span class="p-button-label">{{ option }}</span>
+						</template>
+					</SelectButton>
 				</section>
 			</template>
 			<template #data>
@@ -124,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEqual } from 'lodash'; // debounce
+import { cloneDeep, isEmpty, isEqual } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -178,6 +185,10 @@ const junctions = computed<ModelTemplateJunction[]>(() => currentTemplates.value
 
 const newModelTemplate = ref();
 const newEdge = ref();
+
+const isDecomposedLoading = computed(
+	() => props.model && isEmpty(decomposedTemplates.value.models)
+);
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
@@ -383,39 +394,41 @@ function mouseUpdate(event: MouseEvent) {
 }
 
 watch(
-	() => [props.model, props.kernelManager.jupyterSession],
+	() => [props.model],
 	() => {
-		if (props.model && props.kernelManager.jupyterSession) {
-			// Create flattened view of model
-			const flattenedModel: any = cloneDeep(props.model);
-			flattenedModel.metadata.templateCard = {
-				id: props.model.id,
-				name: props.model.header.name,
-				x: 100,
-				y: 100
-			};
+		if (props.model) {
+			flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
 
-			modelTemplatingService.addCard(
+			modelTemplatingService.updateFlattenedTemplate(
+				props.model,
 				flattenedTemplates.value,
 				props.kernelManager,
-				outputCode,
-				flattenedModel
-			);
-
-			// Create decomposed view of model
-			modelTemplatingService.flattenedToDecomposed(
-				decomposedTemplates.value,
-				props.kernelManager,
-				outputCode,
-				interpolatePointsForCurve
+				outputCode
 			);
 		}
-	},
-	{ immediate: true }
+	}
 );
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+
+	if (props.model) {
+		// Create flattened view of model
+		modelTemplatingService.updateFlattenedTemplate(
+			props.model,
+			flattenedTemplates.value,
+			props.kernelManager,
+			outputCode
+		);
+
+		// Create decomposed view of model
+		modelTemplatingService.flattenedToDecomposed(
+			decomposedTemplates.value,
+			props.kernelManager,
+			outputCode,
+			interpolatePointsForCurve
+		);
+	}
 });
 
 onUnmounted(() => {
@@ -432,6 +445,10 @@ onUnmounted(() => {
 
 .view-toggles {
 	padding: 0.5rem;
+
+	.pi-spin {
+		color: var(--text-color-subdued);
+	}
 }
 
 aside {
