@@ -123,7 +123,6 @@ public class ClientEventService{
    * @param message the message to send
    * @param channel the channel to send the message on
    */
-
 	//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
 	@RabbitListener(
           queues = "${terarium.client-all-user-event-queue}",
