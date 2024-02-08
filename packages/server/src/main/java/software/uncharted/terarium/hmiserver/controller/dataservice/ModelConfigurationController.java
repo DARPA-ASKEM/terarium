@@ -1,26 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,10 +8,20 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/model-configurations")
 @RestController
@@ -55,8 +45,8 @@ public class ModelConfigurationController {
 			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
 
 		try {
-			return ResponseEntity.ok(modelConfigurationService.getModelConfigurations(pageSize, page));
-		} catch (IOException e) {
+			return ResponseEntity.ok(modelConfigurationService.getAssets(pageSize, page));
+		} catch (final IOException e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -72,12 +62,12 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "201", description = "Model configuration created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the configuration", content = @Content)
 	})
-	public ResponseEntity<ModelConfiguration> createModelConfiguration(@RequestBody ModelConfiguration config) {
+	public ResponseEntity<ModelConfiguration> createModelConfiguration(@RequestBody final ModelConfiguration config) {
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(modelConfigurationService.createModelConfiguration(config));
-		} catch (IOException e) {
+					.body(modelConfigurationService.createAsset(config));
+		} catch (final IOException e) {
 			final String error = "Unable to create model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -95,16 +85,13 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the configuration from the data store", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
-			@PathVariable("id") UUID id) {
+			@PathVariable("id") final UUID id) {
 
 		try {
-			Optional<ModelConfiguration> modelConfiguration = modelConfigurationService
-					.getModelConfiguration(id);
-			if (modelConfiguration.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(modelConfiguration.get());
-		} catch (IOException e) {
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService
+					.getAsset(id);
+			return modelConfiguration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+		} catch (final IOException e) {
 			final String error = "Unable to get model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -118,21 +105,19 @@ public class ModelConfigurationController {
 	@Operation(summary = "Update a model configuration")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model configuration updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class))),
+			@ApiResponse(responseCode = "404", description = "Model configuration could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the configuration", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
-			@PathVariable("id") UUID id,
-			@RequestBody ModelConfiguration config) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final ModelConfiguration config) {
 
 		try {
 			config.setId(id);
 			final Optional<ModelConfiguration> updated = modelConfigurationService
-					.updateModelConfiguration(config);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
-		} catch (IOException e) {
+					.updateAsset(config);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final IOException e) {
 			final String error = "Unable to update model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -151,12 +136,12 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
-			@PathVariable("id") UUID id) {
+			@PathVariable("id") final UUID id) {
 
 		try {
-			modelConfigurationService.deleteModelConfiguration(id);
+			modelConfigurationService.deleteAsset(id);
 			return ResponseEntity.ok(new ResponseDeleted("ModelConfiguration", id));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			final String error = "Unable to delete model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(

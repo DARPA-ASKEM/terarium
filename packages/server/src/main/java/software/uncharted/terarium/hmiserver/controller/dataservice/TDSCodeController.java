@@ -1,13 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -22,37 +22,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
-import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @RequestMapping("/code-asset")
 @RestController
@@ -90,8 +74,8 @@ public class TDSCodeController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(codeService.getCode(pageSize, page));
-		} catch (IOException e) {
+			return ResponseEntity.ok(codeService.getAssets(pageSize, page));
+		} catch (final IOException e) {
 			log.error("Unable to get code resources", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -115,9 +99,9 @@ public class TDSCodeController {
 	public ResponseEntity<Code> createCode(@RequestBody Code code) {
 
 		try {
-			code = codeService.createCode(code);
+			code = codeService.createAsset(code);
 			return ResponseEntity.status(HttpStatus.CREATED).body(code);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to create code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -141,14 +125,11 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the code resource from the data store", content = @Content)
 	})
-	public ResponseEntity<Code> getCode(@PathVariable("id") UUID id) {
+	public ResponseEntity<Code> getCode(@PathVariable("id") final UUID id) {
 		try {
-			Optional<Code> code = codeService.getCode(id);
-			if (code.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(code.get());
-		} catch (IOException e) {
+			final Optional<Code> code = codeService.getAsset(id);
+			return code.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+		} catch (final IOException e) {
 			log.error("Unable to get code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -169,21 +150,19 @@ public class TDSCodeController {
 	@Operation(summary = "Update a code resource")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Code resource updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "404", description = "Code resource could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the code resource", content = @Content)
 	})
 	public ResponseEntity<Code> updateCode(
-			@PathVariable("id") UUID codeId,
-			@RequestBody Code code) {
+			@PathVariable("id") final UUID codeId,
+			@RequestBody final Code code) {
 
 		try {
 			code.setId(codeId);
-			final Optional<Code> updated = codeService.updateCode(code);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			final Optional<Code> updated = codeService.updateAsset(code);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Unable to update code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -196,7 +175,6 @@ public class TDSCodeController {
 	 *
 	 * @param id The ID of the code to delete.
 	 * @return A ResponseEntity containing a JsonNode object with a success message.
-	 * @throws IOException if an error occurs while deleting the code.
 	 */
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
@@ -205,11 +183,11 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "200", description = "Code resource deleted.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the code resource", content = @Content)
 	})
-	public ResponseEntity<ResponseDeleted> deleteCode(@PathVariable("id") UUID id) {
+	public ResponseEntity<ResponseDeleted> deleteCode(@PathVariable("id") final UUID id) {
 
 		try {
-			codeService.deleteCode(id);
-		} catch (IOException e) {
+			codeService.deleteAsset(id);
+		} catch (final IOException e) {
 			log.error("Unable to delete code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -234,14 +212,14 @@ public class TDSCodeController {
 			@ApiResponse(responseCode = "200", description = "Code file found.", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the code file from the data store", content = @Content)
 	})
-	public ResponseEntity<String> getCodeFileAsText(@PathVariable("id") UUID codeId,
-			@RequestParam("filename") String filename) {
+	public ResponseEntity<String> getCodeFileAsText(@PathVariable("id") final UUID codeId,
+			@RequestParam("filename") final String filename) {
 
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
 
-			Optional<PresignedURL> url = codeService.getDownloadUrl(codeId, filename);
+			final Optional<PresignedURL> url = codeService.getDownloadUrl(codeId, filename);
 			if (url.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -252,7 +230,7 @@ public class TDSCodeController {
 
 			return ResponseEntity.ok(textFileAsString);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -260,6 +238,31 @@ public class TDSCodeController {
 		}
 
 	}
+
+
+	@GetMapping("/{id}/download-url")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a presigned url to download the code file")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+		@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
+		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
+	public ResponseEntity<PresignedURL> getDownloadURL(@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
+		try {
+
+			final Optional<PresignedURL> url = codeService.getDownloadUrl(id, filename);
+      return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
+		} catch (final Exception e) {
+			final String error = "Unable to get download url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				error);
+		}
+	}
+
 
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
@@ -304,12 +307,12 @@ public class TDSCodeController {
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") MultipartFile input) throws IOException {
+			@RequestPart("file") final MultipartFile input) throws IOException {
 
 		log.debug("Uploading code {} to project", codeId);
 
-		byte[] fileAsBytes = input.getBytes();
-		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+		final byte[] fileAsBytes = input.getBytes();
+		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadCodeHelper(codeId, filename, fileEntity);
 
 	}
@@ -332,8 +335,13 @@ public class TDSCodeController {
 		log.debug("Uploading code file from github to dataset {}", codeId);
 
 		// download file from GitHub
-		String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
+		final String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		if(fileString == null){
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to get file as string data");
+		}
+		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadCodeHelper(codeId, filename, fileEntity);
 
 	}
@@ -361,18 +369,18 @@ public class TDSCodeController {
 		try (final CloseableHttpClient httpClient = HttpClients.custom()
 				.build()) {
 
-			String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
+			final String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
 
 			// get github repo zip
-			HttpGet httpGet = new HttpGet(githubApiUrl);
-			HttpResponse response = httpClient.execute(httpGet);
+			final HttpGet httpGet = new HttpGet(githubApiUrl);
+			final HttpResponse response = httpClient.execute(httpGet);
 			final byte[] zipBytes = response.getEntity().getContent().readAllBytes();
 
-			HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 			return uploadCodeHelper(codeId, repoName, fileEntity);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -389,9 +397,9 @@ public class TDSCodeController {
 	 * @param codeHttpEntity The entity containing the code to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadCodeHelper(UUID codeId, String fileName, HttpEntity codeHttpEntity) {
+	private ResponseEntity<Integer> uploadCodeHelper(final UUID codeId, final String fileName, final HttpEntity codeHttpEntity) {
 
-		try (CloseableHttpClient httpclient = HttpClients.custom()
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
 
@@ -401,7 +409,12 @@ public class TDSCodeController {
 			put.setEntity(codeHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
 
-			final Optional<Code> code = codeService.getCode(codeId);
+			final Optional<Code> code = codeService.getAsset(codeId);
+			if(code.isEmpty()){
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to get code");
+			}
 			final CodeFile codeFile = new CodeFile();
 			codeFile.setProgrammingLanguageFromFileName(fileName);
 
@@ -412,11 +425,11 @@ public class TDSCodeController {
 			}
 			fileMap.put(fileName, codeFile);
 			code.get().setFiles(fileMap);
-			codeService.updateCode(code.get());
+			codeService.updateAsset(code.get());
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to PUT artifact data", e);
 			return ResponseEntity.internalServerError().build();
 		}

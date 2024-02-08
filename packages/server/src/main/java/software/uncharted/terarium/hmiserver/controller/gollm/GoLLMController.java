@@ -1,25 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,6 +11,11 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -39,6 +27,10 @@ import software.uncharted.terarium.hmiserver.service.TaskResponseHandler;
 import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/gollm")
 @RestController
@@ -57,33 +49,41 @@ public class GoLLMController {
 	private static class ModelCardInput {
 		@JsonProperty("research_paper")
 		String researchPaper;
-	};
+	}
+
+    @Data
+	private static class ModelCardResponse {
+		JsonNode response;
+	}
 
 	@Data
 	private static class ModelCardProperties {
 		UUID modelId;
 		UUID documentId;
-	};
+	}
 
-	@PostConstruct
+    @PostConstruct
 	void init() {
 		taskService.addResponseHandler(MODEL_CARD_SCRIPT, getModelCardResponseHandler());
 	}
 
 	private TaskResponseHandler getModelCardResponseHandler() {
-		TaskResponseHandler handler = new TaskResponseHandler();
-		handler.onSuccess((TaskResponse resp) -> {
-			ModelCardProperties props = resp.getAdditionalProperties(ModelCardProperties.class);
+		final TaskResponseHandler handler = new TaskResponseHandler();
+		handler.onSuccess((final TaskResponse resp) -> {
+			final ModelCardProperties props = resp.getAdditionalProperties(ModelCardProperties.class);
 			log.info("Writing model card to database for model {}", props.getModelId());
 			try {
-				Model model = modelService.getModel(props.getModelId())
+				final Model model = modelService.getAsset(props.getModelId())
 						.orElseThrow();
-				JsonNode card = objectMapper.readTree(resp.getOutput());
-				model.getMetadata().setGollmCard(card);
-				modelService.updateModel(model);
-			} catch (IOException e) {
+				final ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);
+				model.getMetadata().setGollmCard(card.response);
+				modelService.updateAsset(model);
+			} catch (final IOException e) {
 				log.error("Failed to write model card to database", e);
 			}
+		});
+		handler.onRunning((final TaskResponse response) -> {
+			log.info(response.toString());
 		});
 		return handler;
 	}
@@ -97,32 +97,44 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
-			@RequestParam(name = "document-id", required = true) UUID documentId,
-			@RequestParam(name = "model-id", required = true) UUID modelId) {
+			@RequestParam(name = "document-id", required = true) final UUID documentId,
+			@RequestParam(name = "model-id", required = true) final UUID modelId) {
 
 		try {
 			// Ensure the model is valid
-			Optional<Model> model = modelService.getModel(modelId);
-			if (!model.isPresent()) {
+			final Optional<Model> model = modelService.getAsset(modelId);
+			if (model.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 
 			// Grab the document
-			Optional<DocumentAsset> document = documentAssetService.getDocumentAsset(documentId);
-			if (!document.isPresent()) {
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
+			if (document.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 
-			ModelCardInput input = new ModelCardInput();
+			// make sure there is text in the document
+			if (document.get().getText() == null || document.get().getText().isEmpty()) {
+				log.warn("Document {} has no text to send", documentId);
+				return ResponseEntity.badRequest().build();
+			}
+
+			// check for input length
+			if (document.get().getText().length() > 600000) {
+				log.warn("Document {} text too long for GoLLM model card task", documentId);
+				return ResponseEntity.badRequest().build();
+			}
+
+			final ModelCardInput input = new ModelCardInput();
 			input.setResearchPaper(document.get().getText());
 
 			// Create the task
-			TaskRequest req = new TaskRequest();
+			final TaskRequest req = new TaskRequest();
 			req.setId(java.util.UUID.randomUUID());
 			req.setScript(MODEL_CARD_SCRIPT);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
-			ModelCardProperties props = new ModelCardProperties();
+			final ModelCardProperties props = new ModelCardProperties();
 			props.setModelId(modelId);
 			props.setDocumentId(documentId);
 			req.setAdditionalProperties(props);
@@ -130,10 +142,10 @@ public class GoLLMController {
 			// send the request
 			taskService.sendTaskRequest(req);
 
-			TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
+			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 			return ResponseEntity.ok().body(resp);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,

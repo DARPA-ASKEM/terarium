@@ -1,121 +1,142 @@
 <template>
-	<tera-infinite-canvas
-		@click="onCanvasClick"
-		@save-transform="saveTransform"
-		@mouseenter="setMouseOverCanvas(true)"
-		@mouseleave="setMouseOverCanvas(false)"
-		@drop="onDrop"
-		@dragover.prevent
-		@dragenter.prevent
-		@focus="() => {}"
-		@blur="() => {}"
-	>
-		<template #foreground>
-			<aside>
-				<section v-if="model?.header?.schema_name">
-					<header>Model framework</header>
-					<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
+	<section class="template-editor-wrapper">
+		<aside>
+			<section v-if="model?.header?.schema_name">
+				<header>Model framework</header>
+				<h5>{{ model.header.schema_name }}<i class="pi pi-info-circle"></i></h5>
+			</section>
+			<section class="template-options">
+				<header>Model templates</header>
+				<ul>
+					<li
+						v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
+						:key="index"
+					>
+						<tera-model-template
+							:model="modelTemplate"
+							:is-editable="false"
+							draggable="true"
+							@dragstart="newModelTemplate = modelTemplate"
+						/>
+					</li>
+				</ul>
+			</section>
+			<section class="trash">
+				<i class="pi pi-trash"></i>
+				<div>Drag items here to delete</div>
+			</section>
+		</aside>
+		<tera-infinite-canvas
+			@click="onCanvasClick"
+			@save-transform="saveTransform"
+			@mouseenter="setMouseOverCanvas(true)"
+			@mouseleave="setMouseOverCanvas(false)"
+			@drop="onDrop"
+			@dragover.prevent
+			@dragenter.prevent
+			@focus="() => {}"
+			@blur="() => {}"
+		>
+			<template #foreground>
+				<!--FIXME: This container holding the toggles overlaps the top of the canvas so the drag area is slightly cutoff-->
+				<section class="view-toggles">
+					<!-- TODO: There will be a Diagram/Equation toggle here. There may be plans to make a component for this specific
+						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
+					<SelectButton
+						:model-value="currentModelFormat"
+						@change="if ($event.value) currentModelFormat = $event.value;"
+						:options="modelFormatOptions"
+					/>
 				</section>
-				<section class="template-options">
-					<header>Model templates</header>
-					<ul>
-						<li
-							v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
-							:key="index"
-						>
-							<tera-model-template
-								:model="modelTemplate"
-								:is-editable="false"
-								draggable="true"
-								@dragstart="newModelTemplate = modelTemplate"
-							/>
-						</li>
-					</ul>
-				</section>
-				<section class="trash">
-					<i class="pi pi-trash"></i>
-					<div>Drag items here to delete</div>
-				</section>
-			</aside>
-		</template>
-		<template #data>
-			<tera-canvas-item
-				v-for="(card, index) in cards"
-				:key="card.id"
-				:style="{
-					width: 'fit-content',
-					top: `${card.y}px`,
-					left: `${card.x}px`
-				}"
-				@dragging="(event) => updatePosition(event, card)"
-			>
-				<tera-model-template
-					:model="modelTemplateEditor.models[index]"
-					is-editable
-					@update-name="
-						(name: string) =>
-							modelTemplatingService.updateCardName(modelTemplateEditor, name, card.id)
-					"
-					@port-selected="(portId: string) => createNewEdge(card, portId)"
-					@port-mouseover="
-						(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
-					"
-					@port-mouseleave="onPortMouseleave"
-					@remove="modelTemplatingService.removeCard(modelTemplateEditor, card.id)"
-				/>
-			</tera-canvas-item>
-			<tera-canvas-item
-				v-for="(junction, index) in junctions"
-				:key="index"
-				:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
-				@dragging="(event) => updatePosition(event, junction)"
-			>
-				<tera-model-junction :junction="junction" :template-cards="cards" />
-			</tera-canvas-item>
-		</template>
-		<template #background>
-			<path
-				v-if="newEdge?.points"
-				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
-				stroke="var(--text-color-subdued)"
-				stroke-width="2"
-				fill="none"
-			/>
-			<template v-for="{ edges } in junctions">
+			</template>
+			<template #data>
+				<tera-canvas-item
+					v-for="(card, index) in cards"
+					:key="card.id"
+					:style="{
+						width: 'fit-content',
+						top: `${card.y}px`,
+						left: `${card.x}px`
+					}"
+					@dragging="(event) => updatePosition(event, card)"
+				>
+					<tera-model-template
+						:model="currentEditor.models[index]"
+						is-editable
+						@update-name="
+							(name: string) => modelTemplatingService.updateCardName(currentEditor, name, card.id)
+						"
+						@port-selected="(portId: string) => createNewEdge(card, portId)"
+						@port-mouseover="
+							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
+						"
+						@port-mouseleave="onPortMouseleave"
+						@remove="modelTemplatingService.removeCard(currentEditor, card.id)"
+					/>
+				</tera-canvas-item>
+				<tera-canvas-item
+					v-for="(junction, index) in junctions"
+					:key="index"
+					:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
+					@dragging="(event) => updatePosition(event, junction)"
+				>
+					<tera-model-junction :junction="junction" :template-cards="cards" />
+				</tera-canvas-item>
+			</template>
+			<template #background>
 				<path
-					v-for="(edge, index) in edges"
-					:d="drawPath(edge.points)"
+					v-if="newEdge?.points"
+					:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
 					stroke="var(--text-color-subdued)"
 					stroke-width="2"
-					:key="index"
 					fill="none"
 				/>
+				<template v-for="{ edges } in junctions">
+					<path
+						v-for="(edge, index) in edges"
+						:d="drawPath(edge.points)"
+						stroke="var(--text-color-subdued)"
+						stroke-width="2"
+						:key="index"
+						fill="none"
+					/>
+				</template>
 			</template>
-		</template>
-	</tera-infinite-canvas>
+		</tera-infinite-canvas>
+	</section>
 </template>
 
 <script setup lang="ts">
 import { cloneDeep, isEqual } from 'lodash'; // debounce
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
 import type { Position } from '@/types/common';
 import type { Model } from '@/types/Types';
 import type {
-	ModelTemplateEditor,
+	ModelTemplates,
 	ModelTemplateCard,
 	ModelTemplateJunction
 } from '@/types/model-templating';
 import * as modelTemplatingService from '@/services/model-templating';
+import SelectButton from 'primevue/selectbutton';
+import { KernelSessionManager } from '@/services/jupyter';
+import { logger } from '@/utils/logger';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 
-defineProps<{
+const props = defineProps<{
 	model?: Model;
 }>();
+
+enum EditorFormat {
+	Decomposed = 'Decomposed',
+	Flattened = 'Flattened'
+}
+
+const kernelManager = new KernelSessionManager();
 
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
@@ -123,14 +144,20 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
-const modelTemplateEditor = ref<ModelTemplateEditor>(
-	modelTemplatingService.emptyModelTemplateEditor()
-);
+const decomposedTemplates = ref<ModelTemplates>(modelTemplatingService.initializeModelTemplates());
+const flattenedTemplates = ref<ModelTemplates>(modelTemplatingService.initializeModelTemplates());
+const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
+const currentModelFormat = ref(EditorFormat.Decomposed);
 
-const cards = computed<ModelTemplateCard[]>(
-	() => modelTemplateEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+const currentEditor = computed(() =>
+	currentModelFormat.value === EditorFormat.Decomposed
+		? decomposedTemplates.value
+		: flattenedTemplates.value
 );
-const junctions = computed<ModelTemplateJunction[]>(() => modelTemplateEditor.value.junctions);
+const cards = computed<ModelTemplateCard[]>(
+	() => currentEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+);
+const junctions = computed<ModelTemplateJunction[]>(() => currentEditor.value.junctions);
 
 const newModelTemplate = ref();
 const newEdge = ref();
@@ -177,12 +204,12 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
-			modelTemplatingService.addJunction(modelTemplateEditor.value, currentPortPosition);
+			modelTemplatingService.addJunction(decomposedTemplates.value, currentPortPosition);
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
 			// Add a default edge as well
 			modelTemplatingService.addEdge(
-				modelTemplateEditor.value,
+				decomposedTemplates.value,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -208,7 +235,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
 		modelTemplatingService.addEdge(
-			modelTemplateEditor.value,
+			decomposedTemplates.value,
 			junctionIdForNewEdge,
 			target,
 			currentPortPosition,
@@ -245,7 +272,7 @@ function onCanvasClick() {
 function cancelNewEdge() {
 	newEdge.value = undefined;
 	junctionIdForNewEdge = null;
-	modelTemplatingService.junctionCleanUp(modelTemplateEditor.value);
+	modelTemplatingService.junctionCleanUp(decomposedTemplates.value);
 }
 
 const setMouseOverCanvas = (val: boolean) => {
@@ -265,7 +292,7 @@ function updateNewCardPosition(event) {
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-	modelTemplatingService.addCard(modelTemplateEditor.value, cloneDeep(newModelTemplate.value));
+	modelTemplatingService.addCard(decomposedTemplates.value, cloneDeep(newModelTemplate.value));
 	newModelTemplate.value = null;
 }
 
@@ -325,25 +352,96 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-onMounted(() => {
+function amrToTemplates() {
+	kernelManager.sendMessage('amr_to_templates', {}).on('amr_to_templates_response', (d) => {
+		// FIXME: Model templates are passed no junctions yet
+
+		// Insert template card data into template models
+		let yPos = 100;
+		const templateModelsWithCards = d.content.templates.map((modelTemplate: any) => {
+			modelTemplate.metadata.templateCard = {
+				id: modelTemplate.header.name,
+				name: modelTemplate.header.name,
+				x: 100,
+				y: yPos
+			} as ModelTemplateCard;
+
+			yPos += 200;
+			return modelTemplate;
+		});
+
+		templateModelsWithCards.forEach((templateModel: any) =>
+			modelTemplatingService.addCard(decomposedTemplates.value, templateModel)
+		);
+	});
+}
+
+watch(
+	() => props.model,
+	async () => {
+		if (props.model) {
+			// Create flattened view of model
+			const flattenedModel: any = cloneDeep(props.model);
+			flattenedModel.metadata.templateCard = {
+				id: props.model.id,
+				name: props.model.header.name,
+				x: 100,
+				y: 100
+			};
+
+			modelTemplatingService.addCard(flattenedTemplates.value, flattenedModel);
+
+			// Initialize beaker kernel
+			try {
+				if (kernelManager.jupyterSession) kernelManager.shutdown();
+
+				const context = {
+					context: 'mira_model',
+					language: 'python3',
+					context_info: {
+						id: props.model.id
+					}
+				};
+				await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
+				// Create template view of model
+				amrToTemplates();
+			} catch (error) {
+				logger.error(`Error initializing Jupyter session: ${error}`);
+			}
+		}
+	}
+);
+
+onMounted(async () => {
 	document.addEventListener('mousemove', mouseUpdate);
 });
+
 onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
+	kernelManager.shutdown();
 });
 </script>
 
 <style scoped>
+.template-editor-wrapper {
+	display: flex;
+	flex: 1;
+}
+
+.view-toggles {
+	padding: 0.5rem;
+}
+
 aside {
-	width: 15rem;
+	min-width: 15rem;
 	display: flex;
 	flex-direction: column;
-	height: 100%;
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-alt);
 	padding: var(--gap) 0;
 	gap: 0.5rem;
 	overflow: hidden;
+	z-index: 1;
 }
 
 ul {
@@ -366,6 +464,11 @@ header {
 	font-size: var(--font-caption);
 }
 
+h5,
+header {
+	padding: 0 var(--gap);
+}
+
 .pi-info-circle {
 	color: var(--text-color-subdued);
 	cursor: help;
@@ -373,10 +476,6 @@ header {
 
 .template-options {
 	overflow: hidden;
-
-	& > header {
-		padding: 0 var(--gap);
-	}
 
 	& > ul {
 		height: 85%;

@@ -1,24 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,11 +7,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ExternalPublicationService;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Controller class for handling external publications.
@@ -63,9 +54,9 @@ public class ExternalPublicationController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
-		List<ExternalPublication> publications = null;
+		final List<ExternalPublication> publications;
 		try {
-			publications = externalPublicationService.getExternalPublications(page, pageSize);
+			publications = externalPublicationService.getAssets(page, pageSize);
 		} catch (final IOException e) {
 			log.error("Unable to get publications", e);
 			throw new ResponseStatusException(
@@ -96,7 +87,7 @@ public class ExternalPublicationController {
 	public ResponseEntity<ExternalPublication> createPublication(
 			@RequestBody final ExternalPublication publication) {
 		try {
-			externalPublicationService.createExternalPublication(publication);
+			externalPublicationService.createAsset(publication);
 		} catch (final IOException e) {
 			log.error("Unable to POST publication", e);
 			throw new ResponseStatusException(
@@ -124,11 +115,8 @@ public class ExternalPublicationController {
 
 		try {
 			final Optional<ExternalPublication> externalPublication = externalPublicationService
-					.getExternalPublication(id);
-			if (externalPublication.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(externalPublication.get());
+					.getAsset(id);
+			return externalPublication.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final IOException e) {
 			log.error("Unable to GET publication", e);
 			throw new ResponseStatusException(
@@ -150,6 +138,7 @@ public class ExternalPublicationController {
 	@Operation(summary = "updates an external publication by object id")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "publication updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExternalPublication.class))),
+			@ApiResponse(responseCode = "404", description = "There was no publication found with the given ID", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the publication", content = @Content)
 	})
 	public ResponseEntity<ExternalPublication> updatePublication(
@@ -158,11 +147,8 @@ public class ExternalPublicationController {
 		try {
 			publication.setId(id);
 			final Optional<ExternalPublication> updated = externalPublicationService
-					.updateExternalPublication(publication);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+					.updateAsset(publication);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			log.error("Unable to PUT publication", e);
 			throw new ResponseStatusException(
@@ -189,7 +175,7 @@ public class ExternalPublicationController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			externalPublicationService.deleteExternalPublication(id);
+			externalPublicationService.deleteAsset(id);
 		} catch (final IOException e) {
 			log.error("Unable to DELETE publication", e);
 			throw new ResponseStatusException(

@@ -1,32 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.UUID;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 import org.springframework.stereotype.Service;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceEdge;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceNode;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceSearchResult;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.*;
 import software.uncharted.terarium.hmiserver.service.neo4j.Graph;
 import software.uncharted.terarium.hmiserver.service.neo4j.Neo4jService;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -44,20 +30,20 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public ProvenanceSearchResult connectedNodes(ProvenanceQueryParam payload) {
-		try (Session session = neo4jService.getSession()) {
+	public ProvenanceSearchResult connectedNodes(final ProvenanceQueryParam payload) {
+		try (final Session session = neo4jService.getSession()) {
 
-			String matchNode = matchNodeBuilder(payload.getRootType(), payload.getRootId());
-			String nodeAbbr = returnNodeAbbr(payload.getRootType());
+			final String matchNode = matchNodeBuilder(payload.getRootType(), payload.getRootId());
+			final String nodeAbbr = returnNodeAbbr(payload.getRootType());
 
-			String relationshipsStr = relationshipsArrayAsStr(
+			final String relationshipsStr = relationshipsArrayAsStr(
 					Arrays.asList(ProvenanceRelationType.CONTAINS, ProvenanceRelationType.IS_CONCEPT_OF),
 					new ArrayList<>());
 
-			String limit = payload.getLimit() != null ? "limit: " + payload.getLimit() + ", " : "";
-			String hops = payload.getHops() != null ? "maxLevel: " + payload.getHops() + ", " : "";
+			final String limit = payload.getLimit() != null ? "limit: " + payload.getLimit() + ", " : "";
+			final String hops = payload.getHops() != null ? "maxLevel: " + payload.getHops() + ", " : "";
 
-			String query = matchNode + " CALL apoc.path.subgraphAll(" + nodeAbbr + ", {"
+			final String query = matchNode + " CALL apoc.path.subgraphAll(" + nodeAbbr + ", {"
 					+ "relationshipFilter: '" + relationshipsStr + "',"
 					+ "minLevel: 0, "
 					+ limit
@@ -65,24 +51,24 @@ public class ProvenanceSearchService {
 					+ "whitelistNodes: []"
 					+ "}) YIELD nodes, relationships RETURN nodes, relationships";
 
-			Result result = session.run(query);
+			final Result result = session.run(query);
 
 			return nodesEdges(result, payload);
 		}
 	}
 
-	private ProvenanceSearchResult connectedNodesByDirection(ProvenanceQueryParam payload, String direction) {
-		try (Session session = neo4jService.getSession()) {
-			String relationshipsStr = relationshipsArrayAsStr(Arrays.asList(ProvenanceRelationType.CONTAINS,
+	private ProvenanceSearchResult connectedNodesByDirection(final ProvenanceQueryParam payload, final String direction) {
+		try (final Session session = neo4jService.getSession()) {
+			final String relationshipsStr = relationshipsArrayAsStr(Arrays.asList(ProvenanceRelationType.CONTAINS,
 					ProvenanceRelationType.IS_CONCEPT_OF), new ArrayList<>());
-			String relationDirection = dynamicRelationshipDirection(direction,
+			final String relationDirection = dynamicRelationshipDirection(direction,
 					String.format("r:'%s' *1..", relationshipsStr));
-			String matchNode = matchNodeBuilder(payload.getRootType(), payload.getRootId());
-			String nodeAbbr = returnNodeAbbr(payload.getRootType());
+			final String matchNode = matchNodeBuilder(payload.getRootType(), payload.getRootId());
+			final String nodeAbbr = returnNodeAbbr(payload.getRootType());
 
-			String query = String.format("'%s''%s'(n) return '%s', r, n", matchNode, relationDirection, nodeAbbr);
+			final String query = String.format("'%s''%s'(n) return '%s', r, n", matchNode, relationDirection, nodeAbbr);
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
 			return nodesEdges(response, payload);
 		}
@@ -95,7 +81,7 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public ProvenanceSearchResult childNodes(ProvenanceQueryParam payload) {
+	public ProvenanceSearchResult childNodes(final ProvenanceQueryParam payload) {
 		return connectedNodesByDirection(payload, "child");
 	}
 
@@ -106,7 +92,7 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public ProvenanceSearchResult parentNodes(ProvenanceQueryParam payload) {
+	public ProvenanceSearchResult parentNodes(final ProvenanceQueryParam payload) {
 		return connectedNodesByDirection(payload, "parent");
 	}
 
@@ -118,7 +104,7 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public ProvenanceSearchResult parentModelRevisions(ProvenanceQueryParam payload) {
+	public ProvenanceSearchResult parentModelRevisions(final ProvenanceQueryParam payload) {
 		if (!Arrays
 				.asList(ProvenanceType.MODEL, ProvenanceType.SIMULATION_RUN, ProvenanceType.PLAN,
 						ProvenanceType.DATASET)
@@ -127,17 +113,17 @@ public class ProvenanceSearchService {
 					"Derived models can only be found from root types of Model, SimulationRun, Plan and Dataset");
 		}
 
-		try (Session session = neo4jService.getSession()) {
-			String matchPattern = parentModelQueryGenerator(payload.getRootType(), payload.getRootId());
-			String relationshipsStr = relationshipsArrayAsStr(
+		try (final Session session = neo4jService.getSession()) {
+			final String matchPattern = parentModelQueryGenerator(payload.getRootType(), payload.getRootId());
+			final String relationshipsStr = relationshipsArrayAsStr(
 					Arrays.asList(ProvenanceRelationType.CONTAINS, ProvenanceRelationType.IS_CONCEPT_OF),
 					new ArrayList<>());
 
-			String query = String.format(
+			final String query = String.format(
 					"'%s' OPTIONAL MATCH (Mr2:ModelRevision)-[r2:'%s' *1..]->(Mr) WITH *, COLLECT(r)+COLLECT(r2) AS r3, COLLECT(Mr)+COLLECT(Mr2) AS Mrs UNWIND Mrs AS Both_rms UNWIND r3 AS r4 WITH * OPTIONAL MATCH (Both_rms)<-[r5:BEGINS_AT]-(Md:Model) WITH *, COLLECT(r4)+COLLECT(r5) AS r6 UNWIND r6 AS r7 RETURN Both_rms, Md, r7",
 					matchPattern, relationshipsStr);
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
 			return nodesEdges(response, payload);
 		}
@@ -150,18 +136,18 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public ProvenanceSearchResult parentModels(ProvenanceQueryParam payload) {
+	public ProvenanceSearchResult parentModels(final ProvenanceQueryParam payload) {
 		if (!Arrays.asList(ProvenanceType.MODEL, ProvenanceType.SIMULATION_RUN, ProvenanceType.PLAN,
 				ProvenanceType.DATASET).contains(payload.getRootType())) {
 			throw new IllegalArgumentException(
 					"Parent models can only be found from root types of Model, Plan, SimulationRun, Dataset");
 		}
 
-		try (Session session = neo4jService.getSession()) {
-			String matchPattern = parentModelQueryGenerator(payload.getRootType(), payload.getRootId());
-			String nodeAbbr = returnNodeAbbr(payload.getRootType());
+		try (final Session session = neo4jService.getSession()) {
+			final String matchPattern = parentModelQueryGenerator(payload.getRootType(), payload.getRootId());
+			final String nodeAbbr = returnNodeAbbr(payload.getRootType());
 
-			String modelRelationships = relationshipsArrayAsStr(
+			final String modelRelationships = relationshipsArrayAsStr(
 					new ArrayList<>(),
 					Arrays.asList(
 							ProvenanceRelationType.EDITED_FROM,
@@ -170,11 +156,11 @@ public class ProvenanceSearchService {
 							ProvenanceRelationType.DECOMPOSED_FROM,
 							ProvenanceRelationType.STRATIFIED_FROM));
 
-			String query = String.format(
+			final String query = String.format(
 					"'%s' OPTIONAL MATCH (Mr)-[r2:'%s' *1..]->(Mr2:ModelRevision) WITH *, COLLECT(Mr)+COLLECT(Mr2) AS Mrs, COLLECT(r)+COLLECT(r2) AS r3 UNWIND Mrs AS Both_rms WITH * OPTIONAL MATCH (md2:Model)-[r4:BEGINS_AT]->(Both_rms) WITH *, COLLECT(r3)+COLLECT(r4) AS r5 RETURN '%s', md2, Both_rms, r5",
 					matchPattern, modelRelationships, nodeAbbr);
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
 			return nodesEdges(response, payload);
 		}
@@ -187,15 +173,15 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public ProvenanceSearchResult artifactsCreatedByUser(ProvenanceQueryParam payload) {
-		try (Session session = neo4jService.getSession()) {
-			String matchNode = matchNodeBuilder();
+	public ProvenanceSearchResult artifactsCreatedByUser(final ProvenanceQueryParam payload) {
+		try (final Session session = neo4jService.getSession()) {
+			final String matchNode = matchNodeBuilder();
 
-			String query = String.format(
+			final String query = String.format(
 					"'%s'-[r]->(n2) WHERE r.user_id='%s' WITH *, COLLECT(n)+COLLECT(n2) AS nodes UNWIND nodes AS both_nodes WITH * RETURN both_nodes",
 					matchNode, payload.getUserId());
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
 			return nodesEdges(response, payload);
 		}
@@ -208,15 +194,15 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public ProvenanceSearchResult concept(ProvenanceQueryParam payload) {
-		try (Session session = neo4jService.getSession()) {
-			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
+	public ProvenanceSearchResult concept(final ProvenanceQueryParam payload) {
+		try (final Session session = neo4jService.getSession()) {
+			final String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
 
-			String query = String.format(
+			final String query = String.format(
 					"'%s'-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN n",
 					matchNode, payload.getCurie());
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
 			return nodesEdges(response, payload);
 		}
@@ -229,19 +215,19 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public Set<String> modelsFromCode(ProvenanceQueryParam payload) {
+	public Set<String> modelsFromCode(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
 			throw new IllegalArgumentException("Code used for model extraction can only be found by providing a Model");
 		}
 
-		try (Session session = neo4jService.getSession()) {
-			UUID modelId = payload.getRootId();
+		try (final Session session = neo4jService.getSession()) {
+			final UUID modelId = payload.getRootId();
 
-			String query = String.format("MATCH (c:Code)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN c", modelId);
+			final String query = String.format("MATCH (c:Code)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN c", modelId);
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
-			Set<String> responseData = new HashSet<>();
+			final Set<String> responseData = new HashSet<>();
 			while (response.hasNext()) {
 				responseData.add(response.next().get("c").get("id").asString());
 			}
@@ -257,21 +243,21 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public Set<String> modelsFromEquation(ProvenanceQueryParam payload) {
+	public Set<String> modelsFromEquation(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
 			throw new IllegalArgumentException(
 					"Equation used for model extraction can only be found by providing a Model");
 		}
 
-		try (Session session = neo4jService.getSession()) {
-			UUID modelId = payload.getRootId();
+		try (final Session session = neo4jService.getSession()) {
+			final UUID modelId = payload.getRootId();
 
-			String query = String.format("MATCH (e:Equation)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN e",
+			final String query = String.format("MATCH (e:Equation)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN e",
 					modelId);
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
-			Set<String> responseData = new HashSet<>();
+			final Set<String> responseData = new HashSet<>();
 			while (response.hasNext()) {
 				responseData.add(response.next().get("e").get("id").asString());
 			}
@@ -287,21 +273,21 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public Set<String> modelsFromDocument(ProvenanceQueryParam payload) {
+	public Set<String> modelsFromDocument(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
 			throw new IllegalArgumentException(
 					"Document used for model extraction can only be found by providing a Model");
 		}
 
-		try (Session session = neo4jService.getSession()) {
-			UUID modelId = payload.getRootId();
+		try (final Session session = neo4jService.getSession()) {
+			final UUID modelId = payload.getRootId();
 
-			String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN d",
+			final String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN d",
 					modelId);
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
-			Set<String> responseData = new HashSet<>();
+			final Set<String> responseData = new HashSet<>();
 			while (response.hasNext()) {
 				responseData.add(response.next().get("d").get("id").asString());
 			}
@@ -317,20 +303,20 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public Map<String, Integer> conceptCounts(ProvenanceQueryParam payload) {
-		try (Session session = neo4jService.getSession()) {
-			String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
+	public Map<String, Integer> conceptCounts(final ProvenanceQueryParam payload) {
+		try (final Session session = neo4jService.getSession()) {
+			final String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
 
-			String query = String.format(
+			final String query = String.format(
 					"'%s'-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN labels(n) as label, n.id as id",
 					matchNode, payload.getCurie());
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 
-			Map<String, Integer> counts = new HashMap<>();
+			final Map<String, Integer> counts = new HashMap<>();
 			while (response.hasNext()) {
-				Record record = response.next();
-				String label = record.get("label").asList().get(0).toString();
+				final Record r = response.next();
+				final String label = r.get("label").asList().get(0).toString();
 				counts.put(label, counts.getOrDefault(label, 0) + 1);
 			}
 
@@ -345,20 +331,20 @@ public class ProvenanceSearchService {
 	 * @param payload - Search param payload.
 	 * @return
 	 */
-	public Set<String> extractedModels(ProvenanceQueryParam payload) {
-		ProvenanceType rootType = payload.getRootType();
+	public Set<String> extractedModels(final ProvenanceQueryParam payload) {
+		final ProvenanceType rootType = payload.getRootType();
 		if (rootType != ProvenanceType.DOCUMENT && rootType != ProvenanceType.CODE
 				&& rootType != ProvenanceType.EQUATION) {
 			throw new IllegalArgumentException(
 					"Derived models can only be found from root types of Document, Code, or Equation");
 		}
 
-		try (Session session = neo4jService.getSession()) {
-			String generatedQuery = extractedModelsQueryGenerator(rootType, payload.getRootId());
+		try (final Session session = neo4jService.getSession()) {
+			final String generatedQuery = extractedModelsQueryGenerator(rootType, payload.getRootId());
 
-			Result response = session.run(generatedQuery);
+			final Result response = session.run(generatedQuery);
 
-			Set<String> responseData = new HashSet<>();
+			final Set<String> responseData = new HashSet<>();
 			while (response.hasNext()) {
 				responseData.add(response.next().get("m").get("id").asString());
 			}
@@ -367,13 +353,13 @@ public class ProvenanceSearchService {
 		}
 	}
 
-	public Map<String, Object> modelDocument(ProvenanceQueryParam payload) {
-		try (Session session = neo4jService.getSession()) {
-			String query = String.format(
+	public Map<String, Object> modelDocument(final ProvenanceQueryParam payload) {
+		try (final Session session = neo4jService.getSession()) {
+			final String query = String.format(
 					"MATCH (Md:Model {id:'%s'})<-[r:REINTERPRETS|EXTRACTED_FROM|BEGINS_AT *1..]->(Do:Document) RETURN Do",
 					payload.getRootId());
 
-			Result response = session.run(query);
+			final Result response = session.run(query);
 			if (!response.hasNext()) {
 				return null;
 			}
@@ -384,26 +370,26 @@ public class ProvenanceSearchService {
 
 	// Util methods
 
-	public ProvenanceSearchResult nodesEdges(Result response, ProvenanceQueryParam payload) {
+	public ProvenanceSearchResult nodesEdges(final Result response, final ProvenanceQueryParam payload) {
 
-		boolean includeEdges = payload.getEdges() != null ? payload.getEdges() : false;
-		boolean includeNodes = payload.getNodes() != null ? payload.getNodes() : true;
-		boolean includeVersions = payload.getVersions() != null ? payload.getVersions() : false;
-		List<ProvenanceType> types = payload.getTypes() != null ? payload.getTypes() : new ArrayList<>();
+		final boolean includeEdges = payload.getEdges() != null ? payload.getEdges() : false;
+		final boolean includeNodes = payload.getNodes() != null ? payload.getNodes() : true;
+		final boolean includeVersions = payload.getVersions() != null ? payload.getVersions() : false;
+		final List<ProvenanceType> types = payload.getTypes() != null ? payload.getTypes() : new ArrayList<>();
 
-		Graph graph = new Graph(response);
+		final Graph graph = new Graph(response);
 
-		ProvenanceSearchResult result = new ProvenanceSearchResult();
+		final ProvenanceSearchResult result = new ProvenanceSearchResult();
 
 		if (includeEdges) {
-			List<ProvenanceEdge> edges = formattedEdges(graph);
+			final List<ProvenanceEdge> edges = formattedEdges(graph);
 
 			if (!includeVersions) {
-				for (ProvenanceEdge edge : edges) {
+				for (final ProvenanceEdge edge : edges) {
 					if (edge.getRelationType() == ProvenanceRelationType.BEGINS_AT) {
 
-						ProvenanceNode model = edge.getLeft();
-						ProvenanceNode modelRevision = edge.getRight();
+						final ProvenanceNode model = edge.getLeft();
+						final ProvenanceNode modelRevision = edge.getRight();
 						modelRevisionsToModel(model, modelRevision, edges);
 					}
 				}
@@ -422,13 +408,13 @@ public class ProvenanceSearchService {
 		return result;
 	}
 
-	public void modelRevisionsToModel(ProvenanceNode model, ProvenanceNode modelRevision,
-			final List<ProvenanceEdge> edges) {
+	public static void modelRevisionsToModel(final ProvenanceNode model, final ProvenanceNode modelRevision,
+																					 final List<ProvenanceEdge> edges) {
 
-		for (ProvenanceEdge edge : edges) {
+		for (final ProvenanceEdge edge : edges) {
 			if (edge.getRight().equals(modelRevision)) {
 				edge.setRight(model);
-				ProvenanceNode left = edge.getLeft();
+				final ProvenanceNode left = edge.getLeft();
 				if (left.getType() == ProvenanceType.MODEL_REVISION
 						&& ProvenanceRelationType.EDITED_FROM == edge.getRelationType()) {
 					modelRevisionsToModel(model, left, edges);
@@ -437,7 +423,7 @@ public class ProvenanceSearchService {
 
 			if (edge.getLeft().equals(modelRevision)) {
 				edge.setLeft(model);
-				ProvenanceNode right = edge.getRight();
+				final ProvenanceNode right = edge.getRight();
 				if (right.getType() == ProvenanceType.MODEL_REVISION
 						&& ProvenanceRelationType.EDITED_FROM == edge.getRelationType()) {
 					modelRevisionsToModel(model, right, edges);
@@ -446,15 +432,15 @@ public class ProvenanceSearchService {
 		}
 	}
 
-	public List<ProvenanceEdge> filterRelationshipTypes(List<ProvenanceEdge> relationships,
-			List<ProvenanceType> includedTypes) {
+	public static List<ProvenanceEdge> filterRelationshipTypes(final List<ProvenanceEdge> relationships,
+																														 final List<ProvenanceType> includedTypes) {
 		if (includedTypes.size() == 0) {
 			return relationships;
 		}
-		List<ProvenanceEdge> clipped = new ArrayList<>();
-		for (ProvenanceEdge relation : relationships) {
-			ProvenanceNode left = relation.getLeft();
-			ProvenanceNode right = relation.getRight();
+		final List<ProvenanceEdge> clipped = new ArrayList<>();
+		for (final ProvenanceEdge relation : relationships) {
+			final ProvenanceNode left = relation.getLeft();
+			final ProvenanceNode right = relation.getRight();
 			if (!left.equals(right)
 					&& includedTypes.contains(left.getType())
 					&& includedTypes.contains(right.getType())) {
@@ -464,12 +450,12 @@ public class ProvenanceSearchService {
 		return clipped;
 	}
 
-	public List<ProvenanceNode> filterNodeTypes(List<ProvenanceNode> nodes, List<ProvenanceType> includedTypes) {
+	public static List<ProvenanceNode> filterNodeTypes(final List<ProvenanceNode> nodes, final List<ProvenanceType> includedTypes) {
 		if (includedTypes.size() == 0) {
 			return nodes;
 		}
-		List<ProvenanceNode> res = new ArrayList<>();
-		for (ProvenanceNode node : nodes) {
+		final List<ProvenanceNode> res = new ArrayList<>();
+		for (final ProvenanceNode node : nodes) {
 			if (includedTypes.contains(node.getType())) {
 				res.add(node);
 			}
@@ -477,19 +463,19 @@ public class ProvenanceSearchService {
 		return res;
 	}
 
-	public List<ProvenanceNode> formattedNodes(Graph graph) {
-		List<ProvenanceNode> nodes = new ArrayList<>();
-		for (Node node : graph.getNodes()) {
+	public static List<ProvenanceNode> formattedNodes(final Graph graph) {
+		final List<ProvenanceNode> nodes = new ArrayList<>();
+		for (final Node node : graph.getNodes()) {
 			try {
-				String label = node.labels().iterator().next();
+				final String label = node.labels().iterator().next();
 
-				ProvenanceNode formatted = new ProvenanceNode();
+				final ProvenanceNode formatted = new ProvenanceNode();
 				formatted.setId(UUID.fromString(node.get("id").asString()));
 				formatted.setType(ProvenanceType.findByType(label));
 
 				nodes.add(formatted);
 
-			} catch (NoSuchElementException e) {
+			} catch (final NoSuchElementException e) {
 				log.warn("No element found: " + e);
 				continue;
 			}
@@ -497,7 +483,7 @@ public class ProvenanceSearchService {
 		return nodes;
 	}
 
-	public String dynamicRelationshipDirection(String direction, String relationshipType) {
+	public static String dynamicRelationshipDirection(final String direction, final String relationshipType) {
 		switch (direction) {
 			case "all":
 				return String.format("-['%s']-", relationshipType);
@@ -510,7 +496,7 @@ public class ProvenanceSearchService {
 		}
 	}
 
-	public String extractedModelsQueryGenerator(ProvenanceType rootType, UUID rootId) {
+	public static String extractedModelsQueryGenerator(final ProvenanceType rootType, final UUID rootId) {
 		switch (rootType) {
 			case DOCUMENT:
 				return String.format("MATCH (m:Model)-[:EXTRACTED_FROM]->(d:Document {id:'%s'}) RETURN m", rootId);
@@ -523,14 +509,14 @@ public class ProvenanceSearchService {
 		}
 	}
 
-	public String parentModelQueryGenerator(ProvenanceType rootType, UUID rootId) {
-		String matchNode = matchNodeBuilder(rootType, rootId);
-		String relationshipsStr = relationshipsArrayAsStr(
+	public String parentModelQueryGenerator(final ProvenanceType rootType, final UUID rootId) {
+		final String matchNode = matchNodeBuilder(rootType, rootId);
+		final String relationshipsStr = relationshipsArrayAsStr(
 				Arrays.asList(ProvenanceRelationType.CONTAINS, ProvenanceRelationType.IS_CONCEPT_OF),
 				new ArrayList<>());
-		String modelRevisionNode = nodeBuilder(ProvenanceType.MODEL);
+		final String modelRevisionNode = nodeBuilder(ProvenanceType.MODEL);
 
-		Map<ProvenanceType, String> queryTemplatesIndex = new HashMap<>();
+		final Map<ProvenanceType, String> queryTemplatesIndex = new HashMap<>();
 		queryTemplatesIndex.put(ProvenanceType.MODEL, String.format("-[r:BEGINS_AT]->'%s' ", modelRevisionNode));
 		queryTemplatesIndex.put(ProvenanceType.MODEL_CONFIGURATION,
 				String.format("-[r:USES]->'%s' ", modelRevisionNode));
@@ -542,110 +528,110 @@ public class ProvenanceSearchService {
 		return matchNode + queryTemplatesIndex.get(rootType);
 	}
 
-	public String matchNodeBuilder() {
+	public static String matchNodeBuilder() {
 		return "MATCH (n) ";
 	}
 
-	public String matchNodeBuilder(ProvenanceType nodeType) {
-		String nodeTypeCharacter = returnNodeAbbr(nodeType);
+	public String matchNodeBuilder(final ProvenanceType nodeType) {
+		final String nodeTypeCharacter = returnNodeAbbr(nodeType);
 		return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
 	}
 
-	public String matchNodeBuilder(ProvenanceType nodeType, UUID nodeId) {
+	public String matchNodeBuilder(final ProvenanceType nodeType, final UUID nodeId) {
 		if (nodeType == null) {
 			return "MATCH (n) ";
 		}
-		String nodeTypeCharacter = returnNodeAbbr(nodeType);
+		final String nodeTypeCharacter = returnNodeAbbr(nodeType);
 		if (nodeId == null) {
 			return String.format("MATCH (%s:%s)", nodeTypeCharacter, nodeType);
 		}
 		return String.format("MATCH (%s:%s {id: '%s'}) ", nodeTypeCharacter, nodeType, nodeId);
 	}
 
-	public String returnNodeAbbr(ProvenanceType nodeType) {
-		Map<ProvenanceType, String> provenanceTypeToAbbr = new HashMap<ProvenanceType, String>() {
-			{
-				put(ProvenanceType.DATASET, "Ds");
-				put(ProvenanceType.MODEL, "Md");
-				put(ProvenanceType.MODEL_CONFIGURATION, "Mc");
-				put(ProvenanceType.DOCUMENT, "Do");
-				put(ProvenanceType.SIMULATION, "Si");
-				put(ProvenanceType.PROJECT, "Pr");
-				put(ProvenanceType.CONCEPT, "Cn");
-				put(ProvenanceType.ARTIFACT, "Ar");
-				put(ProvenanceType.CODE, "Co");
-				put(ProvenanceType.EQUATION, "Eq");
-			}
-		};
+	public String returnNodeAbbr(final ProvenanceType nodeType) {
+		final Map<ProvenanceType, String> provenanceTypeToAbbr = new HashMap<>() {
+            {
+                put(ProvenanceType.DATASET, "Ds");
+                put(ProvenanceType.MODEL, "Md");
+                put(ProvenanceType.MODEL_CONFIGURATION, "Mc");
+                put(ProvenanceType.DOCUMENT, "Do");
+                put(ProvenanceType.SIMULATION, "Si");
+                put(ProvenanceType.PROJECT, "Pr");
+                put(ProvenanceType.CONCEPT, "Cn");
+                put(ProvenanceType.ARTIFACT, "Ar");
+                put(ProvenanceType.CODE, "Co");
+                put(ProvenanceType.EQUATION, "Eq");
+            }
+        };
 
 		return provenanceTypeToAbbr.get(nodeType);
 	}
 
-	public String relationshipsArrayAsStr(List<ProvenanceRelationType> exclude, List<ProvenanceRelationType> include) {
-		StringBuilder relationshipStr = new StringBuilder();
+	public static String relationshipsArrayAsStr(final List<ProvenanceRelationType> exclude, final List<ProvenanceRelationType> include) {
+		final StringBuilder relationshipStr = new StringBuilder();
 		if (exclude != null) {
-			for (ProvenanceRelationType type : ProvenanceRelationType.values()) {
+			for (final ProvenanceRelationType type : ProvenanceRelationType.values()) {
 				if (exclude.contains(type)) {
 					continue;
 				}
-				String value = type.name();
+				final String value = type.name();
 				relationshipStr.append(value).append("|");
 			}
 			return relationshipStr.substring(0, relationshipStr.length() - 1);
 		}
-		for (ProvenanceRelationType type : ProvenanceRelationType.values()) {
+		for (final ProvenanceRelationType type : ProvenanceRelationType.values()) {
 			if (include.contains(type)) {
-				String value = type.name();
+				final String value = type.name();
 				relationshipStr.append(value).append("|");
 			}
 		}
 		return relationshipStr.substring(0, relationshipStr.length() - 1);
 	}
 
-	public String nodeBuilder(ProvenanceType nodeType, String nodeId) {
+	public String nodeBuilder(final ProvenanceType nodeType, final String nodeId) {
 		if (nodeType == null) {
 			return "(n) ";
 		}
-		String nodeTypeAbbr = returnNodeAbbr(nodeType);
+		final String nodeTypeAbbr = returnNodeAbbr(nodeType);
 		return String.format("('%s':'%s' {id: '%s'}) ", nodeTypeAbbr, nodeType, nodeId);
 	}
 
-	public String nodeBuilder(ProvenanceType nodeType) {
+	public String nodeBuilder(final ProvenanceType nodeType) {
 		if (nodeType == null) {
 			return "(n) ";
 		}
-		String nodeTypeAbbr = returnNodeAbbr(nodeType);
+		final String nodeTypeAbbr = returnNodeAbbr(nodeType);
 		return String.format("('%s':'%s')", nodeTypeAbbr, nodeType);
 	}
 
-	public List<ProvenanceEdge> formattedEdges(Graph graph) {
-		List<ProvenanceEdge> edges = new ArrayList<>();
-		for (Relationship relationship : graph.getRelationships()) {
+	public List<ProvenanceEdge> formattedEdges(final Graph graph) {
+		final List<ProvenanceEdge> edges = new ArrayList<>();
+		for (final Relationship relationship : graph.getRelationships()) {
 			try {
-				String startId = relationship.startNodeElementId();
-				String endId = relationship.endNodeElementId();
-				Node startNode = graph.getNodesById().get(startId);
-				Node endNode = graph.getNodesById().get(endId);
+				final String startId = relationship.startNodeElementId();
+				final String endId = relationship.endNodeElementId();
+				final Node startNode = graph.getNodesById().get(startId);
+				final Node endNode = graph.getNodesById().get(endId);
 
-				String startLabel = startNode.labels().iterator().next();
-				String endLabel = endNode.labels().iterator().next();
+				final String startLabel = startNode.labels().iterator().next();
+				final String endLabel = endNode.labels().iterator().next();
 
-				ProvenanceNode left = new ProvenanceNode();
+				final ProvenanceNode left = new ProvenanceNode();
 				left.setId(UUID.fromString(startNode.get("id").asString()));
 				left.setType(ProvenanceType.findByType(startLabel));
 
-				ProvenanceNode right = new ProvenanceNode();
+				final ProvenanceNode right = new ProvenanceNode();
 				right.setId(UUID.fromString(endNode.get("id").asString()));
 				right.setType(ProvenanceType.findByType(endLabel));
 
-				ProvenanceEdge edge = new ProvenanceEdge();
+				final ProvenanceEdge edge = new ProvenanceEdge();
 				edge.setRelationType(ProvenanceRelationType.findByType(relationship.type()));
 				edge.setId(UUID.fromString(relationship.get("provenance_id").asString()));
 				edge.setLeft(left);
 				edge.setRight(right);
 
 				edges.add(edge);
-			} catch (NoSuchElementException e) {
+			} catch (final NoSuchElementException e) {
 				log.warn("No element found: " + e);
 				continue;
 			}

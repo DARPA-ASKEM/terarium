@@ -81,7 +81,7 @@ const cardWidth = computed(() => cardRef.value?.clientWidth ?? 0);
 const card = computed<ModelTemplateCard>(
 	() =>
 		props.model.metadata.templateCard ?? {
-			id: -1,
+			id: '',
 			name: props.model.header.name,
 			x: 0,
 			y: 0

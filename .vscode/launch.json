@@ -53,6 +53,16 @@
       "args": [
         "--spring.profiles.active=default,local"
       ]
+    },
+    {
+      "type": "java",
+      "name": "ElasticIngestApplication",
+      "request": "launch",
+      "mainClass": "software.uncharted.terarium.esingest.ElasticIngestApplication",
+      "projectName": "es-ingest",
+      "args": [
+        "--spring.profiles.active=default,local"
+      ]
     }
   ]
 }
