@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.notebooksession;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -20,6 +21,6 @@ public class NotebookSession extends TerariumAsset  {
 	@TSOptional
 	private String description;
 
-	private Object data;
+	private JsonNode data;
 
 }

@@ -86,7 +86,7 @@ public class KnowledgeController {
 		UUID modelId = null;
 		if (requestMap.containsKey("modelId")) {
 			modelId = UUID.fromString((String) requestMap.get("modelId"));
-		} 
+		}
 		List<String> equations = (List<String>) requestMap.getOrDefault("equations", Collections.emptyList());
 
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
@@ -133,7 +133,7 @@ public class KnowledgeController {
 		try(final CloseableHttpClient httpClient = HttpClients.custom()
 		.build()) {
 		// 1. create code asset from code blocks
-		Code createdCode = codeService.createCode(code);
+		Code createdCode = codeService.createAsset(code);
 
 		// 2. upload file to code asset
 		byte[] fileAsBytes = input.getBytes();

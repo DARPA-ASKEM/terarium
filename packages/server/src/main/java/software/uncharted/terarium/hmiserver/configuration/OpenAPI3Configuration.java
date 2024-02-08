@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 
-@OpenAPIDefinition(servers = { @Server(url = "http://localhost:${server.port}"), @Server(url = "https://server.staging.terarium.ai")}, info = @Info(title = "Terarium APIs", description = "This lists all the Terarium HMI API Calls. The Calls are OAuth2 secured, "
+@OpenAPIDefinition(servers = { @Server(url = "${terarium.swagger.server-url}")}, info = @Info(title = "Terarium APIs", description = "This lists all the Terarium HMI API Calls. The Calls are OAuth2 secured, "
 	+ "so please use your client ID and Secret to test them out.",
 	version = "v1.0"), security = @SecurityRequirement(name = "security_auth"))
 @SecurityScheme(

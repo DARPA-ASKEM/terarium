@@ -88,10 +88,7 @@ public class SimulationController {
 			@PathVariable("id") final UUID id) {
 		try {
 			final Optional<Simulation> simulation = simulationService.getSimulation(id);
-			if (simulation.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(simulation.get());
+			return simulation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get simulation %s", id);
 			log.error(error, e);
@@ -113,10 +110,7 @@ public class SimulationController {
 			@RequestBody final Simulation simulation) {
 		try {
 			final Optional<Simulation> updated = simulationService.updateSimulation(simulation.setId(id));
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to update simulation %s", id);
 			log.error(error, e);
@@ -163,13 +157,6 @@ public class SimulationController {
 				return ResponseEntity.notFound().build();
 			}
 			final PresignedURL presignedURL = url.get();
-			if (presignedURL == null) {
-				final String error = String.format("Failed to get presigned URL for result of simulation %s", id);
-				log.error(error);
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						error);
-			}
 
 			final HttpGet get = new HttpGet(presignedURL.getUrl());
 			final HttpResponse response = httpclient.execute(get);
@@ -198,6 +185,7 @@ public class SimulationController {
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Dataset created and added to project.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class))),
+			@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset or adding it to the project", content = @Content)
 	})
 	public ResponseEntity<ProjectAsset> createFromSimulationResult(
@@ -219,7 +207,7 @@ public class SimulationController {
 			}
 
 			dataset.setName(datasetName);
-			datasetService.createDataset(dataset);
+			datasetService.createAsset(dataset);
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
@@ -227,11 +215,8 @@ public class SimulationController {
 				final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
 						AssetType.DATASET,
 						dataset.getId());
-				if (asset.isEmpty()) {
-					// underlying asset does not exist
-					return ResponseEntity.notFound().build();
-				}
-				return ResponseEntity.status(HttpStatus.CREATED).body(asset.get());
+				// underlying asset does not exist
+				return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset)).orElseGet(() -> ResponseEntity.notFound().build());
 			} else {
 				log.error("Failed to add the dataset from simulation {} result", id);
 				return ResponseEntity.internalServerError().build();
@@ -273,6 +258,7 @@ public class SimulationController {
 	@Operation(summary = "Gets a presigned url to download the simulation results")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "There was no simulation found with the given ID", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
@@ -281,10 +267,7 @@ public class SimulationController {
 
 		try {
 			final Optional<PresignedURL> url = simulationService.getDownloadUrl(id, filename);
-			if (url.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(url.get());
+			return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);

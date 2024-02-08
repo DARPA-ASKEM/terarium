@@ -47,6 +47,9 @@
 							/>
 						</div>
 					</div>
+					<div v-if="inferredParameters">
+						Using inferred parameters from calibration: {{ inferredParameters[0] }}
+					</div>
 				</div>
 			</tera-drilldown-section>
 		</section>
@@ -189,6 +192,8 @@ const emit = defineEmits([
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
+const inferredParameters = computed(() => props.node.inputs[1].value);
+
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -283,6 +288,11 @@ const runSimulate = async () => {
 		},
 		engine: 'ciemss'
 	};
+
+	if (inferredParameters.value) {
+		payload.extra.inferred_parameters = inferredParameters.value[0];
+	}
+
 	const response = await makeForecastJob(payload);
 	getStatus(response.id);
 };

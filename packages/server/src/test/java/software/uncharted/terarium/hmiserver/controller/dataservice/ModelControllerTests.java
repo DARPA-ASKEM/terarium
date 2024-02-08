@@ -1,10 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.io.IOException;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -22,6 +15,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
+import java.io.IOException;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ModelControllerTests extends TerariumApplicationTests {
 	@Autowired
@@ -68,7 +66,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModel() throws Exception {
 
-		final Model model = modelService.createModel(new Model()
+		final Model model = modelService.createAsset(new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
@@ -84,7 +82,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModel() throws Exception {
 
-		final Model model = modelService.createModel(new Model()
+		final Model model = modelService.createAsset(new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
@@ -102,7 +100,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModel() throws Exception {
 
-		final Model model = modelService.createModel(new Model()
+		final Model model = modelService.createAsset(new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
@@ -113,14 +111,14 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(modelService.getModel(model.getId()).isEmpty());
+		Assertions.assertTrue(modelService.getAsset(model.getId()).isEmpty());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelDescription() throws Exception {
 
-		final Model model = modelService.createModel(new Model()
+		final Model model = modelService.createAsset(new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
@@ -136,7 +134,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelDescriptions() throws Exception {
 
-		modelService.createModel(new Model()
+		modelService.createAsset(new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
