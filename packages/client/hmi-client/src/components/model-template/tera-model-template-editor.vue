@@ -138,7 +138,6 @@ import type {
 import * as modelTemplatingService from '@/services/model-templating';
 import SelectButton from 'primevue/selectbutton';
 import { KernelSessionManager } from '@/services/jupyter';
-import { logger } from '@/utils/logger';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
@@ -146,6 +145,7 @@ import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 
 const props = defineProps<{
 	model?: Model;
+	kernelManager: KernelSessionManager;
 }>();
 
 const emit = defineEmits(['output-code']);
@@ -154,8 +154,6 @@ enum EditorFormat {
 	Decomposed = 'Decomposed',
 	Flattened = 'Flattened'
 }
-
-const kernelManager = new KernelSessionManager();
 
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
@@ -229,7 +227,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			// Add a default edge as well
 			modelTemplatingService.addEdge(
 				currentTemplates.value,
-				kernelManager,
+				props.kernelManager,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -257,7 +255,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 	) {
 		modelTemplatingService.addEdge(
 			currentTemplates.value,
-			kernelManager,
+			props.kernelManager,
 			junctionIdForNewEdge,
 			target,
 			currentPortPosition,
@@ -321,7 +319,7 @@ function onDrop(event) {
 	updateNewCardPosition(event);
 	modelTemplatingService.addCard(
 		currentTemplates.value,
-		kernelManager,
+		props.kernelManager,
 		outputCode,
 		cloneDeep(newModelTemplate.value)
 	);
@@ -384,36 +382,10 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-async function initializeBeakerKernel(isModelLoaded = false) {
-	if (kernelManager.jupyterSession) kernelManager.shutdown();
-
-	try {
-		const context = {
-			context: 'mira_model_edit',
-			language: 'python3',
-			context_info: {
-				id: isModelLoaded ? props.model?.id ?? '' : ''
-			}
-		};
-		await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
-		// Create decomposed view from model
-		if (isModelLoaded && props.model) {
-			modelTemplatingService.flattenedToDecomposed(
-				decomposedTemplates.value,
-				kernelManager,
-				outputCode,
-				interpolatePointsForCurve
-			);
-		}
-	} catch (error) {
-		logger.error(`Error initializing Jupyter session: ${error}`);
-	}
-}
-
 watch(
-	() => props.model,
+	() => [props.model, props.kernelManager.jupyterSession],
 	() => {
-		if (props.model) {
+		if (props.model && props.kernelManager.jupyterSession) {
 			// Create flattened view of model
 			const flattenedModel: any = cloneDeep(props.model);
 			flattenedModel.metadata.templateCard = {
@@ -425,13 +397,19 @@ watch(
 
 			modelTemplatingService.addCard(
 				flattenedTemplates.value,
-				kernelManager,
+				props.kernelManager,
 				outputCode,
 				flattenedModel
 			);
+
+			// Create decomposed view of model
+			modelTemplatingService.flattenedToDecomposed(
+				decomposedTemplates.value,
+				props.kernelManager,
+				outputCode,
+				interpolatePointsForCurve
+			);
 		}
-		// If the model is loaded here then we'll allow it in initializeBeakerKernel
-		initializeBeakerKernel(props.model !== undefined);
 	},
 	{ immediate: true }
 );
@@ -442,7 +420,6 @@ onMounted(() => {
 
 onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
-	kernelManager.shutdown();
 });
 </script>
 

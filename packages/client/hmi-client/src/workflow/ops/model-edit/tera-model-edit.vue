@@ -2,7 +2,9 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
-				:model="amr ?? undefined"
+				v-if="amr && isKernelReady"
+				:model="amr"
+				:kernel-manager="kernelManager"
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
 			/>
 		</div>
@@ -11,8 +13,7 @@
 				<h4>Code Editor - Python</h4>
 				<Suspense>
 					<tera-notebook-jupyter-input
-						context="mira_model_edit"
-						:contextInfo="contextInfo"
+						:kernel-manager="kernelManager"
 						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
@@ -131,9 +132,9 @@ const selectedOutputId = ref<string>();
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
+const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
 const modelId = props.node.inputs[0].value?.[0];
-const contextInfo = { id: modelId }; // context for jupyter-input
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
@@ -246,6 +247,7 @@ const inputChangeHandler = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+			isKernelReady.value = true;
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -310,12 +312,12 @@ const onUpdateSelection = (id) => {
 
 watch(
 	() => props.node.active,
-	() => {
+	async () => {
 		// Update selected output
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
-			inputChangeHandler();
+			await inputChangeHandler();
 		}
 	},
 	{ immediate: true }

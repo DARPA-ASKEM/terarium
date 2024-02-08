@@ -19,46 +19,31 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import { ref, onUnmounted, onMounted } from 'vue';
+import { ref } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
-	context: string;
-	contextInfo: any;
+	kernelManager: KernelSessionManager;
 }>();
 
 const emit = defineEmits(['llm-output']);
 
 const queryString = ref('');
 const kernelStatus = ref<string>('');
+
+// FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 const contextLanguage = ref<string>('python3');
 const contextLanguageOptions = ref<string[]>(['python3']);
 
-const manager = new KernelSessionManager();
-
-const submitQuery = async () => {
-	const message = manager.sendMessage('llm_request', {
+const submitQuery = () => {
+	const message = props.kernelManager.sendMessage('llm_request', {
 		request: queryString.value
 	});
 	message.register('code_cell', (data) => {
 		emit('llm-output', data);
 	});
 };
-
-onMounted(async () => {
-	const context = {
-		context: props.context,
-		language: contextLanguage.value,
-		context_info: props.contextInfo
-	};
-
-	await manager.init('beaker_kernel', 'Beaker Kernel', context);
-});
-
-onUnmounted(() => {
-	manager.shutdown();
-});
 </script>
 
 <style scoped>
