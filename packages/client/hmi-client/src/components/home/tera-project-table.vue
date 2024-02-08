@@ -28,13 +28,15 @@
 					:lines="1"
 				/>
 				<div v-else-if="col.field === 'stats'" class="stats">
-					<span><i class="pi pi-user" />1</span>
-					<span><i class="pi pi-file" /> {{ data.metadata?.['publications-count'] }}</span>
-					<span>
-						<dataset-icon fill="var(--text-color-secondary)" />
+					<span class="mr-1"><i class="pi pi-user mr-1" />1</span>
+					<span class="mr-1"
+						><i class="pi pi-file mr-1" /> {{ data.metadata?.['publications-count'] }}</span
+					>
+					<span class="mr-1">
+						<dataset-icon fill="var(--text-color-secondary)" class="mr-1" />
 						{{ data.metadata?.['datasets-count'] }}
 					</span>
-					<span><i class="pi pi-share-alt" /> {{ data.metadata?.['models-count'] }}</span>
+					<span><i class="pi pi-share-alt mr-1" /> {{ data.metadata?.['models-count'] }}</span>
 				</div>
 				<template v-else-if="col.field === 'timestamp'">
 					{{ formatDdMmmYyyy(data.updatedOn) }}
