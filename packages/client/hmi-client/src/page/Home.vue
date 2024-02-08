@@ -38,7 +38,7 @@
 										v-model="selectedSort"
 										:options="sortOptions"
 										@update:model-value="tab.projects = myFilteredSortedProjects"
-										class="p-inputtext-sm sort-options-dropdown"
+										class="sort-options-dropdown"
 									/>
 								</span>
 								<MultiSelect
@@ -70,12 +70,9 @@
 						</section>
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
-								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
-								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
-							-->
 								<template v-if="tab.title === TabTitles.MyProjects">
-									<p class="mt-4">
+									<p>
 										Get started by creating a
 										<Button
 											label="new project"
@@ -137,8 +134,6 @@ import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
-import { Vue3Lottie } from 'vue3-lottie';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
@@ -320,13 +315,10 @@ header > section > button {
 
 .p-dropdown,
 .p-multiselect {
-	min-width: 15rem;
-}
-
-.p-multiselect:deep(.p-multiselect-label) {
-	/* Matches exact size of small dropdown */
-	font-size: 12.25px;
-	padding: 0.875rem;
+	min-width: 17rem;
+	display: flex;
+	align-items: center;
+	padding-left: 0.5rem;
 }
 
 .filter-and-sort {
