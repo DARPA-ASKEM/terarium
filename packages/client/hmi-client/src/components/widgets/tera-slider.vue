@@ -104,6 +104,7 @@ footer:empty {
 
 footer {
 	position: relative;
+	overflow: hidden;
 	border-top: 1px solid var(--surface-border-light);
 	box-shadow: 0px -4px 8px -7px #b8b8b8;
 	background-color: var(--surface-section);
@@ -111,5 +112,6 @@ footer {
 	width: 100%;
 	display: flex;
 	align-items: center;
+	justify-content: space-evenly;
 }
 </style>

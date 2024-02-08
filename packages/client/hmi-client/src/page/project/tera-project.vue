@@ -16,6 +16,14 @@
 					@open-new-asset="openNewAsset"
 				/>
 			</template>
+			<template v-slot:footerButtons>
+				<Button
+					class="upload-resources-button"
+					size="small"
+					icon="pi pi-upload"
+					label="Upload resources"
+				/>
+			</template>
 		</tera-slider-panel>
 		<section class="project-page">
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
@@ -78,6 +86,7 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraWorkflow from '@/workflow/tera-workflow.vue';
+import Button from 'primevue/button';
 import TeraModelModal from './components/tera-model-modal.vue';
 
 const route = useRoute();
@@ -220,6 +229,12 @@ section {
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
+}
+
+.upload-resources-button {
+	margin: 0 15px;
+	flex-grow: 1;
+	min-width: 140px;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
