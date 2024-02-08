@@ -33,9 +33,6 @@ const EDGE_COLOR = 'var(--petri-lineColor)';
 const HIGHLIGHTEDSTROKECOLOUR = 'var(--primary-color)';
 const EDGE_OPACITY = 0.5;
 
-const HANDLE_SIZE = 4;
-const HANDLE_SIZE_HOVER = 8;
-
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
@@ -120,38 +117,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
 
-		function handleMouseOver(evt: MouseEvent) {
-			d3.select(evt.target as any)
-				.transition()
-				.duration(100)
-				.attr('r', HANDLE_SIZE_HOVER);
-		}
-
-		function handleMouseOut(evt: MouseEvent) {
-			d3.select(evt.target as any)
-				.transition()
-				.duration(100)
-				.attr('r', HANDLE_SIZE);
-		}
-
-		// transitions drag handles
-		const transitionsHandles = [
-			...transitions.append('circle').attr('cx', (d) => d.width * 0.75),
-			...transitions.append('circle').attr('cy', (d) => d.height * 0.75),
-			...transitions.append('circle').attr('cx', (d) => -d.width * 0.75),
-			...transitions.append('circle').attr('cy', (d) => -d.height * 0.75)
-		];
-
-		d3.selectAll(transitionsHandles)
-			.classed('shape no-drag', true)
-			.attr('r', HANDLE_SIZE)
-			.attr('fill', 'var(--primary-color)')
-			.attr('stroke', 'none')
-			.style('cursor', 'pointer')
-			.style('opacity', 0)
-			.on('mouseover', handleMouseOver)
-			.on('mouseout', handleMouseOut);
-
 		// transitions label text
 		transitions
 			.append('text')
@@ -192,24 +157,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
-
-		// species drag handles
-		const speciesHandles = [
-			...species.append('circle').attr('cx', (d) => d.width * 0.75),
-			...species.append('circle').attr('cy', (d) => d.height * 0.75),
-			...species.append('circle').attr('cx', (d) => -d.width * 0.75),
-			...species.append('circle').attr('cy', (d) => -d.height * 0.75)
-		];
-
-		d3.selectAll(speciesHandles)
-			.classed('shape no-drag', true)
-			.attr('r', HANDLE_SIZE)
-			.attr('fill', 'var(--primary-color)')
-			.attr('stroke', 'none')
-			.style('cursor', 'pointer')
-			.style('opacity', 0)
-			.on('mouseover', handleMouseOver)
-			.on('mouseout', handleMouseOut);
 
 		// species text
 		species
@@ -258,11 +205,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 	}
 
-	deselectNode(selection: D3SelectionINode<NodeData>) {
-		if (!this.editMode) return;
-		selection.selectAll('.no-drag').attr('stroke-width', 1);
-	}
-
 	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
 		selection.selectAll('path').style('stroke-width', 3);
 	}
@@ -282,28 +224,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) {
 			this?.chart?.selectAll('.node-ui').style('opacity', 1);
 			this?.chart?.selectAll('.edge').style('opacity', 1);
-			this.deselectNode(this.nodeSelection);
 			this.nodeSelection = null;
 		} else {
-			if (this.nodeSelection) {
-				this.deselectNode(this.nodeSelection);
-				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
-			}
-
 			// Set focus on node:
 			this?.chart?.selectAll('.node-ui').style('opacity', 0.3);
 			this?.chart?.selectAll('.edge').style('opacity', 0.3);
 			selection.style('opacity', 1);
 			this.nodeSelection = selection;
-
-			if (this.editMode) {
-				selection
-					.selectAll('.no-drag')
-					.transition('ease-out')
-					.duration(200)
-					.style('opacity', 1)
-					.style('visibility', 'visible');
-			}
 		}
 
 		if (this.edgeSelection) {
@@ -398,8 +325,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				this.deselectEdge(this.edgeSelection);
 			}
 			if (this.nodeSelection) {
-				this.deselectNode(this.nodeSelection);
-				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
 				this.nodeSelection = null;
 			}
 
@@ -417,8 +342,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				this.edgeSelection = null;
 			}
 			if (this.nodeSelection) {
-				this.deselectNode(this.nodeSelection);
-				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
 				this.nodeSelection = null;
 			}
 		});
@@ -474,13 +397,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.render();
 	}
 
-	addNodeCenter(type: string, id: string, name: string) {
-		// FIXME: hardwired sizing
-		const positionX = this.chartSize.width / 2;
-		const positionY = this.chartSize.height / 2;
-		this.addNode(type, id, name, { x: positionX, y: positionY });
-	}
-
 	removeNode(id: string) {
 		const nodeData = this.nodeSelection?.datum();
 		if (!nodeData) return;
@@ -494,7 +410,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const amr = this.graph.amr as Model;
 		edgesToRemove.forEach((e) => {
-			console.log('lala', e.source, e.target);
 			petrinetService.removeEdge(amr, e.source, e.target);
 		});
 
