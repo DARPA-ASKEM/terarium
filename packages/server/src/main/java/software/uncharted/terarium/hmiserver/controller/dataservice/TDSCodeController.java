@@ -74,7 +74,7 @@ public class TDSCodeController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(codeService.getCode(pageSize, page));
+			return ResponseEntity.ok(codeService.getAssets(pageSize, page));
 		} catch (final IOException e) {
 			log.error("Unable to get code resources", e);
 			throw new ResponseStatusException(
@@ -99,7 +99,7 @@ public class TDSCodeController {
 	public ResponseEntity<Code> createCode(@RequestBody Code code) {
 
 		try {
-			code = codeService.createCode(code);
+			code = codeService.createAsset(code);
 			return ResponseEntity.status(HttpStatus.CREATED).body(code);
 		} catch (final IOException e) {
 			log.error("Unable to create code resource", e);
@@ -127,11 +127,8 @@ public class TDSCodeController {
 	})
 	public ResponseEntity<Code> getCode(@PathVariable("id") final UUID id) {
 		try {
-			final Optional<Code> code = codeService.getCode(id);
-			if (code.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(code.get());
+			final Optional<Code> code = codeService.getAsset(id);
+			return code.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final IOException e) {
 			log.error("Unable to get code resource", e);
 			throw new ResponseStatusException(
@@ -153,6 +150,7 @@ public class TDSCodeController {
 	@Operation(summary = "Update a code resource")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Code resource updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "404", description = "Code resource could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the code resource", content = @Content)
 	})
 	public ResponseEntity<Code> updateCode(
@@ -161,11 +159,8 @@ public class TDSCodeController {
 
 		try {
 			code.setId(codeId);
-			final Optional<Code> updated = codeService.updateCode(code);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			final Optional<Code> updated = codeService.updateAsset(code);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 
 		} catch (final IOException e) {
 			log.error("Unable to update code resource", e);
@@ -180,7 +175,6 @@ public class TDSCodeController {
 	 *
 	 * @param id The ID of the code to delete.
 	 * @return A ResponseEntity containing a JsonNode object with a success message.
-	 * @throws IOException if an error occurs while deleting the code.
 	 */
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
@@ -192,7 +186,7 @@ public class TDSCodeController {
 	public ResponseEntity<ResponseDeleted> deleteCode(@PathVariable("id") final UUID id) {
 
 		try {
-			codeService.deleteCode(id);
+			codeService.deleteAsset(id);
 		} catch (final IOException e) {
 			log.error("Unable to delete code resource", e);
 			throw new ResponseStatusException(
@@ -342,6 +336,11 @@ public class TDSCodeController {
 
 		// download file from GitHub
 		final String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		if(fileString == null){
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to get file as string data");
+		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadCodeHelper(codeId, filename, fileEntity);
 
@@ -410,7 +409,12 @@ public class TDSCodeController {
 			put.setEntity(codeHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
 
-			final Optional<Code> code = codeService.getCode(codeId);
+			final Optional<Code> code = codeService.getAsset(codeId);
+			if(code.isEmpty()){
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to get code");
+			}
 			final CodeFile codeFile = new CodeFile();
 			codeFile.setProgrammingLanguageFromFileName(fileName);
 
@@ -421,7 +425,7 @@ public class TDSCodeController {
 			}
 			fileMap.put(fileName, codeFile);
 			code.get().setFiles(fileMap);
-			codeService.updateCode(code.get());
+			codeService.updateAsset(code.get());
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
