@@ -9,9 +9,11 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -55,5 +57,24 @@ public class DocumentAsset extends TerariumAsset {
 
 	@TSOptional
 	private List<DocumentExtraction> assets;
+
+	/**
+	 * Get the DOI of a document
+	 *
+	 * @param doc
+	 * @return the DOI of the document, or an empty string if no DOI is found
+	 */
+	public static String getDocumentDoi(final Document doc) {
+		String docIdentifier = "";
+		if (doc != null && doc.getIdentifier() != null && !doc.getIdentifier().isEmpty()) {
+			for (final Map<String, String> identifier : doc.getIdentifier()) {
+				if (identifier.get("type").equals("doi")) {
+					docIdentifier = identifier.get("id");
+					break;
+				}
+			}
+		}
+		return docIdentifier;
+	}
 
 }

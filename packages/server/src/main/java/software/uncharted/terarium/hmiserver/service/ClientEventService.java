@@ -25,7 +25,6 @@ import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.User;
 
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -48,11 +47,6 @@ public class ClientEventService{
   @Value("${terarium.client-all-user-event-queue}")
   private String CLIENT_ALL_USERS_EVENT_QUEUE;
 
-  @Value("${terarium.queue.suffix:${terarium.userqueue.suffix}}")
-  private String queueSuffix;
-
-  @Value("${terarium.queue.suffix:#{null}}")
-  private String isUserDev;
 
 
 
@@ -72,10 +66,10 @@ public class ClientEventService{
 
   @PostConstruct
   void init() {
-    allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
+    allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE, config.getDurableQueues(), false, false);
     rabbitAdmin.declareQueue(allUsersQueue);
 
-    userQueue = new Queue(CLIENT_USER_EVENT_QUEUE+queueSuffix, config.getDurableQueues(), false, isUserDev == null);
+    userQueue = new Queue(CLIENT_USER_EVENT_QUEUE, config.getDurableQueues(), false, false);
     rabbitAdmin.declareQueue(userQueue);
   }
 
@@ -89,7 +83,7 @@ public class ClientEventService{
     if (userIdToEmitter.containsKey(user.getId())) {
       try {
         userIdToEmitter.get(user.getId()).complete();
-      } catch (IllegalStateException ignored) { }
+      } catch (final IllegalStateException ignored) { }
     }
     userIdToEmitter.put(user.getId(), emitter);
     return emitter;
@@ -104,7 +98,7 @@ public class ClientEventService{
     try {
       final String jsonStr = mapper.writeValueAsString(event);
       rabbitTemplate.convertAndSend(allUsersQueue.getName(), jsonStr);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       log.error("Error sending all users message", e);
     }
   }
@@ -119,7 +113,7 @@ public class ClientEventService{
     try {
       final String jsonStr = mapper.writeValueAsString(new UserClientEvent<T>().setEvent(event).setUserId(userId));
       rabbitTemplate.convertAndSend(userQueue.getName(), jsonStr);
-    } catch (JsonProcessingException e) {
+    } catch (final JsonProcessingException e) {
       log.error("Error sending all users message", e);
     }
   }
@@ -129,8 +123,9 @@ public class ClientEventService{
    * @param message the message to send
    * @param channel the channel to send the message on
    */
-  @RabbitListener(
-          queues = "${terarium.client-all-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}",
+	//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	@RabbitListener(
+          queues = "${terarium.client-all-user-event-queue}",
           concurrency = "1")
   void onSendToAllUsersEvent(final Message message, final Channel channel) {
     final JsonNode messageJson = decodeMessage(message, JsonNode.class);
@@ -143,10 +138,10 @@ public class ClientEventService{
       userIdToEmitter.forEach((userId, emitter) -> {
         try {
           emitter.send(messageJson);
-        } catch (IllegalStateException | ClientAbortException e) {
+        } catch (final IllegalStateException | ClientAbortException e) {
           log.warn("Error sending all users message to user {}. User likely disconnected", userId);
           userIdsToRemove.add(userId);
-        } catch (IOException e) {
+        } catch (final IOException e) {
           log.error("Error sending all users message to user {}", userId, e);
         }
       });
@@ -162,8 +157,9 @@ public class ClientEventService{
    * @param channel       the channel to send the message on
    * @throws IOException  if there was an error sending the message
    */
-  @RabbitListener(
-          queues = {"${terarium.client-user-event-queue}${terarium.queue.suffix:${terarium.userqueue.suffix}}"},
+	//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	@RabbitListener(
+          queues = {"${terarium.client-user-event-queue}"},
           concurrency = "1")
   void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
     final JsonNode messageJson = decodeMessage(message, JsonNode.class);
@@ -176,10 +172,10 @@ public class ClientEventService{
         final String userId = messageJson.at("/userId").asText();
         try {
           emitter.send(messageJson.at("/event"));
-        } catch (IllegalStateException | ClientAbortException e) {
+        } catch (final IllegalStateException | ClientAbortException e) {
           log.warn("Error sending user message to user {}. User likely disconnected", userId);
           userIdToEmitter.remove(userId);
-        } catch (IOException e) {
+        } catch (final IOException e) {
           log.error("Error sending user message to user {}", userId, e);
         }
       }
@@ -194,18 +190,18 @@ public class ClientEventService{
 	 * @return 		 the decoded message or null if there was an error
 	 * @param <T>
 	 */
-	public static <T> T decodeMessage(final Message message, Class<T> clazz) {
+	public static <T> T decodeMessage(final Message message, final Class<T> clazz) {
 
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 
 		try {
 			return mapper.readValue(message.getBody(), clazz);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			try {
-				JsonNode jsonMessage =  mapper.readValue(message.getBody(), JsonNode.class);
+				final JsonNode jsonMessage =  mapper.readValue(message.getBody(), JsonNode.class);
 				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
 				return null;
-			} catch (Exception e1) {
+			} catch (final Exception e1) {
 				log.error("Error decoding message as either {} or {}. Raw message is: {}", clazz.getName(), JsonNode.class.getName(), message.getBody());
 				log.error("",e1);
 				return null;

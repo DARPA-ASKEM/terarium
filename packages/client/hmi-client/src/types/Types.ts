@@ -757,6 +757,12 @@ export interface CalibrationRequestJulia {
     engine: string;
 }
 
+export interface CiemssStatusUpdate {
+    loss: number;
+    progress: number;
+    jobId: string;
+}
+
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
