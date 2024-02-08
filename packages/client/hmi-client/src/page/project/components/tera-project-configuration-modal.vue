@@ -56,11 +56,14 @@
 				</p> -->
 				<ul>
 					<li v-for="i in 12" :key="i">
-						<img
+						<div class="thumbnail-image">
+							<span class="pi pi-image text-3xl"></span>
+						</div>
+						<!-- <img
 							src="@assets/svg/terarium-icon-transparent.svg"
 							:alt="`Thumbnail ${i}`"
 							class="thumbnail-image"
-						/>
+						/> -->
 					</li>
 				</ul>
 			</section>
@@ -179,7 +182,12 @@ img {
 }
 
 .thumbnail-image {
-	background-color: var(--surface-0);
+	background-color: var(--surface-300);
+	height: 5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--gray-400);
 }
 
 :deep(.content span) {
