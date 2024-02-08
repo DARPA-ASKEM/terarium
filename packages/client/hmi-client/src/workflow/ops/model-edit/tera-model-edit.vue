@@ -13,7 +13,7 @@
 					<tera-notebook-jupyter-input
 						context="mira_model_edit"
 						:contextInfo="contextInfo"
-						@output-code="(data: any) => appendCode(data, 'code')"
+						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
 				<v-ace-editor

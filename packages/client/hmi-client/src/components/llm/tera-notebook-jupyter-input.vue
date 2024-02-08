@@ -28,7 +28,7 @@ const props = defineProps<{
 	contextInfo: any;
 }>();
 
-const emit = defineEmits(['output-code']);
+const emit = defineEmits(['llm-output']);
 
 const queryString = ref('');
 const kernelStatus = ref<string>('');
@@ -42,7 +42,7 @@ const submitQuery = async () => {
 		request: queryString.value
 	});
 	message.register('code_cell', (data) => {
-		emit('output-code', data);
+		emit('llm-output', data);
 	});
 };
 
