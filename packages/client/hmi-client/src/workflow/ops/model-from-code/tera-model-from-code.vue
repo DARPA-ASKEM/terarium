@@ -512,10 +512,8 @@ async function generateCard(docId, modelId) {
 		return;
 	}
 
-	const response = await generateModelCard(docId, modelId, clonedState.value.modelService);
-	if (response) {
-		fetchModel();
-	}
+	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	fetchModel();
 }
 
 watch(

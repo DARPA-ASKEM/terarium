@@ -1,4 +1,4 @@
-import API, { SSEStatus } from '@/api/api';
+import API from '@/api/api';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import { AssetType, EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -130,24 +130,19 @@ export async function profile(modelId: string, documentId: string): Promise<stri
  * @param {string} documentId - The ID of the document.
  * @param {string} modelId - The ID of the model.
  * @param {ModelServiceType} modelServiceType - The type of the model service.
- *
- * @returns {Promise<string | null>} The ID of the model if the operation is successful, null otherwise.
  */
 export async function generateModelCard(
 	documentId: string,
 	modelId: string,
 	modelServiceType: ModelServiceType
-): Promise<string | null> {
+): Promise<void> {
 	if (modelServiceType === ModelServiceType.TA1) {
-		const response = await profile(modelId, documentId);
-		return response ? modelId : null;
+		await profile(modelId, documentId);
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
 		const task = await modelCard(documentId, modelId);
-		if (!task) return null;
-		const response = await handleTaskById(task.id);
-		return response === SSEStatus.DONE ? modelId : null;
+		if (!task) return;
+		await handleTaskById(task.id);
 	}
-	return null;
 }

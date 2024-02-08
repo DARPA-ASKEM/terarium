@@ -191,10 +191,10 @@ export class Poller<T> {
  */
 export interface SSEHandlers {
 	/**
-	 * Handler for incoming SSE messages.
-	 * @param {any} message The received message.
+	 * Handler for incoming SSE data.
+	 * @param {any} data The received data.
 	 */
-	onmessage: (message: any) => void;
+	ondata: (data: any) => void;
 	/**
 	 * Handler for SSE connection open event.
 	 * @param {Response} response The response object.
@@ -291,7 +291,8 @@ export class SSEHandler {
 			},
 			onmessage: (message: EventSourceMessage) => {
 				const data = message?.data;
-				this.handlers.onmessage(data);
+				const parsedData = JSON.parse(data);
+				this.handlers.ondata(parsedData);
 			},
 			onerror: (error: Error) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
@@ -306,9 +307,9 @@ export class SSEHandler {
 		};
 
 		try {
-			await fetchEventSource(this.url, fetchEventSourceOptions);
+			await fetchEventSource(API.defaults.baseURL + this.url, fetchEventSourceOptions);
 		} catch (error: unknown) {
-			logger.error(error, { showToast: false });
+			logger.error(error);
 			this.setStatus(SSEStatus.ERROR);
 		} finally {
 			this.closeConnection();

@@ -90,7 +90,7 @@ public class GoLLMController {
 		return handler;
 	}
 
-	@PostMapping("/model_card")
+	@PostMapping("/model-card")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Model Card task")
 	@ApiResponses(value = {
