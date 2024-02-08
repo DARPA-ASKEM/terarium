@@ -1,4 +1,4 @@
-import API, { SSEHandlers, handleSSE } from '@/api/api';
+import API, { SSEHandler, SSEStatus } from '@/api/api';
 import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { logger } from '@/utils/logger';
@@ -45,23 +45,19 @@ export async function modelCard(documentId: string, modelId: string): Promise<Ta
  * @param {string} id - The task ID.
  * @param {(message: any) => void} successHandler - The success handler function.
  */
-export async function handleTaskById(id: string, successHandler: (message: any) => void) {
-	const handlers: SSEHandlers = {
-		onMessage(message, abort) {
+export async function handleTaskById(id: string) {
+	const sseHandler = new SSEHandler(`/api/gollm/${id}`, {
+		onMessage(message) {
 			const data = JSON.parse(message);
 			if (data?.status === TaskStatus.Failed) {
-				logger.error('Task Failed.');
-				abort();
+				throw Error('Task failed');
 			}
 			if (data.status === TaskStatus.Success) {
-				successHandler(data);
-				abort();
+				sseHandler.setStatus(SSEStatus.DONE);
+				sseHandler.closeConnection();
 			}
-		},
-		onError(error) {
-			logger.error(error, { showToast: false });
 		}
-	};
-
-	await handleSSE(`/api/gollm/${id}`, handlers);
+	});
+	const result = await sseHandler.connect();
+	return result;
 }

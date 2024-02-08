@@ -147,7 +147,7 @@ import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
-import { getModel, profile, updateModel } from '@/services/model';
+import { generateModelCard, getModel, updateModel } from '@/services/model';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -160,7 +160,6 @@ import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-import { handleTaskById, modelCard } from '@/services/goLLM';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -336,9 +335,7 @@ async function onRun() {
 
 	if (!modelId) return;
 
-	if (document.value?.id && !card.value) {
-		generateModelCard(document.value.id, modelId);
-	}
+	generateCard(document.value?.id, modelId);
 
 	clonedState.value.modelId = modelId;
 	emit('append-output-port', {
@@ -420,21 +417,20 @@ function removeEquation(index: number) {
 	emit('update-state', clonedState.value);
 }
 
-async function generateModelCard(documentId, modelId) {
-	const modelServiceType = clonedState.value.modelService;
+async function generateCard(docId, modelId) {
+	if (!docId || !modelId) return;
 
-	if (modelServiceType === ModelServiceType.TA1) {
-		await profile(modelId, documentId);
-		fetchModel();
+	if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
+		return;
 	}
 
-	if (modelServiceType === ModelServiceType.TA4) {
-		const goLLMTask = await modelCard(documentId, modelId);
-		if (!goLLMTask) return;
-		handleTaskById(goLLMTask.id, (data) => {
-			console.log(data);
-			fetchModel();
-		});
+	if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
+		return;
+	}
+
+	const response = await generateModelCard(docId, modelId, clonedState.value.modelService);
+	if (response) {
+		fetchModel();
 	}
 }
 

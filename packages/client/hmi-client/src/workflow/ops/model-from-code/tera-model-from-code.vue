@@ -160,7 +160,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { createModel, getModel, profile, updateModel } from '@/services/model';
+import { createModel, generateModelCard, getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -170,7 +170,6 @@ import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
-import { handleTaskById, modelCard } from '@/services/goLLM';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { ModelServiceType } from '@/types/common';
 import { extensionFromProgrammingLanguage } from '@/utils/data-util';
@@ -358,9 +357,7 @@ async function handleCode() {
 			return;
 		}
 
-		if (documentId.value && !card.value) {
-			generateModelCard(documentId.value, modelId);
-		}
+		generateCard(documentId.value, modelId);
 
 		clonedState.value.modelId = modelId;
 
@@ -504,22 +501,20 @@ function isSaveModelDisabled(): boolean {
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }
 
-async function generateModelCard(docId, modelId) {
-	const modelServiceType = clonedState.value.modelService;
+async function generateCard(docId, modelId) {
+	if (!docId || !modelId) return;
 
-	if (modelServiceType === ModelServiceType.TA1) {
-		await profile(modelId, docId);
-		fetchModel();
+	if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
+		return;
 	}
 
-	if (modelServiceType === ModelServiceType.TA4) {
-		const goLLMTask = await modelCard(docId, modelId);
-		if (!goLLMTask) return;
-		// fetch model on success
-		handleTaskById(goLLMTask.id, (data) => {
-			console.log(data);
-			fetchModel();
-		});
+	if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
+		return;
+	}
+
+	const response = await generateModelCard(docId, modelId, clonedState.value.modelService);
+	if (response) {
+		fetchModel();
 	}
 }
 

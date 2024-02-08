@@ -193,9 +193,8 @@ export interface SSEHandlers {
 	/**
 	 * Handler for incoming SSE messages.
 	 * @param {any} message The received message.
-	 * @param {() => void} abort Function to abort the SSE connection.
 	 */
-	onMessage: (message: any, abort: () => void) => void;
+	onMessage: (message: any) => void;
 	/**
 	 * Handler for SSE connection open event.
 	 * @param {Response} response The response object.
@@ -205,7 +204,7 @@ export interface SSEHandlers {
 	 * Handler for SSE connection error.
 	 * @param {Error} error The error object.
 	 */
-	onError: (error: Error) => void;
+	onError?: (error: Error) => void;
 	/**
 	 * Handler for SSE connection close event.
 	 */
@@ -213,54 +212,108 @@ export interface SSEHandlers {
 }
 
 /**
- * Function to handle Server-Sent Events (SSE) connections.
- * @param {string} url The URL to connect to.
- * @param {SSEHandlers} handlers Object containing SSE event handlers.
- * @param {FetchEventSourceInit} options Additional options for the SSE connection.
+ * Enum for SSE connection status values.
+ * @readonly
+ * @enum {string}
  */
-export async function handleSSE(
-	url: string,
-	handlers: SSEHandlers,
-	options?: FetchEventSourceInit
-) {
-	const authStore = useAuthStore();
-	const controller = new AbortController();
-	const fetchEventSourceOptions: FetchEventSourceInit = {
-		...options,
-		headers: {
-			...options?.headers,
-			Authorization: `Bearer ${authStore.token}`
-		},
-		onmessage(message: EventSourceMessage) {
-			const data = message?.data;
-			const abort = () => controller.abort();
-			handlers.onMessage(data, abort);
-		},
-		onerror(error: Error) {
-			handlers.onError(error);
-			controller.abort();
-		},
-		async onopen(response: Response) {
-			logger.info('Connection opened', { showToast: false });
-			if (handlers.onOpen) handlers.onOpen(response);
-		},
-		onclose() {
-			if (handlers.onClose) handlers.onClose();
-		},
-		signal: controller.signal,
-		openWhenHidden: true
-	};
+export enum SSEStatus {
+	INITIALIZED = 'initialized',
+	DONE = 'done',
+	ERROR = 'error'
+}
 
-	try {
-		await fetchEventSource(url, fetchEventSourceOptions);
-	} catch (error: unknown) {
-		if (!(error instanceof Error)) {
-			throw error;
+/**
+ * Class representing a Server-Sent Events (SSE) handler.
+ */
+export class SSEHandler {
+	private url: string;
+
+	private handlers: SSEHandlers;
+
+	private options?: FetchEventSourceInit;
+
+	private controller: AbortController;
+
+	private status: SSEStatus;
+
+	/**
+	 * Create a SSEHandler.
+	 * @param {string} url - The URL to connect to.
+	 * @param {SSEHandlers} handlers - The handlers for the SSE events.
+	 * @param {FetchEventSourceInit} options - The options for the fetchEventSource function.
+	 */
+	constructor(url: string, handlers: SSEHandlers, options?: FetchEventSourceInit) {
+		this.url = url;
+		this.handlers = handlers;
+		this.options = options;
+		this.controller = new AbortController();
+		this.status = SSEStatus.INITIALIZED;
+	}
+
+	/**
+	 * Close the SSE connection.
+	 */
+	public closeConnection() {
+		this.controller.abort();
+		if (this.handlers.onClose) this.handlers.onClose();
+		logger.info('Connection closed', { showToast: false });
+	}
+
+	/**
+	 * Get the status of the SSE connection.
+	 * @return {SSEStatus} The status of the SSE connection.
+	 */
+	getStatus() {
+		return this.status;
+	}
+
+	/**
+	 * Set the status of the SSE connection.
+	 * @param {SSEStatus} status - The new status of the SSE connection.
+	 */
+	setStatus(status: SSEStatus) {
+		this.status = status;
+	}
+
+	// FIXME: We can probably add the message to the response
+	/**
+	 * Connect to the SSE server.
+	 * @return {Promise<SSEStatus>} The status of the SSE connection after attempting to connect.
+	 */
+	async connect(): Promise<SSEStatus> {
+		const handlers = this.handlers;
+		const authStore = useAuthStore();
+		const fetchEventSourceOptions: FetchEventSourceInit = {
+			...this.options,
+			headers: {
+				...this.options?.headers,
+				Authorization: `Bearer ${authStore.token}`
+			},
+			onmessage: (message: EventSourceMessage) => {
+				const data = message?.data;
+				this.handlers.onMessage(data);
+			},
+			onerror: (error: Error) => {
+				if (this.handlers.onError) this.handlers.onError(error);
+				throw error;
+			},
+			async onopen(response: Response) {
+				logger.info('Connection opened', { showToast: false });
+				if (handlers.onOpen) handlers.onOpen(response);
+			},
+			signal: this.controller.signal,
+			openWhenHidden: true
+		};
+
+		try {
+			await fetchEventSource(this.url, fetchEventSourceOptions);
+		} catch (error: unknown) {
+			logger.error(error, { showToast: false });
+			this.setStatus(SSEStatus.ERROR);
+		} finally {
+			this.closeConnection();
 		}
-		handlers.onError(error);
-		controller.abort();
-	} finally {
-		if (handlers.onClose) handlers.onClose();
+		return this.getStatus();
 	}
 }
 
