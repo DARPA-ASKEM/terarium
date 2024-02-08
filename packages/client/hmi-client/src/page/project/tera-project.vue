@@ -22,6 +22,11 @@
 					size="small"
 					icon="pi pi-upload"
 					label="Upload resources"
+					@click="isUploadResourcesModalVisible = true"
+				/>
+				<tera-upload-resources-modal
+					:visible="isUploadResourcesModalVisible"
+					@close="isUploadResourcesModalVisible = false"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -88,6 +93,7 @@ import TeraCode from '@/components/code/tera-code.vue';
 import TeraWorkflow from '@/workflow/tera-workflow.vue';
 import Button from 'primevue/button';
 import TeraModelModal from './components/tera-model-modal.vue';
+import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -96,6 +102,7 @@ const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);
+const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as string) ?? '');
