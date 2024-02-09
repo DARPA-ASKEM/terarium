@@ -176,10 +176,6 @@ watch(
 			}
 		});
 
-		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-			renderer?.addEdge(d.source, d.target);
-		});
-
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
