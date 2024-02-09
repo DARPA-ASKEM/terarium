@@ -6,17 +6,33 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
+import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.NetCDF;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.NetCDFService;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +44,13 @@ import java.util.UUID;
 public class NetCDFController {
 	final NetCDFService netCDFService;
 
+	@GetMapping
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a list of netCDFs")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "NetCDFs retrieved.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NetCDF.class))),
+		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the netCDFs", content = @Content)
+	})
 	public ResponseEntity<List<NetCDF>> getNetCDFs(
 		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
@@ -131,6 +154,75 @@ public class NetCDFController {
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 				error);
+		}
+	}
+
+	/**
+	 * Uploads a file to the project.
+	 */
+	@PutMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Secured(Roles.USER)
+	@Operation(summary = "Uploads an .nc file")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Uploaded the file.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
+		@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
+	public ResponseEntity<Void> uploadNCFile(
+		@PathVariable("id") final UUID netCDFId,
+		@RequestParam("filename") final String filename,
+		@RequestPart("file") final MultipartFile file
+	) {
+		try {
+			final byte[] fileAsBytes = file.getBytes();
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			return uploadNCFileHelper(netCDFId, filename, fileEntity);
+		} catch (final IOException e) {
+			final String error = "Unable to upload file";
+			log.error(error, e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				error);
+		}
+	}
+
+	/**
+	 * Uploads an nc file inside the entity to TDS via a presigned URL
+	 *
+	 * @param netCDFId The ID of the netCDFId associated with the nc file
+	 * @param fileName   The name of the file to upload
+	 * @param fileEntity The entity containing the file to upload
+	 * @return A response containing the status of the upload
+	 */
+	private ResponseEntity<Void> uploadNCFileHelper(final UUID netCDFId, final String fileName,
+																										final HttpEntity fileEntity) {
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
+			.disableRedirectHandling()
+			.build()) {
+
+			// upload file to S3
+			final PresignedURL presignedURL = netCDFService.getUploadUrl(netCDFId, fileName);
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse response = httpclient.execute(put);
+
+			// if the fileEntity is not a PDF, then we need to extract the text and update
+			// the netCDF
+			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
+				final Optional<NetCDF> netCDF = netCDFService.getNetCDF(netCDFId);
+				if (netCDF.isEmpty()) {
+					return ResponseEntity.notFound().build();
+				}
+
+				NetCDF updatedNetCDF = netCDFService.decodeNCFile(netCDF.get(), fileEntity.getContent());
+				netCDFService.updateNetCDF(updatedNetCDF);
+			}
+
+			return ResponseEntity.status(response.getStatusLine().getStatusCode()).build();
+		} catch (final IOException e) {
+			final String error = "Unable to upload document";
+			log.error(error, e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

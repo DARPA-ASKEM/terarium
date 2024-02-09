@@ -93,6 +93,7 @@ public class Config {
 	String resultsPath;
 	String artifactPath;
 	String documentPath;
+	String netcdfPath;
 	String codePath;
 
 	@Data
