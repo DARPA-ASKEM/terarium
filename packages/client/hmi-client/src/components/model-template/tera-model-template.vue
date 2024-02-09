@@ -23,7 +23,7 @@
 		</section>
 		<ul>
 			<li
-				v-for="({ id }, index) in [...model.model.states, ...model.semantics.ode.parameters]"
+				v-for="({ id }, index) in ports"
 				class="port"
 				:class="{ selectable: isEditable }"
 				:key="index"
@@ -47,7 +47,12 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import type { ModelTemplateCard } from '@/types/model-templating';
 import Menu from 'primevue/menu';
 
-const props = defineProps<{ model: any; isEditable: boolean; isDecomposed: boolean }>();
+const props = defineProps<{
+	model: any;
+	isEditable: boolean;
+	isDecomposed: boolean;
+	showParameters?: boolean;
+}>();
 
 const emit = defineEmits([
 	'port-mouseover',
@@ -77,6 +82,12 @@ const toggle = (event) => {
 };
 
 const cardWidth = computed(() => cardRef.value?.clientWidth ?? 0);
+
+const ports = computed(() =>
+	props.showParameters
+		? [...props.model.model.states, ...props.model.semantics.ode.parameters]
+		: props.model.model.states
+);
 
 const card = computed<ModelTemplateCard>(
 	() =>

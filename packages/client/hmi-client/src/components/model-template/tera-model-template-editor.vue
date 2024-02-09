@@ -75,13 +75,18 @@
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						@update-name="
 							(name: string) =>
-								modelTemplatingService.updateDecomposedCardName(
-									currentTemplates,
-									kernelManager,
-									outputCode,
-									name,
-									card.id
-								)
+								kernelManager
+									.sendMessage('replace_template_name_request', {
+										old_name: currentTemplates.models[index].header.name,
+										new_name: name
+									})
+									.register('replace_template_name_response', (d) => {
+										outputCode(d);
+										modelTemplatingService.updateDecomposedCardName(
+											currentTemplates.models[index],
+											name
+										);
+									})
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
 						@port-mouseover="
@@ -89,12 +94,16 @@
 						"
 						@port-mouseleave="onPortMouseleave"
 						@remove="
-							modelTemplatingService.removeCard(
-								currentTemplates,
-								kernelManager,
-								outputCode,
-								card.id
-							)
+							() => {
+								kernelManager
+									.sendMessage('remove_template_request', {
+										template_name: currentTemplates.models[index].metadata.templateCard.name
+									})
+									.register('remove_template_response', (d) => {
+										outputCode(d);
+										modelTemplatingService.removeCard(currentTemplates, card.id, index);
+									});
+							}
 						"
 					/>
 				</tera-canvas-item>
@@ -131,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty, isEqual } from 'lodash'; // debounce
+import { isEmpty, isEqual, snakeCase } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -241,8 +250,13 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 				props.kernelManager,
 				junctionIdForNewEdge,
 				target,
+				outputCode
+			);
+			modelTemplatingService.addEdge2(
+				currentTemplates.value,
+				target,
+				junctionIdForNewEdge,
 				currentPortPosition,
-				outputCode,
 				interpolatePointsForCurve
 			);
 		}
@@ -269,10 +283,16 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			props.kernelManager,
 			junctionIdForNewEdge,
 			target,
+			outputCode
+		);
+		modelTemplatingService.addEdge2(
+			currentTemplates.value,
+			target,
+			junctionIdForNewEdge,
 			currentPortPosition,
-			outputCode,
 			interpolatePointsForCurve
 		);
+
 		cancelNewEdge();
 	}
 }
@@ -328,12 +348,24 @@ function outputCode(data: any) {
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-	modelTemplatingService.addCard(
+
+	const { name } = newModelTemplate.value.header;
+
+	const { addTemplateArguments, modelTemplateToAdd } = modelTemplatingService.prepareAddingTemplate(
 		currentTemplates.value,
-		props.kernelManager,
-		outputCode,
-		cloneDeep(newModelTemplate.value)
+		newModelTemplate.value
 	);
+
+	console.log(newModelTemplate.value, modelTemplateToAdd);
+
+	props.kernelManager
+		.sendMessage(`add_${snakeCase(name)}_template_request`, addTemplateArguments)
+		.register(`add_${snakeCase(name)}_template_response`, (d) => {
+			outputCode(d);
+		});
+
+	modelTemplatingService.addCard(currentTemplates.value, modelTemplateToAdd);
+
 	newModelTemplate.value = null;
 }
 
@@ -399,12 +431,7 @@ watch(
 		if (props.model) {
 			flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
 
-			modelTemplatingService.updateFlattenedTemplate(
-				props.model,
-				flattenedTemplates.value,
-				props.kernelManager,
-				outputCode
-			);
+			modelTemplatingService.updateFlattenedTemplate(props.model, flattenedTemplates.value);
 		}
 	}
 );
@@ -414,20 +441,18 @@ onMounted(() => {
 
 	if (props.model) {
 		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplate(
-			props.model,
-			flattenedTemplates.value,
-			props.kernelManager,
-			outputCode
-		);
+		modelTemplatingService.updateFlattenedTemplate(props.model, flattenedTemplates.value);
 
 		// Create decomposed view of model
-		modelTemplatingService.flattenedToDecomposed(
-			decomposedTemplates.value,
-			props.kernelManager,
-			outputCode,
-			interpolatePointsForCurve
-		);
+		props.kernelManager
+			.sendMessage('amr_to_templates', {})
+			.register('amr_to_templates_response', (d) => {
+				modelTemplatingService.flattenedToDecomposed(
+					decomposedTemplates.value,
+					d.content.templates as Model[],
+					interpolatePointsForCurve
+				);
+			});
 	}
 });
 
