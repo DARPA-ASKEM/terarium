@@ -33,6 +33,7 @@ import software.uncharted.terarium.hmiserver.service.data.NetCDFService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -211,6 +212,9 @@ public class NetCDFController {
 			put.setEntity(fileEntity);
 			final HttpResponse response = httpclient.execute(put);
 
+			if (netCDF.getFileNames() == null) {
+				netCDF.setFileNames(new ArrayList<>());
+			}
 			netCDF.getFileNames().add(fileName);
 			netCDFService.updateNetCDF(netCDF);
 			// TODO: decode NC file
