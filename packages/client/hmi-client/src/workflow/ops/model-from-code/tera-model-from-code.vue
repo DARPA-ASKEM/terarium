@@ -1,5 +1,16 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-action-row>
+			<label>Output</label>
+			<tera-output-dropdown
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:is-loading="isProcessing"
+				is-selectable
+			/>
+		</template>
 		<div tabName="Wizard">
 			<tera-drilldown-section :isLoading="fetchingInputBlocks">
 				<header>
@@ -36,7 +47,8 @@
 						@delete="removeCodeBlock(i - inputCodeBlocks.length)"
 						:is-included="allCodeBlocks[i].includeInProcess"
 						@update:is-included="
-							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess
+							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess;
+							emit('update-state', clonedState);
 						"
 					>
 						<template #header>
@@ -54,22 +66,23 @@
 					</tera-asset-block>
 				</template>
 				<template #footer>
-					<span style="margin-right: auto"
-						><label>Model framework:</label
+					<span
+						><label>Model framework</label
 						><Dropdown
-							class="w-full md:w-14rem"
+							size="small"
 							v-model="clonedState.modelFramework"
 							:options="modelFrameworks"
 							@change="setKernelContext"
 					/></span>
-					<Button
-						:disabled="isProcessing || allCodeBlocks.length === 0"
-						label="Run"
-						icon="pi pi-play"
-						severity="secondary"
-						outlined
-						@click="handleCode"
-					/>
+					<span class="mr-auto">
+						<label>Service</label>
+						<Dropdown
+							size="small"
+							v-model="clonedState.modelService"
+							:options="modelServices"
+							@change="emit('update-state', clonedState)"
+						/>
+					</span>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -77,17 +90,17 @@
 			<!--Notebook section if we decide we need one-->
 		</div>
 		<template #preview>
-			<tera-drilldown-preview
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:is-loading="isProcessing"
-				is-selectable
-			>
+			<tera-drilldown-preview :is-loading="isProcessing">
 				<section v-if="selectedModel">
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
-						<tera-model-card :model="selectedModel" />
+						<!--FIXME: currently not parsing the goLLM card so just printing its JSON for now-->
+						<ul v-if="goLLMCard">
+							<li v-for="(key, index) in Object.keys(goLLMCard)" :key="index">
+								<h3>{{ key }}</h3>
+								<p>{{ goLLMCard[key] }}</p>
+							</li>
+						</ul>
+						<tera-model-card v-else :model="selectedModel" />
 						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 						<tera-model-semantic-tables :model="selectedModel" readonly />
 					</template>
@@ -108,9 +121,15 @@
 						severity="secondary"
 						outlined
 						@click="openModal"
-						style="margin-right: auto"
+						class="mr-auto"
 					/>
 					<Button label="Cancel" severity="secondary" @click="emit('close')" outlined />
+					<Button
+						:disabled="isProcessing || allCodeBlocks.length === 0"
+						label="Run"
+						icon="pi pi-play"
+						@click="handleCode"
+					/>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -141,7 +160,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { createModel, getModel, profile, updateModel } from '@/services/model';
+import { createModel, generateModelCard, getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -151,6 +170,9 @@ import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import { ModelServiceType } from '@/types/common';
+import { extensionFromProgrammingLanguage } from '@/utils/data-util';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -175,6 +197,7 @@ const fetchingInputBlocks = ref(false);
 
 const programmingLanguages = Object.values(ProgrammingLanguage);
 const modelFrameworks = Object.values(ModelFramework);
+const modelServices = Object.values(ModelServiceType);
 const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 
@@ -206,7 +229,8 @@ const clonedState = ref<ModelFromCodeState>({
 	codeLanguage: ProgrammingLanguage.Python,
 	modelFramework: ModelFramework.Petrinet,
 	codeBlocks: [],
-	modelId: ''
+	modelId: '',
+	modelService: ModelServiceType.TA1
 });
 
 const outputs = computed(() => {
@@ -246,12 +270,13 @@ const outputs = computed(() => {
 
 	return groupedOutputs;
 });
-const selectedOutputId = ref<string>();
+const selectedOutputId = ref<string>('');
 const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
 	() => props.node.outputs?.find((output) => selectedOutputId.value === output.id)
 );
 
 const card = ref<Card | null>(null);
+const goLLMCard = ref<any>(null);
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
@@ -307,12 +332,14 @@ async function handleCode() {
 		const codeContent = allCodeBlocks.value
 			.filter((block) => block.includeInProcess)
 			.reduce((acc, block) => `${acc}${block.asset.codeContent}\n`, '');
-		const file = new File([codeContent], 'tempFile');
+
+		const fileName = `tempFile.${extensionFromProgrammingLanguage(clonedState.value.codeLanguage)}`;
+		const file = new File([codeContent], fileName);
 		const newCode: Code = {
 			name: 'tempCode',
 			description: 'tempDescription',
 			files: {
-				tempFile: {
+				[fileName]: {
 					language: clonedState.value.codeLanguage,
 					dynamics: {
 						name: 'dynamic',
@@ -325,12 +352,12 @@ async function handleCode() {
 
 		const modelId = await codeBlocksToAmr(newCode, file);
 
-		if (!modelId) return;
-
-		if (documentId.value && !card.value) {
-			const profiledModel = await profile(modelId, documentId.value);
-			if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
+		if (!modelId) {
+			isProcessing.value = false;
+			return;
 		}
+
+		generateCard(documentId.value, modelId);
 
 		clonedState.value.modelId = modelId;
 
@@ -445,14 +472,22 @@ async function fetchModel() {
 	}
 	isProcessing.value = true;
 	let model = await getModel(clonedState.value.modelId);
-	if (model && !model.metadata?.card && card.value) {
+	if (model) {
 		if (!model.metadata) {
 			model.metadata = {};
 		}
 
-		model.metadata.card = card.value;
+		if (!model.metadata?.card && card.value) {
+			model.metadata.card = card.value;
+		}
+
+		if (!model.metadata?.gollm_card && goLLMCard.value) {
+			model.metadata.gollm_card = goLLMCard.value;
+		}
+
 		model = await updateModel(model);
 	}
+
 	card.value = model?.metadata?.card ?? null;
 	selectedModel.value = model;
 	isProcessing.value = false;
@@ -464,6 +499,21 @@ function isSaveModelDisabled(): boolean {
 		.map((model) => model.id);
 
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
+}
+
+async function generateCard(docId, modelId) {
+	if (!docId || !modelId) return;
+
+	if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
+		return;
+	}
+
+	if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
+		return;
+	}
+
+	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	fetchModel();
 }
 
 watch(

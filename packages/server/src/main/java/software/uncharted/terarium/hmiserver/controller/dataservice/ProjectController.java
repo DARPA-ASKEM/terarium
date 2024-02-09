@@ -1,30 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,6 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.NetCDF;
@@ -53,13 +34,12 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.*;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
+
+import java.io.IOException;
+import java.util.*;
 
 @RequestMapping("/projects")
 @RestController
@@ -271,10 +251,7 @@ public class ProjectController {
 					.canWrite(new RebacProject(id, reBACService))) {
 				project.setId(id);
 				final Optional<Project> updatedProject = projectService.updateProject(project);
-				if (updatedProject.isEmpty()) {
-					return ResponseEntity.notFound().build();
-				}
-				return ResponseEntity.ok(updatedProject.get());
+				return updatedProject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
@@ -320,13 +297,13 @@ public class ProjectController {
 								HashMap::putAll);
 
 				final Assets assetsResponse = new Assets();
-				for (AssetType type : assetTypeListMap.keySet()) {
+				for (final AssetType type : assetTypeListMap.keySet()) {
 					switch (type) {
 						case DATASET:
-							List<Dataset> datasets = new ArrayList<>();
-							for (UUID id : assetTypeListMap.get(type)) {
+							final List<Dataset> datasets = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<Dataset> dataset = datasetService.getDataset(id);
+									final Optional<Dataset> dataset = datasetService.getAsset(id);
 									dataset.ifPresent(datasets::add);
 								} catch (final IOException e) {
 									log.error("Error getting dataset", e);
@@ -335,10 +312,10 @@ public class ProjectController {
 							assetsResponse.setDataset(datasets);
 							break;
 						case MODEL:
-							List<Model> models = new ArrayList<>();
-							for (UUID id : assetTypeListMap.get(type)) {
+							final List<Model> models = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<Model> model = modelService.getModel(id);
+									final Optional<Model> model = modelService.getAsset(id);
 									model.ifPresent(models::add);
 								} catch (final IOException e) {
 									log.error("Error getting model", e);
@@ -347,10 +324,10 @@ public class ProjectController {
 							assetsResponse.setModel(models);
 							break;
 						case DOCUMENT:
-							List<DocumentAsset> documents = new ArrayList<>();
-							for (UUID id : assetTypeListMap.get(type)) {
+							final List<DocumentAsset> documents = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<DocumentAsset> document = documentService.getDocumentAsset(id);
+									final Optional<DocumentAsset> document = documentService.getAsset(id);
 									document.ifPresent(documents::add);
 								} catch (final IOException e) {
 									log.error("Error getting document", e);
@@ -359,10 +336,10 @@ public class ProjectController {
 							assetsResponse.setDocument(documents);
 							break;
 						case WORKFLOW:
-							List<Workflow> workflows = new ArrayList<>();
-							for (UUID id : assetTypeListMap.get(type)) {
+							final List<Workflow> workflows = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<Workflow> workflow = workflowService.getWorkflow(id);
+									final Optional<Workflow> workflow = workflowService.getAsset(id);
 									workflow.ifPresent(workflows::add);
 								} catch (final IOException e) {
 									log.error("Error getting workflow", e);
@@ -371,11 +348,11 @@ public class ProjectController {
 							assetsResponse.setWorkflow(workflows);
 							break;
 						case PUBLICATION:
-							List<ExternalPublication> publications = new ArrayList<>();
-							for (UUID id : assetTypeListMap.get(type)) {
+							final List<ExternalPublication> publications = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<ExternalPublication> publication = publicationService
-											.getExternalPublication(id);
+									final Optional<ExternalPublication> publication = publicationService
+											.getAsset(id);
 									publication.ifPresent(publications::add);
 								} catch (final IOException e) {
 									log.error("Error getting publication", e);
@@ -384,10 +361,10 @@ public class ProjectController {
 							assetsResponse.setPublication(publications);
 							break;
 						case CODE:
-							List<Code> code = new ArrayList<>();
-							for (UUID id : assetTypeListMap.get(type)) {
+							final List<Code> code = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<Code> codeAsset = codeService.getCode(id);
+									final Optional<Code> codeAsset = codeService.getAsset(id);
 									codeAsset.ifPresent(code::add);
 								} catch (final IOException e) {
 									log.error("Error getting code", e);
@@ -396,10 +373,10 @@ public class ProjectController {
 							assetsResponse.setCode(code);
 							break;
 						case ARTIFACT:
-							List<Artifact> artifacts = new ArrayList<>();
-							for (UUID id : assetTypeListMap.get(type)) {
+							final List<Artifact> artifacts = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<Artifact> artifact = artifactService.getArtifact(id);
+									final Optional<Artifact> artifact = artifactService.getAsset(id);
 									artifact.ifPresent(artifacts::add);
 								} catch (final IOException e) {
 									log.error("Error getting artifact", e);
@@ -440,6 +417,7 @@ public class ProjectController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
@@ -455,11 +433,8 @@ public class ProjectController {
 				if (project.isPresent()) {
 					final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
 							assetType, assetId);
-					if (asset.isEmpty()) {
-						// underlying asset does not exist
-						return ResponseEntity.notFound().build();
-					}
-					return ResponseEntity.status(HttpStatus.CREATED).body(asset.get());
+					// underlying asset does not exist
+					return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset)).orElseGet(() -> ResponseEntity.notFound().build());
 				}
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();

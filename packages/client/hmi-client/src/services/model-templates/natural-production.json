@@ -20,13 +20,13 @@
         ],
         "transitions": [
             {
-                "id": "NaturalProduction",
+                "id": "Natural production",
                 "input": [],
                 "output": [
                     "A"
                 ],
                 "properties": {
-                    "name": "NaturalProduction"
+                    "name": "Natural production"
                 }
             }
         ]
@@ -35,7 +35,7 @@
         "ode": {
             "rates": [
                 {
-                    "target": "NaturalProduction",
+                    "target": "Natural production",
                     "expression": "p",
                     "expression_mathml": "<ci>p</ci>"
                 }

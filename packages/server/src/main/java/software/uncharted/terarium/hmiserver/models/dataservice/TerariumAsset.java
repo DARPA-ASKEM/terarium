@@ -43,10 +43,10 @@ public abstract class TerariumAsset implements Serializable {
 	private Timestamp deletedOn;
 
 	@TSOptional
-	private Boolean temporary;
+	private Boolean temporary = false;
 
 	@TSOptional
-	private Boolean publicAsset;
+	private Boolean publicAsset = false;
 
 
 }

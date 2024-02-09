@@ -1,0 +1,44 @@
+import API, { TaskHandler, FatalError, TaskEventHandlers } from '@/api/api';
+import type { TaskResponse } from '@/types/Types';
+import { TaskStatus } from '@/types/Types';
+import { logger } from '@/utils/logger';
+
+/**
+ * Fetches model card data from the server and wait for task to finish.
+ * @param {string} documentId - The document ID.
+ * @param {string} modelId - The model ID.
+ */
+export async function modelCard(documentId: string, modelId: string): Promise<void> {
+	try {
+		const response = await API.post<TaskResponse>('/gollm/model-card', null, {
+			params: {
+				'document-id': documentId,
+				'model-id': modelId
+			}
+		});
+
+		// FIXME: I think we need to refactor the response interceptors so that we can handle errors here, or even in the interceptor itself...might be worth a discussion
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					throw new FatalError('Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					closeConnection();
+				}
+			}
+		});
+	} catch (err) {
+		logger.error(err);
+	}
+}
+
+/**
+ * Handles task for a given task ID.
+ * @param {string} id - The task ID.
+ */
+export async function handleTaskById(id: string, handlers: TaskEventHandlers) {
+	const taskHandler = new TaskHandler(`/gollm/${id}`, handlers);
+	await taskHandler.start();
+}

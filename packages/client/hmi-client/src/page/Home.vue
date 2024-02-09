@@ -70,9 +70,12 @@
 						</section>
 						<section class="projects">
 							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
+								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
+							-->
 								<template v-if="tab.title === TabTitles.MyProjects">
-									<p>
+									<p class="mt-4">
 										Get started by creating a
 										<Button
 											label="new project"
@@ -134,6 +137,8 @@ import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
