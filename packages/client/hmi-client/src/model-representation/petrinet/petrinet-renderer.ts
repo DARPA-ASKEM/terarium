@@ -37,8 +37,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
 
-	editMode: boolean = false;
-
 	initialize(element: HTMLDivElement): void {
 		super.initialize(element);
 
@@ -73,17 +71,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', EDGE_COLOR)
 			.style('fill-opacity', EDGE_OPACITY)
 			.style('stroke', 'none');
-	}
-
-	setEditMode(v: boolean) {
-		this.editMode = v;
-
-		const svg = d3.select(this.svgEl);
-		if (this.editMode) {
-			svg.style('border', '4px solid var(--primary-color)');
-		} else {
-			svg.style('border', '4px solid transparent');
-		}
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
@@ -298,7 +285,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		);
 
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
-			console.log('drag ended', sourceData, targetData);
 			chart?.selectAll('.new-edge').remove();
 			// reset colour after drag
 			selection.selectAll('.selectableNode').attr('stroke', 'var(--petri-nodeBorder)');
@@ -316,8 +302,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {
-			if (!this.editMode) return;
-
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
 			}
