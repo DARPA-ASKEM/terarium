@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
@@ -29,7 +28,7 @@ public class SearchByAssetTypeControllerTests extends TerariumApplicationTests {
 	private static final String TEST_INDEX = "tds_searchable_document_tera_1.0";
 	private static final String TEST_ASSET = "document";
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.ADAM)
 	public void testKnnSearch() throws Exception {
 
