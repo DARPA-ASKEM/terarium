@@ -114,7 +114,7 @@ public class NetCDFController {
 	@Operation(summary = "Updates an netCDF")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "NetCDF updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NetCDF.class))),
-		@ApiResponse(responseCode = "204", description = "NetCDF not found", content = @Content),
+		@ApiResponse(responseCode = "404", description = "NetCDF not found", content = @Content),
 		@ApiResponse(responseCode = "500", description = "There was an issue updating the netCDF", content = @Content)
 	})
 	public ResponseEntity<NetCDF> updateNetCDF(
