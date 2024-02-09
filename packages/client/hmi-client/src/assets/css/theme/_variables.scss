@@ -583,7 +583,7 @@ $organizationChartConnectorColor: rgba(0, 0, 0, .12) !default;
 //message
 $messageMargin: 1rem 0 !default;
 $messagePadding: 1.25rem 1.5rem !default;
-$messageBorderWidth: 0 0 0 0 !default;
+$messageBorderWidth: 1px !default;
 $messageIconFontSize: 1.5rem !default;
 $messageTextFontSize: 1rem !default;
 $messageTextFontWeight: 500 !default;
@@ -596,33 +596,36 @@ $inlineMessageTextFontSize: 1rem !default;
 $inlineMessageBorderWidth: 1px !default;
 
 //toast
-$toastIconFontSize: 2rem !default;
+$toastIconFontSize: 1.5rem !default;
 $toastMessageTextMargin: 0 0 0 1rem !default;
-$toastMargin: 0 0 0 0 !default;
-$toastPadding: 1rem 0.5rem !default;
-$toastBorderWidth: 0 0 0 0 !default;
+$toastMargin: 0 0 0.25rem 0 !default;
+$toastPadding: 0.75rem 0.5rem !default;
+$toastBorderWidth: 1px !default;
 $toastShadow: 0 3px 6px -3px rgba(0, 0, 0, .1), 0 8px 10px 1px rgba(0, 0, 0, .08), 0 3px 14px 2px rgba(0, 0, 0, .06) !default;
 $toastOpacity: .9 !default;
-$toastTitleFontWeight: 700 !default;
+$toastTitleFontWeight: 600 !default;
 $toastDetailMargin: $inlineSpacing 0 0 0 !default;
 
 //severities
-$infoMessageBg: #B3E5FC !default;
-$infoMessageBorder: solid transparent !default;
-$infoMessageTextColor: #01579B !default;
-$infoMessageIconColor: #01579B !default;
-$successMessageBg: #C8E6C9 !default;
-$successMessageBorder: solid transparent !default;
-$successMessageTextColor: #1B5E20 !default;
-$successMessageIconColor: #1B5E20 !default;
-$warningMessageBg: #FFECB3 !default;
-$warningMessageBorder: solid transparent !default;
+$infoMessageBg: #F4F7FA;
+$infoMessageBorder: solid 1px #a0a8b0 !default;
+$infoMessageTextColor: #6A7682 !default;
+$infoMessageIconColor: #6A7682 !default;
+
+$successMessageBg: var(--primary-color-lighter) !default;
+$successMessageBorder: solid 1px var(--primary-color) !default;
+$successMessageTextColor: var(--primary-color-dark) !default;
+$successMessageIconColor: var(--primary-color-dark) !default;
+
+$warningMessageBg: var(--surface-warning) !default;
+$warningMessageBorder: 1px solid #7f6003 !default;
 $warningMessageTextColor: #7f6003 !default;
 $warningMessageIconColor: #7f6003 !default;
-$errorMessageBg: #FFCDD2 !default;
-$errorMessageBorder: solid transparent !default;
-$errorMessageTextColor: #B71C1C !default;
-$errorMessageIconColor: #B71C1C !default;
+
+$errorMessageBg: #FDF1ED !default;
+$errorMessageBorder: solid 1px #C2451E !default;
+$errorMessageTextColor: #C2451E !default;
+$errorMessageIconColor: #C2451E !default;
 
 //overlays
 $overlayContentBorder: 0 none !default;
