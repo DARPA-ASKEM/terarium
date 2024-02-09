@@ -56,7 +56,7 @@ public class NetCDFController {
 		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(netCDFService.getNetCDFs(page, pageSize));
+			return ResponseEntity.ok(netCDFService.getAssets(page, pageSize));
 		} catch (Exception e) {
 			final String error = "Unable to get netCDFs";
 			log.error(error, e);
@@ -75,7 +75,7 @@ public class NetCDFController {
 	})
 	public ResponseEntity<NetCDF> createNetCDF(@RequestBody NetCDF netCDF) {
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(netCDFService.createNetCDF(netCDF));
+			return ResponseEntity.status(HttpStatus.CREATED).body(netCDFService.createAsset(netCDF));
 		} catch (Exception e) {
 			final String error = "Unable to create netCDF";
 			log.error(error, e);
@@ -95,7 +95,7 @@ public class NetCDFController {
 	})
 	public ResponseEntity<NetCDF> getNetCDF(@PathVariable("id") UUID netCDFId) {
 		try {
-			Optional<NetCDF> netCDF = netCDFService.getNetCDF(netCDFId);
+			Optional<NetCDF> netCDF = netCDFService.getAsset(netCDFId);
 			if (netCDF.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -123,7 +123,7 @@ public class NetCDFController {
 
 		try {
 			netCDF.setId(netCDFId);
-			Optional<NetCDF> updated = netCDFService.updateNetCDF(netCDF);
+			Optional<NetCDF> updated = netCDFService.updateAsset(netCDF);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -147,7 +147,7 @@ public class NetCDFController {
 	public ResponseEntity<ResponseDeleted> deleteNetCDF(@PathVariable("id") UUID netCDFId) {
 
 		try {
-			netCDFService.deleteNetCDF(netCDFId);
+			netCDFService.deleteAsset(netCDFId);
 			return ResponseEntity.ok(new ResponseDeleted("netCDF", netCDFId));
 		} catch (Exception e) {
 			final String error = "Unable to delete netCDF";
@@ -216,7 +216,7 @@ public class NetCDFController {
 				netCDF.setFileNames(new ArrayList<>());
 			}
 			netCDF.getFileNames().add(fileName);
-			netCDFService.updateNetCDF(netCDF);
+			netCDFService.updateAsset(netCDF);
 			// TODO: decode NC file
 //			NetCDF updatedNetCDF = netCDFService.decodeNCFile(netCDF, fileEntity.getContent());
 //			netCDFService.updateNetCDF(updatedNetCDF);
