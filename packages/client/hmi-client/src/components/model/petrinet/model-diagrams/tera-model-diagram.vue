@@ -8,35 +8,9 @@
 							<Button @click="resetZoom" label="Reset zoom" class="p-button-sm p-button-outlined" />
 						</span>
 					</template>
-					<template #center>
-						<span v-if="isEditing">
-							<Button
-								@click="prepareStateEdit()"
-								label="Add state"
-								class="p-button-sm p-button-outlined"
-							/>
-							<Button
-								@click="prepareTransitionEdit()"
-								label="Add transition"
-								class="p-button-sm p-button-outlined"
-							/>
-						</span>
-					</template>
+					<template #center> </template>
 					<template #end>
 						<span>
-							<template v-if="isEditable">
-								<Button
-									v-if="isEditing"
-									@click="cancelEdit"
-									label="Cancel"
-									class="p-button-sm p-button-outlined"
-								/>
-								<Button
-									@click="toggleEditMode"
-									:label="isEditing ? 'Save model' : 'Edit model'"
-									:class="isEditing ? 'p-button-sm save-model' : 'p-button-sm p-button-outlined'"
-								/>
-							</template>
 							<SelectButton
 								v-if="model && getStratificationType(model)"
 								:model-value="stratifiedView"
@@ -67,7 +41,6 @@
 						</div>
 					</div>
 				</div>
-				<ContextMenu ref="menu" :model="contextMenuItems" />
 			</section>
 		</TeraResizablePanel>
 		<div
@@ -77,40 +50,6 @@
 			:style="!isEditable && { pointerEvents: 'none' }"
 		/>
 		<Teleport to="body">
-			<tera-modal
-				class="edit-modal"
-				v-if="openEditNode === true"
-				@modal-mask-clicked="openEditNode = false"
-				@modal-enter-press="addNode"
-			>
-				<template #header>
-					<h4>Add/Edit {{ editNodeObj.nodeType }}</h4>
-				</template>
-				<div class="modal-input-container">
-					<span class="modal-input-label">ID: </span>
-					<InputText class="modal-input" v-model="editNodeObj.id" placeholder="Id" />
-				</div>
-				<div class="modal-input-container">
-					<span class="modal-input-label">Name: </span>
-					<InputText class="modal-input" v-model="editNodeObj.name" placeholder="Name" />
-				</div>
-				<template #math-editor>
-					<div class="modal-input-container">
-						<span class="modal-input-label">Transition Expression: </span>
-						<tera-math-editor
-							ref="editNodeMathEditor"
-							:keep-open="true"
-							:is-editing-eq="true"
-							:latex-equation="editNodeObj.expression"
-							@equation-updated="updateRateEquation"
-						/>
-					</div>
-				</template>
-				<template #footer>
-					<Button label="Submit" :disabled="editNodeObj.id === ''" @click="addNode" />
-					<Button label="Cancel" class="p-button-secondary" @click="openEditNode = false" />
-				</template>
-			</tera-modal>
 			<tera-stratified-matrix-modal
 				v-if="openValueConfig && modelConfiguration"
 				:id="selectedTransitionId"
@@ -129,12 +68,8 @@
 
 <script setup lang="ts">
 import { watch, ref, onMounted, onUnmounted } from 'vue';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import InputText from 'primevue/inputtext';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
-import ContextMenu from 'primevue/contextmenu';
 import {
 	getStratificationType,
 	StratifiedModel
@@ -155,14 +90,6 @@ import SelectButton from 'primevue/selectbutton';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 
-interface AddStateObj {
-	id: string;
-	name: string;
-	nodeType: string;
-	expression: string;
-	expression_mathml?: string;
-}
-
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
@@ -172,36 +99,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model', 'update-configuration']);
 
-// Model editor context menu
-const menu = ref();
-const contextMenuItems = ref([
-	{
-		label: 'Add state',
-		icon: 'pi pi-fw pi-circle',
-		command: () => {
-			prepareStateEdit();
-		}
-	},
-	{
-		label: 'Add transition',
-		icon: 'pi pi-fw pi-stop',
-		command: () => {
-			prepareTransitionEdit();
-		}
-	}
-]);
 const isCollapsed = ref(true);
-const isEditing = ref(false);
 const graphElement = ref<HTMLDivElement | null>(null);
-const openEditNode = ref(false);
-const editNodeMathEditor = ref<typeof TeraMathEditor | null>(null);
-const editNodeObj = ref<AddStateObj>({
-	id: '',
-	name: '',
-	nodeType: '',
-	expression: '',
-	expression_mathml: ''
-});
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
@@ -224,10 +123,7 @@ const stratifiedViewOptions = ref([
 // Is this going to consistently have an option to switch from diagram to equation if not the toggle should be somewherlse
 // enum
 
-let previousId: any = null;
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
 
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
@@ -256,80 +152,6 @@ async function toggleCollapsedView() {
 	renderGraph();
 }
 
-// Cancel existing edits, currently this will:
-// - Resets changes to the model structure
-const cancelEdit = async () => {
-	isEditing.value = false;
-	renderer?.setEditMode(false);
-	renderGraph();
-};
-
-const toggleEditMode = () => {
-	isEditing.value = !isEditing.value;
-	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && renderer) {
-		emit('update-model', renderer.graph.amr);
-	}
-};
-
-// Updates the transition equations
-const updateRateEquation = (_index: number, latexEquation: string, mathml: string) => {
-	editNodeObj.value.expression = latexEquation;
-	editNodeObj.value.expression_mathml = mathml;
-};
-
-const prepareStateEdit = () => {
-	editNodeObj.value = {
-		id: '',
-		name: '',
-		nodeType: NodeType.State,
-		expression: '',
-		expression_mathml: ''
-	};
-	openEditNode.value = true;
-};
-
-const prepareTransitionEdit = () => {
-	editNodeObj.value = {
-		id: '',
-		name: '',
-		nodeType: NodeType.Transition,
-		expression: '',
-		expression_mathml: ''
-	};
-	openEditNode.value = true;
-};
-
-const addNode = async () => {
-	if (!renderer) return;
-	const node = editNodeObj.value;
-	if (!node?.id) {
-		return;
-	}
-	if (props.model?.model.states.find((s) => s.id === node.id)) {
-		return;
-	}
-	if (props.model?.model.transitions.find((t) => t.id === node.id)) {
-		return;
-	}
-	node.expression_mathml = editNodeMathEditor.value?.mathLiveField.getValue('math-ml');
-
-	if (!previousId) {
-		if (eventX && eventY) {
-			renderer.addNode(node.nodeType, node.id, node.name, { x: eventX, y: eventY });
-		} else {
-			renderer.addNodeCenter(node.nodeType, node.id, node.name);
-		}
-	} else {
-		renderer.updateNode(previousId, node.id, node.name, node.expression);
-		previousId = null;
-	}
-
-	eventX = -1;
-	eventY = -1;
-	openEditNode.value = false;
-};
-
 // Render graph whenever a new model is fetched or whenever the HTML element
 // that we render the graph to changes.
 // Consider just watching the model
@@ -354,75 +176,12 @@ watch(
 			}
 		});
 
-		renderer.on('node-dbl-click', (_eventName, _event, selection, thisRenderer) => {
-			if (isEditing.value === true) {
-				const data = selection.datum();
-				const rate = thisRenderer.graph.amr.semantics?.ode?.rates.find((d) => d.target === data.id);
-				editNodeObj.value = {
-					id: data.id,
-					name: data.label,
-					nodeType: data.data.type,
-					expression: rate?.expression ? rate.expression : ''
-				};
-				previousId = data.id;
-				openEditNode.value = true;
-			}
-		});
-
-		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-			renderer?.addEdge(d.source, d.target);
-		});
-
-		renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-			if (!renderer?.editMode) return;
-			eventX = pos.x;
-			eventY = pos.y;
-			menu.value.show(evt);
-		});
-
-		renderer.on('background-click', () => {
-			if (menu.value) menu.value.hide();
-		});
-
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
 	},
 	{ deep: true }
 );
-
-const editorKeyHandler = (event: KeyboardEvent) => {
-	// Ignore backspace if the current focus is a text/input box
-	if ((event.target as HTMLElement).tagName === 'INPUT') {
-		return;
-	}
-
-	if (event.key === 'Backspace' && renderer) {
-		if (renderer.nodeSelection) {
-			const nodeData = renderer.nodeSelection.datum();
-			renderer.removeNode(nodeData.id);
-		}
-
-		if (renderer.edgeSelection) {
-			const edgeData = renderer.edgeSelection.datum();
-			renderer.removeEdge(edgeData.source, edgeData.target);
-		}
-	}
-	if (event.key === 'Enter' && renderer) {
-		if (renderer.nodeSelection) {
-			renderer.deselectNode(renderer.nodeSelection);
-			renderer.nodeSelection
-				.selectAll('.no-drag')
-				.style('opacity', 0)
-				.style('visibility', 'hidden');
-			renderer.nodeSelection = null;
-		}
-		if (renderer.edgeSelection) {
-			renderer.deselectEdge(renderer.edgeSelection);
-			renderer.edgeSelection = null;
-		}
-	}
-};
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -436,13 +195,11 @@ const updateLayout = () => {
 const handleResize = () => updateLayout();
 
 onMounted(() => {
-	document.addEventListener('keyup', editorKeyHandler);
 	window.addEventListener('resize', handleResize);
 	handleResize();
 });
 
 onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
 	window.removeEventListener('resize', handleResize);
 });
 </script>
@@ -463,16 +220,6 @@ main {
 	border-radius: var(--border-radius);
 	display: flex;
 	flex-direction: column;
-}
-
-.diagram-container-editing {
-	box-shadow:
-		inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px #1b8073,
-		inset 0 0 0 1px var(--primary-color);
-	border: 2px solid var(--primary-color);
-	border-radius: var(--border-radius);
 }
 
 .preview {
@@ -500,10 +247,6 @@ main {
 .p-toolbar:deep(> div > span) {
 	gap: 0.25rem;
 	display: flex;
-}
-
-section math-editor {
-	justify-content: center;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
@@ -563,10 +306,6 @@ section math-editor {
 	background-color: var(--surface-section);
 	border-radius: 0.5rem;
 	padding: 0.5rem;
-}
-
-.edit-modal:deep(main) {
-	max-width: 50rem;
 }
 
 .modal-input-container {

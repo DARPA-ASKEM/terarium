@@ -1,16 +1,10 @@
 import API from '@/api/api';
 import { updateModelConfiguration } from '@/services/model-configurations';
-import {
-	Model,
-	ModelConfiguration,
-	PetriNetModel,
-	PetriNetTransition,
-	TypingSemantics
-} from '@/types/Types';
+import { Model, ModelConfiguration, PetriNetModel, PetriNetTransition } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { IGraph } from '@graph-scaffolder/types';
 import { AxiosError } from 'axios';
-import _, { cloneDeep, isEmpty, some } from 'lodash';
+import _, { isEmpty, some } from 'lodash';
 
 // deprecated section - this is the acset representation, we should do the conversion on model-service
 interface PetriNet {
@@ -257,84 +251,7 @@ export const convertToIGraph = (amr: Model) => {
 	return result;
 };
 
-const DUMMY_VALUE = -999;
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
-
-export const addState = (amr: Model, id: string, name: string) => {
-	amr.model.states.push({
-		id,
-		name,
-		description: ''
-	});
-	amr.semantics?.ode.initials?.push({
-		target: id,
-		expression: `${id}init`,
-		expression_mathml: `<ci>${id}init</ci>`
-	});
-	amr.semantics?.ode.parameters?.push({
-		id: `${id}init`,
-		name: '',
-		description: '',
-		value: DUMMY_VALUE
-	});
-};
-
-export const addTransition = (amr: Model, id: string, name: string, value?: number) => {
-	amr.model.transitions.push({
-		id,
-		input: [],
-		output: [],
-		properties: {
-			name,
-			description: ''
-		}
-	});
-	amr.semantics?.ode?.rates?.push({
-		target: id,
-		expression: `${id}Param`,
-		expression_mathml: `<ci>${id}Param</ci>`
-	});
-	amr.semantics?.ode.parameters?.push({
-		id: `${id}Param`,
-		name: '',
-		description: '',
-		value: value ?? DUMMY_VALUE
-	});
-};
-
-export const removeState = (amr: Model, id: string) => {
-	const model = amr.model as PetriNetModel;
-
-	// Remove from AMR topology
-	model.states = model.states.filter((d) => d.id !== id);
-	model.transitions.forEach((t) => {
-		_.remove(t.input, (d) => d === id);
-		_.remove(t.output, (d) => d === id);
-	});
-
-	// Remove from semantics
-	if (amr.semantics?.ode) {
-		const ode = amr.semantics.ode;
-		if (ode.initials) {
-			_.remove(ode.initials, (d) => d.target === id);
-		}
-	}
-};
-
-export const removeTransition = (amr: Model, id: string) => {
-	const model = amr.model as PetriNetModel;
-
-	// Remove from AMR topology
-	model.transitions = model.transitions.filter((d) => d.id !== id);
-
-	// Remove from semantics
-	if (amr.semantics?.ode) {
-		const ode = amr.semantics.ode;
-		if (ode.rates) {
-			_.remove(ode.rates, (d) => d.target === id);
-		}
-	}
-};
 
 // Update a transition's expression and expression_mathml fields based on
 // mass-kinetics
@@ -379,113 +296,6 @@ export const updateRateExpressionWithParam = (
 	rate.target = transition.id;
 	rate.expression = expression;
 	rate.expression_mathml = expressionMathml;
-};
-
-export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
-	const model = amr.model as PetriNetModel;
-	const state = model.states.find((d) => d.id === sourceId);
-	if (state) {
-		// if source is a state then the target is a transition
-		const transition = model.transitions.find((d) => d.id === targetId);
-		if (transition) {
-			transition.input.push(sourceId);
-			updateRateExpression(amr, transition, '');
-		}
-	} else {
-		// if source is a transition then the target is a state
-		const transition = model.transitions.find((d) => d.id === sourceId);
-		if (transition) {
-			transition.output.push(targetId);
-			updateRateExpression(amr, transition, '');
-		}
-	}
-};
-
-export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
-	const model = amr.model as PetriNetModel;
-	const state = model.states.find((d) => d.id === sourceId);
-	if (state) {
-		const transition = model.transitions.find((d) => d.id === targetId);
-		if (!transition) return;
-
-		let c = 0;
-		transition.input = transition.input.filter((id) => {
-			if (c === 0 && id === sourceId) {
-				c++;
-				return false;
-			}
-			return true;
-		});
-		updateRateExpression(amr, transition, '');
-	} else {
-		const transition = model.transitions.find((d) => d.id === sourceId);
-		if (!transition) return;
-
-		let c = 0;
-		transition.output = transition.output.filter((id) => {
-			if (c === 0 && id === targetId) {
-				c++;
-				return false;
-			}
-			return true;
-		});
-		updateRateExpression(amr, transition, '');
-	}
-};
-
-export const updateState = (amr: Model, id: string, newId: string, newName: string) => {
-	const model = amr.model as PetriNetModel;
-	const state = model.states.find((d) => d.id === id);
-	if (!state) return;
-
-	state.id = newId;
-	state.name = newName;
-
-	const initial = amr.semantics?.ode.initials?.find((d) => d.target === id);
-	if (!initial) return;
-	initial.target = newId;
-
-	model.transitions.forEach((transition) => {
-		for (let i = 0; i < transition.input.length; i++) {
-			if (transition.input[i] === id) transition.input[i] = newId;
-		}
-		for (let i = 0; i < transition.output.length; i++) {
-			if (transition.output[i] === id) transition.output[i] = newId;
-		}
-	});
-
-	model.transitions.forEach((t) => {
-		updateRateExpression(amr, t, '');
-	});
-};
-
-export const updateTransition = (
-	amr: Model,
-	id: string,
-	newId: string,
-	newName: string,
-	newExpression: string
-) => {
-	const model = amr.model as PetriNetModel;
-	const transition = model.transitions.find((d) => d.id === id);
-	if (!transition) return;
-	transition.id = newId;
-	if (transition.properties) {
-		transition.properties.name = newName;
-	} else {
-		transition.properties = {
-			name: newName,
-			description: newName
-		};
-	}
-
-	const rate = amr.semantics?.ode?.rates?.find((d) => d.target === id);
-	if (!rate) return;
-	rate.target = newId;
-
-	model.transitions.forEach((t) => {
-		if (t.id === id) updateRateExpression(amr, t, newExpression);
-	});
 };
 
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
@@ -599,71 +409,8 @@ export const updateConfigFields = async (
 	});
 };
 
-// Replace typing semantics
-export const addTyping = (amr: Model, typing: TypingSemantics) => {
-	if (amr.semantics) {
-		amr.semantics.typing = typing;
-	}
-};
-
-// Add a reflexive transition loop to the state
-// This is a special type of addTransition that creates a self loop
-const DEFAULT_REFLEXIVE_PARAM_VALUE = 1.0;
-
-export const addReflexives = (
-	amr: Model,
-	stateId: string,
-	reflexiveId: string,
-	numLoops: number = 1
-) => {
-	addTransition(amr, reflexiveId, reflexiveId, DEFAULT_REFLEXIVE_PARAM_VALUE);
-	const transition = (amr.model as PetriNetModel).transitions.find((t) => t.id === reflexiveId);
-	if (transition) {
-		for (let i = 0; i < numLoops; i++) {
-			transition.input.push(stateId);
-			transition.output.push(stateId);
-		}
-	}
-};
-
 export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
-};
-
-export const cloneModelWithExtendedTypeSystem = (amr: Model) => {
-	const amrCopy = cloneDeep(amr);
-	if (amrCopy.semantics?.typing) {
-		/* eslint-disable @typescript-eslint/naming-convention */
-		const { name, description, schema, model_version } = amrCopy.header;
-		const typeSystem = {
-			name,
-			description,
-			schema,
-			model_version,
-			model: amrCopy.semantics?.typing?.system
-		};
-		amrCopy.semantics.typing.system = typeSystem;
-	}
-	return amrCopy;
-};
-
-function unifyModelTypeSystems(baseAMR: Model, strataAMR: Model) {
-	// Entries in type system need to be in the same order for stratification
-	// They should contain the same state and transition entries for both baseAMR and strataAMR, just in a different order
-	// So just overwrite one with the other instead of sorting
-	const typeSystem = baseAMR.semantics?.typing?.system;
-	if (strataAMR.semantics?.typing?.system) {
-		strataAMR.semantics.typing.system.model = typeSystem.model;
-	}
-}
-
-export const stratify = async (baseModel: Model, strataModel: Model) => {
-	unifyModelTypeSystems(baseModel, strataModel);
-	const response = await API.post('/modeling-request/stratify', {
-		baseModel,
-		strataModel
-	});
-	return response.data as Model;
 };
 
 /// /////////////////////////////////////////////////////////////////////////////
