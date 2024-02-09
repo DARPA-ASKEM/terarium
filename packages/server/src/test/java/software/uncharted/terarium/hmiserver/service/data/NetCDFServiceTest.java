@@ -14,16 +14,16 @@ public class NetCDFServiceTest extends TerariumApplicationTests {
 
 	//@Test
 	public void testFileStream() {
-		File file = new File("/Users/ccoleman/Downloads/prra_Omon_IPSL-CM6A-LR_historical_r22i1p1f1_gr_185001-201412.nc");
-		if (file.exists()) {
-			try {
-				FileInputStream fis = new FileInputStream(file);
-			} catch (FileNotFoundException e) {
-				Assertions.
-			}
-
-		} else {
-		 Assertions.assertTrue(false);
-		}
+//		File file = new File("/Users/ccoleman/Downloads/prra_Omon_IPSL-CM6A-LR_historical_r22i1p1f1_gr_185001-201412.nc");
+//		if (file.exists()) {
+//			try {
+//				FileInputStream fis = new FileInputStream(file);
+//			} catch (FileNotFoundException e) {
+//				Assertions.assertTrue(false);
+//			}
+//
+//		} else {
+//		 Assertions.assertTrue(false);
+//		}
 	}
 }
