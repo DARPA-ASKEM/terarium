@@ -108,7 +108,7 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Create all indices that are not already present in the cluster
+	 * Check for the existence of an index.
 	 *
 	 * @return True if the index exists, false otherwise
 	 */
@@ -334,7 +334,7 @@ public class ElasticsearchService {
 		return null;
 	}
 
-	public <T> List<T> knnSearch(String index, KnnQuery query, final Class<T> tClass)
+	public <T> List<T> knnSearch(String index, KnnQuery query, int numResults, final Class<T> tClass)
 			throws IOException {
 		log.info("KNN search on: {}", index);
 
@@ -344,7 +344,7 @@ public class ElasticsearchService {
 
 		SearchRequest req = new SearchRequest.Builder()
 				.index(index)
-				.size((int) query.k())
+				.size(numResults)
 				.source(src -> src.filter(v -> v.includes("title")))
 				.knn(query)
 				.build();

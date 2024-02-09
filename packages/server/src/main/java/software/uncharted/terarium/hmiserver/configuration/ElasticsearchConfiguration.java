@@ -41,6 +41,10 @@ public class ElasticsearchConfiguration {
 			String decapodesContext) {
 	}
 
+	public String getIndex(String root) {
+		return String.join("_", index.prefix, root, index.suffix);
+	}
+
 	public String getCodeIndex() {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
 	}
