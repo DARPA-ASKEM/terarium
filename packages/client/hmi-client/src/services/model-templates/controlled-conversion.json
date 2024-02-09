@@ -36,7 +36,7 @@
         ],
         "transitions": [
             {
-                "id": "ControlledConversion",
+                "id": "Controlled conversion",
                 "input": [
                     "C",
                     "A"
@@ -46,7 +46,7 @@
                     "B"
                 ],
                 "properties": {
-                    "name": "ControlledConversion"
+                    "name": "Controlled conversion"
                 }
             }
         ]
@@ -55,7 +55,7 @@
         "ode": {
             "rates": [
                 {
-                    "target": "ControlledConversion",
+                    "target": "Controlled conversion",
                     "expression": "A*B*p",
                     "expression_mathml": "<apply><times/><ci>A</ci><ci>B</ci><ci>p</ci></apply>"
                 }
