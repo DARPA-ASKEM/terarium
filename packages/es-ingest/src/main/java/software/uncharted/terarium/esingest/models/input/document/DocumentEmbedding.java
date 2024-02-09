@@ -1,23 +1,22 @@
-package software.uncharted.terarium.esingest.models.input.covid;
+package software.uncharted.terarium.esingest.models.input.document;
 
 import java.util.List;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
-import software.uncharted.terarium.esingest.models.input.IInputEmbeddingChunk;
+import software.uncharted.terarium.esingest.models.input.IInputDocument;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CovidEmbedding implements IInputEmbeddingChunk {
+public class DocumentEmbedding implements IInputDocument {
 
 	@JsonProperty("doc_id")
-	private UUID id;
+	private String id;
 
 	@JsonProperty("uuid")
-	private UUID embeddingChunkId;
+	private String embeddingChunkId;
 
 	private long[] spans;
 	private String title;

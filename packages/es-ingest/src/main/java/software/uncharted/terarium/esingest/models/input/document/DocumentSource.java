@@ -1,8 +1,7 @@
-package software.uncharted.terarium.esingest.models.input.covid;
+package software.uncharted.terarium.esingest.models.input.document;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -12,7 +11,7 @@ import software.uncharted.terarium.esingest.models.input.IInputDocument;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CovidDocument implements IInputDocument {
+public class DocumentSource implements IInputDocument {
 
 	@Data
 	@JsonIgnoreProperties(ignoreUnknown = true)
@@ -45,7 +44,7 @@ public class CovidDocument implements IInputDocument {
 	}
 
 	@JsonAlias("_id")
-	UUID id;
+	String id;
 
 	@JsonAlias("_source")
 	Source source;
