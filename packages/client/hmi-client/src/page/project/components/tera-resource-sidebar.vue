@@ -130,7 +130,8 @@
 				<template #default>
 					<p>
 						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ useProjects().activeProject.value?.name }}.
+						<em>{{ useProjects().activeProject.value?.name }}</em
+						>.
 					</p>
 				</template>
 				<template #footer>
