@@ -79,6 +79,7 @@ public class NetCDFService {
 		updateNetCDF(netCDF.get());
 	}
 
+	/* TODO: Figure out how to extract the global attributes from a Stream */
 	public NetCDF decodeNCFile(NetCDF netCDF, InputStream content) {
 		try {
 //		try (NetcdfFile ncfile = NetcdfFiles.open("/Users/ccoleman/Downloads/prra_Omon_IPSL-CM6A-LR_historical_r22i1p1f1_gr_185001-201412.nc")) {
@@ -110,5 +111,23 @@ public class NetCDFService {
 			HOUR_EXPIRATION));
 		presigned.setMethod("PUT");
 		return presigned;
+	}
+
+	public Optional<PresignedURL> getDownloadUrl(UUID id, String filename) {
+		long HOUR_EXPIRATION = 60;
+
+		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
+			config.getFileStorageS3BucketName(),
+			getPath(id, filename),
+			HOUR_EXPIRATION);
+
+		if (url.isEmpty()) {
+			return Optional.empty();
+		}
+
+		PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
+		presigned.setMethod("GET");
+		return Optional.of(presigned);
 	}
 }

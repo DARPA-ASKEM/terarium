@@ -165,6 +165,7 @@ public class NetCDFController {
 	@Operation(summary = "Uploads an .nc file")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "Uploaded the file.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class))),
+		@ApiResponse(responseCode = "404", description = "NetCDF could not be found", content = @Content),
 		@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 	})
 	public ResponseEntity<Void> uploadNCFile(
@@ -173,9 +174,14 @@ public class NetCDFController {
 		@RequestPart("file") final MultipartFile file
 	) {
 		try {
+			final Optional<NetCDF> netCDF = netCDFService.getNetCDF(netCDFId);
+			if (netCDF.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
 			final byte[] fileAsBytes = file.getBytes();
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			return uploadNCFileHelper(netCDFId, filename, fileEntity);
+			return uploadNCFileHelper(netCDF.get(), filename, fileEntity);
 		} catch (final IOException e) {
 			final String error = "Unable to upload file";
 			log.error(error, e);
@@ -188,34 +194,28 @@ public class NetCDFController {
 	/**
 	 * Uploads an nc file inside the entity to TDS via a presigned URL
 	 *
-	 * @param netCDFId The ID of the netCDFId associated with the nc file
+	 * @param netCDF		 The netCDF associated with the nc file
 	 * @param fileName   The name of the file to upload
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Void> uploadNCFileHelper(final UUID netCDFId, final String fileName,
+	private ResponseEntity<Void> uploadNCFileHelper(final NetCDF netCDF, final String fileName,
 																										final HttpEntity fileEntity) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build()) {
 
 			// upload file to S3
-			final PresignedURL presignedURL = netCDFService.getUploadUrl(netCDFId, fileName);
+			final PresignedURL presignedURL = netCDFService.getUploadUrl(netCDF.getId(), fileName);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(fileEntity);
 			final HttpResponse response = httpclient.execute(put);
 
-			// if the fileEntity is not a PDF, then we need to extract the text and update
-			// the netCDF
-			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				final Optional<NetCDF> netCDF = netCDFService.getNetCDF(netCDFId);
-				if (netCDF.isEmpty()) {
-					return ResponseEntity.notFound().build();
-				}
-
-				NetCDF updatedNetCDF = netCDFService.decodeNCFile(netCDF.get(), fileEntity.getContent());
-				netCDFService.updateNetCDF(updatedNetCDF);
-			}
+			netCDF.getFileNames().add(fileName);
+			netCDFService.updateNetCDF(netCDF);
+			// TODO: decode NC file
+//			NetCDF updatedNetCDF = netCDFService.decodeNCFile(netCDF, fileEntity.getContent());
+//			netCDFService.updateNetCDF(updatedNetCDF);
 
 			return ResponseEntity.status(response.getStatusLine().getStatusCode()).build();
 		} catch (final IOException e) {
