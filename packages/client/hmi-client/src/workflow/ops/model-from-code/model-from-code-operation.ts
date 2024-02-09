@@ -1,4 +1,5 @@
 import { ProgrammingLanguage } from '@/types/Types';
+import { ModelServiceType } from '@/types/common';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { CodeBlock } from '@/utils/code-asset';
 
@@ -7,6 +8,7 @@ export interface ModelFromCodeState {
 	codeBlocks: AssetBlock<CodeBlock>[];
 	modelFramework: string;
 	modelId: string;
+	modelService: ModelServiceType;
 }
 
 export const ModelFromCodeOperation: Operation = {
@@ -26,7 +28,8 @@ export const ModelFromCodeOperation: Operation = {
 			codeLanguage: ProgrammingLanguage.Python,
 			codeBlocks: [],
 			modelFramework: 'Petrinet',
-			modelId: ''
+			modelId: '',
+			modelService: ModelServiceType.TA1
 		};
 		return init;
 	}

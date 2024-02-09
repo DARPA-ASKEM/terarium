@@ -12,7 +12,7 @@ public class TaskResponseHandler {
 	private Map<TaskStatus, Consumer<TaskResponse>> responseHandlers = new ConcurrentHashMap<>();
 
 	public void onRunning(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.RUNNING, callback);
 	}
 
 	public void onCancelling(Consumer<TaskResponse> callback) {
