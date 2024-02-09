@@ -1,11 +1,8 @@
-import _ from 'lodash';
 import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
-import type { Model } from '@/types/Types';
-import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
 
 export interface NodeData {
 	type: string;
@@ -369,124 +366,5 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			default:
 				return { x: node.x, y: node.y };
 		}
-	}
-
-	addNode(type: string, id: string, name: string, pos: { x: number; y: number }) {
-		// FIXME: hardwired sizing
-		const size = type === NodeType.State ? 60 : 30;
-		// const id = `${type}${this.graph.nodes.length + 1}`;
-		this.graph.nodes.push({
-			id,
-			label: name,
-			x: pos.x,
-			y: pos.y,
-			width: size,
-			height: size,
-			nodes: [],
-			data: {
-				type
-			}
-		});
-
-		const amr = this.graph.amr as Model;
-		if (type === NodeType.State) {
-			petrinetService.addState(amr, id, name);
-		} else {
-			petrinetService.addTransition(amr, id, name);
-		}
-		this.render();
-	}
-
-	removeNode(id: string) {
-		const nodeData = this.nodeSelection?.datum();
-		if (!nodeData) return;
-		const edgesToRemove = this.graph.edges.filter(
-			(e) => e.source === nodeData.id || e.target === nodeData.id
-		);
-		_.remove(this.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
-		_.remove(this.graph.nodes, (n) => n.id === nodeData.id);
-		this.nodeSelection = null;
-		this.render();
-
-		const amr = this.graph.amr as Model;
-		edgesToRemove.forEach((e) => {
-			petrinetService.removeEdge(amr, e.source, e.target);
-		});
-
-		if (nodeData.data.type === NodeType.State) {
-			petrinetService.removeState(amr, id);
-		} else {
-			petrinetService.removeTransition(amr, id);
-		}
-	}
-
-	updateNode(id: string, newId: string, newName: string, newExpression: string) {
-		const node = this.graph.nodes.find((d) => d.id === id);
-		if (!node) return;
-		node.id = newId;
-		node.label = newName;
-
-		this.graph.edges.forEach((edge) => {
-			if (edge.source === id) edge.source = newId;
-			if (edge.target === id) edge.target = newId;
-		});
-
-		const amr = this.graph.amr;
-		if (node.data.type === NodeType.State) {
-			petrinetService.updateState(amr, id, newId, newName);
-		} else {
-			petrinetService.updateTransition(amr, id, newId, newName, newExpression);
-		}
-		this.render();
-	}
-
-	addEdge(source: any, target: any) {
-		// prevent nodes with same type from being linked with each other
-		if (source.data.type === target.data.type) {
-			return;
-		}
-
-		const existingEdge = this.graph.edges.find(
-			(edge) => edge.source === source.id && edge.target === target.id
-		);
-		if (existingEdge && existingEdge.data) {
-			existingEdge.data.numEdges++;
-		} else {
-			this.graph.edges.push({
-				id: `${source.id}_${target.id}`,
-				source: source.id,
-				target: target.id,
-				points: [
-					{ x: source.x, y: source.y },
-					{ x: target.x, y: target.y }
-				],
-				data: { numEdges: 1 }
-			});
-		}
-		this.render();
-
-		const amr = this.graph.amr as Model;
-		petrinetService.addEdge(amr, source.id, target.id);
-	}
-
-	removeEdge(sourceId: string, targetId: string) {
-		const existingEdge = this.graph.edges.find(
-			(edge) => edge.source === sourceId && edge.target === targetId
-		);
-		if (!existingEdge) return;
-
-		console.log('removing', sourceId, targetId);
-
-		if (existingEdge.data && existingEdge.data.numEdges > 1) {
-			existingEdge.data.numEdges--;
-		} else {
-			this.graph.edges = this.graph.edges.filter(
-				(d) => d.source === sourceId && d.target === targetId
-			);
-		}
-		this.render();
-
-		const amr = this.graph.amr as Model;
-		petrinetService.removeEdge(amr, sourceId, targetId);
 	}
 }

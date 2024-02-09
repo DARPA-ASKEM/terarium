@@ -255,27 +255,6 @@ export interface Transition {
     properties?: Properties;
 }
 
-export interface TypeSystem {
-    states: State[];
-    transitions: Transition[];
-}
-
-export interface TypeSystemExtended {
-    name: string;
-    description: string;
-    schema: string;
-    model_version: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
-}
-
-export interface TypingSemantics {
-    map: string[][];
-    system: any;
-}
-
 export interface Configuration {
     parameters: { [index: string]: ConfigurationParameter };
     initialConditions: { [index: string]: ConfigurationCondition };
@@ -911,7 +890,7 @@ export interface ModelHeader {
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
-    typing?: TypingSemantics;
+    typing?: any;
 }
 
 export interface ModelMetadata {

@@ -8,7 +8,6 @@ import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.OdeSemantics;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.TypingSemantics;
 
 @Data
 @AMRSchemaType
@@ -20,5 +19,5 @@ public class ModelSemantics implements SupportAdditionalProperties {
 	private List<Object> span;
 
 	@TSOptional
-	private TypingSemantics typing;
+	private Object typing;
 }
