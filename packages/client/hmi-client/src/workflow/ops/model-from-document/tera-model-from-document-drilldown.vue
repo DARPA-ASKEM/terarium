@@ -237,7 +237,7 @@ const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
-const goLLMCard = ref<any>(null);
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollm_card);
 
 const formSteps = ref([
 	{
