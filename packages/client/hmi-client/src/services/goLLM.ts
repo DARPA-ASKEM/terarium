@@ -1,17 +1,16 @@
-import API, { SSEHandler, SSEStatus } from '@/api/api';
+import API, { TaskHandler, FatalError, TaskEventHandlers } from '@/api/api';
 import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
- * Fetches model card data from the server.
+ * Fetches model card data from the server and wait for task to finish.
  * @param {string} documentId - The document ID.
  * @param {string} modelId - The model ID.
- * @returns {Promise<TaskResponse|null>} A promise resolving to the task response or null if unsuccessful.
  */
-export async function modelCard(documentId: string, modelId: string): Promise<TaskResponse | null> {
+export async function modelCard(documentId: string, modelId: string): Promise<void> {
 	try {
-		const response = await API.post('/gollm/model-card', null, {
+		const response = await API.post<TaskResponse>('/gollm/model-card', null, {
 			params: {
 				'document-id': documentId,
 				'model-id': modelId
@@ -19,29 +18,27 @@ export async function modelCard(documentId: string, modelId: string): Promise<Ta
 		});
 
 		// FIXME: I think we need to refactor the response interceptors so that we can handle errors here, or even in the interceptor itself...might be worth a discussion
-		return response.data;
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					throw new FatalError('Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					closeConnection();
+				}
+			}
+		});
 	} catch (err) {
 		logger.error(err);
-		return null;
 	}
 }
 
 /**
- * Handles SSE connection for a given task ID.
+ * Handles task for a given task ID.
  * @param {string} id - The task ID.
  */
-export async function handleTaskById(id: string) {
-	const sseHandler = new SSEHandler(`/gollm/${id}`, {
-		ondata(data) {
-			if (data?.status === TaskStatus.Failed) {
-				throw Error('Task failed');
-			}
-			if (data.status === TaskStatus.Success) {
-				sseHandler.setStatus(SSEStatus.DONE);
-				sseHandler.closeConnection();
-			}
-		}
-	});
-	const result = await sseHandler.connect();
-	return result;
+export async function handleTaskById(id: string, handlers: TaskEventHandlers) {
+	const taskHandler = new TaskHandler(`/gollm/${id}`, handlers);
+	await taskHandler.start();
 }

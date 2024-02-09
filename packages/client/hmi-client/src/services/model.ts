@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { ModelServiceType } from '@/types/common';
 import { fetchExtraction, profileModel } from './knowledge';
-import { handleTaskById, modelCard } from './goLLM';
+import { modelCard } from './goLLM';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -141,8 +141,6 @@ export async function generateModelCard(
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
-		const task = await modelCard(documentId, modelId);
-		if (!task) return;
-		await handleTaskById(task.id);
+		await modelCard(documentId, modelId);
 	}
 }

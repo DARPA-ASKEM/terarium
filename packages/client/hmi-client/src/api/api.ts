@@ -8,6 +8,8 @@ import {
 } from '@microsoft/fetch-event-source';
 import useAuthStore from '../stores/auth';
 
+export class FatalError extends Error {}
+
 const API = axios.create({
 	baseURL: '/api',
 	headers: new AxiosHeaders()
@@ -189,12 +191,12 @@ export class Poller<T> {
 /**
  * Interface defining handlers for Server-Sent Events (SSE).
  */
-export interface SSEHandlers {
+export interface TaskEventHandlers {
 	/**
 	 * Handler for incoming SSE data.
 	 * @param {any} data The received data.
 	 */
-	ondata: (data: any) => void;
+	ondata: (data: any, closeConnection: () => void) => void;
 	/**
 	 * Handler for SSE connection open event.
 	 * @param {Response} response The response object.
@@ -212,42 +214,28 @@ export interface SSEHandlers {
 }
 
 /**
- * Enum for SSE connection status values.
- * @readonly
- * @enum {string}
- */
-export enum SSEStatus {
-	INITIALIZED = 'initialized',
-	DONE = 'done',
-	ERROR = 'error'
-}
-
-/**
  * Class representing a Server-Sent Events (SSE) handler.
  */
-export class SSEHandler {
+export class TaskHandler {
 	private url: string;
 
-	private handlers: SSEHandlers;
+	private handlers: TaskEventHandlers;
 
 	private options?: FetchEventSourceInit;
 
 	private controller: AbortController;
 
-	private status: SSEStatus;
-
 	/**
-	 * Create a SSEHandler.
+	 * Create a TaskHandler.
 	 * @param {string} url - The URL to connect to.
-	 * @param {SSEHandlers} handlers - The handlers for the SSE events.
+	 * @param {TaskHandlers} handlers - The handlers for the SSE events.
 	 * @param {FetchEventSourceInit} options - The options for the fetchEventSource function.
 	 */
-	constructor(url: string, handlers: SSEHandlers, options?: FetchEventSourceInit) {
+	constructor(url: string, handlers: TaskEventHandlers, options?: FetchEventSourceInit) {
 		this.url = url;
 		this.handlers = handlers;
 		this.options = options;
 		this.controller = new AbortController();
-		this.status = SSEStatus.INITIALIZED;
 	}
 
 	/**
@@ -260,27 +248,9 @@ export class SSEHandler {
 	}
 
 	/**
-	 * Get the status of the SSE connection.
-	 * @return {SSEStatus} The status of the SSE connection.
+	 * Start the task.
 	 */
-	getStatus() {
-		return this.status;
-	}
-
-	/**
-	 * Set the status of the SSE connection.
-	 * @param {SSEStatus} status - The new status of the SSE connection.
-	 */
-	setStatus(status: SSEStatus) {
-		this.status = status;
-	}
-
-	// FIXME: We can probably add the message to the response
-	/**
-	 * Connect to the SSE server.
-	 * @return {Promise<SSEStatus>} The status of the SSE connection after attempting to connect.
-	 */
-	async connect(): Promise<SSEStatus> {
+	async start(): Promise<void> {
 		const handlers = this.handlers;
 		const authStore = useAuthStore();
 		const fetchEventSourceOptions: FetchEventSourceInit = {
@@ -292,11 +262,15 @@ export class SSEHandler {
 			onmessage: (message: EventSourceMessage) => {
 				const data = message?.data;
 				const parsedData = JSON.parse(data);
-				this.handlers.ondata(parsedData);
+				const closeConnection = this.closeConnection.bind(this);
+				this.handlers.ondata(parsedData, closeConnection);
 			},
 			onerror: (error: Error) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
-				throw error;
+				if (error instanceof FatalError) {
+					// closes the connection on fatal error otherwise it will keep retrying
+					throw error;
+				}
 			},
 			async onopen(response: Response) {
 				logger.info('Connection opened', { showToast: false });
@@ -310,11 +284,7 @@ export class SSEHandler {
 			await fetchEventSource(API.defaults.baseURL + this.url, fetchEventSourceOptions);
 		} catch (error: unknown) {
 			logger.error(error);
-			this.setStatus(SSEStatus.ERROR);
-		} finally {
-			this.closeConnection();
 		}
-		return this.getStatus();
 	}
 }
 
