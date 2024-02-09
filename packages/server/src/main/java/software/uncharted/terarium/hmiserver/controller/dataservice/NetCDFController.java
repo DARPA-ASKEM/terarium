@@ -175,7 +175,7 @@ public class NetCDFController {
 		@RequestPart("file") final MultipartFile file
 	) {
 		try {
-			final Optional<NetCDF> netCDF = netCDFService.getNetCDF(netCDFId);
+			final Optional<NetCDF> netCDF = netCDFService.getAsset(netCDFId);
 			if (netCDF.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

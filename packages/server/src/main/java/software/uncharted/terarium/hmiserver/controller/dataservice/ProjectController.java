@@ -388,7 +388,7 @@ public class ProjectController {
 							List<NetCDF> netcdfs = new ArrayList<>();
 							for (UUID id : assetTypeListMap.get(type)) {
 								try {
-									Optional<NetCDF> netcdf = netCDFService.getNetCDF(id);
+									Optional<NetCDF> netcdf = netCDFService.getAsset(id);
 									netcdf.ifPresent(netcdfs::add);
 								} catch (final IOException e) {
 									log.error("Error getting netCDF", e);

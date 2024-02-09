@@ -1,12 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch.core.SearchRequest;
 import com.google.common.collect.ImmutableList;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.NetCDF;
-import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import ucar.ma2.Array;
@@ -17,11 +15,6 @@ import ucar.unidata.io.InMemoryRandomAccessFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class NetCDFService extends S3BackedAssetService<NetCDF> {
@@ -50,10 +43,10 @@ public class NetCDFService extends S3BackedAssetService<NetCDF> {
 			for (Attribute attribute:globalAttributes) {
 				String name = attribute.getName();
 				Array values = attribute.getValues();
-				log.info("[{},{}]", name, values);
+//				log.info("[{},{}]", name, values);
 			}
 		} catch (IOException ioe) {
-			log.error("Error reading NetCDF file!", ioe);
+//			log.error("Error reading NetCDF file!", ioe);
 		}
 		return netCDF;
 	}

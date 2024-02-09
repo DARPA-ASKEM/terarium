@@ -130,7 +130,7 @@ public class ProjectAssetService {
 				}
 				return artifact.isPresent();
 			case NETCDF:
-				final Optional<NetCDF> netCDF = netCDFService.getNetCDF(id);
+				final Optional<NetCDF> netCDF = netCDFService.getAsset(id);
 				if (netCDF.isPresent()) {
 					projectAsset.setAssetName(netCDF.get().getName());
 				}
