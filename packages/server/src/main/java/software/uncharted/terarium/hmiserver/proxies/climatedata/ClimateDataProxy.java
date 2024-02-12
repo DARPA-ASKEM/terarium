@@ -15,7 +15,11 @@ public interface ClimateDataProxy {
 	ResponseEntity<JsonNode> searchEsgf(@RequestParam("query") final String query);
 
 	@GetMapping("/preview/esgf")
-	ResponseEntity<JsonNode> previewEsgf(@RequestParam("dataset_id") final String datasetId);
+	ResponseEntity<JsonNode> previewEsgf(@RequestParam("dataset_id") final String datasetId,
+																			 @RequestParam(value = "variable_id", required = false) final String variableId,
+																			 @RequestParam(value = "timestamps", required = false) final String timestamps,
+																			 @RequestParam(value = "time_index", required = false) final String timeIndex
+	);
 
 	@GetMapping("/subset/esgf")
 	ResponseEntity<JsonNode> subsetEsgf(@RequestParam("dataset_id") final String datasetId,

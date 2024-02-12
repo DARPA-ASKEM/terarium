@@ -36,8 +36,12 @@ public class ClimateDataController {
 
 	@GetMapping("/preview-esgf/{datasetId}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> previewEsgf(@PathVariable String datasetId) {
-		ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(datasetId);
+	public ResponseEntity<JsonNode> previewEsgf(@PathVariable String datasetId,
+																							@RequestParam(value = "variable-id", required = false) final String variableId,
+																							@RequestParam(value = "timestamps", required = false) final String timestamps,
+																							@RequestParam(value = "time-index", required = false) final String timeIndex
+	) {
+		ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(datasetId, variableId, timestamps, timeIndex);
 
 		return ResponseEntity.ok(response.getBody());
 	}
@@ -45,10 +49,10 @@ public class ClimateDataController {
 	@GetMapping("/subset-esgf/{datasetId}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> subsetEsgf(@PathVariable String datasetId,
-																						 @RequestParam(value = "parent_dataset_id", required = false) final String parentDatasetId,
+																						 @RequestParam(value = "parent-dataset-id", required = false) final String parentDatasetId,
 																						 @RequestParam(value = "timestamps", required = false) final String timestamps,
 																						 @RequestParam(value = "envelope", required = false) final String envelope,
-																						 @RequestParam(value = "thin_factor", required = false) final String thinFactor
+																						 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
 		ResponseEntity<JsonNode> response = climateDataProxy.subsetEsgf(datasetId, parentDatasetId, timestamps, envelope, thinFactor);
 
