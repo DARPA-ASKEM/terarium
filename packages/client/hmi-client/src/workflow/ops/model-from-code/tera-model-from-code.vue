@@ -510,6 +510,7 @@ function isSaveModelDisabled(): boolean {
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }
 
+// generates the model card and fetches the model when finished
 async function generateCard(docId, modelId) {
 	if (!docId || !modelId) return;
 

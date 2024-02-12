@@ -417,6 +417,7 @@ function removeEquation(index: number) {
 	emit('update-state', clonedState.value);
 }
 
+// generates the model card and fetches the model when finished
 async function generateCard(docId, modelId) {
 	if (!docId || !modelId) return;
 
