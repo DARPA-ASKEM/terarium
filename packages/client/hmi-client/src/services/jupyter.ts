@@ -229,9 +229,6 @@ export class KernelSessionManager {
 
 		// Dispatch
 		const iopubMessageHandler = (_session: any, message: any) => {
-			if (message.header.msg_type === 'status') {
-				return;
-			}
 			const msgType = message.header.msg_type;
 			const msgId = message.parent_header.msg_id;
 
