@@ -22,22 +22,6 @@ public class ElasticsearchConfiguration {
 
 	Index index;
 
-	public record Index(
-			String prefix,
-			String suffix,
-			String codeRoot,
-			String datasetRoot,
-			String documentRoot,
-			String equationRoot,
-			String modelRoot,
-			String modelConfigurationRoot,
-			String notebookSessionRoot,
-			String simulationRoot,
-			String workflowRoot,
-			String decapodesConfigurationRoot,
-			String decapodesContextRoot) {
-	}
-
 	public String getCodeIndex() {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
 	}
@@ -80,5 +64,22 @@ public class ElasticsearchConfiguration {
 
 	public String getDecapodesContextIndex() {
 		return String.join("_", index.prefix, index.decapodesContextRoot, index.suffix);
+	}
+
+	public record Index(
+		String prefix,
+		String suffix,
+		String codeRoot,
+		String datasetRoot,
+		String documentRoot,
+		String equationRoot,
+		String modelRoot,
+		String modelConfigurationRoot,
+		String notebookSessionRoot,
+		String simulationRoot,
+		String workflowRoot,
+		String decapodesConfigurationRoot,
+		String decapodesContextRoot
+	) {
 	}
 }

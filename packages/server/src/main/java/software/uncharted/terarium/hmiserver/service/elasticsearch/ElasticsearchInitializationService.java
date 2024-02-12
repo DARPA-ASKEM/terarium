@@ -26,6 +26,9 @@ public class ElasticsearchInitializationService {
 
 	private final Environment env;
 
+	@Value("classpath:static/es/component-templates/*.json")
+	private Resource[] resourceComponentTemplates;
+
 	@Value("classpath:static/es/index-templates/*.json")
 	private Resource[] resourceIndexTemplates;
 
@@ -35,6 +38,7 @@ public class ElasticsearchInitializationService {
 	@PostConstruct
 	void init() throws IOException {
 		pushMissingPipelines();
+		pushMissingComponentTemplates();
 		pushMissingIndexTemplates();
 		pushMissingIndices();
 	}
@@ -49,6 +53,33 @@ public class ElasticsearchInitializationService {
 		}
 
 		return false;
+	}
+
+	/**
+	 * For each system template resource, add it to the cluster if it doesn't exist
+	 */
+	private void pushMissingComponentTemplates() throws IOException {
+		for (final Resource resource : resourceComponentTemplates) {
+			final String filename = resource.getFilename();
+			if (filename != null) {
+				final String componentTemplateName = filename.substring(0, filename.length() - 5);
+				if (isRunningLocalProfile() || !elasticsearchService.containsComponentTemplate(componentTemplateName)) {
+					final JsonNode templateJson;
+					try {
+						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
+						final boolean acknowledged = elasticsearchService.putComponentTemplate(componentTemplateName,
+							templateJson.toString());
+						if (acknowledged) {
+							log.info("Added component template: {}", componentTemplateName);
+						} else {
+							log.error("Error adding component template: {}", componentTemplateName);
+						}
+					} catch (final IOException e) {
+						log.error("Error parsing component template: {}", resource.getFilename(), e);
+					}
+				}
+			}
+		}
 	}
 
 	/**

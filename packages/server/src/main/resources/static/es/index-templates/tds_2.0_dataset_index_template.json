@@ -1,62 +1,23 @@
 {
+  "version": 1,
+  "priority": 500,
+  "composed_of": ["tds_2.0_terarium_asset_component", "tds_2.0_name_description_component"],
   "index_patterns": [
     "*_dataset_tera_2.0"
   ],
-  "version": 1,
-  "priority": 500,
   "_meta": {
     "description": "This index template is the standard template for all Terarium DATASET indices"
   },
   "template": {
     "settings": {
       "index": {
-        "number_of_shards": 16,
+        "number_of_shards": 1,
         "number_of_replicas": 1,
         "refresh_interval": "1s"
       }
     },
     "mappings": {
       "properties": {
-        "id": {
-          "type": "keyword",
-          "ignore_above": 512
-        },
-        "createdOn": {
-          "type": "date",
-          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
-        },
-        "updatedOn": {
-          "type": "date",
-          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
-        },
-        "deletedOn": {
-          "type": "date",
-          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
-        },
-        "temporary": {
-          "type": "boolean"
-        },
-        "publicAsset": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 512
-            }
-          }
-        },
-        "description": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 512
-            }
-          }
-        },
         "userId": {
           "type": "keyword",
           "ignore_above": 512

@@ -1,0 +1,26 @@
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "createdOn": {
+          "type": "date",
+          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+        },
+        "updatedOn": {
+          "type": "date",
+          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+        },
+        "deletedOn": {
+          "type": "date",
+          "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+        },
+        "temporary": {
+          "type": "boolean"
+        },
+        "publicAsset": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
