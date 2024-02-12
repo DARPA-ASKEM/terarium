@@ -261,6 +261,7 @@ const showSpinner = ref(false);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
+
 // List of each observible + state for each model.
 const allModelOptions = ref<string[][]>([]);
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
@@ -513,11 +514,6 @@ watch(
 	margin: 1rem 0;
 }
 
-.tera-ensemble {
-	background: white;
-	z-index: 1;
-}
-
 .ensemble-calibration-mode {
 	display: flex;
 	flex-direction: column;
@@ -529,9 +525,7 @@ watch(
 }
 
 .ensemble-calibration-graph {
-	/* margin-left: 1rem; */
 	height: 100px;
-	/* width: 80%; */
 }
 
 .model-weights {
@@ -551,14 +545,6 @@ th {
 th,
 td {
 	padding-left: 15px;
-}
-
-.ensemble-header-label {
-	display: flex;
-	align-items: center;
-	margin: 0 1em;
-	font-weight: 700;
-	font-size: 1.75em;
 }
 
 .simulate-container {
