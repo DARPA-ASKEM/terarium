@@ -78,37 +78,58 @@ export function junctionCleanUp(modelTemplates: ModelTemplates) {
 	modelTemplates.junctions = modelTemplates.junctions.filter(({ edges }) => edges.length > 1);
 }
 
-// Designed to work with the decomposed model templates
-function appendNumberToModelVariables(modelTemplate: any, models: any[]) {
-	// Helper function - gets last number in the string and compare it to the highest number
-	function updateHighestNumber(str: string, highestNumber: number) {
-		const lastNumber = parseInt(str.slice(-1), 10) ? parseInt(str.slice(-1), 10) : 0;
-		if (lastNumber >= highestNumber) return lastNumber + 1;
-		return highestNumber;
-	}
-
-	// Determine the number to append to the model variables
-	let number = 0;
+function determineNumberToAppend(models: any[]) {
+	// Collect values to check for numbers
+	const valuesToCheck: Set<string> = new Set();
 	models.forEach((model) => {
+		valuesToCheck.add(model.header.name);
+		valuesToCheck.add(model.metadata.templateCard.name);
+
 		const { states, transitions } = model.model;
 		const { rates, initials, parameters, observables } = model.semantics.ode;
 
-		// Use reduce on both of these?
-
 		[...states, ...transitions, ...rates, ...initials, ...parameters, ...observables].forEach(
 			(variable) => {
-				const { id, name, target } = variable;
+				const { id, name, target, properties, input, output, expression } = variable;
 
-				[id, name, target].forEach((str) => {
-					if (str) number = updateHighestNumber(str, number);
-				});
+				// Common properties
+				if (id) valuesToCheck.add(id);
+				if (name) valuesToCheck.add(name);
+				if (target) valuesToCheck.add(target);
+				// Transition properties
+				if (properties?.name) valuesToCheck.add(properties.name);
+				if (input) input.forEach((value: string) => valuesToCheck.add(value));
+				if (output) output.forEach((value: string) => valuesToCheck.add(value));
+
+				// Check if the expression contains any variables with a number after it
+				if (expression) {
+					const matches = expression.match(/([a-zA-Z])(\d+)/g);
+					if (matches) matches.forEach((match: string) => valuesToCheck.add(match));
+				}
 			}
 		);
 	});
 
+	const lastNumbers = Array.from(valuesToCheck)
+		.map((str: string) => parseInt(str.slice(-1), 10))
+		.filter((num) => !Number.isNaN(num));
+
+	console.log(lastNumbers);
+
+	// Determine the number to append
+	let number = 0;
+	Array.from(valuesToCheck).forEach((str: string) => {
+		const lastNumber = parseInt(str.slice(-1), 10) ?? 0;
+		if (lastNumber >= number) number = lastNumber + 1;
+	});
+
+	return number;
+}
+
+// Designed to work with the decomposed model templates
+function appendNumberToModelVariables(modelTemplate: any, number: number) {
 	const templateWithNumber = cloneDeep(modelTemplate);
 
-	// Append the number to the model variables
 	const { states, transitions } = templateWithNumber.model;
 	const { rates, initials, parameters, observables } = templateWithNumber.semantics.ode;
 
@@ -167,7 +188,10 @@ export function prepareAddingTemplate(modelTemplates: ModelTemplates, modelTempl
 	// If a decomposed card is added, add it to the kernel
 	if (Object.values(DecomposedModelTemplateTypes).includes(templateType)) {
 		// Append a number to the model variables to avoid conflicts
-		modelTemplateToAdd = appendNumberToModelVariables(modelTemplate, modelTemplates.models);
+		modelTemplateToAdd = appendNumberToModelVariables(
+			modelTemplate,
+			determineNumberToAppend(modelTemplates.models)
+		);
 
 		if (templateType !== DecomposedModelTemplateTypes.Observable) {
 			const uniqueName = modelTemplateToAdd.header.name; // Now save a version of the name with the number appended
