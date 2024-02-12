@@ -1,267 +1,75 @@
 {
-    "index_patterns": [
-        "*_workflow_tera_1.0"
-    ],
-    "version": 1,
-    "priority": 500,
-    "_meta": {
-        "description": "This index template is the standard template for all Terarium WORKFLOW indices"
+  "index_patterns": [
+    "*_workflow_tera_1.0"
+  ],
+  "version": 1,
+  "priority": 500,
+  "_meta": {
+    "description": "This index template is the standard template for all Terarium WORKFLOW indices"
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 16,
+        "number_of_replicas": 1,
+        "refresh_interval": "1s"
+      }
     },
-    "template": {
-        "settings": {
-            "index": {
-                "number_of_shards": 16,
-                "number_of_replicas": 1,
-                "refresh_interval": "1s"
-            },
-            "analysis": {
-                "analyzer": {
-                    "english_analyzer": {
-                        "type": "custom",
-                        "tokenizer": "standard",
-                        "char_filter": [
-                            "html_strip"
-                        ],
-                        "filter": [
-                            "english_possessive_stemmer",
-                            "lowercase",
-                            "word_delimiter",
-                            "english_stop",
-                            "english_stemmer"
-                        ]
-                    }
-                },
-                "normalizer": {
-                    "lowercase_normalizer": {
-                        "type": "custom",
-                        "filter": [
-                            "lowercase"
-                        ]
-                    },
-                    "domain_normalizer": {
-                        "type": "custom",
-                        "char_filter": [
-                            "exclude_url_prefix",
-                            "exclude_url_portandsuffix",
-                            "exclude_subdomain_from_hostname"
-                        ]
-                    },
-                    "hostname_normalizer": {
-                        "type": "custom",
-                        "char_filter": [
-                            "exclude_url_prefix",
-                            "exclude_url_portandsuffix"
-                        ]
-                    }
-                },
-                "filter": {
-                    "english_stemmer": {
-                        "type": "stemmer",
-                        "language": "english"
-                    },
-                    "english_stop": {
-                        "type": "stop",
-                        "stopwords": "_english_"
-                    },
-                    "english_possessive_stemmer": {
-                        "type": "stemmer",
-                        "language": "possessive_english"
-                    }
-                },
-                "char_filter": {
-                    "digits_only": {
-                        "type": "pattern_replace",
-                        "pattern": "(\\D)",
-                        "replacement": ""
-                    },
-                    "wordchars_only": {
-                        "type": "pattern_replace",
-                        "pattern": "(\\W)",
-                        "replacement": ""
-                    },
-                    "exclude_url_prefix": {
-                        "flags": "CASE_INSENSITIVE",
-                        "type": "pattern_replace",
-                        "pattern": "((https?)|(ftp))://",
-                        "replacement": ""
-                    },
-                    "exclude_url_portandsuffix": {
-                        "type": "pattern_replace",
-                        "pattern": "(:|/).*",
-                        "replacement": ""
-                    },
-                    "exclude_subdomain_from_hostname": {
-                        "type": "pattern_replace",
-                        "pattern": "^([\\w\\-]+)\\.(?=([\\w\\-]+)\\.([\\w\\-]+))",
-                        "replacement": ""
-                    }
-                }
-            }
+    "mappings": {
+      "properties": {
+        "id": {
+          "type": "keyword",
+          "ignore_above": 512
         },
-        "mappings": {
-            "dynamic_templates": [
-                {
-                    "url_feature": {
-                        "path_match": "feature.url*",
-                        "match_mapping_type": "string",
-                        "mapping": {
-                            "type": "keyword",
-                            "ignore_above": 512,
-                            "normalizer": "lowercase_normalizer",
-                            "fields": {
-                                "domain": {
-                                    "normalizer": "domain_normalizer",
-                                    "type": "keyword"
-                                },
-                                "hostname": {
-                                    "normalizer": "hostname_normalizer",
-                                    "type": "keyword"
-                                }
-                            }
-                        }
-                    }
-                },
-                {
-                    "website_feature": {
-                        "path_match": "feature.website*",
-                        "match_mapping_type": "string",
-                        "mapping": {
-                            "type": "keyword",
-                            "ignore_above": 512,
-                            "eager_global_ordinals": true,
-                            "fields": {
-                                "domain": {
-                                    "normalizer": "domain_normalizer",
-                                    "type": "keyword"
-                                },
-                                "hostname": {
-                                    "normalizer": "hostname_normalizer",
-                                    "type": "keyword"
-                                }
-                            }
-                        }
-                    }
-                },
-                {
-                    "extra_text_feature": {
-                        "path_match": "feature.extra_body_text*",
-                        "match_mapping_type": "string",
-                        "mapping": {
-                            "type": "keyword",
-                            "ignore_above": 2048,
-                            "fields": {
-                                "fuzzy": {
-                                    "type": "text",
-                                    "analyzer": "english_analyzer"
-                                },
-                                "language_en": {
-                                    "analyzer": "english_analyzer",
-                                    "type": "text"
-                                }
-                            }
-                        }
-                    }
-                },
-                {
-                    "string_features": {
-                        "path_match": "feature.*",
-                        "match_mapping_type": "string",
-                        "mapping": {
-                            "type": "keyword",
-                            "ignore_above": 512,
-                            "eager_global_ordinals": true
-                        }
-                    }
-                },
-                {
-                    "analyzed_string_features": {
-                        "path_match": "analyzed_feature.*",
-                        "match_mapping_type": "string",
-                        "mapping": {
-                            "type": "text",
-                            "analyzer": "english_analyzer",
-                            "fields": {
-                                "exact": {
-                                    "type": "keyword",
-                                    "ignore_above": 512
-                                },
-                                "language_en": {
-                                    "analyzer": "english_analyzer",
-                                    "type": "text"
-                                }
-                            }
-                        }
-                    }
-                },
-                {
-                    "integer_features": {
-                        "path_match": "integer_feature.*",
-                        "match_mapping_type": "string",
-                        "mapping": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                {
-                    "flat_features": {
-                        "path_match": "flat_feature.*",
-                        "mapping": {
-                            "type": "flattened",
-                            "index": false
-                        }
-                    }
-                },
-                {
-                    "dense_vectors": {
-                        "path_match": "vector_feature.*",
-                        "mapping": {
-                            "type": "dense_vector",
-                            "dims": 768,
-                            "index": true,
-                            "similarity": "dot_product"
-                        }
-                    }
-                }
-            ],
-            "properties": {
-                "id": {
-                    "type": "keyword"
-                },
-                "name": {
-                    "type": "text",
-                    "fields": {
-                        "keyword": {
-                            "type": "keyword",
-                            "ignore_above": 256
-                        }
-                    }
-                },
-                "description": {
-                    "type": "text",
-                    "fields": {
-                        "keyword": {
-                            "type": "keyword",
-                            "ignore_above": 256
-                        }
-                    }
-                },
-                "transform": {
-                    "type": "object",
-                    "enabled": false
-                },
-                "nodes": {
-                    "type": "object",
-                    "enabled": false
-                },
-                "edges": {
-                    "type": "object",
-                    "enabled": false
-                },
-                "timestamp": {
-                    "type": "date",
-                    "format": "yyyy-MM-dd HH:mm:ss"
-                }
+        "createdOn": {
+          "type": "date",
+          "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        },
+        "updatedOn": {
+          "type": "date",
+          "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        },
+        "deletedOn": {
+          "type": "date",
+          "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        },
+        "temporary": {
+          "type": "boolean"
+        },
+        "publicAsset": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 512
             }
+          }
+        },
+        "description": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 512
+            }
+          }
+        },
+        "transform": {
+          "type": "object",
+          "enabled": false
+        },
+        "nodes": {
+          "type": "object",
+          "enabled": false
+        },
+        "edges": {
+          "type": "object",
+          "enabled": false
         }
+      }
     }
+  }
 }
