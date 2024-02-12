@@ -54,6 +54,7 @@ const submitQuery = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: queryString.value
 	});
+	// May prefer to use a manual status rather than following this. TBD. Both options work for now
 	message.register('status', (data) => {
 		kernelStatus.value = data.content.execution_state;
 	});
