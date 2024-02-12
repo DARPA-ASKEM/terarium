@@ -127,14 +127,18 @@
 			</Accordion>
 		</section>
 		<section :tabName="Tabs.Notebook"></section>
-		<template #preview> preview pane </template>
+		<template #preview>
+			<tera-drilldown-preview title="Simulation output" :is-loading="showSpinner">
+				Preview </tera-drilldown-preview
+			>>
+		</template>
 		<template #footer>
 			<Button
 				outlined
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
-				@click="true"
+				@click="runEnsemble"
 				:disabled="false"
 			/>
 		</template>
@@ -195,14 +199,25 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { getRunResultCiemss } from '@/services/models/simulation-service';
+import { Poller, PollerState } from '@/api/api';
+import {
+	getRunResultCiemss,
+	makeEnsembleCiemssSimulation,
+	simulationPollAction
+} from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
-import type { ModelConfiguration, TimeSpan, EnsembleModelConfigs } from '@/types/Types';
+import type {
+	ModelConfiguration,
+	TimeSpan,
+	EnsembleModelConfigs,
+	EnsembleSimulationCiemssRequest
+} from '@/types/Types';
+import { ProgressState } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -212,6 +227,8 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 // import { saveDataset } from '@/services/dataset';
 // import { useProjects } from '@/composables/project';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import { logger } from '@/utils/logger';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 console.log('1' as any as ChartConfig);
@@ -238,6 +255,9 @@ const CATEGORYPERCENTAGE = 0.9;
 const BARPERCENTAGE = 0.6;
 const MINBARLENGTH = 1;
 
+const poller = new Poller();
+const showSpinner = ref(false);
+
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
@@ -259,6 +279,7 @@ const completedRunId = computed<string>(
 const customWeights = ref<boolean>(false);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 // Tom TODO: Make this generic... its copy paste from node.
 // const chartConfigurationChange = (index: number, config: ChartConfig) => {
@@ -352,6 +373,51 @@ const setChartOptions = () => {
 			}
 		}
 	};
+};
+
+const runEnsemble = async () => {
+	const params: EnsembleSimulationCiemssRequest = {
+		modelConfigs: ensembleConfigs.value,
+		timespan: timeSpan.value,
+		engine: 'ciemss',
+		extra: { num_samples: numSamples.value }
+	};
+	const response = await makeEnsembleCiemssSimulation(params);
+	if (response?.simulationId) {
+		getStatus(response.simulationId);
+	}
+};
+
+const getStatus = async (simulationId: string) => {
+	showSpinner.value = true;
+	if (!simulationId) return;
+
+	const runIds = [simulationId];
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		showSpinner.value = false;
+		logger.error(`Simulate Ensemble: ${simulationId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+		throw Error('Failed Runs');
+	}
+	showSpinner.value = false;
+	updateOutputPorts(simulationId);
+};
+
+const updateOutputPorts = async (simulationId: string) => {
+	const portLabel = props.node.inputs[0].label;
+	emit('append-output-port', {
+		type: 'simulationId',
+		label: `${portLabel} Result`,
+		value: [simulationId]
+	});
 };
 
 // const addChart = () => {
