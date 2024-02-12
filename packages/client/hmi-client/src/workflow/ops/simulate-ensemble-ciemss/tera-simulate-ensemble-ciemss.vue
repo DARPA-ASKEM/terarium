@@ -198,7 +198,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Poller, PollerState } from '@/api/api';
 import {
 	getRunResultCiemss,
@@ -261,7 +261,6 @@ const showSpinner = ref(false);
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
-const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<string[][]>([]);
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
@@ -411,7 +410,7 @@ const getStatus = async (simulationId: string) => {
 	updateOutputPorts(simulationId);
 };
 
-const updateOutputPorts = async (simulationId: string) => {
+const updateOutputPorts = (simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
 		type: 'simulationId',
@@ -445,6 +444,36 @@ const watchCompletedRunList = async () => {
 	runResults.value = output.runResults;
 };
 
+onMounted(async () => {
+	const allModelConfigurations: ModelConfiguration[] = [];
+
+	// Fetch Model Configurations
+	await Promise.all(
+		listModelIds.value.map(async (id) => {
+			const result = await getModelConfigurationById(id);
+			allModelConfigurations.push(result);
+		})
+	);
+
+	allModelOptions.value = [];
+	for (let i = 0; i < allModelConfigurations.length; i++) {
+		const tempList: string[] = [];
+		const amr = allModelConfigurations[i].configuration;
+		amr.model.states?.forEach((element) => {
+			tempList.push(element.id);
+		});
+		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
+		allModelOptions.value.push(tempList);
+	}
+	calculateWeights();
+	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
+
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = ensembleConfigs.value;
+
+	emit('update-state', state);
+});
+
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
 watch(
@@ -456,53 +485,10 @@ watch(
 );
 
 watch(
-	() => listModelIds,
-	async () => {
-		allModelConfigurations.value = [];
-		// Fetch Model Configurations
-		await Promise.all(
-			listModelIds.value.map(async (id) => {
-				const result = await getModelConfigurationById(id);
-				allModelConfigurations.value.push(result);
-			})
-		);
-		allModelOptions.value = [];
-		for (let i = 0; i < allModelConfigurations.value.length; i++) {
-			const tempList: string[] = [];
-			allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
-				tempList.push(element.id);
-			});
-			allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
-				tempList.push(element.id)
-			);
-			allModelOptions.value.push(tempList);
-		}
-		calculateWeights();
-		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
-
-		const state = _.cloneDeep(props.node.state);
-		state.mapping = ensembleConfigs.value;
-
-		emit('update-state', state);
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => timeSpan.value,
+	() => [timeSpan.value, numSamples.value],
 	async () => {
 		const state = _.cloneDeep(props.node.state);
 		state.timeSpan = timeSpan.value;
-
-		emit('update-state', state);
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => numSamples.value,
-	async () => {
-		const state = _.cloneDeep(props.node.state);
 		state.numSamples = numSamples.value;
 
 		emit('update-state', state);
