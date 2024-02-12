@@ -6,26 +6,26 @@
 			:editable="true"
 			class="input"
 			ref="inputElement"
-			v-model="queryString"
+			v-model="questionString"
 			:options="props.defaultOptions"
 			type="text"
 			:disabled="kernelStatus === KernelState.busy"
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
-			@keydown.enter="submitQuery"
+			@keydown.enter="submitQuestion"
 		/>
 		<InputText
 			v-else
 			class="input"
 			ref="inputElement"
-			v-model="queryString"
+			v-model="questionString"
 			type="text"
 			:disabled="kernelStatus === KernelState.busy"
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
-			@keydown.enter="submitQuery"
+			@keydown.enter="submitQuestion"
 		/>
 		<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-		<Button v-else icon="pi pi-send" @click="submitQuery" />
+		<Button v-else icon="pi pi-send" @click="submitQuestion" />
 	</div>
 </template>
 
@@ -43,16 +43,16 @@ const props = defineProps<{
 
 const emit = defineEmits(['llm-output']);
 
-const queryString = ref('');
+const questionString = ref('');
 const kernelStatus = ref<string>('');
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 const contextLanguage = ref<string>('python3');
 const contextLanguageOptions = ref<string[]>(['python3']);
 
-const submitQuery = () => {
+const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
-		request: queryString.value
+		request: questionString.value
 	});
 	// May prefer to use a manual status rather than following this. TBD. Both options work for now
 	message.register('status', (data) => {
