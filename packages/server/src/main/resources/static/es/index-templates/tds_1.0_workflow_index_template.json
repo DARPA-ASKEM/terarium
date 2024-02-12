@@ -1,6 +1,6 @@
 {
   "index_patterns": [
-    "*_workflow_tera_1.0"
+    "*_workflow_tera_2.0"
   ],
   "version": 1,
   "priority": 500,

@@ -1,19 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
-import java.io.IOException;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -42,9 +40,9 @@ public class ElasticsearchInitializationService {
 	}
 
 	private boolean isRunningLocalProfile() {
-		String[] activeProfiles = env.getActiveProfiles();
+		final String[] activeProfiles = env.getActiveProfiles();
 
-		for (String profile : activeProfiles) {
+		for (final String profile : activeProfiles) {
 			if ("local".equals(profile)) {
 				return true;
 			}
@@ -113,17 +111,19 @@ public class ElasticsearchInitializationService {
 	 */
 	private void pushMissingIndices() throws IOException {
 		final String[] indices = new String[] {
-				config.getCodeIndex(),
-				config.getDatasetIndex(),
-				config.getDocumentIndex(),
-				config.getEquationIndex(),
-				config.getModelIndex(),
-				config.getModelConfigurationIndex(),
-				config.getNotebookSessionIndex(),
-				config.getSimulationIndex(),
-				config.getWorkflowIndex()
+			config.getCodeIndex(),
+			config.getDatasetIndex(),
+			config.getDecapodesConfigurationIndex(),
+			config.getDecapodesContextIndex(),
+			config.getDocumentIndex(),
+			config.getEquationIndex(),
+			config.getModelIndex(),
+			config.getModelConfigurationIndex(),
+			config.getNotebookSessionIndex(),
+			config.getSimulationIndex(),
+			config.getWorkflowIndex()
 		};
-		for (String index : indices) {
+		for (final String index : indices) {
 			if (!elasticsearchService.containsIndex(index)) {
 				try {
 					elasticsearchService.createIndex(index);
