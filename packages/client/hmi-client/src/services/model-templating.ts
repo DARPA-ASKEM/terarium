@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { isNumber, cloneDeep, uniq } from 'lodash';
+import { cloneDeep, uniq } from 'lodash';
 import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
@@ -78,34 +78,35 @@ export function junctionCleanUp(modelTemplates: ModelTemplates) {
 	modelTemplates.junctions = modelTemplates.junctions.filter(({ edges }) => edges.length > 1);
 }
 
-function getLastNumberFromString(str: string) {
-	return isNumber(str.slice(-1)) ? parseInt(str.slice(-1), 10) : 0;
-}
-
 // Designed to work with the decomposed model templates
 function appendNumberToModelVariables(modelTemplate: any, models: any[]) {
-	const templateWithNumber = cloneDeep(modelTemplate);
+	// Helper function - gets last number in the string and compare it to the highest number
+	function updateHighestNumber(str: string, highestNumber: number) {
+		const lastNumber = parseInt(str.slice(-1), 10) ? parseInt(str.slice(-1), 10) : 0;
+		if (lastNumber >= highestNumber) return lastNumber + 1;
+		return highestNumber;
+	}
 
 	// Determine the number to append to the model variables
-	const number = models.reduce((n, model) => {
+	let number = 0;
+	models.forEach((model) => {
 		const { states, transitions } = model.model;
 		const { rates, initials, parameters, observables } = model.semantics.ode;
+
+		// Use reduce on both of these?
 
 		[...states, ...transitions, ...rates, ...initials, ...parameters, ...observables].forEach(
 			(variable) => {
 				const { id, name, target } = variable;
 
 				[id, name, target].forEach((str) => {
-					if (str) {
-						const lastNumber = getLastNumberFromString(str);
-						if (lastNumber >= n) n = lastNumber;
-					}
+					if (str) number = updateHighestNumber(str, number);
 				});
 			}
 		);
+	});
 
-		return n + 1;
-	}, 0);
+	const templateWithNumber = cloneDeep(modelTemplate);
 
 	// Append the number to the model variables
 	const { states, transitions } = templateWithNumber.model;
@@ -160,7 +161,7 @@ export function addCard(modelTemplates: ModelTemplates, modelTemplate: any) {
 export function prepareAddingTemplate(modelTemplates: ModelTemplates, modelTemplate: any) {
 	const templateType = modelTemplate.header.name;
 
-	let modelTemplateToAdd = null;
+	let modelTemplateToAdd = modelTemplate; // CLEAN
 	const addTemplateArguments: AddTemplateArguments = {};
 
 	// If a decomposed card is added, add it to the kernel
@@ -262,16 +263,18 @@ export function addEdge2(
 ) {
 	const junctionToDrawFrom = modelTemplates.junctions.find(({ id }) => id === junctionId);
 
-	const points: Position[] = [
-		{ x: junctionToDrawFrom.x + 10, y: junctionToDrawFrom.y + 10 },
-		{ x: portPosition.x, y: portPosition.y }
-	];
+	if (junctionToDrawFrom) {
+		const points: Position[] = [
+			{ x: junctionToDrawFrom.x + 10, y: junctionToDrawFrom.y + 10 },
+			{ x: portPosition.x, y: portPosition.y }
+		];
 
-	junctionToDrawFrom.edges.push({
-		id: uuidv4(),
-		target,
-		points: interpolatePointsFn ? interpolatePointsFn(...points) : points
-	});
+		junctionToDrawFrom.edges.push({
+			id: uuidv4(),
+			target,
+			points: interpolatePointsFn ? interpolatePointsFn(...points) : points
+		});
+	}
 }
 
 export function addEdge(
@@ -287,7 +290,7 @@ export function addEdge(
 
 	const junctionToDrawFrom = modelTemplates.junctions.find(({ id }) => id === junctionId);
 
-	if (junctionToDrawFrom.edges.length >= 1 && outputCode) {
+	if (junctionToDrawFrom && junctionToDrawFrom.edges.length >= 1 && outputCode) {
 		kernelManager
 			.sendMessage('replace_state_name_request', {
 				template_name: templateName,
