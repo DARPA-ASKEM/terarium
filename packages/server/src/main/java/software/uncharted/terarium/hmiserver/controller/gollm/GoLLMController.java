@@ -69,10 +69,11 @@ public class GoLLMController {
 
 	private TaskResponseHandler getModelCardResponseHandler() {
 		final TaskResponseHandler handler = new TaskResponseHandler();
-		handler.onSuccess((final TaskResponse resp) -> {
-			final ModelCardProperties props = resp.getAdditionalProperties(ModelCardProperties.class);
-			log.info("Writing model card to database for model {}", props.getModelId());
+		handler.onSuccess((TaskResponse resp) -> {
 			try {
+				final String serializedString = objectMapper.writeValueAsString(resp.getAdditionalProperties());
+				final ModelCardProperties props = objectMapper.readValue(serializedString, ModelCardProperties.class);
+				log.info("Writing model card to database for model {}", props.getModelId());
 				final Model model = modelService.getAsset(props.getModelId())
 						.orElseThrow();
 				final ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);
@@ -82,13 +83,14 @@ public class GoLLMController {
 				log.error("Failed to write model card to database", e);
 			}
 		});
-		handler.onRunning((final TaskResponse response) -> {
-			log.info(response.toString());
+
+		handler.onRunning((TaskResponse resp) -> {
+			log.info(resp.toString());
 		});
 		return handler;
 	}
 
-	@PostMapping("/model_card")
+	@PostMapping("/model-card")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Model Card task")
 	@ApiResponses(value = {

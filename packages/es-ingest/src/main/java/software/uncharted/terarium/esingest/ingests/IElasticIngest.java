@@ -1,18 +1,16 @@
 package software.uncharted.terarium.esingest.ingests;
 
+import java.util.List;
+
 import software.uncharted.terarium.esingest.models.input.IInputDocument;
-import software.uncharted.terarium.esingest.models.input.IInputEmbeddingChunk;
 import software.uncharted.terarium.esingest.models.output.IOutputDocument;
-import software.uncharted.terarium.esingest.models.output.IOutputEmbeddingChunk;
+import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 
-public interface IElasticIngest<DocInputType extends IInputDocument, DocOutputType extends IOutputDocument, EmbeddingInputChunkType extends IInputEmbeddingChunk, EmbeddingOutputChunkType extends IOutputEmbeddingChunk> {
+public interface IElasticIngest {
 
-	public DocOutputType processDocument(DocInputType input);
+	public void setup(final ElasticIngestParams params);
 
-	public EmbeddingOutputChunkType processEmbedding(EmbeddingInputChunkType input);
+	public void teardown(final ElasticIngestParams params);
 
-	public DocInputType deserializeDocument(String line);
-
-	public EmbeddingInputChunkType deserializeEmbedding(String line);
-
+	public List<IElasticPass<? extends IInputDocument, ? extends IOutputDocument>> getPasses();
 }

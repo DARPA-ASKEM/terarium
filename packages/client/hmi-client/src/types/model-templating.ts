@@ -1,5 +1,15 @@
 import type { Position } from '@/types/common';
 
+export enum DecomposedModelTemplateTypes {
+	ControlledConversion = 'Controlled conversion',
+	ControlledDegradation = 'Controlled degradation',
+	ControlledProduction = 'Controlled production',
+	NaturalConversion = 'Natural conversion',
+	NaturalDegradation = 'Natural degradation',
+	NaturalProduction = 'Natural production',
+	Observable = 'Observable'
+}
+
 export interface ModelTemplates {
 	id: string;
 	transform: {
@@ -13,7 +23,7 @@ export interface ModelTemplates {
 
 export interface ModelTemplateCard {
 	id: string;
-	name: string;
+	name: string; // FIXME: name may not be necessary if it's already in model.header
 	x: number;
 	y: number;
 	// For collisionFn

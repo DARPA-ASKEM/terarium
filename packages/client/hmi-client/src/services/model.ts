@@ -6,7 +6,9 @@ import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
+import { ModelServiceType } from '@/types/common';
 import { fetchExtraction, profileModel } from './knowledge';
+import { modelCard } from './goLLM';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -116,9 +118,29 @@ export function validateModelName(name: string): boolean {
 	return true;
 }
 
-export async function profile(modelId: string, documentId: string): Promise<Model | null> {
+export async function profile(modelId: string, documentId: string): Promise<string | null> {
 	const profileModelJobId = await profileModel(modelId, documentId);
 	await fetchExtraction(profileModelJobId);
-	const model = await getModel(modelId);
-	return model;
+	return modelId;
+}
+
+/**
+ * Generates a model card based on the provided document ID, model ID, and model service type.
+ *
+ * @param {string} documentId - The ID of the document.
+ * @param {string} modelId - The ID of the model.
+ * @param {ModelServiceType} modelServiceType - The type of the model service.
+ */
+export async function generateModelCard(
+	documentId: string,
+	modelId: string,
+	modelServiceType: ModelServiceType
+): Promise<void> {
+	if (modelServiceType === ModelServiceType.TA1) {
+		await profile(modelId, documentId);
+	}
+
+	if (modelServiceType === ModelServiceType.TA4) {
+		await modelCard(documentId, modelId);
+	}
 }
