@@ -471,14 +471,19 @@ onMounted(async () => {
 	state.modelConfigIds = modelConfigurationIds;
 
 	// FIXME: There can be existing mappings of different length
-	state.mapping = [];
-	listModelIds.value.forEach((id) => {
-		state.mapping.push({
-			id,
-			solutionMappings: {},
-			weight: 0.0
+	if (state.mapping.length > 0) {
+		state.mapping = [];
+		listModelIds.value.forEach((id) => {
+			state.mapping.push({
+				id,
+				solutionMappings: {},
+				weight: 0.0
+			});
 		});
-	});
+	}
+	if (state.chartConfigs.length === 0) {
+		state.chartConfigs.push({ selectedVariable: [], selectedRun: '' });
+	}
 
 	emit('update-state', state);
 });

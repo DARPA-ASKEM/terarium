@@ -66,17 +66,6 @@ const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const poller = new Poller();
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
-
 // Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
@@ -118,12 +107,24 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
+onMounted(() => {
+	// FIXME: clean up to use just the active
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
+
 watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
 
-		const output = await getRunResultCiemss(simulationIds.value[0].runId, 'result.csv');
+		const output = await getRunResultCiemss(simulationIds.value[0], 'result.csv');
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }
