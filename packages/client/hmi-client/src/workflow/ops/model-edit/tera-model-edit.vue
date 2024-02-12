@@ -14,6 +14,7 @@
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
+						:defaultOptions="sampleAgentOptions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
@@ -136,6 +137,18 @@ const modelId = props.node.inputs[0].value?.[0];
 const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
+const sampleAgentOptions = [
+	'Add a new transition from S to R with the name vaccine with the rate of v.',
+	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u',
+	'Add a new transition (from nowhere) to S with a rate constant of f.',
+	'Add a new transition (from nowhere) to S with a rate constant of f. The rate depends on R.',
+	'Add a new transition from S (to nowhere) with a rate constant of v',
+	'Add a new transition from S (to nowhere) with a rate constant of v. The Rate depends on R',
+	'Add an observable titled sample with the expression A * B  * p.',
+	'Rename the state S to Susceptible in the infection transition.',
+	'Rename the transition infection to inf.'
+];
+
 const codeText = ref(
 	'# This environment contains the variable "model" \n# which is displayed on the right'
 );
