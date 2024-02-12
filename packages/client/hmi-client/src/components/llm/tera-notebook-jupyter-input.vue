@@ -51,7 +51,6 @@ const contextLanguage = ref<string>('python3');
 const contextLanguageOptions = ref<string[]>(['python3']);
 
 const submitQuery = () => {
-	kernelStatus.value = KernelState.busy;
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: queryString.value
 	});
