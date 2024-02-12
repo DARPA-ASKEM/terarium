@@ -239,9 +239,13 @@ section {
 }
 
 .upload-resources-button {
-	margin: 0 15px;
+	margin: 0 1rem;
 	flex-grow: 1;
 	min-width: 140px;
+	justify-content: center;
+	& :deep(.p-button-label) {
+		flex-grow: 0;
+	}
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {

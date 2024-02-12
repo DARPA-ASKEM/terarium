@@ -18,9 +18,10 @@
 			<label for="fileInput" class="file-label">
 				<div v-if="dragOver">Release mouse button to add files to import</div>
 				<div v-else class="drop-zone">
-					<div><i class="pi pi-file" style="font-size: 2.5rem" /></div>
+					<div><i class="pi pi-upload" style="font-size: 2.5rem" /></div>
 					<div>
-						Drop resources here or <span class="text-link">click to open a file browser</span>
+						Drop resources here <br />
+						or <span class="text-link">click to open a file browser</span>
 					</div>
 				</div>
 			</label>
@@ -251,11 +252,13 @@ watch(
 
 .file-label {
 	font-size: var(--font-body-small);
-	display: flex;
 	flex-direction: column;
 	cursor: pointer;
 	align-items: center;
 	padding: 2.5rem 0 2.5rem 0;
+}
+label.file-label {
+	display: flex;
 }
 
 .text-link {

@@ -7,7 +7,15 @@
 			<template #default>
 				<section class="main-section">
 					<section>
-						<label class="subheader">Add resources to your project here</label>
+						<label class="subheader">Add documents, models or datasets to your project here.</label>
+						<div class="supported-resources">
+							<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
+							<div>
+								<i class="pi pi-share-alt" /><span>Models</span
+								><span>(AMR, sbml, vensim, stella)</span>
+							</div>
+							<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
+						</div>
 						<tera-drag-and-drop-importer
 							:accept-types="[
 								AcceptedTypes.PDF,
@@ -72,6 +80,7 @@ import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
+import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
 defineProps<{
 	visible: boolean;
@@ -185,6 +194,24 @@ async function upload() {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+}
+
+.supported-resources {
+	display: flex;
+	justify-content: space-between;
+
+	div {
+		display: flex;
+		align-items: end;
+		gap: 0.25rem;
+		font-size: 0.75rem;
+	}
+	span:first-of-type {
+		font-weight: 700;
+	}
+	span:last-of-type {
+		color: #667985;
+	}
 }
 
 :deep(.upload-from-github-url) {

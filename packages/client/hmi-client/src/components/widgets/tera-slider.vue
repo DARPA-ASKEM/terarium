@@ -62,7 +62,8 @@ const sidePanelTabStyle = computed(
 <style scoped>
 .slider,
 .slider-content,
-.slider-tab {
+.slider-tab,
+footer {
 	transition: all 0.2s ease-out;
 }
 
@@ -85,7 +86,8 @@ const sidePanelTabStyle = computed(
 }
 
 .slider.open .slider-tab,
-.slider.closed .slider-content {
+.slider.closed .slider-content,
+.slider.closed footer {
 	visibility: hidden;
 	opacity: 0;
 }
