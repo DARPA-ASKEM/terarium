@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { cloneDeep, uniq } from 'lodash';
+import { cloneDeep, uniq, isEmpty } from 'lodash';
 import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
@@ -109,20 +109,13 @@ function determineNumberToAppend(models: any[]) {
 			}
 		);
 	});
-
-	const lastNumbers = Array.from(valuesToCheck)
-		.map((str: string) => parseInt(str.slice(-1), 10))
-		.filter((num) => !Number.isNaN(num));
-
-	console.log(lastNumbers);
-
-	// Determine the number to append
-	let number = 0;
-	Array.from(valuesToCheck).forEach((str: string) => {
-		const lastNumber = parseInt(str.slice(-1), 10) ?? 0;
-		if (lastNumber >= number) number = lastNumber + 1;
-	});
-
+	// Extract the numbers from the values
+	const lastNumbers = uniq(
+		Array.from(valuesToCheck)
+			.map((str: string) => parseInt(str.slice(-1), 10))
+			.filter((num) => !Number.isNaN(num))
+	);
+	const number = !isEmpty(lastNumbers) ? Math.max(...lastNumbers) + 1 : 0;
 	return number;
 }
 

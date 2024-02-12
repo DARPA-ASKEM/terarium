@@ -16,7 +16,8 @@
 							:model="modelTemplate"
 							:is-editable="false"
 							is-decomposed
-							draggable="true"
+							:style="isDecomposedLoading && { cursor: 'wait' }"
+							:draggable="!isDecomposedLoading"
 							@dragstart="newModelTemplate = modelTemplate"
 						/>
 					</li>
