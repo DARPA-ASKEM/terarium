@@ -22,6 +22,10 @@ public class ElasticsearchConfiguration {
 
 	Index index;
 
+	public String getIndex(final String root) {
+		return String.join("_", index.prefix, root, index.suffix);
+	}
+
 	public String getCodeIndex() {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
 	}
@@ -79,7 +83,6 @@ public class ElasticsearchConfiguration {
 		String simulationRoot,
 		String workflowRoot,
 		String decapodesConfigurationRoot,
-		String decapodesContextRoot
-	) {
+		String decapodesContextRoot) {
 	}
 }

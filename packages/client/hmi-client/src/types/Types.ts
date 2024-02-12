@@ -902,7 +902,7 @@ export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
-    gollm_card?: any;
+    gollmCard?: any;
 }
 
 export interface ModelGrounding {

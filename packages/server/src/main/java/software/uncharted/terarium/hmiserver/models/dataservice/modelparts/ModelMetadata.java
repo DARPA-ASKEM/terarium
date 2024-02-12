@@ -44,7 +44,7 @@ public class ModelMetadata implements SupportAdditionalProperties {
 	private Card card;
 
 	@TSOptional
-	@JsonProperty("gollm_card")
+	@JsonProperty("gollmCard")
 	private Object gollmCard;
 
 	@TSOptional
