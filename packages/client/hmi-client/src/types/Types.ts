@@ -134,7 +134,11 @@ export interface ActiveConcept extends TerariumAsset {
     name: string;
 }
 
-export interface OntologyConcept extends TerariumAsset {
+export interface OntologyConcept {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
     curie: string;
     type: TaggableType;
     objectId: string;
