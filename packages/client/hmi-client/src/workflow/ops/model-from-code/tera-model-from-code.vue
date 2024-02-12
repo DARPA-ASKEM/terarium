@@ -152,7 +152,7 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import type { Card, Code, Model } from '@/types/Types';
+import type { Card, Code, DocumentAsset, Model } from '@/types/Types';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
@@ -173,6 +173,7 @@ import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { ModelServiceType } from '@/types/common';
 import { extensionFromProgrammingLanguage } from '@/utils/data-util';
+import { getDocumentAsset } from '@/services/document-assets';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -203,6 +204,10 @@ const kernelManager = new KernelSessionManager();
 
 const selectedModel = ref<Model | null>(null);
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+
+const document = ref<DocumentAsset | null>(null);
+
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const inputCodeBlocks = ref<AssetBlock<CodeBlock>[]>([]);
 
@@ -276,12 +281,16 @@ const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
 );
 
 const card = ref<Card | null>(null);
-const goLLMCard = ref<any>(null);
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
+
 	if (selectedOutputId.value) {
 		onUpdateOutput(selectedOutputId.value);
+	}
+
+	if (documentId.value) {
+		document.value = await getDocumentAsset(documentId.value);
 	}
 
 	fetchingInputBlocks.value = true;
@@ -481,8 +490,8 @@ async function fetchModel() {
 			model.metadata.card = card.value;
 		}
 
-		if (!model.metadata?.gollm_card && goLLMCard.value) {
-			model.metadata.gollm_card = goLLMCard.value;
+		if (!model.metadata?.gollmCard && goLLMCard.value) {
+			model.metadata.gollmCard = goLLMCard.value;
 		}
 
 		model = await updateModel(model);
@@ -501,6 +510,7 @@ function isSaveModelDisabled(): boolean {
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }
 
+// generates the model card and fetches the model when finished
 async function generateCard(docId, modelId) {
 	if (!docId || !modelId) return;
 

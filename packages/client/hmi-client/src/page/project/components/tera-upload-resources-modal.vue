@@ -72,6 +72,7 @@ import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
+import { modelCard } from '@/services/goLLM';
 
 defineProps<{
 	visible: boolean;
@@ -153,6 +154,11 @@ async function upload() {
 				const newAsset = useProjects().addAsset(assetType, id);
 				if (name && name.toLowerCase().endsWith('.pdf')) {
 					extractPDF(id);
+				} else if (
+					(name && name.toLowerCase().endsWith('.txt')) ||
+					(name && name.toLowerCase().endsWith('.md'))
+				) {
+					modelCard(id);
 				}
 				return newAsset;
 			})
