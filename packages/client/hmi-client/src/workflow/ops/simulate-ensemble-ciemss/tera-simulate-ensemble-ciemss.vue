@@ -129,8 +129,8 @@
 		<section :tabName="Tabs.Notebook"></section>
 		<template #preview>
 			<tera-drilldown-preview title="Simulation output" :is-loading="showSpinner">
-				Preview </tera-drilldown-preview
-			>>
+				Preview
+			</tera-drilldown-preview>
 		</template>
 		<template #footer>
 			<Button
@@ -199,7 +199,17 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch, onMounted } from 'vue';
+import Button from 'primevue/button';
+import AccordionTab from 'primevue/accordiontab';
+import Accordion from 'primevue/accordion';
+import InputNumber from 'primevue/inputnumber';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+
 import { Poller, PollerState } from '@/api/api';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+
 import {
 	getRunResultCiemss,
 	makeEnsembleCiemssSimulation,
@@ -207,27 +217,18 @@ import {
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
-import Button from 'primevue/button';
-import AccordionTab from 'primevue/accordiontab';
-import Accordion from 'primevue/accordion';
-import InputNumber from 'primevue/inputnumber';
 import type {
-	ModelConfiguration,
 	TimeSpan,
 	EnsembleModelConfigs,
 	EnsembleSimulationCiemssRequest
 } from '@/types/Types';
 import { ProgressState } from '@/types/Types';
-import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import InputText from 'primevue/inputtext';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 // import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 // import { saveDataset } from '@/services/dataset';
 // import { useProjects } from '@/composables/project';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { logger } from '@/utils/logger';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
@@ -268,9 +269,9 @@ const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
-const completedRunId = computed<string>(
-	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
-);
+// const completedRunId = computed<string>(
+// 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
+// );
 
 // const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 // const showSaveInput = ref(<boolean>false);
@@ -438,22 +439,19 @@ const updateOutputPorts = (simulationId: string) => {
 // }
 
 // assume only one run for now
-const watchCompletedRunList = async () => {
-	if (!completedRunId.value) return;
-
-	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
-	runResults.value = output.runResults;
-};
+// const watchCompletedRunList = async () => {
+// 	if (!completedRunId.value) return;
+//
+// 	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
+// 	runResults.value = output.runResults;
+// };
 
 onMounted(async () => {
-	const allModelConfigurations: ModelConfiguration[] = [];
+	const modelConfigurationIds = props.node.inputs[0]?.value; // FIXME: probably switch to multiport instead of multivalue
+	if (!modelConfigurationIds) return;
 
-	// Fetch Model Configurations
-	await Promise.all(
-		listModelIds.value.map(async (id) => {
-			const result = await getModelConfigurationById(id);
-			allModelConfigurations.push(result);
-		})
+	const allModelConfigurations = await Promise.all(
+		modelConfigurationIds.map((id) => getModelConfigurationById(id))
 	);
 
 	allModelOptions.value = [];
@@ -470,12 +468,36 @@ onMounted(async () => {
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
 
 	const state = _.cloneDeep(props.node.state);
-	state.mapping = ensembleConfigs.value;
+	state.modelConfigIds = modelConfigurationIds;
+
+	// FIXME: There can be existing mappings of different length
+	state.mapping = [];
+	listModelIds.value.forEach((id) => {
+		state.mapping.push({
+			id,
+			solutionMappings: {},
+			weight: 0.0
+		});
+	});
 
 	emit('update-state', state);
 });
 
-watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
+// watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
+
+watch(
+	() => props.node.active,
+	async () => {
+		const output = props.node.outputs.find((d) => d.id === props.node.active);
+		if (!output || !output.value) return;
+
+		const response = await getRunResultCiemss(output.value[0], 'result.csv');
+		runResults.value = response.runResults;
+
+		console.log('hihi', runResults.value);
+	},
+	{ immediate: true }
+);
 
 watch(
 	[() => ensembleCalibrationMode.value, listModelIds.value],
