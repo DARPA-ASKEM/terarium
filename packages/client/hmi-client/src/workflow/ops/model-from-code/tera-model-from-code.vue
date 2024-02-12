@@ -207,7 +207,7 @@ const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
 
 const document = ref<DocumentAsset | null>(null);
 
-const goLLMCard = computed<any>(() => document.value?.metadata?.gollm_card);
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const inputCodeBlocks = ref<AssetBlock<CodeBlock>[]>([]);
 
@@ -490,8 +490,8 @@ async function fetchModel() {
 			model.metadata.card = card.value;
 		}
 
-		if (!model.metadata?.gollm_card && goLLMCard.value) {
-			model.metadata.gollm_card = goLLMCard.value;
+		if (!model.metadata?.gollmCard && goLLMCard.value) {
+			model.metadata.gollmCard = goLLMCard.value;
 		}
 
 		model = await updateModel(model);

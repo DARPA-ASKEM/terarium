@@ -76,7 +76,7 @@ public class GoLLMController {
 				if (document.getMetadata() == null){
 					document.setMetadata(new java.util.HashMap<>());
 				}
-				document.getMetadata().put("goLLM_card", card.response);
+				document.getMetadata().put("gollmCard", card.response);
 				
 				documentAssetService.updateAsset(document);
 			} catch (final IOException e) {

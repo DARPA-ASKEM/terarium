@@ -237,7 +237,7 @@ const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
-const goLLMCard = computed<any>(() => document.value?.metadata?.gollm_card);
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const formSteps = ref([
 	{
@@ -368,8 +368,8 @@ async function fetchModel() {
 			model.metadata.card = card.value;
 		}
 
-		if (!model.metadata?.gollm_card && goLLMCard.value) {
-			model.metadata.gollm_card = goLLMCard.value;
+		if (!model.metadata?.gollmCard && goLLMCard.value) {
+			model.metadata.gollmCard = goLLMCard.value;
 		}
 
 		model = await updateModel(model);
