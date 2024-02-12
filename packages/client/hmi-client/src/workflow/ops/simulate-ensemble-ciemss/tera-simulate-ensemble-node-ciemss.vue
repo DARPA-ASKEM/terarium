@@ -33,7 +33,6 @@
 import _ from 'lodash';
 import { computed, ComputedRef, onMounted, onUnmounted, ref, watch } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
-import type { EnsembleModelConfigs } from '@/types/Types';
 import { ProgressState } from '@/types/Types';
 import {
 	getRunResultCiemss,
@@ -58,7 +57,6 @@ const props = defineProps<{
 const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
 
 const showSpinner = ref(false);
-const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
 const completedRunId = ref<string>();
 const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
@@ -119,29 +117,6 @@ const updateOutputPorts = async (runId) => {
 		value: { runId }
 	});
 };
-
-watch(
-	() => modelConfigIds.value,
-	async () => {
-		if (modelConfigIds.value) {
-			const mapping: EnsembleModelConfigs[] = [];
-			// Init ensemble Configs:
-			for (let i = 0; i < modelConfigIds.value.length; i++) {
-				mapping[i] = {
-					id: modelConfigIds.value[i],
-					solutionMappings: {},
-					weight: 0
-				};
-			}
-
-			const state = _.cloneDeep(props.node.state);
-			state.modelConfigIds = modelConfigIds.value;
-			state.mapping = mapping;
-			emit('update-state', state);
-		}
-	},
-	{ immediate: true }
-);
 
 watch(
 	() => simulationIds.value,
