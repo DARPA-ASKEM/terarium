@@ -145,64 +145,6 @@ const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration',
 
 const teraModelDiagramRef = ref();
 
-// "gollmCard": {
-//             "ModelName": {
-//                 "model_summary": "The SIDARTHE model predicts the course of the COVID-19 epidemic and the impact of population-wide interventions in Italy."
-//             },
-//             "ModelDetails": {
-//                 "model_description": "The model considers eight stages of infection: susceptible (S), infected (I), diagnosed (D), ailing (A), recognized (R), threatened (T), healed (H), and extinct (E), collectively termed SIDARTHE. It discriminates between infected individuals depending on whether they have been diagnosed and on the severity of their symptoms. The model can likely be represented in petrinet format due to its compartmental nature.",
-//                 "FundedBy": "Italian grant PRIN 2017 'Monitoring and Control Underpinning the Energy-Aware Factory of the Future: Novel Methodologies and Industrial Validation' (ID 2017YKXYXJ).",
-//                 "ModelType": "Mathematical"
-//             },
-//             "Uses": {
-//                 "DirectUse": "The model can be used to understand the course of the epidemic, plan effective control strategies, and assess the impact of strategies like lockdown, social distancing, testing, and contact tracing.",
-//                 "OutOfScopeUse": "Using the model for diseases with significantly different transmission dynamics or in populations with vastly different social structures may be inappropriate."
-//             },
-//             "BiasRisksLimitations": {
-//                 "bias_risks_limitations": "The model may overestimate the number of ICU patients due to healthcare system saturation, which is neglected in the model. It may also underestimate asymptomatic or pauci-symptomatic cases if the average age of infected people decreases over time."
-//             },
-//             "Evaluation": {
-//                 "TestingDataFactorsMetrics": "The model was validated by fitting parameters based on official data about the COVID-19 epidemic in Italy, including the number of currently infected individuals with different severity of illness and the number of recovered diagnosed patients."
-//             },
-//             "TechnicalSpecifications": {
-//                 "model_specs": "The model is a system of eight ordinary differential equations with parameters that can be adjusted to reflect different intervention strategies and stages of the epidemic."
-//             },
-//             "Glossary": {
-//                 "terms": [
-//                     "SIDARTHE",
-//                     "Susceptible",
-//                     "Infected",
-//                     "Diagnosed",
-//                     "Ailing",
-//                     "Recognized",
-//                     "Threatened",
-//                     "Healed",
-//                     "Extinct"
-//                 ]
-//             },
-//             "ModelCardAuthors": [
-//                 "Giulia Giordano",
-//                 "Franco Blanchini",
-//                 "Raffaele Bruno",
-//                 "Patrizio Colaneri",
-//                 "Alessandro Di Filippo",
-//                 "Angela Di Matteo",
-//                 "Marta Colaneri"
-//             ],
-//             "HowToGetStartedWithTheModel": {
-//                 "examples": "To get started with the SIDARTHE model, one would need to understand the compartmental nature of the model, the significance of each stage of infection, and how the parameters influence the model's predictions. The model's equations and parameters would then be adjusted based on the specific epidemic data and intervention strategies being analyzed."
-//             },
-//             "Citation": {
-//                 "references": [
-//                     "Giordano, G., Blanchini, F., Bruno, R., Colaneri, P., Di Filippo, A., Di Matteo, A., & Colaneri, M. (2020). Modelling the COVID-19 epidemic and implementation of population-wide interventions in Italy. Nature Medicine, 26(6), 855-860."
-//                 ]
-//             },
-//             "MoreInformation": {
-//                 "links": [
-//                     "https://doi.org/10.1038/s41591-020-0883-7"
-//                 ]
-//             }
-//         }
 const card = computed(() => {
 	// prioritize gollm_card over skema card
 	if (props.model.metadata?.gollmCard) {
