@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -22,6 +24,12 @@ public class ModelAddMetadataPass
 
 	final ObjectMapper mapper = new ObjectMapper();
 	final String MODEL_PATH = "models";
+
+	ConcurrentMap<String, UUID> uuidLookup;
+
+	ModelAddMetadataPass(ConcurrentMap<String, UUID> uuidLookup) {
+		this.uuidLookup = uuidLookup;
+	}
 
 	public void setup(final ElasticIngestParams params) {
 	}
@@ -42,16 +50,24 @@ public class ModelAddMetadataPass
 	public List<Model> process(List<ModelMetadata> input) {
 		List<Model> res = new ArrayList<>();
 		for (ModelMetadata in : input) {
+
+			if (!uuidLookup.containsKey(in.getId())) {
+				// no embeddings for this model
+				continue;
+			}
+
+			UUID uuid = uuidLookup.get(in.getId());
+
 			Model doc = new Model();
-			doc.setId(in.getId());
-			doc.setTitle(in.getPublicationMetadata().getTitle());
-			doc.setDoi(in.getPublicationMetadata().getDoi());
-			doc.setType(in.getPublicationMetadata().getType());
-			doc.setIssn(in.getPublicationMetadata().getIssn());
-			doc.setJournal(in.getPublicationMetadata().getJournal());
-			doc.setPublisher(in.getPublicationMetadata().getPublisher());
-			doc.setYear(in.getPublicationMetadata().getYear());
-			doc.setAuthor(in.getPublicationMetadata().getAuthor());
+			doc.setId(uuid);
+			doc.getMetadata().setTitle(in.getPublicationMetadata().getTitle());
+			doc.getMetadata().setDoi(in.getPublicationMetadata().getDoi());
+			doc.getMetadata().setType(in.getPublicationMetadata().getType());
+			doc.getMetadata().setIssn(in.getPublicationMetadata().getIssn());
+			doc.getMetadata().setJournal(in.getPublicationMetadata().getJournal());
+			doc.getMetadata().setPublisher(in.getPublicationMetadata().getPublisher());
+			doc.getMetadata().setYear(in.getPublicationMetadata().getYear());
+			doc.getMetadata().setAuthor(in.getPublicationMetadata().getAuthor());
 			res.add(doc);
 		}
 		return res;

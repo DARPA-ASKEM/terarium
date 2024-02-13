@@ -21,9 +21,6 @@ public class ElasticIngestParams {
 	// topics to add to each document
 	List<String> topics;
 
-	// Whether or not to clear the index before ingesting
-	boolean clearBeforeIngest = false;
-
 	// The work queue size, determines how many documents / embeddings can queue up
 	// while workers are busy
 	int workQueueSize = 36;
@@ -37,7 +34,7 @@ public class ElasticIngestParams {
 	// The classname used for the ingest.
 	String ingestClass;
 
-	// Whether to ignore missing documents during updates or not
-	boolean ignoreMissingDocumentsDuringUpdates = false;
+	// Whether to upload assets to S3
+	boolean uploadAssetsToS3 = false;
 
 }
