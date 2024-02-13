@@ -23,10 +23,8 @@ public class DocumentInsertSourcePass
 		implements IElasticPass<DocumentSource, Document> {
 
 	final String DOCUMENT_PATH = "documents";
-	boolean uploadFilesToS3 = false;
 
 	public void setup(final ElasticIngestParams params) {
-		uploadFilesToS3 = params.isUploadAssetsToS3();
 	}
 
 	public void teardown(final ElasticIngestParams params) {
