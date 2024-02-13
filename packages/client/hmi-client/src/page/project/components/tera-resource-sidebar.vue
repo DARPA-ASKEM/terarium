@@ -220,14 +220,14 @@ const optionsMenuItems = ref([
 	},
 	{
 		key: AssetType.Model,
-		label: 'New Model',
+		label: 'New model',
 		command() {
 			emit('open-new-asset', AssetType.Model);
 		}
 	},
 	{
 		key: AssetType.Workflow,
-		label: 'New Workflow',
+		label: 'New workflow',
 		command() {
 			emit('open-new-asset', AssetType.Workflow);
 		}
