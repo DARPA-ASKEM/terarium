@@ -43,10 +43,11 @@ const placeholderGraphic = operatorGraphics[props.operationType] ?? plants;
 	color: var(--text-color-subdued);
 	text-align: center;
 	gap: 0.5rem;
+	padding: 0.5rem;
 }
 
 img {
-	width: 50%;
+	width: 40%;
 	max-height: 8rem;
 	margin: 0 auto;
 	pointer-events: none;
