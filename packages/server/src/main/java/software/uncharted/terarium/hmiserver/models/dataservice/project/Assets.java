@@ -5,7 +5,6 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
-import software.uncharted.terarium.hmiserver.models.dataservice.NetCDF;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -31,5 +30,4 @@ public class Assets implements Serializable {
 	private List<Artifact> artifact;
 	private List<Code> code;
 	private List<DocumentAsset> document;
-	private List<NetCDF> netcdf;
 }
