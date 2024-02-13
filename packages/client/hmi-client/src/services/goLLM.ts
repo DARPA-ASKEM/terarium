@@ -8,12 +8,11 @@ import { logger } from '@/utils/logger';
  * @param {string} documentId - The document ID.
  * @param {string} modelId - The model ID.
  */
-export async function modelCard(documentId: string, modelId: string): Promise<void> {
+export async function modelCard(documentId: string): Promise<void> {
 	try {
 		const response = await API.post<TaskResponse>('/gollm/model-card', null, {
 			params: {
-				'document-id': documentId,
-				'model-id': modelId
+				'document-id': documentId
 			}
 		});
 

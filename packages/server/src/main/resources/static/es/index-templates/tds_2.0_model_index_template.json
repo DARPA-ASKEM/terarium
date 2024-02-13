@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "priority": 500,
+  "composed_of": ["tds_2.0_terarium_asset_component", "tds_2.0_embedding_component"],
+  "index_patterns": [
+    "*_model_tera_2.0"
+  ],
+  "_meta": {
+    "description": "This index template is the standard template for all Terarium MODEL indices"
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1,
+        "refresh_interval": "1s"
+      }
+    },
+    "mappings": {
+      "properties": {
+        "header": {
+          "type": "nested",
+          "properties": {
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 512
+                }
+              }
+            },
+            "description": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 512
+                }
+              }
+            },
+            "model_version": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 512
+                }
+              }
+            },
+            "schema": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 512
+                }
+              }
+            },
+            "schema_name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 512
+                }
+              }
+            },
+            "extracted_from": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 512
+                }
+              }
+            }
+          }
+        },
+        "userId": {
+          "type": "keyword",
+          "ignore_above": 512
+        },
+        "metadata": {
+          "type": "object",
+          "enabled": false
+        },
+        "model": {
+          "type": "object",
+          "enabled": false
+        },
+        "properties": {
+          "type": "object"
+        },
+        "semantics": {
+          "type": "object",
+          "enabled": false
+        }
+      }
+    }
+  }
+}

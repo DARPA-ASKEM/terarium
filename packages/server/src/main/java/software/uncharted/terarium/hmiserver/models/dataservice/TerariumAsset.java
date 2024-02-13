@@ -47,6 +47,4 @@ public abstract class TerariumAsset implements Serializable {
 
 	@TSOptional
 	private Boolean publicAsset = false;
-
-
 }

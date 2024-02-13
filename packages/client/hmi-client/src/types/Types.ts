@@ -134,7 +134,11 @@ export interface ActiveConcept extends TerariumAsset {
     name: string;
 }
 
-export interface OntologyConcept extends TerariumAsset {
+export interface OntologyConcept {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
     curie: string;
     type: TaggableType;
     objectId: string;
@@ -902,7 +906,7 @@ export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
-    gollm_card?: any;
+    gollmCard?: any;
 }
 
 export interface ModelGrounding {

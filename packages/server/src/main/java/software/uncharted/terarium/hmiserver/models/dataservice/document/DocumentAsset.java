@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,13 +22,14 @@ import java.util.Map;
 @Accessors(chain = true)
 public class DocumentAsset extends TerariumAsset {
 
+	@Serial
+	private static final long serialVersionUID = -8425680186002783351L;
 
 	@TSOptional
 	private String name;
 
 	@TSOptional
 	private String description;
-
 
 	@TSOptional
 	private String userId;
@@ -76,5 +78,4 @@ public class DocumentAsset extends TerariumAsset {
 		}
 		return docIdentifier;
 	}
-
 }

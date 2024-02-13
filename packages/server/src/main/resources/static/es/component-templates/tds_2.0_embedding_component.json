@@ -1,0 +1,27 @@
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "topics": {
+          "type": "keyword"
+        },
+        "embeddings": {
+          "type": "nested",
+          "properties": {
+            "vector": {
+              "type": "dense_vector",
+              "element_type": "float",
+              "dims": 1536
+            },
+            "embeddingId": {
+              "type": "keyword"
+            },
+            "span": {
+              "type": "long"
+            }
+          }
+        }
+      }
+    }
+  }
+}

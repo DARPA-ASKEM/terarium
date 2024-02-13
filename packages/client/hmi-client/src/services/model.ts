@@ -141,6 +141,6 @@ export async function generateModelCard(
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
-		await modelCard(documentId, modelId);
+		await modelCard(documentId);
 	}
 }
