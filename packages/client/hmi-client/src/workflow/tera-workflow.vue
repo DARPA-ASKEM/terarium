@@ -33,13 +33,26 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
-					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
+					<Button
+						label="Show everything"
+						severity="secondary"
+						outlined
+						@click="resetZoom"
+						size="small"
+					/>
+					<Button
+						label="Clean up layout"
+						severity="secondary"
+						outlined
+						@click="cleanUpLayout"
+						size="small"
+					/>
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
 						@click="showAddComponentMenu"
+						size="small"
 					/>
 					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
 					<ContextMenu
@@ -815,6 +828,6 @@ function resetZoom() {
 	display: flex;
 	align-items: center;
 	flex-direction: row;
-	gap: 1rem;
+	gap: 0.5rem;
 }
 </style>
