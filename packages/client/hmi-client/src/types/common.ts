@@ -136,7 +136,8 @@ export enum AcceptedTypes {
 	MD = 'text/markdown',
 	PY = 'text/x-python-script',
 	R = 'text/x-r',
-	JL = 'application/julia'
+	JL = 'application/julia',
+	NC = 'application/x-netcdf'
 }
 
 export enum AcceptedExtensions {
@@ -146,7 +147,8 @@ export enum AcceptedExtensions {
 	MD = 'md',
 	PY = 'py',
 	R = 'r',
-	JL = 'jl'
+	JL = 'jl',
+	NC = 'nc'
 }
 
 export interface PDFExtractionResponseType {

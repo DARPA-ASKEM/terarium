@@ -24,7 +24,8 @@
 								AcceptedTypes.MD,
 								AcceptedTypes.PY,
 								AcceptedTypes.R,
-								AcceptedTypes.JL
+								AcceptedTypes.JL,
+								AcceptedTypes.NC
 							]"
 							:accept-extensions="[
 								AcceptedExtensions.PDF,
@@ -33,7 +34,8 @@
 								AcceptedExtensions.MD,
 								AcceptedExtensions.PY,
 								AcceptedExtensions.R,
-								AcceptedExtensions.JL
+								AcceptedExtensions.JL,
+								AcceptedExtensions.NC
 							]"
 							:import-action="processFiles"
 							:progress="progress"
@@ -72,7 +74,7 @@ import { useProjects } from '@/composables/project';
 import type { DocumentAsset, Dataset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
-import { createNewDatasetFromCSV } from '@/services/dataset';
+import { createNewDatasetFromFile } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
 import { ref } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
@@ -93,11 +95,12 @@ const urlToUpload = ref('');
 const isImportGithubFileModalVisible = ref(false);
 const importedFiles = ref<File[]>([]);
 
-async function processFiles(files: File[], csvDescription: string) {
+async function processFiles(files: File[], description: string) {
 	return files.map(async (file) => {
 		switch (file.name.split('.').pop()) {
 			case AcceptedExtensions.CSV:
-				return processDataset(file, csvDescription);
+			case AcceptedExtensions.NC:
+				return processDataset(file, description);
 			case AcceptedExtensions.PDF:
 			case AcceptedExtensions.TXT:
 			case AcceptedExtensions.MD:
@@ -142,7 +145,7 @@ async function processDocument(file: File) {
  * @param description
  */
 async function processDataset(file: File, description: string) {
-	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
+	const addedDataset: Dataset | null = await createNewDatasetFromFile(
 		progress,
 		file,
 		useAuthStore().user?.id ?? '',
@@ -199,6 +202,7 @@ async function upload() {
 .supported-resources {
 	display: flex;
 	justify-content: space-between;
+	max-width: 48rem;
 
 	div {
 		display: flex;
