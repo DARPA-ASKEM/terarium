@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<template v-if="code">
-			<div>{{ code?.name }}</div>
+			<h6>{{ code?.name }}</h6>
 			<Button
 				label="Open code editor"
 				@click="emit('open-drilldown')"
