@@ -116,7 +116,7 @@
 		<!-- background -->
 		<template #backgroundDefs>
 			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
-				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
+				<circle cx="5" cy="5" r="3" style="fill: var(--text-color-secondary)" />
 			</marker>
 			<marker
 				id="arrow"
@@ -129,7 +129,10 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					style="fill: var(--text-color-secondary); fill-opacity: 1"
+				></path>
 			</marker>
 			<marker
 				id="smallArrow"
@@ -142,14 +145,14 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--text-color-secondary)"></path>
 			</marker>
 		</template>
 		<template #background>
 			<path
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
-				stroke="#1B8073"
+				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
 				marker-end="url(#arrow)"
@@ -158,7 +161,7 @@
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				stroke="#1B8073"
+				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
 				:key="index"

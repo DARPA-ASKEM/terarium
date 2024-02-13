@@ -158,7 +158,7 @@ main {
 		padding: 0.5rem 0;
 		list-style: none;
 		font-size: var(--font-caption);
-		color: var(--text-color-secondary);
+		color: var(--text-color-subdued);
 
 		&:empty {
 			display: none;
@@ -199,7 +199,7 @@ main {
 
 		&:deep(.port-connected:hover .unlink) {
 			display: block;
-			color: var(--text-color-primary);
+			color: var(--text-color-subdued);
 			padding: 0.25rem 0.5rem;
 			margin: 0.5rem;
 			background-color: var(--surface-0);
@@ -207,7 +207,7 @@ main {
 		}
 
 		&:deep(.port-connected) {
-			color: var(--text-color-primary);
+			color: var(--text-color-subdued);
 		}
 
 		&:deep(.port-container) {
@@ -224,12 +224,12 @@ main {
 
 		&:deep(.port-connected .port) {
 			width: calc(var(--port-base-size) * 2);
-			border: 2px solid var(--primary-color);
+			border: 2px solid var(--text-color-subdued);
 			border-radius: var(--port-base-size);
-			background-color: var(--primary-color);
+			background-color: var(--text-color-subdued);
 		}
 		&:deep(.port-connected:hover .port) {
-			background-color: var(--primary-color);
+			background-color: var(--text-color-subdued);
 		}
 	}
 }
