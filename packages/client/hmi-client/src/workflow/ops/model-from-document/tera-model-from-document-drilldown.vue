@@ -87,16 +87,12 @@
 		<template #preview>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
-					<!--FIXME: currently not parsing the goLLM card so just printing its JSON for now-->
-					<ul v-if="goLLMCard">
-						<li v-for="(key, index) in Object.keys(goLLMCard)" :key="index">
-							<h3>{{ key }}</h3>
-							<p>{{ goLLMCard[key] }}</p>
-						</li>
-					</ul>
-					<tera-model-card v-else :model="selectedModel" />
-					<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
-					<tera-model-semantic-tables :model="selectedModel" readonly />
+					<tera-model-description
+						:model="selectedModel"
+						:feature-config="{
+							isPreview: true
+						}"
+					/>
 				</section>
 				<tera-operator-placeholder
 					v-else
@@ -148,8 +144,6 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
 import { generateModelCard, getModel, updateModel } from '@/services/model';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
@@ -157,9 +151,9 @@ import InputText from 'primevue/inputtext';
 import Steps from 'primevue/steps';
 import Textarea from 'primevue/textarea';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
-import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import {
 	EquationBlock,
 	EquationFromImageBlock,

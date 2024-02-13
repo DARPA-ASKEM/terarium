@@ -51,6 +51,21 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 	}
 }
 
+async function searchCuriesEntities(query: string): Promise<Array<DKG> | null> {
+	try {
+		const response = await API.get('/mira/search', {
+			params: {
+				q: query
+			}
+		});
+		if (response?.status !== 200) return null;
+		return response?.data ?? null;
+	} catch (error) {
+		logger.error(error, { showToast: false });
+		return null;
+	}
+}
+
 /**
  * Hit MIRA to get pairwise similarities between elements referenced by CURIEs in the first list and second list.
  * @input a List of curies (strings) for each source, and target.
@@ -87,4 +102,4 @@ async function getEntitySimilarity(
 	}
 }
 
-export { getCuriesEntities, getFacets, getEntitySimilarity };
+export { getCuriesEntities, getFacets, getEntitySimilarity, searchCuriesEntities };
