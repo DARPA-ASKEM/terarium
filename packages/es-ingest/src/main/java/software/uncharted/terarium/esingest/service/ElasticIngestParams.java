@@ -34,7 +34,4 @@ public class ElasticIngestParams {
 	// The classname used for the ingest.
 	String ingestClass;
 
-	// Whether to upload assets to S3
-	boolean uploadAssetsToS3 = false;
-
 }

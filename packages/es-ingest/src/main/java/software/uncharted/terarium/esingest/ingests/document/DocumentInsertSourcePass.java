@@ -62,15 +62,13 @@ public class DocumentInsertSourcePass
 			doc.setDescription(in.getSource().getTitle());
 			doc.setText(in.getSource().getBody());
 
-			if (uploadFilesToS3) {
-				final String filename = "source.txt";
-				doc.setFilenames(List.of(filename));
+			final String filename = "source.txt";
+			doc.setFilenames(List.of(filename));
 
-				final String bucket = config.getFileStorageS3BucketName();
-				final String key = getPath(id, filename);
+			final String bucket = config.getFileStorageS3BucketName();
+			final String key = getPath(id, filename);
 
-				s3Service.putObject(bucket, key, in.getSource().getBody().getBytes());
-			}
+			s3Service.putObject(bucket, key, in.getSource().getBody().getBytes());
 
 			res.add(doc);
 		}
