@@ -49,4 +49,8 @@ public class ModelMetadata implements SupportAdditionalProperties {
 
 	@TSOptional
 	private List<String> provenance;
+
+	@TSOptional
+	@JsonProperty("templateCard")
+	private Object templateCard;
 }

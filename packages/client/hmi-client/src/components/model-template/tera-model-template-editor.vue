@@ -402,6 +402,7 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
+// Triggered after syncWithMiraModel() in parent
 watch(
 	() => [props.model],
 	() => {

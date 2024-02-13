@@ -4,7 +4,7 @@ import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
-import { Model, Initial } from '@/types/Types';
+import { Model, Initial, ModelUnit } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import naturalConversionTemplate from './model-templates/natural-conversion.json';
 import naturalProductionTemplate from './model-templates/natural-production.json';
@@ -23,7 +23,7 @@ interface AddTemplateArguments {
 	controller_initial_value?: string;
 	parameter_name?: string;
 	parameter_value?: number;
-	parameter_units?: string;
+	parameter_units?: ModelUnit;
 	parameter_description?: string;
 	template_expression?: string;
 	template_name?: string;
@@ -42,12 +42,14 @@ export const modelTemplateOptions = [
 	observableTemplate
 ].map((modelTemplate: any) => {
 	// TODO: Add templateCard attribute to Model later
-	modelTemplate.metadata.templateCard = {
-		id: modelTemplate.header.name,
-		name: modelTemplate.header.name,
-		x: 0,
-		y: 0
-	} as ModelTemplateCard;
+	modelTemplate.metadata = {
+		templateCard: {
+			id: modelTemplate.header.name,
+			name: modelTemplate.header.name,
+			x: 0,
+			y: 0
+		} as ModelTemplateCard
+	};
 	return modelTemplate;
 });
 
@@ -93,30 +95,43 @@ export function junctionCleanUp(modelTemplates: ModelTemplates) {
  */
 
 // Helper functions
-function determineNumberToAppend(models: any[]) {
+function determineNumberToAppend(models: Model[]) {
 	// Collect values to check for numbers
 	const valuesToCheck: Set<string> = new Set();
 	models.forEach((model) => {
 		valuesToCheck.add(model.header.name);
-		valuesToCheck.add(model.metadata.templateCard.name);
+		if (model.metadata) valuesToCheck.add(model.metadata.templateCard.name);
 
 		const { states, transitions } = model.model;
-		const { rates, initials, parameters, observables } = model.semantics.ode;
+		[...states, ...transitions].forEach((variable) => {
+			const { id, name, target, properties, input, output } = variable;
 
-		[...states, ...transitions, ...rates, ...initials, ...parameters, ...observables].forEach(
-			(variable) => {
-				const { id, name, target, properties, input, output } = variable;
+			// Common properties
+			if (id) valuesToCheck.add(id);
+			if (name) valuesToCheck.add(name);
+			if (target) valuesToCheck.add(target);
+			// Transition properties
+			if (properties?.name) valuesToCheck.add(properties.name);
+			if (input) input.forEach((value: string) => valuesToCheck.add(value));
+			if (output) output.forEach((value: string) => valuesToCheck.add(value));
+		});
 
-				// Common properties
+		if (model?.semantics?.ode) {
+			const { rates, initials, parameters, observables } = model.semantics.ode;
+
+			const ode: any[] = [...rates];
+			if (initials) ode.push(...initials);
+			if (parameters) ode.push(...parameters);
+			if (observables) ode.push(...observables);
+
+			ode.forEach((variable) => {
+				const { id, name, target } = variable;
+
 				if (id) valuesToCheck.add(id);
 				if (name) valuesToCheck.add(name);
 				if (target) valuesToCheck.add(target);
-				// Transition properties
-				if (properties?.name) valuesToCheck.add(properties.name);
-				if (input) input.forEach((value: string) => valuesToCheck.add(value));
-				if (output) output.forEach((value: string) => valuesToCheck.add(value));
-			}
-		);
+			});
+		}
 	});
 	// Extract the numbers from the values
 	const lastNumbers = uniq(
@@ -128,14 +143,13 @@ function determineNumberToAppend(models: any[]) {
 	return number;
 }
 
-function appendNumberToModelVariables(modelTemplate: any, number: number) {
+function appendNumberToModelVariables(modelTemplate: Model, number: number) {
 	const templateWithNumber = cloneDeep(modelTemplate);
 
 	const { states, transitions } = templateWithNumber.model;
-	const { rates, initials, parameters, observables } = templateWithNumber.semantics.ode;
 
 	templateWithNumber.header.name += number;
-	templateWithNumber.metadata.templateCard.name += number;
+	if (templateWithNumber.metadata) templateWithNumber.metadata.templateCard.name += number;
 
 	states.forEach((state) => {
 		state.id += number;
@@ -149,48 +163,52 @@ function appendNumberToModelVariables(modelTemplate: any, number: number) {
 		transition.output = transition.output.map((output) => output + number);
 	});
 
-	initials.forEach((initial) => {
-		initial.target += number;
-	});
+	if (templateWithNumber?.semantics?.ode) {
+		const { rates, initials, parameters, observables } = templateWithNumber.semantics.ode;
 
-	parameters.forEach((parameter) => {
-		parameter.id += number;
-	});
+		initials?.forEach((initial) => {
+			initial.target += number;
+		});
+		parameters?.forEach((parameter) => {
+			parameter.id += number;
+		});
 
-	rates.forEach((rate) => {
-		rate.target += number;
-		// Within the expression attributes update the targets to match the new ones
-		rate.expression = rate.expression.replace(/([a-zA-Z])/g, (match) => match + number);
-		rate.expression_mathml = rate.expression_mathml.replace(
-			/<ci>([a-zA-Z])<\/ci>/g,
-			(_, letter: string) => `<ci>${letter + number}</ci>`
-		);
-	});
+		rates.forEach((rate) => {
+			rate.target += number;
+			// Within the expression attributes update the targets to match the new ones
+			rate.expression = rate.expression.replace(/([a-zA-Z])/g, (match) => match + number);
+			if (rate.expression_mathml) {
+				rate.expression_mathml = rate.expression_mathml.replace(
+					/<ci>([a-zA-Z])<\/ci>/g,
+					(_, letter: string) => `<ci>${letter + number}</ci>`
+				);
+			}
+		});
 
-	observables.forEach((observable) => {
-		observable.id += number;
-		observable.name += number;
-	});
-
+		observables?.forEach((observable) => {
+			observable.id += number;
+			if (observable.name) observable.name += number;
+		});
+	}
 	return templateWithNumber;
 }
 
-export function addTemplateInView(modelTemplates: ModelTemplates, modelTemplate: any) {
-	modelTemplate.metadata.templateCard.id = uuidv4();
+export function addTemplateInView(modelTemplates: ModelTemplates, modelTemplate: Model) {
+	if (modelTemplate.metadata) modelTemplate.metadata.templateCard.id = uuidv4();
 	modelTemplates.models.push(modelTemplate);
 }
 
 export function addDecomposedTemplateInKernel(
 	kernelManager: KernelSessionManager,
 	modelTemplates: ModelTemplates,
-	modelTemplate: any,
+	modelTemplate: Model,
 	outputCode: Function,
 	syncWithMiraModel: Function
 ) {
 	const templateType = modelTemplate.header.name;
 
 	// If a decomposed card is added, add it to the kernel
-	if (Object.values(DecomposedModelTemplateTypes).includes(templateType)) {
+	if ((Object.values(DecomposedModelTemplateTypes) as string[]).includes(templateType)) {
 		const addTemplateArguments: AddTemplateArguments = {};
 
 		// Append a number to the model variables to avoid conflicts
@@ -202,59 +220,66 @@ export function addDecomposedTemplateInKernel(
 		if (templateType !== DecomposedModelTemplateTypes.Observable) {
 			const uniqueName = modelTemplateToAdd.header.name; // Now save a version of the name with the number appended
 			const { transitions } = modelTemplateToAdd.model;
-			const { rates, initials, parameters } = cloneDeep(modelTemplateToAdd.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
 
-			// Add parameters to the arguments
-			addTemplateArguments.parameter_name = parameters[0].id;
-			addTemplateArguments.parameter_value = parameters[0].value;
-			addTemplateArguments.parameter_units = parameters[0].units;
-			addTemplateArguments.parameter_description = parameters[0].description;
-			addTemplateArguments.template_expression = rates[0].expression;
-			addTemplateArguments.template_name = uniqueName;
+			if (modelTemplateToAdd?.semantics?.ode) {
+				const { rates, initials, parameters } = cloneDeep(modelTemplateToAdd.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
 
-			// Extract controller from initials and add it to the arguments
-			if (
-				templateType === DecomposedModelTemplateTypes.ControlledConversion ||
-				templateType === DecomposedModelTemplateTypes.ControlledDegradation ||
-				templateType === DecomposedModelTemplateTypes.ControlledProduction
-			) {
-				const { input, output } = transitions[0];
-				if (input?.[0] === output?.[0]) {
-					const index = initials.findIndex((initial) => initial.target === input[0]);
-					const controller = initials[index];
+				// Add parameters to the arguments
+				addTemplateArguments.template_expression = rates[0].expression;
+				addTemplateArguments.template_name = uniqueName;
+				if (parameters) {
+					addTemplateArguments.parameter_name = parameters[0].id;
+					addTemplateArguments.parameter_value = parameters[0].value;
+					addTemplateArguments.parameter_units = parameters[0].unit ?? undefined;
+					addTemplateArguments.parameter_description = parameters[0].description;
+				}
 
-					// Add controller to the arguments
-					addTemplateArguments.controller_name = controller.target;
-					addTemplateArguments.controller_initial_value = controller.expression;
+				if (initials) {
+					// Extract controller from initials and add it to the arguments
+					if (
+						templateType === DecomposedModelTemplateTypes.ControlledConversion ||
+						templateType === DecomposedModelTemplateTypes.ControlledDegradation ||
+						templateType === DecomposedModelTemplateTypes.ControlledProduction
+					) {
+						const { input, output } = transitions[0];
+						if (input?.[0] === output?.[0]) {
+							const index = initials.findIndex((initial) => initial.target === input[0]);
+							const controller = initials[index];
 
-					// Remove controller from initials
-					initials.splice(index, 1);
+							// Add controller to the arguments
+							addTemplateArguments.controller_name = controller.target;
+							addTemplateArguments.controller_initial_value = controller.expression;
+
+							// Remove controller from initials
+							initials.splice(index, 1);
+						}
+					}
+
+					// Now that there are no controllers in initals we can add subject/outcome to the arguments
+					if (
+						templateType === DecomposedModelTemplateTypes.NaturalConversion ||
+						templateType === DecomposedModelTemplateTypes.ControlledConversion
+					) {
+						// If it's a conversion template, the first two initials are the subject then outcome
+						addTemplateArguments.subject_name = initials[0].target;
+						addTemplateArguments.subject_initial_value = initials[0].expression;
+						addTemplateArguments.outcome_name = initials[1].target;
+						addTemplateArguments.outcome_initial_value = initials[1].expression;
+					} else if (
+						templateType === DecomposedModelTemplateTypes.NaturalProduction ||
+						templateType === DecomposedModelTemplateTypes.ControlledProduction
+					) {
+						// If it's a production template, the first initial is the outcome
+						addTemplateArguments.outcome_name = initials[0].target;
+						addTemplateArguments.outcome_initial_value = initials[0].expression;
+					} else {
+						// If it's a degradation template, the first initial is the subject
+						addTemplateArguments.subject_name = initials[0].target;
+						addTemplateArguments.subject_initial_value = initials[0].expression;
+					}
 				}
 			}
-
-			// Now that there are no controllers in initals we can add subject/outcome to the arguments
-			if (
-				templateType === DecomposedModelTemplateTypes.NaturalConversion ||
-				templateType === DecomposedModelTemplateTypes.ControlledConversion
-			) {
-				// If it's a conversion template, the first two initials are the subject then outcome
-				addTemplateArguments.subject_name = initials[0].target;
-				addTemplateArguments.subject_initial_value = initials[0].expression;
-				addTemplateArguments.outcome_name = initials[1].target;
-				addTemplateArguments.outcome_initial_value = initials[1].expression;
-			} else if (
-				templateType === DecomposedModelTemplateTypes.NaturalProduction ||
-				templateType === DecomposedModelTemplateTypes.ControlledProduction
-			) {
-				// If it's a production template, the first initial is the outcome
-				addTemplateArguments.outcome_name = initials[0].target;
-				addTemplateArguments.outcome_initial_value = initials[0].expression;
-			} else {
-				// If it's a degradation template, the first initial is the subject
-				addTemplateArguments.subject_name = initials[0].target;
-				addTemplateArguments.subject_initial_value = initials[0].expression;
-			}
-		} else {
+		} else if (modelTemplateToAdd?.semantics?.ode?.observables) {
 			const { observables } = modelTemplateToAdd.semantics.ode;
 			addTemplateArguments.new_id = observables[0].id;
 			addTemplateArguments.new_name = modelTemplateToAdd.header.name;
@@ -311,20 +336,20 @@ export function removeTemplateInKernel(
 /**
  * Update decomposed template name
  */
-export function updateDecomposedTemplateNameInView(model: any, newName: string) {
-	model.header.name = newName;
-	model.metadata.templateCard.name = newName;
-	if (model.model.transitions[0] && model.semantics.ode.rates[0]) {
-		model.model.transitions[0].id = newName;
-		model.model.transitions[0].properties.name = newName;
-		model.semantics.ode.rates[0].target = newName;
+export function updateDecomposedTemplateNameInView(decomposedModel: Model, newName: string) {
+	decomposedModel.header.name = newName;
+	if (decomposedModel.metadata) decomposedModel.metadata.templateCard.name = newName;
+	if (decomposedModel.model.transitions[0] && decomposedModel?.semantics?.ode?.rates[0]) {
+		decomposedModel.model.transitions[0].id = newName;
+		decomposedModel.model.transitions[0].properties.name = newName;
+		decomposedModel.semantics.ode.rates[0].target = newName;
 	}
 }
 
 export function updateDecomposedTemplateNameInKernel(
 	kernelManager: KernelSessionManager,
-	decomposedModel: any,
-	flattenedModel: any,
+	decomposedModel: Model,
+	flattenedModel: Model,
 	newName: string,
 	outputCode: Function,
 	syncWithMiraModel: Function
@@ -334,7 +359,10 @@ export function updateDecomposedTemplateNameInKernel(
 
 	// Sanity check: Make sure the new template name is unique
 	const transitionIds = flattenedModel.model.transitions.map(({ id }) => id);
-	const rateTargets = flattenedModel.semantics.ode.rates.map(({ target }) => target);
+	const rateTargets = flattenedModel.semantics?.ode?.rates
+		? flattenedModel.semantics.ode.rates.map(({ target }) => target)
+		: [];
+
 	if (
 		flattenedModel.header.name === newName ||
 		transitionIds.includes(newName) ||
@@ -427,12 +455,14 @@ export function addEdgeInKernel(
  * Update/refresh flattened template
  */
 export function updateFlattenedTemplateInView(model: Model, flattenedTemplates: ModelTemplates) {
-	const flattenedModel: any = cloneDeep(model);
-	flattenedModel.metadata.templateCard = {
-		id: model.id,
-		name: model.header.name,
-		x: 100,
-		y: 100
+	const flattenedModel = cloneDeep(model);
+	flattenedModel.metadata = {
+		templateCard: {
+			id: model.id,
+			name: model.header.name,
+			x: 100,
+			y: 100
+		}
 	};
 	addTemplateInView(flattenedTemplates, flattenedModel);
 }
@@ -449,17 +479,21 @@ export function flattenedToDecomposedInView(
 	let yPos = 100;
 	const allInitals: Initial[] = [];
 
-	templatesToAdd.forEach((modelTemplate: any) => {
-		modelTemplate.metadata.templateCard = {
-			id: modelTemplate.header.name,
-			name: modelTemplate.header.name,
-			x: 100,
-			y: yPos
-		} as ModelTemplateCard;
-		yPos += 200;
+	templatesToAdd.forEach((modelTemplate: Model) => {
+		if (modelTemplate.semantics?.ode?.initials) {
+			modelTemplate.metadata = {
+				templateCard: {
+					id: modelTemplate.header.name,
+					name: modelTemplate.header.name,
+					x: 100,
+					y: yPos
+				} as ModelTemplateCard
+			};
+			yPos += 200;
 
-		addTemplateInView(decomposedTemplates, modelTemplate);
-		allInitals.push(...modelTemplate.semantics.ode.initials);
+			addTemplateInView(decomposedTemplates, modelTemplate);
+			allInitals.push(...modelTemplate.semantics.ode.initials);
+		}
 	});
 
 	// Add junctions and edges based on initials
@@ -485,17 +519,20 @@ export function flattenedToDecomposedInView(
 			model.semantics.ode.initials.some((initial) => initial.target !== repeatedInitialTargets[i])
 		);
 
-		templatesWithRepeatedInitial.forEach((modelTemplate: any) => {
-			const templateCard = modelTemplate.metadata.templateCard;
-			const junctionId = decomposedTemplates.junctions[decomposedTemplates.junctions.length - 1].id;
-			const target = {
-				cardId: templateCard.id,
-				portId: repeatedInitialTargets[i]
-			};
+		templatesWithRepeatedInitial.forEach((modelTemplate: Model) => {
+			if (modelTemplate.metadata?.templateCard) {
+				const templateCard = modelTemplate.metadata.templateCard;
+				const junctionId =
+					decomposedTemplates.junctions[decomposedTemplates.junctions.length - 1].id;
+				const target = {
+					cardId: templateCard.id,
+					portId: repeatedInitialTargets[i]
+				};
 
-			// Port position is now card position + 168 (width of the card)
-			const portPosition = { x: templateCard.x + 168, y: templateCard.y };
-			addEdgeInView(decomposedTemplates, junctionId, target, portPosition, interpolatePointsFn);
+				// Port position is now card position + 168 (width of the card)
+				const portPosition = { x: templateCard.x + 168, y: templateCard.y };
+				addEdgeInView(decomposedTemplates, junctionId, target, portPosition, interpolatePointsFn);
+			}
 		});
 	}
 }
