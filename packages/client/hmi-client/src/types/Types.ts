@@ -89,12 +89,6 @@ export interface Grounding {
     context?: { [index: string]: any };
 }
 
-export interface NetCDF extends TerariumAsset {
-    userId: string;
-    name: string;
-    fileNames?: string[];
-}
-
 export interface ResponseDeleted {
     message: string;
 }
@@ -419,7 +413,6 @@ export interface Assets {
     artifact: Artifact[];
     code: Code[];
     document: DocumentAsset[];
-    netcdf: NetCDF[];
 }
 
 export interface Project extends TerariumAsset {
@@ -1240,7 +1233,6 @@ export enum AssetType {
     Artifact = "ARTIFACT",
     Code = "CODE",
     Document = "DOCUMENT",
-    Netcdf = "NETCDF",
 }
 
 export enum EvaluationScenarioStatus {
