@@ -16,16 +16,18 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<div class="button-group">
+				<div class="button-group w-full">
 					<InputText
 						v-if="isRenamingWorkflow"
-						class="p-inputtext-sm"
+						class="p-inputtext w-full mr-8"
 						v-model.lazy="newWorkflowName"
 						placeholder="Workflow name"
 						@keyup.enter="updateWorkflowName"
+						@keyup.esc="updateWorkflowName"
 					/>
 					<h4 v-else>{{ wf.name }}</h4>
 					<Button
+						v-if="!isRenamingWorkflow"
 						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
 						@click="toggleOptionsMenu"
@@ -40,6 +42,7 @@
 						@click="resetZoom"
 						size="small"
 						disabled
+						class="white-space-nowrap"
 					/>
 					<Button
 						label="Clean up layout"
@@ -48,6 +51,7 @@
 						@click="cleanUpLayout"
 						size="small"
 						disabled
+						class="white-space-nowrap"
 					/>
 					<Button
 						id="add-component-btn"
@@ -55,6 +59,7 @@
 						label="Add component"
 						@click="showAddComponentMenu"
 						size="small"
+						class="white-space-nowrap"
 					/>
 					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
 					<ContextMenu
