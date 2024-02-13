@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "priority": 500,
+  "composed_of": ["tds_2.0_terarium_asset_component", "tds_2.0_name_description_component"],
+  "index_patterns": [
+    "*_code_tera_2.0"
+  ],
+  "_meta": {
+    "description": "This index template is the standard template for all Terarium CODE indices"
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1,
+        "refresh_interval": "1s"
+      }
+    },
+    "mappings": {
+      "properties": {
+        "files": {
+          "type": "object",
+          "enabled": false
+        },
+        "repoUrl": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 512
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "enabled": false
+        }
+      }
+    }
+  }
+}

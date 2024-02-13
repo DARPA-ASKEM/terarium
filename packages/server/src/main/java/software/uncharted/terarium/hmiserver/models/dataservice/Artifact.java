@@ -7,8 +7,10 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -22,7 +24,9 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class Artifact extends TerariumAsset{
+public class Artifact extends TerariumAsset {
+	@Serial
+	private static final long serialVersionUID = -1122602270904707476L;
 
 	/* The id of the artifact. */
 

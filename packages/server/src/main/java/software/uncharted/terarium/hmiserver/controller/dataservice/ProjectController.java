@@ -16,13 +16,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -61,9 +59,8 @@ public class ProjectController {
 	final ModelService modelService;
 	final DocumentAssetService documentService;
 	final WorkflowService workflowService;
-	final ExternalPublicationService publicationService;
 	final CodeService codeService;
-	final ArtifactService artifactService;
+
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
 	// --------------------------------------------------------------------------
@@ -344,19 +341,6 @@ public class ProjectController {
 							}
 							assetsResponse.setWorkflow(workflows);
 							break;
-						case PUBLICATION:
-							final List<ExternalPublication> publications = new ArrayList<>();
-							for (final UUID id : assetTypeListMap.get(type)) {
-								try {
-									final Optional<ExternalPublication> publication = publicationService
-											.getAsset(id);
-									publication.ifPresent(publications::add);
-								} catch (final IOException e) {
-									log.error("Error getting publication", e);
-								}
-							}
-							assetsResponse.setPublication(publications);
-							break;
 						case CODE:
 							final List<Code> code = new ArrayList<>();
 							for (final UUID id : assetTypeListMap.get(type)) {
@@ -368,18 +352,6 @@ public class ProjectController {
 								}
 							}
 							assetsResponse.setCode(code);
-							break;
-						case ARTIFACT:
-							final List<Artifact> artifacts = new ArrayList<>();
-							for (final UUID id : assetTypeListMap.get(type)) {
-								try {
-									final Optional<Artifact> artifact = artifactService.getAsset(id);
-									artifact.ifPresent(artifacts::add);
-								} catch (final IOException e) {
-									log.error("Error getting artifact", e);
-								}
-							}
-							assetsResponse.setArtifact(artifacts);
 							break;
 						default:
 							break;

@@ -10,7 +10,8 @@ export enum ToastSummaries {
 	ATTENTION = 'Attention',
 	INFO = 'Info',
 	WARNING = 'Warning',
-	ERROR = 'Error'
+	ERROR = 'Error',
+	SUCCESS = 'Success'
 }
 
 export enum ToastSeverity {
@@ -55,6 +56,21 @@ export const useToastService = () => {
 		});
 	};
 
+	// Why isn't this a standard toast? It doesn't seem to work, fwiw.
+	// const success = (
+	// 	summary: string | undefined,
+	// 	detail: string,
+	// 	life: number = DEFAULT_DURATION
+	// ) => {
+	// 	ToastEventBus.emit('add', {
+	// 		severity: ToastSeverity.success,
+	// 		summary: summary || ToastSummaries.INFO,
+	// 		group: ToastSeverity.success,
+	// 		detail,
+	// 		life
+	// 	});
+	// };
+
 	const success = (
 		summary: string | undefined,
 		detail: string,
@@ -62,7 +78,7 @@ export const useToastService = () => {
 	) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.success,
-			summary: summary || ToastSummaries.INFO,
+			summary: summary || ToastSummaries.SUCCESS,
 			group: ToastSeverity.success,
 			detail,
 			life
