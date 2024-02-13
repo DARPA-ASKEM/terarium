@@ -155,7 +155,6 @@ watch(
 /* Supported by Chromium, Safari, Webkit, Edge and others. Not supported by IE and Opera Mini */
 .truncate-after-three-lines {
 	display: -webkit-box;
-	max-width: 200px;
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
