@@ -5,8 +5,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 

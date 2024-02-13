@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 import java.io.IOException;
@@ -129,7 +129,4 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
 		return Optional.of(asset);
 	}
-
-
-
 }
