@@ -131,6 +131,8 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 				:is-loading="showSpinner"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
 			>
 				<tera-simulate-chart
 					v-for="(cfg, index) of node.state.chartConfigs"
@@ -164,10 +166,13 @@ import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import Chart from 'primevue/chart';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import { Poller, PollerState } from '@/api/api';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 
 import {
 	getRunResultCiemss,
@@ -175,26 +180,30 @@ import {
 	simulationPollAction
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { WorkflowNode } from '@/types/workflow';
+import { logger } from '@/utils/logger';
+
+import type { WorkflowNode } from '@/types/workflow';
 import type {
 	TimeSpan,
 	EnsembleModelConfigs,
 	EnsembleSimulationCiemssRequest
 } from '@/types/Types';
 import { ProgressState } from '@/types/Types';
-import Chart from 'primevue/chart';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { logger } from '@/utils/logger';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
-
-const dataLabelPlugin = [ChartDataLabels];
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits([
+	'append-output-port',
+	'select-output',
+	'update-output-port',
+	'update-state',
+	'close'
+]);
+
+const dataLabelPlugin = [ChartDataLabels];
 
 enum Tabs {
 	Wizard = 'wizasrd',
@@ -227,7 +236,6 @@ const numSamples = ref<number>(props.node.state.numSamples);
 // 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 // );
 
-// const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 // const showSaveInput = ref(<boolean>false);
 // const saveAsName = ref(<string | null>'');
 
@@ -257,6 +265,17 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	emit('update-state', state);
 };
 
+const onUpdateOutput = (id) => {
+	emit('select-output', id);
+};
+
+const onUpdateSelection = (id) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+};
+
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
 	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
@@ -271,7 +290,7 @@ const calculateWeights = () => {
 	}
 };
 
-function addMapping() {
+const addMapping = () => {
 	for (let i = 0; i < ensembleConfigs.value.length; i++) {
 		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
 	}
@@ -280,7 +299,7 @@ function addMapping() {
 	state.mapping = ensembleConfigs.value;
 
 	emit('update-state', state);
-}
+};
 
 const setBarChartData = () => {
 	const documentStyle = getComputedStyle(document.documentElement);
@@ -348,6 +367,8 @@ const runEnsemble = async () => {
 		extra: { num_samples: numSamples.value }
 	};
 	const response = await makeEnsembleCiemssSimulation(params);
+
+	// Start polling
 	if (response?.simulationId) {
 		getStatus(response.simulationId);
 	}
@@ -378,40 +399,23 @@ const getStatus = async (simulationId: string) => {
 
 const updateOutputPorts = (simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
+	const state = props.node.state;
 	emit('append-output-port', {
 		type: 'simulationId',
 		label: `${portLabel} Result`,
-		value: [simulationId]
+		value: [simulationId],
+		state: {
+			mapping: _.cloneDeep(state.mapping),
+			timeSpan: _.cloneDeep(state.timeSpan),
+			numSamples: state.numSamples
+		},
+		isSelected: false
 	});
 };
 
-// const addChart = () => {
-// 	const state = _.cloneDeep(props.node.state);
-// 	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
-//
-// 	emit('update-state', state);
-// };
-//
-// async function saveDatasetToProject() {
-// 	const { activeProject, refresh } = useProjects();
-// 	if (activeProject.value?.id) {
-// 		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
-// 			refresh();
-// 		}
-// 		showSaveInput.value = false;
-// 	}
-// }
-
-// assume only one run for now
-// const watchCompletedRunList = async () => {
-// 	if (!completedRunId.value) return;
-//
-// 	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
-// 	runResults.value = output.runResults;
-// };
-
 onMounted(async () => {
-	const modelConfigurationIds = props.node.inputs[0]?.value; // FIXME: probably switch to multiport instead of multivalue
+	// FIXME: probably switch to multiport instead of multivalue
+	const modelConfigurationIds = props.node.inputs[0]?.value;
 	if (!modelConfigurationIds) return;
 
 	const allModelConfigurations = await Promise.all(
@@ -452,8 +456,6 @@ onMounted(async () => {
 	emit('update-state', state);
 });
 
-// watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
-
 watch(
 	() => props.node.active,
 	async () => {
@@ -490,12 +492,6 @@ watch(
 </script>
 
 <style scoped>
-.add-chart {
-	width: 9em;
-	margin: 0em 1em;
-	margin-bottom: 1em;
-}
-
 .row-header {
 	display: flex;
 	flex-direction: column;
@@ -536,26 +532,6 @@ th {
 th,
 td {
 	padding-left: 15px;
-}
-
-.simulate-container {
-	overflow-y: scroll;
-}
-
-.simulate-chart {
-	margin: 2em 1em;
-}
-
-.sim-tspan-container {
-	display: flex;
-	gap: 1em;
-}
-
-.sim-tspan-group {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	flex-basis: 0;
 }
 
 ::v-deep .p-inputnumber-input,
