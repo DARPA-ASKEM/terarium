@@ -8,7 +8,6 @@
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
 				@sync-with-mira-model="syncWithMiraModel"
 			/>
-			<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>

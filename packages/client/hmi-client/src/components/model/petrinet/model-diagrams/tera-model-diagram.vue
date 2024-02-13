@@ -176,11 +176,6 @@ watch(
 				openValueConfig.value = true;
 			}
 		});
-		if (!props.isPreview) {
-			console.log('graphData', graphData);
-			console.log('\n');
-			console.log(renderer);
-		}
 
 		// Render graph
 		await renderer?.setData(graphData);
