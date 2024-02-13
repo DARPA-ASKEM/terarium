@@ -24,10 +24,7 @@
 						</section>
 						<section class="ensemble-calibration-graph">
 							<Chart
-								v-if="
-									ensembleCalibrationMode === EnsembleCalibrationMode.CALIBRATIONWEIGHTS ||
-									ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS
-								"
+								v-if="ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS"
 								type="bar"
 								:height="100"
 								:data="setBarChartData()"
@@ -128,8 +125,21 @@
 		</section>
 		<section :tabName="Tabs.Notebook"></section>
 		<template #preview>
-			<tera-drilldown-preview title="Simulation output" :is-loading="showSpinner">
-				Preview
+			<tera-drilldown-preview
+				title="Simulation output"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				is-selectable
+				:is-loading="showSpinner"
+			>
+				<tera-simulate-chart
+					v-for="(cfg, index) of node.state.chartConfigs"
+					:key="index"
+					:run-results="runResults"
+					:chartConfig="cfg"
+					has-mean-line
+					@configuration-change="chartConfigurationChange(index, $event)"
+				/>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -143,57 +153,6 @@
 			/>
 		</template>
 	</tera-drilldown>
-
-	<!--
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section tabName="Wizard">
-			<section class="tera-ensemble">
-				<div class="ensemble-header">
-				</div>
-				<div v-if="view === SimulateView.Output && runResults" class="simulate-container">
-					<tera-simulate-chart
-						v-for="(cfg, index) of node.state.chartConfigs"
-						:key="index"
-						:run-results="runResults"
-						:chartConfig="cfg"
-						has-mean-line
-						@configuration-change="chartConfigurationChange(index, $event)"
-					/>
-					<Button
-						class="add-chart"
-						text
-						:outlined="true"
-						@click="addChart"
-						label="Add chart"
-						icon="pi pi-plus"
-					/>
-					<Button
-						class="add-chart"
-						title="Saves the current version of the model as a new Terarium asset"
-						@click="showSaveInput = !showSaveInput"
-					>
-						<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-						<span class="p-button-text">Save as</span>
-					</Button>
-					<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-						<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-						<i
-							class="pi pi-times i"
-							:class="{ clear: hasValidDatasetName }"
-							@click="saveAsName = ''"
-						></i>
-						<i
-							v-if="useProjects().activeProject.value?.id"
-							class="pi pi-check i"
-							:class="{ save: hasValidDatasetName }"
-							@click="saveDatasetToProject"
-						></i>
-					</span>
-				</div>
-			</section>
-		</section>
-	</tera-drilldown>
-	-->
 </template>
 
 <script setup lang="ts">
@@ -226,13 +185,9 @@ import { ProgressState } from '@/types/Types';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-// import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-// import { saveDataset } from '@/services/dataset';
-// import { useProjects } from '@/composables/project';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { logger } from '@/utils/logger';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
-
-console.log('1' as any as ChartConfig);
 
 const dataLabelPlugin = [ChartDataLabels];
 
@@ -248,7 +203,6 @@ enum Tabs {
 
 enum EnsembleCalibrationMode {
 	EQUALWEIGHTS = 'equalWeights',
-	CALIBRATIONWEIGHTS = 'calibrationWeights',
 	CUSTOM = 'custom'
 }
 
@@ -282,13 +236,26 @@ const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
-// Tom TODO: Make this generic... its copy paste from node.
-// const chartConfigurationChange = (index: number, config: ChartConfig) => {
-// 	const state = _.cloneDeep(props.node.state);
-// 	state.chartConfigs[index] = config;
-//
-// 	emit('update-state', state);
-// };
+// Preview selection
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+const selectedOutputId = ref<string>();
+
+const chartConfigurationChange = (index: number, config: ChartConfig) => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	emit('update-state', state);
+};
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
@@ -301,9 +268,6 @@ const calculateWeights = () => {
 	}
 	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
 		customWeights.value = true;
-	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
-		customWeights.value = false;
-		// TODO: Get weights from AMR
 	}
 };
 
@@ -496,10 +460,10 @@ watch(
 		const output = props.node.outputs.find((d) => d.id === props.node.active);
 		if (!output || !output.value) return;
 
+		selectedOutputId.value = output.id;
+
 		const response = await getRunResultCiemss(output.value[0], 'result.csv');
 		runResults.value = response.runResults;
-
-		console.log('hihi', runResults.value);
 	},
 	{ immediate: true }
 );
