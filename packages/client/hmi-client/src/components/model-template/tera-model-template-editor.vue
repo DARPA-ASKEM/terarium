@@ -79,6 +79,7 @@
 								modelTemplatingService.updateDecomposedTemplateNameInKernel(
 									kernelManager,
 									currentTemplates.models[index],
+									flattenedTemplates.models[0],
 									name,
 									outputCode
 								)

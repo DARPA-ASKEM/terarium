@@ -108,7 +108,7 @@ async function turnOnNameEdit() {
 }
 
 function updateName() {
-	emit('update-name', name);
+	emit('update-name', name.value);
 	isEditingName.value = false;
 }
 </script>

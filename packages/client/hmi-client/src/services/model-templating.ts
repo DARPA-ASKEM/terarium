@@ -5,6 +5,7 @@ import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
 import { Model } from '@/types/Types';
+import { logger } from '@/utils/logger';
 import naturalConversionTemplate from './model-templates/natural-conversion.json';
 import naturalProductionTemplate from './model-templates/natural-production.json';
 import naturalDegredationTemplate from './model-templates/natural-degradation.json';
@@ -80,6 +81,12 @@ export function junctionCleanUp(modelTemplates: ModelTemplates) {
 	// If a junction ends up having one edge coming out of it, remove it
 	modelTemplates.junctions = modelTemplates.junctions.filter(({ edges }) => edges.length > 1);
 }
+
+/**
+ * Add/remove template cards and edges in the UI (view) and kernel are separate functions
+ * The view functions are always called at the end of the kernel functions
+ * There are cases where the view functions can be called without the kernel functions
+ */
 
 /**
  * Add template card
@@ -314,17 +321,35 @@ export function updateDecomposedTemplateNameInView(model: any, newName: string) 
 
 export function updateDecomposedTemplateNameInKernel(
 	kernelManager: KernelSessionManager,
-	model: any,
+	decomposedModel: any,
+	flattenedModel: any,
 	newName: string,
 	outputCode: Function
 ) {
+	const transitionIds = flattenedModel.model.transitions.map(({ id }) => id);
+	const rateTargets = flattenedModel.semantics.ode.rates.map(({ target }) => target);
+
+	console.log('transitionIds', transitionIds);
+	console.log('rateTargets', rateTargets);
+	console.log('newName', newName);
+
+	// Sanity check: Make sure the new template name is unique
+	if (
+		flattenedModel.header.name === newName ||
+		transitionIds.includes(newName) ||
+		rateTargets.includes(newName)
+	) {
+		logger.error('Your template name needs to be unique. Please try again.');
+		return;
+	}
+
 	kernelManager
 		.sendMessage('replace_template_name_request', {
-			old_name: model.header.name,
+			old_name: decomposedModel.header.name,
 			new_name: newName
 		})
 		.register('replace_template_name_response', (d) => {
-			updateDecomposedTemplateNameInView(model, newName);
+			updateDecomposedTemplateNameInView(decomposedModel, newName);
 			outputCode(d);
 		});
 }
@@ -370,6 +395,7 @@ export function addEdgeInKernel(
 
 	const junctionToDrawFrom = modelTemplates.junctions.find(({ id }) => id === junctionId);
 
+	// Once ports are connected they share the same state name in the flattened model
 	if (junctionToDrawFrom && junctionToDrawFrom.edges.length >= 1 && outputCode) {
 		kernelManager
 			.sendMessage('replace_state_name_request', {
