@@ -81,7 +81,8 @@
 									currentTemplates.models[index],
 									flattenedTemplates.models[0],
 									name,
-									outputCode
+									outputCode,
+									syncWithMiraModel
 								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
@@ -95,7 +96,8 @@
 									kernelManager,
 									currentTemplates,
 									card.id,
-									outputCode
+									outputCode,
+									syncWithMiraModel
 								)
 						"
 					/>
@@ -157,7 +159,15 @@ const props = defineProps<{
 	kernelManager: KernelSessionManager;
 }>();
 
-const emit = defineEmits(['output-code']);
+const emit = defineEmits(['output-code', 'sync-with-mira-model']);
+
+function outputCode(data: any) {
+	emit('output-code', data);
+}
+
+function syncWithMiraModel(data: any) {
+	emit('sync-with-mira-model', data);
+}
 
 enum EditorFormat {
 	Decomposed = 'Decomposed',
@@ -271,6 +281,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			target,
 			currentPortPosition,
 			outputCode,
+			syncWithMiraModel,
 			interpolatePointsForCurve
 		);
 		cancelNewEdge();
@@ -322,10 +333,6 @@ function updateNewCardPosition(event) {
 		(event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
-function outputCode(data: any) {
-	emit('output-code', data);
-}
-
 function onDrop(event) {
 	updateNewCardPosition(event);
 
@@ -333,7 +340,8 @@ function onDrop(event) {
 		props.kernelManager,
 		currentTemplates.value,
 		newModelTemplate.value,
-		outputCode
+		outputCode,
+		syncWithMiraModel
 	);
 
 	newModelTemplate.value = null;

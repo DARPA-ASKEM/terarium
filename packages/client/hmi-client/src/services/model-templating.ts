@@ -4,7 +4,7 @@ import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
-import { Model } from '@/types/Types';
+import { Model, Initial } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import naturalConversionTemplate from './model-templates/natural-conversion.json';
 import naturalProductionTemplate from './model-templates/natural-production.json';
@@ -105,7 +105,7 @@ function determineNumberToAppend(models: any[]) {
 
 		[...states, ...transitions, ...rates, ...initials, ...parameters, ...observables].forEach(
 			(variable) => {
-				const { id, name, target, properties, input, output, expression } = variable;
+				const { id, name, target, properties, input, output } = variable;
 
 				// Common properties
 				if (id) valuesToCheck.add(id);
@@ -115,12 +115,6 @@ function determineNumberToAppend(models: any[]) {
 				if (properties?.name) valuesToCheck.add(properties.name);
 				if (input) input.forEach((value: string) => valuesToCheck.add(value));
 				if (output) output.forEach((value: string) => valuesToCheck.add(value));
-
-				// Check if the expression contains any variables with a number after it
-				if (expression) {
-					const matches = expression.match(/([a-zA-Z])(\d+)/g);
-					if (matches) matches.forEach((match: string) => valuesToCheck.add(match));
-				}
 			}
 		);
 	});
@@ -190,7 +184,8 @@ export function addDecomposedTemplateInKernel(
 	kernelManager: KernelSessionManager,
 	modelTemplates: ModelTemplates,
 	modelTemplate: any,
-	outputCode: Function
+	outputCode: Function,
+	syncWithMiraModel: Function
 ) {
 	const templateType = modelTemplate.header.name;
 
@@ -270,6 +265,9 @@ export function addDecomposedTemplateInKernel(
 			.sendMessage(`add_${snakeCase(templateType)}_template_request`, addTemplateArguments)
 			.register(`add_${snakeCase(templateType)}_template_response`, (d) => {
 				outputCode(d);
+			})
+			.register('model_preview', (d) => {
+				syncWithMiraModel(d);
 			});
 
 		addTemplateInView(modelTemplates, modelTemplateToAdd);
@@ -293,7 +291,8 @@ export function removeTemplateInKernel(
 	kernelManager: KernelSessionManager,
 	modelTemplates: ModelTemplates,
 	id: string,
-	outputCode: Function
+	outputCode: Function,
+	syncWithMiraModel: Function
 ) {
 	const index = findCardIndexById(modelTemplates, id);
 	kernelManager
@@ -303,6 +302,9 @@ export function removeTemplateInKernel(
 		.register('remove_template_response', (d) => {
 			removeTemplateInView(modelTemplates, id);
 			outputCode(d);
+		})
+		.register('model_preview', (d) => {
+			syncWithMiraModel(d);
 		});
 }
 
@@ -324,16 +326,15 @@ export function updateDecomposedTemplateNameInKernel(
 	decomposedModel: any,
 	flattenedModel: any,
 	newName: string,
-	outputCode: Function
+	outputCode: Function,
+	syncWithMiraModel: Function
 ) {
-	const transitionIds = flattenedModel.model.transitions.map(({ id }) => id);
-	const rateTargets = flattenedModel.semantics.ode.rates.map(({ target }) => target);
-
-	console.log('transitionIds', transitionIds);
-	console.log('rateTargets', rateTargets);
-	console.log('newName', newName);
+	// Return if old and new name are the same
+	if (decomposedModel.header.name === newName) return;
 
 	// Sanity check: Make sure the new template name is unique
+	const transitionIds = flattenedModel.model.transitions.map(({ id }) => id);
+	const rateTargets = flattenedModel.semantics.ode.rates.map(({ target }) => target);
 	if (
 		flattenedModel.header.name === newName ||
 		transitionIds.includes(newName) ||
@@ -343,6 +344,7 @@ export function updateDecomposedTemplateNameInKernel(
 		return;
 	}
 
+	// Apply name change
 	kernelManager
 		.sendMessage('replace_template_name_request', {
 			old_name: decomposedModel.header.name,
@@ -351,6 +353,9 @@ export function updateDecomposedTemplateNameInKernel(
 		.register('replace_template_name_response', (d) => {
 			updateDecomposedTemplateNameInView(decomposedModel, newName);
 			outputCode(d);
+		})
+		.register('model_preview', (d) => {
+			syncWithMiraModel(d);
 		});
 }
 
@@ -386,7 +391,8 @@ export function addEdgeInKernel(
 	junctionId: string,
 	target: { cardId: string; portId: string },
 	portPosition: Position,
-	outputCode?: Function,
+	outputCode: Function,
+	syncWithMiraModel: Function,
 	interpolatePointsFn?: Function
 ) {
 	const templateName = modelTemplates.models.find(
@@ -405,6 +411,9 @@ export function addEdgeInKernel(
 			})
 			.register('replace_state_name_response', (d) => {
 				outputCode(d);
+			})
+			.register('model_preview', (d) => {
+				syncWithMiraModel(d);
 			});
 
 		addEdgeInView(modelTemplates, junctionId, target, portPosition, interpolatePointsFn);
@@ -438,7 +447,7 @@ export function flattenedToDecomposedInView(
 ) {
 	// Insert template card data into decomposed models
 	let yPos = 100;
-	const allInitals: any[] = [];
+	const allInitals: Initial[] = [];
 
 	templatesToAdd.forEach((modelTemplate: any) => {
 		modelTemplate.metadata.templateCard = {
