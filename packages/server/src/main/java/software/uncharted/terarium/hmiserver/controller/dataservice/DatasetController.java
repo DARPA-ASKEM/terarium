@@ -579,17 +579,22 @@ public class DatasetController {
 		@RequestParam("filename") final String filename) {
 
 		try {
-			final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
-			try (NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
-				ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
-				for (Attribute attribute : globalAttributes) {
-					String name = attribute.getName();
-					Array values = attribute.getValues();
-					//				log.info("[{},{}]", name, values);
-				}
+			if (filename.endsWith(".nc")) {
 				return climateDataProxy.previewEsgf(id.toString(), null, null, null);
-			} catch (IOException ioe) {
-				return ResponseEntity.status(415).build();
+			} else {
+				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
+				// TODO: This attempts to check the file, but fails to open the file, might need to write a NetcdfFiles Stream reader
+				try (NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
+					ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
+					for (Attribute attribute : globalAttributes) {
+						String name = attribute.getName();
+						Array values = attribute.getValues();
+						//				log.info("[{},{}]", name, values);
+					}
+					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
+				} catch (IOException ioe) {
+					return ResponseEntity.status(415).build();
+				}
 			}
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
