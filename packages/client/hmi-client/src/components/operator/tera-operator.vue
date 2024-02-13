@@ -169,7 +169,6 @@ main {
 			display: flex;
 			flex-direction: column;
 			gap: 0.25rem;
-			width: fit-content;
 			cursor: pointer;
 		}
 		&:deep(> li:hover) {
@@ -199,19 +198,18 @@ main {
 
 		&:deep(.port-connected:hover .unlink) {
 			display: block;
-			color: var(--text-color-subdued);
+			color: var(--text-color-primary);
 			padding: 0.25rem 0.5rem;
-			margin: 0.5rem;
 			background-color: var(--surface-0);
 			border: solid 1px var(--surface-border);
 		}
 
 		&:deep(.port-connected) {
-			color: var(--text-color-subdued);
+			color: var(--text-color-primary);
 		}
 
 		&:deep(.port-container) {
-			width: calc(var(--port-base-size) * 2);
+			width: calc(var(--port-base-size) * 1.25);
 		}
 
 		&:deep(.port) {
@@ -220,6 +218,7 @@ main {
 			position: relative;
 			width: var(--port-base-size);
 			height: calc(var(--port-base-size) * 2);
+			top: 2px;
 		}
 
 		&:deep(.port-connected .port) {
