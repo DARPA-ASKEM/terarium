@@ -24,7 +24,7 @@
 						placeholder="Workflow name"
 						@keyup.enter="updateWorkflowName"
 					/>
-					<h5 v-else>{{ wf.name }}</h5>
+					<h4 v-else>{{ wf.name }}</h4>
 					<Button
 						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
