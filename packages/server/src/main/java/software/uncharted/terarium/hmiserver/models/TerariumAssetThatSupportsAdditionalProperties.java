@@ -10,7 +10,7 @@ import java.util.Map;
 public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 
 	@TSIgnore
-	public Map<String, Object> additionalProperties = new HashMap<>();
+	private Map<String, Object> additionalProperties = new HashMap<>();
 
 	@JsonAnyGetter
 	@TSIgnore
