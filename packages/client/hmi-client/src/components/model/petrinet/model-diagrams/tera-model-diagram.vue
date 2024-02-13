@@ -134,6 +134,7 @@ async function renderGraph(updatedModel: Model | null = null) {
 
 	// Convert petri net into a graph with raw input data
 	const graphData: IGraph<NodeData, EdgeData> = getGraphData(modelToRender, isCollapsed.value);
+
 	// Render graph
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -175,6 +176,11 @@ watch(
 				openValueConfig.value = true;
 			}
 		});
+		if (!props.isPreview) {
+			console.log('graphData', graphData);
+			console.log('\n');
+			console.log(renderer);
+		}
 
 		// Render graph
 		await renderer?.setData(graphData);

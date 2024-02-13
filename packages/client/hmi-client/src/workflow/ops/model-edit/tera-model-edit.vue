@@ -8,6 +8,7 @@
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
 				@sync-with-mira-model="syncWithMiraModel"
 			/>
+			<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
@@ -40,12 +41,7 @@
 				:options="outputs"
 				is-selectable
 			>
-				<tera-model-diagram
-					v-if="amr"
-					ref="teraModelDiagramRef"
-					:model="amr"
-					:is-editable="false"
-				/>
+				<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Model Provided</h4>
@@ -135,7 +131,6 @@ const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
 const modelId = props.node.inputs[0].value?.[0];
-const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentOptions = [
