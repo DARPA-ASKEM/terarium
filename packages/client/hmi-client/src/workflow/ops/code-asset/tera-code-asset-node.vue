@@ -15,7 +15,7 @@
 				:options="codeAssets"
 				option-label="name"
 				v-model="code"
-				placeholder="Select code asset"
+				placeholder="Select a code asset"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
