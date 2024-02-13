@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.NetCDF;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -64,6 +65,7 @@ public class ProjectController {
 	final ExternalPublicationService publicationService;
 	final CodeService codeService;
 	final ArtifactService artifactService;
+	final NetCDFService netCDFService;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -381,6 +383,18 @@ public class ProjectController {
 								}
 							}
 							assetsResponse.setArtifact(artifacts);
+							break;
+						case NETCDF:
+							List<NetCDF> netcdfs = new ArrayList<>();
+							for (UUID id : assetTypeListMap.get(type)) {
+								try {
+									Optional<NetCDF> netcdf = netCDFService.getAsset(id);
+									netcdf.ifPresent(netcdfs::add);
+								} catch (final IOException e) {
+									log.error("Error getting netCDF", e);
+								}
+							}
+							assetsResponse.setNetcdf(netcdfs);
 							break;
 						default:
 							break;
