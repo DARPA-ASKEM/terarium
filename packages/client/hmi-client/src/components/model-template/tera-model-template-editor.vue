@@ -76,18 +76,12 @@
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						@update-name="
 							(name: string) =>
-								kernelManager
-									.sendMessage('replace_template_name_request', {
-										old_name: currentTemplates.models[index].header.name,
-										new_name: name
-									})
-									.register('replace_template_name_response', (d) => {
-										outputCode(d);
-										modelTemplatingService.updateDecomposedCardName(
-											currentTemplates.models[index],
-											name
-										);
-									})
+								modelTemplatingService.updateDecomposedTemplateNameInKernel(
+									kernelManager,
+									currentTemplates.models[index],
+									name,
+									outputCode
+								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
 						@port-mouseover="
@@ -95,16 +89,13 @@
 						"
 						@port-mouseleave="onPortMouseleave"
 						@remove="
-							() => {
-								kernelManager
-									.sendMessage('remove_template_request', {
-										template_name: currentTemplates.models[index].metadata.templateCard.name
-									})
-									.register('remove_template_response', (d) => {
-										outputCode(d);
-										modelTemplatingService.removeCard(currentTemplates, card.id, index);
-									});
-							}
+							() =>
+								modelTemplatingService.removeTemplateInKernel(
+									kernelManager,
+									currentTemplates,
+									card.id,
+									outputCode
+								)
 						"
 					/>
 				</tera-canvas-item>
@@ -141,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isEqual, snakeCase } from 'lodash'; // debounce
+import { isEmpty, isEqual } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -246,17 +237,10 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
 			// Add a default edge as well
-			modelTemplatingService.addEdge(
+			modelTemplatingService.addEdgeInView(
 				currentTemplates.value,
-				props.kernelManager,
 				junctionIdForNewEdge,
 				target,
-				outputCode
-			);
-			modelTemplatingService.addEdge2(
-				currentTemplates.value,
-				target,
-				junctionIdForNewEdge,
 				currentPortPosition,
 				interpolatePointsForCurve
 			);
@@ -279,21 +263,15 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		junctionIdForNewEdge &&
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
-		modelTemplatingService.addEdge(
-			currentTemplates.value,
+		modelTemplatingService.addEdgeInKernel(
 			props.kernelManager,
-			junctionIdForNewEdge,
-			target,
-			outputCode
-		);
-		modelTemplatingService.addEdge2(
 			currentTemplates.value,
-			target,
 			junctionIdForNewEdge,
+			target,
 			currentPortPosition,
+			outputCode,
 			interpolatePointsForCurve
 		);
-
 		cancelNewEdge();
 	}
 }
@@ -350,22 +328,12 @@ function outputCode(data: any) {
 function onDrop(event) {
 	updateNewCardPosition(event);
 
-	const { name } = newModelTemplate.value.header;
-
-	const { addTemplateArguments, modelTemplateToAdd } = modelTemplatingService.prepareAddingTemplate(
+	modelTemplatingService.addDecomposedTemplateInKernel(
+		props.kernelManager,
 		currentTemplates.value,
-		newModelTemplate.value
+		newModelTemplate.value,
+		outputCode
 	);
-
-	console.log(newModelTemplate.value, modelTemplateToAdd);
-
-	props.kernelManager
-		.sendMessage(`add_${snakeCase(name)}_template_request`, addTemplateArguments)
-		.register(`add_${snakeCase(name)}_template_response`, (d) => {
-			outputCode(d);
-		});
-
-	modelTemplatingService.addCard(currentTemplates.value, modelTemplateToAdd);
 
 	newModelTemplate.value = null;
 }
@@ -398,7 +366,6 @@ const updatePosition = (
 			if (!isJunction && edge.target.cardId === node.id) {
 				edge.points[lastPointIndex].x += x / canvasTransform.k;
 				edge.points[lastPointIndex].y += y / canvasTransform.k;
-
 				edge.points = interpolatePointsForCurve(edge.points[0], edge.points[lastPointIndex]);
 			}
 		});
@@ -431,8 +398,7 @@ watch(
 	() => {
 		if (props.model) {
 			flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
-
-			modelTemplatingService.updateFlattenedTemplate(props.model, flattenedTemplates.value);
+			modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
 		}
 	}
 );
@@ -442,18 +408,13 @@ onMounted(() => {
 
 	if (props.model) {
 		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplate(props.model, flattenedTemplates.value);
-
+		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
 		// Create decomposed view of model
-		props.kernelManager
-			.sendMessage('amr_to_templates', {})
-			.register('amr_to_templates_response', (d) => {
-				modelTemplatingService.flattenedToDecomposed(
-					decomposedTemplates.value,
-					d.content.templates as Model[],
-					interpolatePointsForCurve
-				);
-			});
+		modelTemplatingService.flattenedToDecomposedInKernel(
+			props.kernelManager,
+			decomposedTemplates.value,
+			interpolatePointsForCurve
+		);
 	}
 });
 

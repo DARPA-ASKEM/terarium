@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { cloneDeep, uniq, isEmpty } from 'lodash';
+import { cloneDeep, uniq, isEmpty, snakeCase } from 'lodash';
 import type { Position } from '@/types/common';
 import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
@@ -50,6 +50,10 @@ export const modelTemplateOptions = [
 	return modelTemplate;
 });
 
+function findCardIndexById(modelTemplates: ModelTemplates, id: string) {
+	return modelTemplates.models.findIndex(({ metadata }) => metadata.templateCard.id === id);
+}
+
 export function initializeModelTemplates() {
 	const modelTemplates: ModelTemplates = {
 		id: uuidv4(),
@@ -60,10 +64,9 @@ export function initializeModelTemplates() {
 	return modelTemplates;
 }
 
-export function findCardIndexById(modelTemplates: ModelTemplates, id: string) {
-	return modelTemplates.models.findIndex(({ metadata }) => metadata.templateCard.id === id);
-}
-
+/**
+ * Add junction (exclusive to UI)
+ */
 export function addJunction(modelTemplates: ModelTemplates, portPosition: Position) {
 	modelTemplates.junctions.push({
 		id: uuidv4(),
@@ -78,6 +81,11 @@ export function junctionCleanUp(modelTemplates: ModelTemplates) {
 	modelTemplates.junctions = modelTemplates.junctions.filter(({ edges }) => edges.length > 1);
 }
 
+/**
+ * Add template card
+ */
+
+// Helper functions
 function determineNumberToAppend(models: any[]) {
 	// Collect values to check for numbers
 	const valuesToCheck: Set<string> = new Set();
@@ -119,7 +127,6 @@ function determineNumberToAppend(models: any[]) {
 	return number;
 }
 
-// Designed to work with the decomposed model templates
 function appendNumberToModelVariables(modelTemplate: any, number: number) {
 	const templateWithNumber = cloneDeep(modelTemplate);
 
@@ -167,21 +174,25 @@ function appendNumberToModelVariables(modelTemplate: any, number: number) {
 	return templateWithNumber;
 }
 
-export function addCard(modelTemplates: ModelTemplates, modelTemplate: any) {
+export function addTemplateInView(modelTemplates: ModelTemplates, modelTemplate: any) {
 	modelTemplate.metadata.templateCard.id = uuidv4();
 	modelTemplates.models.push(modelTemplate);
 }
 
-export function prepareAddingTemplate(modelTemplates: ModelTemplates, modelTemplate: any) {
+export function addDecomposedTemplateInKernel(
+	kernelManager: KernelSessionManager,
+	modelTemplates: ModelTemplates,
+	modelTemplate: any,
+	outputCode: Function
+) {
 	const templateType = modelTemplate.header.name;
-
-	let modelTemplateToAdd = modelTemplate; // CLEAN
-	const addTemplateArguments: AddTemplateArguments = {};
 
 	// If a decomposed card is added, add it to the kernel
 	if (Object.values(DecomposedModelTemplateTypes).includes(templateType)) {
+		const addTemplateArguments: AddTemplateArguments = {};
+
 		// Append a number to the model variables to avoid conflicts
-		modelTemplateToAdd = appendNumberToModelVariables(
+		const modelTemplateToAdd = appendNumberToModelVariables(
 			modelTemplate,
 			determineNumberToAppend(modelTemplates.models)
 		);
@@ -247,34 +258,84 @@ export function prepareAddingTemplate(modelTemplates: ModelTemplates, modelTempl
 			addTemplateArguments.new_name = modelTemplateToAdd.header.name;
 			addTemplateArguments.new_expression = observables[0].expression_mathml;
 		}
-	}
-	return { addTemplateArguments, modelTemplateToAdd };
-}
 
-export function updateDecomposedCardName(model: any, name: string) {
-	model.header.name = name;
-	model.metadata.templateCard.name = name;
-	if (model.model.transitions[0] && model.semantics.ode.rates[0]) {
-		model.model.transitions[0].id = name;
-		model.model.transitions[0].properties.name = name;
-		model.semantics.ode.rates[0].target = name;
+		kernelManager
+			.sendMessage(`add_${snakeCase(templateType)}_template_request`, addTemplateArguments)
+			.register(`add_${snakeCase(templateType)}_template_response`, (d) => {
+				outputCode(d);
+			});
+
+		addTemplateInView(modelTemplates, modelTemplateToAdd);
 	}
 }
 
-export function removeCard(modelTemplates: ModelTemplates, id: string, index: number) {
+/**
+ * Remove template card
+ */
+export function removeTemplateInView(modelTemplates: ModelTemplates, id: string) {
+	const index = findCardIndexById(modelTemplates, id);
 	// Remove edges connected to the card
 	modelTemplates.junctions.forEach((junction) => {
 		junction.edges = junction.edges.filter((edge) => edge.target.cardId !== id);
 	});
 	junctionCleanUp(modelTemplates);
-	// Remove card
-	modelTemplates.models.splice(index, 1);
+	modelTemplates.models.splice(index, 1); // Remove card
 }
 
-export function addEdge2(
+export function removeTemplateInKernel(
+	kernelManager: KernelSessionManager,
 	modelTemplates: ModelTemplates,
-	target: { cardId: string; portId: string },
+	id: string,
+	outputCode: Function
+) {
+	const index = findCardIndexById(modelTemplates, id);
+	kernelManager
+		.sendMessage('remove_template_request', {
+			template_name: modelTemplates.models[index].metadata.templateCard.name
+		})
+		.register('remove_template_response', (d) => {
+			removeTemplateInView(modelTemplates, id);
+			outputCode(d);
+		});
+}
+
+/**
+ * Update decomposed template name
+ */
+export function updateDecomposedTemplateNameInView(model: any, newName: string) {
+	model.header.name = newName;
+	model.metadata.templateCard.name = newName;
+	if (model.model.transitions[0] && model.semantics.ode.rates[0]) {
+		model.model.transitions[0].id = newName;
+		model.model.transitions[0].properties.name = newName;
+		model.semantics.ode.rates[0].target = newName;
+	}
+}
+
+export function updateDecomposedTemplateNameInKernel(
+	kernelManager: KernelSessionManager,
+	model: any,
+	newName: string,
+	outputCode: Function
+) {
+	kernelManager
+		.sendMessage('replace_template_name_request', {
+			old_name: model.header.name,
+			new_name: newName
+		})
+		.register('replace_template_name_response', (d) => {
+			updateDecomposedTemplateNameInView(model, newName);
+			outputCode(d);
+		});
+}
+
+/**
+ * Add edge to model template
+ */
+export function addEdgeInView(
+	modelTemplates: ModelTemplates,
 	junctionId: string,
+	target: { cardId: string; portId: string },
 	portPosition: Position,
 	interpolatePointsFn?: Function
 ) {
@@ -294,12 +355,14 @@ export function addEdge2(
 	}
 }
 
-export function addEdge(
-	modelTemplates: ModelTemplates,
+export function addEdgeInKernel(
 	kernelManager: KernelSessionManager,
+	modelTemplates: ModelTemplates,
 	junctionId: string,
 	target: { cardId: string; portId: string },
-	outputCode?: Function // This is not used within flattenedToDecomposed
+	portPosition: Position,
+	outputCode?: Function,
+	interpolatePointsFn?: Function
 ) {
 	const templateName = modelTemplates.models.find(
 		(model) => model.metadata.templateCard.id === target.cardId
@@ -317,13 +380,32 @@ export function addEdge(
 			.register('replace_state_name_response', (d) => {
 				outputCode(d);
 			});
+
+		addEdgeInView(modelTemplates, junctionId, target, portPosition, interpolatePointsFn);
 	}
 }
 
 // TODO: There isn't a way to remove edges in the UI yet
 // export function removeEdge(modelTemplates: ModelTemplates) {}
 
-export function flattenedToDecomposed(
+/**
+ * Update/refresh flattened template
+ */
+export function updateFlattenedTemplateInView(model: Model, flattenedTemplates: ModelTemplates) {
+	const flattenedModel: any = cloneDeep(model);
+	flattenedModel.metadata.templateCard = {
+		id: model.id,
+		name: model.header.name,
+		x: 100,
+		y: 100
+	};
+	addTemplateInView(flattenedTemplates, flattenedModel);
+}
+
+/**
+ * Flattened to decomposed
+ */
+export function flattenedToDecomposedInView(
 	decomposedTemplates: ModelTemplates,
 	templatesToAdd: Model[],
 	interpolatePointsFn?: Function
@@ -341,7 +423,7 @@ export function flattenedToDecomposed(
 		} as ModelTemplateCard;
 		yPos += 200;
 
-		addCard(decomposedTemplates, modelTemplate);
+		addTemplateInView(decomposedTemplates, modelTemplate);
 		allInitals.push(...modelTemplate.semantics.ode.initials);
 	});
 
@@ -378,19 +460,21 @@ export function flattenedToDecomposed(
 
 			// Port position is now card position + 168 (width of the card)
 			const portPosition = { x: templateCard.x + 168, y: templateCard.y };
-			addEdge2(decomposedTemplates, target, junctionId, portPosition, interpolatePointsFn);
+			addEdgeInView(decomposedTemplates, junctionId, target, portPosition, interpolatePointsFn);
 		});
 	}
 }
 
-export function updateFlattenedTemplate(model: Model, flattenedTemplates: ModelTemplates) {
-	const flattenedModel: any = cloneDeep(model);
-	flattenedModel.metadata.templateCard = {
-		id: model.id,
-		name: model.header.name,
-		x: 100,
-		y: 100
-	};
-
-	addCard(flattenedTemplates, flattenedModel);
+export function flattenedToDecomposedInKernel(
+	kernelManager: KernelSessionManager,
+	decomposedTemplates: ModelTemplates,
+	interpolatePointsFn: Function
+) {
+	kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
+		flattenedToDecomposedInView(
+			decomposedTemplates,
+			d.content.templates as Model[],
+			interpolatePointsFn
+		);
+	});
 }
