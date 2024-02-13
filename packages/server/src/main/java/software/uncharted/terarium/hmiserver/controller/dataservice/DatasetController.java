@@ -44,7 +44,6 @@ import ucar.ma2.Array;
 import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
-import ucar.unidata.io.InMemoryRandomAccessFile;
 
 import java.io.IOException;
 import java.io.StringReader;
