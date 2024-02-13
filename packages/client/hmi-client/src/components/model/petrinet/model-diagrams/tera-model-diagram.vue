@@ -253,6 +253,8 @@ main {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+	background: var(--gray-50) !important;
+	border: none !important;
 }
 .graph-container {
 	background-color: var(--surface-secondary);
