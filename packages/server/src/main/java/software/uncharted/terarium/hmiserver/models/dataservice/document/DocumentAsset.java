@@ -6,8 +6,8 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
