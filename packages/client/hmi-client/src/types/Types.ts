@@ -134,7 +134,11 @@ export interface ActiveConcept extends TerariumAsset {
     name: string;
 }
 
-export interface OntologyConcept extends TerariumAsset {
+export interface OntologyConcept {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
     curie: string;
     type: TaggableType;
     objectId: string;
@@ -253,27 +257,6 @@ export interface Transition {
     output: string[];
     grounding?: ModelGrounding;
     properties?: Properties;
-}
-
-export interface TypeSystem {
-    states: State[];
-    transitions: Transition[];
-}
-
-export interface TypeSystemExtended {
-    name: string;
-    description: string;
-    schema: string;
-    model_version: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
-}
-
-export interface TypingSemantics {
-    map: string[][];
-    system: any;
 }
 
 export interface Configuration {
@@ -911,7 +894,7 @@ export interface ModelHeader {
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
-    typing?: TypingSemantics;
+    typing?: any;
 }
 
 export interface ModelMetadata {
@@ -923,7 +906,7 @@ export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
-    gollm_card?: any;
+    gollmCard?: any;
 }
 
 export interface ModelGrounding {

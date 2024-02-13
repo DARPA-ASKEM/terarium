@@ -3729,10 +3729,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ace-builds@npm:1.32.3":
-  version: 1.32.3
-  resolution: "ace-builds@npm:1.32.3"
-  checksum: 2bbad710cb8401aa45c19e0225ccea8299cd6b57e016a807d9e408bb8f8e25c83794dc07dd2c066cd85109deeca094128b1eed6a0a6bd0ca9a449df792e6b1ea
+"ace-builds@npm:1.32.6":
+  version: 1.32.6
+  resolution: "ace-builds@npm:1.32.6"
+  checksum: 7b034277e95de63684626cd0427ca47a2def4bd818297126cbc6dc6f49930fc43100ecdb69fec4f7e286f7c651adc44e63e25166e3f1fb0452eae3762a09c07d
   languageName: node
   linkType: hard
 
@@ -8167,7 +8167,7 @@ __metadata:
     "@vitest/coverage-c8": "npm:0.24.5"
     "@vue/runtime-dom": "npm:3.3.13"
     "@vueup/vue-quill": "npm:1.2.0"
-    ace-builds: "npm:1.32.3"
+    ace-builds: "npm:1.32.6"
     axios: "npm:1.6.5"
     chart.js: "npm:4.4.1"
     chartjs-plugin-datalabels: "npm:2.2.0"

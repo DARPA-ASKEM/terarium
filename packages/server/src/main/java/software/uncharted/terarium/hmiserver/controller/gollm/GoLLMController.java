@@ -18,7 +18,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -26,7 +25,6 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.TaskResponseHandler;
 import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -41,7 +39,6 @@ public class GoLLMController {
 	final private ObjectMapper objectMapper;
 	final private TaskService taskService;
 	final private DocumentAssetService documentAssetService;
-	final private ModelService modelService;
 
 	final private String MODEL_CARD_SCRIPT = "gollm:model_card";
 
@@ -58,7 +55,6 @@ public class GoLLMController {
 
 	@Data
 	private static class ModelCardProperties {
-		UUID modelId;
 		UUID documentId;
 	}
 
@@ -69,26 +65,32 @@ public class GoLLMController {
 
 	private TaskResponseHandler getModelCardResponseHandler() {
 		final TaskResponseHandler handler = new TaskResponseHandler();
-		handler.onSuccess((final TaskResponse resp) -> {
-			final ModelCardProperties props = resp.getAdditionalProperties(ModelCardProperties.class);
-			log.info("Writing model card to database for model {}", props.getModelId());
+		handler.onSuccess((TaskResponse resp) -> {
 			try {
-				final Model model = modelService.getAsset(props.getModelId())
+				final String serializedString = objectMapper.writeValueAsString(resp.getAdditionalProperties());
+				final ModelCardProperties props = objectMapper.readValue(serializedString, ModelCardProperties.class);
+				log.info("Writing model card to database for document {}", props.getDocumentId());
+				final DocumentAsset document = documentAssetService.getAsset(props.getDocumentId())
 						.orElseThrow();
 				final ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);
-				model.getMetadata().setGollmCard(card.response);
-				modelService.updateAsset(model);
+				if (document.getMetadata() == null){
+					document.setMetadata(new java.util.HashMap<>());
+				}
+				document.getMetadata().put("gollmCard", card.response);
+				
+				documentAssetService.updateAsset(document);
 			} catch (final IOException e) {
 				log.error("Failed to write model card to database", e);
 			}
 		});
-		handler.onRunning((final TaskResponse response) -> {
-			log.info(response.toString());
+
+		handler.onRunning((TaskResponse resp) -> {
+			log.info(resp.toString());
 		});
 		return handler;
 	}
 
-	@PostMapping("/model_card")
+	@PostMapping("/model-card")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Model Card task")
 	@ApiResponses(value = {
@@ -97,16 +99,9 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
-			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "model-id", required = true) final UUID modelId) {
+			@RequestParam(name = "document-id", required = true) final UUID documentId) {
 
 		try {
-			// Ensure the model is valid
-			final Optional<Model> model = modelService.getAsset(modelId);
-			if (model.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-
 			// Grab the document
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 			if (document.isEmpty()) {
@@ -135,7 +130,6 @@ public class GoLLMController {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			final ModelCardProperties props = new ModelCardProperties();
-			props.setModelId(modelId);
 			props.setDocumentId(documentId);
 			req.setAdditionalProperties(props);
 
