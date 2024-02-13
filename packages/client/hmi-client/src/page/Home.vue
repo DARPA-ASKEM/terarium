@@ -38,7 +38,7 @@
 										v-model="selectedSort"
 										:options="sortOptions"
 										@update:model-value="tab.projects = myFilteredSortedProjects"
-										class="p-inputtext-sm sort-options-dropdown"
+										class="sort-options-dropdown"
 									/>
 								</span>
 								<MultiSelect
@@ -320,13 +320,10 @@ header > section > button {
 
 .p-dropdown,
 .p-multiselect {
-	min-width: 15rem;
-}
-
-.p-multiselect:deep(.p-multiselect-label) {
-	/* Matches exact size of small dropdown */
-	font-size: 12.25px;
-	padding: 0.875rem;
+	min-width: 17rem;
+	display: flex;
+	align-items: center;
+	padding-left: 0.5rem;
 }
 
 .filter-and-sort {
