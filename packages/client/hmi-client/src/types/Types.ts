@@ -22,6 +22,15 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface TerariumAsset {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    temporary?: boolean;
+    publicAsset?: boolean;
+}
+
 export interface User {
     id: string;
     createdAtMs: number;
@@ -99,15 +108,6 @@ export interface ResponseStatus {
 
 export interface ResponseSuccess {
     success: boolean;
-}
-
-export interface TerariumAsset {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    temporary?: boolean;
-    publicAsset?: boolean;
 }
 
 export interface Code extends TerariumAsset {
@@ -214,7 +214,7 @@ export interface ExternalPublication extends TerariumAsset {
     xdd_uri: string;
 }
 
-export interface Model extends TerariumAsset {
+export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     header: ModelHeader;
     userId?: string;
     model: { [index: string]: any };
@@ -223,7 +223,7 @@ export interface Model extends TerariumAsset {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration extends TerariumAsset {
+export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     description?: string;
     configuration: any;
@@ -237,7 +237,7 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAsset {
+export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     version: string;
     semantics: string;
@@ -908,6 +908,9 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     gollmCard?: any;
     templateCard?: any;
+}
+
+export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 }
 
 export interface ModelGrounding {

@@ -7,10 +7,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SupportAdditionalProperties {
+public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 
 	@TSIgnore
-	private final Map<String, Object> additionalProperties = new HashMap<>();
+	private Map<String, Object> additionalProperties = new HashMap<>();
 
 	@JsonAnyGetter
 	@TSIgnore
