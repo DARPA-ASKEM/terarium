@@ -12,7 +12,7 @@
 				class="w-full p-dropdown-sm"
 				:options="documents"
 				option-label="assetName"
-				placeholder="Select document"
+				placeholder="Select a document"
 				@update:model-value="onDocumentChange"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
