@@ -39,6 +39,7 @@
 						outlined
 						@click="resetZoom"
 						size="small"
+						disabled
 					/>
 					<Button
 						label="Clean up layout"
@@ -46,6 +47,7 @@
 						outlined
 						@click="cleanUpLayout"
 						size="small"
+						disabled
 					/>
 					<Button
 						id="add-component-btn"
