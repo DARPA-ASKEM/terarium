@@ -8,8 +8,9 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
+import java.io.Serial;
 import java.util.Map;
 
 
@@ -19,6 +20,8 @@ import java.util.Map;
 @TSModel
 public class Code extends TerariumAsset {
 
+	@Serial
+	private static final long serialVersionUID = 3041175096070970227L;
 	/* The name of the code. */
 	@Schema(defaultValue = "Default Name")
 	private String name;

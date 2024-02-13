@@ -6,10 +6,16 @@ import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Data
 @AMRSchemaType
 @Accessors(chain = true)
-public class ModelParameter implements SupportAdditionalProperties {
+public class ModelParameter extends SupportAdditionalProperties implements Serializable {
+	@Serial
+	private static final long serialVersionUID = -8680842000646488249L;
+
 	private String id;
 
 	@TSOptional
