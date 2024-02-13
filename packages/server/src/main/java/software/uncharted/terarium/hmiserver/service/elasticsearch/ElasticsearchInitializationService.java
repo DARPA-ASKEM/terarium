@@ -119,7 +119,6 @@ public class ElasticsearchInitializationService {
 				config.getEquationIndex(),
 				config.getModelIndex(),
 				config.getModelConfigurationIndex(),
-				config.getNetCDFIndex(),
 				config.getNotebookSessionIndex(),
 				config.getSimulationIndex(),
 				config.getWorkflowIndex()
