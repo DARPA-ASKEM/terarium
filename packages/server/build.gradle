@@ -41,6 +41,9 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://artifacts.unidata.ucar.edu/repository/unidata-all/"
+    }
 }
 
 dependencies {
@@ -84,6 +87,8 @@ dependencies {
 
     implementation(platform("software.amazon.awssdk:bom:2.21.26"))
     implementation("software.amazon.awssdk:s3")
+
+    implementation "edu.ucar:cdm-core:5.5.3"
 
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
