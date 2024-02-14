@@ -4,7 +4,7 @@
 			<tera-slider-panel
 				content-width="240px"
 				direction="left"
-				header="Facets"
+				header="Filters"
 				v-model:is-open="isSliderFacetsOpen"
 			>
 				<template v-slot:content>
