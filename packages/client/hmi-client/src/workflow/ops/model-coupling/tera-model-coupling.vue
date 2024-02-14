@@ -5,7 +5,30 @@
 		</div>
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
-				<h4>Code Editor - Julia</h4>
+				<div class="notebook-toolbar">
+					<div class="toolbar-left-side">
+						<Dropdown
+							v-model="selectedLanguage"
+							optionLabel="name"
+							:options="languages"
+							outlined
+							placeholder="Language"
+							disabled
+						></Dropdown>
+					</div>
+					<div class="toolbar-right-side">
+						<Button
+							style="margin-right: auto"
+							icon="pi pi-play"
+							label="Run"
+							outlined
+							severity="secondary"
+							size="small"
+							@click="runCodeModelCoupling"
+						/>
+					</div>
+				</div>
+
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -13,11 +36,12 @@
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
+					:options="{ showPrintMargin: false }"
 				/>
-
+				<!-- 
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="runCodeModelCoupling" />
-				</template>
+					<Button style="margin-right: auto" icon="pi pi-play" label="Run" size="large" @click="runCodeModelCoupling" />
+				</template> -->
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
@@ -26,9 +50,9 @@
 					<div v-if="modelCouplingResult">
 						{{ modelCouplingResult }}
 					</div>
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
+					<div v-else class="empty-state-container">
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" class="empty-state-image" />
+						<p>No model provided</p>
 					</div>
 				</div>
 				<template #footer>
@@ -36,22 +60,25 @@
 						v-model="newModelName"
 						placeholder="model name"
 						type="text"
-						class="input-small"
+						class="input-small white-space-nowrap"
 					/>
-					<Button
-						:disabled="!modelCouplingResult"
-						outlined
-						style="margin-right: auto"
-						label="Save as new Model"
-						@click="
-							() =>
-								saveNewModel(newModelName, {
-									addToProject: true,
-									appendOutputPort: true
-								})
-						"
-					/>
-					<Button label="Close" @click="emit('close')" />
+					<div class="w-full flex gap-2 justify-content-end">
+						<Button
+							:disabled="!modelCouplingResult"
+							outlined
+							class="white-space-nowrap"
+							size="large"
+							label="Save as new model"
+							@click="
+								() =>
+									saveNewModel(newModelName, {
+										addToProject: true,
+										appendOutputPort: true
+									})
+							"
+						/>
+						<Button label="Close" size="large" @click="emit('close')" />
+					</div>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -73,6 +100,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import Dropdown from 'primevue/dropdown';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -247,6 +275,9 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const selectedLanguage = ref({ name: 'Julia' });
+const languages = ref([{ name: 'Julia' }, { name: 'Python' }]);
 </script>
 
 <style scoped>
@@ -257,5 +288,26 @@ watch(
 
 .input-small {
 	padding: 0.5rem;
+	width: 100%;
+}
+
+.empty-state-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 1rem;
+	min-height: calc(100vh - 18rem);
+}
+
+.empty-state-image {
+	height: 10rem;
+}
+
+.notebook-toolbar {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+	justify-content: space-between;
 }
 </style>

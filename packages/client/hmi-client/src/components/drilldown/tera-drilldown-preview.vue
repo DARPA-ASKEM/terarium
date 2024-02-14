@@ -76,6 +76,6 @@ main {
 	flex-grow: 1;
 	overflow-y: auto;
 	gap: 1.5rem;
-	padding: 1.5rem 1.5rem 1.5rem 1rem;
+	/* padding: 1.5rem 1.5rem 1.5rem 1rem; */
 }
 </style>

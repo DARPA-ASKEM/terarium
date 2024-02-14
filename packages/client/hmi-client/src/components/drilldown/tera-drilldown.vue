@@ -93,8 +93,8 @@ than the main application behind the modal when these render issues come, howeve
 
 main {
 	flex-grow: 1;
-	padding: var(--gap);
-	gap: var(--gap-small);
+	padding: 1rem 1.5rem 1rem 1.5rem;
+	gap: var(--gap);
 }
 
 main > :deep(*) {
