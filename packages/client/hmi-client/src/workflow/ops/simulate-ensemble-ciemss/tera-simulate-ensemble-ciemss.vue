@@ -534,8 +534,7 @@ td {
 	padding-left: 15px;
 }
 
-::v-deep .p-inputnumber-input,
-.p-inputwrapper {
+:deep(.p-inputnumber-input, .p-inputwrapper) {
 	width: 100%;
 }
 </style>
