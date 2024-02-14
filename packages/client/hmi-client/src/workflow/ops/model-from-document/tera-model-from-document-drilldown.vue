@@ -45,16 +45,13 @@
 											preview
 										/>
 									</template>
-									<template v-if="!equation.asset.extractionError">
-										<label>Interpreted As:</label>
-										<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false">
-										</tera-math-editor>
-										<InputText
-											v-model="equation.asset.text"
-											@update:model-value="emit('update-state', clonedState)"
-										/>
-									</template>
-									<span v-else>Could not extract LaTeX for image</span>
+									<label>Interpreted As:</label>
+									<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false" />
+									<InputText
+										v-model="equation.asset.text"
+										placeholder="Unable to automatically extract LaTeX from the image. Please manually input the expression."
+										@update:model-value="emit('update-state', clonedState)"
+									/>
 								</div>
 							</tera-asset-block>
 						</li>
@@ -64,14 +61,15 @@
 					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
 				</div>
 				<template #footer>
-					<span
-						><label>Model framework:</label
-						><Dropdown
+					<span>
+						<label>Model framework:</label>
+						<Dropdown
 							class="w-full md:w-14rem"
 							v-model="clonedState.modelFramework"
 							:options="modelFrameworks"
 							@change="onChangeModelFramework"
-					/></span>
+						/>
+					</span>
 					<span class="mr-auto">
 						<label>Service</label>
 						<Dropdown
@@ -79,7 +77,7 @@
 							v-model="clonedState.modelService"
 							:options="modelServices"
 							@change="emit('update-state', clonedState)"
-						></Dropdown>
+						/>
 					</span>
 				</template>
 			</tera-drilldown-section>
@@ -237,7 +235,7 @@ const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
-const goLLMCard = ref<any>(null);
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const formSteps = ref([
 	{
@@ -368,8 +366,8 @@ async function fetchModel() {
 			model.metadata.card = card.value;
 		}
 
-		if (!model.metadata?.gollm_card && goLLMCard.value) {
-			model.metadata.gollm_card = goLLMCard.value;
+		if (!model.metadata?.gollmCard && goLLMCard.value) {
+			model.metadata.gollmCard = goLLMCard.value;
 		}
 
 		model = await updateModel(model);
@@ -417,6 +415,7 @@ function removeEquation(index: number) {
 	emit('update-state', clonedState.value);
 }
 
+// generates the model card and fetches the model when finished
 async function generateCard(docId, modelId) {
 	if (!docId || !modelId) return;
 

@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.ingests.IElasticPass;
@@ -66,7 +67,7 @@ public class DocumentAddEmbeddingsPass
 	public List<Document> process(List<DocumentEmbedding> input) {
 		List<Document> output = new ArrayList<>();
 		List<Embedding> embeddings = new ArrayList<>();
-		String currentId = null;
+		UUID currentId = null;
 
 		for (DocumentEmbedding in : input) {
 			Embedding embedding = process(in);
@@ -74,18 +75,20 @@ public class DocumentAddEmbeddingsPass
 				continue;
 			}
 
+			UUID uuid = UUID.fromString(in.getId());
+
 			if (currentId == null) {
 				// create a new partial
-				currentId = in.getId();
-			} else if (!currentId.equals(in.getId())) {
+				currentId = uuid;
+			} else if (!currentId.equals(uuid)) {
 				// embedding references a new doc, add existing partial to output, create next
 				// one
 				Document doc = new Document();
-				doc.setId(in.getId());
+				doc.setId(uuid);
 				doc.setEmbeddings(embeddings);
 				output.add(doc);
 
-				currentId = in.getId();
+				currentId = uuid;
 				embeddings = new ArrayList<>();
 			}
 

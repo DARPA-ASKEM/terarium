@@ -112,6 +112,17 @@
 				</Button>
 			</AccordionTab>
 		</Accordion>
+		<!-- This is the upload button, fixed at the bottom of the panel -->
+		<div class="fixed-upload-button">
+			<Button
+				label="Upload resources"
+				size="small"
+				icon="pi pi-cloud-upload"
+				severity="primary"
+				class="w-full"
+				@click="isUploadResourcesModalVisible = true"
+			/>
+		</div>
 
 		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
 			<Skeleton v-for="i in 10" :key="i" width="85%" />
@@ -130,7 +141,8 @@
 				<template #default>
 					<p>
 						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						{{ useProjects().activeProject.value?.name }}.
+						<em>{{ useProjects().activeProject.value?.name }}</em
+						>.
 					</p>
 				</template>
 				<template #footer>
@@ -140,6 +152,10 @@
 			</tera-modal>
 		</Teleport>
 	</nav>
+	<tera-upload-resources-modal
+		:visible="isUploadResourcesModalVisible"
+		@close="isUploadResourcesModalVisible = false"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -160,6 +176,7 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
+import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -219,14 +236,14 @@ const optionsMenuItems = ref([
 	},
 	{
 		key: AssetType.Model,
-		label: 'New Model',
+		label: 'New model',
 		command() {
 			emit('open-new-asset', AssetType.Model);
 		}
 	},
 	{
 		key: AssetType.Workflow,
-		label: 'New Workflow',
+		label: 'New workflow',
 		command() {
 			emit('open-new-asset', AssetType.Workflow);
 		}
@@ -236,6 +253,8 @@ const optionsMenuItems = ref([
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
+
+const isUploadResourcesModalVisible = ref(false);
 </script>
 
 <style scoped>
@@ -307,24 +326,33 @@ header {
 	border-radius: var(--border-radius);
 }
 
-::v-deep(.p-accordion .p-accordion-content) {
+.fixed-upload-button {
+	position: fixed;
+	bottom: 3rem;
+	left: 0;
+	z-index: 10;
+	width: 240px;
+	white-space: nowrap;
+	padding: 0rem 1rem 1rem;
+}
+:deep(.p-accordion .p-accordion-content) {
 	display: flex;
 	flex-direction: column;
 	padding: 0 0 1rem;
 }
 
-::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
 	font-size: var(--font-body-small);
 	padding: 0.5rem 1rem;
 }
 
-::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
+:deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	margin-left: 0.25rem;
 }
 
-::v-deep(.asset-button.p-button) {
+:deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
@@ -332,14 +360,14 @@ header {
 	/* Remove the border-radius to end nitely with the border of the sidebar */
 }
 
-::v-deep(.asset-button.p-button > span) {
+:deep(.asset-button.p-button > span) {
 	display: inline-flex;
 	width: 100%;
 	padding: 0.375rem 1rem;
 	overflow: hidden;
 }
 
-::v-deep(.asset-button.p-button[active='true']) {
+:deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
 
 	&::after {
@@ -350,7 +378,7 @@ header {
 	}
 }
 
-::v-deep(.asset-button.p-button .p-button-label) {
+:deep(.asset-button.p-button .p-button-label) {
 	overflow: hidden;
 	text-align: left;
 	text-overflow: ellipsis;

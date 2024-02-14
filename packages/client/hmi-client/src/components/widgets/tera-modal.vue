@@ -86,7 +86,7 @@ main > section {
 	margin: 0px auto;
 	padding: 2rem 0;
 	transition: all 0.15s ease;
-	width: 65vw;
+	/* width: 65vw; */
 	z-index: 2;
 	top: 50%;
 	left: 50%;
