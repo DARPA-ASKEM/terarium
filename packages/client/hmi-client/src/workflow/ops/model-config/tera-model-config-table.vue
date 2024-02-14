@@ -16,7 +16,9 @@
 					text
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					icon="pi pi-table"
+					label="Matrix"
 					@click="openMatrixModal(slotProps.data)"
+					class="p-0"
 				/>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
 				<Dropdown
@@ -32,7 +34,12 @@
 		</Column>
 		<Column field="value" header="Value" style="width: 15%">
 			<template #body="slotProps">
-				<span v-if="slotProps.data.type === ParamType.MATRIX">Matrix</span>
+				<span
+					v-if="slotProps.data.type === ParamType.MATRIX"
+					@click="openMatrixModal(slotProps.data)"
+					class="cursor-pointer"
+					>Click to view</span
+				>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
 					<InputText
 						size="small"
