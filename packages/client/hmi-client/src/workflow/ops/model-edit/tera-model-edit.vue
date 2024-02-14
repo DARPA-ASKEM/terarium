@@ -5,7 +5,8 @@
 				v-if="amr && isKernelReady"
 				:model="amr"
 				:kernel-manager="kernelManager"
-				@output-code="(data: any) => appendCode(data, 'executed_code', true)"
+				@output-code="(data: any) => appendCode(data, 'executed_code')"
+				@sync-with-mira-model="syncWithMiraModel"
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
@@ -39,12 +40,7 @@
 				:options="outputs"
 				is-selectable
 			>
-				<tera-model-diagram
-					v-if="amr"
-					ref="teraModelDiagramRef"
-					:model="amr"
-					:is-editable="false"
-				/>
+				<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 				<div v-else>
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					<h4>No Model Provided</h4>
@@ -134,7 +130,6 @@ const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
 const modelId = props.node.inputs[0].value?.[0];
-const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentOptions = [
@@ -153,9 +148,12 @@ const codeText = ref(
 	'# This environment contains the variable "model" \n# which is displayed on the right'
 );
 
-const appendCode = (data: any, property: string, runUpdatedCode = false) => {
+const appendCode = (data: any, property: string) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
-	if (runUpdatedCode) runFromCodeWrapper();
+};
+
+const syncWithMiraModel = (data: any) => {
+	amr.value = data.content['application/json'];
 };
 
 // Reset model, then execute the code
@@ -199,7 +197,7 @@ const runFromCode = () => {
 		.register('model_preview', (data) => {
 			if (!data.content) return;
 
-			handleModelPreview(data);
+			syncWithMiraModel(data);
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
@@ -213,7 +211,7 @@ const resetModel = () => {
 	kernelManager
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
-		.register('model_preview', handleModelPreview);
+		.register('model_preview', syncWithMiraModel);
 };
 
 const handleResetResponse = (data: any) => {
@@ -227,10 +225,6 @@ const handleResetResponse = (data: any) => {
 	} else {
 		logger.error('Error resetting model');
 	}
-};
-
-const handleModelPreview = (data: any) => {
-	amr.value = data.content['application/json'];
 };
 
 const buildJupyterContext = () => {
