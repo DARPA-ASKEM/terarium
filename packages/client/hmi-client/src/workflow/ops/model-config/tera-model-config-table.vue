@@ -37,7 +37,7 @@
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
-					class="cursor-pointer"
+					class="cursor-pointer secondary-text"
 					>Click to view</span
 				>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
@@ -292,5 +292,9 @@ const updateExpression = async (value: Initial) => {
 .timeseries-container {
 	display: flex;
 	flex-direction: column;
+}
+
+.secondary-text {
+	color: var(--text-color-subdued);
 }
 </style>
