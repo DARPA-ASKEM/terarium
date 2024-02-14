@@ -47,11 +47,12 @@
 			</div>
 			<div class="code-blocks-container">
 				<div>
-					<h2>Code Blocks</h2>
-					<p>Identify the code blocks that represent the core dynamics of your model.</p>
+					<h6 class="mb-2">Code blocks</h6>
+					<p>Select the code blocks that represent the core dynamics of your model.</p>
 					<Button
 						:disabled="selectionRange === null"
 						text
+						size="small"
 						icon="pi pi-plus"
 						label="Add a code block"
 						@click="isDynamicsModalVisible = true"
@@ -93,19 +94,24 @@
 				@modal-enter-press="isDynamicsModalVisible = false"
 			>
 				<template #header>
-					<h4>Add dynamics</h4>
+					<h4>Save this code block</h4>
+					<p>
+						Enter a name for the code block you are saving. Choose a name that reflects its purpose
+						or functionality within the model.
+					</p>
 				</template>
 				<template #default>
 					<form @submit.prevent>
-						<label for="model-name">Dynamics name</label>
+						<label class="text-sm mb-1" for="model-name">Name</label>
 						<InputText id="model-name" type="text" v-model="newDynamicsName" />
-						<label for="model-description">Enter a description (optional)</label>
+						<label class="text-sm mb-1" for="model-description">Description (optional)</label>
 						<Textarea v-model="newDynamicsDescription" />
 					</form>
 				</template>
 				<template #footer>
 					<Button
-						label="Add dynamics"
+						label="Save"
+						size="large"
 						@click="
 							() => {
 								isDynamicsModalVisible = false;
@@ -116,6 +122,7 @@
 					<Button
 						label="Cancel"
 						severity="secondary"
+						size="large"
 						outlined
 						@click="isDynamicsModalVisible = false"
 					/>
@@ -588,7 +595,7 @@ h4 {
 	max-width: 100%;
 }
 .code-blocks-container {
-	padding: 2rem;
+	padding: 1rem;
 	max-width: 300px;
 	height: 100%;
 	display: flex;
