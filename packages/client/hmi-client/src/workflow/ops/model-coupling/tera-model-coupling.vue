@@ -129,7 +129,7 @@ decapode = apex(ice_dynamics_cospan)
 
 const buildJupyterContext = () => ({
 	context: 'decapodes',
-	language: 'julia-1.9',
+	language: 'julia-1.10',
 	context_info: modelMap.value
 });
 
