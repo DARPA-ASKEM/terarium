@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.ingests.IElasticPass;
@@ -17,10 +18,16 @@ import software.uncharted.terarium.esingest.models.output.model.Model;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 
 @Slf4j
-public class ModelInsertEmbeddingsPass
+public class ModelAddEmbeddingsPass
 		implements IElasticPass<ModelEmbedding, Model> {
 
 	final String EMBEDDING_PATH = "embeddings";
+
+	ConcurrentMap<String, UUID> uuidLookup;
+
+	ModelAddEmbeddingsPass(ConcurrentMap<String, UUID> uuidLookup) {
+		this.uuidLookup = uuidLookup;
+	}
 
 	public void setup(final ElasticIngestParams params) {
 	}
@@ -41,9 +48,17 @@ public class ModelInsertEmbeddingsPass
 	public List<Model> process(List<ModelEmbedding> input) {
 		List<Model> res = new ArrayList<>();
 		for (ModelEmbedding in : input) {
+
+			if (!uuidLookup.containsKey(in.getId())) {
+				// no embedding for this model
+				continue;
+			}
+
+			UUID uuid = uuidLookup.get(in.getId());
+
 			Model doc = new Model();
-			doc.setId(in.getId());
-			doc.setModelCard(in.getModelCard().toString());
+			doc.setId(uuid);
+			doc.getMetadata().setModelCard(in.getModelCard().toString());
 
 			Embedding embedding = new Embedding();
 			embedding.setEmbeddingId(UUID.randomUUID().toString());

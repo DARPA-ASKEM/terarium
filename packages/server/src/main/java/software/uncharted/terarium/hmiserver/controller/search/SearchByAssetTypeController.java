@@ -32,6 +32,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -53,9 +54,8 @@ public class SearchByAssetTypeController {
 	private RMapCache<byte[], List<Float>> queryVectorCache;
 
 	static final private long CACHE_TTL_SECONDS = 60 * 60 * 2; // 2 hours
-	static final private long REQUEST_TIMEOUT_SECONDS = 10;
+	static final private long REQUEST_TIMEOUT_SECONDS = 30;
 	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
-	static final private String SEARCHABLE_INDEX_PREFIX = "searchable_";
 	static final private String REDIS_EMBEDDING_CACHE_KEY = "knn-vector-cache";
 
 	@Data
@@ -85,7 +85,7 @@ public class SearchByAssetTypeController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
 	})
 	public ResponseEntity<List<JsonNode>> searchByAssetType(
-			@PathVariable("asset-type") final String assetType,
+			@PathVariable("asset-type") final AssetType assetType,
 			@RequestParam(value = "text", required = true) final String text,
 			@RequestParam(value = "k", defaultValue = "10") final int k,
 			@RequestParam(value = "num-results", defaultValue = "100") final int numResults,
@@ -96,11 +96,12 @@ public class SearchByAssetTypeController {
 		try {
 
 			if (index.equals("")) {
-				index = esConfig.getIndex(SEARCHABLE_INDEX_PREFIX + assetType);
-				if (!esService.containsIndex(index)) {
-					log.error("Unsupported asset type: {}, index does not exist", assetType);
-					return ResponseEntity.badRequest().build();
-				}
+				index = esConfig.getIndex(assetType.toString().toLowerCase());
+			}
+
+			if (!esService.containsIndex(index)) {
+				log.error("Unsupported asset type: {}, index {} does not exist", assetType, index);
+				return ResponseEntity.badRequest().build();
 			}
 
 			if (k > numCandidates) {

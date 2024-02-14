@@ -100,5 +100,4 @@ terarium.esingest.ingestParams[0].inputDir=/path/to/source/dir
 terarium.esingest.ingestParams[0].topics=some,topics,to,add,to,each,doc
 terarium.esingest.ingestParams[0].outputIndexRoot=example
 terarium.esingest.ingestParams[0].ingestClass=software.uncharted.terarium.esingest.ingests.ExampleIngest
-terarium.esingest.ingestParams[0].clearBeforeIngest=true
 ```
