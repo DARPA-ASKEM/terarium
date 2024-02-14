@@ -72,12 +72,14 @@
 						outlined
 						size="large"
 						@click="onCancelChanges"
+						class="w-7 mb-0"
 					/>
 					<Button
 						:loading="savingAsset"
 						:disabled="isEqual(codeAsset, codeAssetCopy)"
 						label="Apply changes"
 						size="large"
+						class="w-full white-space-nowrap mb-0"
 						@click="onSaveChanges"
 					/>
 				</div>
@@ -606,7 +608,8 @@ h4 {
 }
 .code-blocks-buttons-container {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
+	gap: 0.5rem;
 }
 
 .code-blocks-buttons-container > * {
