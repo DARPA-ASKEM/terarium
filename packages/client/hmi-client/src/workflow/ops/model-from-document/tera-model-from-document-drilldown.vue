@@ -1,5 +1,16 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-action-row>
+			<label class="ml-auto">Output</label>
+			<tera-output-dropdown
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:is-loading="assetLoading"
+				is-selectable
+			/>
+		</template>
 		<div>
 			<tera-drilldown-section :is-loading="assetLoading">
 				<Steps
@@ -53,7 +64,7 @@
 					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
 				</div>
 				<template #footer>
-					<span style="margin-right: auto"
+					<span
 						><label>Model framework:</label
 						><Dropdown
 							class="w-full md:w-14rem"
@@ -61,27 +72,29 @@
 							:options="modelFrameworks"
 							@change="onChangeModelFramework"
 					/></span>
-					<Button
-						label="Run"
-						@click="onRun"
-						:diabled="assetLoading"
-						:loading="loadingModel"
-						outlined
-					></Button>
+					<span class="mr-auto">
+						<label>Service</label>
+						<Dropdown
+							size="small"
+							v-model="clonedState.modelService"
+							:options="modelServices"
+							@change="emit('update-state', clonedState)"
+						></Dropdown>
+					</span>
 				</template>
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:is-loading="loadingModel"
-				is-selectable
-			>
+			<tera-drilldown-preview>
 				<section v-if="selectedModel">
-					<tera-model-card :model="selectedModel" />
+					<!--FIXME: currently not parsing the goLLM card so just printing its JSON for now-->
+					<ul v-if="goLLMCard">
+						<li v-for="(key, index) in Object.keys(goLLMCard)" :key="index">
+							<h3>{{ key }}</h3>
+							<p>{{ goLLMCard[key] }}</p>
+						</li>
+					</ul>
+					<tera-model-card v-else :model="selectedModel" />
 					<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
 					<tera-model-semantic-tables :model="selectedModel" readonly />
 				</section>
@@ -92,14 +105,20 @@
 				/>
 				<template #footer>
 					<Button
-						style="margin-right: auto"
+						class="mr-auto"
 						label="Save as new model"
 						:disabled="!selectedModel"
 						outlined
 						:loading="savingAsset"
 						@click="isNewModelModalVisible = true"
 					></Button>
-					<Button label="Close" @click="emit('close')"></Button>
+					<Button label="Close" @click="emit('close')" outlined></Button>
+					<Button
+						label="Run"
+						@click="onRun"
+						:diabled="assetLoading"
+						:loading="loadingModel"
+					></Button>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -128,7 +147,7 @@ import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
-import { getModel, profile, updateModel } from '@/services/model';
+import { generateModelCard, getModel, updateModel } from '@/services/model';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -139,6 +158,8 @@ import Steps from 'primevue/steps';
 import Textarea from 'primevue/textarea';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
+import { ModelServiceType } from '@/types/common';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -200,21 +221,23 @@ const outputs = computed(() => {
 	return groupedOutputs;
 });
 
-const selectedOutputId = ref<string>();
+const selectedOutputId = ref<string>('');
 
 const modelFrameworks = Object.values(ModelFramework);
-
+const modelServices = Object.values(ModelServiceType);
 const clonedState = ref<ModelFromDocumentState>({
 	equations: [],
 	text: '',
 	modelFramework: ModelFramework.Petrinet,
-	modelId: null
+	modelId: null,
+	modelService: ModelServiceType.TA1
 });
 const document = ref<DocumentAsset | null>();
 const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const formSteps = ref([
 	{
@@ -235,7 +258,7 @@ onMounted(async () => {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
-	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
+	const documentId = props.node.inputs?.[1]?.value?.[0];
 	const equations: AssetBlock<DocumentExtraction>[] =
 		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
 	assetLoading.value = true;
@@ -252,28 +275,24 @@ onMounted(async () => {
 			return !foundEquation;
 		});
 
-		if (isEmpty(nonRunEquations)) {
-			assetLoading.value = false;
-			return;
-		}
-		const promises = nonRunEquations?.map(async (e) => {
-			const equationText = await getEquationFromImageUrl(documentId, e.asset.fileName);
-			const equationBlock: EquationFromImageBlock = {
-				...e.asset,
-				text: equationText ?? '',
-				extractionError: !equationText
-			};
+		const equationsDocumentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
+		const promises =
+			nonRunEquations?.map(async (e) => {
+				const equationText = await getEquationFromImageUrl(equationsDocumentId, e.asset.fileName);
+				const equationBlock: EquationFromImageBlock = {
+					...e.asset,
+					text: equationText ?? '',
+					extractionError: !equationText
+				};
 
-			const assetBlock: AssetBlock<EquationFromImageBlock> = {
-				name: e.name,
-				includeInProcess: e.includeInProcess,
-				asset: equationBlock
-			};
+				const assetBlock: AssetBlock<EquationFromImageBlock> = {
+					name: e.name,
+					includeInProcess: e.includeInProcess,
+					asset: equationBlock
+				};
 
-			return assetBlock;
-		});
-
-		if (!promises) return;
+				return assetBlock;
+			}) ?? [];
 
 		const newEquations = await Promise.all(promises);
 
@@ -316,10 +335,7 @@ async function onRun() {
 
 	if (!modelId) return;
 
-	if (document.value?.id && !card.value) {
-		const profiledModel = await profile(modelId, document.value.id);
-		if (profiledModel?.metadata?.card) card.value = profiledModel?.metadata?.card ?? null;
-	}
+	generateCard(document.value?.id, modelId);
 
 	clonedState.value.modelId = modelId;
 	emit('append-output-port', {
@@ -342,12 +358,20 @@ async function fetchModel() {
 	}
 	loadingModel.value = true;
 	let model = await getModel(clonedState.value.modelId);
-	if (model && !model.metadata?.card && card.value) {
+
+	if (model) {
 		if (!model.metadata) {
 			model.metadata = {};
 		}
 
-		model.metadata.card = card.value;
+		if (!model.metadata?.card && card.value) {
+			model.metadata.card = card.value;
+		}
+
+		if (!model.metadata?.gollmCard && goLLMCard.value) {
+			model.metadata.gollmCard = goLLMCard.value;
+		}
+
 		model = await updateModel(model);
 	}
 	card.value = model?.metadata?.card ?? null;
@@ -391,6 +415,22 @@ function addEquation() {
 function removeEquation(index: number) {
 	clonedState.value.equations.splice(index, 1);
 	emit('update-state', clonedState.value);
+}
+
+// generates the model card and fetches the model when finished
+async function generateCard(docId, modelId) {
+	if (!docId || !modelId) return;
+
+	if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
+		return;
+	}
+
+	if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
+		return;
+	}
+
+	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	fetchModel();
 }
 
 watch(

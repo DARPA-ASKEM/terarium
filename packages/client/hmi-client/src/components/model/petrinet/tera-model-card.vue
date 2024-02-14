@@ -51,6 +51,7 @@
 import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
 import { Model } from '@/types/Types';
 import { computed } from 'vue';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 
 const props = defineProps<{
 	model: Model;

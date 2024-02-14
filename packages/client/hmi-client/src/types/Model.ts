@@ -1,23 +1,6 @@
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
 import { Filters } from './Filter';
 
-export type ITypedModel<T> = {
-	id: string | number;
-	name: string;
-	description: string;
-
-	concept: string;
-	timestamp: string | Date;
-	/* parameters: { [key: string]: string }; */
-	parameters: any; // FIXME
-	content: T;
-
-	type: string;
-};
-
-// Generic Model
-export type Model = ITypedModel<any>;
-
 export type ModelSearchParams = {
 	filters?: Filters;
 	related_search_id?: string;

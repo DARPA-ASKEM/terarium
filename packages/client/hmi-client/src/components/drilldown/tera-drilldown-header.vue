@@ -3,9 +3,7 @@
 		<div class="title-row">
 			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
 
-			<a v-if="views.length <= 1" :href="documentationUrl" rel="noopener noreferrer"
-				>Documentation</a
-			>
+			<a :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
 			<Button
 				class="close-mask"
 				icon="pi pi-times"
@@ -16,12 +14,16 @@
 			/>
 		</div>
 		<div class="tabs-row">
-			<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
+			<TabView
+				v-if="views.length > 1"
+				:active-index="activeIndex"
+				@tab-change="onTabChange"
+				class="mr-auto"
+			>
 				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 			</TabView>
-			<a v-if="views.length > 1" :href="documentationUrl" rel="noopener noreferrer"
-				>Documentation</a
-			>
+
+			<slot name="action-row" />
 		</div>
 	</header>
 </template>
@@ -58,7 +60,6 @@ header {
 header > * {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 }
 
 .title-row > h4 > i {

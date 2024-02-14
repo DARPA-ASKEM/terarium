@@ -7,8 +7,9 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
+import java.io.Serial;
 import java.util.Map;
 
 /**
@@ -21,6 +22,8 @@ import java.util.Map;
 public class Equation extends TerariumAsset {
 
 
+	@Serial
+	private static final long serialVersionUID = -5769056715284691520L;
 	/** The userId of the user that created the equation **/
 	@TSOptional
 	private String userId;

@@ -15,5 +15,4 @@ public class AddDocumentAssetFromXDDRequest {
 	private Document document;
 
 	private UUID projectId;
-
 }

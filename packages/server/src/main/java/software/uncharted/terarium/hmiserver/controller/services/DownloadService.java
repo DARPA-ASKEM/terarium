@@ -55,7 +55,7 @@ public class DownloadService {
 
 		// for pdf version 1.3
 		// check if data ends with %%EOF
-		if (data[5] == 0x31 && data[6] == 0x2E && data[7] == 0x33) {
+		if (data[4] == 0x31 && data[5] == 0x2E && data[6] == 0x33) {
 			return data[data.length - 7] == 0x25 &&
 				data[data.length - 6] == 0x25 &&
 				data[data.length - 5] == 0x45 &&
@@ -67,7 +67,7 @@ public class DownloadService {
 
 		// for pdf version 1.4
 		// check if data ends with %%EOF
-		else if (data[5] == 0x31 && data[6] == 0x2E && data[7] == 0x34) {
+		else if (data[4] == 0x31 && data[5] == 0x2E && data[6] == 0x34) {
 			return data[data.length - 6] == 0x25 &&
 				data[data.length - 5] == 0x25 &&
 				data[data.length - 4] == 0x45 &&

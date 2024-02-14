@@ -22,6 +22,15 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface TerariumAsset {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    temporary?: boolean;
+    publicAsset?: boolean;
+}
+
 export interface User {
     id: string;
     createdAtMs: number;
@@ -101,15 +110,6 @@ export interface ResponseSuccess {
     success: boolean;
 }
 
-export interface TerariumAsset {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    temporary?: boolean;
-    publicAsset?: boolean;
-}
-
 export interface Code extends TerariumAsset {
     name: string;
     description: string;
@@ -134,7 +134,11 @@ export interface ActiveConcept extends TerariumAsset {
     name: string;
 }
 
-export interface OntologyConcept extends TerariumAsset {
+export interface OntologyConcept {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
     curie: string;
     type: TaggableType;
     objectId: string;
@@ -210,7 +214,7 @@ export interface ExternalPublication extends TerariumAsset {
     xdd_uri: string;
 }
 
-export interface Model extends TerariumAsset {
+export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     header: ModelHeader;
     userId?: string;
     model: { [index: string]: any };
@@ -219,7 +223,7 @@ export interface Model extends TerariumAsset {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration extends TerariumAsset {
+export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     description?: string;
     configuration: any;
@@ -233,7 +237,7 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAsset {
+export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     version: string;
     semantics: string;
@@ -253,27 +257,6 @@ export interface Transition {
     output: string[];
     grounding?: ModelGrounding;
     properties?: Properties;
-}
-
-export interface TypeSystem {
-    states: State[];
-    transitions: Transition[];
-}
-
-export interface TypeSystemExtended {
-    name: string;
-    description: string;
-    schema: string;
-    model_version: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
-}
-
-export interface TypingSemantics {
-    map: string[][];
-    system: any;
 }
 
 export interface Configuration {
@@ -911,7 +894,7 @@ export interface ModelHeader {
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
-    typing?: TypingSemantics;
+    typing?: any;
 }
 
 export interface ModelMetadata {
@@ -923,7 +906,10 @@ export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
-    gollm_card?: any;
+    gollmCard?: any;
+}
+
+export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 }
 
 export interface ModelGrounding {

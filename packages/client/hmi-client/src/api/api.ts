@@ -1,7 +1,14 @@
 import { ToastSummaries } from '@/services/toast';
 import { logger } from '@/utils/logger';
 import axios, { AxiosHeaders } from 'axios';
+import {
+	EventSourceMessage,
+	FetchEventSourceInit,
+	fetchEventSource
+} from '@microsoft/fetch-event-source';
 import useAuthStore from '../stores/auth';
+
+export class FatalError extends Error {}
 
 const API = axios.create({
 	baseURL: '/api',
@@ -178,6 +185,106 @@ export class Poller<T> {
 	// Not really a fluent API, but convienent
 	stop() {
 		this.keepGoing = false;
+	}
+}
+
+/**
+ * Interface defining handlers for Server-Sent Events (SSE).
+ */
+export interface TaskEventHandlers {
+	/**
+	 * Handler for incoming SSE data.
+	 * @param {any} data The received data.
+	 */
+	ondata: (data: any, closeConnection: () => void) => void;
+	/**
+	 * Handler for SSE connection open event.
+	 * @param {Response} response The response object.
+	 */
+	onopen?: (response: Response) => void;
+	/**
+	 * Handler for SSE connection error.
+	 * @param {Error} error The error object.
+	 */
+	onerror?: (error: Error) => void;
+	/**
+	 * Handler for SSE connection close event.
+	 */
+	onclose?: () => void;
+}
+
+/**
+ * Class representing a Server-Sent Events (SSE) handler.
+ */
+export class TaskHandler {
+	private url: string;
+
+	private handlers: TaskEventHandlers;
+
+	private options?: FetchEventSourceInit;
+
+	private controller: AbortController;
+
+	/**
+	 * Create a TaskHandler.
+	 * @param {string} url - The URL to connect to.
+	 * @param {TaskHandlers} handlers - The handlers for the SSE events.
+	 * @param {FetchEventSourceInit} options - The options for the fetchEventSource function.
+	 */
+	constructor(url: string, handlers: TaskEventHandlers, options?: FetchEventSourceInit) {
+		this.url = url;
+		this.handlers = handlers;
+		this.options = options;
+		this.controller = new AbortController();
+	}
+
+	/**
+	 * Close the SSE connection.
+	 */
+	public closeConnection() {
+		this.controller.abort();
+		if (this.handlers.onclose) this.handlers.onclose();
+		logger.info('Connection closed', { showToast: false });
+	}
+
+	/**
+	 * Start the task.
+	 */
+	async start(): Promise<void> {
+		const handlers = this.handlers;
+		const authStore = useAuthStore();
+		const fetchEventSourceOptions: FetchEventSourceInit = {
+			...this.options,
+			headers: {
+				...this.options?.headers,
+				Authorization: `Bearer ${authStore.token}`
+			},
+			onmessage: (message: EventSourceMessage) => {
+				const data = message?.data;
+				const parsedData = JSON.parse(data);
+				const closeConnection = this.closeConnection.bind(this);
+				this.handlers.ondata(parsedData, closeConnection);
+			},
+			onerror: (error: Error) => {
+				if (this.handlers.onerror) this.handlers.onerror(error);
+				if (error instanceof FatalError) {
+					// closes the connection on fatal error otherwise it will keep retrying
+					throw error;
+				}
+			},
+			async onopen(response: Response) {
+				logger.info('Connection opened', { showToast: false });
+				if (handlers.onopen) handlers.onopen(response);
+			},
+			signal: this.controller.signal,
+			openWhenHidden: true
+		};
+
+		try {
+			await fetchEventSource(API.defaults.baseURL + this.url, fetchEventSourceOptions);
+		} catch (error: unknown) {
+			logger.error(error);
+		}
 	}
 }
 

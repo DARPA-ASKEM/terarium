@@ -20,13 +20,13 @@
         ],
         "transitions": [
             {
-                "id": "NaturalDegradation",
+                "id": "Natural degradation",
                 "input": [
                     "A"
                 ],
                 "output": [],
                 "properties": {
-                    "name": "NaturalDegradation"
+                    "name": "Natural degradation"
                 }
             }
         ]
@@ -35,7 +35,7 @@
         "ode": {
             "rates": [
                 {
-                    "target": "NaturalDegradation",
+                    "target": "Natural degradation",
                     "expression": "A*p",
                     "expression_mathml": "<apply><times/><ci>A</ci><ci>p</ci></apply>"
                 }
