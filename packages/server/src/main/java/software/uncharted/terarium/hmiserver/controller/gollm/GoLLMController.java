@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -25,6 +26,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.TaskResponseHandler;
 import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -39,8 +41,10 @@ public class GoLLMController {
 	final private ObjectMapper objectMapper;
 	final private TaskService taskService;
 	final private DocumentAssetService documentAssetService;
+	final private ModelService modelService;
 
 	final private String MODEL_CARD_SCRIPT = "gollm:model_card";
+	final private String CONFIGURE_MODEL_SCRIPT = "gollm:configure_model";
 
 	@Data
 	private static class ModelCardInput {
@@ -58,9 +62,28 @@ public class GoLLMController {
 		UUID documentId;
 	}
 
+	@Data
+	private static class ConfigureModelInput {
+		@JsonProperty("research_paper")
+		String researchPaper;
+		@JsonProperty("amr")
+		Model amr;
+	}
+
+	@Data
+	private static class ConfigureModelResponse {
+		JsonNode response;
+	}
+
+	@Data
+	private static class ConfigureModelProperties {
+		JsonNode resp;
+	}
+
     @PostConstruct
 	void init() {
 		taskService.addResponseHandler(MODEL_CARD_SCRIPT, getModelCardResponseHandler());
+		taskService.addResponseHandler(CONFIGURE_MODEL_SCRIPT, configureModelResponseHandler());
 	}
 
 	private TaskResponseHandler getModelCardResponseHandler() {
@@ -87,6 +110,24 @@ public class GoLLMController {
 		handler.onRunning((TaskResponse resp) -> {
 			log.info(resp.toString());
 		});
+		return handler;
+	}
+
+	private TaskResponseHandler configureModelResponseHandler() {
+		final TaskResponseHandler handler = new TaskResponseHandler();
+		handler.onSuccess((TaskResponse resp) -> {
+			try {
+				log.info(resp.toString());
+				final String serializedString = objectMapper.writeValueAsString(resp);
+				log.info(serializedString);
+				final ConfigureModelProperties props = objectMapper.readValue(serializedString, ConfigureModelProperties.class);
+				log.info(props.toString());
+			} catch (final IOException e) {
+				log.error("Failed to configure model", e);
+			}
+			log.info("Model configured successfully");
+		});
+
 		return handler;
 	}
 
@@ -131,6 +172,65 @@ public class GoLLMController {
 
 			final ModelCardProperties props = new ModelCardProperties();
 			props.setDocumentId(documentId);
+			req.setAdditionalProperties(props);
+
+			// send the request
+			taskService.sendTaskRequest(req);
+
+			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
+			return ResponseEntity.ok().body(resp);
+
+		} catch (final Exception e) {
+			final String error = "Unable to dispatch task request";
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@GetMapping("/configure-model")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Configure Model` task")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
+	public ResponseEntity<TaskResponse> createConfigureModelTask(
+			@RequestParam(name = "model-id", required = true) final UUID modelId,
+			@RequestParam(name = "document-id", required = true) final UUID documentId){
+
+		try {
+
+			// Grab the document
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
+			if (document.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			// make sure there is text in the document
+			if (document.get().getText() == null || document.get().getText().isEmpty()) {
+				log.warn("Document {} has no text to send", documentId);
+				return ResponseEntity.badRequest().build();
+			}
+
+			// Grab the model
+			final Optional<Model> model = modelService.getAsset(modelId);
+			if (model.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			final ConfigureModelInput input = new ConfigureModelInput();
+			input.setResearchPaper(document.get().getText());
+			input.setAmr(model.get());
+
+			// Create the task
+			final TaskRequest req = new TaskRequest();
+			req.setId(java.util.UUID.randomUUID());
+			req.setScript(CONFIGURE_MODEL_SCRIPT);
+			req.setInput(objectMapper.writeValueAsBytes(input));
+
+			final ConfigureModelProperties props = new ConfigureModelProperties();
 			req.setAdditionalProperties(props);
 
 			// send the request
