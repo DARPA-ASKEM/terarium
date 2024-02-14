@@ -317,7 +317,7 @@ function buildJupyterContext() {
 	const contextName =
 		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
 	const languageName =
-		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
+		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.10' : null;
 
 	return {
 		context: contextName,

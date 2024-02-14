@@ -11,11 +11,46 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 
 @Configuration
-@ConfigurationProperties(prefix = "terarium.esingest")
+@ConfigurationProperties(prefix = "terarium")
 @Data
 @Accessors(chain = true)
 @NoArgsConstructor
 public class Config {
 
+	/**
+	 * Ingests configured for the app.
+	 */
 	List<ElasticIngestParams> ingestParams;
+
+	/**
+	 * Amazon configuration
+	 */
+	Amazon amazon;
+
+	/*
+	 * S3 Storage related config
+	 */
+	String fileStorageS3BucketName;
+
+	@Data
+	@Accessors(chain = true)
+	public static class AmazonCredentials {
+		String accessKey;
+		String secretKey;
+	}
+
+	@Data
+	@Accessors(chain = true)
+	public static class AmazonS3 {
+		String region;
+		String url;
+		String credentialsId;
+	}
+
+	@Data
+	@Accessors(chain = true)
+	public static class Amazon {
+		AmazonCredentials credential;
+		AmazonS3 s3;
+	}
 }
