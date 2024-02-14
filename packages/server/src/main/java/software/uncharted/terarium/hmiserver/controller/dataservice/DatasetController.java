@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableList;
 import com.google.common.math.Quantiles;
 import com.google.common.math.Stats;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,9 +36,14 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
+import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import ucar.ma2.Array;
+import ucar.nc2.Attribute;
+import ucar.nc2.NetcdfFile;
+import ucar.nc2.NetcdfFiles;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -54,6 +61,7 @@ public class DatasetController {
 	private static final int DEFAULT_CSV_LIMIT = 100;
 
 	final DatasetService datasetService;
+	final ClimateDataProxy climateDataProxy;
 
 	final JsDelivrProxy githubProxy;
 
@@ -553,6 +561,46 @@ public class DatasetController {
 		} catch (final Exception e) {
 			// Cannot convert column to double, just return empty list.
 			return new CsvColumnStats(bins, 0, 0, 0, 0, 0);
+		}
+	}
+
+	@GetMapping("/{id}/preview")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a preview of the data asset")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Dataset preview.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
+		@ApiResponse(responseCode = "404", description = "Dataset could not be found to create a preview for", content = @Content),
+		@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
+		@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
+	})
+	public ResponseEntity<JsonNode> getPreview(
+		@PathVariable("id") final UUID id,
+		@RequestParam("filename") final String filename) {
+
+		try {
+			if (filename.endsWith(".nc")) {
+				return climateDataProxy.previewEsgf(id.toString(), null, null, null);
+			} else {
+				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
+				// TODO: This attempts to check the file, but fails to open the file, might need to write a NetcdfFiles Stream reader
+				try (NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
+					ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
+					for (Attribute attribute : globalAttributes) {
+						String name = attribute.getName();
+						Array values = attribute.getValues();
+						//				log.info("[{},{}]", name, values);
+					}
+					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
+				} catch (IOException ioe) {
+					return ResponseEntity.status(415).build();
+				}
+			}
+		} catch (final Exception e) {
+			final String error = "Unable to get download url";
+			log.error(error, e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				error);
 		}
 	}
 }
