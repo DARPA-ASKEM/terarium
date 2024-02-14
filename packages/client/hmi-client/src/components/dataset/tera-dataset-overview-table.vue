@@ -11,13 +11,12 @@
 		<Column field="concept" header="Concept" sortable style="width: 10%">
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
-					{{ console.log(data.concept) }}
 					{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(data.concept)}`"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -46,7 +45,11 @@ import Column from 'primevue/column';
 import type { Dataset, DatasetColumn } from '@/types/Types';
 import { computed, ref } from 'vue';
 import { isEmpty } from 'lodash';
-import { getNameOfCurieCached, getCurieFromGroudingIdentifier } from '@/services/concept';
+import {
+	getNameOfCurieCached,
+	getCurieFromGroudingIdentifier,
+	getCurieUrl
+} from '@/services/concept';
 
 const props = defineProps<{
 	dataset: Dataset;

@@ -52,19 +52,23 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 	}
 }
 
-async function searchCuriesEntities(query: string): Promise<Array<DKG> | null> {
+async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
 	try {
 		const response = await API.get('/mira/search', {
 			params: {
 				q: query
 			}
 		});
-		if (response?.status !== 200) return null;
-		return response?.data ?? null;
+		if (response?.status !== 200) return [];
+		return response?.data ?? [];
 	} catch (error) {
-		logger.error(error, { showToast: false });
-		return null;
+		logger.error(`There was an issue searching for mira query: ${query}`, { showToast: false });
+		return [];
 	}
+}
+
+function getCurieUrl(curie: string): string {
+	return `http://34.230.33.149:8772/${curie}`;
 }
 
 /**
@@ -124,5 +128,6 @@ export {
 	getEntitySimilarity,
 	searchCuriesEntities,
 	getNameOfCurieCached,
-	getCurieFromGroudingIdentifier
+	getCurieFromGroudingIdentifier,
+	getCurieUrl
 };

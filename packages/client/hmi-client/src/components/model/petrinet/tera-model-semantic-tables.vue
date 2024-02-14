@@ -29,9 +29,7 @@
 							<a
 								target="_blank"
 								rel="noopener noreferrer"
-								:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
-									data.grounding.identifiers
-								)}`"
+								:href="getCurieUrl(getCurieFromGroudingIdentifier(data.grounding.identifiers))"
 								@click.stop
 								aria-label="Open Concept"
 							>
@@ -263,7 +261,7 @@
 							<a
 								target="_blank"
 								rel="noopener noreferrer"
-								:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
+								:href="getCurieUrl(grounding.grounding_id)"
 								aria-label="Open Concept"
 							>
 								<i class="pi pi-external-link" />
@@ -302,7 +300,8 @@ import { logger } from '@/utils/logger';
 import {
 	searchCuriesEntities,
 	getNameOfCurieCached,
-	getCurieFromGroudingIdentifier
+	getCurieFromGroudingIdentifier,
+	getCurieUrl
 } from '@/services/concept';
 import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
@@ -481,7 +480,7 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 	const query = event.query;
 	if (query.length > 2) {
 		const response = await searchCuriesEntities(query);
-		curies.value = response ?? [];
+		curies.value = response;
 	}
 }
 
