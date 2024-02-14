@@ -70,10 +70,11 @@
 				outlined
 				:disabled="!configName"
 				label="Run"
+				size="large"
 				icon="pi pi-play"
 				@click="createConfiguration"
 			/>
-			<Button style="margin-left: auto" label="Close" @click="emit('close')" />
+			<Button style="margin-left: auto" label="Close" size="large" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>
