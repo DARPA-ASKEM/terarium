@@ -19,7 +19,12 @@
 				<Column field="grounding.identifiers" header="Concept">
 					<template #body="{ data }">
 						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
-							{{ getNameOfCurieCached(getCurieFromGroudingIdentifier(data.grounding.identifiers)) }}
+							{{
+								getNameOfCurieCached(
+									nameOfCurieCache,
+									getCurieFromGroudingIdentifier(data.grounding.identifiers)
+								)
+							}}
 
 							<a
 								target="_blank"
@@ -294,7 +299,11 @@ import {
 	updateParameterId
 } from '@/model-representation/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
-import { getCuriesEntities, searchCuriesEntities } from '@/services/concept';
+import {
+	searchCuriesEntities,
+	getNameOfCurieCached,
+	getCurieFromGroudingIdentifier
+} from '@/services/concept';
 import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -466,23 +475,6 @@ async function confirmEdit() {
 
 	isRowEditable.value = null;
 	transientTableValue.value = null;
-}
-
-const getNameOfCurieCached = (curie: string): string => {
-	if (!nameOfCurieCache.value.has(curie)) {
-		getCuriesEntities([curie]).then((response) =>
-			nameOfCurieCache.value.set(curie, response?.[0].name ?? '')
-		);
-	}
-	return nameOfCurieCache.value.get(curie) ?? '';
-};
-
-function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
-	if (!!identifier && !isEmpty(identifier)) {
-		const [key, value] = Object.entries(identifier)[0];
-		return `${key}:${value}`;
-	}
-	return '';
 }
 
 async function onSearch(event: AutoCompleteCompleteEvent) {

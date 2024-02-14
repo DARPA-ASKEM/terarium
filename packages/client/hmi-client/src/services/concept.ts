@@ -7,6 +7,7 @@ import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
 import type { Curies, DKG, EntitySimilarityResult } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
 
 /**
  * Get concept facets
@@ -102,4 +103,26 @@ async function getEntitySimilarity(
 	}
 }
 
-export { getCuriesEntities, getFacets, getEntitySimilarity, searchCuriesEntities };
+const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string => {
+	if (!cache.has(curie)) {
+		getCuriesEntities([curie]).then((response) => cache.set(curie, response?.[0].name ?? ''));
+	}
+	return cache.get(curie) ?? '';
+};
+
+function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
+	if (!!identifier && !isEmpty(identifier)) {
+		const [key, value] = Object.entries(identifier)[0];
+		return `${key}:${value}`;
+	}
+	return '';
+}
+
+export {
+	getCuriesEntities,
+	getFacets,
+	getEntitySimilarity,
+	searchCuriesEntities,
+	getNameOfCurieCached,
+	getCurieFromGroudingIdentifier
+};

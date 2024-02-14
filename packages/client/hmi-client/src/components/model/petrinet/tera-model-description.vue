@@ -5,12 +5,18 @@
 				<section class="description">
 					<tera-show-more-text :text="description" :lines="5" />
 
-					<label class="p-text-secondary">Model type</label>
-					<p>{{ modelType }}</p>
-					<label class="p-text-secondary">Funded by</label>
-					<p>{{ fundedBy }}</p>
-					<label class="p-text-secondary">Authors</label>
-					<p>{{ authors }}</p>
+					<template v-if="modelType">
+						<label class="p-text-secondary">Model type</label>
+						<p>{{ modelType }}</p>
+					</template>
+					<template v-if="fundedBy">
+						<label class="p-text-secondary">Funded by</label>
+						<p>{{ fundedBy }}</p>
+					</template>
+					<template v-if="authors">
+						<label class="p-text-secondary">Authors</label>
+						<p>{{ authors }}</p>
+					</template>
 					<template v-if="uses">
 						<h5>Uses</h5>
 						<label class="p-text-secondary">Direct use</label>
@@ -41,7 +47,14 @@
 
 					<template v-if="!isEmpty(moreInformation)">
 						<h5>More Information</h5>
-						<p>{{ moreInformation }}</p>
+						<a
+							v-for="(link, index) in moreInformation"
+							:href="link"
+							target="_blank"
+							rel="noopener noreferrer"
+							:key="index"
+							>{{ link }}</a
+						>
 					</template>
 
 					<template v-if="!isEmpty(provenance)">
