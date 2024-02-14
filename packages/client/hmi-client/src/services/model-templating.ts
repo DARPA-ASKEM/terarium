@@ -198,37 +198,46 @@ function appendNumberToModelVariables(modelTemplate: Model, number: number) {
 	return templateWithNumber;
 }
 
+function prepareDecomposedTemplateAddition(modelTemplates: ModelTemplates, modelTemplate: Model) {
+	// Confirm a decomposed card is being added
+	const templateType = modelTemplate.header.name;
+	if (!(Object.values(DecomposedModelTemplateTypes) as string[]).includes(templateType))
+		return null;
+
+	// Append a number to the model variables to avoid conflicts
+	const decomposedTemplateToAdd = appendNumberToModelVariables(
+		modelTemplate,
+		determineNumberToAppend(modelTemplates.models)
+	);
+	return decomposedTemplateToAdd;
+}
+
 export function addTemplateInView(modelTemplates: ModelTemplates, modelTemplate: Model) {
-	if (modelTemplate.metadata) modelTemplate.metadata.templateCard.id = uuidv4();
-	modelTemplates.models.push(modelTemplate);
+	const modelTemplateToAdd =
+		prepareDecomposedTemplateAddition(modelTemplates, modelTemplate) ?? modelTemplate;
+	if (modelTemplateToAdd.metadata) modelTemplateToAdd.metadata.templateCard.id = uuidv4();
+	modelTemplates.models.push(modelTemplateToAdd);
 }
 
 export function addDecomposedTemplateInKernel(
 	kernelManager: KernelSessionManager,
-	decomposedTemplates: ModelTemplates,
+	modelTemplates: ModelTemplates,
 	modelTemplate: Model,
 	outputCode: Function,
-	syncWithMiraModel: Function,
-	flattenedTemplates?: ModelTemplates
+	syncWithMiraModel: Function
 ) {
-	// Confirm a decomposed card is being added
 	const templateType = modelTemplate.header.name;
-	if (!(Object.values(DecomposedModelTemplateTypes) as string[]).includes(templateType)) return;
+	const decomposedTemplateToAdd = prepareDecomposedTemplateAddition(modelTemplates, modelTemplate);
+	if (!decomposedTemplateToAdd) return;
 
 	const addTemplateArguments: AddTemplateArguments = {};
 
-	// Append a number to the model variables to avoid conflicts
-	const modelTemplateToAdd = appendNumberToModelVariables(
-		modelTemplate,
-		determineNumberToAppend(decomposedTemplates.models)
-	);
-
 	if (templateType !== DecomposedModelTemplateTypes.Observable) {
-		const uniqueName = modelTemplateToAdd.header.name; // Now save a version of the name with the number appended
+		const uniqueName = decomposedTemplateToAdd.header.name; // Now save a version of the name with the number appended
 		addTemplateArguments.template_name = uniqueName;
 
-		if (modelTemplateToAdd?.semantics?.ode) {
-			const { rates, initials, parameters } = cloneDeep(modelTemplateToAdd.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
+		if (decomposedTemplateToAdd?.semantics?.ode) {
+			const { rates, initials, parameters } = cloneDeep(decomposedTemplateToAdd.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
 
 			// Add rate to the arguments
 			addTemplateArguments.template_expression = rates[0].expression;
@@ -243,7 +252,7 @@ export function addDecomposedTemplateInKernel(
 
 			// Add intial related arguments
 			if (initials) {
-				const { transitions } = modelTemplateToAdd.model;
+				const { transitions } = decomposedTemplateToAdd.model;
 				if (
 					templateType === DecomposedModelTemplateTypes.ControlledConversion ||
 					templateType === DecomposedModelTemplateTypes.ControlledDegradation ||
@@ -288,10 +297,10 @@ export function addDecomposedTemplateInKernel(
 				}
 			}
 		}
-	} else if (modelTemplateToAdd?.semantics?.ode?.observables) {
-		const { observables } = modelTemplateToAdd.semantics.ode;
+	} else if (decomposedTemplateToAdd?.semantics?.ode?.observables) {
+		const { observables } = decomposedTemplateToAdd.semantics.ode;
 		addTemplateArguments.new_id = observables[0].id;
-		addTemplateArguments.new_name = modelTemplateToAdd.header.name;
+		addTemplateArguments.new_name = decomposedTemplateToAdd.header.name;
 		addTemplateArguments.new_expression = observables[0].expression_mathml;
 	}
 
@@ -304,8 +313,7 @@ export function addDecomposedTemplateInKernel(
 			syncWithMiraModel(d);
 		});
 
-	addTemplateInView(decomposedTemplates, modelTemplateToAdd);
-	if (flattenedTemplates) updateFlattenedTemplateInView(modelTemplateToAdd, flattenedTemplates);
+	addTemplateInView(modelTemplates, decomposedTemplateToAdd);
 }
 
 /**

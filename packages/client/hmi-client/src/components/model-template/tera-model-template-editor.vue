@@ -337,14 +337,19 @@ function updateNewCardPosition(event) {
 function onDrop(event) {
 	updateNewCardPosition(event);
 
-	modelTemplatingService.addDecomposedTemplateInKernel(
-		props.kernelManager,
-		decomposedTemplates.value,
-		newModelTemplate.value,
-		outputCode,
-		syncWithMiraModel,
-		currentModelFormat.value === EditorFormat.Flattened ? flattenedTemplates.value : undefined
-	);
+	if (currentModelFormat.value === EditorFormat.Decomposed) {
+		modelTemplatingService.addDecomposedTemplateInKernel(
+			props.kernelManager,
+			decomposedTemplates.value,
+			newModelTemplate.value,
+			outputCode,
+			syncWithMiraModel
+		);
+	} else {
+		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
+		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
+		modelTemplatingService.addTemplateInView(flattenedTemplates.value, newModelTemplate.value);
+	}
 
 	newModelTemplate.value = null;
 }
