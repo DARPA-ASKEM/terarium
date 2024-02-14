@@ -206,8 +206,8 @@ const emit = defineEmits([
 const dataLabelPlugin = [ChartDataLabels];
 
 enum Tabs {
-	Wizard = 'wizasrd',
-	Notebook = 'notebook'
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 
 enum EnsembleCalibrationMode {
