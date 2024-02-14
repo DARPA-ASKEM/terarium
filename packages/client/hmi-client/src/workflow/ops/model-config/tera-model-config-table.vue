@@ -251,8 +251,17 @@ const updateExpression = async (value: Initial) => {
 </script>
 
 <style scoped>
+.p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
+	padding: 0;
+}
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
 	display: none;
+}
+.p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
+	background: var(--surface-highlight);
+}
+.p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {
+	padding: 0;
 }
 
 .hide-header :deep(.p-datatable-thead) {
