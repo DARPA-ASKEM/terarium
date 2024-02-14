@@ -1,6 +1,4 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-// import type { EnsembleRequest } from '@/types/Types';
-// import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 

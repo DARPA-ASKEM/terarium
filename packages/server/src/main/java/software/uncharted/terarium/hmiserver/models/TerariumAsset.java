@@ -1,6 +1,7 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Id;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -47,6 +48,4 @@ public abstract class TerariumAsset implements Serializable {
 
 	@TSOptional
 	private Boolean publicAsset = false;
-
-
 }

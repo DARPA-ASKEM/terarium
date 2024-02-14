@@ -38,17 +38,6 @@ public class ElasticIngestService extends ConcurrentWorkerService {
 		String indexName = esConfig.getIndex(params.getOutputIndexRoot());
 
 		try {
-			// ensure the index is empty
-			if (params.isClearBeforeIngest()) {
-				if (esService.containsIndex(indexName)) {
-					esService.deleteIndex(indexName);
-				}
-				esService.createIndex(indexName);
-			} else {
-				if (!esService.containsIndex(indexName)) {
-					esService.createIndex(indexName);
-				}
-			}
 
 			// setup ingest
 			ingest.setup(params);

@@ -8,10 +8,16 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Data
 @Accessors(chain = true)
 @TSModel
-public class RegNetParameter implements SupportAdditionalProperties {
+public class RegNetParameter extends SupportAdditionalProperties implements Serializable {
+	@Serial
+	private static final long serialVersionUID = 3640205037391991531L;
+
 	private String id;
 
 	@TSOptional

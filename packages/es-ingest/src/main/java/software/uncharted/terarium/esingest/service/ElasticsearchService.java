@@ -359,7 +359,7 @@ public class ElasticsearchService {
 			bulkRequest.operations(op -> op
 					.index(idx -> idx
 							.index(index)
-							.id(doc.getId())
+							.id(doc.getId().toString())
 							.document(doc)));
 		}
 
@@ -381,8 +381,7 @@ public class ElasticsearchService {
 		return r;
 	}
 
-	public <Output extends IOutputDocument> BulkOpResponse bulkUpdate(String index, List<Output> docs,
-			boolean ignoreMissing)
+	public <Output extends IOutputDocument> BulkOpResponse bulkUpdate(String index, List<Output> docs)
 			throws IOException {
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -393,7 +392,7 @@ public class ElasticsearchService {
 			}
 			UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<Object, Object>()
 					.index(index)
-					.id(doc.getId())
+					.id(doc.getId().toString())
 					.action(a -> a.doc(doc))
 					.build();
 
@@ -412,9 +411,6 @@ public class ElasticsearchService {
 				if (error != null) {
 					String reason = error.reason();
 					if (reason != null) {
-						if (ignoreMissing && reason.contains("document missing")) {
-							continue;
-						}
 						errors.add(error.reason());
 					}
 				}

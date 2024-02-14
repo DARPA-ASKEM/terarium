@@ -21,6 +21,21 @@
 			/>
 		</div>
 	</div>
+
+	<!-- Skeleton for when no facets are found -->
+	<div v-if="!formattedFacets.length">
+		<div class="centered-text">
+			<p>No filters available</p>
+		</div>
+
+		<div v-for="index in 5" :key="index" class="skeleton-facet-group">
+			<div class="skeleton-facet-header" />
+			<div v-for="index in 5" :key="index" class="skeleton-facet">
+				<div class="skeleton-facet-bar-indicator" />
+				<div class="skeleton-facet-label" />
+			</div>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -119,7 +134,40 @@ const formattedFacets = computed(() => {
 </script>
 
 <style scoped>
+.skeleton-facet-group {
+	padding: 1rem;
+	padding-top: 0.5rem;
+}
+.skeleton-facet-header {
+	height: 1rem;
+	width: 8rem;
+	background-color: var(--gray-100);
+	margin-bottom: 0.5rem;
+	border-radius: 3px;
+}
+
+.skeleton-facet-bar-indicator {
+	width: 100;
+	height: 0.5rem;
+	background-color: var(--gray-100);
+	margin-bottom: 0.25rem;
+	border-radius: 3px;
+}
+.skeleton-facet-label {
+	height: 0.75rem;
+	width: 6rem;
+	margin-bottom: 0.5rem;
+	background-color: var(--gray-100);
+	border-radius: 3px;
+}
 .facets-panel {
 	overflow-y: auto;
+}
+
+.centered-text {
+	position: absolute;
+	top: 50%;
+	left: 4.5rem;
+	color: var(--text-color-secondary);
 }
 </style>
