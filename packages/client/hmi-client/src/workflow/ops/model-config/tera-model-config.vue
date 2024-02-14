@@ -2,7 +2,7 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<Accordion multiple :active-index="[0, 1, 2, 3]">
+				<Accordion multiple :active-index="[0, 1, 2, 3]" class="pb-6">
 					<AccordionTab header="Context">
 						<template #header>
 							<tera-output-dropdown
@@ -66,15 +66,20 @@
 			<h4>TODO</h4>
 		</section>
 		<template #footer>
-			<Button
-				outlined
-				:disabled="!configName"
-				label="Run"
-				size="large"
-				icon="pi pi-play"
-				@click="createConfiguration"
-			/>
-			<Button style="margin-left: auto" label="Close" size="large" @click="emit('close')" />
+			<div class="floating-footer">
+				<div class="flex gap-2">
+					<Button
+						outlined
+						:disabled="!configName"
+						label="Run"
+						size="large"
+						icon="pi pi-play"
+						@click="createConfiguration"
+						class="bg-white"
+					/>
+					<Button label="Close" size="large" @click="emit('close')" />
+				</div>
+			</div>
 		</template>
 	</tera-drilldown>
 </template>
@@ -453,5 +458,21 @@ onMounted(async () => {
 
 .context-item {
 	width: 100%;
+}
+
+.floating-footer {
+	display: flex;
+	justify-content: flex-end;
+	position: fixed;
+	padding-top: 0.75rem;
+	bottom: 16px;
+	left: 3rem;
+	width: calc(100% - 6rem);
+	background-color: var(--surface-glass);
+	backdrop-filter: blur(8px);
+	border-top: 1px solid var(--surface-border);
+}
+:deep(.p-button:disabled.p-button-outlined) {
+	background-color: var(--surface-0) !important;
 }
 </style>
