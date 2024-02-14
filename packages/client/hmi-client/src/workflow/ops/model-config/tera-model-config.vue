@@ -15,17 +15,17 @@
 								@update:selection="onUpdateSelection"
 							/>
 						</template>
-						<h3>Name</h3>
+						<p class="text-sm mb-1">Name</p>
 						<InputText
 							class="context-item"
 							placeholder="Enter a name for this configuration"
 							v-model="configName"
 							@update:model-value="() => debouncedUpdateState({ name: configName })"
 						/>
-						<h3>Description</h3>
+						<p class="text-sm mb-1 mt-3">Description</p>
 						<Textarea
 							class="context-item"
-							placeholder="Enter a description"
+							placeholder="Enter a description (optional)"
 							v-model="configDescription"
 							@update:model-value="() => debouncedUpdateState({ description: configDescription })"
 						/>

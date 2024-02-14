@@ -13,7 +13,7 @@ $colors: (
 );
 
 $emphasis-high: rgba(16, 24, 40, 1) !default;
-$emphasis-medium: rgba(0, 0, 0, .60) !default;
+$emphasis-medium: #6A7682 !default;
 $emphasis-low: var(--surface-border) !default;
 $emphasis-lower: rgba(208, 213, 221, 1) !default;
 $overlayColor: #000000 !default;
@@ -96,7 +96,7 @@ $inputBorder: 1px solid var(--surface-border) !default;
 $inputHoverBorderColor: $emphasis-medium !default;
 $inputFocusBorderColor: $primaryColor !default;
 $inputErrorBorderColor: $errorColor !default;
-$inputPlaceholderTextColor: $emphasis-medium !default;
+$inputPlaceholderTextColor: $emphasis-medium !important;
 $inputFilledBg: #f5f5f5 !default;
 $inputFilledHoverBg: #ececec !default;
 $inputFilledFocusBg: #dcdcdc !default;
