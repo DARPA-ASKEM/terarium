@@ -78,7 +78,7 @@ header {
 }
 
 .header-label {
-	font-size: 0.85rem;
+	font-size: var(--font-caption);
 }
 .warning {
 	background-color: var(--surface-warning);
