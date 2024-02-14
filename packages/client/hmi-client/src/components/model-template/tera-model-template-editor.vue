@@ -23,10 +23,11 @@
 					</li>
 				</ul>
 			</section>
-			<section class="trash">
+			<!--FIXME: This doesn't work and really may not be worth implementing-->
+			<!-- <section class="trash">
 				<i class="pi pi-trash"></i>
 				<div>Drag items here to delete</div>
-			</section>
+			</section> -->
 		</aside>
 		<tera-infinite-canvas
 			@click="onCanvasClick"

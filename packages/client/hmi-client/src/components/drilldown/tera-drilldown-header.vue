@@ -55,6 +55,7 @@ header {
 	padding-top: 1rem;
 	padding-left: 1.5rem;
 	padding-right: 1.5rem;
+	z-index: 1;
 }
 
 header > * {
