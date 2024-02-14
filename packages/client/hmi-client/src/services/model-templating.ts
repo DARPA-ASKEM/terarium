@@ -51,6 +51,7 @@ export const modelTemplateOptions = [
 		templateCard: {
 			id: modelTemplate.header.name,
 			name: modelTemplate.header.name,
+			templateType: modelTemplate.header.name,
 			x: 0,
 			y: 0
 		} as ModelTemplateCard
@@ -198,11 +199,15 @@ function appendNumberToModelVariables(modelTemplate: Model, number: number) {
 	return templateWithNumber;
 }
 
-function prepareDecomposedTemplateAddition(modelTemplates: ModelTemplates, modelTemplate: Model) {
+export function prepareDecomposedTemplateAddition(
+	modelTemplates: ModelTemplates,
+	modelTemplate: Model
+) {
 	// Confirm a decomposed card is being added
-	const templateType = modelTemplate.header.name;
-	if (!(Object.values(DecomposedModelTemplateTypes) as string[]).includes(templateType))
-		return null;
+	if (!modelTemplate.metadata?.templateCard) return null;
+	const { templateType } = modelTemplate.metadata.templateCard;
+
+	if (!Object.values(DecomposedModelTemplateTypes).includes(templateType)) return null;
 
 	// Append a number to the model variables to avoid conflicts
 	const decomposedTemplateToAdd = appendNumberToModelVariables(
@@ -213,10 +218,8 @@ function prepareDecomposedTemplateAddition(modelTemplates: ModelTemplates, model
 }
 
 export function addTemplateInView(modelTemplates: ModelTemplates, modelTemplate: Model) {
-	const modelTemplateToAdd =
-		prepareDecomposedTemplateAddition(modelTemplates, modelTemplate) ?? modelTemplate;
-	if (modelTemplateToAdd.metadata) modelTemplateToAdd.metadata.templateCard.id = uuidv4();
-	modelTemplates.models.push(modelTemplateToAdd);
+	if (modelTemplate.metadata) modelTemplate.metadata.templateCard.id = uuidv4();
+	modelTemplates.models.push(modelTemplate);
 }
 
 export function addDecomposedTemplateInKernel(
@@ -224,10 +227,15 @@ export function addDecomposedTemplateInKernel(
 	modelTemplates: ModelTemplates,
 	modelTemplate: Model,
 	outputCode: Function,
-	syncWithMiraModel: Function
+	syncWithMiraModel: Function,
+	isTemplatePrepared = false // True when decomposed template in flattened view is being added
 ) {
-	const templateType = modelTemplate.header.name;
-	const decomposedTemplateToAdd = prepareDecomposedTemplateAddition(modelTemplates, modelTemplate);
+	if (!modelTemplate.metadata?.templateCard) return;
+	const { templateType } = modelTemplate.metadata.templateCard;
+
+	const decomposedTemplateToAdd = isTemplatePrepared
+		? modelTemplate
+		: prepareDecomposedTemplateAddition(modelTemplates, modelTemplate);
 	if (!decomposedTemplateToAdd) return;
 
 	const addTemplateArguments: AddTemplateArguments = {};
@@ -427,6 +435,14 @@ export function addEdgeInView(
 			target,
 			points: interpolatePointsFn ? interpolatePointsFn(...points) : points
 		});
+
+		// Apply connection done in flattened view to decomposedTemplates
+		// if (decomposedTemplates) {
+		// 	const targetCardIndex = findCardIndexById(decomposedTemplates, target.cardId);
+		// 	const targetCard = decomposedTemplates.models[targetCardIndex];
+		// 	const targetPort = targetCard.model.transitions.find(({ id }) => id === target.portId);
+		// 	targetPort.position = portPosition;
+		// }
 	}
 }
 

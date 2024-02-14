@@ -46,7 +46,7 @@
 						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
 						:model-value="currentModelFormat"
-						@change="if ($event.value) currentModelFormat = $event.value;"
+						@change="if ($event.value) onEditorFormatSwitch($event.value);"
 						:options="modelFormatOptions"
 					>
 						<template #option="{ option }">
@@ -274,17 +274,40 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		junctionIdForNewEdge &&
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
-		modelTemplatingService.addEdgeInKernel(
-			props.kernelManager,
-			currentTemplates.value,
-			junctionIdForNewEdge,
-			target,
-			newEdge.value.target,
-			currentPortPosition,
-			outputCode,
-			syncWithMiraModel,
-			interpolatePointsForCurve
-		);
+		if (currentModelFormat.value === EditorFormat.Decomposed) {
+			modelTemplatingService.addEdgeInKernel(
+				props.kernelManager,
+				currentTemplates.value,
+				junctionIdForNewEdge,
+				target,
+				newEdge.value.target,
+				currentPortPosition,
+				outputCode,
+				syncWithMiraModel,
+				interpolatePointsForCurve
+			);
+		} else {
+			modelTemplatingService.addEdgeInView(
+				currentTemplates.value,
+				junctionIdForNewEdge,
+				target,
+				currentPortPosition,
+				interpolatePointsForCurve
+			);
+			// Reflect flattened view connections in decomposed view
+			// Once this is done, everything in the flattened view will be "merged"
+			flattenedTemplates.value.models.slice(1).forEach((modelTemplate: Model) => {
+				console.log(99);
+				modelTemplatingService.addDecomposedTemplateInKernel(
+					props.kernelManager,
+					decomposedTemplates.value,
+					modelTemplate,
+					outputCode,
+					syncWithMiraModel,
+					true
+				);
+			});
+		}
 		cancelNewEdge();
 	}
 }
@@ -345,10 +368,18 @@ function onDrop(event) {
 			outputCode,
 			syncWithMiraModel
 		);
-	} else {
+	}
+	// Add decomposed template to the flattened view
+	else {
 		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
 		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
-		modelTemplatingService.addTemplateInView(flattenedTemplates.value, newModelTemplate.value);
+		const decomposedTemplateToAdd = modelTemplatingService.prepareDecomposedTemplateAddition(
+			flattenedTemplates.value,
+			newModelTemplate.value
+		);
+		if (decomposedTemplateToAdd) {
+			modelTemplatingService.addTemplateInView(flattenedTemplates.value, decomposedTemplateToAdd);
+		}
 	}
 
 	newModelTemplate.value = null;
@@ -409,15 +440,22 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-// Triggered after syncWithMiraModel() in parent
+function refreshFlattenedTemplate() {
+	console.log(9);
+	if (props.model) {
+		flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
+		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
+	}
+}
+
+function onEditorFormatSwitch(newFormat: EditorFormat) {
+	currentModelFormat.value = newFormat;
+	if (newFormat === EditorFormat.Decomposed) refreshFlattenedTemplate(); // Removes unlinked decomposed templates
+}
+
 watch(
 	() => [props.model],
-	() => {
-		if (props.model) {
-			flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
-			modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
-		}
-	}
+	() => refreshFlattenedTemplate() // Triggered after syncWithMiraModel() in parent
 );
 
 onMounted(() => {

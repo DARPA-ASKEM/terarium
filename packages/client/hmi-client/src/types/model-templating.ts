@@ -24,6 +24,7 @@ export interface ModelTemplates {
 export interface ModelTemplateCard {
 	id: string;
 	name: string; // FIXME: name may not be necessary if it's already in model.header
+	templateType: DecomposedModelTemplateTypes;
 	x: number;
 	y: number;
 	// For collisionFn
