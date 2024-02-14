@@ -1,20 +1,26 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+
 @Data
 @AMRSchemaType
 @Accessors(chain = true)
-public class Variable implements SupportAdditionalProperties {
+public class Variable extends SupportAdditionalProperties implements Serializable {
+	@Serial
+	private static final long serialVersionUID = 701749887670320136L;
+
 	private String id;
+
 	private String name;
+
 	private List<VariableMetadata> metadata;
 
 	@JsonProperty("dkg_groundings")
