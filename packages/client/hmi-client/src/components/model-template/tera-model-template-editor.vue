@@ -339,10 +339,11 @@ function onDrop(event) {
 
 	modelTemplatingService.addDecomposedTemplateInKernel(
 		props.kernelManager,
-		currentTemplates.value,
+		decomposedTemplates.value,
 		newModelTemplate.value,
 		outputCode,
-		syncWithMiraModel
+		syncWithMiraModel,
+		currentModelFormat.value === EditorFormat.Flattened ? flattenedTemplates.value : undefined
 	);
 
 	newModelTemplate.value = null;

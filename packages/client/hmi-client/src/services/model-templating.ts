@@ -205,10 +205,11 @@ export function addTemplateInView(modelTemplates: ModelTemplates, modelTemplate:
 
 export function addDecomposedTemplateInKernel(
 	kernelManager: KernelSessionManager,
-	modelTemplates: ModelTemplates,
+	decomposedTemplates: ModelTemplates,
 	modelTemplate: Model,
 	outputCode: Function,
-	syncWithMiraModel: Function
+	syncWithMiraModel: Function,
+	flattenedTemplates?: ModelTemplates
 ) {
 	// Confirm a decomposed card is being added
 	const templateType = modelTemplate.header.name;
@@ -219,7 +220,7 @@ export function addDecomposedTemplateInKernel(
 	// Append a number to the model variables to avoid conflicts
 	const modelTemplateToAdd = appendNumberToModelVariables(
 		modelTemplate,
-		determineNumberToAppend(modelTemplates.models)
+		determineNumberToAppend(decomposedTemplates.models)
 	);
 
 	if (templateType !== DecomposedModelTemplateTypes.Observable) {
@@ -303,7 +304,8 @@ export function addDecomposedTemplateInKernel(
 			syncWithMiraModel(d);
 		});
 
-	addTemplateInView(modelTemplates, modelTemplateToAdd);
+	addTemplateInView(decomposedTemplates, modelTemplateToAdd);
+	if (flattenedTemplates) updateFlattenedTemplateInView(modelTemplateToAdd, flattenedTemplates);
 }
 
 /**
