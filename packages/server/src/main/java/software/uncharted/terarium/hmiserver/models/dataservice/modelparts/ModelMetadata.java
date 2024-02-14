@@ -53,4 +53,8 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 	@TSOptional
 	private List<String> provenance;
+
+	@TSOptional
+	@JsonProperty("templateCard")
+	private Object templateCard;
 }
