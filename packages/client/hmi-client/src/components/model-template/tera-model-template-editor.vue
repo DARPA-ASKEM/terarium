@@ -279,6 +279,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			currentTemplates.value,
 			junctionIdForNewEdge,
 			target,
+			newEdge.value.target,
 			currentPortPosition,
 			outputCode,
 			syncWithMiraModel,

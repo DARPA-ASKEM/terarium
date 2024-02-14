@@ -1,7 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
-import { cloneDeep, uniq, isEmpty, snakeCase } from 'lodash';
+import { cloneDeep, uniq, isEmpty, snakeCase, isEqual } from 'lodash';
 import type { Position } from '@/types/common';
-import type { ModelTemplateCard, ModelTemplates } from '@/types/model-templating';
+import type {
+	ModelTemplateCard,
+	ModelTemplateEdge,
+	ModelTemplateJunction,
+	ModelTemplates
+} from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
 import { Model, Initial, ModelUnit } from '@/types/Types';
@@ -205,98 +210,100 @@ export function addDecomposedTemplateInKernel(
 	outputCode: Function,
 	syncWithMiraModel: Function
 ) {
+	// Confirm a decomposed card is being added
 	const templateType = modelTemplate.header.name;
+	if (!(Object.values(DecomposedModelTemplateTypes) as string[]).includes(templateType)) return;
 
-	// If a decomposed card is added, add it to the kernel
-	if ((Object.values(DecomposedModelTemplateTypes) as string[]).includes(templateType)) {
-		const addTemplateArguments: AddTemplateArguments = {};
+	const addTemplateArguments: AddTemplateArguments = {};
 
-		// Append a number to the model variables to avoid conflicts
-		const modelTemplateToAdd = appendNumberToModelVariables(
-			modelTemplate,
-			determineNumberToAppend(modelTemplates.models)
-		);
+	// Append a number to the model variables to avoid conflicts
+	const modelTemplateToAdd = appendNumberToModelVariables(
+		modelTemplate,
+		determineNumberToAppend(modelTemplates.models)
+	);
 
-		if (templateType !== DecomposedModelTemplateTypes.Observable) {
-			const uniqueName = modelTemplateToAdd.header.name; // Now save a version of the name with the number appended
-			const { transitions } = modelTemplateToAdd.model;
+	if (templateType !== DecomposedModelTemplateTypes.Observable) {
+		const uniqueName = modelTemplateToAdd.header.name; // Now save a version of the name with the number appended
+		addTemplateArguments.template_name = uniqueName;
 
-			if (modelTemplateToAdd?.semantics?.ode) {
-				const { rates, initials, parameters } = cloneDeep(modelTemplateToAdd.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
+		if (modelTemplateToAdd?.semantics?.ode) {
+			const { rates, initials, parameters } = cloneDeep(modelTemplateToAdd.semantics.ode); // Clone to avoid mutation on initials when splitting controllers
 
-				// Add parameters to the arguments
-				addTemplateArguments.template_expression = rates[0].expression;
-				addTemplateArguments.template_name = uniqueName;
-				if (parameters) {
-					addTemplateArguments.parameter_name = parameters[0].id;
-					addTemplateArguments.parameter_value = parameters[0].value;
-					addTemplateArguments.parameter_units = parameters[0].unit ?? undefined;
-					addTemplateArguments.parameter_description = parameters[0].description;
+			// Add rate to the arguments
+			addTemplateArguments.template_expression = rates[0].expression;
+
+			// Add parameter to the arguments
+			if (parameters) {
+				addTemplateArguments.parameter_name = parameters[0].id;
+				addTemplateArguments.parameter_value = parameters[0].value;
+				addTemplateArguments.parameter_units = parameters[0].unit ?? undefined;
+				addTemplateArguments.parameter_description = parameters[0].description;
+			}
+
+			// Add intial related arguments
+			if (initials) {
+				const { transitions } = modelTemplateToAdd.model;
+				if (
+					templateType === DecomposedModelTemplateTypes.ControlledConversion ||
+					templateType === DecomposedModelTemplateTypes.ControlledDegradation ||
+					templateType === DecomposedModelTemplateTypes.ControlledProduction
+				) {
+					// Extract controller from initials and add it to the arguments
+					const { input, output } = transitions[0];
+					if (input?.[0] === output?.[0]) {
+						const index = initials.findIndex((initial) => initial.target === input[0]);
+						const controller = initials[index];
+
+						// Add controller to the arguments
+						addTemplateArguments.controller_name = controller.target;
+						addTemplateArguments.controller_initial_value = controller.expression;
+
+						// Remove controller from initials
+						initials.splice(index, 1);
+					}
 				}
 
-				if (initials) {
-					// Extract controller from initials and add it to the arguments
-					if (
-						templateType === DecomposedModelTemplateTypes.ControlledConversion ||
-						templateType === DecomposedModelTemplateTypes.ControlledDegradation ||
-						templateType === DecomposedModelTemplateTypes.ControlledProduction
-					) {
-						const { input, output } = transitions[0];
-						if (input?.[0] === output?.[0]) {
-							const index = initials.findIndex((initial) => initial.target === input[0]);
-							const controller = initials[index];
-
-							// Add controller to the arguments
-							addTemplateArguments.controller_name = controller.target;
-							addTemplateArguments.controller_initial_value = controller.expression;
-
-							// Remove controller from initials
-							initials.splice(index, 1);
-						}
-					}
-
-					// Now that there are no controllers in initals we can add subject/outcome to the arguments
-					if (
-						templateType === DecomposedModelTemplateTypes.NaturalConversion ||
-						templateType === DecomposedModelTemplateTypes.ControlledConversion
-					) {
-						// If it's a conversion template, the first two initials are the subject then outcome
-						addTemplateArguments.subject_name = initials[0].target;
-						addTemplateArguments.subject_initial_value = initials[0].expression;
-						addTemplateArguments.outcome_name = initials[1].target;
-						addTemplateArguments.outcome_initial_value = initials[1].expression;
-					} else if (
-						templateType === DecomposedModelTemplateTypes.NaturalProduction ||
-						templateType === DecomposedModelTemplateTypes.ControlledProduction
-					) {
-						// If it's a production template, the first initial is the outcome
-						addTemplateArguments.outcome_name = initials[0].target;
-						addTemplateArguments.outcome_initial_value = initials[0].expression;
-					} else {
-						// If it's a degradation template, the first initial is the subject
-						addTemplateArguments.subject_name = initials[0].target;
-						addTemplateArguments.subject_initial_value = initials[0].expression;
-					}
+				// Now that there are no controllers in initals we can add subject/outcome to the arguments
+				if (
+					templateType === DecomposedModelTemplateTypes.NaturalConversion ||
+					templateType === DecomposedModelTemplateTypes.ControlledConversion
+				) {
+					// If it's a conversion template, the first two initials are the subject then outcome
+					addTemplateArguments.subject_name = initials[0].target;
+					addTemplateArguments.subject_initial_value = initials[0].expression;
+					addTemplateArguments.outcome_name = initials[1].target;
+					addTemplateArguments.outcome_initial_value = initials[1].expression;
+				} else if (
+					templateType === DecomposedModelTemplateTypes.NaturalProduction ||
+					templateType === DecomposedModelTemplateTypes.ControlledProduction
+				) {
+					// If it's a production template, the first initial is the outcome
+					addTemplateArguments.outcome_name = initials[0].target;
+					addTemplateArguments.outcome_initial_value = initials[0].expression;
+				} else {
+					// If it's a degradation template, the first initial is the subject
+					addTemplateArguments.subject_name = initials[0].target;
+					addTemplateArguments.subject_initial_value = initials[0].expression;
 				}
 			}
-		} else if (modelTemplateToAdd?.semantics?.ode?.observables) {
-			const { observables } = modelTemplateToAdd.semantics.ode;
-			addTemplateArguments.new_id = observables[0].id;
-			addTemplateArguments.new_name = modelTemplateToAdd.header.name;
-			addTemplateArguments.new_expression = observables[0].expression_mathml;
 		}
-
-		kernelManager
-			.sendMessage(`add_${snakeCase(templateType)}_template_request`, addTemplateArguments)
-			.register(`add_${snakeCase(templateType)}_template_response`, (d) => {
-				outputCode(d);
-			})
-			.register('model_preview', (d) => {
-				syncWithMiraModel(d);
-			});
-
-		addTemplateInView(modelTemplates, modelTemplateToAdd);
+	} else if (modelTemplateToAdd?.semantics?.ode?.observables) {
+		const { observables } = modelTemplateToAdd.semantics.ode;
+		addTemplateArguments.new_id = observables[0].id;
+		addTemplateArguments.new_name = modelTemplateToAdd.header.name;
+		addTemplateArguments.new_expression = observables[0].expression_mathml;
 	}
+
+	kernelManager
+		.sendMessage(`add_${snakeCase(templateType)}_template_request`, addTemplateArguments)
+		.register(`add_${snakeCase(templateType)}_template_response`, (d) => {
+			outputCode(d);
+		})
+		.register('model_preview', (d) => {
+			syncWithMiraModel(d);
+		});
+
+	addTemplateInView(modelTemplates, modelTemplateToAdd);
 }
 
 /**
@@ -418,6 +425,7 @@ export function addEdgeInKernel(
 	modelTemplates: ModelTemplates,
 	junctionId: string,
 	target: { cardId: string; portId: string },
+	altTarget: { cardId: string; portId: string },
 	portPosition: Position,
 	outputCode: Function,
 	syncWithMiraModel: Function,
@@ -427,6 +435,16 @@ export function addEdgeInKernel(
 		(model) => model.metadata.templateCard.id === target.cardId
 	).metadata.templateCard.name;
 
+	// Junction ID to draw from can be changed if the latter chosen port is already connected to a junction
+	// TODO: The altPortPosition needs to be determined (by the altTarget?) so this case is still WIP
+	let altJunctionId: string | null = null;
+	modelTemplates.junctions.some(({ edges, id }: ModelTemplateJunction) => {
+		const hasMatchingTarget = edges.some((edge: ModelTemplateEdge) => isEqual(edge.target, target));
+		if (hasMatchingTarget) altJunctionId = id;
+		return hasMatchingTarget;
+	});
+	if (altJunctionId) junctionId = altJunctionId;
+
 	const junctionToDrawFrom = modelTemplates.junctions.find(({ id }) => id === junctionId);
 
 	// Once ports are connected they share the same state name in the flattened model
@@ -434,7 +452,7 @@ export function addEdgeInKernel(
 		kernelManager
 			.sendMessage('replace_state_name_request', {
 				template_name: templateName,
-				old_name: target.portId,
+				old_name: altJunctionId ? altTarget.portId : target.portId,
 				new_name: junctionToDrawFrom.edges[0].target.portId
 			})
 			.register('replace_state_name_response', (d) => {
@@ -444,7 +462,13 @@ export function addEdgeInKernel(
 				syncWithMiraModel(d);
 			});
 
-		addEdgeInView(modelTemplates, junctionId, target, portPosition, interpolatePointsFn);
+		addEdgeInView(
+			modelTemplates,
+			junctionId,
+			altJunctionId ? altTarget : target,
+			portPosition, // TODO: altPortPosition case needs to be handled
+			interpolatePointsFn
+		);
 	}
 }
 
@@ -516,7 +540,7 @@ export function flattenedToDecomposedInView(
 
 		// Find cards that have the repeated initial and add edges to its junction
 		const templatesWithRepeatedInitial = decomposedTemplates.models.filter((model) =>
-			model.semantics.ode.initials.some((initial) => initial.target !== repeatedInitialTargets[i])
+			model.semantics.ode.initials.some(({ target }) => target === repeatedInitialTargets[i])
 		);
 
 		templatesWithRepeatedInitial.forEach((modelTemplate: Model) => {
