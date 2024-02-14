@@ -20,6 +20,7 @@ public class Document implements IOutputDocument {
 	private String name;
 	private String description;
 	private String text;
+	private List<String> doi;
 	private List<String> filenames;
 
 	private Timestamp createdOn = new Timestamp(System.currentTimeMillis());

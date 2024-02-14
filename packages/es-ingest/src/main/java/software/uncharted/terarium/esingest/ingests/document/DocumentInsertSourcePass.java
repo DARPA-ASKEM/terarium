@@ -59,6 +59,7 @@ public class DocumentInsertSourcePass
 			doc.setName(in.getSource().getTitle());
 			doc.setDescription(in.getSource().getTitle());
 			doc.setText(in.getSource().getBody());
+			doc.setDoi(in.getSource().getFeature().getDoi());
 
 			final String filename = "source.txt";
 			doc.setFilenames(List.of(filename));
