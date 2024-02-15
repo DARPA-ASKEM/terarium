@@ -124,4 +124,20 @@ a {
 	height: calc(100vh - 347px);
 	font-family: var(--font-family);
 }
+
+:deep(.ql-picker-label) {
+	font-family: var(--font-family);
+}
+
+:deep(.ql-active) {
+	background-color: var(--surface-highlight) !important;
+	color: var(--text-color-subdued) !important;
+}
+
+:deep(.ql-active .ql-stroke) {
+	stroke: var(--text-color-subdued) !important;
+}
+:deep(.ql-selected) {
+	background-color: var(--surface-highlight) !important;
+}
 </style>
