@@ -636,7 +636,7 @@ main {
 .code-blocks-buttons-container {
 	display: flex;
 	flex-direction: row;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 
 .code-blocks-buttons-container > * {
