@@ -665,4 +665,9 @@ main {
 .toolbar-button {
 	height: 2.25rem;
 }
+
+/* hide the unnecessary top bar */
+:deep(#asset-top) {
+	display: contents !important;
+}
 </style>
