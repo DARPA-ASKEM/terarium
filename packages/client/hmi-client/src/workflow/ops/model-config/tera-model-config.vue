@@ -120,7 +120,6 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep } from 'lodash';
 import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -446,37 +445,27 @@ const getParamType = (param: ModelParameter | undefined) => {
 };
 
 const updateConfigParam = (params: ModelParameter[]) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.parameters) return;
-
-	for (let i = 0; i < state.parameters.length; i++) {
-		const foundParam = params.find((p) => p.id === state.parameters![i].id);
+	for (let i = 0; i < knobs.value.parameters.length; i++) {
+		const foundParam = params.find((p) => p.id === knobs.value.parameters![i].id);
 		if (foundParam) {
-			state.parameters[i] = foundParam;
+			knobs.value.parameters[i] = foundParam;
 		}
 	}
 };
 
 const updateConfigInitial = (inits: Initial[]) => {
-	console.log('Update config initials');
-	const state = _.cloneDeep(props.node.state);
-	if (!state.initials) return;
-
-	for (let i = 0; i < state.initials.length; i++) {
-		const foundInitial = inits.find((init) => init.target === state.initials![i].target);
+	for (let i = 0; i < knobs.value.initials.length; i++) {
+		const foundInitial = inits.find((init) => init.target === knobs.value.initials![i].target);
 		if (foundInitial) {
-			state.initials[i] = foundInitial;
+			knobs.value.initials[i] = foundInitial;
 		}
 	}
-	emit('update-state', state);
 };
 
 const updateFromConfig = (config: ModelConfiguration) => {
-	const state = cloneDeep(props.node.state);
-	state.initials = config.configuration.semantics?.ode.initials ?? [];
-	state.parameters = config.configuration.semantics?.ode.parameters ?? [];
-	state.timeseries = config.configuration?.metadata?.timeseries ?? {};
-	emit('update-state', state);
+	knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
+	knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
 };
 
 const createConfiguration = async () => {
@@ -568,6 +557,20 @@ watch(
 		await initialize();
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => knobs.value,
+	async () => {
+		const state = _.cloneDeep(props.node.state);
+		state.name = knobs.value.name;
+		state.description = knobs.value.description;
+		state.initials = knobs.value.initials;
+		state.parameters = knobs.value.parameters;
+		state.timeseries = knobs.value.timeseries;
+		emit('update-state', state);
+	},
+	{ deep: true }
 );
 
 watch(
