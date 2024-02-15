@@ -65,7 +65,22 @@ import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 const emit = defineEmits(['open-asset', 'open-new-asset']);
 const isRenamingProject = ref(false);
 
-const editorContent = ref('<div>Hello World!</div><div>Jamie <b>is</b> cool</div><div><br></div>');
+const editorContent = ref(`
+    <div>
+        <h2>Hey there! </h2>
+        <p>Welcome to your project overview page. Use this space to track progress, brainstorm, or lay out your project steps. </p>
+		<p>Not sure where to start? Here are some things you can try:</p>
+		<br>
+        <ul>
+            <li><strong>Upload stuff:</strong> Got documents or code? Upload them right into your project with the green button in the bottom right corner.</li>
+            <li><strong>Explore and add:</strong> Dive into the Explorer to find documents, models, and datasets that you can add to your project.</li>
+            <li><strong>Build a model:</strong> Feeling creative? Start a new model from scratch that fits just what you need.</li>
+            <li><strong>Create a workflow:</strong> Design workflows to connect operators so you can focus on the science and not the coding and orchestration.</li>
+        </ul>
+		<br>
+        <p>Feel free to erase this text and use this space however you like. Keep notes, outline your project, or whatever else helps you stay organized.</p>
+    </div>
+    `);
 </script>
 
 <style scoped>
