@@ -120,22 +120,22 @@ public class ProjectAssetService {
 	public Optional<ProjectAsset> createProjectAsset(final Project project, final AssetType assetType, final UUID assetId)
 			throws IOException {
 
-		final ProjectAsset asset = new ProjectAsset();
-		if (!populateProjectAssetFields(asset, assetType, assetId)) {
+		final ProjectAsset projectAsset = new ProjectAsset();
+		if (!populateProjectAssetFields(projectAsset, assetType, assetId)) {
 			// underlying asset does not exist
 			return Optional.empty();
 		}
-		asset.setAssetType(assetType);
-		asset.setProject(project);
-		asset.setAssetId(assetId);
+		projectAsset.setAssetType(assetType);
+		projectAsset.setProject(project);
+		projectAsset.setAssetId(assetId);
 
 		if (project.getProjectAssets() == null) {
-			project.setProjectAssets(new ArrayList<>(List.of(asset)));
+			project.setProjectAssets(new ArrayList<>(List.of(projectAsset)));
 		} else {
-			project.getProjectAssets().add(asset);
+			project.getProjectAssets().add(projectAsset);
 		}
 
-		return Optional.of(projectAssetRepository.save(asset));
+		return Optional.of(projectAssetRepository.save(projectAsset));
 	}
 
 	public Optional<ProjectAsset> updateProjectAsset(final ProjectAsset projectAsset) {
@@ -145,8 +145,14 @@ public class ProjectAssetService {
 		return Optional.of(projectAssetRepository.save(projectAsset));
 	}
 
-	public Optional<ProjectAsset> getProjectAssetById(final UUID id) {
-		return projectAssetRepository.findById(id);
+	public void updateNameByAssetId(UUID assetId, String name) {
+		Optional<ProjectAsset> projectAsset = projectAssetRepository.findByAssetId(assetId);
+		if (projectAsset.isPresent()) {
+			projectAsset.get().setAssetName(name);
+			updateProjectAsset(projectAsset.get());
+		} else {
+			log.info("Could not update the project asset name for asset with id: " + assetId + " because it does not exist.");
+		}
 	}
 
 	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType) {

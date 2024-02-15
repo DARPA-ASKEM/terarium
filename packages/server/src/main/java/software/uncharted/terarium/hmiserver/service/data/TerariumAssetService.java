@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -140,38 +141,10 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
 
 		// Update the related ProjectAsset.assetName
-		final Optional<ProjectAsset> projectAsset = projectAssetService.getProjectAssetById(asset.getId());
-		if (projectAsset.isPresent()) {
-			final String assetName = getAssetName(asset);
-			if (assetName != null) {
-				projectAsset.get().setAssetName(assetName);
-				projectAssetService.save(projectAsset.get());
-			} else {
-				log.info("Could not update the project asset name for asset with id: " + asset.getId() + " because the asset name is null");
-			}
-		}
+		projectAssetService.updateNameByAssetId(asset.getId(), asset.getName());
 
 		return Optional.of(asset);
 	}
 
-	/**
-	 * Get the name of an asset
-	 * @param asset
-	 * @return assetName
-	 */
-	private static String getAssetName(Object asset) {
-		// Force cast to the correct type because Terrarium Asset does not provide a bloody name
-		if (asset instanceof Dataset) {
-			return ((Dataset) asset).getName();
-		} else if (asset instanceof Model) {
-			return ((Model) asset).getHeader().getName();
-		} else if (asset instanceof Workflow) {
-			return ((Workflow) asset).getName();
-		} else if (asset instanceof Code) {
-			return ((Code) asset).getName();
-		} else if (asset instanceof DocumentAsset) {
-			return ((DocumentAsset) asset).getName();
-		}
-		return null;
-	}
+
 }

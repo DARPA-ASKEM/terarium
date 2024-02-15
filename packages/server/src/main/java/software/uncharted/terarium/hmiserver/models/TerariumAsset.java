@@ -26,6 +26,8 @@ public abstract class TerariumAsset implements Serializable {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private UUID id;
 
+	private String name;
+
 	@TSOptional
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
