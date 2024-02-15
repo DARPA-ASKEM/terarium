@@ -1,39 +1,49 @@
 <template>
 	<tera-asset :is-loading="isLoading" stretch-content overflow-hidden>
-		<template #name-input v-if="!isPreview">
-			<section class="header">
-				<section class="name">
-					<InputText v-model="codeName" class="name-input" @change="() => saveCode" />
-				</section>
-				<section class="buttons">
-					<template v-if="programmingLanguage !== ProgrammingLanguage.Zip">
-						<FileUpload
-							name="demo[]"
-							:customUpload="true"
-							@uploader="onFileOpen"
-							mode="basic"
-							auto
-							chooseLabel="Load file"
-						/>
-						<Button outlined label="Save" @click="saveCode()" />
-						<Button outlined label="Save as new" @click="isCodeNamingModalVisible = true" />
-					</template>
-					<template v-else>
-						<Button label="Download Zip" />
-					</template>
-				</section>
-			</section>
-		</template>
 		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
 			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
 			<div class="code-asset-editor">
 				<header class="code-asset-editor-header">
-					<h1>{{ codeSelectedFile }}</h1>
-					<Dropdown
-						v-model="programmingLanguage"
-						:options="programmingLanguages"
-						@change="onFileTypeChange"
-					/>
+					<div class="left-side w-full flex align-items-center gap-2">
+						<InputText
+							v-if="isRenamingCode"
+							v-model="codeName"
+							class="name-input w-10"
+							@change="() => saveCode"
+							@keyup.enter="() => saveCode"
+							@keyup.esc="() => saveCode"
+						/>
+						<h4 v-else>{{ codeSelectedFile }}</h4>
+						<Button
+							v-if="!isRenamingCode"
+							icon="pi pi-ellipsis-v"
+							class="p-button-icon-only p-button-text p-button-rounded"
+							@click="toggleOptionsMenu"
+						/>
+					</div>
+					<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+					<div class="right-side flex gap-2">
+						<Button
+							class="toolbar-button"
+							severity="secondary"
+							outlined
+							label="Save"
+							@click="saveCode()"
+						/>
+						<Button
+							class="toolbar-button white-space-nowrap"
+							severity="secondary"
+							outlined
+							label="Save as new"
+							@click="isCodeNamingModalVisible = true"
+						/>
+						<Dropdown
+							class="toolbar-button"
+							v-model="programmingLanguage"
+							:options="programmingLanguages"
+							@change="onFileTypeChange"
+						/>
+					</div>
 				</header>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -136,28 +146,33 @@
 				@modal-enter-press="isCodeNamingModalVisible = false"
 			>
 				<template #header>
-					<h4>Save new code</h4>
+					<h4>Save code file</h4>
+					<p>Choose a descriptive and unique name for your code file.</p>
 				</template>
 				<template #default>
 					<form @submit.prevent>
-						<label for="model-name">Name</label>
-						<InputText id="model-name" type="text" v-model="newCodeName" />
+						<label class="text-sm" for="model-name">Name</label>
+						<InputText id="model-name" type="text" placeholder="Filename" v-model="newCodeName" />
 					</form>
 				</template>
 				<template #footer>
 					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isCodeNamingModalVisible = false"
-					/>
-					<Button
-						label="Save code"
+						label="Save"
+						size="large"
 						@click="
 							() => {
 								isCodeNamingModalVisible = false;
 								saveNewCode();
 							}
 						"
+					/>
+					<Button
+						label="Cancel"
+						size="large"
+						outlined
+						severity="secondary"
+						class="p-button-secondary"
+						@click="isCodeNamingModalVisible = false"
 					/>
 				</template>
 			</tera-modal>
@@ -188,7 +203,6 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import FileUpload from 'primevue/fileupload';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
@@ -196,6 +210,7 @@ import Dropdown from 'primevue/dropdown';
 import { Ace, Range } from 'ace-builds';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import { extractDynamicRows } from '@/utils/code-asset';
+import Menu from 'primevue/menu';
 import TeraDirectory from './tera-directory.vue';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 
@@ -248,6 +263,7 @@ const fileNames = computed<string[]>(() => {
 
 const codeAssetCopy = ref<Code | null>(null);
 const savingAsset = ref(false);
+
 /**
  * Editor initialization function
  * @param editorInstance	the Ace editor instance
@@ -381,21 +397,23 @@ async function refreshCodeAsset(codeId: string) {
 		codeAssetCopy.value = cloneDeep(codeAsset.value);
 	}
 }
+// This was causing issues when trying to commit
+// probably because I removed the Open File button
+//
+// async function onFileOpen(event) {
+// 	const file = event.files[0];
+// 	const reader = new FileReader();
+// 	reader.readAsText(file, 'UTF-8');
+// 	reader.onload = (evt) => {
+// 		removeMarkers();
 
-async function onFileOpen(event) {
-	const file = event.files[0];
-	const reader = new FileReader();
-	reader.readAsText(file, 'UTF-8');
-	reader.onload = (evt) => {
-		removeMarkers();
-
-		if (codeAssetCopy.value) {
-			codeAssetCopy.value.files = { ...codeAssetCopy.value.files, [file.name]: {} };
-		}
-		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
-		codeSelectedFile.value = file.name;
-	};
-}
+// 		if (codeAssetCopy.value) {
+// 			codeAssetCopy.value.files = { ...codeAssetCopy.value.files, [file.name]: {} };
+// 		}
+// 		codeText.value = evt?.target?.result?.toString() ?? codeText.value;
+// 		codeSelectedFile.value = file.name;
+// 	};
+// }
 
 async function onFileSelect(filePath: string) {
 	codeSelectedFile.value = filePath;
@@ -514,6 +532,22 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const isRenamingCode = ref(false);
+
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-pencil',
+		label: 'Rename',
+		command() {
+			isRenamingCode.value = true;
+		}
+	}
+]);
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
 </script>
 
 <style scoped>
@@ -531,11 +565,6 @@ header > section {
 main {
 	height: 100%;
 }
-
-h4 {
-	margin-top: 0.25rem;
-}
-
 .code-asset-content {
 	display: flex;
 	height: 100%;
@@ -571,12 +600,9 @@ h4 {
 }
 
 .name-input {
-	height: 2.5rem;
+	height: 2.25rem;
 	align-self: center;
-	font-size: 20px;
-	font-weight: var(--font-weight-semibold);
-	width: 100%;
-	border: 0;
+	border: 1px solid var(--surface-border);
 }
 
 .form-checkbox {
@@ -603,7 +629,7 @@ h4 {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	border-left: solid var(--surface-500);
+	border-left: solid 1px var(--surface-border);
 	overflow-y: auto;
 }
 .code-blocks-buttons-container {
@@ -626,13 +652,17 @@ h4 {
 .code-asset-editor-header {
 	display: flex;
 	align-items: center;
-	background-color: var(--surface-200);
+	background-color: var(--surface-100);
 	justify-content: space-between;
-	border-bottom: solid var(--surface-500);
+	border-bottom: solid 1px var(--surface-border);
 }
 
 :deep(.ace-active-line) {
 	background-color: var(--surface-highlight);
 	position: absolute;
+}
+
+.toolbar-button {
+	height: 2.25rem;
 }
 </style>
