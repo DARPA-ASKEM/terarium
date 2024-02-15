@@ -1,5 +1,5 @@
 <template>
-	<figure>
+	<figure class="relative">
 		<div ref="content" class="content" :style="{ height, width }">
 			<slot />
 			<div v-if="!hasSlot('default')" class="empty">
@@ -20,11 +20,28 @@
 				<li v-if="isNumeric && itemCount > 5">(+{{ itemCount }})</li>
 			</ul>
 		</nav>
+		<Button
+			v-if="itemCount > 1"
+			text
+			severity="secondary"
+			icon="pi pi-chevron-left"
+			@click="move(currentPage - 1)"
+			class="carousel-chevron go-back"
+		/>
+		<Button
+			v-if="itemCount > 1"
+			text
+			severity="secondary"
+			icon="pi pi-chevron-right"
+			@click="move(currentPage + 1)"
+			class="carousel-chevron go-forward"
+		/>
 	</figure>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, useSlots } from 'vue';
+import Button from 'primevue/button';
 
 defineProps({
 	height: {
@@ -166,5 +183,24 @@ nav {
 		border-radius: 24px;
 		font-size: 10px;
 	}
+}
+
+.carousel-chevron {
+	opacity: 0;
+	height: 5rem;
+}
+.carousel-chevron:hover {
+	opacity: 0.5;
+}
+.go-back {
+	position: absolute;
+	top: 1.25rem;
+	left: 8px;
+}
+
+.go-forward {
+	position: absolute;
+	top: 1.25rem;
+	right: 8px;
 }
 </style>
