@@ -91,7 +91,7 @@ public class ConceptController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
 	})
 	@Secured(Roles.USER)
-	public ResponseEntity<DKG> searchConceptDefinitions(
+	public ResponseEntity<List<DKG>> searchConceptDefinitions(
 			@RequestParam("term") String term,
 			@RequestParam(name = "limit", defaultValue = "100") Integer limit,
 			@RequestParam(name = "offset", defaultValue = "100") Integer offset) {

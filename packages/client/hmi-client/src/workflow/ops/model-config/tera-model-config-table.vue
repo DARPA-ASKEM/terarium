@@ -16,7 +16,9 @@
 					text
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					icon="pi pi-table"
+					label="Matrix"
 					@click="openMatrixModal(slotProps.data)"
+					class="p-0"
 				/>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
 				<Dropdown
@@ -32,7 +34,12 @@
 		</Column>
 		<Column field="value" header="Value" style="width: 15%">
 			<template #body="slotProps">
-				<span v-if="slotProps.data.type === ParamType.MATRIX">Matrix</span>
+				<span
+					v-if="slotProps.data.type === ParamType.MATRIX"
+					@click="openMatrixModal(slotProps.data)"
+					class="cursor-pointer secondary-text"
+					>Click to view</span
+				>
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
 					<InputText
 						size="small"
@@ -251,8 +258,17 @@ const updateExpression = async (value: Initial) => {
 </script>
 
 <style scoped>
+.p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
+	padding: 0;
+}
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
 	display: none;
+}
+.p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
+	background: var(--surface-highlight);
+}
+.p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {
+	padding: 0;
 }
 
 .hide-header :deep(.p-datatable-thead) {
@@ -276,5 +292,9 @@ const updateExpression = async (value: Initial) => {
 .timeseries-container {
 	display: flex;
 	flex-direction: column;
+}
+
+.secondary-text {
+	color: var(--text-color-subdued);
 }
 </style>
