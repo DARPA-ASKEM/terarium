@@ -29,6 +29,7 @@
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
+				class="evaluation-scneario-modal"
 			>
 				<template #header>
 					<h4>Evaluation scenario</h4>
@@ -67,10 +68,14 @@
 					</form>
 				</template>
 				<template #footer>
-					<Button class="p-button-secondary" @click="isEvaluationScenarioModalVisible = false"
+					<Button
+						size="large"
+						class="p-button-secondary"
+						@click="isEvaluationScenarioModalVisible = false"
 						>Close</Button
 					>
 					<Button
+						size="large"
 						class="p-button-danger"
 						v-if="
 							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
@@ -82,6 +87,7 @@
 						>Stop</Button
 					>
 					<Button
+						size="large"
 						class="p-button-warning"
 						v-if="
 							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
@@ -91,12 +97,14 @@
 						>Pause</Button
 					>
 					<Button
+						size="large"
 						class="p-button-warning"
 						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
 						@click="resumeEvaluationScenario"
 						>Resume</Button
 					>
 					<Button
+						size="large"
 						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
 						@click="beginEvaluationScenario"
 						>Begin</Button
@@ -573,5 +581,9 @@ nav {
 	justify-content: space-between;
 	width: 100%;
 	color: var(--text-color-subdued);
+}
+
+.evaluation-scneario-modal:deep(section) {
+	width: 60vw;
 }
 </style>
