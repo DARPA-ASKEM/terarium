@@ -191,7 +191,7 @@ const currentTemplates = computed(() =>
 		: flattenedTemplates.value
 );
 const cards = computed<ModelTemplateCard[]>(
-	() => currentTemplates.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+	() => currentTemplates.value.models.map(({ metadata }) => metadata?.templateCard) ?? []
 );
 const junctions = computed<ModelTemplateJunction[]>(() => currentTemplates.value.junctions);
 
@@ -207,7 +207,6 @@ const isCreatingNewEdge = computed(
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
-
 	return cards.value.some(({ x, y, width, height }) => {
 		const withinXRange = p.x >= x - buffer && p.x <= x + width + buffer;
 		const withinYRange = p.y >= y - buffer && p.y <= y + height + buffer;
@@ -294,19 +293,15 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 				currentPortPosition,
 				interpolatePointsForCurve
 			);
-			// Reflect flattened view connections in decomposed view
-			// Once this is done, everything in the flattened view will be "merged"
-			flattenedTemplates.value.models.slice(1).forEach((modelTemplate: Model) => {
-				console.log(99);
-				modelTemplatingService.addDecomposedTemplateInKernel(
-					props.kernelManager,
-					decomposedTemplates.value,
-					modelTemplate,
-					outputCode,
-					syncWithMiraModel,
-					true
-				);
-			});
+			// Once the second edge is drawn, reflect changes in decomposed view - once done, everything in the flattened view will be "merged"
+			modelTemplatingService.reflectFlattenedEditInDecomposedView(
+				props.kernelManager,
+				flattenedTemplates.value,
+				decomposedTemplates.value,
+				outputCode,
+				syncWithMiraModel,
+				interpolatePointsForCurve
+			);
 		}
 		cancelNewEdge();
 	}

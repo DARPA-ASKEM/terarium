@@ -580,7 +580,7 @@ export function flattenedToDecomposedInView(
 				};
 
 				// Port position is now card position + 168 (width of the card)
-				const portPosition = { x: templateCard.x + 168, y: templateCard.y };
+				const portPosition = { x: templateCard.x + 168, y: templateCard.y }; // FIXME: True port positions should be determined, for now this points to the top of the card
 				addEdgeInView(decomposedTemplates, junctionId, target, portPosition, interpolatePointsFn);
 			}
 		});
@@ -590,7 +590,7 @@ export function flattenedToDecomposedInView(
 export function flattenedToDecomposedInKernel(
 	kernelManager: KernelSessionManager,
 	decomposedTemplates: ModelTemplates,
-	interpolatePointsFn: Function
+	interpolatePointsFn?: Function
 ) {
 	kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
 		flattenedToDecomposedInView(
@@ -598,5 +598,105 @@ export function flattenedToDecomposedInKernel(
 			d.content.templates as Model[],
 			interpolatePointsFn
 		);
+	});
+}
+
+// Reflect flattened view connections in decomposed view - once done, everything in the flattened view will be "merged"
+export function reflectFlattenedEditInDecomposedView(
+	kernelManager: KernelSessionManager,
+	flattenedTemplates: ModelTemplates,
+	decomposedTemplates: ModelTemplates,
+	outputCode: Function,
+	syncWithMiraModel: Function,
+	interpolatePointsFn?: Function
+) {
+	const templatesToMerge = flattenedTemplates.models;
+	const flattenedJunctions = flattenedTemplates.junctions;
+
+	// Add decomposed templates from flattened view to decomposed view
+	templatesToMerge
+		.slice(1) // Ignore the first one since it's the previous flattened one, the rest are decomposed
+		.forEach((modelTemplate: Model) => {
+			addDecomposedTemplateInKernel(
+				kernelManager,
+				decomposedTemplates,
+				modelTemplate,
+				outputCode,
+				syncWithMiraModel,
+				true
+			);
+		});
+
+	// Add edges and potential junctions from flattened view to decomposed view
+	flattenedJunctions.forEach((flatJunction: ModelTemplateJunction) => {
+		const sharedPortId = flatJunction.edges[0].target.portId; // The state id shared by all ports is always the first port id
+
+		// Find the junction in the decomposed view that corresponds to the flattened junction
+		// let isNewJunction = false;
+		let decompJunction = decomposedTemplates.junctions.find(
+			({ edges }) => edges[0].target.portId === sharedPortId
+		);
+		// If one isn't found then create a new one
+		if (!decompJunction) {
+			// isNewJunction = true;
+			addJunction(decomposedTemplates, {
+				x: flatJunction.x,
+				y: flatJunction.y
+			});
+			decompJunction = decomposedTemplates.junctions[decomposedTemplates.junctions.length - 1];
+
+			// Draw the edge that would be drawn to the junction by default
+			decomposedTemplates.models.forEach((modelTemplate: Model) => {
+				if (modelTemplate.semantics?.ode?.initials && modelTemplate.metadata?.templateCard) {
+					const initial = modelTemplate.semantics.ode.initials.find(
+						({ target }) => target === sharedPortId
+					);
+					if (initial && decompJunction) {
+						const { templateCard } = modelTemplate.metadata;
+						addEdgeInView(
+							decomposedTemplates,
+							decompJunction.id,
+							{ cardId: templateCard.id, portId: sharedPortId },
+							{ x: templateCard.x + 168, y: templateCard.y }, // FIXME: True port positions should be determined, for now this points to the top of the card
+							interpolatePointsFn
+						);
+					}
+				}
+			});
+		}
+
+		// Add edges from flattened view to decomposed view
+		flatJunction.edges.forEach((flatEdge) => {
+			if (!decompJunction) return;
+			console.log(flatEdge);
+
+			// If this is a new junction
+			// Find the decomposed template that has the sharedPortId in the initials
+			// const firstDecompTemplate =
+
+			// const decompTemplateToLinkEdge = templatesToMerge.find(
+			// 	({ models }) => metadata?.templateCard.id === flatEdge.target.portId
+			// )?.id;
+
+			// const newDecompTarget = {
+			// 	cardId: flatEdge.target.cardId,
+			// 	portId: flatEdge.target.portId
+			// };
+
+			// if (!decompEdge) return;console.log(templatesToMerge, flatEdge, decompJunction);
+
+			// console.log(decompEdge);
+
+			// 	addEdgeInKernel(
+			// 		props.kernelManager,
+			// 		decomposedTemplates,
+			// 		newDecompJunction.id,
+			// 		edge.target,
+			// 		edge.points[0],
+			// 		outputCode,
+			// 		syncWithMiraModel,
+			// 		interpolatePointsForCurve
+			// 	);
+		});
 	});
 }

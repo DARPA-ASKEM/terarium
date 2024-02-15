@@ -1,4 +1,5 @@
 import type { Position } from '@/types/common';
+import type { Model } from '@/types/Types';
 
 export enum DecomposedModelTemplateTypes {
 	ControlledConversion = 'Controlled conversion',
@@ -17,7 +18,7 @@ export interface ModelTemplates {
 		y: number;
 		k: number;
 	};
-	models: any[];
+	models: Model[];
 	junctions: ModelTemplateJunction[];
 }
 
