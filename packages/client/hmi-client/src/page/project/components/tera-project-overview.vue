@@ -115,7 +115,9 @@ a {
 	margin-bottom: 1rem;
 	gap: 1rem;
 }
-
+.quick-links .p-button.p-button-secondary {
+	width: 100%;
+}
 /* Ensure the parent container fills the height of its parent or set a specific height */
 .editor-container {
 	display: flex;
@@ -127,13 +129,6 @@ a {
 }
 .editor-container:deep(.ql-editor) {
 	height: calc(100vh - 347px);
-}
-
-.p-button.p-button-secondary {
-	width: 100%;
-}
-.no-results-found-message {
-	text-align: center;
-	width: 40%;
+	font-family: var(--font-family);
 }
 </style>
