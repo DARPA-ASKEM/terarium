@@ -46,15 +46,7 @@
 
 			<!-- PrimeVue editor-container go here -->
 			<section class="editor-container">
-				<Editor v-model="editorContent" class="editor h-full">
-					<template v-slot:toolbar>
-						<span class="ql-formats">
-							<Button v-tooltip.bottom="'Bold'" class="ql-bold"></Button>
-							<Button v-tooltip.bottom="'Italic'" class="ql-italic"></Button>
-							<Button v-tooltip.bottom="'Underline'" class="ql-underline"></Button>
-						</span>
-					</template>
-				</Editor>
+				<Editor v-model="editorContent" class="editor h-full"> </Editor>
 			</section>
 		</section>
 	</tera-asset>
@@ -117,6 +109,7 @@ a {
 }
 .quick-links .p-button.p-button-secondary {
 	width: 100%;
+	font-size: 1rem;
 }
 /* Ensure the parent container fills the height of its parent or set a specific height */
 .editor-container {
