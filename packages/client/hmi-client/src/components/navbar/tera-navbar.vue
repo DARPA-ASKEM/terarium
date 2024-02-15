@@ -36,7 +36,9 @@
 						<h4>Evaluation scenario</h4>
 						<div>
 							<span class="text-sm">Status</span
-							><span class="ml-2 status-chip">{{ evaluationScenarioCurrentStatus }}</span>
+							><span class="ml-2 status-chip">{{
+								evaluationScenarioCurrentStatus ? evaluationScenarioCurrentStatus : 'Ready to start'
+							}}</span>
 						</div>
 					</div>
 				</template>
