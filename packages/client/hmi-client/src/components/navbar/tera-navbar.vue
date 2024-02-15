@@ -31,7 +31,7 @@
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
 			>
 				<template #header>
-					<h4>Evaluation Scenario</h4>
+					<h4>Evaluation scenario</h4>
 				</template>
 				<template #default>
 					<form>
@@ -375,7 +375,7 @@ const userMenu = ref();
 const isLogoutDialog = ref(false);
 const userMenuItems = ref([
 	{
-		label: 'Evaluation Scenario',
+		label: 'Evaluation scenario',
 		command: () => {
 			isEvaluationScenarioModalVisible.value = true;
 		}
