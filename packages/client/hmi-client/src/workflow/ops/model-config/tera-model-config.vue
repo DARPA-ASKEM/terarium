@@ -120,6 +120,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
