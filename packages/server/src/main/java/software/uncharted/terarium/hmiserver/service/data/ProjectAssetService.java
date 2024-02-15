@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -145,10 +146,10 @@ public class ProjectAssetService {
 		return Optional.of(projectAssetRepository.save(projectAsset));
 	}
 
-	public void updateNameByAssetId(UUID assetId, String name) {
-		Optional<ProjectAsset> projectAsset = projectAssetRepository.findByAssetId(assetId);
+	public void updateByAsset(TerariumAsset asset) {
+		Optional<ProjectAsset> projectAsset = projectAssetRepository.findByAssetId(asset.getId());
 		if (projectAsset.isPresent()) {
-			projectAsset.get().setAssetName(name);
+			projectAsset.get().setAssetName(asset.getName());
 			updateProjectAsset(projectAsset.get());
 		} else {
 			log.info("Could not update the project asset name for asset with id: " + assetId + " because it does not exist.");

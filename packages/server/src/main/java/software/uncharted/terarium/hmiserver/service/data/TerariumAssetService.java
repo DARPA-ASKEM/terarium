@@ -141,10 +141,9 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
 
 		// Update the related ProjectAsset.assetName
-		projectAssetService.updateNameByAssetId(asset.getId(), asset.getName());
+		projectAssetService.updateByAsset(asset);
 
 		return Optional.of(asset);
 	}
-
 
 }
