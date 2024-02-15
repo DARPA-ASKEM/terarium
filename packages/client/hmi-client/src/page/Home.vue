@@ -171,7 +171,9 @@ const viewOptions = ref([
 const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const myProjects = projects.filter(({ publicProject }) => publicProject === false);
+	const myProjects = projects.filter(({ userPermission }) =>
+		['creator', 'writer'].includes(userPermission ?? '')
+	);
 	return filterAndSortProjects(myProjects);
 });
 

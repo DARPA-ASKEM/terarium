@@ -1,10 +1,39 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+
+import org.apache.http.Header;
+import org.apache.http.HttpHost;
+import org.apache.http.message.BasicHeader;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
+import co.elastic.clients.elasticsearch.core.GetRequest;
+import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -15,28 +44,10 @@ import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.message.BasicHeader;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
 
 @Service
 @Data
@@ -198,7 +209,8 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Returns true if the ES cluster contains the component template with the provided
+	 * Returns true if the ES cluster contains the component template with the
+	 * provided
 	 * name, false otherwise
 	 *
 	 * @param name The name of the index template to check existence for
@@ -216,7 +228,8 @@ public class ElasticsearchService {
 	 *
 	 * @param name         The name of the index template
 	 * @param templateJson The component template json string
-	 * @return True if the component template was successfully added, false otherwise
+	 * @return True if the component template was successfully added, false
+	 *         otherwise
 	 */
 	public boolean putComponentTemplate(final String name, final String templateJson) {
 		return putTyped(name, templateJson, "component template", "_component_template");
@@ -360,7 +373,6 @@ public class ElasticsearchService {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(index)
 				.size(numResults)
-				.source(src -> src.filter(v -> v.includes("title")))
 				.knn(query)
 				.build();
 
