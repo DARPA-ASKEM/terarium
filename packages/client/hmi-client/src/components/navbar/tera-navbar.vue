@@ -32,7 +32,13 @@
 				class="evaluation-scneario-modal"
 			>
 				<template #header>
-					<h4>Evaluation scenario</h4>
+					<div class="flex w-full justify-content-between align-items-center">
+						<h4>Evaluation scenario</h4>
+						<div>
+							<span class="text-sm">Status</span
+							><span class="ml-2 status-chip">{{ evaluationScenarioCurrentStatus }}</span>
+						</div>
+					</div>
 				</template>
 				<template #default>
 					<form>
@@ -62,10 +68,6 @@
 
 						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
-
-						<p>
-							Status <span class="ml-2 status-chip">{{ evaluationScenarioCurrentStatus }}</span>
-						</p>
 					</form>
 				</template>
 				<template #footer>
