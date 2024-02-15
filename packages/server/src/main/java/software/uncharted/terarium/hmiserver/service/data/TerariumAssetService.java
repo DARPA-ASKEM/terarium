@@ -158,9 +158,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	 * Get the name of an asset
 	 * @param asset
 	 * @return assetName
-	 * @param <T>
 	 */
-	private static <T> String getAssetName(T asset) {
+	private static String getAssetName(Object asset) {
 		// Force cast to the correct type because Terrarium Asset does not provide a bloody name
 		if (asset instanceof Dataset) {
 			return ((Dataset) asset).getName();
