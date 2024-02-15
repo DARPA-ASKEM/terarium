@@ -158,9 +158,9 @@ ul {
 }
 
 :deep(.p-panel .p-panel-content) {
-	padding: 0rem 0rem 1rem 1rem !important;
+	padding: 0 0 var(--gap) var(--gap) !important;
 }
 :deep(.p-panel .p-panel-footer) {
-	padding: 0 1rem 1rem 0 !important;
+	padding: 0 var(--gap) var(--gap) 0 !important;
 }
 </style>
