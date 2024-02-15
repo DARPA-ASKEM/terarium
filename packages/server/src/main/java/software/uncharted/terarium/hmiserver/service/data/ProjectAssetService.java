@@ -152,7 +152,7 @@ public class ProjectAssetService {
 			projectAsset.get().setAssetName(asset.getName());
 			updateProjectAsset(projectAsset.get());
 		} else {
-			log.info("Could not update the project asset name for asset with id: " + assetId + " because it does not exist.");
+			log.info("Could not update the project asset name for asset with id: " + asset.getId() + " because it does not exist.");
 		}
 	}
 

@@ -24,6 +24,7 @@ export interface ClientLog {
 
 export interface TerariumAsset {
     id?: string;
+    name: string;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
@@ -69,7 +70,6 @@ export interface GithubRepo {
 
 export interface Artifact extends TerariumAsset {
     userId: string;
-    name: string;
     description?: string;
     fileNames: string[];
     metadata?: any;
@@ -111,7 +111,6 @@ export interface ResponseSuccess {
 }
 
 export interface Code extends TerariumAsset {
-    name: string;
     description: string;
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
@@ -131,7 +130,6 @@ export interface Dynamics {
 
 export interface ActiveConcept extends TerariumAsset {
     curie: string;
-    name: string;
 }
 
 export interface OntologyConcept {
@@ -148,7 +146,6 @@ export interface OntologyConcept {
 
 export interface Dataset extends TerariumAsset {
     userId?: string;
-    name: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
@@ -195,8 +192,8 @@ export interface DocumentAsset extends TerariumAsset {
 }
 
 export interface Equation extends TerariumAsset {
-    userId?: string;
     name?: string;
+    userId?: string;
     equationType: EquationType;
     content: string;
     metadata?: { [index: string]: any };
@@ -224,7 +221,6 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
     description?: string;
     configuration: any;
     model_id: string;
@@ -238,7 +234,6 @@ export interface ModelDescription {
 }
 
 export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
     version: string;
     semantics: string;
 }
@@ -395,7 +390,6 @@ export interface DecapodesTerm {
 }
 
 export interface NotebookSession extends TerariumAsset {
-    name: string;
     description?: string;
     data: any;
 }
@@ -420,7 +414,6 @@ export interface Assets {
 }
 
 export interface Project extends TerariumAsset {
-    name: string;
     userId: string;
     userName?: string;
     description?: string;
@@ -533,7 +526,6 @@ export interface Transform {
 }
 
 export interface Workflow extends TerariumAsset {
-    name: string;
     description: string;
     transform: Transform;
     nodes: any;
