@@ -71,7 +71,7 @@ const editorContent = ref(`
         <p>Welcome to your project overview page. Use this space to track progress, brainstorm, or lay out your project steps. Not sure where to start? Here are some things you can try:</p>
 		<br>
         <ul>
-            <li><strong>Upload stuff:</strong> Got documents or code? Upload them right into your project with the green button in the bottom right corner.</li>
+            <li><strong>Upload stuff:</strong> Got documents or code? Upload them right into your project with the green button in the bottom left corner.</li>
             <li><strong>Explore and add:</strong> Dive into the Explorer to find documents, models, and datasets that you can add to your project.</li>
             <li><strong>Build a model:</strong> Do you have something specific in mind? Start a new model from scratch that fits just what you need.</li>
             <li><strong>Create a workflow:</strong> Design workflows to connect operators so you can focus on the science and not the coding and orchestration.</li>
@@ -135,7 +135,7 @@ a {
 	height: 100%;
 }
 .editor-container:deep(.ql-editor) {
-	height: calc(100vh - 347px);
+	height: calc(100vh - 344px);
 	font-family: var(--font-family);
 }
 
