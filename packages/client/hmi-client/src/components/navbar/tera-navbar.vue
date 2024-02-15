@@ -63,64 +63,70 @@
 						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
 
-						<p>Status: {{ evaluationScenarioCurrentStatus }}</p>
-						<p>Runtime: {{ evaluationScenarioRuntimeString }}</p>
+						<p>
+							Status <span class="ml-2 status-chip">{{ evaluationScenarioCurrentStatus }}</span>
+						</p>
 					</form>
 				</template>
 				<template #footer>
-					<Button
-						size="large"
-						class="p-button-danger"
-						v-if="
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
-						"
-						:disabled="!isEvaluationScenarioValid"
-						@click="stopEvaluationScenario"
-						>Stop</Button
-					>
-					<Button
-						size="large"
-						class="p-button-warning"
-						v-if="
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
-						"
-						@click="pauseEvaluationScenario"
-						>Pause</Button
-					>
-					<Button
-						size="large"
-						class="p-button-warning"
-						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
-						@click="resumeEvaluationScenario"
-						>Resume</Button
-					>
+					<div class="flex gap-2">
+						<Button
+							size="large"
+							class="p-button-danger"
+							v-if="
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
+							"
+							:disabled="!isEvaluationScenarioValid"
+							@click="stopEvaluationScenario"
+							>Stop</Button
+						>
+						<Button
+							size="large"
+							class="p-button-warning"
+							v-if="
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
+							"
+							@click="pauseEvaluationScenario"
+							>Pause</Button
+						>
+						<Button
+							size="large"
+							class="p-button-warning"
+							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
+							@click="resumeEvaluationScenario"
+							>Resume</Button
+						>
 
-					<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
-					<div
-						class="hidden"
-						v-if="
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
-						"
-					/>
-					<Button
-						v-else
-						size="large"
-						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
-						@click="beginEvaluationScenario"
-						>Begin</Button
-					>
-					<Button
-						size="large"
-						class="p-button-secondary"
-						outlined
-						@click="isEvaluationScenarioModalVisible = false"
-						>Close</Button
-					>
+						<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
+						<div
+							class="hidden"
+							v-if="
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
+							"
+						/>
+						<Button
+							v-else
+							size="large"
+							:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
+							@click="beginEvaluationScenario"
+							>Begin</Button
+						>
+						<Button
+							size="large"
+							class="p-button-secondary"
+							outlined
+							@click="isEvaluationScenarioModalVisible = false"
+							>Close</Button
+						>
+					</div>
+					<div class="align-self-center">
+						<p>Runtime {{ evaluationScenarioRuntimeString }}</p>
+					</div>
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -597,5 +603,14 @@ nav {
 
 .evaluation-scneario-modal:deep(section) {
 	width: 60vw;
+}
+
+.evaluation-scneario-modal:deep(footer) {
+	justify-content: space-between;
+}
+.status-chip {
+	background-color: var(--surface-highlight);
+	padding: var(--gap-small);
+	border-radius: 3rem;
 }
 </style>
