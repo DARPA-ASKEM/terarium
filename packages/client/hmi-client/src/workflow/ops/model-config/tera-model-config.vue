@@ -544,7 +544,7 @@ const initialize = async () => {
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
