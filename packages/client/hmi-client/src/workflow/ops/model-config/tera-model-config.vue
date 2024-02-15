@@ -19,8 +19,7 @@
 						<InputText
 							class="context-item"
 							placeholder="Enter a name for this configuration"
-							v-model="configName"
-							@update:model-value="() => debouncedUpdateState({ name: configName })"
+							v-model="knobs.name"
 						/>
 						<h3>Description</h3>
 						<Textarea
@@ -63,12 +62,55 @@
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="ConfigTabs.Notebook">
-			<h4>TODO</h4>
+			<tera-drilldown-section>
+				<h4>Code Editor - Python</h4>
+				<Suspense>
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:defaultOptions="sampleAgentQuestions"
+						@llm-output="(data: any) => appendCode(data, 'code')"
+					/>
+				</Suspense>
+				<v-ace-editor
+					v-model:value="codeText"
+					@init="initializeEditor"
+					lang="python"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%"
+					class="ace-editor"
+				/>
+				<template #footer>
+					<Button style="margin-right: auto" label="Run" @click="runFromCode" />
+					<InputText
+						v-model="knobs.name"
+						placeholder="Configuration Name"
+						type="text"
+						class="input-small"
+					/>
+					<Button
+						:disabled="isSaveDisabled"
+						outlined
+						style="margin-right: auto"
+						label="Save as new configuration"
+						@click="createConfiguration"
+					/>
+				</template>
+			</tera-drilldown-section>
+			<tera-drilldown-preview
+				title="Output Preview"
+				v-model:output="selectedOutputId"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				:options="outputs"
+				is-selectable
+			>
+				<div>OUTPUT HERE</div>
+			</tera-drilldown-preview>
 		</section>
 		<template #footer>
 			<Button
 				outlined
-				:disabled="!configName"
+				:disabled="isSaveDisabled"
 				label="Run"
 				icon="pi pi-play"
 				@click="createConfiguration"
@@ -105,8 +147,13 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import { KernelSessionManager } from '@/services/jupyter';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraModelConfigTable from './tera-model-config-table.vue';
+import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -137,14 +184,123 @@ const emit = defineEmits([
 	'close'
 ]);
 
+interface BasicKnobs {
+	name: string;
+	description: string;
+	initials: Initial[];
+	parameters: ModelParameter[];
+}
+
+const knobs = ref<BasicKnobs>({
+	name: '',
+	description: '',
+	initials: [],
+	parameters: []
+});
+
+const isSaveDisabled = computed(() => {
+	if (knobs.value.name === '') return true;
+	return false;
+});
+
+const kernelManager = new KernelSessionManager();
+// const isKernelReady = ref(false);
+let editor: VAceEditorInstance['_editor'] | null;
+const buildJupyterContext = () => {
+	console.log('buildJupyterContext');
+	const contextId = selectedConfigId.value ?? props.node.state.tempConfigId;
+	console.log(contextId);
+	if (!model.value) {
+		logger.warn('Cannot build Jupyter context without a model');
+		return null;
+	}
+	return {
+		context: 'mira_config_edit',
+		language: 'python3',
+		context_info: {
+			id: contextId
+		}
+	};
+};
+const codeText = ref(
+	'# This environment contains the variable "model" \n# which is displayed on the right'
+);
+const sampleAgentQuestions = ['What are the current parameters values?'];
+
+const appendCode = (data: any, property: string, runUpdatedCode = false) => {
+	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+	if (runUpdatedCode) runFromCode();
+};
+
+const runFromCode = () => {
+	const code = editor?.getValue();
+	if (!code) return;
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	let executedCode = '';
+
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('error', (data) => {
+			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			console.log('error', data.content);
+		})
+		.register('model_preview', (data) => {
+			if (!data.content) return;
+
+			handleModelPreview(data);
+
+			if (executedCode) {
+				saveCodeToState(executedCode, true);
+			}
+		});
+};
+
+const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
+	const state = _.cloneDeep(props.node.state);
+	state.hasCodeBeenRun = hasCodeBeenRun;
+
+	// for now only save the last code executed, may want to save all code executed in the future
+	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
+	const timestamp = Date.now();
+	if (codeHistoryLength > 0) {
+		state.modelEditCodeHistory[0] = { code, timestamp };
+	} else {
+		state.modelEditCodeHistory.push({ code, timestamp });
+	}
+	emit('update-state', state);
+};
+
+const initializeEditor = (editorInstance: any) => {
+	editor = editorInstance;
+};
+
+const handleModelPreview = (data: any) => {
+	console.log('Handle model preview:');
+	console.log(data);
+	model.value = data.content['application/json'];
+};
+
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
 const configCache = ref<Record<string, ModelConfiguration>>({});
-
-const configName = ref<string>(props.node.state.name);
 const configDescription = ref<string>(props.node.state.description);
 const model = ref<Model>();
 
@@ -337,16 +493,19 @@ const updateFromConfig = (config: ModelConfiguration) => {
 };
 
 const createConfiguration = async () => {
+	console.log('Creating config');
 	if (!model.value) return;
 
 	const state = _.cloneDeep(props.node.state);
 
 	const data = await createModelConfiguration(
 		model.value.id,
-		configName.value,
+		knobs.value.name,
 		configDescription.value,
 		modelConfiguration.value?.configuration
 	);
+	console.log('Model config created:');
+	console.log(data);
 
 	if (!data) {
 		logger.error('Failed to create model configuration');
@@ -382,13 +541,41 @@ const lazyLoadModelConfig = async (configId: string) => {
 };
 
 const onUpdateOutput = (id) => {
+	console.log(id);
 	emit('select-output', id);
 };
 const onUpdateSelection = (id) => {
+	console.log(id);
 	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
+};
+
+// Creates a temp config (if doesnt exist in state)
+// This is used for beaker context when there are no outputs in the node
+const createTempModelConfig = async () => {
+	console.log('Create temp model');
+	console.log(modelConfiguration.value?.configuration);
+	const state = _.cloneDeep(props.node.state);
+	if (state.tempConfigId !== '' || !model.value) return;
+	const data = await createModelConfiguration(
+		model.value.id,
+		knobs.value.name,
+		configDescription.value,
+		modelConfiguration.value?.configuration
+	);
+	state.tempConfigId = data.id;
+	emit('update-state', state);
+};
+
+// Fill the form with the config data
+const initialize = () => {
+	knobs.value.name = props.node.state.name;
+	configDescription.value = props.node.state.description;
+	configInitials.value = props.node.state.initials;
+	configParams.value = props.node.state.parameters;
+	configTimeSeries.value = props.node.state.timeseries;
 };
 
 watch(
@@ -401,6 +588,15 @@ watch(
 	{ immediate: true, deep: true }
 );
 
+// TODO:
+// watch(
+// 	() => props.node.inputs[0],
+// 	async () => {
+// 		initialize()
+// 	},
+// 	{ immediate: true }
+// )
+
 watch(
 	() => props.node.active,
 	() => {
@@ -408,12 +604,7 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 		}
-		// Fill the form with the config data
-		configName.value = props.node.state.name;
-		configDescription.value = props.node.state.description;
-		configInitials.value = props.node.state.initials;
-		configParams.value = props.node.state.parameters;
-		configTimeSeries.value = props.node.state.timeseries;
+		initialize();
 	},
 	{ immediate: true, deep: true }
 );
@@ -437,6 +628,16 @@ onMounted(async () => {
 				state.initials = m.semantics?.ode.initials;
 				state.parameters = m.semantics?.ode.parameters;
 				emit('update-state', state);
+			}
+			// Create a new session and context based on model
+			try {
+				await createTempModelConfig();
+				const jupyterContext = buildJupyterContext();
+				if (jupyterContext) {
+					await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+				}
+			} catch (error) {
+				logger.error(`Error initializing Jupyter session: ${error}`);
 			}
 		}
 	}
