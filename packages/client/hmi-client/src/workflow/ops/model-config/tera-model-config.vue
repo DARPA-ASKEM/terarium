@@ -25,8 +25,7 @@
 						<Textarea
 							class="context-item"
 							placeholder="Enter a description"
-							v-model="configDescription"
-							@update:model-value="() => debouncedUpdateState({ description: configDescription })"
+							v-model="knobs.description"
 						/>
 					</AccordionTab>
 					<AccordionTab header="Diagram">
@@ -121,8 +120,8 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, isEmpty } from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
+import _, { cloneDeep } from 'lodash';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -130,10 +129,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { getModel } from '@/services/model';
-import {
-	createModelConfiguration,
-	getModelConfigurationById
-} from '@/services/model-configurations';
+import { createModelConfiguration } from '@/services/model-configurations';
 import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
@@ -189,13 +185,15 @@ interface BasicKnobs {
 	description: string;
 	initials: Initial[];
 	parameters: ModelParameter[];
+	timeseries: { [index: string]: any };
 }
 
 const knobs = ref<BasicKnobs>({
 	name: '',
 	description: '',
 	initials: [],
-	parameters: []
+	parameters: [],
+	timeseries: {}
 });
 
 const isSaveDisabled = computed(() => {
@@ -300,9 +298,7 @@ const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const configCache = ref<Record<string, ModelConfiguration>>({});
-const configDescription = ref<string>(props.node.state.description);
-const model = ref<Model>();
+const model = ref<Model | null>();
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
@@ -315,9 +311,9 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 				timeseries: {}
 			};
 		}
-		cloneModel.semantics.ode.initials = configInitials.value;
-		cloneModel.semantics.ode.parameters = configParams.value;
-		cloneModel.metadata.timeseries = configTimeSeries.value;
+		cloneModel.semantics.ode.initials = knobs.value.initials;
+		cloneModel.semantics.ode.parameters = knobs.value.parameters;
+		cloneModel.metadata.timeseries = knobs.value.timeseries;
 	}
 	const modelConfig: ModelConfiguration = {
 		id: '',
@@ -327,10 +323,6 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	};
 	return modelConfig;
 });
-
-const configInitials = ref<Initial[]>();
-const configParams = ref<ModelParameter[]>();
-const configTimeSeries = ref<{ [index: string]: any }>();
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
@@ -353,7 +345,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 	if (stratifiedModelType.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = configInitials.value?.find((i) => i.target === v);
+				const initial = knobs.value.initials.find((i) => i.target === v);
 				return {
 					id: v,
 					name: v,
@@ -379,7 +371,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 				id: init,
 				name: init,
 				type: ParamType.EXPRESSION,
-				value: configInitials.value?.find((i) => i.target === vals[0]),
+				value: knobs.value.initials.find((i) => i.target === vals[0]),
 				source: '',
 				visibility: false
 			});
@@ -395,9 +387,9 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	if (stratifiedModelType.value) {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const param = configParams.value?.find((i) => i.id === v);
+				const param = knobs.value.parameters.find((i) => i.id === v);
 				const paramType = getParamType(param);
-				const timeseriesValue = configTimeSeries.value?.[param!.id];
+				const timeseriesValue = knobs.value.timeseries[param!.id];
 				return {
 					id: v,
 					name: v,
@@ -420,10 +412,10 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		parameters.value.forEach((vals, init) => {
-			const param = configParams.value?.find((i) => i.id === vals[0]);
+			const param = knobs.value.parameters.find((i) => i.id === vals[0]);
 			const paramType = getParamType(param);
 
-			const timeseriesValue = configTimeSeries.value?.[param!.id];
+			const timeseriesValue = knobs.value.timeseries[param!.id];
 			formattedParams.push({
 				id: init,
 				name: init,
@@ -453,12 +445,6 @@ const getParamType = (param: ModelParameter | undefined) => {
 	return type;
 };
 
-const updateState = (updatedField) => {
-	let state = _.cloneDeep(props.node.state);
-	state = { ...state, ...updatedField };
-	emit('update-state', state);
-};
-
 const updateConfigParam = (params: ModelParameter[]) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.parameters) return;
@@ -472,6 +458,7 @@ const updateConfigParam = (params: ModelParameter[]) => {
 };
 
 const updateConfigInitial = (inits: Initial[]) => {
+	console.log('Update config initials');
 	const state = _.cloneDeep(props.node.state);
 	if (!state.initials) return;
 
@@ -501,8 +488,8 @@ const createConfiguration = async () => {
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value.name,
-		configDescription.value,
-		modelConfiguration.value?.configuration
+		knobs.value.description,
+		model.value
 	);
 	console.log('Model config created:');
 	console.log(data);
@@ -520,24 +507,6 @@ const createConfiguration = async () => {
 		isSelected: false,
 		state
 	});
-
-	setTimeout(async () => {
-		const modelConfig = await getModelConfigurationById(data.id);
-		// TODO: do we need to cache here at all?
-		// model configs aren't too large so we could potentially just fetch each time
-		configCache.value[modelConfig.id ?? ''] = modelConfig;
-	}, 1000);
-};
-
-const debouncedUpdateState = _.debounce(updateState, 500);
-
-const lazyLoadModelConfig = async (configId: string) => {
-	if (!configId || configCache.value[configId]) return;
-
-	const config = await getModelConfigurationById(configId);
-	if (config) {
-		configCache.value[configId] = config;
-	}
 };
 
 const onUpdateOutput = (id) => {
@@ -556,91 +525,66 @@ const onUpdateSelection = (id) => {
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
 	console.log('Create temp model');
-	console.log(modelConfiguration.value?.configuration);
+	console.log(model.value);
 	const state = _.cloneDeep(props.node.state);
 	if (state.tempConfigId !== '' || !model.value) return;
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value.name,
-		configDescription.value,
-		modelConfiguration.value?.configuration
+		knobs.value.description,
+		model.value
 	);
 	state.tempConfigId = data.id;
 	emit('update-state', state);
 };
 
 // Fill the form with the config data
-const initialize = () => {
+const initialize = async () => {
+	const modelId = props.node.inputs[0].value?.[0];
+	if (!modelId) return;
+	model.value = await getModel(modelId);
 	knobs.value.name = props.node.state.name;
-	configDescription.value = props.node.state.description;
-	configInitials.value = props.node.state.initials;
-	configParams.value = props.node.state.parameters;
-	configTimeSeries.value = props.node.state.timeseries;
+	knobs.value.description = props.node.state.description;
+	knobs.value.initials = props.node.state.initials;
+	knobs.value.parameters = props.node.state.parameters;
+	knobs.value.timeseries = props.node.state.timeseries;
+	createTempModelConfig();
+
+	// Create a new session and context based on model
+	try {
+		const jupyterContext = buildJupyterContext();
+		if (jupyterContext) {
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
 };
 
 watch(
-	() => props.node.state,
-	() => {
-		configInitials.value = props.node.state.initials;
-		configParams.value = props.node.state.parameters;
-		configTimeSeries.value = props.node.state.timeseries;
-	},
-	{ immediate: true, deep: true }
-);
-
-// TODO:
-// watch(
-// 	() => props.node.inputs[0],
-// 	async () => {
-// 		initialize()
-// 	},
-// 	{ immediate: true }
-// )
-
-watch(
-	() => props.node.active,
-	() => {
-		// Update selected output
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
-		}
-		initialize();
-	},
-	{ immediate: true, deep: true }
-);
-
-watch(
-	() => selectedConfigId.value,
-	() => {
-		lazyLoadModelConfig(selectedConfigId.value);
+	() => props.node.inputs[0],
+	async () => {
+		console.log('Inputs watcher');
+		await initialize();
 	},
 	{ immediate: true }
 );
 
-onMounted(async () => {
-	const input = props.node.inputs[0];
-	if (input.value) {
-		const m = await getModel(input.value[0]);
-		if (m) {
-			model.value = m;
-			if (isEmpty(outputs.value)) {
-				const state = _.cloneDeep(props.node.state);
-				state.initials = m.semantics?.ode.initials;
-				state.parameters = m.semantics?.ode.parameters;
-				emit('update-state', state);
-			}
-			// Create a new session and context based on model
-			try {
-				await createTempModelConfig();
-				const jupyterContext = buildJupyterContext();
-				if (jupyterContext) {
-					await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
-				}
-			} catch (error) {
-				logger.error(`Error initializing Jupyter session: ${error}`);
-			}
-		}
-	}
+watch(
+	() => props.node.active,
+	async () => {
+		console.log('Active watcher:');
+		// Update selected output
+		// TODO:
+		// activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
+		// selectedOutputId.value = props.node.active;
+		await initialize();
+	},
+	{ immediate: true, deep: true }
+);
+
+onUnmounted(() => {
+	kernelManager.shutdown();
 });
 </script>
 
