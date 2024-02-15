@@ -11,9 +11,9 @@ export interface ModelEditCode {
 export interface ModelConfigOperationState {
 	name: string;
 	description: string;
-	initials?: Initial[];
-	parameters?: ModelParameter[];
-	timeseries?: { [key: string]: string };
+	initials: Initial[];
+	parameters: ModelParameter[];
+	timeseries: { [key: string]: string };
 	modelEditCodeHistory: ModelEditCode[];
 	hasCodeBeenRun: boolean;
 	tempConfigId: string; // This is used for beaker context when there is no output selected. It is a config id that is in TDS and marked as temp
@@ -34,7 +34,10 @@ export const ModelConfigOperation: Operation = {
 			description: '',
 			modelEditCodeHistory: [],
 			hasCodeBeenRun: false,
-			tempConfigId: ''
+			tempConfigId: '',
+			initials: [],
+			parameters: [],
+			timeseries: {}
 		};
 		return init;
 	}
