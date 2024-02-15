@@ -35,10 +35,15 @@
 				</template>
 				<template #default>
 					<form>
-						<label for="evaluation-scenario-name">Scenario</label>
-						<InputText id="evaluation-scenario-name" type="text" v-model="evaluationScenarioName" />
+						<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
+						<InputText
+							id="evaluation-scenario-name"
+							type="text"
+							v-model="evaluationScenarioName"
+							placeholder="What is the scenario name?"
+						/>
 
-						<label for="evaluation-scenario-task">Task</label>
+						<label class="text-sm" for="evaluation-scenario-task">Task</label>
 						<InputText
 							id="evaluation-scenario-task"
 							type="text"
@@ -46,7 +51,7 @@
 							placeholder="What is the scenario question?"
 						/>
 
-						<label for="evaluation-scenario-description">Description</label>
+						<label class="text-sm" for="evaluation-scenario-description">Description</label>
 						<Textarea
 							id="evaluation-scenario-description"
 							rows="5"
@@ -54,7 +59,7 @@
 							placeholder="Describe what you are working on"
 						/>
 
-						<label for="evaluation-scenario-notes">Notes</label>
+						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
 
 						<p>Status: {{ evaluationScenarioCurrentStatus }}</p>
