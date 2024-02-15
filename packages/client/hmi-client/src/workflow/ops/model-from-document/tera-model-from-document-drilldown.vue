@@ -13,53 +13,42 @@
 		</template>
 		<div>
 			<tera-drilldown-section :is-loading="assetLoading">
-				<Steps
-					:model="formSteps"
-					:readonly="false"
-					@update:active-step="activeStepperIndex = $event"
-				/>
-
-				<div class="equation-view" v-if="activeStepperIndex === 0">
-					<header class="header-group">
-						<p>These equations will be used to create your model.</p>
-						<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
-					</header>
-					<ul class="blocks-container">
-						<li v-for="(equation, i) in clonedState.equations" :key="i">
-							<tera-asset-block
-								:is-included="equation.includeInProcess"
-								@update:is-included="onUpdateInclude(equation)"
-								:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
-								@delete="removeEquation(i)"
-							>
-								<template #header>
-									<h5>{{ equation.name }}</h5>
-								</template>
-								<div class="block-container">
-									<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
-										<label>Extracted Image:</label>
-										<Image
-											id="img"
-											:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
-											:alt="''"
-											preview
-										/>
-									</template>
-									<label>Interpreted As:</label>
-									<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false" />
-									<InputText
-										v-model="equation.asset.text"
-										placeholder="Unable to automatically extract LaTeX from the image. Please manually input the expression."
-										@update:model-value="emit('update-state', clonedState)"
+				<header class="header-group">
+					<p>These equations will be used to create your model.</p>
+					<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
+				</header>
+				<ul class="blocks-container">
+					<li v-for="(equation, i) in clonedState.equations" :key="i">
+						<tera-asset-block
+							:is-included="equation.includeInProcess"
+							@update:is-included="onUpdateInclude(equation)"
+							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+							@delete="removeEquation(i)"
+						>
+							<template #header>
+								<h5>{{ equation.name }}</h5>
+							</template>
+							<div class="block-container">
+								<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+									<label>Extracted Image:</label>
+									<Image
+										id="img"
+										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+										:alt="''"
+										preview
 									/>
-								</div>
-							</tera-asset-block>
-						</li>
-					</ul>
-				</div>
-				<div v-if="activeStepperIndex === 1">
-					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
-				</div>
+								</template>
+								<label>Interpreted As:</label>
+								<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false" />
+								<InputText
+									v-model="equation.asset.text"
+									placeholder="Unable to automatically extract LaTeX from the image. Please manually input the expression."
+									@update:model-value="emit('update-state', clonedState)"
+								/>
+							</div>
+						</tera-asset-block>
+					</li>
+				</ul>
 				<template #footer>
 					<span>
 						<label>Model framework:</label>
@@ -146,8 +135,6 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import InputText from 'primevue/inputtext';
-import Steps from 'primevue/steps';
-import Textarea from 'primevue/textarea';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
@@ -230,16 +217,6 @@ const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
-
-const formSteps = ref([
-	{
-		label: 'Equations'
-	},
-	{
-		label: 'Text'
-	}
-]);
-const activeStepperIndex = ref<number>(0);
 
 const isNewModelModalVisible = ref(false);
 const savingAsset = ref(false);

@@ -99,7 +99,7 @@ watch(
 			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
 				emit('append-output-port', {
 					type: 'documentId',
-					label: `${document.value.name}`,
+					label: `document`,
 					value: [document.value.id]
 				});
 			}
