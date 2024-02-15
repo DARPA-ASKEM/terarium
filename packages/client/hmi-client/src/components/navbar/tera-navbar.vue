@@ -70,12 +70,6 @@
 				<template #footer>
 					<Button
 						size="large"
-						class="p-button-secondary"
-						@click="isEvaluationScenarioModalVisible = false"
-						>Close</Button
-					>
-					<Button
-						size="large"
 						class="p-button-danger"
 						v-if="
 							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
@@ -106,6 +100,7 @@
 
 					<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
 					<div
+						class="hidden"
 						v-if="
 							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
 							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
@@ -118,6 +113,13 @@
 						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
 						@click="beginEvaluationScenario"
 						>Begin</Button
+					>
+					<Button
+						size="large"
+						class="p-button-secondary"
+						outlined
+						@click="isEvaluationScenarioModalVisible = false"
+						>Close</Button
 					>
 				</template>
 			</tera-modal>
