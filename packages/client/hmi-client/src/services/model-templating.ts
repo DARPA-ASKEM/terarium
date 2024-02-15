@@ -435,14 +435,6 @@ export function addEdgeInView(
 			target,
 			points: interpolatePointsFn ? interpolatePointsFn(...points) : points
 		});
-
-		// Apply connection done in flattened view to decomposedTemplates
-		// if (decomposedTemplates) {
-		// 	const targetCardIndex = findCardIndexById(decomposedTemplates, target.cardId);
-		// 	const targetCard = decomposedTemplates.models[targetCardIndex];
-		// 	const targetPort = targetCard.model.transitions.find(({ id }) => id === target.portId);
-		// 	targetPort.position = portPosition;
-		// }
 	}
 }
 
