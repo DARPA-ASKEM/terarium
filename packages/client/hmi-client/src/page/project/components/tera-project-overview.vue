@@ -113,11 +113,13 @@ a {
 	gap: 0.75rem;
 }
 
+.content-container {
+	background-color: var(--surface-b);
+}
 .quick-links {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	margin-top: 1rem;
 	margin-bottom: 1rem;
 	gap: 1rem;
 }
@@ -135,7 +137,7 @@ a {
 	height: 100%;
 }
 .editor-container:deep(.ql-editor) {
-	height: calc(100vh - 344px);
+	height: calc(100vh - 328px);
 	font-family: var(--font-family);
 }
 
