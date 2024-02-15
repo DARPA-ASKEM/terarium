@@ -24,7 +24,7 @@ public interface MIRAProxy {
 			@PathVariable("curie") final String curie);
 
 	@GetMapping("/search")
-	ResponseEntity<DKG> search(
+	ResponseEntity<List<DKG>> search(
 			@RequestParam("q") final String q,
 			@RequestParam("limit") final Integer limit,
 			@RequestParam("offset") final Integer offset);

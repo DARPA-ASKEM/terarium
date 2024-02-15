@@ -44,6 +44,28 @@ public class MIRAController {
 		}
 	}
 
+	@GetMapping("/search")
+	@Secured(Roles.USER)
+	public ResponseEntity<List<DKG>> search(
+		@RequestParam("q") final String q,
+		@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
+		@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset
+	) {
+		try {
+			ResponseEntity<List<DKG>> response = proxy.search(q, limit, offset);
+			if (response.getStatusCode().is2xxSuccessful()) {
+				return ResponseEntity.ok(response.getBody());
+			}
+			return ResponseEntity.internalServerError().build();
+		} catch (FeignException.NotFound e) { // Handle 404 errors
+			log.info("Could not find resource in the DKG", e);
+			return ResponseEntity.notFound().build();
+		} catch (Exception e) {
+			log.error("Unable to fetch DKG", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
 	// This rebuilds the semantics ODE via MIRA
 	// 1. Send AMR to MIRA => MIRANet
 	// 2. Send MIRANet to MIRA to convert back to AMR Petrinet
