@@ -103,7 +103,17 @@
 						@click="resumeEvaluationScenario"
 						>Resume</Button
 					>
+
+					<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
+					<div
+						v-if="
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
+							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
+						"
+					/>
 					<Button
+						v-else
 						size="large"
 						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
 						@click="beginEvaluationScenario"
