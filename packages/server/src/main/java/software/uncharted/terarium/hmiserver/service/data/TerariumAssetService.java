@@ -2,10 +2,19 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 import java.io.IOException;
@@ -21,6 +30,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public abstract class TerariumAssetService<T extends TerariumAsset> {
 
 	/** The configuration for the Elasticsearch service */
@@ -31,6 +41,9 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 
 	/** The Elasticsearch service */
 	protected final ElasticsearchService elasticService;
+
+	/** The ProjectAssetService */
+	protected final ProjectAssetService projectAssetService;
 
 	/** The class of the asset this service manages */
 	private final Class<T> assetClass;
@@ -127,6 +140,41 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 
 		asset.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
+
+		// Update the related ProjectAsset.assetName
+		final Optional<ProjectAsset> projectAsset = projectAssetService.getProjectAssetById(asset.getId());
+		if (projectAsset.isPresent()) {
+			final String assetName = getAssetName(asset);
+			if (assetName != null) {
+				projectAsset.get().setAssetName(assetName);
+				projectAssetService.save(projectAsset.get());
+			} else {
+				log.info("Could not update the project asset name for asset with id: " + asset.getId() + " because the asset name is null");
+			}
+		}
+
 		return Optional.of(asset);
+	}
+
+	/**
+	 * Get the name of an asset
+	 * @param asset
+	 * @return assetName
+	 * @param <T>
+	 */
+	private static <T> String getAssetName(T asset) {
+		// Force cast to the correct type because Terrarium Asset does not provide a bloody name
+		if (asset instanceof Dataset) {
+			return ((Dataset) asset).getName();
+		} else if (asset instanceof Model) {
+			return ((Model) asset).getHeader().getName();
+		} else if (asset instanceof Workflow) {
+			return ((Workflow) asset).getName();
+		} else if (asset instanceof Code) {
+			return ((Code) asset).getName();
+		} else if (asset instanceof DocumentAsset) {
+			return ((DocumentAsset) asset).getName();
+		}
+		return null;
 	}
 }

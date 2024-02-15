@@ -138,11 +138,15 @@ public class ProjectAssetService {
 		return Optional.of(projectAssetRepository.save(asset));
 	}
 
-	public Optional<ProjectAsset> updateProjectAsset(final ProjectAsset asset) {
-		if (!projectAssetRepository.existsById(asset.getId())) {
+	public Optional<ProjectAsset> updateProjectAsset(final ProjectAsset projectAsset) {
+		if (!projectAssetRepository.existsById(projectAsset.getId())) {
 			return Optional.empty();
 		}
-		return Optional.of(projectAssetRepository.save(asset));
+		return Optional.of(projectAssetRepository.save(projectAsset));
+	}
+
+	public Optional<ProjectAsset> getProjectAssetById(final UUID id) {
+		return projectAssetRepository.findById(id);
 	}
 
 	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType) {
