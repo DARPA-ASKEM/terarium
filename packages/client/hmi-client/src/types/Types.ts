@@ -1232,15 +1232,15 @@ export enum RoleType {
 }
 
 export enum AssetType {
-    Dataset = "dataset",
-    ModelConfiguration = "model-configuration",
-    Model = "model",
-    Publication = "publication",
-    Simulation = "simulation",
-    Workflow = "workflow",
-    Artifact = "artifact",
-    Code = "code",
-    Document = "document",
+    Dataset = "DATASET",
+    ModelConfiguration = "MODEL_CONFIGURATION",
+    Model = "MODEL",
+    Publication = "PUBLICATION",
+    Simulation = "SIMULATION",
+    Workflow = "WORKFLOW",
+    Artifact = "ARTIFACT",
+    Code = "CODE",
+    Document = "DOCUMENT",
 }
 
 export enum EvaluationScenarioStatus {
