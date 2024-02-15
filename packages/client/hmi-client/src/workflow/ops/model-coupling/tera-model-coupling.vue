@@ -18,7 +18,7 @@
 					</div>
 					<div class="toolbar-right-side">
 						<Button
-							style="margin-right: auto"
+							class="mr-auto"
 							icon="pi pi-play"
 							label="Run"
 							outlined
