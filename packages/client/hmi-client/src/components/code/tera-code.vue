@@ -624,7 +624,7 @@ main {
 	max-width: 100%;
 }
 .code-blocks-container {
-	padding: 1rem;
+	padding: var(--gap);
 	max-width: 300px;
 	height: 100%;
 	display: flex;
