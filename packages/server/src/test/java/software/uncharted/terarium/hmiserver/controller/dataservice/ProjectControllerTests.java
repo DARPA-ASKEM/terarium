@@ -138,7 +138,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.setDescription("my description"));
 
 		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
-				documentAsset.getId());
+				documentAsset);
 
 		mockMvc.perform(
 				MockMvcRequestBuilders

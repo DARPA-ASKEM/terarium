@@ -117,7 +117,6 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		return asset;
 	}
 
-
 	/**
 	 * Update an asset and saves to ES
 	 * @param asset The asset to update
@@ -140,7 +139,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		asset.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
 
-		// Update the related ProjectAsset.assetName
+		// Update the related ProjectAsset
 		projectAssetService.updateByAsset(asset);
 
 		return Optional.of(asset);

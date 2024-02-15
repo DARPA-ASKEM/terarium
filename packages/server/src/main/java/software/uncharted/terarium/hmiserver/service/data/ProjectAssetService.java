@@ -79,56 +79,14 @@ public class ProjectAssetService {
 		return projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, assetId, type);
 	}
 
-	private boolean populateProjectAssetFields(final ProjectAsset projectAsset, final AssetType assetType, final UUID id)
-			throws IOException {
-		switch (assetType) {
-			case DATASET:
-				final Optional<Dataset> dataset = datasetService.getAsset(id);
-				if (dataset.isPresent()) {
-					projectAsset.setAssetName(dataset.get().getName());
-				}
-				return dataset.isPresent();
-			case MODEL:
-				final Optional<Model> model = modelService.getAsset(id);
-				if (model.isPresent()) {
-					projectAsset.setAssetName(model.get().getHeader().getName());
-				}
-				return model.isPresent();
-			case DOCUMENT:
-				final Optional<DocumentAsset> document = documentService.getAsset(id);
-				if (document.isPresent()) {
-					projectAsset.setAssetName(document.get().getName());
-				}
-				return document.isPresent();
-			case WORKFLOW:
-				final Optional<Workflow> workflow = workflowService.getAsset(id);
-				if (workflow.isPresent()) {
-					projectAsset.setAssetName(workflow.get().getName());
-				}
-				return workflow.isPresent();
-			case CODE:
-				final Optional<Code> code = codeService.getAsset(id);
-				if (code.isPresent()) {
-					projectAsset.setAssetName(code.get().getName());
-				}
-				return code.isPresent();
-			default:
-				break;
-		}
-		return false;
-	}
-
-	public Optional<ProjectAsset> createProjectAsset(final Project project, final AssetType assetType, final UUID assetId)
+	public Optional<ProjectAsset> createProjectAsset(final Project project, final AssetType assetType, final TerariumAsset asset)
 			throws IOException {
 
 		final ProjectAsset projectAsset = new ProjectAsset();
-		if (!populateProjectAssetFields(projectAsset, assetType, assetId)) {
-			// underlying asset does not exist
-			return Optional.empty();
-		}
-		projectAsset.setAssetType(assetType);
 		projectAsset.setProject(project);
-		projectAsset.setAssetId(assetId);
+		projectAsset.setAssetId(asset.getId());
+		projectAsset.setAssetType(assetType);
+		projectAsset.setAssetName(asset.getName());
 
 		if (project.getProjectAssets() == null) {
 			project.setProjectAssets(new ArrayList<>(List.of(projectAsset)));
