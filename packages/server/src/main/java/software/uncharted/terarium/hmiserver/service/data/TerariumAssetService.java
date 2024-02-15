@@ -39,10 +39,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	/** The configuration for the application */
 	protected final Config config;
 
-	/** The Elasticsearch service */
+	/** Services */
 	protected final ElasticsearchService elasticService;
-
-	/** The ProjectAssetService */
 	protected final ProjectAssetService projectAssetService;
 
 	/** The class of the asset this service manages */

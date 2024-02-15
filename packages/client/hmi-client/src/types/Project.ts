@@ -5,4 +5,4 @@ export enum ProjectPages {
 }
 
 export const isProjectAssetTypes = (type: AssetType | string): boolean =>
-	Object.values(AssetType).includes(type.toUpperCase() as AssetType);
+	Object.values(AssetType).includes(type as AssetType);
