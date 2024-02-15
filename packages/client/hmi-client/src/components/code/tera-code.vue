@@ -66,6 +66,7 @@
 						icon="pi pi-plus"
 						label="Add a code block"
 						@click="isDynamicsModalVisible = true"
+						class="mb-2"
 					/>
 					<tera-code-dynamic
 						v-if="codeAssetCopy"
