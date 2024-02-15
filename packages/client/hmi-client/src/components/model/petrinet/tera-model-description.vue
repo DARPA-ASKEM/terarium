@@ -132,8 +132,8 @@ import { isEmpty } from 'lodash';
 import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AcceptedExtensions, FeatureConfig, ResultType } from '@/types/common';
-import type { DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import { FeatureConfig, ResultType } from '@/types/common';
+import type { Model, Dataset, ModelConfiguration, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -217,19 +217,9 @@ const documents = computed(
 	() =>
 		useProjects()
 			.getActiveProjectAssets(AssetType.Document)
-			.filter((document: DocumentAsset) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
-					(extension) => {
-						if (document.fileNames && !isEmpty(document.fileNames)) {
-							return document.fileNames[0]?.endsWith(extension);
-						}
-						return false;
-					}
-				)
-			)
-			.map((document: DocumentAsset) => ({
-				name: document.name,
-				id: document.id
+			.map((document: ProjectAsset) => ({
+				name: document.assetName,
+				id: document.assetId
 			})) ?? []
 );
 
