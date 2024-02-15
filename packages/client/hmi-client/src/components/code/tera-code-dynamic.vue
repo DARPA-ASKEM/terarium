@@ -154,7 +154,7 @@ ul {
 .footer-container {
 	display: flex;
 	justify-content: end;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 
 :deep(.p-panel .p-panel-content) {
