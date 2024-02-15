@@ -25,7 +25,14 @@
 								AcceptedTypes.PY,
 								AcceptedTypes.R,
 								AcceptedTypes.JL,
-								AcceptedTypes.NC
+								AcceptedTypes.NC,
+								AcceptedTypes.JSON,
+								AcceptedTypes.XML,
+								AcceptedTypes.SBML,
+								AcceptedTypes.MDL,
+								AcceptedTypes.XMILE,
+								AcceptedTypes.ITMX,
+								AcceptedTypes.STMX
 							]"
 							:accept-extensions="[
 								AcceptedExtensions.PDF,
@@ -35,7 +42,14 @@
 								AcceptedExtensions.PY,
 								AcceptedExtensions.R,
 								AcceptedExtensions.JL,
-								AcceptedExtensions.NC
+								AcceptedExtensions.NC,
+								AcceptedExtensions.JSON,
+								AcceptedExtensions.XML,
+								AcceptedExtensions.SBML,
+								AcceptedExtensions.MDL,
+								AcceptedExtensions.XMILE,
+								AcceptedExtensions.ITMX,
+								AcceptedExtensions.STMX
 							]"
 							:import-action="processFiles"
 							:progress="progress"
@@ -72,7 +86,7 @@ import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import { useProjects } from '@/composables/project';
 import type { DocumentAsset, Dataset } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+import { AssetType, ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
@@ -83,6 +97,9 @@ import { useToastService } from '@/services/toast';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { uploadArtifactToProject } from '@/services/artifact';
+import { addNewModelToProject } from '@/services/model';
+import { RelationshipType, createProvenance } from '@/services/provenance';
 
 defineProps<{
 	visible: boolean;
@@ -109,6 +126,14 @@ async function processFiles(files: File[], description: string) {
 			case AcceptedExtensions.R:
 			case AcceptedExtensions.JL:
 				return processCode(file);
+			case AcceptedExtensions.JSON:
+			case AcceptedExtensions.XML:
+			case AcceptedExtensions.SBML:
+			case AcceptedExtensions.MDL:
+			case AcceptedExtensions.XMILE:
+			case AcceptedExtensions.ITMX:
+			case AcceptedExtensions.STMX:
+				return processModel(file);
 			default:
 				return { id: '', assetType: '' };
 		}
@@ -152,6 +177,24 @@ async function processDataset(file: File, description: string) {
 		description
 	);
 	return { id: addedDataset?.id ?? '', assetType: AssetType.Dataset };
+}
+
+/**
+ * Process a model file into a model asset
+ * @param file
+ */
+async function processModel(file: File) {
+	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
+	if (!artifact) return { id: '', assetType: '' };
+	const newModelId = await addNewModelToProject(file.name.replace(/\.[^/.]+$/, ''));
+	await createProvenance({
+		relation_type: RelationshipType.EXTRACTED_FROM,
+		left: newModelId ?? '',
+		left_type: ProvenanceType.Model,
+		right: artifact.id ?? '',
+		right_type: ProvenanceType.Artifact
+	});
+	return { id: newModelId ?? '', assetType: AssetType.Model };
 }
 
 function importCompleted(newResults: { id: string; name: string; assetType: AssetType }[] | null) {

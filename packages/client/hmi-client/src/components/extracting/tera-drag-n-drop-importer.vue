@@ -12,7 +12,7 @@
 				ref="fileInput"
 				@change="onFileChange"
 				multiple
-				accept=".pdf,.csv,.txt,.md,.py,.m,.js,.R,.nc"
+				:accept="fileInputAcceptedExtensions"
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import API from '@/api/api';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
@@ -67,31 +67,13 @@ const props = defineProps({
 		type: Array<AcceptedTypes>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[
-				AcceptedTypes.PDF,
-				AcceptedTypes.CSV,
-				AcceptedTypes.TXT,
-				AcceptedTypes.MD,
-				AcceptedTypes.PY,
-				AcceptedTypes.R,
-				AcceptedTypes.JL,
-				AcceptedTypes.NC
-			].every((v) => value.includes(v))
+			Object.values(AcceptedTypes).every((v) => value.includes(v))
 	},
 	acceptExtensions: {
 		type: Array<AcceptedExtensions>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[
-				AcceptedExtensions.PDF,
-				AcceptedExtensions.CSV,
-				AcceptedExtensions.TXT,
-				AcceptedExtensions.MD,
-				AcceptedExtensions.PY,
-				AcceptedExtensions.R,
-				AcceptedExtensions.JL,
-				AcceptedExtensions.NC
-			].every((v) => value.includes(v))
+			Object.values(AcceptedExtensions).every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
 	importAction: {
@@ -120,6 +102,10 @@ const props = defineProps({
 		}
 	}
 });
+
+const fileInputAcceptedExtensions = computed(() =>
+	props.acceptExtensions.map((v) => `.${v}`).join(',')
+);
 
 /**
  * Add file event
