@@ -773,6 +773,12 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
+const unloadCheck = () => {
+	if (workflowDirty) {
+		workflowService.updateWorkflow(wf.value);
+	}
+};
+
 watch(
 	() => [props.assetId],
 	async () => {
@@ -791,6 +797,7 @@ watch(
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
 		if (workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
@@ -806,6 +813,7 @@ onUnmounted(() => {
 		clearInterval(saveTimer);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
+	window.removeEventListener('beforeunload', unloadCheck);
 });
 
 function cleanUpLayout() {
