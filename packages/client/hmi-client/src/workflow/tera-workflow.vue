@@ -838,6 +838,6 @@ function resetZoom() {
 	display: flex;
 	align-items: center;
 	flex-direction: row;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 }
 </style>
