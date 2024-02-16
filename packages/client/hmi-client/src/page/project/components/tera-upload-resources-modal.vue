@@ -100,6 +100,7 @@ import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
 import { addNewModelToProject } from '@/services/model';
 import { RelationshipType, createProvenance } from '@/services/provenance';
+import { modelCard } from '@/services/goLLM';
 
 defineProps<{
 	visible: boolean;
@@ -208,6 +209,11 @@ async function upload() {
 				const newAsset = useProjects().addAsset(assetType, id);
 				if (name && name.toLowerCase().endsWith('.pdf')) {
 					extractPDF(id);
+				} else if (
+					(name && name.toLowerCase().endsWith('.txt')) ||
+					(name && name.toLowerCase().endsWith('.md'))
+				) {
+					modelCard(id);
 				}
 				return newAsset;
 			})
@@ -239,13 +245,14 @@ async function upload() {
 .main-section section {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	width: 65vw;
+	min-width: 32rem;
+	max-width: 48rem;
 }
 
 .supported-resources {
 	display: flex;
 	justify-content: space-between;
-	max-width: 48rem;
 
 	div {
 		display: flex;

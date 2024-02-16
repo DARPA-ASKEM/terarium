@@ -2,6 +2,7 @@ import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api'
 import { AxiosError, AxiosResponse } from 'axios';
 import type { Code, Dataset, ExtractionResponse, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { modelCard } from './goLLM';
 
 /**
  * Fetch information from the extraction service via the Poller utility
@@ -192,6 +193,7 @@ export const extractPDF = async (documentId: string) => {
 		if (resp) {
 			const pollResult = await fetchExtraction(resp);
 			if (pollResult?.state === PollerState.Done) {
+				modelCard(documentId);
 				pdfExtractions(documentId, Extractor.SKEMA);
 				pdfExtractions(documentId, Extractor.MIT);
 			}

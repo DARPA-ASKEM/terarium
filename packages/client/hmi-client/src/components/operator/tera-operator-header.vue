@@ -1,6 +1,6 @@
 <template>
 	<header :class="`${status} ${interactionClasses}`">
-		<h6>{{ name }}</h6>
+		<span class="header-label">{{ name }}</span>
 		<Button
 			icon="pi pi-ellipsis-v"
 			class="p-button-icon-only p-button-text p-button-rounded"
@@ -77,6 +77,9 @@ header {
 	transition: all 80ms ease;
 }
 
+.header-label {
+	font-size: var(--font-caption);
+}
 .warning {
 	background-color: var(--surface-warning);
 }

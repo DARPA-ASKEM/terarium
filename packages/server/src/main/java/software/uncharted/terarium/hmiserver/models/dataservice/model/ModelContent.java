@@ -1,20 +1,23 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @Data
 @Accessors(chain = true)
-public class ModelContent implements SupportAdditionalProperties, Serializable {
+public class ModelContent extends SupportAdditionalProperties implements Serializable {
+
+	@Serial
+	private static final long serialVersionUID = -4384491876928940024L;
 
 	@JsonProperty("S")
 	private List<Species> S;

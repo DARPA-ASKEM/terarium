@@ -4,12 +4,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
@@ -33,9 +31,7 @@ public class ProjectAssetService {
 	final ModelService modelService;
 	final DocumentAssetService documentService;
 	final WorkflowService workflowService;
-	final ExternalPublicationService publicationService;
 	final CodeService codeService;
-	final ArtifactService artifactService;
 
 	public List<ProjectAsset> findAllByProjectId(@NotNull final UUID projectId) {
 		return projectAssetRepository.findAllByProjectId(projectId);
@@ -109,24 +105,12 @@ public class ProjectAssetService {
 					projectAsset.setAssetName(workflow.get().getName());
 				}
 				return workflow.isPresent();
-			case PUBLICATION:
-				final Optional<ExternalPublication> publication = publicationService.getAsset(id);
-				if (publication.isPresent()) {
-					projectAsset.setAssetName(publication.get().getTitle());
-				}
-				return publication.isPresent();
 			case CODE:
 				final Optional<Code> code = codeService.getAsset(id);
 				if (code.isPresent()) {
 					projectAsset.setAssetName(code.get().getName());
 				}
 				return code.isPresent();
-			case ARTIFACT:
-				final Optional<Artifact> artifact = artifactService.getAsset(id);
-				if (artifact.isPresent()) {
-					projectAsset.setAssetName(artifact.get().getName());
-				}
-				return artifact.isPresent();
 			default:
 				break;
 		}

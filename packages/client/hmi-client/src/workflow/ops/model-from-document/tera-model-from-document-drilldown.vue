@@ -13,65 +13,52 @@
 		</template>
 		<div>
 			<tera-drilldown-section :is-loading="assetLoading">
-				<Steps
-					:model="formSteps"
-					:readonly="false"
-					@update:active-step="activeStepperIndex = $event"
-				/>
-
-				<div class="equation-view" v-if="activeStepperIndex === 0">
-					<header class="header-group">
-						<p>These equations will be used to create your model.</p>
-						<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
-					</header>
-					<ul class="blocks-container">
-						<li v-for="(equation, i) in clonedState.equations" :key="i">
-							<tera-asset-block
-								:is-included="equation.includeInProcess"
-								@update:is-included="onUpdateInclude(equation)"
-								:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
-								@delete="removeEquation(i)"
-							>
-								<template #header>
-									<h5>{{ equation.name }}</h5>
+				<header class="header-group">
+					<p>These equations will be used to create your model.</p>
+					<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
+				</header>
+				<ul class="blocks-container">
+					<li v-for="(equation, i) in clonedState.equations" :key="i">
+						<tera-asset-block
+							:is-included="equation.includeInProcess"
+							@update:is-included="onUpdateInclude(equation)"
+							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+							@delete="removeEquation(i)"
+						>
+							<template #header>
+								<h5>{{ equation.name }}</h5>
+							</template>
+							<div class="block-container">
+								<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+									<label>Extracted Image:</label>
+									<Image
+										id="img"
+										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+										:alt="''"
+										preview
+									/>
 								</template>
-								<div class="block-container">
-									<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
-										<label>Extracted Image:</label>
-										<Image
-											id="img"
-											:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
-											:alt="''"
-											preview
-										/>
-									</template>
-									<template v-if="!equation.asset.extractionError">
-										<label>Interpreted As:</label>
-										<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false">
-										</tera-math-editor>
-										<InputText
-											v-model="equation.asset.text"
-											@update:model-value="emit('update-state', clonedState)"
-										/>
-									</template>
-									<span v-else>Could not extract LaTeX for image</span>
-								</div>
-							</tera-asset-block>
-						</li>
-					</ul>
-				</div>
-				<div v-if="activeStepperIndex === 1">
-					<Textarea v-model="clonedState.text" autoResize disabled style="width: 100%" />
-				</div>
+								<label>Interpreted As:</label>
+								<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false" />
+								<InputText
+									v-model="equation.asset.text"
+									placeholder="Unable to automatically extract LaTeX from the image. Please manually input the expression."
+									@update:model-value="emit('update-state', clonedState)"
+								/>
+							</div>
+						</tera-asset-block>
+					</li>
+				</ul>
 				<template #footer>
-					<span
-						><label>Model framework:</label
-						><Dropdown
+					<span>
+						<label>Model framework:</label>
+						<Dropdown
 							class="w-full md:w-14rem"
 							v-model="clonedState.modelFramework"
 							:options="modelFrameworks"
 							@change="onChangeModelFramework"
-					/></span>
+						/>
+					</span>
 					<span class="mr-auto">
 						<label>Service</label>
 						<Dropdown
@@ -79,7 +66,7 @@
 							v-model="clonedState.modelService"
 							:options="modelServices"
 							@change="emit('update-state', clonedState)"
-						></Dropdown>
+						/>
 					</span>
 				</template>
 			</tera-drilldown-section>
@@ -87,16 +74,12 @@
 		<template #preview>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
-					<!--FIXME: currently not parsing the goLLM card so just printing its JSON for now-->
-					<ul v-if="goLLMCard">
-						<li v-for="(key, index) in Object.keys(goLLMCard)" :key="index">
-							<h3>{{ key }}</h3>
-							<p>{{ goLLMCard[key] }}</p>
-						</li>
-					</ul>
-					<tera-model-card v-else :model="selectedModel" />
-					<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
-					<tera-model-semantic-tables :model="selectedModel" readonly />
+					<tera-model-description
+						:model="selectedModel"
+						:feature-config="{
+							isPreview: true
+						}"
+					/>
 				</section>
 				<tera-operator-placeholder
 					v-else
@@ -148,18 +131,14 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { logger } from '@/utils/logger';
 import { generateModelCard, getModel, updateModel } from '@/services/model';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import InputText from 'primevue/inputtext';
-import Steps from 'primevue/steps';
-import Textarea from 'primevue/textarea';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
-import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -237,17 +216,7 @@ const assetLoading = ref(false);
 const loadingModel = ref(false);
 const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
-const goLLMCard = ref<any>(null);
-
-const formSteps = ref([
-	{
-		label: 'Equations'
-	},
-	{
-		label: 'Text'
-	}
-]);
-const activeStepperIndex = ref<number>(0);
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const isNewModelModalVisible = ref(false);
 const savingAsset = ref(false);
@@ -368,8 +337,8 @@ async function fetchModel() {
 			model.metadata.card = card.value;
 		}
 
-		if (!model.metadata?.gollm_card && goLLMCard.value) {
-			model.metadata.gollm_card = goLLMCard.value;
+		if (!model.metadata?.gollmCard && goLLMCard.value) {
+			model.metadata.gollmCard = goLLMCard.value;
 		}
 
 		model = await updateModel(model);
@@ -417,6 +386,7 @@ function removeEquation(index: number) {
 	emit('update-state', clonedState.value);
 }
 
+// generates the model card and fetches the model when finished
 async function generateCard(docId, modelId) {
 	if (!docId || !modelId) return;
 

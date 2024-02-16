@@ -16,16 +16,18 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<div class="button-group">
+				<div class="button-group w-full">
 					<InputText
 						v-if="isRenamingWorkflow"
-						class="p-inputtext-sm"
+						class="p-inputtext w-full mr-8"
 						v-model.lazy="newWorkflowName"
 						placeholder="Workflow name"
 						@keyup.enter="updateWorkflowName"
+						@keyup.esc="updateWorkflowName"
 					/>
-					<h5 v-else>{{ wf.name }}</h5>
+					<h4 v-else>{{ wf.name }}</h4>
 					<Button
+						v-if="!isRenamingWorkflow"
 						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
 						@click="toggleOptionsMenu"
@@ -33,13 +35,31 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
-					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
+					<Button
+						label="Show everything"
+						severity="secondary"
+						outlined
+						@click="resetZoom"
+						size="small"
+						disabled
+						class="white-space-nowrap"
+					/>
+					<Button
+						label="Clean up layout"
+						severity="secondary"
+						outlined
+						@click="cleanUpLayout"
+						size="small"
+						disabled
+						class="white-space-nowrap"
+					/>
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
 						@click="showAddComponentMenu"
+						size="small"
+						class="white-space-nowrap"
 					/>
 					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
 					<ContextMenu
@@ -96,7 +116,7 @@
 		<!-- background -->
 		<template #backgroundDefs>
 			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
-				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
+				<circle cx="5" cy="5" r="3" style="fill: var(--text-color-secondary)" />
 			</marker>
 			<marker
 				id="arrow"
@@ -109,7 +129,10 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					style="fill: var(--text-color-secondary); fill-opacity: 1"
+				></path>
 			</marker>
 			<marker
 				id="smallArrow"
@@ -122,14 +145,14 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--text-color-secondary)"></path>
 			</marker>
 		</template>
 		<template #background>
 			<path
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
-				stroke="#1B8073"
+				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
 				marker-end="url(#arrow)"
@@ -138,7 +161,7 @@
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				stroke="#1B8073"
+				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
 				:key="index"
@@ -750,6 +773,12 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
+const unloadCheck = () => {
+	if (workflowDirty) {
+		workflowService.updateWorkflow(wf.value);
+	}
+};
+
 watch(
 	() => [props.assetId],
 	async () => {
@@ -768,6 +797,7 @@ watch(
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
 		if (workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
@@ -783,6 +813,7 @@ onUnmounted(() => {
 		clearInterval(saveTimer);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
+	window.removeEventListener('beforeunload', unloadCheck);
 });
 
 function cleanUpLayout() {
@@ -815,6 +846,6 @@ function resetZoom() {
 	display: flex;
 	align-items: center;
 	flex-direction: row;
-	gap: 1rem;
+	gap: var(--gap-small);
 }
 </style>

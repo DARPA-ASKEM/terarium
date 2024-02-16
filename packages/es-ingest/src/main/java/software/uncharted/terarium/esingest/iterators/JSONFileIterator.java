@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.function.BiFunction;
 
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import software.uncharted.terarium.esingest.util.FileUtil;
 @Slf4j
 public class JSONFileIterator<T extends IInputDocument> implements IInputIterator<T> {
 
-	ObjectMapper mapper = new ObjectMapper();
+	ObjectMapper mapper;
 	Queue<Path> files;
 	long batchSize;
 	BiFunction<List<T>, T, Boolean> batcher;
@@ -32,6 +33,8 @@ public class JSONFileIterator<T extends IInputDocument> implements IInputIterato
 		if (files.isEmpty()) {
 			throw new IOException("No input files found for path: " + inputPath.toString());
 		}
+		this.mapper = new ObjectMapper();
+		this.mapper.enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature());
 	}
 
 	public JSONFileIterator(Path inputPath, Class<T> classType, BiFunction<List<T>, T, Boolean> batcher)
@@ -42,6 +45,8 @@ public class JSONFileIterator<T extends IInputDocument> implements IInputIterato
 		if (files.isEmpty()) {
 			throw new IOException("No input files found for path: " + inputPath.toString());
 		}
+		this.mapper = new ObjectMapper();
+		this.mapper.enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature());
 	}
 
 	private List<T> returnAndClearResults(T toAddAfterClear) {
@@ -72,7 +77,7 @@ public class JSONFileIterator<T extends IInputDocument> implements IInputIterato
 
 			T doc = mapper.readValue(content, classType);
 			if (doc.getId() == null || doc.getId().isEmpty()) {
-				doc.setId(file.getFileName().toString());
+				doc.setId(FileUtil.getFilenameWithoutExtension(file.getFileName().toString()));
 			}
 			if (batcher != null) {
 				// check if we need to split the batch yet

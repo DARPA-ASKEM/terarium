@@ -93,16 +93,12 @@
 			<tera-drilldown-preview :is-loading="isProcessing">
 				<section v-if="selectedModel">
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
-						<!--FIXME: currently not parsing the goLLM card so just printing its JSON for now-->
-						<ul v-if="goLLMCard">
-							<li v-for="(key, index) in Object.keys(goLLMCard)" :key="index">
-								<h3>{{ key }}</h3>
-								<p>{{ goLLMCard[key] }}</p>
-							</li>
-						</ul>
-						<tera-model-card v-else :model="selectedModel" />
-						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
-						<tera-model-semantic-tables :model="selectedModel" readonly />
+						<tera-model-description
+							:model="selectedModel"
+							:feature-config="{
+								isPreview: true
+							}"
+						/>
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
 						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
@@ -152,27 +148,26 @@ import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-julia';
 import 'ace-builds/src-noconflict/mode-r';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import type { Card, Code, Model } from '@/types/Types';
+import type { Card, Code, DocumentAsset, Model } from '@/types/Types';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, generateModelCard, getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getCodeAsset } from '@/services/code';
 import { codeBlocksToAmr } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
-import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { ModelServiceType } from '@/types/common';
 import { extensionFromProgrammingLanguage } from '@/utils/data-util';
+import { getDocumentAsset } from '@/services/document-assets';
+import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -203,6 +198,10 @@ const kernelManager = new KernelSessionManager();
 
 const selectedModel = ref<Model | null>(null);
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+
+const document = ref<DocumentAsset | null>(null);
+
+const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const inputCodeBlocks = ref<AssetBlock<CodeBlock>[]>([]);
 
@@ -276,12 +275,16 @@ const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
 );
 
 const card = ref<Card | null>(null);
-const goLLMCard = ref<any>(null);
 
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
+
 	if (selectedOutputId.value) {
 		onUpdateOutput(selectedOutputId.value);
+	}
+
+	if (documentId.value) {
+		document.value = await getDocumentAsset(documentId.value);
 	}
 
 	fetchingInputBlocks.value = true;
@@ -308,7 +311,7 @@ function buildJupyterContext() {
 	const contextName =
 		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
 	const languageName =
-		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
+		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.10' : null;
 
 	return {
 		context: contextName,
@@ -481,8 +484,8 @@ async function fetchModel() {
 			model.metadata.card = card.value;
 		}
 
-		if (!model.metadata?.gollm_card && goLLMCard.value) {
-			model.metadata.gollm_card = goLLMCard.value;
+		if (!model.metadata?.gollmCard && goLLMCard.value) {
+			model.metadata.gollmCard = goLLMCard.value;
 		}
 
 		model = await updateModel(model);
@@ -501,6 +504,7 @@ function isSaveModelDisabled(): boolean {
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }
 
+// generates the model card and fetches the model when finished
 async function generateCard(docId, modelId) {
 	if (!docId || !modelId) return;
 
