@@ -72,5 +72,14 @@ const submitQuestion = () => {
 }
 .input {
 	width: 100%;
+	padding: var(--gap-xsmall);
+}
+
+.input:deep(input) {
+	background-image: url('@assets/svg/icons/message.svg');
+	background-size: 1rem;
+	background-position: var(--gap-small);
+	background-repeat: no-repeat;
+	text-indent: 24px;
 }
 </style>
