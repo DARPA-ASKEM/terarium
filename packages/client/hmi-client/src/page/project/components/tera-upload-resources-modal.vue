@@ -7,7 +7,15 @@
 			<template #default>
 				<section class="main-section">
 					<section>
-						<label class="subheader">Add resources to your project here</label>
+						<label class="subheader">Add documents, models or datasets to your project here.</label>
+						<div class="supported-resources">
+							<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
+							<div>
+								<i class="pi pi-share-alt" /><span>Models</span
+								><span>(AMR, sbml, vensim, stella)</span>
+							</div>
+							<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
+						</div>
 						<tera-drag-and-drop-importer
 							:accept-types="[
 								AcceptedTypes.PDF,
@@ -16,7 +24,15 @@
 								AcceptedTypes.MD,
 								AcceptedTypes.PY,
 								AcceptedTypes.R,
-								AcceptedTypes.JL
+								AcceptedTypes.JL,
+								AcceptedTypes.NC,
+								AcceptedTypes.JSON,
+								AcceptedTypes.XML,
+								AcceptedTypes.SBML,
+								AcceptedTypes.MDL,
+								AcceptedTypes.XMILE,
+								AcceptedTypes.ITMX,
+								AcceptedTypes.STMX
 							]"
 							:accept-extensions="[
 								AcceptedExtensions.PDF,
@@ -25,7 +41,15 @@
 								AcceptedExtensions.MD,
 								AcceptedExtensions.PY,
 								AcceptedExtensions.R,
-								AcceptedExtensions.JL
+								AcceptedExtensions.JL,
+								AcceptedExtensions.NC,
+								AcceptedExtensions.JSON,
+								AcceptedExtensions.XML,
+								AcceptedExtensions.SBML,
+								AcceptedExtensions.MDL,
+								AcceptedExtensions.XMILE,
+								AcceptedExtensions.ITMX,
+								AcceptedExtensions.STMX
 							]"
 							:import-action="processFiles"
 							:progress="progress"
@@ -62,9 +86,9 @@ import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import { useProjects } from '@/composables/project';
 import type { DocumentAsset, Dataset } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+import { AssetType, ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
-import { createNewDatasetFromCSV } from '@/services/dataset';
+import { createNewDatasetFromFile } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
 import { ref } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
@@ -72,6 +96,10 @@ import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
+import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import { uploadArtifactToProject } from '@/services/artifact';
+import { addNewModelToProject, validateAMRFile, createModel } from '@/services/model';
+import { RelationshipType, createProvenance } from '@/services/provenance';
 import { modelCard } from '@/services/goLLM';
 
 defineProps<{
@@ -85,11 +113,12 @@ const urlToUpload = ref('');
 const isImportGithubFileModalVisible = ref(false);
 const importedFiles = ref<File[]>([]);
 
-async function processFiles(files: File[], csvDescription: string) {
+async function processFiles(files: File[], description: string) {
 	return files.map(async (file) => {
 		switch (file.name.split('.').pop()) {
 			case AcceptedExtensions.CSV:
-				return processDataset(file, csvDescription);
+			case AcceptedExtensions.NC:
+				return processDataset(file, description);
 			case AcceptedExtensions.PDF:
 			case AcceptedExtensions.TXT:
 			case AcceptedExtensions.MD:
@@ -98,6 +127,15 @@ async function processFiles(files: File[], csvDescription: string) {
 			case AcceptedExtensions.R:
 			case AcceptedExtensions.JL:
 				return processCode(file);
+			case AcceptedExtensions.JSON:
+				return processAMRJson(file);
+			case AcceptedExtensions.XML:
+			case AcceptedExtensions.SBML:
+			case AcceptedExtensions.MDL:
+			case AcceptedExtensions.XMILE:
+			case AcceptedExtensions.ITMX:
+			case AcceptedExtensions.STMX:
+				return processModel(file);
 			default:
 				return { id: '', assetType: '' };
 		}
@@ -134,13 +172,47 @@ async function processDocument(file: File) {
  * @param description
  */
 async function processDataset(file: File, description: string) {
-	const addedDataset: Dataset | null = await createNewDatasetFromCSV(
+	const addedDataset: Dataset | null = await createNewDatasetFromFile(
 		progress,
 		file,
 		useAuthStore().user?.id ?? '',
 		description
 	);
 	return { id: addedDataset?.id ?? '', assetType: AssetType.Dataset };
+}
+
+/*
+ * Process an AMR file into a model asset
+ * @param file
+ */
+async function processAMRJson(file: File) {
+	// Check if the file is an AMR file
+	const amr = await validateAMRFile(file);
+	if (amr) {
+		const model = await createModel(amr);
+		return { id: model?.id ?? '', assetType: AssetType.Model };
+	}
+	// Ignore none AMR json files for now
+	return { id: '', assetType: '' };
+}
+
+/**
+ * Process a model file into a model asset
+ * @param file
+ */
+async function processModel(file: File) {
+	// Upload file as an artifact, create an empty model, and link them
+	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
+	if (!artifact) return { id: '', assetType: '' };
+	const newModelId = await addNewModelToProject(file.name.replace(/\.[^/.]+$/, ''));
+	await createProvenance({
+		relation_type: RelationshipType.EXTRACTED_FROM,
+		left: newModelId ?? '',
+		left_type: ProvenanceType.Model,
+		right: artifact.id ?? '',
+		right_type: ProvenanceType.Artifact
+	});
+	return { id: newModelId ?? '', assetType: AssetType.Model };
 }
 
 function importCompleted(newResults: { id: string; name: string; assetType: AssetType }[] | null) {
@@ -191,7 +263,27 @@ async function upload() {
 .main-section section {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	width: 65vw;
+	min-width: 32rem;
+	max-width: 48rem;
+}
+
+.supported-resources {
+	display: flex;
+	justify-content: space-between;
+
+	div {
+		display: flex;
+		align-items: end;
+		gap: 0.25rem;
+		font-size: 0.75rem;
+	}
+	span:first-of-type {
+		font-weight: 700;
+	}
+	span:last-of-type {
+		color: #667985;
+	}
 }
 
 :deep(.upload-from-github-url) {
