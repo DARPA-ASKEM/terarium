@@ -1,7 +1,7 @@
 <template>
 	<ul>
 		<li v-for="(codeBlocks, filename) in formattedCodeBlocks" :key="filename">
-			<h3>{{ filename ?? '' }}</h3>
+			<p class="mb-2 text-sm">{{ filename ?? '' }}</p>
 			<ul>
 				<li v-for="(codeBlock, i) in codeBlocks" :key="i">
 					<tera-asset-block
@@ -14,7 +14,7 @@
 						:key="i"
 					>
 						<template #header>
-							<h5>Code Block</h5>
+							<h5>Code block</h5>
 						</template>
 						<div
 							v-if="
@@ -26,20 +26,28 @@
 						</div>
 						<div class="edit-container" v-else>
 							<div class="edit-input-container">
-								<label for="code-dynamic-start">Start</label>
-								<InputNumber v-model="startLine" input-id="code-dynamic-start" />
+								<label class="text-sm" for="code-dynamic-start">Start line</label>
+								<InputNumber
+									class="small-input-number"
+									v-model="startLine"
+									input-id="code-dynamic-start"
+								/>
 							</div>
 
 							<div class="edit-input-container">
-								<label for="code-dynamic-start">End</label>
-								<InputNumber v-model="endLine" input-id="code-dynamic-end" />
+								<label class="text-sm" for="code-dynamic-start">End line</label>
+								<InputNumber
+									class="small-input-number"
+									v-model="endLine"
+									input-id="code-dynamic-end"
+								/>
 							</div>
 						</div>
 
 						<template #footer v-if="editRef?.index === i && editRef?.filename === filename">
 							<div class="footer-container">
-								<Button outlined label="Cancel" @click="editRef = null" />
-								<Button label="OK" @click="saveCodeBlockChanges" />
+								<Button outlined label="Cancel" @click="editRef = null" size="small" />
+								<Button label="Save" @click="saveCodeBlockChanges" size="small" />
 							</div>
 						</template>
 					</tera-asset-block>
@@ -139,6 +147,20 @@ ul {
 }
 
 .edit-input-container:deep(.p-inputnumber-input) {
-	width: 100px;
+	width: 107px;
+	height: 2rem;
+}
+
+.footer-container {
+	display: flex;
+	justify-content: end;
+	gap: var(--gap-small);
+}
+
+:deep(.p-panel .p-panel-content) {
+	padding: 0 0 var(--gap) var(--gap) !important;
+}
+:deep(.p-panel .p-panel-footer) {
+	padding: 0 var(--gap) var(--gap) 0 !important;
 }
 </style>

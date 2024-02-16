@@ -7,6 +7,7 @@ import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
 import type { Curies, DKG, EntitySimilarityResult } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
 
 /**
  * Get concept facets
@@ -51,6 +52,25 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 	}
 }
 
+async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
+	try {
+		const response = await API.get('/mira/search', {
+			params: {
+				q: query
+			}
+		});
+		if (response?.status !== 200) return [];
+		return response?.data ?? [];
+	} catch (error) {
+		logger.error(`There was an issue searching for mira query: ${query}`, { showToast: false });
+		return [];
+	}
+}
+
+function getCurieUrl(curie: string): string {
+	return `http://34.230.33.149:8772/${curie}`;
+}
+
 /**
  * Hit MIRA to get pairwise similarities between elements referenced by CURIEs in the first list and second list.
  * @input a List of curies (strings) for each source, and target.
@@ -87,4 +107,34 @@ async function getEntitySimilarity(
 	}
 }
 
-export { getCuriesEntities, getFacets, getEntitySimilarity };
+const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string => {
+	if (!cache.has(curie)) {
+		getCuriesEntities([curie]).then((response) => cache.set(curie, response?.[0].name ?? ''));
+	}
+	return cache.get(curie) ?? '';
+};
+
+function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
+	if (!!identifier && !isEmpty(identifier)) {
+		const [key, value] = Object.entries(identifier)[0];
+		return `${key}:${value}`;
+	}
+	return '';
+}
+
+function parseCurie(curie: string) {
+	const key = curie.split(':')[0];
+	const value = curie.split(':')[1];
+	return { [key]: value };
+}
+
+export {
+	getCuriesEntities,
+	getFacets,
+	getEntitySimilarity,
+	searchCuriesEntities,
+	getNameOfCurieCached,
+	getCurieFromGroudingIdentifier,
+	getCurieUrl,
+	parseCurie
+};

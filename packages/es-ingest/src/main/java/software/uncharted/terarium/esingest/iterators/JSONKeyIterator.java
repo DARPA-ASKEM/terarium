@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -19,7 +20,7 @@ import software.uncharted.terarium.esingest.util.FileUtil;
 @Slf4j
 public class JSONKeyIterator<T extends IInputDocument> implements IInputIterator<T> {
 
-	ObjectMapper mapper = new ObjectMapper();
+	ObjectMapper mapper;
 	Queue<Path> files;
 	long batchSize;
 	Class<T> classType;
@@ -32,7 +33,9 @@ public class JSONKeyIterator<T extends IInputDocument> implements IInputIterator
 		if (files.isEmpty()) {
 			throw new IOException("No input files found for path: " + inputPath.toString());
 		}
-		this.currentNode = (ObjectNode) mapper.readTree(Files.readString(files.poll()));
+		this.mapper = new ObjectMapper();
+		this.mapper.enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature());
+		this.currentNode = (ObjectNode) this.mapper.readTree(Files.readString(files.poll()));
 	}
 
 	public List<T> getNext() throws IOException {

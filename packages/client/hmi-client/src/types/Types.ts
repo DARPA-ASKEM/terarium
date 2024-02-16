@@ -907,6 +907,7 @@ export interface ModelMetadata {
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
+    templateCard?: any;
 }
 
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {

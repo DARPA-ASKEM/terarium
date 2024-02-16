@@ -5,7 +5,6 @@ services:
   model-service:
     container_name: model-service
     image: ghcr.io/darpa-askem/model-service:latest
-    platform: linux/amd64
     networks:
       - terarium
     ports:

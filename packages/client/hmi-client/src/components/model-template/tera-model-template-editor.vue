@@ -16,7 +16,8 @@
 							:model="modelTemplate"
 							:is-editable="false"
 							is-decomposed
-							draggable="true"
+							:style="isDecomposedLoading && { cursor: 'wait' }"
+							:draggable="!isDecomposedLoading"
 							@dragstart="newModelTemplate = modelTemplate"
 						/>
 					</li>
@@ -45,7 +46,7 @@
 						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
 						:model-value="currentModelFormat"
-						@change="if ($event.value) currentModelFormat = $event.value;"
+						@change="if ($event.value) onEditorFormatSwitch($event.value);"
 						:options="modelFormatOptions"
 					>
 						<template #option="{ option }">
@@ -75,12 +76,13 @@
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						@update-name="
 							(name: string) =>
-								modelTemplatingService.updateDecomposedCardName(
-									currentTemplates,
+								modelTemplatingService.updateDecomposedTemplateNameInKernel(
 									kernelManager,
-									outputCode,
+									currentTemplates.models[index],
+									flattenedTemplates.models[0],
 									name,
-									card.id
+									outputCode,
+									syncWithMiraModel
 								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
@@ -89,12 +91,14 @@
 						"
 						@port-mouseleave="onPortMouseleave"
 						@remove="
-							modelTemplatingService.removeCard(
-								currentTemplates,
-								kernelManager,
-								outputCode,
-								card.id
-							)
+							() =>
+								modelTemplatingService.removeTemplateInKernel(
+									kernelManager,
+									currentTemplates,
+									card.id,
+									outputCode,
+									syncWithMiraModel
+								)
 						"
 					/>
 				</tera-canvas-item>
@@ -131,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty, isEqual } from 'lodash'; // debounce
+import { isEmpty, isEqual } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -155,7 +159,15 @@ const props = defineProps<{
 	kernelManager: KernelSessionManager;
 }>();
 
-const emit = defineEmits(['output-code']);
+const emit = defineEmits(['output-code', 'sync-with-mira-model']);
+
+function outputCode(data: any) {
+	emit('output-code', data);
+}
+
+function syncWithMiraModel(data: any) {
+	emit('sync-with-mira-model', data);
+}
 
 enum EditorFormat {
 	Decomposed = 'Decomposed',
@@ -179,7 +191,7 @@ const currentTemplates = computed(() =>
 		: flattenedTemplates.value
 );
 const cards = computed<ModelTemplateCard[]>(
-	() => currentTemplates.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+	() => currentTemplates.value.models.map(({ metadata }) => metadata?.templateCard) ?? []
 );
 const junctions = computed<ModelTemplateJunction[]>(() => currentTemplates.value.junctions);
 
@@ -195,7 +207,6 @@ const isCreatingNewEdge = computed(
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
-
 	return cards.value.some(({ x, y, width, height }) => {
 		const withinXRange = p.x >= x - buffer && p.x <= x + width + buffer;
 		const withinYRange = p.y >= y - buffer && p.y <= y + height + buffer;
@@ -236,13 +247,11 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
 			// Add a default edge as well
-			modelTemplatingService.addEdge(
+			modelTemplatingService.addEdgeInView(
 				currentTemplates.value,
-				props.kernelManager,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
-				outputCode,
 				interpolatePointsForCurve
 			);
 		}
@@ -264,15 +273,36 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		junctionIdForNewEdge &&
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
-		modelTemplatingService.addEdge(
-			currentTemplates.value,
-			props.kernelManager,
-			junctionIdForNewEdge,
-			target,
-			currentPortPosition,
-			outputCode,
-			interpolatePointsForCurve
-		);
+		if (currentModelFormat.value === EditorFormat.Decomposed) {
+			modelTemplatingService.addEdgeInKernel(
+				props.kernelManager,
+				currentTemplates.value,
+				junctionIdForNewEdge,
+				target,
+				newEdge.value.target,
+				currentPortPosition,
+				outputCode,
+				syncWithMiraModel,
+				interpolatePointsForCurve
+			);
+		} else {
+			modelTemplatingService.addEdgeInView(
+				currentTemplates.value,
+				junctionIdForNewEdge,
+				target,
+				currentPortPosition,
+				interpolatePointsForCurve
+			);
+			// Once the second edge is drawn, reflect changes in decomposed view - once done, everything in the flattened view will be "merged"
+			modelTemplatingService.reflectFlattenedEditInDecomposedView(
+				props.kernelManager,
+				flattenedTemplates.value,
+				decomposedTemplates.value,
+				outputCode,
+				syncWithMiraModel,
+				interpolatePointsForCurve
+			);
+		}
 		cancelNewEdge();
 	}
 }
@@ -322,18 +352,31 @@ function updateNewCardPosition(event) {
 		(event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
-function outputCode(data: any) {
-	emit('output-code', data);
-}
-
 function onDrop(event) {
 	updateNewCardPosition(event);
-	modelTemplatingService.addCard(
-		currentTemplates.value,
-		props.kernelManager,
-		outputCode,
-		cloneDeep(newModelTemplate.value)
-	);
+
+	if (currentModelFormat.value === EditorFormat.Decomposed) {
+		modelTemplatingService.addDecomposedTemplateInKernel(
+			props.kernelManager,
+			decomposedTemplates.value,
+			newModelTemplate.value,
+			outputCode,
+			syncWithMiraModel
+		);
+	}
+	// Add decomposed template to the flattened view
+	else {
+		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
+		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
+		const decomposedTemplateToAdd = modelTemplatingService.prepareDecomposedTemplateAddition(
+			flattenedTemplates.value,
+			newModelTemplate.value
+		);
+		if (decomposedTemplateToAdd) {
+			modelTemplatingService.addTemplateInView(flattenedTemplates.value, decomposedTemplateToAdd);
+		}
+	}
+
 	newModelTemplate.value = null;
 }
 
@@ -365,7 +408,6 @@ const updatePosition = (
 			if (!isJunction && edge.target.cardId === node.id) {
 				edge.points[lastPointIndex].x += x / canvasTransform.k;
 				edge.points[lastPointIndex].y += y / canvasTransform.k;
-
 				edge.points = interpolatePointsForCurve(edge.points[0], edge.points[lastPointIndex]);
 			}
 		});
@@ -393,20 +435,21 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
+function refreshFlattenedTemplate() {
+	if (props.model) {
+		flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
+		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
+	}
+}
+
+function onEditorFormatSwitch(newFormat: EditorFormat) {
+	currentModelFormat.value = newFormat;
+	if (newFormat === EditorFormat.Decomposed) refreshFlattenedTemplate(); // Removes unlinked decomposed templates
+}
+
 watch(
 	() => [props.model],
-	() => {
-		if (props.model) {
-			flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
-
-			modelTemplatingService.updateFlattenedTemplate(
-				props.model,
-				flattenedTemplates.value,
-				props.kernelManager,
-				outputCode
-			);
-		}
-	}
+	() => refreshFlattenedTemplate() // Triggered after syncWithMiraModel() in parent
 );
 
 onMounted(() => {
@@ -414,18 +457,11 @@ onMounted(() => {
 
 	if (props.model) {
 		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplate(
-			props.model,
-			flattenedTemplates.value,
-			props.kernelManager,
-			outputCode
-		);
-
+		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
 		// Create decomposed view of model
-		modelTemplatingService.flattenedToDecomposed(
-			decomposedTemplates.value,
+		modelTemplatingService.flattenedToDecomposedInKernel(
 			props.kernelManager,
-			outputCode,
+			decomposedTemplates.value,
 			interpolatePointsForCurve
 		);
 	}
