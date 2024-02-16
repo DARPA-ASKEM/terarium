@@ -32,38 +32,41 @@
 					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
 				</template>
 			</tera-drilldown-section>
-			<tera-drilldown-preview
-				title="Model Preview"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:options="outputs"
-				is-selectable
-			>
-				<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Model Provided</h4>
-				</div>
-				<template #footer>
-					<InputText
-						v-model="newModelName"
-						placeholder="model name"
-						type="text"
-						class="input-small"
-					/>
-					<Button
-						:disabled="!amr"
-						outlined
-						style="margin-right: auto"
-						label="Save as new Model"
-						@click="
-							() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-						"
-					/>
-					<Button label="Close" @click="emit('close')" />
-				</template>
-			</tera-drilldown-preview>
+			<div class="preview-container">
+				<tera-drilldown-preview
+					title="Model Preview"
+					v-model:output="selectedOutputId"
+					@update:output="onUpdateOutput"
+					@update:selection="onUpdateSelection"
+					:options="outputs"
+					is-selectable
+					class="h-full"
+				>
+					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
+					<div v-else>
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+						<h4>No Model Provided</h4>
+					</div>
+					<template #footer>
+						<InputText
+							v-model="newModelName"
+							placeholder="model name"
+							type="text"
+							class="input-small"
+						/>
+						<Button
+							:disabled="!amr"
+							outlined
+							style="margin-right: auto"
+							label="Save as new Model"
+							@click="
+								() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
+							"
+						/>
+						<Button label="Close" @click="emit('close')" />
+					</template>
+				</tera-drilldown-preview>
+			</div>
 		</div>
 	</tera-drilldown>
 </template>
@@ -355,7 +358,11 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 }
-
+.preview-container {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem;
+}
 .input-small {
 	padding: 0.5rem;
 }
