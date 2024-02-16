@@ -73,6 +73,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
 import { fetchData, getDocumentById, getRelatedTerms } from '@/services/data';
+import { search } from '@/services/search';
 import {
 	ResourceType,
 	ResultType,
@@ -97,7 +98,7 @@ import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
-import type { XDDFacetsItemResponse } from '@/types/Types';
+import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
 import Chip from 'primevue/chip';
 import { useSearchByExampleOptions } from './search-by-example';
@@ -328,6 +329,16 @@ const executeSearch = async () => {
 		searchParamsWithFacetFilters,
 		searchType
 	);
+
+	let assetType: AssetType = AssetType.Document;
+	if (searchType === ResourceType.MODEL) {
+		assetType = AssetType.Model;
+	} else if (searchType === ResourceType.DATASET) {
+		assetType = AssetType.Dataset;
+	}
+
+	const searchResults = await search(searchWords, assetType);
+	console.log(searchWords, assetType, searchResults);
 
 	// cache unfiltered data
 	dataItemsUnfiltered.value = mergeResultsKeepRecentDuplicates(dataItemsUnfiltered.value, allData);
