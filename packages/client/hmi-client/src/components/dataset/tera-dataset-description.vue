@@ -26,7 +26,11 @@
 			/>
 		</AccordionTab>
 		<AccordionTab header="Column Information">
-			<tera-dataset-overview-table v-if="dataset" :dataset="dataset" />
+			<tera-dataset-overview-table
+				v-if="dataset"
+				:dataset="dataset"
+				@update-dataset="(dataset: Dataset) => emit('update-dataset', dataset)"
+			/>
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -52,7 +56,7 @@ const props = defineProps<{
 	rawContent: CsvAsset | null;
 }>();
 
-const emit = defineEmits(['fetch-dataset']);
+const emit = defineEmits(['fetch-dataset', 'update-dataset']);
 const card = computed(() => {
 	if (props.dataset?.metadata?.data_card) {
 		const cardWithUnknowns = props.dataset.metadata?.data_card;

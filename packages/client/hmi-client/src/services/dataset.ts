@@ -37,7 +37,6 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
  * @return Dataset|null - the dataset, or null if none returned by API
  */
 async function updateDataset(dataset: Dataset) {
-	delete dataset.columns;
 	const response = await API.put(`/datasets/${dataset.id}`, dataset);
 	return response?.data ?? null;
 }
@@ -140,20 +139,21 @@ async function createNewDatasetFromGithubFile(
 }
 
 /**
- * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
+ * This is a helper function which creates a new dataset and adds a given file to it. The data set will
  * share the same name as the file and can optionally have a description
  * @param progress reference to display in ui
- * @param file the CSV file
+ * @param file an arbitrary or csv file
  * @param userName uploader of this dataset
  * @param projectId the project ID
  * @param description description of the file. Optional. If not given description will be just the csv name
  */
-async function createNewDatasetFromCSV(
+async function createNewDatasetFromFile(
 	progress: Ref<number>,
 	file: File,
 	userId: string,
 	description?: string
 ): Promise<Dataset | null> {
+	const fileType = file.name.endsWith('.csv') ? 'csv' : 'file';
 	// Remove the file extension from the name, if any
 	const name = file.name.replace(/\.[^/.]+$/, '');
 
@@ -171,7 +171,7 @@ async function createNewDatasetFromCSV(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const urlResponse = await API.put(`/datasets/${newDataset.id}/upload-csv`, formData, {
+	const urlResponse = await API.put(`/datasets/${newDataset.id}/upload-${fileType}`, formData, {
 		params: {
 			filename: file.name
 		},
@@ -325,7 +325,7 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
-	createNewDatasetFromCSV,
+	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
 	saveDataset,
