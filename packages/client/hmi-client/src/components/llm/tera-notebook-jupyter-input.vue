@@ -23,7 +23,7 @@
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
 			@keydown.enter="submitQuestion"
 		/>
-		<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
+		<!-- <Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" /> -->
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<Button v-else icon="pi pi-send" @click="submitQuestion" />
 	</div>
@@ -47,8 +47,8 @@ const questionString = ref('');
 const kernelStatus = ref<string>('');
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
-const contextLanguage = ref<string>('python3');
-const contextLanguageOptions = ref<string[]>(['python3']);
+// const contextLanguage = ref<string>('python3');
+// const contextLanguageOptions = ref<string[]>(['python3']);
 
 const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {

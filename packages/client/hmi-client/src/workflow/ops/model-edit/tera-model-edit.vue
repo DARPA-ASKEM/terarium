@@ -392,7 +392,7 @@ onUnmounted(() => {
 	gap: var(--gap-3);
 	justify-content: space-between;
 	margin-left: 1.5rem;
-	padding-top: var(--gap-small);
+	padding-top: var(--gap);
 }
 
 .toolbar-left-side,
