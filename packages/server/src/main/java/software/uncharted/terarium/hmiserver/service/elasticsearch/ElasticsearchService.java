@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
@@ -362,19 +363,23 @@ public class ElasticsearchService {
 		return null;
 	}
 
-	public <T> List<T> knnSearch(final String index, final KnnQuery query, final int numResults, final Class<T> tClass)
+	public <T> List<T> knnSearch(final String index, final KnnQuery query, final Query additional, final int numResults,
+			final Class<T> tClass)
 			throws IOException {
 		log.info("KNN search on: {}", index);
 
 		if (query.numCandidates() < query.k()) {
 			throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
 		}
-
-		final SearchRequest req = new SearchRequest.Builder()
+		SearchRequest.Builder builder = new SearchRequest.Builder()
 				.index(index)
 				.size(numResults)
-				.knn(query)
-				.build();
+				.knn(query);
+		if (additional != null) {
+			builder.query(additional);
+		}
+
+		final SearchRequest req = builder.build();
 
 		final List<T> docs = new ArrayList<>();
 		final SearchResponse<T> res = client.search(req, tClass);
