@@ -301,7 +301,8 @@ import {
 	searchCuriesEntities,
 	getNameOfCurieCached,
 	getCurieFromGroudingIdentifier,
-	getCurieUrl
+	getCurieUrl,
+	parseCurie
 } from '@/services/concept';
 import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
@@ -482,12 +483,6 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 		const response = await searchCuriesEntities(query);
 		curies.value = response;
 	}
-}
-
-function parseCurie(curie: string) {
-	const key = curie.split(':')[0];
-	const value = curie.split(':')[1];
-	return { [key]: value };
 }
 
 function onCellEditComplete() {

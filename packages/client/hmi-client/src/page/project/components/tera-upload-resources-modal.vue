@@ -257,7 +257,6 @@ async function upload() {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	width: 36rem;
 }
 
 .main-section section {
@@ -271,6 +270,7 @@ async function upload() {
 .supported-resources {
 	display: flex;
 	justify-content: space-between;
+	margin-bottom: 0.25rem;
 
 	div {
 		display: flex;
