@@ -455,7 +455,7 @@ aside {
 	flex-direction: column;
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-alt);
-	padding: var(--gap) 0;
+	padding: var(--gap);
 	gap: 0.5rem;
 	overflow: hidden;
 	z-index: 1;

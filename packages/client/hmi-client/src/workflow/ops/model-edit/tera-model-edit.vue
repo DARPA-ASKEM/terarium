@@ -344,6 +344,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* The wizard of this operator is atypical and needs the outside margins to be removed */
+.overlay-container:deep(main) {
+	padding: 0 0 0 0;
+}
 .input {
 	width: 95%;
 }
