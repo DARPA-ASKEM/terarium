@@ -98,7 +98,7 @@ import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.v
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
-import { addNewModelToProject } from '@/services/model';
+import { addNewModelToProject, validateAMRFile, createModel } from '@/services/model';
 import { RelationshipType, createProvenance } from '@/services/provenance';
 import { modelCard } from '@/services/goLLM';
 
@@ -128,6 +128,7 @@ async function processFiles(files: File[], description: string) {
 			case AcceptedExtensions.JL:
 				return processCode(file);
 			case AcceptedExtensions.JSON:
+				return processAMRJson(file);
 			case AcceptedExtensions.XML:
 			case AcceptedExtensions.SBML:
 			case AcceptedExtensions.MDL:
@@ -180,11 +181,27 @@ async function processDataset(file: File, description: string) {
 	return { id: addedDataset?.id ?? '', assetType: AssetType.Dataset };
 }
 
+/*
+ * Process an AMR file into a model asset
+ * @param file
+ */
+async function processAMRJson(file: File) {
+	// Check if the file is an AMR file
+	const amr = await validateAMRFile(file);
+	if (amr) {
+		const model = await createModel(amr);
+		return { id: model?.id ?? '', assetType: AssetType.Model };
+	}
+	// Ignore none AMR json files for now
+	return { id: '', assetType: '' };
+}
+
 /**
  * Process a model file into a model asset
  * @param file
  */
 async function processModel(file: File) {
+	// Upload file as an artifact, create an empty model, and link them
 	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
 	if (!artifact) return { id: '', assetType: '' };
 	const newModelId = await addNewModelToProject(file.name.replace(/\.[^/.]+$/, ''));

@@ -170,6 +170,13 @@ export enum AcceptedExtensions {
 	STMX = 'stmx'
 }
 
+export enum AMRSchemaNames {
+	PETRINET = 'petrinet',
+	REGNET = 'regnet',
+	STOCKFLOW = 'stockflow',
+	DECAPODES = 'decapodes'
+}
+
 export interface PDFExtractionResponseType {
 	text: string;
 	images: string[];
