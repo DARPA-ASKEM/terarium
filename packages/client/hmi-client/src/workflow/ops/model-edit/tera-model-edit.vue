@@ -13,6 +13,11 @@
 			<tera-drilldown-section>
 				<div class="notebook-toolbar">
 					<div class="toolbar-left-side">
+						<div class="assistant-switch">
+							<InputSwitch v-model="showAssistant" class="mr-1" />
+							<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
+							<span>AI assistant</span>
+						</div>
 						<Dropdown
 							:disabled="true"
 							:model-value="contextLanguage"
@@ -100,6 +105,7 @@ import _ from 'lodash';
 import { onUnmounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import InputSwitch from 'primevue/inputswitch';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -139,6 +145,8 @@ interface SaveOptions {
 	addToProject?: boolean;
 	appendOutputPort?: boolean;
 }
+
+const showAssistant = ref(true);
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -399,6 +407,14 @@ onUnmounted(() => {
 .toolbar-right-side {
 	display: flex;
 	gap: var(--gap-small);
+	align-items: center;
+}
+
+.assistant-switch {
+	display: flex;
+	flex-direction: row;
+	gap: 0.25rem;
+	margin-right: var(--gap);
 }
 .preview-container {
 	display: flex;
