@@ -30,6 +30,10 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.codeRoot, index.suffix);
 	}
 
+	public String getArtifactIndex() {
+		return String.join("_", index.prefix, index.artifactRoot, index.suffix);
+	}
+
 	public String getDatasetIndex() {
 		return String.join("_", index.prefix, index.datasetRoot, index.suffix);
 	}
@@ -74,6 +78,7 @@ public class ElasticsearchConfiguration {
 		String prefix,
 		String suffix,
 		String codeRoot,
+		String artifactRoot,
 		String datasetRoot,
 		String documentRoot,
 		String equationRoot,

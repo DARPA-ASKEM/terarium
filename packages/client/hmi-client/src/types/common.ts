@@ -136,7 +136,15 @@ export enum AcceptedTypes {
 	MD = 'text/markdown',
 	PY = 'text/x-python-script',
 	R = 'text/x-r',
-	JL = 'application/julia'
+	JL = 'application/julia',
+	NC = 'application/x-netcdf',
+	JSON = 'application/json',
+	XML = 'application/xml',
+	SBML = 'application/sbml+xml',
+	MDL = `application/vnd.vensim.mdl`,
+	XMILE = 'application/vnd.stella.xmile',
+	ITMX = 'application/vnd.stella.itmx',
+	STMX = 'application/vnd.stella.stmx'
 }
 
 export enum AcceptedExtensions {
@@ -146,7 +154,27 @@ export enum AcceptedExtensions {
 	MD = 'md',
 	PY = 'py',
 	R = 'r',
-	JL = 'jl'
+	JL = 'jl',
+	// NetCDF format
+	NC = 'nc',
+	// Model file extensions
+	JSON = 'json',
+	// SBML formats
+	XML = 'xml',
+	SBML = 'sbml',
+	// Vensim format
+	MDL = 'mdl',
+	// Stella formats
+	XMILE = 'xmile',
+	ITMX = 'itmx',
+	STMX = 'stmx'
+}
+
+export enum AMRSchemaNames {
+	PETRINET = 'petrinet',
+	REGNET = 'regnet',
+	STOCKFLOW = 'stockflow',
+	DECAPODES = 'decapodes'
 }
 
 export interface PDFExtractionResponseType {
