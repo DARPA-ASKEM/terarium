@@ -85,16 +85,21 @@
 							type="text"
 							class="input-small"
 						/>
-						<Button
-							:disabled="!amr"
-							outlined
-							style="margin-right: auto"
-							label="Save as new Model"
-							@click="
-								() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-							"
-						/>
-						<Button label="Close" @click="emit('close')" />
+						<div class="flex gap-2">
+							<Button
+								:disabled="!amr"
+								size="large"
+								severity="secondary"
+								outlined
+								class="white-space-nowrap"
+								style="margin-right: auto"
+								label="Save as new model"
+								@click="
+									() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
+								"
+							/>
+							<Button label="Close" size="large" @click="emit('close')" />
+						</div>
 					</template>
 				</tera-drilldown-preview>
 			</div>
@@ -431,6 +436,7 @@ onUnmounted(() => {
 }
 .input-small {
 	padding: 0.5rem;
+	width: 100%;
 }
 
 .code-executed-warning {
