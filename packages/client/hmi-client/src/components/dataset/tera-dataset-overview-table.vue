@@ -40,7 +40,6 @@
 						})
 					"
 					optionLabel="name"
-					:inputStyle="{ width: '100%' }"
 				/>
 			</template>
 		</Column>
