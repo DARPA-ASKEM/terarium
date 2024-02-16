@@ -160,7 +160,7 @@ const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'update-state',
 	'select-output',
 	'update-output-port',
@@ -292,7 +292,7 @@ const watchCompletedRunId = async (runId: string) => {
 
 	const sim = await getSimulation(runId);
 
-	emit('append-output-port', {
+	emit('append-output', {
 		type: SimulateJuliaOperation.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
 		value: runId,

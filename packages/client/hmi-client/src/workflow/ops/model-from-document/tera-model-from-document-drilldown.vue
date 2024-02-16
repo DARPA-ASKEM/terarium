@@ -149,7 +149,7 @@ import {
 const emit = defineEmits([
 	'close',
 	'update-state',
-	'append-output-port',
+	'append-output',
 	'select-output',
 	'update-output-port'
 ]);
@@ -307,7 +307,7 @@ async function onRun() {
 	generateCard(document.value?.id, modelId);
 
 	clonedState.value.modelId = modelId;
-	emit('append-output-port', {
+	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
 		isSelected: false,
