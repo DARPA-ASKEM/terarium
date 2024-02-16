@@ -10,7 +10,7 @@
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
-			<tera-drilldown-section>
+			<tera-drilldown-section id="notebook-section">
 				<div class="notebook-toolbar">
 					<div class="toolbar-left-side">
 						<div class="assistant-switch">
@@ -395,6 +395,9 @@ onUnmounted(() => {
 .code-container {
 	display: flex;
 	flex-direction: column;
+}
+#notebook-section:deep(main) {
+	gap: var(--gap);
 }
 .notebook-toolbar {
 	display: flex;
