@@ -16,7 +16,7 @@
 					<i class="pi pi-filter"></i>
 				</span>
 			</div>
-			<!-- 			
+			<!--
 			<SplitButton
 				class="new-resource-button"
 				label="New"
@@ -159,17 +159,6 @@
 				</Button>
 			</AccordionTab>
 		</Accordion>
-		<!-- This is the upload button, fixed at the bottom of the panel -->
-		<div class="fixed-upload-button">
-			<Button
-				label="Upload resources"
-				size="small"
-				icon="pi pi-cloud-upload"
-				severity="primary"
-				class="w-full"
-				@click="isUploadResourcesModalVisible = true"
-			/>
-		</div>
 
 		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
 			<Skeleton v-for="i in 10" :key="i" width="85%" />
@@ -199,10 +188,6 @@
 			</tera-modal>
 		</Teleport>
 	</nav>
-	<tera-upload-resources-modal
-		:visible="isUploadResourcesModalVisible"
-		@close="isUploadResourcesModalVisible = false"
-	/>
 </template>
 
 <script setup lang="ts">
@@ -223,7 +208,6 @@ import InputText from 'primevue/inputtext';
 // import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
-import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -306,8 +290,6 @@ function endDrag() {
 // const toggleOptionsMenu = (event) => {
 // 	optionsMenu.value.toggle(event);
 // };
-
-const isUploadResourcesModalVisible = ref(false);
 </script>
 
 <style scoped>
@@ -400,15 +382,6 @@ header {
 	border-radius: var(--border-radius);
 }
 
-.fixed-upload-button {
-	position: fixed;
-	bottom: 3rem;
-	left: 0;
-	z-index: 10;
-	width: 240px;
-	white-space: nowrap;
-	padding: 0rem 1rem 1rem;
-}
 :deep(.p-accordion .p-accordion-content) {
 	display: flex;
 	flex-direction: column;

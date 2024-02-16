@@ -12,7 +12,7 @@
 				ref="fileInput"
 				@change="onFileChange"
 				multiple
-				accept=".pdf,.csv,.txt,.md,.py,.m,.js,.R"
+				:accept="fileInputAcceptedExtensions"
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
@@ -21,9 +21,10 @@
 					<div>Release mouse button to add files to import</div>
 				</div>
 				<div v-else class="drop-zone">
-					<div><i class="pi pi-file" style="font-size: 2.5rem" /></div>
+					<div><i class="pi pi-upload" style="font-size: 2.5rem" /></div>
 					<div>
-						Drop resources here or <span class="text-link">click to open a file browser</span>
+						Drop resources here <br />
+						or <span class="text-link">click to open a file browser</span>
 					</div>
 				</div>
 			</label>
@@ -45,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import API from '@/api/api';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
@@ -69,29 +70,13 @@ const props = defineProps({
 		type: Array<AcceptedTypes>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[
-				AcceptedTypes.PDF,
-				AcceptedTypes.CSV,
-				AcceptedTypes.TXT,
-				AcceptedTypes.MD,
-				AcceptedTypes.PY,
-				AcceptedTypes.R,
-				AcceptedTypes.JL
-			].every((v) => value.includes(v))
+			Object.values(AcceptedTypes).every((v) => value.includes(v))
 	},
 	acceptExtensions: {
 		type: Array<AcceptedExtensions>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[
-				AcceptedExtensions.PDF,
-				AcceptedExtensions.CSV,
-				AcceptedExtensions.TXT,
-				AcceptedExtensions.MD,
-				AcceptedExtensions.PY,
-				AcceptedExtensions.R,
-				AcceptedExtensions.JL
-			].every((v) => value.includes(v))
+			Object.values(AcceptedExtensions).every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
 	importAction: {
@@ -120,6 +105,10 @@ const props = defineProps({
 		}
 	}
 });
+
+const fileInputAcceptedExtensions = computed(() =>
+	props.acceptExtensions.map((v) => `.${v}`).join(',')
+);
 
 /**
  * Add file event
@@ -254,11 +243,13 @@ watch(
 
 .file-label {
 	font-size: var(--font-body-small);
-	display: flex;
 	flex-direction: column;
 	cursor: pointer;
 	align-items: center;
 	padding: 2.5rem 0 2.5rem 0;
+}
+label.file-label {
+	display: flex;
 }
 
 .text-link {
