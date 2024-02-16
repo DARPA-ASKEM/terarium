@@ -1,10 +1,22 @@
 <template>
 	<nav>
 		<header class="resource-panel-toolbar">
-			<span class="p-input-icon-left">
-				<i class="pi pi-search" />
-				<InputText v-model="searchAsset" class="resource-panel-search" placeholder="Find" />
-			</span>
+			<div class="p-inputgroup">
+				<InputText
+					v-model="searchAsset"
+					placeholder="Filter resources"
+					id="searchAsset"
+					@focus="inputFocused = true"
+					@blur="inputFocused = false"
+				/>
+				<span v-if="searchAsset || inputFocused" class="clear-icon" @click="clearSearch()">
+					<i class="pi pi-times"></i>
+				</span>
+				<span class="p-inputgroup-addon">
+					<i class="pi pi-filter"></i>
+				</span>
+			</div>
+			<!--
 			<SplitButton
 				class="new-resource-button"
 				label="New"
@@ -24,6 +36,7 @@
 					</a>
 				</template>
 			</Menu>
+-->
 		</header>
 		<Button
 			class="asset-button"
@@ -58,11 +71,45 @@
 		>
 			<AccordionTab v-for="[type, assetItems] in assetItemsMap" :key="type">
 				<template #header>
-					<template v-if="type === AssetType.Publication">External Publications</template>
-					<template v-else-if="type === AssetType.Document">Documents</template>
-					<template v-else>{{ capitalize(type) }}</template>
-					<aside>({{ assetItems.size }})</aside>
+					<div class="flex justify-space-between w-full">
+						<div class="flex align-items-center w-full">
+							<template v-if="type === AssetType.Publication">External Publications</template>
+							<template v-else-if="type === AssetType.Document">Documents</template>
+							<template v-else>{{ capitalize(type) }}</template>
+							<aside>({{ assetItems.size }})</aside>
+						</div>
+						<!-- New asset buttons for some types -->
+						<Button
+							class="new-button"
+							v-if="type === AssetType.Model"
+							icon="pi pi-plus"
+							label="New"
+							text
+							size="small"
+							@click="emit('open-new-asset', AssetType.Model)"
+						/>
+						<Button
+							class="new-button"
+							v-if="type === AssetType.Code"
+							icon="pi pi-plus"
+							label="New"
+							text
+							size="small"
+							@click="emit('open-new-asset', AssetType.Code)"
+						/>
+						<Button
+							class="new-button"
+							v-if="type === AssetType.Workflow"
+							icon="pi pi-plus"
+							label="New"
+							text
+							size="small"
+							@click="emit('open-new-asset', AssetType.Workflow)"
+						/>
+					</div>
 				</template>
+
+				<!-- These are all the resources. They're buttons because they're click and draggable. -->
 				<Button
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
@@ -112,17 +159,6 @@
 				</Button>
 			</AccordionTab>
 		</Accordion>
-		<!-- This is the upload button, fixed at the bottom of the panel -->
-		<div class="fixed-upload-button">
-			<Button
-				label="Upload resources"
-				size="small"
-				icon="pi pi-cloud-upload"
-				severity="primary"
-				class="w-full"
-				@click="isUploadResourcesModalVisible = true"
-			/>
-		</div>
 
 		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
 			<Skeleton v-for="i in 10" :key="i" width="85%" />
@@ -152,10 +188,6 @@
 			</tera-modal>
 		</Teleport>
 	</nav>
-	<tera-upload-resources-modal
-		:visible="isUploadResourcesModalVisible"
-		@close="isUploadResourcesModalVisible = false"
-	/>
 </template>
 
 <script setup lang="ts">
@@ -171,12 +203,11 @@ import { capitalize, isEmpty, isEqual } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import SplitButton from 'primevue/splitbutton';
+// import SplitButton from 'primevue/splitbutton';
 import InputText from 'primevue/inputtext';
-import Menu from 'primevue/menu';
+// import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
-import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -192,6 +223,8 @@ const isRemovalModal = ref(false);
 const draggedAsset = ref<AssetRoute | null>(null);
 const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
+const inputFocused = ref(false);
+
 const activeAccordionTabs = ref(
 	new Set(
 		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
@@ -199,6 +232,10 @@ const activeAccordionTabs = ref(
 );
 
 const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
+
+function clearSearch() {
+	searchAsset.value = '';
+}
 
 function removeAsset() {
 	if (assetToDelete.value) {
@@ -225,36 +262,34 @@ function endDrag() {
 	draggedAsset.value = null;
 }
 
-const optionsMenu = ref();
-const optionsMenuItems = ref([
-	{
-		key: AssetType.Code,
-		label: 'New code',
-		command() {
-			emit('open-new-asset', AssetType.Code);
-		}
-	},
-	{
-		key: AssetType.Model,
-		label: 'New model',
-		command() {
-			emit('open-new-asset', AssetType.Model);
-		}
-	},
-	{
-		key: AssetType.Workflow,
-		label: 'New workflow',
-		command() {
-			emit('open-new-asset', AssetType.Workflow);
-		}
-	}
-]);
+// const optionsMenu = ref();
+// const optionsMenuItems = ref([
+// 	{
+// 		key: AssetType.Code,
+// 		label: 'New code',
+// 		command() {
+// 			emit('open-new-asset', AssetType.Code);
+// 		}
+// 	},
+// 	{
+// 		key: AssetType.Model,
+// 		label: 'New model',
+// 		command() {
+// 			emit('open-new-asset', AssetType.Model);
+// 		}
+// 	},
+// 	{
+// 		key: AssetType.Workflow,
+// 		label: 'New workflow',
+// 		command() {
+// 			emit('open-new-asset', AssetType.Workflow);
+// 		}
+// 	}
+// ]);
 
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
-
-const isUploadResourcesModalVisible = ref(false);
+// const toggleOptionsMenu = (event) => {
+// 	optionsMenu.value.toggle(event);
+// };
 </script>
 
 <style scoped>
@@ -276,6 +311,18 @@ header {
 	}
 }
 
+.clear-icon {
+	position: absolute;
+	right: 48px;
+	margin-top: 0.65rem;
+	height: 0.5rem;
+}
+.clear-icon .pi-times {
+	font-size: 0.75rem;
+	color: var(--text-color-subdued);
+	cursor: pointer;
+	z-index: 100;
+}
 .icon {
 	fill: var(--text-color-primary);
 	overflow: visible;
@@ -321,38 +368,38 @@ header {
 	color: var(--text-color-danger);
 }
 
+.new-button {
+	width: 6rem;
+	padding: 0rem 0.25rem 0 0.25rem !important;
+	margin-right: -0.75rem;
+}
+
+.new-button:deep(.p-button-icon) {
+	margin-right: -0.5rem !important;
+}
 .dragged-asset {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);
 }
 
-.fixed-upload-button {
-	position: fixed;
-	bottom: 3rem;
-	left: 0;
-	z-index: 10;
-	width: 240px;
-	white-space: nowrap;
-	padding: 0rem 1rem 1rem;
-}
-::v-deep(.p-accordion .p-accordion-content) {
+:deep(.p-accordion .p-accordion-content) {
 	display: flex;
 	flex-direction: column;
 	padding: 0 0 1rem;
 }
 
-::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
 	font-size: var(--font-body-small);
 	padding: 0.5rem 1rem;
 }
 
-::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
+:deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	margin-left: 0.25rem;
 }
 
-::v-deep(.asset-button.p-button) {
+:deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
@@ -360,14 +407,14 @@ header {
 	/* Remove the border-radius to end nitely with the border of the sidebar */
 }
 
-::v-deep(.asset-button.p-button > span) {
+:deep(.asset-button.p-button > span) {
 	display: inline-flex;
 	width: 100%;
 	padding: 0.375rem 1rem;
 	overflow: hidden;
 }
 
-::v-deep(.asset-button.p-button[active='true']) {
+:deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
 
 	&::after {
@@ -378,7 +425,7 @@ header {
 	}
 }
 
-::v-deep(.asset-button.p-button .p-button-label) {
+:deep(.asset-button.p-button .p-button-label) {
 	overflow: hidden;
 	text-align: left;
 	text-overflow: ellipsis;
@@ -425,6 +472,10 @@ header {
 	margin-right: 0.5rem;
 }
 
+:deep(.pi-plus) {
+	font-size: 0.75rem !important;
+	padding-top: 2px;
+}
 .skeleton-container {
 	display: flex;
 	flex-direction: column;

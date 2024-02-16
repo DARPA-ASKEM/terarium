@@ -27,8 +27,8 @@ export interface ModelFromDocumentState {
 
 export const ModelFromDocumentOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_FROM_DOCUMENT,
-	description: 'Create model from document',
-	displayName: 'Create model from document',
+	description: 'Create model from equations',
+	displayName: 'Create model from equations',
 	isRunnable: true,
 	inputs: [
 		{ type: 'equations', label: 'Equations' },

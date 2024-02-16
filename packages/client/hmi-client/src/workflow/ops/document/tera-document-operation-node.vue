@@ -1,9 +1,9 @@
 <template>
 	<main v-if="!fetchingDocument">
 		<template v-if="document">
-			<h5>
-				<strong>{{ document?.name }}</strong>
-			</h5>
+			<h6>
+				<span class="truncate-after-three-lines">{{ document?.name }}</span>
+			</h6>
 			<tera-operator-placeholder :operation-type="node.operationType" />
 			<Button label="Open document" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
@@ -12,7 +12,7 @@
 				class="w-full p-dropdown-sm"
 				:options="documents"
 				option-label="assetName"
-				placeholder="Select document"
+				placeholder="Select a document"
 				@update:model-value="onDocumentChange"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
@@ -99,7 +99,7 @@ watch(
 			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
 				emit('append-output-port', {
 					type: 'documentId',
-					label: `${document.value.name}`,
+					label: `document`,
 					value: [document.value.id]
 				});
 			}
@@ -151,4 +151,12 @@ watch(
 );
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Supported by Chromium, Safari, Webkit, Edge and others. Not supported by IE and Opera Mini */
+.truncate-after-three-lines {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+</style>

@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "HMI Client",
             "runtimeExecutable": "yarn",
-            "cwd": "${workspaceFolder}/packages/client",
+            "cwd": "${workspaceFolder}/packages/client/hmi-client",
             "runtimeArgs": [
                 "dev"
             ],
@@ -18,7 +18,7 @@
                 "action": "debugWithChrome",
                 "pattern": "Local:[ ]+http://.+:([0-9]+)",
                 "uriFormat": "http://localhost:%s",
-                "webRoot": "${workspaceFolder}/packages/client"
+                "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
             }
         },
         {
@@ -26,7 +26,7 @@
             "request": "launch",
             "name": "HMI Client (Local)",
             "runtimeExecutable": "yarn",
-            "cwd": "${workspaceFolder}/packages/client",
+            "cwd": "${workspaceFolder}/packages/client/hmi-client",
             "runtimeArgs": [
                 "local"
             ],
@@ -35,7 +35,7 @@
                 "action": "debugWithChrome",
                 "pattern": "Local:[ ]+http://.+:([0-9]+)",
                 "uriFormat": "http://localhost:%s",
-                "webRoot": "${workspaceFolder}/packages/client"
+                "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
             }
         },
         {

@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<template v-if="code">
-			<div>{{ code?.name }}</div>
+			<h6>{{ code?.name }}</h6>
 			<Button
 				label="Open code editor"
 				@click="emit('open-drilldown')"
@@ -15,7 +15,7 @@
 				:options="codeAssets"
 				option-label="name"
 				v-model="code"
-				placeholder="Select code asset"
+				placeholder="Select a code asset"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>

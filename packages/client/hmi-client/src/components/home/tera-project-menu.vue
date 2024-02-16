@@ -58,21 +58,20 @@ const forkMenuItem = {
 		}
 	}
 };
+
 const separatorMenuItem = { separator: true };
 const projectMenuItems = computed(() => {
+	const items = [] as any[];
 	if (props.project?.publicProject) {
-		return [forkMenuItem];
+		items.push(forkMenuItem);
 	}
 	if (props.project?.userPermission === 'creator') {
-		return [renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem];
+		items.push(renameMenuItem, shareMenuItem, separatorMenuItem, removeMenuItem);
 	}
 	if (props.project?.userPermission === 'writer') {
-		return [renameMenuItem, shareMenuItem];
+		items.push(renameMenuItem, shareMenuItem);
 	}
-	if (props.project?.userPermission === 'reader') {
-		return [];
-	}
-	return [];
+	return items;
 });
 
 function toggle(event) {
