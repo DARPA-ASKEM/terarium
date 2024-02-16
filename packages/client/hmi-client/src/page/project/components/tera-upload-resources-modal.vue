@@ -98,7 +98,7 @@ import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.v
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
-import { addNewModelToProject } from '@/services/model';
+import { addNewModelToProject, validateAMRFile, createModel } from '@/services/model';
 import { RelationshipType, createProvenance } from '@/services/provenance';
 import { modelCard } from '@/services/goLLM';
 
@@ -185,6 +185,13 @@ async function processDataset(file: File, description: string) {
  * @param file
  */
 async function processModel(file: File) {
+	// Check if the file is an AMR file
+	const amr = await validateAMRFile(file);
+	if (amr) {
+		const model = await createModel(amr);
+		return { id: model?.id ?? '', assetType: AssetType.Model };
+	}
+	// If file is not an AMR file, upload it as an artifact, create an empty model, and link them
 	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
 	if (!artifact) return { id: '', assetType: '' };
 	const newModelId = await addNewModelToProject(file.name.replace(/\.[^/.]+$/, ''));

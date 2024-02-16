@@ -6,7 +6,8 @@ import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { ModelServiceType } from '@/types/common';
+import { AMRSchemaNames, ModelServiceType } from '@/types/common';
+import { fileToJson } from '@/utils/file';
 import { fetchExtraction, profileModel } from './knowledge';
 import { modelCard } from './goLLM';
 
@@ -115,6 +116,33 @@ export function validateModelName(name: string): boolean {
 		return false;
 	}
 
+	return true;
+}
+
+/**
+ * Validates the provided file and returns the json object if it is a valid AMR
+ * @param file file to validate
+ * @returns json object if valid, null otherwise
+ */
+export async function validateAMRFile(file: File) {
+	if (!file.name.endsWith('.json')) return null;
+	const jsonObject = await fileToJson(file);
+	if (!jsonObject) return null;
+	if (!isValidAMR(jsonObject)) return null;
+	return jsonObject;
+}
+
+/**
+ * Checks if the provided json object is a valid AMR
+ * @param json json object to validate
+ * @returns boolean
+ */
+export function isValidAMR(json: Record<string, unknown>) {
+	const schema: string = (json?.header as any)?.schema;
+	const schemaName: string = (json?.header as any)?.schema_name;
+	if (!schema || !schemaName) return false;
+	if (!Object.values(AMRSchemaNames).includes(schemaName as AMRSchemaNames)) return false;
+	if (!Object.values(AMRSchemaNames).some((name) => schema.includes(name))) return false;
 	return true;
 }
 
