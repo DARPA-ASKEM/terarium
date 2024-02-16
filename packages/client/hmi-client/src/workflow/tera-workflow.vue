@@ -366,10 +366,16 @@ function appendOutput(
 	workflowDirty = true;
 }
 
-function appendOutputPort(
+// @deprecated
+function appendOutputPort() {
+/*
 	node: WorkflowNode<any> | null,
 	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
-) {
+	*/
+	console.error('This function is no longer supported, use <append-output> intstead');
+	throw new Error('This function is no longer supported, use <append-output> intstead');
+
+	/*
 	if (!node) return;
 
 	const uuid = uuidv4();
@@ -391,6 +397,7 @@ function appendOutputPort(
 	node.active = uuid;
 
 	workflowDirty = true;
+	*/
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
