@@ -335,6 +335,8 @@ const executeSearch = async () => {
 		assetType = AssetType.Model;
 	} else if (searchType === ResourceType.DATASET) {
 		assetType = AssetType.Dataset;
+	} else {
+		assetType = AssetType.Document;
 	}
 
 	const searchResults = await search(searchWords, assetType);
