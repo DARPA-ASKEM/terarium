@@ -227,7 +227,7 @@ onMounted(async () => {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
-	const documentId = props.node.inputs?.[1]?.value?.[0];
+	const documentId = props.node.inputs?.[0]?.value?.[0];
 	const equations: AssetBlock<DocumentExtraction>[] =
 		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
 	assetLoading.value = true;
