@@ -45,7 +45,7 @@
 					</div>
 				</div>
 
-				<Suspense>
+				<Suspense v-if="showAssistant">
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
 						:defaultOptions="sampleAgentOptions"
