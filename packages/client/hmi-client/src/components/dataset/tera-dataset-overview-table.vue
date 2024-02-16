@@ -5,6 +5,7 @@
 		dataKey="id"
 		:rowsPerPageOptions="[10, 20, 50]"
 		edit-mode="cell"
+		@cell-edit-complete="onCellEditComplete"
 	>
 		<Column field="id" header="ID" sortable style="width: 10%" />
 		<Column field="name" header="Name" sortable style="width: 10%" />
@@ -77,7 +78,10 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-dataset']);
 
-const conceptSearchTerm = ref({ name: '' });
+const conceptSearchTerm = ref({
+	curie: '',
+	name: ''
+});
 const curies = ref<DKG[]>([]);
 
 const nameOfCurieCache = ref(new Map<string, string>());
@@ -107,8 +111,11 @@ function updateDataset(index: number, field: string, value: any) {
 		}
 		datasetClone.columns[index][field] = value;
 	}
-	conceptSearchTerm.value.name = '';
 	emit('update-dataset', datasetClone);
+}
+
+function onCellEditComplete() {
+	conceptSearchTerm.value = { curie: '', name: '' };
 }
 
 function formatData(data: DatasetColumn[]) {
