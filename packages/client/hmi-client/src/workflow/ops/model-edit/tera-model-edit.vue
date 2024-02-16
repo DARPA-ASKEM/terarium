@@ -12,6 +12,35 @@
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
+				<div class="notebook-toolbar">
+					<div class="toolbar-left-side">
+						<Dropdown
+							:disabled="true"
+							:model-value="contextLanguage"
+							:options="contextLanguageOptions"
+						/>
+					</div>
+					<div class="toolbar-right-side">
+						<Button
+							class="mr-auto"
+							label="Reset"
+							outlined
+							severity="secondary"
+							size="small"
+							@click="resetModel"
+						/>
+						<Button
+							class="mr-auto"
+							icon="pi pi-play"
+							label="Run"
+							outlined
+							severity="secondary"
+							size="small"
+							@click="runFromCodeWrapper"
+						/>
+					</div>
+				</div>
+
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
@@ -75,6 +104,7 @@
 import _ from 'lodash';
 import { onUnmounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -319,6 +349,9 @@ const onUpdateSelection = (id) => {
 	emit('update-output-port', outputPort);
 };
 
+const contextLanguage = ref<string>('python3');
+const contextLanguageOptions = ref<string[]>(['python3']);
+
 watch(
 	() => props.node.active,
 	async () => {
@@ -357,6 +390,19 @@ onUnmounted(() => {
 .code-container {
 	display: flex;
 	flex-direction: column;
+}
+.notebook-toolbar {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-3);
+	justify-content: space-between;
+	margin-left: var(--gap);
+}
+
+.toolbar-left-side,
+.toolbar-right-side {
+	display: flex;
+	gap: var(--gap-small);
 }
 .preview-container {
 	display: flex;
