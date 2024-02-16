@@ -492,22 +492,21 @@ header {
 }
 
 .template-options {
-	overflow: hidden;
+	overflow: scroll;
+	min-width: 15rem;
 
 	& > ul {
 		height: 85%;
 		padding: 0.25rem 0 0.25rem var(--gap-small);
-		overflow-y: scroll;
 	}
 }
 
 .trash {
-	margin: auto 0.5rem 0 0.5rem;
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	border: 1px dashed #9fa9b7;
 	border-radius: var(--border-radius);
-	background-color: #eff2f5;
+	background-color: var(--surface-a);
 	text-align: center;
 	padding: 1rem;
 
