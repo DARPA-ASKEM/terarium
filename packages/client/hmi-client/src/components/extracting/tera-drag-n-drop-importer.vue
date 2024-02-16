@@ -16,7 +16,10 @@
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
-				<div v-if="dragOver">Release mouse button to add files to import</div>
+				<div v-if="dragOver" class="flex row align-items-center gap-3">
+					<div><i class="pi pi-file" style="font-size: 2.5rem" /></div>
+					<div>Release mouse button to add files to import</div>
+				</div>
 				<div v-else class="drop-zone">
 					<div><i class="pi pi-file" style="font-size: 2.5rem" /></div>
 					<div>

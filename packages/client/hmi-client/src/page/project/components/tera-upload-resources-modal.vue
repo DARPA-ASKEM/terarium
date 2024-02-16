@@ -185,6 +185,7 @@ async function upload() {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	width: 36rem;
 }
 
 .main-section section {
