@@ -24,11 +24,7 @@
 
 	<!-- Skeleton for when no facets are found -->
 	<div v-if="!formattedFacets.length">
-		<div class="centered-text">
-			<p>No filters available</p>
-		</div>
-
-		<div v-for="index in 5" :key="index" class="skeleton-facet-group">
+		<div v-for="index in 4" :key="index" class="skeleton-facet-group">
 			<div class="skeleton-facet-header" />
 			<div v-for="index in 5" :key="index" class="skeleton-facet">
 				<div class="skeleton-facet-bar-indicator" />

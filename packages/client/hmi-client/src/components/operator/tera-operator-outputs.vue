@@ -15,14 +15,17 @@
 				<div class="port-container">
 					<div class="port" />
 				</div>
-				<label>{{ output.label }}</label>
-				<Button
-					class="unlink"
-					label="Unlink"
-					size="small"
-					text
-					@click.stop="emit('remove-edges', output.id)"
-				/>
+				<div class="relative w-full">
+					<div class="truncate text-right">{{ output.label }}</div>
+					<Button
+						class="unlink"
+						label="Unlink"
+						size="small"
+						icon="pi pi-unlock"
+						text
+						@click.stop="emit('remove-edges', output.id)"
+					/>
+				</div>
 			</section>
 			<!--TODO: We will see how to integrate port actions into this button later-->
 			<!-- <Button
@@ -70,6 +73,7 @@ ul {
 }
 
 li {
+	width: 100%;
 	padding-left: 0.75rem;
 	border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
@@ -93,6 +97,19 @@ li > *:not(:first-child) {
 }
 
 .port-connected .port {
-	left: var(--port-base-size);
+	left: calc(var(--port-base-size) * 0.25);
+}
+
+.truncate {
+	max-width: 180px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.unlink {
+	position: absolute;
+	top: -0.35rem;
+	left: -0.35rem;
 }
 </style>

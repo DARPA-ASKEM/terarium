@@ -1,68 +1,109 @@
 <template>
 	<main>
-		<tera-columnar-panel>
-			<Accordion multiple :active-index="[0, 1]">
-				<AccordionTab header="Description">
-					<section class="description">
-						<tera-show-more-text :text="description" :lines="5" />
-					</section>
-				</AccordionTab>
-				<AccordionTab header="Additional information">
-					<section class="additional-information">
-						<article v-if="!isEmpty(provenance)">
-							<h5>Provenance</h5>
-							<p v-html="provenance" />
-						</article>
-						<article v-if="!isEmpty(schema)">
-							<h5>Schema</h5>
-							<p v-html="schema" />
-						</article>
-						<article v-if="!isEmpty(sourceDataset)">
-							<h5>Source dataset</h5>
-							<p v-html="sourceDataset" />
-						</article>
-						<article v-if="!isEmpty(usage)">
-							<h5>Usage</h5>
-							<p v-html="usage" />
-						</article>
-					</section>
-				</AccordionTab>
-			</Accordion>
-			<section class="details-column">
-				<tera-model-card :model="model" />
+		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
+			<AccordionTab header="Description">
+				<section class="description">
+					<tera-show-more-text :text="description" :lines="5" />
+
+					<template v-if="modelType">
+						<label class="p-text-secondary">Model type</label>
+						<p>{{ modelType }}</p>
+					</template>
+					<template v-if="fundedBy">
+						<label class="p-text-secondary">Funded by</label>
+						<p>{{ fundedBy }}</p>
+					</template>
+					<template v-if="authors">
+						<label class="p-text-secondary">Authors</label>
+						<p>{{ authors }}</p>
+					</template>
+					<template v-if="uses">
+						<h5>Uses</h5>
+						<label class="p-text-secondary">Direct use</label>
+						<p>{{ uses.DirectUse }}</p>
+						<label class="p-text-secondary">Out of scope use</label>
+						<p>{{ uses.OutOfScopeUse }}</p>
+					</template>
+
+					<template v-if="biasAndRiskLimitations">
+						<h5>Bias and Risk Limitations</h5>
+						<p>{{ biasAndRiskLimitations }}</p>
+					</template>
+
+					<template v-if="evaluation">
+						<h5>Evaluation</h5>
+						<p>{{ evaluation }}</p>
+					</template>
+
+					<template v-if="technicalSpecifications">
+						<h5>Technical Specifications</h5>
+						<p>{{ technicalSpecifications }}</p>
+					</template>
+
+					<template v-if="!isEmpty(glossary)">
+						<h5>Glossary</h5>
+						<p>{{ glossary.join(', ') }}</p>
+					</template>
+
+					<template v-if="!isEmpty(moreInformation)">
+						<h5>More Information</h5>
+						<a
+							v-for="(link, index) in moreInformation"
+							:href="link"
+							target="_blank"
+							rel="noopener noreferrer"
+							:key="index"
+							>{{ link }}</a
+						>
+					</template>
+
+					<template v-if="!isEmpty(provenance)">
+						<h5>Provenance</h5>
+						<p v-html="provenance" />
+					</template>
+					<template v-if="!isEmpty(schema)">
+						<h5>Schema</h5>
+						<p v-html="schema" />
+					</template>
+					<template v-if="!isEmpty(sourceDataset)">
+						<h5>Source dataset</h5>
+						<p v-html="sourceDataset" />
+					</template>
+					<template v-if="!isEmpty(usage)">
+						<h5>Usage</h5>
+						<p v-html="usage" />
+					</template>
+				</section>
+			</AccordionTab>
+			<AccordionTab header="Diagram">
+				<tera-model-diagram
+					ref="teraModelDiagramRef"
+					:model="model"
+					:is-editable="!featureConfig?.isPreview"
+					:model-configuration="modelConfigurations?.[0]"
+					@update-model="updateModelContent"
+					@update-configuration="updateConfiguration"
+				/>
+			</AccordionTab>
+			<AccordionTab header="Provenance">
 				<tera-related-documents
 					:documents="documents"
 					:asset-type="AssetType.Model"
 					:assetId="model.id"
 					@enriched="fetchAsset"
 				/>
-			</section>
-		</tera-columnar-panel>
-		<Accordion multiple :active-index="[0, 1, 2, 3]" v-bind:lazy="true">
-			<!--Design in flux: diagram will probably be merged with equations (views would be switched with a toggle).
-			However it may be worth showing the diagram and the equation at the same time on this page.
-			-->
-			<AccordionTab header="Diagram">
-				<tera-model-diagram
-					ref="teraModelDiagramRef"
-					:model="model"
-					:is-editable="!featureConfig.isPreview"
-					:model-configuration="modelConfigurations[0]"
-					@update-model="updateModelContent"
-					@update-configuration="updateConfiguration"
-				/>
 			</AccordionTab>
 			<AccordionTab header="Model equations">
 				<tera-model-equation
 					:model="model"
-					:is-editable="!featureConfig.isPreview"
+					:is-editable="!featureConfig?.isPreview"
 					@model-updated="emit('model-updated')"
 				/>
 			</AccordionTab>
 			<AccordionTab header="Model observables">
 				<tera-model-observable
 					:model="model"
-					:is-editable="!featureConfig.isPreview"
+					:is-editable="!featureConfig?.isPreview"
 					@update-model="updateModelContent"
 				/>
 			</AccordionTab>
@@ -102,17 +143,15 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
-import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import TeraModelCard from './tera-model-card.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations: ModelConfiguration[];
-	highlight: string;
-	featureConfig: FeatureConfig;
+	modelConfigurations?: ModelConfiguration[];
+	highlight?: string;
+	featureConfig?: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
@@ -120,6 +159,11 @@ const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration',
 const teraModelDiagramRef = ref();
 
 const card = computed(() => {
+	// prioritize gollm_card over skema card
+	if (props.model.metadata?.gollmCard) {
+		return props.model.metadata.gollmCard;
+	}
+
 	if (props.model.metadata?.card) {
 		const cardWithUnknowns = props.model.metadata?.card;
 		const cardWithUnknownsArr = Object.entries(cardWithUnknowns);
@@ -135,12 +179,40 @@ const card = computed(() => {
 	return null;
 });
 const description = computed(() =>
-	highlightSearchTerms(props.model?.header?.description.concat(' ', card.value?.description ?? ''))
+	highlightSearchTerms(
+		card.value?.ModelDetails?.model_description ??
+			card.value?.description ??
+			props.model?.header?.description ??
+			''
+	)
 );
+
+const biasAndRiskLimitations = computed(
+	() => card.value?.BiasRisksLimitations?.bias_risks_limitations ?? ''
+);
+const modelType = computed(() => card.value?.ModelDetails?.ModelType ?? '');
+const fundedBy = computed(() => card.value?.ModelDetails?.FundedBy ?? '');
+const evaluation = computed(() => card.value?.Evaluation?.TestingDataFactorsMetrics ?? '');
+const technicalSpecifications = computed(
+	() => card.value?.TechnicalSpecifications?.model_specs ?? ''
+);
+const glossary = computed(() => card.value?.Glossary?.terms ?? []);
+const moreInformation = computed(() => card.value?.MoreInformation?.links ?? []);
+
+const uses = computed(() => card.value?.Uses ?? null);
 const usage = computed(() => card.value?.usage ?? '');
 const sourceDataset = computed(() => card.value?.dataset ?? '');
 const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');
+const authors = computed(() => {
+	const authorsArray = props.model?.metadata?.annotations?.authors ?? [];
+
+	if (card.value?.ModelCardAuthors) authorsArray.unshift(card.value?.ModelCardAuthors);
+	else if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
+
+	return authorsArray.join(', ');
+});
+
 const documents = computed(
 	() =>
 		useProjects()
