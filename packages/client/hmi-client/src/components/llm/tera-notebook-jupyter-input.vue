@@ -25,7 +25,7 @@
 		/>
 		<!-- <Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" /> -->
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-		<Button v-else icon="pi pi-send" @click="submitQuestion" />
+		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
 	</div>
 </template>
 
@@ -68,16 +68,12 @@ const submitQuestion = () => {
 .container {
 	display: flex;
 	align-items: center;
-	width: 100%;
 	gap: 0.5rem;
 }
 .input {
-	flex: 1;
-}
-.p-dropdown {
-	width: 8rem;
+	width: 100%;
 }
 .p-button {
-	background-color: var(--surface-200);
+	width: 2rem;
 }
 </style>

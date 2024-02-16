@@ -50,6 +50,7 @@
 						:kernel-manager="kernelManager"
 						:defaultOptions="sampleAgentOptions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
+						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -415,6 +416,9 @@ onUnmounted(() => {
 	flex-direction: row;
 	gap: 0.25rem;
 	margin-right: var(--gap);
+}
+.ai-assistant-container {
+	margin-left: var(--gap);
 }
 .preview-container {
 	display: flex;
