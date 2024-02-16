@@ -436,7 +436,6 @@ function mouseUpdate(event: MouseEvent) {
 }
 
 function refreshFlattenedTemplate() {
-	console.log(9);
 	if (props.model) {
 		flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
 		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
