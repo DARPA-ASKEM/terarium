@@ -12,23 +12,23 @@ public class TaskResponseHandler {
 	private Map<TaskStatus, Consumer<TaskResponse>> responseHandlers = new ConcurrentHashMap<>();
 
 	public void onRunning(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.RUNNING, callback);
 	}
 
 	public void onCancelling(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.CANCELLING, callback);
 	}
 
 	public void onCancelled(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.CANCELLED, callback);
 	}
 
 	public void onSuccess(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.SUCCESS, callback);
 	}
 
 	public void onFailure(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.QUEUED, callback);
+		responseHandlers.put(TaskStatus.FAILED, callback);
 	}
 
 	public void handle(TaskResponse response) {

@@ -125,6 +125,8 @@ public class TaskRunnerService {
 
 			// send failure and return
 			TaskResponse failedResp = req.createResponse(TaskStatus.FAILED);
+			// append error
+			failedResp.setOutput(e.getMessage().getBytes());
 			String failedJson = mapper.writeValueAsString(failedResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
 			return;
@@ -167,6 +169,10 @@ public class TaskRunnerService {
 
 			TaskResponse failedResp = req.createResponse(
 					task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
+			if (task.getStatus() == TaskStatus.FAILED) {
+				// append error
+				failedResp.setOutput(e.getMessage().getBytes());
+			}
 			String failedJson = mapper.writeValueAsString(failedResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
 		} finally {

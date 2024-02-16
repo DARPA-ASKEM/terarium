@@ -229,9 +229,6 @@ export class KernelSessionManager {
 
 		// Dispatch
 		const iopubMessageHandler = (_session: any, message: any) => {
-			if (message.header.msg_type === 'status') {
-				return;
-			}
 			const msgType = message.header.msg_type;
 			const msgId = message.parent_header.msg_id;
 
@@ -264,14 +261,22 @@ export class KernelSessionManager {
 
 		// A bit of a hacky way to wait for the kernel to be setup in order
 		// to send custom messages
-		return new Promise((resolve) => {
+		const interval = 100;
+		const threshold = 50;
+		return new Promise((resolve, reject) => {
+			let counter = 0;
 			const id = setInterval(() => {
 				console.log('waiting...', this.jupyterSession?.session?.kernel);
+				counter++;
 				if (this.jupyterSession?.session?.kernel) {
 					clearInterval(id);
 					resolve(true);
 				}
-			}, 100);
+				if (counter > threshold) {
+					clearInterval(id);
+					reject(new Error(`Failed to connect to jupyter session after ${interval * threshold}ms`));
+				}
+			}, interval);
 		});
 	}
 

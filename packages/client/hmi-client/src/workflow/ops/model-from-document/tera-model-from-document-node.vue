@@ -1,6 +1,5 @@
 <template>
 	<main>
-		model from code node
 		<tera-carousel>
 			<img v-for="(image, index) in images" :src="image" alt="alt" :key="index" />
 		</tera-carousel>

@@ -5,6 +5,8 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -13,7 +15,10 @@ import java.util.Map;
 @Data
 @Accessors(chain = true)
 @TSModel
-public class Grounding {
+public class Grounding implements Serializable {
+
+	@Serial
+	private static final long serialVersionUID = 302308407252037615L;
 
 	/**
 	 * Ontological identifier per DKG

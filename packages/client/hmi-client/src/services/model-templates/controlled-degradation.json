@@ -28,7 +28,7 @@
         ],
         "transitions": [
             {
-                "id": "ControlledDegradation",
+                "id": "Controlled degradation",
                 "input": [
                     "C",
                     "A"
@@ -37,7 +37,7 @@
                     "C"
                 ],
                 "properties": {
-                    "name": "ControlledDegradation"
+                    "name": "Controlled degradation"
                 }
             }
         ]
@@ -46,7 +46,7 @@
         "ode": {
             "rates": [
                 {
-                    "target": "ControlledDegradation",
+                    "target": "Controlled degradation",
                     "expression": "A*C*p",
                     "expression_mathml": "<apply><times/><ci>A</ci><ci>C</ci><ci>p</ci></apply>"
                 }

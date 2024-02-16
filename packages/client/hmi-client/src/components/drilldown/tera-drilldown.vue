@@ -7,11 +7,19 @@
 				:tooltip="tooltip"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
-				>{{ props.title }}</tera-drilldown-header
-			>
+				>{{ props.title }}
+				<template #action-row>
+					<slot name="header-action-row" />
+				</template>
+			</tera-drilldown-header>
 			<tera-columnar-panel>
 				<template v-for="(tab, index) in tabs" :key="index">
-					<component :is="tab" v-show="selectedViewIndex === index" />
+					<!--
+						TODO: We used to use v-show here but it ruined the rendering of tera-model-diagram
+						if it was in the unselected tab. For now we are using v-if but we may want to
+						use css to hide the unselected tab content instead.
+					-->
+					<component :is="tab" v-if="selectedViewIndex === index" />
 				</template>
 
 				<section v-if="slots.preview">
@@ -90,8 +98,8 @@ than the main application behind the modal when these render issues come, howeve
 
 main {
 	flex-grow: 1;
-	padding: var(--gap);
-	gap: var(--gap-small);
+	padding: var(--gap) 1.5rem var(--gap) 1.5rem;
+	gap: var(--gap);
 }
 
 main > :deep(*) {

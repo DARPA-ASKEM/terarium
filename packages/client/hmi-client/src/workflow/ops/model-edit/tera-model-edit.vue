@@ -1,20 +1,22 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="ModelEditTabs.Wizard">
-			<tera-drilldown-section>
-				<template #footer>
-					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
-				</template>
-			</tera-drilldown-section>
+			<tera-model-template-editor
+				v-if="amr && isKernelReady"
+				:model="amr"
+				:kernel-manager="kernelManager"
+				@output-code="(data: any) => appendCode(data, 'executed_code')"
+				@sync-with-mira-model="syncWithMiraModel"
+			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
 				<h4>Code Editor - Python</h4>
 				<Suspense>
 					<tera-notebook-jupyter-input
-						context="mira_model_edit"
-						:contextInfo="contextInfo"
-						@llm-output="getOutputFromLLM"
+						:kernel-manager="kernelManager"
+						:defaultOptions="sampleAgentOptions"
+						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -25,30 +27,23 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
-				<template #footer>
+				<template #footer
+					><Button style="margin-right: auto" label="Reset" @click="resetModel" />
 					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
 				</template>
 			</tera-drilldown-section>
-		</div>
-		<template #preview>
 			<tera-drilldown-preview
 				title="Model Preview"
 				v-model:output="selectedOutputId"
 				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
 				:options="outputs"
 				is-selectable
 			>
-				<div>
-					<tera-model-diagram
-						v-if="amr"
-						ref="teraModelDiagramRef"
-						:model="amr"
-						:is-editable="false"
-					/>
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
-					</div>
+				<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+					<h4>No Model Provided</h4>
 				</div>
 				<template #footer>
 					<InputText
@@ -69,7 +64,7 @@
 					<Button label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
-		</template>
+		</div>
 	</tera-drilldown>
 </template>
 
@@ -92,13 +87,20 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
-import teraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close', 'select-output']);
+const emit = defineEmits([
+	'append-output-port',
+	'update-state',
+	'close',
+	'select-output',
+	'update-output-port'
+]);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -125,18 +127,33 @@ const selectedOutputId = ref<string>();
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
+const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
 const modelId = props.node.inputs[0].value?.[0];
-const contextInfo = { id: modelId }; // context for jupyter-input
-const teraModelDiagramRef = ref();
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
+const sampleAgentOptions = [
+	'Add a new transition from S to R with the name vaccine with the rate of v.',
+	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u',
+	'Add a new transition (from nowhere) to S with a rate constant of f.',
+	'Add a new transition (from nowhere) to S with a rate constant of f. The rate depends on R.',
+	'Add a new transition from S (to nowhere) with a rate constant of v',
+	'Add a new transition from S (to nowhere) with a rate constant of v. The Rate depends on R',
+	'Add an observable titled sample with the expression A * B  * p.',
+	'Rename the state S to Susceptible in the infection transition.',
+	'Rename the transition infection to inf.'
+];
+
 const codeText = ref(
 	'# This environment contains the variable "model" \n# which is displayed on the right'
 );
 
-const getOutputFromLLM = (data) => {
-	codeText.value = codeText.value.concat(' \n', data.value.content.code as string);
+const appendCode = (data: any, property: string) => {
+	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+};
+
+const syncWithMiraModel = (data: any) => {
+	amr.value = data.content['application/json'];
 };
 
 // Reset model, then execute the code
@@ -180,7 +197,7 @@ const runFromCode = () => {
 		.register('model_preview', (data) => {
 			if (!data.content) return;
 
-			handleModelPreview(data);
+			syncWithMiraModel(data);
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
@@ -194,7 +211,7 @@ const resetModel = () => {
 	kernelManager
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
-		.register('model_preview', handleModelPreview);
+		.register('model_preview', syncWithMiraModel);
 };
 
 const handleResetResponse = (data: any) => {
@@ -210,10 +227,6 @@ const handleResetResponse = (data: any) => {
 	}
 };
 
-const handleModelPreview = (data: any) => {
-	amr.value = data.content['application/json'];
-};
-
 const buildJupyterContext = () => {
 	if (!amr.value) {
 		logger.warn('Cannot build Jupyter context without a model');
@@ -221,7 +234,7 @@ const buildJupyterContext = () => {
 	}
 
 	return {
-		context: 'mira_model',
+		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
 			id: amr.value.id
@@ -240,6 +253,7 @@ const inputChangeHandler = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+			isKernelReady.value = true;
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -295,14 +309,21 @@ const onUpdateOutput = (id: string) => {
 	emit('select-output', id);
 };
 
+const onUpdateSelection = (id) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+};
+
 watch(
 	() => props.node.active,
-	() => {
+	async () => {
 		// Update selected output
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
-			inputChangeHandler();
+			await inputChangeHandler();
 		}
 	},
 	{ immediate: true }

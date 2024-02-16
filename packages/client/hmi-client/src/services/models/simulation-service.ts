@@ -102,6 +102,15 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
+// Return the presigned download URL of the calibration output blob
+// This is only applicable to CIEMSS functionalities
+export async function getCalibrateBlobURL(runId: string) {
+	const resp = await API.get(`simulations/${runId}/download-url`, {
+		params: { filename: 'parameters.dill' }
+	});
+	return resp.data.url;
+}
+
 export async function getRunResultCiemss(runId: string, filename = 'result.csv') {
 	const resultCsv = await getRunResult(runId, filename);
 	const csvData = csvParse(resultCsv);
@@ -252,7 +261,7 @@ export async function subscribeToUpdateMessages(
 	eventType: ClientEventType,
 	messageHandler: (data: ClientEvent<any>) => void
 ) {
-	await API.get(`/simulations/subscribe?simulationIds=${simulationIds}`);
+	await API.get(`/simulations/subscribe?simulation-ids=${simulationIds}`);
 	await subscribe(eventType, messageHandler);
 }
 
@@ -261,7 +270,7 @@ export async function unsubscribeToUpdateMessages(
 	eventType: ClientEventType,
 	messageHandler: (data: ClientEvent<any>) => void
 ) {
-	await API.get(`/simulations/unsubscribe?simulationIds=${simulationIds}`);
+	await API.get(`/simulations/unsubscribe?simulation-ids=${simulationIds}`);
 	await unsubscribe(eventType, messageHandler);
 }
 

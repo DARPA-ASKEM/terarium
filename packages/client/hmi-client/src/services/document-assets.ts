@@ -2,10 +2,12 @@
  * Documents Asset
  */
 
-import API from '@/api/api';
+import API, { PollerState } from '@/api/api';
 import type { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
+import { fetchExtraction } from './knowledge';
+import { modelCard } from './goLLM';
 
 /**
  * Get all documents
@@ -209,16 +211,25 @@ async function createDocumentFromXDD(
 	projectId: string
 ): Promise<AddDocumentAssetFromXDDResponse | null> {
 	if (!document || !projectId) return null;
-	const response = await API.post(`/document-asset/create-document-from-xdd`, {
-		document,
-		projectId
-	});
+	const response = await API.post<AddDocumentAssetFromXDDResponse>(
+		`/document-asset/create-document-from-xdd`,
+		{
+			document,
+			projectId
+		}
+	);
 
 	if (!response || response.status >= 400) {
 		logger.error('Error upload file from doi');
 		return null;
 	}
 
+	if (response.data.extractionJobId) {
+		const result = await fetchExtraction(response.data.extractionJobId);
+		if (result.state === PollerState.Done) {
+			modelCard(response.data.documentAssetId);
+		}
+	}
 	return response.data;
 }
 export {

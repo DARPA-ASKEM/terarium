@@ -15,7 +15,7 @@
 				:key="index"
 				target="_blank"
 				rel="noopener noreferrer"
-				:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
+				:href="getCurieUrl(grounding.grounding_id)"
 			>
 				{{ grounding.grounding_text }}
 			</a>
@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
+import { getCurieUrl } from '@/services/concept';
 
 defineProps({
 	extractions: {

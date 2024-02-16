@@ -1,18 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
@@ -20,24 +7,33 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 @Service
-@RequiredArgsConstructor
-public class ModelService {
+public class ModelService extends TerariumAssetService<Model >{
 
-	private final ElasticsearchService elasticService;
-	private final ElasticsearchConfiguration elasticConfig;
-	private final ObjectMapper objectMapper;
+	public ModelService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService) {
+		super(elasticConfig, config, elasticService, Model.class);
+	}
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	public List<ModelDescription> getDescriptions(Integer page, Integer pageSize) throws IOException {
+	public List<ModelDescription> getDescriptions(final Integer page, final Integer pageSize) throws IOException {
 
-		SourceConfig source = new SourceConfig.Builder()
+		final SourceConfig source = new SourceConfig.Builder()
 				.filter(new SourceFilter.Builder().excludes("model", "semantics").build())
 				.build();
 
@@ -45,43 +41,48 @@ public class ModelService {
 				.index(elasticConfig.getModelIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q
-						.bool(b -> b
-								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b
+					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.source(source)
 				.build();
 
 		return elasticService.search(req, Model.class).stream().map(m -> ModelDescription.fromModel(m)).toList();
 	}
 
-	public Optional<ModelDescription> getDescription(UUID id) throws IOException {
-		ModelDescription md = ModelDescription
+	public Optional<ModelDescription> getDescription(final UUID id) throws IOException {
+		final ModelDescription md = ModelDescription
 				.fromModel(elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class));
 
 		return Optional.of(md);
 	}
 
-	public List<Model> searchModels(Integer page, Integer pageSize, JsonNode queryJson) throws IOException {
+	public List<Model> searchModels(final Integer page, final Integer pageSize, final JsonNode queryJson) throws IOException {
+
+
+
 
 		Query query = null;
 		if (queryJson != null) {
 			// if query is provided deserialize it, append the soft delete filter
-			byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
+			final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
 			query = new Query.Builder()
 					.bool(b -> b
 							.must(new Query.Builder().withJson(
 									new ByteArrayInputStream(bytes))
 									.build())
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn"))))
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
 					.build();
 		} else {
 			query = new Query.Builder()
 					.bool(b -> b
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn"))))
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
 					.build();
 		}
 
-		SourceConfig source = new SourceConfig.Builder()
+		final SourceConfig source = new SourceConfig.Builder()
 				.filter(new SourceFilter.Builder().excludes("model", "semantics").build())
 				.build();
 
@@ -95,7 +96,7 @@ public class ModelService {
 		return elasticService.search(req, Model.class);
 	}
 
-	public List<ModelConfiguration> getModelConfigurationsByModelId(UUID id, Integer page, Integer pageSize)
+	public List<ModelConfiguration> getModelConfigurationsByModelId(final UUID id, final Integer page, final Integer pageSize)
 			throws IOException {
 
 		final SearchRequest req = new SearchRequest.Builder()
@@ -104,7 +105,7 @@ public class ModelService {
 				.size(pageSize)
 				.query(q -> q
 						.bool(b -> b
-								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.exists(e -> e.field("deletedOn"))) // its ok to return temporary here because we're asking for it by id
 								.must(m -> m.term(e -> e.field("modelId").value(id.toString())))))
 				.sort(new SortOptions.Builder()
 						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
@@ -113,36 +114,16 @@ public class ModelService {
 		return elasticService.search(req, ModelConfiguration.class);
 	}
 
-	public Optional<Model> getModel(UUID id) throws IOException {
-		Model doc = elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class);
-		if (doc != null && doc.getDeletedOn() == null) {
-			return Optional.of(doc);
-		}
-		return Optional.empty();
+	@Override
+	protected String getAssetIndex() {
+		return elasticConfig.getModelIndex();
 	}
 
-	public void deleteModel(UUID id) throws IOException {
-		Optional<Model> model = getModel(id);
-		if (model.isEmpty()) {
-			return;
-		}
-		model.get().setDeletedOn(Timestamp.from(Instant.now()));
-		updateModel(model.get());
+	@Override
+	public List<Model> getAssets(final Integer page, final Integer pageSize) throws IOException {
+		throw new UnsupportedOperationException("Not implemented. Use ModelService.searchModels instead");
 	}
 
-	public Model createModel(Model model) throws IOException {
-		model.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getModelIndex(), model.setId(UUID.randomUUID()).getId().toString(), model);
-		return model;
-	}
 
-	public Optional<Model> updateModel(Model model) throws IOException {
-		if (!elasticService.contains(elasticConfig.getModelIndex(), model.getId().toString())) {
-			return Optional.empty();
-		}
-		model.setUpdatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getModelIndex(), model.getId().toString(), model);
-		return Optional.of(model);
-	}
 
 }

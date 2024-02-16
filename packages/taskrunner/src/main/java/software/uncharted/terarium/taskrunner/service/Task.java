@@ -47,6 +47,8 @@ public class Task {
 
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
+	private int BYTES_PER_READ = 1024 * 1024;
+
 	public Task(TaskRequest req) throws IOException, InterruptedException {
 		mapper = new ObjectMapper();
 
@@ -166,9 +168,11 @@ public class Task {
 			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputPipeName))) {
 				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, req.getId());
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				byte[] buffer = new byte[1024]; // buffer size
+				byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
+					log.debug("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName,
+							req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
 				future.complete(bos.toByteArray());
@@ -246,10 +250,11 @@ public class Task {
 				throw new RuntimeException("Task " + req.getId() + " has already been started");
 			}
 
-			status = TaskStatus.RUNNING;
-
-			log.info("Starting task {} running {}", req.getId(), req.getScript());
+			log.info("Starting task {} executing {}", req.getId(), req.getScript());
 			process = processBuilder.start();
+
+			// flag as running if the process starts
+			status = TaskStatus.RUNNING;
 
 			// Add a shutdown hook to kill the process if the JVM exits
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -311,6 +316,9 @@ public class Task {
 				}
 			}).start();
 
+		} catch (Exception e) {
+			status = TaskStatus.FAILED;
+			throw e;
 		} finally {
 			lock.unlock();
 		}

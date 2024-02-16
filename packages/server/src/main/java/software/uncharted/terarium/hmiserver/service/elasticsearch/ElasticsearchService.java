@@ -25,7 +25,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
@@ -85,9 +87,9 @@ public class ElasticsearchService {
 				HttpHost.create(config.getUrl()));
 
 		if (config.isAuthEnabled()) {
-			String auth = config.getUsername() + ":" + config.getPassword();
-			String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
-			Header header = new BasicHeader("Authorization", "Basic " + encodedAuth);
+			final String auth = config.getUsername() + ":" + config.getPassword();
+			final String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+			final Header header = new BasicHeader("Authorization", "Basic " + encodedAuth);
 
 			httpClientBuilder.setDefaultHeaders(new Header[] { header });
 		}
@@ -107,7 +109,7 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Create all indices that are not already present in the cluster
+	 * Check for the existence of an index.
 	 *
 	 * @return True if the index exists, false otherwise
 	 */
@@ -127,7 +129,7 @@ public class ElasticsearchService {
 				.source(new SourceConfigParam.Builder().fetch(false).build())
 				.build();
 
-		GetResponse<JsonNode> response = client.get(req, JsonNode.class);
+		final GetResponse<JsonNode> response = client.get(req, JsonNode.class);
 		return response.found();
 	}
 
@@ -204,6 +206,33 @@ public class ElasticsearchService {
 	 */
 	public boolean putPipeline(final String name, final String pipelineJson) {
 		return putTyped(name, pipelineJson, "pipeline", "_ingest/pipeline");
+	}
+
+	/**
+	 * Returns true if the ES cluster contains the component template with the
+	 * provided
+	 * name, false otherwise
+	 *
+	 * @param name The name of the index template to check existence for
+	 * @return True if the component template is contained in the cluster, false
+	 *         otherwise
+	 */
+	public boolean containsComponentTemplate(final String name) throws IOException {
+		final ExistsComponentTemplateRequest req = new ExistsComponentTemplateRequest.Builder().name(name).build();
+
+		return client.cluster().existsComponentTemplate(req).value();
+	}
+
+	/**
+	 * Put an component template to the cluster
+	 *
+	 * @param name         The name of the index template
+	 * @param templateJson The component template json string
+	 * @return True if the component template was successfully added, false
+	 *         otherwise
+	 */
+	public boolean putComponentTemplate(final String name, final String templateJson) {
+		return putTyped(name, templateJson, "component template", "_component_template");
 	}
 
 	/**
@@ -302,7 +331,7 @@ public class ElasticsearchService {
 	public void deleteIndex(final String index) throws IOException {
 		log.info("Deleting index: {}", index);
 
-		DeleteIndexRequest deleteRequest = new DeleteIndexRequest.Builder()
+		final DeleteIndexRequest deleteRequest = new DeleteIndexRequest.Builder()
 				.index(index)
 				.build();
 
@@ -331,6 +360,29 @@ public class ElasticsearchService {
 			return res.source();
 		}
 		return null;
+	}
+
+	public <T> List<T> knnSearch(final String index, final KnnQuery query, final int numResults, final Class<T> tClass)
+			throws IOException {
+		log.info("KNN search on: {}", index);
+
+		if (query.numCandidates() < query.k()) {
+			throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
+		}
+
+		final SearchRequest req = new SearchRequest.Builder()
+				.index(index)
+				.size(numResults)
+				.knn(query)
+				.build();
+
+		final List<T> docs = new ArrayList<>();
+		final SearchResponse<T> res = client.search(req, tClass);
+
+		for (final Hit<T> hit : res.hits().hits()) {
+			docs.add(hit.source());
+		}
+		return docs;
 	}
 
 }

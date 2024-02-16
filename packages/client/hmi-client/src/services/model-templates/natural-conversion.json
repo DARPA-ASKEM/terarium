@@ -28,7 +28,7 @@
         ],
         "transitions": [
             {
-                "id": "NaturalConversion",
+                "id": "Natural conversion",
                 "input": [
                     "A"
                 ],
@@ -36,7 +36,7 @@
                     "B"
                 ],
                 "properties": {
-                    "name": "NaturalConversion"
+                    "name": "Natural conversion"
                 }
             }
         ]
@@ -45,7 +45,7 @@
         "ode": {
             "rates": [
                 {
-                    "target": "NaturalConversion",
+                    "target": "Natural conversion",
                     "expression": "A*B*p",
                     "expression_mathml": "<apply><times/><ci>A</ci><ci>B</ci><ci>p</ci></apply>"
                 }

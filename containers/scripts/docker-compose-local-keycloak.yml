@@ -4,7 +4,7 @@ version: "3.9"
 services:
 
   keycloak:
-    image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0
+    image: ghcr.io/unchartedsoftware/keycloak:22.0.4.0
     networks:
       - terarium
     restart: always
@@ -55,7 +55,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   keycloak-init:
-    image: ghcr.io/unchartedsoftware/keycloak:22.0.3.0
+    image: ghcr.io/unchartedsoftware/keycloak:22.0.4.0
     networks:
       - terarium
     command: [ 'import', '--dir', '/data', '--override', 'false' ]

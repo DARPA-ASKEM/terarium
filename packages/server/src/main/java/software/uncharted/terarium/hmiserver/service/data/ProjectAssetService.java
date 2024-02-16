@@ -1,31 +1,24 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.externalpublication.ExternalPublication;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
+
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -38,17 +31,21 @@ public class ProjectAssetService {
 	final ModelService modelService;
 	final DocumentAssetService documentService;
 	final WorkflowService workflowService;
-	final ExternalPublicationService publicationService;
 	final CodeService codeService;
-	final ArtifactService artifactService;
 
 	public List<ProjectAsset> findAllByProjectId(@NotNull final UUID projectId) {
 		return projectAssetRepository.findAllByProjectId(projectId);
 	}
 
+	/**
+	 * Find all active assets for a project.  Active assets are defined as those that are not deleted and not temporary.
+	 * @param projectId
+	 * @param types
+	 * @return
+	 */
 	public List<ProjectAsset> findActiveAssetsForProject(@NotNull final UUID projectId,
 			final Collection<@NotNull AssetType> types) {
-		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNull(projectId, types);
+		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(projectId, types);
 	}
 
 	public ProjectAsset save(final ProjectAsset asset) {
@@ -81,58 +78,46 @@ public class ProjectAssetService {
 		return projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, assetId, type);
 	}
 
-	private boolean populateProjectAssetFields(ProjectAsset projectAsset, AssetType assetType, UUID id)
+	private boolean populateProjectAssetFields(final ProjectAsset projectAsset, final AssetType assetType, final UUID id)
 			throws IOException {
 		switch (assetType) {
 			case DATASET:
-				final Optional<Dataset> dataset = datasetService.getDataset(id);
+				final Optional<Dataset> dataset = datasetService.getAsset(id);
 				if (dataset.isPresent()) {
 					projectAsset.setAssetName(dataset.get().getName());
 				}
 				return dataset.isPresent();
 			case MODEL:
-				final Optional<Model> model = modelService.getModel(id);
+				final Optional<Model> model = modelService.getAsset(id);
 				if (model.isPresent()) {
 					projectAsset.setAssetName(model.get().getHeader().getName());
 				}
 				return model.isPresent();
 			case DOCUMENT:
-				final Optional<DocumentAsset> document = documentService.getDocumentAsset(id);
+				final Optional<DocumentAsset> document = documentService.getAsset(id);
 				if (document.isPresent()) {
 					projectAsset.setAssetName(document.get().getName());
 				}
 				return document.isPresent();
 			case WORKFLOW:
-				final Optional<Workflow> workflow = workflowService.getWorkflow(id);
+				final Optional<Workflow> workflow = workflowService.getAsset(id);
 				if (workflow.isPresent()) {
 					projectAsset.setAssetName(workflow.get().getName());
 				}
 				return workflow.isPresent();
-			case PUBLICATION:
-				final Optional<ExternalPublication> publication = publicationService.getExternalPublication(id);
-				if (publication.isPresent()) {
-					projectAsset.setAssetName(publication.get().getTitle());
-				}
-				return publication.isPresent();
 			case CODE:
-				final Optional<Code> code = codeService.getCode(id);
+				final Optional<Code> code = codeService.getAsset(id);
 				if (code.isPresent()) {
 					projectAsset.setAssetName(code.get().getName());
 				}
 				return code.isPresent();
-			case ARTIFACT:
-				final Optional<Artifact> artifact = artifactService.getArtifact(id);
-				if (artifact.isPresent()) {
-					projectAsset.setAssetName(artifact.get().getName());
-				}
-				return artifact.isPresent();
 			default:
 				break;
 		}
 		return false;
 	}
 
-	public Optional<ProjectAsset> createProjectAsset(Project project, final AssetType assetType, final UUID assetId)
+	public Optional<ProjectAsset> createProjectAsset(final Project project, final AssetType assetType, final UUID assetId)
 			throws IOException {
 
 		final ProjectAsset asset = new ProjectAsset();

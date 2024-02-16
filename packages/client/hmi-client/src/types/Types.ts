@@ -22,6 +22,15 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface TerariumAsset {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    temporary?: boolean;
+    publicAsset?: boolean;
+}
+
 export interface User {
     id: string;
     createdAtMs: number;
@@ -101,15 +110,6 @@ export interface ResponseSuccess {
     success: boolean;
 }
 
-export interface TerariumAsset {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    temporary?: boolean;
-    publicAsset?: boolean;
-}
-
 export interface Code extends TerariumAsset {
     name: string;
     description: string;
@@ -134,7 +134,11 @@ export interface ActiveConcept extends TerariumAsset {
     name: string;
 }
 
-export interface OntologyConcept extends TerariumAsset {
+export interface OntologyConcept {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
     curie: string;
     type: TaggableType;
     objectId: string;
@@ -210,7 +214,7 @@ export interface ExternalPublication extends TerariumAsset {
     xdd_uri: string;
 }
 
-export interface Model extends TerariumAsset {
+export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     header: ModelHeader;
     userId?: string;
     model: { [index: string]: any };
@@ -219,7 +223,7 @@ export interface Model extends TerariumAsset {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration extends TerariumAsset {
+export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     description?: string;
     configuration: any;
@@ -233,7 +237,7 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAsset {
+export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     version: string;
     semantics: string;
@@ -255,31 +259,113 @@ export interface Transition {
     properties?: Properties;
 }
 
-export interface TypeSystem {
-    states: State[];
-    transitions: Transition[];
+export interface Configuration {
+    parameters: { [index: string]: ConfigurationParameter };
+    initialConditions: { [index: string]: ConfigurationCondition };
+    boundryConditions: { [index: string]: ConfigurationCondition };
+    datasets: { [index: string]: ConfigurationDataset };
 }
 
-export interface TypeSystemExtended {
+export interface ConfigurationCondition {
+    _type: string;
+    type: string;
+    value: string;
+    domainMesh: string;
+}
+
+export interface ConfigurationDataset {
+    _type: string;
+    type: string;
     name: string;
     description: string;
-    schema: string;
-    model_version: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
+    file: ConfigurationDatasetFile;
 }
 
-export interface TypingSemantics {
-    map: string[][];
-    system: any;
+export interface ConfigurationDatasetFile {
+    _type: string;
+    uri: string;
+    format: string;
+    shape: number[];
+}
+
+export interface ConfigurationHeader {
+    id: string;
+    description: string;
+    name: string;
+    parentContext: string;
+}
+
+export interface ConfigurationParameter {
+    _type: string;
+    type: string;
+    value: any;
+}
+
+export interface Context {
+    constants: { [index: string]: ContextConstant };
+    spatialConstraints: any;
+    temporalConstraints: any;
+    primalDualRelations: ContextPrimalDualRelation[];
+    meshSubmeshRelations: ContextMeshSubmeshRelation[];
+    meshes: ContextMesh[];
+}
+
+export interface ContextConstant {
+    _type: string;
+    value: any;
+}
+
+export interface ContextFile {
+    uri: string;
+    format: string;
+}
+
+export interface ContextHeader {
+    id: string;
+    description: string;
+    name: string;
+    parentModel: string;
+}
+
+export interface ContextMesh {
+    id: string;
+    description: string;
+    dimensionality: any;
+    vertexCount: number;
+    edgeCount: number;
+    faceCount: number;
+    volumeCount: number;
+    regions: any[];
+    checksum: string;
+    file: ContextFile;
+}
+
+export interface ContextMeshSubmeshRelation {
+    mesh: string;
+    submesh: string;
+    relation: any;
+}
+
+export interface ContextPrimalDualRelation {
+    primal: string;
+    dual: string;
+    method: any;
 }
 
 export interface DecapodesComponent {
     modelInterface: string[];
     model: DecapodesExpression;
     _type: string;
+}
+
+export interface DecapodesConfiguration extends TerariumAsset {
+    header: ConfigurationHeader;
+    configuration: Configuration;
+}
+
+export interface DecapodesContext extends TerariumAsset {
+    header: ContextHeader;
+    context: Context;
 }
 
 export interface DecapodesEquation {
@@ -654,6 +740,12 @@ export interface CalibrationRequestJulia {
     engine: string;
 }
 
+export interface CiemssStatusUpdate {
+    loss: number;
+    progress: number;
+    jobId: string;
+}
+
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
@@ -802,7 +894,7 @@ export interface ModelHeader {
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
-    typing?: TypingSemantics;
+    typing?: any;
 }
 
 export interface ModelMetadata {
@@ -814,7 +906,11 @@ export interface ModelMetadata {
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
-    gollm_card?: any;
+    gollmCard?: any;
+    templateCard?: any;
+}
+
+export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 }
 
 export interface ModelGrounding {

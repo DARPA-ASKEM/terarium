@@ -2,7 +2,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import type { Model, Document, Dataset, DocumentAsset } from '@/types/Types';
+import { Model, Document, Dataset, DocumentAsset, ProgrammingLanguage } from '@/types/Types';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
@@ -115,4 +115,19 @@ export function pdfNameFromUrl(url: string): string | null {
 		return match[1];
 	}
 	return null;
+}
+
+export function extensionFromProgrammingLanguage(lang: ProgrammingLanguage): string | null {
+	switch (lang) {
+		case ProgrammingLanguage.Python:
+			return 'py';
+		case ProgrammingLanguage.Julia:
+			return 'jl';
+		case ProgrammingLanguage.R:
+			return 'r';
+		case ProgrammingLanguage.Zip:
+			return 'zip';
+		default:
+			return null;
+	}
 }

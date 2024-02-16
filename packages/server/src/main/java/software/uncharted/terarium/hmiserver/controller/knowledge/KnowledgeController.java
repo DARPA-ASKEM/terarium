@@ -86,7 +86,7 @@ public class KnowledgeController {
 		UUID modelId = null;
 		if (requestMap.containsKey("modelId")) {
 			modelId = UUID.fromString((String) requestMap.get("modelId"));
-		} 
+		}
 		List<String> equations = (List<String>) requestMap.getOrDefault("equations", Collections.emptyList());
 
 		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
@@ -133,14 +133,14 @@ public class KnowledgeController {
 		try(final CloseableHttpClient httpClient = HttpClients.custom()
 		.build()) {
 		// 1. create code asset from code blocks
-		Code createdCode = codeService.createCode(code);
+		Code createdCode = codeService.createAsset(code);
 
 		// 2. upload file to code asset
 		byte[] fileAsBytes = input.getBytes();
 		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 		// we have pre-formatted the files object already so no need to use uploadCode
-		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), "tempFile");
+		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), input.getOriginalFilename());
 		final HttpPut put = new HttpPut(presignedURL.getUrl());
 		put.setEntity(fileEntity);
 		final HttpResponse response = httpClient.execute(put);

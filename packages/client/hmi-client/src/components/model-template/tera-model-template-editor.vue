@@ -15,7 +15,9 @@
 						<tera-model-template
 							:model="modelTemplate"
 							:is-editable="false"
-							draggable="true"
+							is-decomposed
+							:style="isDecomposedLoading && { cursor: 'wait' }"
+							:draggable="!isDecomposedLoading"
 							@dragstart="newModelTemplate = modelTemplate"
 						/>
 					</li>
@@ -46,7 +48,15 @@
 						:model-value="currentModelFormat"
 						@change="if ($event.value) currentModelFormat = $event.value;"
 						:options="modelFormatOptions"
-					/>
+					>
+						<template #option="{ option }">
+							<i
+								v-if="isDecomposedLoading && option === EditorFormat.Decomposed"
+								class="pi pi-spin pi-spinner p-button-icon-left"
+							/>
+							<span class="p-button-label">{{ option }}</span>
+						</template>
+					</SelectButton>
 				</section>
 			</template>
 			<template #data>
@@ -61,17 +71,35 @@
 					@dragging="(event) => updatePosition(event, card)"
 				>
 					<tera-model-template
-						:model="currentEditor.models[index]"
+						:model="currentTemplates.models[index]"
 						is-editable
+						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						@update-name="
-							(name: string) => modelTemplatingService.updateCardName(currentEditor, name, card.id)
+							(name: string) =>
+								modelTemplatingService.updateDecomposedTemplateNameInKernel(
+									kernelManager,
+									currentTemplates.models[index],
+									flattenedTemplates.models[0],
+									name,
+									outputCode,
+									syncWithMiraModel
+								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card, portId)"
 						@port-mouseover="
 							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 						"
 						@port-mouseleave="onPortMouseleave"
-						@remove="modelTemplatingService.removeCard(currentEditor, card.id)"
+						@remove="
+							() =>
+								modelTemplatingService.removeTemplateInKernel(
+									kernelManager,
+									currentTemplates,
+									card.id,
+									outputCode,
+									syncWithMiraModel
+								)
+						"
 					/>
 				</tera-canvas-item>
 				<tera-canvas-item
@@ -107,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEqual } from 'lodash'; // debounce
+import { isEmpty, isEqual } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -121,7 +149,6 @@ import type {
 import * as modelTemplatingService from '@/services/model-templating';
 import SelectButton from 'primevue/selectbutton';
 import { KernelSessionManager } from '@/services/jupyter';
-import { logger } from '@/utils/logger';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
@@ -129,14 +156,23 @@ import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 
 const props = defineProps<{
 	model?: Model;
+	kernelManager: KernelSessionManager;
 }>();
+
+const emit = defineEmits(['output-code', 'sync-with-mira-model']);
+
+function outputCode(data: any) {
+	emit('output-code', data);
+}
+
+function syncWithMiraModel(data: any) {
+	emit('sync-with-mira-model', data);
+}
 
 enum EditorFormat {
 	Decomposed = 'Decomposed',
 	Flattened = 'Flattened'
 }
-
-const kernelManager = new KernelSessionManager();
 
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
@@ -149,18 +185,22 @@ const flattenedTemplates = ref<ModelTemplates>(modelTemplatingService.initialize
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
-const currentEditor = computed(() =>
+const currentTemplates = computed(() =>
 	currentModelFormat.value === EditorFormat.Decomposed
 		? decomposedTemplates.value
 		: flattenedTemplates.value
 );
 const cards = computed<ModelTemplateCard[]>(
-	() => currentEditor.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+	() => currentTemplates.value.models.map(({ metadata }) => metadata.templateCard) ?? []
 );
-const junctions = computed<ModelTemplateJunction[]>(() => currentEditor.value.junctions);
+const junctions = computed<ModelTemplateJunction[]>(() => currentTemplates.value.junctions);
 
 const newModelTemplate = ref();
 const newEdge = ref();
+
+const isDecomposedLoading = computed(
+	() => props.model && isEmpty(decomposedTemplates.value.models)
+);
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
@@ -204,12 +244,12 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
-			modelTemplatingService.addJunction(decomposedTemplates.value, currentPortPosition);
+			modelTemplatingService.addJunction(currentTemplates.value, currentPortPosition);
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
 			// Add a default edge as well
-			modelTemplatingService.addEdge(
-				decomposedTemplates.value,
+			modelTemplatingService.addEdgeInView(
+				currentTemplates.value,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -234,11 +274,15 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		junctionIdForNewEdge &&
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
-		modelTemplatingService.addEdge(
-			decomposedTemplates.value,
+		modelTemplatingService.addEdgeInKernel(
+			props.kernelManager,
+			currentTemplates.value,
 			junctionIdForNewEdge,
 			target,
+			newEdge.value.target,
 			currentPortPosition,
+			outputCode,
+			syncWithMiraModel,
 			interpolatePointsForCurve
 		);
 		cancelNewEdge();
@@ -272,7 +316,7 @@ function onCanvasClick() {
 function cancelNewEdge() {
 	newEdge.value = undefined;
 	junctionIdForNewEdge = null;
-	modelTemplatingService.junctionCleanUp(decomposedTemplates.value);
+	modelTemplatingService.junctionCleanUp(currentTemplates.value);
 }
 
 const setMouseOverCanvas = (val: boolean) => {
@@ -292,7 +336,15 @@ function updateNewCardPosition(event) {
 
 function onDrop(event) {
 	updateNewCardPosition(event);
-	modelTemplatingService.addCard(decomposedTemplates.value, cloneDeep(newModelTemplate.value));
+
+	modelTemplatingService.addDecomposedTemplateInKernel(
+		props.kernelManager,
+		currentTemplates.value,
+		newModelTemplate.value,
+		outputCode,
+		syncWithMiraModel
+	);
+
 	newModelTemplate.value = null;
 }
 
@@ -324,7 +376,6 @@ const updatePosition = (
 			if (!isJunction && edge.target.cardId === node.id) {
 				edge.points[lastPointIndex].x += x / canvasTransform.k;
 				edge.points[lastPointIndex].y += y / canvasTransform.k;
-
 				edge.points = interpolatePointsForCurve(edge.points[0], edge.points[lastPointIndex]);
 			}
 		});
@@ -352,73 +403,34 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function amrToTemplates() {
-	kernelManager.sendMessage('amr_to_templates', {}).on('amr_to_templates_response', (d) => {
-		// FIXME: Model templates are passed no junctions yet
-
-		// Insert template card data into template models
-		let yPos = 100;
-		const templateModelsWithCards = d.content.templates.map((modelTemplate: any) => {
-			modelTemplate.metadata.templateCard = {
-				id: modelTemplate.header.name,
-				name: modelTemplate.header.name,
-				x: 100,
-				y: yPos
-			} as ModelTemplateCard;
-
-			yPos += 200;
-			return modelTemplate;
-		});
-
-		templateModelsWithCards.forEach((templateModel: any) =>
-			modelTemplatingService.addCard(decomposedTemplates.value, templateModel)
-		);
-	});
-}
-
+// Triggered after syncWithMiraModel() in parent
 watch(
-	() => props.model,
-	async () => {
+	() => [props.model],
+	() => {
 		if (props.model) {
-			// Create flattened view of model
-			const flattenedModel: any = cloneDeep(props.model);
-			flattenedModel.metadata.templateCard = {
-				id: props.model.id,
-				name: props.model.header.name,
-				x: 100,
-				y: 100
-			};
-
-			modelTemplatingService.addCard(flattenedTemplates.value, flattenedModel);
-
-			// Initialize beaker kernel
-			try {
-				if (kernelManager.jupyterSession) kernelManager.shutdown();
-
-				const context = {
-					context: 'mira_model',
-					language: 'python3',
-					context_info: {
-						id: props.model.id
-					}
-				};
-				await kernelManager.init('beaker_kernel', 'Beaker Kernel', context);
-				// Create template view of model
-				amrToTemplates();
-			} catch (error) {
-				logger.error(`Error initializing Jupyter session: ${error}`);
-			}
+			flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
+			modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
 		}
 	}
 );
 
-onMounted(async () => {
+onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+
+	if (props.model) {
+		// Create flattened view of model
+		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
+		// Create decomposed view of model
+		modelTemplatingService.flattenedToDecomposedInKernel(
+			props.kernelManager,
+			decomposedTemplates.value,
+			interpolatePointsForCurve
+		);
+	}
 });
 
 onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
-	kernelManager.shutdown();
 });
 </script>
 
@@ -426,10 +438,15 @@ onUnmounted(() => {
 .template-editor-wrapper {
 	display: flex;
 	flex: 1;
+	overflow: hidden;
 }
 
 .view-toggles {
 	padding: 0.5rem;
+
+	.pi-spin {
+		color: var(--text-color-subdued);
+	}
 }
 
 aside {
