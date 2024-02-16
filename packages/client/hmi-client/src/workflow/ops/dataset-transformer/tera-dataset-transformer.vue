@@ -30,7 +30,7 @@ import { DatasetTransformerState } from './dataset-transformer-operation';
 const props = defineProps<{
 	node: WorkflowNode<DatasetTransformerState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
@@ -67,7 +67,7 @@ onMounted(async () => {
 });
 
 const addOutputPort = (data: any) => {
-	emit('append-output-port', {
+	emit('append-output', {
 		id: data.id,
 		label: data.name,
 		type: 'datasetId',

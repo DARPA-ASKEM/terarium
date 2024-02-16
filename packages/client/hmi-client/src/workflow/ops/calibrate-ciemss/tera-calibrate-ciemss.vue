@@ -203,7 +203,7 @@ const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'close',
 	'select-output',
 	'update-output-port',
@@ -441,7 +441,7 @@ const updateOutputPorts = async (calibrationId: string, simulationId: string) =>
 
 	emit('update-state', state);
 
-	emit('append-output-port', {
+	emit('append-output', {
 		type: 'calibrateSimulationId',
 		label: `${portLabel} Result`,
 		value: [calibrationId]
