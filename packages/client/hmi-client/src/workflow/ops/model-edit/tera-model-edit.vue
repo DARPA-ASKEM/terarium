@@ -11,7 +11,6 @@
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
 				<div class="notebook-toolbar">
 					<div class="toolbar-left-side">
 						<Dropdown
@@ -56,10 +55,6 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
-				<template #footer
-					><Button style="margin-right: auto" label="Reset" @click="resetModel" />
-					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
-				</template>
 			</tera-drilldown-section>
 			<div class="preview-container">
 				<tera-drilldown-preview
@@ -396,7 +391,8 @@ onUnmounted(() => {
 	flex-direction: row;
 	gap: var(--gap-3);
 	justify-content: space-between;
-	margin-left: var(--gap);
+	margin-left: 1.5rem;
+	padding-top: var(--gap-small);
 }
 
 .toolbar-left-side,
