@@ -514,31 +514,53 @@ const onUpdateSelection = (id) => {
 // Creates a temp config (if doesnt exist in state)
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
-	console.log('Create temp model');
-	console.log(model.value);
 	const state = _.cloneDeep(props.node.state);
 	if (state.tempConfigId !== '' || !model.value) return;
 	const data = await createModelConfiguration(
 		model.value.id,
-		knobs.value.name,
-		knobs.value.description,
+		'Temp_config_name',
+		'Utilized in model config node for beaker purposes',
 		model.value
 	);
+
+	state.initials = knobs.value.initials;
+	state.parameters = knobs.value.parameters;
+	state.timeseries = knobs.value.timeseries;
 	state.tempConfigId = data.id;
 	emit('update-state', state);
 };
 
 // Fill the form with the config data
 const initialize = async () => {
+	const state = _.cloneDeep(props.node.state);
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
 	model.value = await getModel(modelId);
-	knobs.value.name = props.node.state.name;
-	knobs.value.description = props.node.state.description;
-	knobs.value.initials = props.node.state.initials;
-	knobs.value.parameters = props.node.state.parameters;
-	knobs.value.timeseries = props.node.state.timeseries;
-	createTempModelConfig();
+
+	knobs.value.name = state.name;
+	knobs.value.description = state.description;
+
+	// State has never been set up:
+	if (state.tempConfigId === '') {
+		// Grab these values from model to inialize them
+		knobs.value.initials =
+			model.value?.semantics?.ode.initials !== undefined
+				? model.value?.semantics?.ode.initials
+				: [];
+		knobs.value.parameters =
+			model.value?.semantics?.ode.parameters !== undefined
+				? model.value?.semantics?.ode.parameters
+				: [];
+		knobs.value.timeseries =
+			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : [];
+		await createTempModelConfig();
+	}
+	// State already been set up use it instead:
+	else {
+		knobs.value.initials = state.initials;
+		knobs.value.parameters = state.parameters;
+		knobs.value.timeseries = state.timeseries;
+	}
 
 	// Create a new session and context based on model
 	try {
@@ -577,12 +599,14 @@ watch(
 watch(
 	() => props.node.active,
 	async () => {
-		console.log('Active watcher:');
-		// Update selected output
-		// TODO:
-		// activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
-		// selectedOutputId.value = props.node.active;
-		await initialize();
+		if (props.node.active) {
+			console.log('Active watcher:');
+			// Update selected output
+			// TODO:
+			// activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
+			// selectedOutputId.value = props.node.active;
+			await initialize();
+		}
 	},
 	{ immediate: true, deep: true }
 );
