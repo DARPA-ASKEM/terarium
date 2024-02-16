@@ -128,7 +128,7 @@ async function processFiles(files: File[], description: string) {
 			case AcceptedExtensions.JL:
 				return processCode(file);
 			case AcceptedExtensions.JSON:
-				return processAMR(file);
+				return processAMRJson(file);
 			case AcceptedExtensions.XML:
 			case AcceptedExtensions.SBML:
 			case AcceptedExtensions.MDL:
@@ -185,7 +185,7 @@ async function processDataset(file: File, description: string) {
  * Process an AMR file into a model asset
  * @param file
  */
-async function processAMR(file: File) {
+async function processAMRJson(file: File) {
 	// Check if the file is an AMR file
 	const amr = await validateAMRFile(file);
 	if (amr) {
