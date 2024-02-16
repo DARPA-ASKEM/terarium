@@ -60,6 +60,7 @@
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
+					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
 			<div class="preview-container">
