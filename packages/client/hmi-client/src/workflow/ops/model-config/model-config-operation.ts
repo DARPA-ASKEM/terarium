@@ -17,7 +17,7 @@ export const ModelConfigOperation: Operation = {
 	displayName: 'Configure model',
 	description: 'Create model configurations.',
 	isRunnable: true,
-	inputs: [{ type: 'modelId' }],
+	inputs: [{ type: 'modelId' }, { type: 'documentId', label: 'Text' }],
 	outputs: [{ type: 'modelConfigId' }],
 	action: async () => ({}),
 

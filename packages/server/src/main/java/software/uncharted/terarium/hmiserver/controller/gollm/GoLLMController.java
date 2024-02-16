@@ -77,7 +77,8 @@ public class GoLLMController {
 
 	@Data
 	private static class ConfigureModelProperties {
-		JsonNode resp;
+		UUID documentId;
+		UUID modelId;
 	}
 
     @PostConstruct
@@ -117,11 +118,12 @@ public class GoLLMController {
 		final TaskResponseHandler handler = new TaskResponseHandler();
 		handler.onSuccess((TaskResponse resp) -> {
 			try {
-				log.info(resp.toString());
-				final String serializedString = objectMapper.writeValueAsString(resp);
-				log.info(serializedString);
+				final String serializedString = objectMapper.writeValueAsString(resp.getAdditionalProperties());
 				final ConfigureModelProperties props = objectMapper.readValue(serializedString, ConfigureModelProperties.class);
-				log.info(props.toString());
+
+				final Model model = modelService.getAsset(props.getModelId())
+						.orElseThrow();
+				
 			} catch (final IOException e) {
 				log.error("Failed to configure model", e);
 			}
@@ -231,6 +233,8 @@ public class GoLLMController {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			final ConfigureModelProperties props = new ConfigureModelProperties();
+			props.setDocumentId(documentId);
+			props.setModelId(modelId);
 			req.setAdditionalProperties(props);
 
 			// send the request

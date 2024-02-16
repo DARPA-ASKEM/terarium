@@ -1,20 +1,20 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-action-row>
+			<tera-output-dropdown
+				@click.stop
+				style="margin-left: auto"
+				:output="selectedOutputId"
+				is-selectable
+				:options="outputs"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+			/>
+		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
 				<Accordion multiple :active-index="[0, 1, 2, 3]" class="pb-6">
 					<AccordionTab header="Context">
-						<template #header>
-							<tera-output-dropdown
-								@click.stop
-								style="margin-left: auto"
-								:output="selectedOutputId"
-								is-selectable
-								:options="outputs"
-								@update:output="onUpdateOutput"
-								@update:selection="onUpdateSelection"
-							/>
-						</template>
 						<p class="text-sm mb-1">Name</p>
 						<InputText
 							class="context-item"
@@ -29,6 +29,18 @@
 							v-model="configDescription"
 							@update:model-value="() => debouncedUpdateState({ description: configDescription })"
 						/>
+					</AccordionTab>
+					<AccordionTab header="Suggested Configurations">
+						<DataTable :value="suggestedConfigurationsTableData" size="small">
+							<Column field="name" header="Name"></Column>
+							<Column field="description" header="Description"></Column>
+							<Column field="source" header="Source"></Column>
+							<Column style="width: 6rem">
+								<template #body="{ data }">
+									<Button label="+ Use" @click="console.log(data)" text />
+								</template>
+							</Column>
+						</DataTable>
 					</AccordionTab>
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
@@ -68,6 +80,15 @@
 		<template #footer>
 			<div class="floating-footer">
 				<div class="flex gap-2">
+					<Button
+						outlined
+						:disabled="!documentId || !modelId"
+						label="Configure"
+						size="large"
+						icon="pi pi-cog"
+						@click="configureModel(documentId, modelId)"
+					>
+					</Button>
 					<Button
 						outlined
 						:disabled="!configName"
@@ -111,8 +132,11 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import { configureModel } from '@/services/goLLM';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import TeraModelConfigTable from './tera-model-config-table.vue';
+import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -148,6 +172,16 @@ const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
+const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+const modelId = computed(() => props.node.inputs?.[0]?.value?.[0]);
+
+const suggestedConfigurationsTableData = ref<
+	{
+		name: string;
+		description: string;
+		source: string;
+	}[]
+>([{ name: 'test', description: 'test', source: 'test' }]);
 const configCache = ref<Record<string, ModelConfiguration>>({});
 
 const configName = ref<string>(props.node.state.name);

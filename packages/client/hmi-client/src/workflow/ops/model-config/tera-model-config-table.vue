@@ -10,7 +10,7 @@
 		<Column expander style="width: 5rem" />
 		<Column field="id" header="ID" style="width: 10%"></Column>
 		<Column field="name" header="Name" style="width: 15%"></Column>
-		<Column field="type" header="Value type" style="width: 10%">
+		<Column field="type" header="Value type" style="width: 15%">
 			<template #body="slotProps">
 				<Button
 					text
@@ -23,6 +23,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
 				<Dropdown
 					v-else
+					class="value-type-dropdown"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
@@ -91,6 +92,7 @@
 				>
 					<InputText
 						size="small"
+						invalid
 						:placeholder="'(e.g., 0:500, 10:550, 25:700 etc)'"
 						v-model.lazy="slotProps.data.timeseries"
 						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
@@ -99,12 +101,14 @@
 				</span>
 			</template>
 		</Column>
-		<Column field="source" header="Source" style="width: 35%"></Column>
+		<Column field="source" header="Source" style="width: 40%"></Column>
+
+		<!-- Hiding for now until functionality is available
 		<Column field="visibility" header="Visibility" style="width: 10%">
 			<template #body="slotProps">
 				<InputSwitch v-model="slotProps.data.visibility" @click.stop />
 			</template>
-		</Column>
+		</Column> -->
 		<template #expansion="slotProps">
 			<tera-model-config-table
 				hide-header
@@ -144,7 +148,6 @@ import Column from 'primevue/column';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
-import InputSwitch from 'primevue/inputswitch';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import { cloneDeep } from 'lodash';
@@ -196,7 +199,7 @@ const updateTimeseries = (id: string, value: string) => {
 };
 
 const validateTimeSeries = (values: string) => {
-	const message = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+	const message = 'Incorrect format (e.g., 0:500)';
 	if (typeof values !== 'string') {
 		errorMessage.value = message;
 		return false;
@@ -296,5 +299,9 @@ const updateExpression = async (value: Initial) => {
 
 .secondary-text {
 	color: var(--text-color-subdued);
+}
+
+.value-type-dropdown {
+	min-width: 10rem;
 }
 </style>
