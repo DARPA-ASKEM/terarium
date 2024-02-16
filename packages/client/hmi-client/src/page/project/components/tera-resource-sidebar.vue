@@ -16,27 +16,6 @@
 					<i class="pi pi-filter"></i>
 				</span>
 			</div>
-			<!-- 			
-			<SplitButton
-				class="new-resource-button"
-				label="New"
-				size="small"
-				severity="secondary"
-				outlined
-				@click="toggleOptionsMenu"
-				:model="optionsMenuItems"
-			/>
-			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
-				<template #item="slotProps">
-					<a class="p-menuitem-link">
-						<tera-asset-icon :asset-type="slotProps.item.key as AssetType" />
-						<span class="p-menuitem-text">
-							{{ slotProps.item.label }}
-						</span>
-					</a>
-				</template>
-			</Menu>
--->
 		</header>
 		<Button
 			class="asset-button"
@@ -213,14 +192,12 @@ import { useDragEvent } from '@/services/drag-drop';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import { AssetItem, AssetRoute } from '@/types/common';
-import { generateProjectAssetsMap } from '@/utils/map-project-assets';
+import { generateProjectAssetsMap, getNonNullSetOfVisibleItems } from '@/utils/map-project-assets';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-// import SplitButton from 'primevue/splitbutton';
 import InputText from 'primevue/inputtext';
-// import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
 import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
@@ -241,13 +218,14 @@ const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
 const inputFocused = ref(false);
 
+const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
+const assetItemsKeysNotEmpty = computed(() => getNonNullSetOfVisibleItems(assetItemsMap.value));
 const activeAccordionTabs = ref(
 	new Set(
-		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
+		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ??
+			assetItemsKeysNotEmpty.value ?? [0, 1, 2, 3, 4, 5, 6]
 	)
 );
-
-const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 
 function clearSearch() {
 	searchAsset.value = '';
