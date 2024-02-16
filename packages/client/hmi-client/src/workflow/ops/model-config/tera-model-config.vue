@@ -205,9 +205,7 @@ const kernelManager = new KernelSessionManager();
 // const isKernelReady = ref(false);
 let editor: VAceEditorInstance['_editor'] | null;
 const buildJupyterContext = () => {
-	console.log('buildJupyterContext');
 	const contextId = selectedConfigId.value ?? props.node.state.tempConfigId;
-	console.log(contextId);
 	if (!model.value) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
@@ -288,8 +286,6 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const handleModelPreview = (data: any) => {
-	console.log('Handle model preview:');
-	console.log(data);
 	model.value = data.content['application/json'];
 };
 
@@ -470,7 +466,6 @@ const updateFromConfig = (config: ModelConfiguration) => {
 };
 
 const createConfiguration = async () => {
-	console.log('Creating config');
 	if (!model.value) return;
 
 	const state = _.cloneDeep(props.node.state);
@@ -481,8 +476,6 @@ const createConfiguration = async () => {
 		knobs.value.description,
 		model.value
 	);
-	console.log('Model config created:');
-	console.log(data);
 
 	if (!data) {
 		logger.error('Failed to create model configuration');
@@ -500,11 +493,9 @@ const createConfiguration = async () => {
 };
 
 const onUpdateOutput = (id) => {
-	console.log(id);
 	emit('select-output', id);
 };
 const onUpdateSelection = (id) => {
-	console.log(id);
 	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.isSelected = !outputPort?.isSelected;
@@ -576,7 +567,6 @@ const initialize = async () => {
 watch(
 	() => props.node.inputs[0],
 	async () => {
-		console.log('Inputs watcher');
 		await initialize();
 	},
 	{ immediate: true }
@@ -600,7 +590,6 @@ watch(
 	() => props.node.active,
 	async () => {
 		if (props.node.active) {
-			console.log('Active watcher:');
 			// Update selected output
 			// TODO:
 			// activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
