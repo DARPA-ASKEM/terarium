@@ -73,7 +73,4 @@ const submitQuestion = () => {
 .input {
 	width: 100%;
 }
-.p-button {
-	width: 2rem;
-}
 </style>
