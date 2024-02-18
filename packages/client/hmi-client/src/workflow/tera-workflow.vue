@@ -104,7 +104,7 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output-port="(event: any) => appendOutputPort(node, event)"
+							@append-output-port="() => appendOutputPort()"
 							@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
@@ -176,7 +176,7 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+			@append-output-port="() => appendOutputPort()"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
@@ -367,8 +367,9 @@ function appendOutput(
 }
 
 // @deprecated
+// FIXME: Leaving this in here to warn against existing development - remove after hackathon, Feb 2022.
 function appendOutputPort() {
-/*
+	/*
 	node: WorkflowNode<any> | null,
 	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 	*/
