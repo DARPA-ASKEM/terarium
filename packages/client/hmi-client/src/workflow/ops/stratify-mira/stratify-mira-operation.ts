@@ -6,9 +6,6 @@ export interface StratifyGroup {
 	selectedVariables: string[];
 	groupLabels: string;
 	cartesianProduct: boolean;
-
-	directed: boolean;
-	structure: null | any[];
 }
 
 export interface StratifyCode {
@@ -27,9 +24,7 @@ export const blankStratifyGroup: StratifyGroup = {
 	name: '',
 	selectedVariables: [],
 	groupLabels: '',
-	cartesianProduct: true,
-	directed: false,
-	structure: null
+	cartesianProduct: true
 };
 
 export const StratifyMiraOperation: Operation = {
