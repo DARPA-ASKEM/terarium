@@ -152,7 +152,7 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'select-output', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
 
 enum FunmanTabs {
 	Wizard = 'Wizard',
@@ -316,7 +316,7 @@ const getStatus = async (runId: string) => {
 
 const addOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
-	emit('append-output-port', {
+	emit('append-output', {
 		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
 		type: FunmanOperation.outputs[0].type,
 		value: runId,

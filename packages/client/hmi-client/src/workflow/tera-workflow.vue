@@ -104,7 +104,8 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output-port="(event: any) => appendOutputPort(node, event)"
+							@append-output-port="() => appendOutputPort()"
+							@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="openDrilldown(node)"
@@ -175,7 +176,8 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+			@append-output-port="() => appendOutputPort()"
+			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
@@ -328,10 +330,53 @@ function appendInputPort(
 	});
 }
 
-function appendOutputPort(
+/**
+ * The operator creates a new output, this will mark the
+ * output as selected, and revert the selection status of
+ * existing outputs
+ * */
+function appendOutput(
 	node: WorkflowNode<any> | null,
 	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 ) {
+	if (!node) return;
+
+	const uuid = uuidv4();
+	const outputPort: WorkflowOutput<any> = {
+		id: uuid,
+		type: port.type,
+		label: port.label,
+		value: isArray(port.value) ? port.value : [port.value],
+		isOptional: false,
+		status: WorkflowPortStatus.NOT_CONNECTED,
+		state: port.state,
+		isSelected: true,
+		timestamp: new Date()
+	};
+
+	// Revert
+	node.outputs.forEach((o) => {
+		o.isSelected = false;
+	});
+
+	// Append and set active
+	node.outputs.push(outputPort);
+	node.active = uuid;
+
+	workflowDirty = true;
+}
+
+// @deprecated
+// FIXME: Leaving this in here to warn against existing development - remove after hackathon, Feb 2022.
+function appendOutputPort() {
+	/*
+	node: WorkflowNode<any> | null,
+	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
+	*/
+	console.error('This function is no longer supported, use <append-output> intstead');
+	throw new Error('This function is no longer supported, use <append-output> intstead');
+
+	/*
 	if (!node) return;
 
 	const uuid = uuidv4();
@@ -353,6 +398,7 @@ function appendOutputPort(
 	node.active = uuid;
 
 	workflowDirty = true;
+	*/
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
