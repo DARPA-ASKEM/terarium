@@ -1,8 +1,14 @@
 <template>
 	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
-		<div class="sub-header">
-			<label>Cartesian product</label>
-			<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
+		<div class="input-row">
+			<div class="sub-header">
+				<label>Directed</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="directed" />
+			</div>
+			<div class="sub-header">
+				<label>Cartesian product</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
+			</div>
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">

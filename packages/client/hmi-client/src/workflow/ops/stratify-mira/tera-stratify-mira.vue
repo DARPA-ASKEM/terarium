@@ -44,15 +44,15 @@
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview
+				title="Stratify output"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				is-selectable
+			>
 				<div>
 					<template v-if="amr">
-						<tera-model-diagram
-							ref="teraModelDiagramRef"
-							:model="amr"
-							:is-editable="false"
-							:model-configuration="modelConfig!"
-						/>
+						<tera-model-diagram ref="teraModelDiagramRef" :model="amr" :is-editable="false" />
 						<TeraModelSemanticTables :model="amr" :is-editable="false" />
 					</template>
 					<div v-else>
@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -149,19 +149,17 @@ const teraModelDiagramRef = ref();
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
 
-const modelConfig = computed<ModelConfiguration | null>(() => {
-	if (!amr.value || !amr.value.id) return null;
-	return {
-		id: 'temporary config',
-		name: 'temporary config',
-		model_id: amr.value.id,
-		configuration: {
-			header: _.cloneDeep(amr.value.header),
-			model: _.cloneDeep(amr.value.model),
-			semantics: _.cloneDeep(amr.value.semantics),
-			metadata: _.cloneDeep(amr.value.metadata)
-		}
-	};
+const selectedOutputId = ref<string>();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
 });
 
 let editor: VAceEditorInstance['_editor'] | null;
