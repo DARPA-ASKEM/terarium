@@ -105,7 +105,7 @@
 							:is="registry.getNode(node.operationType)"
 							:node="node"
 							@append-output-port="() => appendOutputPort()"
-							@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="openDrilldown(node)"
