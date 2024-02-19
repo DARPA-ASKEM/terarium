@@ -88,10 +88,7 @@
 			/>
 		</form>
 		<template #footer>
-			<Button
-				label="Save"
-				@click="() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })"
-			/>
+			<Button label="Save" @click="() => saveNewModel(newModelName)" />
 			<Button class="p-button-secondary" label="Cancel" @click="isNewModelModalVisible = false" />
 		</template>
 	</tera-modal>
@@ -118,6 +115,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { useToastService } from '@/services/toast';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -143,13 +141,6 @@ enum StratifyTabs {
 	Notebook = 'Notebook'
 }
 
-interface SaveOptions {
-	addToProject?: boolean;
-	appendOutputPort?: boolean;
-}
-
-const kernelManager = new KernelSessionManager();
-
 const amr = ref<Model | null>(null);
 const stratifiedAmr = ref<Model | null>(null);
 
@@ -171,6 +162,8 @@ const outputs = computed(() => {
 	return [];
 });
 
+const kernelManager = new KernelSessionManager();
+
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
@@ -186,7 +179,6 @@ const stratifyModel = () => {
 
 const resetModel = () => {
 	if (!amr.value) return;
-
 	kernelManager
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
@@ -298,7 +290,7 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string, options: SaveOptions) => {
+const saveNewModel = async (modelName: string) => {
 	if (!stratifiedAmr.value || !modelName) return;
 	stratifiedAmr.value.header.name = modelName;
 
@@ -307,20 +299,8 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	const projectId = projectResource.activeProject.value?.id;
 
 	if (!modelData) return;
-
-	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-	}
-
-	if (options.appendOutputPort) {
-		emit('append-output', {
-			id: uuidv4(),
-			label: modelName,
-			type: 'modelId',
-			value: [modelData.id]
-		});
-		emit('close');
-	}
+	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
+	useToastService().success('', `Saved to project ${projectResource.activeProject.value?.name}`);
 
 	isNewModelModalVisible.value = false;
 };
