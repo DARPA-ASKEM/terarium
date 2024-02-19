@@ -47,13 +47,15 @@
 			<tera-drilldown-preview
 				title="Stratify output"
 				:options="outputs"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
 				<div>
-					<template v-if="amr">
-						<tera-model-diagram ref="teraModelDiagramRef" :model="amr" :is-editable="false" />
-						<TeraModelSemanticTables :model="amr" :is-editable="false" />
+					<template v-if="stratifiedAmr">
+						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
+						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -128,7 +130,13 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close']);
+const emit = defineEmits([
+	'append-output',
+	'update-state',
+	'close',
+	'update-output-port',
+	'select-output'
+]);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -143,8 +151,9 @@ interface SaveOptions {
 const kernelManager = new KernelSessionManager();
 
 const amr = ref<Model | null>(null);
+const stratifiedAmr = ref<Model | null>(null);
+
 const modelNodeOptions = ref<string[]>([]);
-const teraModelDiagramRef = ref();
 
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
@@ -228,8 +237,23 @@ const handleStratifyResponse = (data: any) => {
 	}
 };
 
-const handleModelPreview = (data: any) => {
-	amr.value = data.content['application/json'];
+const handleModelPreview = async (data: any) => {
+	stratifiedAmr.value = data.content['application/json'];
+
+	// Create output
+	const modelData = await createModel(stratifiedAmr.value);
+	if (!modelData) return;
+
+	emit('append-output', {
+		id: uuidv4(),
+		label: `Output ${Date.now()}`,
+		type: 'modelId',
+		state: {
+			strataGroup: _.cloneDeep(props.node.state.strataGroup),
+			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
+		},
+		value: [modelData.id]
+	});
 };
 
 const buildJupyterContext = () => {
@@ -275,11 +299,11 @@ const inputChangeHandler = async () => {
 };
 
 const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!amr.value || !modelName) return;
-	amr.value.header.name = modelName;
+	if (!stratifiedAmr.value || !modelName) return;
+	stratifiedAmr.value.header.name = modelName;
 
 	const projectResource = useProjects();
-	const modelData = await createModel(amr.value);
+	const modelData = await createModel(stratifiedAmr.value);
 	const projectId = projectResource.activeProject.value?.id;
 
 	if (!modelData) return;
@@ -362,7 +386,37 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
-// Set model, modelConfiguration, modelNodeOptions
+const onUpdateSelection = (id: string) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+};
+
+const onUpdateOutput = (id: string) => {
+	emit('select-output', id);
+};
+
+watch(
+	() => props.node.active,
+	async () => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+
+			const output = props.node.outputs.find((d) => d.id === selectedOutputId.value);
+			if (!output) {
+				console.error(`cannot find active output ${selectedOutputId.value}`);
+				return;
+			}
+			const modelIdToLoad = output.value?.[0];
+			stratifiedAmr.value = await getModel(modelIdToLoad);
+			codeText.value = _.last(props.node.state.strataCodeHistory)?.code ?? '';
+		}
+	},
+	{ immediate: true }
+);
+
+// Set model, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
 	async () => {
