@@ -436,6 +436,7 @@ const setModelOptions = async () => {
 	knobs.value.numberOfSteps = state.numSteps;
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
+	knobs.value.useCompartmentalConstraint = state.useCompartmentalConstraint;
 
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);

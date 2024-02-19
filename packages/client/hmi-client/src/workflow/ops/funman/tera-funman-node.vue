@@ -10,8 +10,6 @@
 				severity="secondary"
 				outlined
 			/>
-			<!--TODO: Run button isn't functional-->
-			<Button label="Run" severity="secondary" outlined />
 		</template>
 	</section>
 </template>
