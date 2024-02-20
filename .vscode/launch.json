@@ -1,68 +1,72 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "HMI Client",
-      "runtimeExecutable": "yarn",
-      "cwd": "${workspaceFolder}/packages/client/hmi-client",
-      "runtimeArgs": ["dev"],
-      // Run vite dev server using `yarn dev` and then luanch the chrome browser
-      "serverReadyAction": {
-        "action": "debugWithChrome",
-        "pattern": "Local:[ ]+http://.+:([0-9]+)",
-        "uriFormat": "http://localhost:%s",
-        "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "HMI Client (Local)",
-      "runtimeExecutable": "yarn",
-      "cwd": "${workspaceFolder}/packages/client/hmi-client",
-      "runtimeArgs": ["local"],
-      // Run vite dev server using `yarn local` and then luanch the chrome browser
-      "serverReadyAction": {
-        "action": "debugWithChrome",
-        "pattern": "Local:[ ]+http://.+:([0-9]+)",
-        "uriFormat": "http://localhost:%s",
-        "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
-      }
-    },
-    {
-      "type": "java",
-      "name": "TerariumApplication",
-      "request": "launch",
-      "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
-      "projectName": "server",
-      "args": [
-        "--spring.profiles.active=default,secrets,local"
-      ]
-    },
-    {
-      "type": "java",
-      "name": "TaskRunnerApplication",
-      "request": "launch",
-      "mainClass": "software.uncharted.terarium.taskrunner.TaskRunnerApplication",
-      "projectName": "taskrunner",
-      "args": [
-        "--spring.profiles.active=default,local"
-      ]
-    },
-    {
-      "type": "java",
-      "name": "ElasticIngestApplication",
-      "request": "launch",
-      "mainClass": "software.uncharted.terarium.esingest.ElasticIngestApplication",
-      "projectName": "es-ingest",
-      "args": [
-        "--spring.profiles.active=default,local"
-      ]
-    }
-  ]
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "HMI Client",
+            "runtimeExecutable": "yarn",
+            "cwd": "${workspaceFolder}/packages/client/hmi-client",
+            "runtimeArgs": [
+                "dev"
+            ],
+            // Run vite dev server using `yarn dev` and then luanch the chrome browser
+            "serverReadyAction": {
+                "action": "debugWithChrome",
+                "pattern": "Local:[ ]+http://.+:([0-9]+)",
+                "uriFormat": "http://localhost:%s",
+                "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "HMI Client (Local)",
+            "runtimeExecutable": "yarn",
+            "cwd": "${workspaceFolder}/packages/client/hmi-client",
+            "runtimeArgs": [
+                "local"
+            ],
+            // Run vite dev server using `yarn local` and then luanch the chrome browser
+            "serverReadyAction": {
+                "action": "debugWithChrome",
+                "pattern": "Local:[ ]+http://.+:([0-9]+)",
+                "uriFormat": "http://localhost:%s",
+                "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
+            }
+        },
+        {
+            "type": "java",
+            "name": "TerariumApplication",
+            "request": "launch",
+            "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
+            "projectName": "server",
+            "args": [
+                "--spring.profiles.active=default,secrets,local,ide"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "TaskRunnerApplication",
+            "request": "launch",
+            "mainClass": "software.uncharted.terarium.taskrunner.TaskRunnerApplication",
+            "projectName": "taskrunner",
+            "args": [
+                "--spring.profiles.active=default,local,ide"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "ElasticIngestApplication",
+            "request": "launch",
+            "mainClass": "software.uncharted.terarium.esingest.ElasticIngestApplication",
+            "projectName": "es-ingest",
+            "args": [
+                "--spring.profiles.active=default,local,ide"
+            ]
+        }
+    ]
 }
