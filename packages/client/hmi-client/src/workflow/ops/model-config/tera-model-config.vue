@@ -2,7 +2,7 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<Accordion multiple :active-index="[0, 1, 2, 3]">
+				<Accordion multiple :active-index="[0, 1, 2, 3]" class="pb-6">
 					<AccordionTab header="Context">
 						<template #header>
 							<tera-output-dropdown
@@ -15,13 +15,13 @@
 								@update:selection="onUpdateSelection"
 							/>
 						</template>
-						<h3>Name</h3>
+						<p class="text-sm mb-1">Name</p>
 						<InputText
 							class="context-item"
 							placeholder="Enter a name for this configuration"
 							v-model="knobs.name"
 						/>
-						<h3>Description</h3>
+						<p class="text-sm mb-1 mt-3">Description</p>
 						<Textarea
 							class="context-item"
 							placeholder="Enter a description"
@@ -173,7 +173,7 @@ const outputs = computed(() => {
 });
 
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'update-state',
 	'select-output',
 	'update-output-port',
@@ -483,7 +483,7 @@ const createConfiguration = async () => {
 	}
 
 	useToastService().success('', 'Created model configuration');
-	emit('append-output-port', {
+	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: state.name,
 		value: data.id,
@@ -614,5 +614,21 @@ onUnmounted(() => {
 
 .context-item {
 	width: 100%;
+}
+
+.floating-footer {
+	display: flex;
+	justify-content: flex-end;
+	position: fixed;
+	padding-top: 0.75rem;
+	bottom: 16px;
+	left: 3rem;
+	width: calc(100% - 6rem);
+	background-color: var(--surface-glass);
+	backdrop-filter: blur(8px);
+	border-top: 1px solid var(--surface-border);
+}
+:deep(.p-button:disabled.p-button-outlined) {
+	background-color: var(--surface-0) !important;
 }
 </style>

@@ -16,16 +16,18 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<div class="button-group">
+				<div class="button-group w-full">
 					<InputText
 						v-if="isRenamingWorkflow"
-						class="p-inputtext-sm"
+						class="p-inputtext w-full mr-8"
 						v-model.lazy="newWorkflowName"
 						placeholder="Workflow name"
 						@keyup.enter="updateWorkflowName"
+						@keyup.esc="updateWorkflowName"
 					/>
-					<h5 v-else>{{ wf.name }}</h5>
+					<h4 v-else>{{ wf.name }}</h4>
 					<Button
+						v-if="!isRenamingWorkflow"
 						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
 						@click="toggleOptionsMenu"
@@ -33,13 +35,31 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button label="Show all" severity="secondary" outlined @click="resetZoom" />
-					<Button label="Clean up layout" severity="secondary" outlined @click="cleanUpLayout" />
+					<Button
+						label="Show everything"
+						severity="secondary"
+						outlined
+						@click="resetZoom"
+						size="small"
+						disabled
+						class="white-space-nowrap"
+					/>
+					<Button
+						label="Clean up layout"
+						severity="secondary"
+						outlined
+						@click="cleanUpLayout"
+						size="small"
+						disabled
+						class="white-space-nowrap"
+					/>
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
 						@click="showAddComponentMenu"
+						size="small"
+						class="white-space-nowrap"
 					/>
 					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
 					<ContextMenu
@@ -84,7 +104,8 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output-port="(event: any) => appendOutputPort(node, event)"
+							@append-output-port="() => appendOutputPort()"
+							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="openDrilldown(node)"
@@ -96,7 +117,7 @@
 		<!-- background -->
 		<template #backgroundDefs>
 			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
-				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
+				<circle cx="5" cy="5" r="3" style="fill: var(--text-color-secondary)" />
 			</marker>
 			<marker
 				id="arrow"
@@ -109,7 +130,10 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					style="fill: var(--text-color-secondary); fill-opacity: 1"
+				></path>
 			</marker>
 			<marker
 				id="smallArrow"
@@ -122,14 +146,14 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--text-color-secondary)"></path>
 			</marker>
 		</template>
 		<template #background>
 			<path
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
-				stroke="#1B8073"
+				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
 				marker-end="url(#arrow)"
@@ -138,7 +162,7 @@
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				stroke="#1B8073"
+				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
 				:key="index"
@@ -152,7 +176,8 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+			@append-output-port="() => appendOutputPort()"
+			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
@@ -305,10 +330,53 @@ function appendInputPort(
 	});
 }
 
-function appendOutputPort(
+/**
+ * The operator creates a new output, this will mark the
+ * output as selected, and revert the selection status of
+ * existing outputs
+ * */
+function appendOutput(
 	node: WorkflowNode<any> | null,
 	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 ) {
+	if (!node) return;
+
+	const uuid = uuidv4();
+	const outputPort: WorkflowOutput<any> = {
+		id: uuid,
+		type: port.type,
+		label: port.label,
+		value: isArray(port.value) ? port.value : [port.value],
+		isOptional: false,
+		status: WorkflowPortStatus.NOT_CONNECTED,
+		state: port.state,
+		isSelected: true,
+		timestamp: new Date()
+	};
+
+	// Revert
+	node.outputs.forEach((o) => {
+		o.isSelected = false;
+	});
+
+	// Append and set active
+	node.outputs.push(outputPort);
+	node.active = uuid;
+
+	workflowDirty = true;
+}
+
+// @deprecated
+// FIXME: Leaving this in here to warn against existing development - remove after hackathon, Feb 2022.
+function appendOutputPort() {
+	/*
+	node: WorkflowNode<any> | null,
+	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
+	*/
+	console.error('This function is no longer supported, use <append-output> intstead');
+	throw new Error('This function is no longer supported, use <append-output> intstead');
+
+	/*
 	if (!node) return;
 
 	const uuid = uuidv4();
@@ -330,6 +398,7 @@ function appendOutputPort(
 	node.active = uuid;
 
 	workflowDirty = true;
+	*/
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -750,6 +819,12 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
+const unloadCheck = () => {
+	if (workflowDirty) {
+		workflowService.updateWorkflow(wf.value);
+	}
+};
+
 watch(
 	() => [props.assetId],
 	async () => {
@@ -768,6 +843,7 @@ watch(
 
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
 		if (workflowDirty) {
 			workflowService.updateWorkflow(wf.value);
@@ -783,6 +859,7 @@ onUnmounted(() => {
 		clearInterval(saveTimer);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
+	window.removeEventListener('beforeunload', unloadCheck);
 });
 
 function cleanUpLayout() {
@@ -815,6 +892,6 @@ function resetZoom() {
 	display: flex;
 	align-items: center;
 	flex-direction: row;
-	gap: 1rem;
+	gap: var(--gap-small);
 }
 </style>

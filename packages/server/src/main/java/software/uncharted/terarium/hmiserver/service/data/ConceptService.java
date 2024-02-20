@@ -67,7 +67,7 @@ public class ConceptService {
 		updateConcept(concept.get());
 	}
 
-	public DKG searchConceptDefinitions(String term, Integer limit, Integer offset) throws Exception {
+	public List<DKG> searchConceptDefinitions(String term, Integer limit, Integer offset) throws Exception {
 		return miraProxy.search(term, limit, offset).getBody();
 	}
 

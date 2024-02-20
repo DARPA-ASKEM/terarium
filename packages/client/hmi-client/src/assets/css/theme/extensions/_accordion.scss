@@ -22,13 +22,13 @@
 
 		&:not(.p-accordion-tab-active) {
 			.p-accordion-toggle-icon {
-				transform: rotate(-270deg);
+				transform: translate(0px, 1px);
 			}
 		}
 
 		&.p-accordion-tab-active {
 			.p-accordion-toggle-icon {
-				transform: rotate(-180deg);
+				transform: translate(0px, 1px);
 			}
 		}
 
