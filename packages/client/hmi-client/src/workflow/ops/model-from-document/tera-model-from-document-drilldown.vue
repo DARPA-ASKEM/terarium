@@ -149,7 +149,7 @@ import {
 const emit = defineEmits([
 	'close',
 	'update-state',
-	'append-output-port',
+	'append-output',
 	'select-output',
 	'update-output-port'
 ]);
@@ -227,7 +227,7 @@ onMounted(async () => {
 		onUpdateOutput(selectedOutputId.value);
 	}
 
-	const documentId = props.node.inputs?.[1]?.value?.[0];
+	const documentId = props.node.inputs?.[0]?.value?.[0];
 	const equations: AssetBlock<DocumentExtraction>[] =
 		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
 	assetLoading.value = true;
@@ -307,7 +307,7 @@ async function onRun() {
 	generateCard(document.value?.id, modelId);
 
 	clonedState.value.modelId = modelId;
-	emit('append-output-port', {
+	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
 		isSelected: false,

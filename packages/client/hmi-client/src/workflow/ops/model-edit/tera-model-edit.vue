@@ -136,7 +136,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'update-state',
 	'close',
 	'select-output',
@@ -318,7 +318,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 
 	if (options.appendOutputPort) {
-		emit('append-output-port', {
+		emit('append-output', {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',
