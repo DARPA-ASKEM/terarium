@@ -363,7 +363,8 @@ public class ElasticsearchService {
 		return null;
 	}
 
-	public <T> List<T> knnSearch(final String index, final KnnQuery query, final Query additional, final int numResults,
+	public <T> SearchResponse<T> knnSearch(final String index, final KnnQuery query, final Query additional,
+			final int numResults,
 			final Class<T> tClass)
 			throws IOException {
 		log.info("KNN search on: {}", index);
@@ -381,13 +382,7 @@ public class ElasticsearchService {
 
 		final SearchRequest req = builder.build();
 
-		final List<T> docs = new ArrayList<>();
-		final SearchResponse<T> res = client.search(req, tClass);
-
-		for (final Hit<T> hit : res.hits().hits()) {
-			docs.add(hit.source());
-		}
-		return docs;
+		return client.search(req, tClass);
 	}
 
 }

@@ -1,5 +1,21 @@
 <template>
-	<div class="container">
+	<!-- Toolbar -->
+	<div class="notebook-toolbar">
+		<div class="toolbar-left-side">
+			<div class="flex gap-1 mr-2">
+				<InputSwitch v-model="showAssistant" class="mr-1" />
+				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
+				<span>AI assistant</span>
+			</div>
+			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
+		</div>
+		<div class="toolbar-right-side">
+			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
+		</div>
+	</div>
+
+	<!-- AI assistant -->
+	<div v-if="showAssistant" class="ai-assistant">
 		<!-- <i class="pi pi-magic" /> -->
 		<Dropdown
 			v-if="defaultOptions"
@@ -23,14 +39,14 @@
 			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
 			@keydown.enter="submitQuestion"
 		/>
-		<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-		<Button v-else icon="pi pi-send" @click="submitQuestion" />
+		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import InputText from 'primevue/inputtext';
+import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import { ref } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
@@ -45,6 +61,8 @@ const emit = defineEmits(['llm-output']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
+
+const showAssistant = ref(true);
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 const contextLanguage = ref<string>('python3');
@@ -65,19 +83,39 @@ const submitQuestion = () => {
 </script>
 
 <style scoped>
-.container {
+.ai-assistant {
 	display: flex;
 	align-items: center;
-	width: 100%;
 	gap: 0.5rem;
+	padding-left: var(--gap);
 }
+
+.notebook-toolbar {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-3);
+	justify-content: space-between;
+	margin-left: 1.5rem;
+	padding-top: var(--gap);
+}
+
+.toolbar-left-side,
+.toolbar-right-side {
+	display: flex;
+	gap: var(--gap-small);
+	align-items: center;
+}
+
 .input {
-	flex: 1;
+	width: 100%;
+	padding: var(--gap-xsmall);
 }
-.p-dropdown {
-	width: 8rem;
-}
-.p-button {
-	background-color: var(--surface-200);
+
+.input:deep(input) {
+	background-image: url('@assets/svg/icons/message.svg');
+	background-size: 1rem;
+	background-position: var(--gap-small);
+	background-repeat: no-repeat;
+	text-indent: 24px;
 }
 </style>
