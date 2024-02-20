@@ -359,6 +359,8 @@ const executeSearch = async () => {
 
 	docCount.value = total;
 
+	console.log(dataItems.value, searchResults);
+
 	isLoading.value = false;
 };
 
