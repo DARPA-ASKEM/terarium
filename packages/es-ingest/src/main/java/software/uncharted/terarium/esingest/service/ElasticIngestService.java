@@ -24,11 +24,7 @@ import software.uncharted.terarium.esingest.util.TimeFormatter;
 public class ElasticIngestService extends ConcurrentWorkerService {
 
 	private final ElasticInsertService esInsertService;
-
 	private final ElasticUpdateService esUpdateService;
-
-	private final ElasticsearchService esService;
-
 	private final ElasticsearchConfiguration esConfig;
 
 	public void ingest(ElasticIngestParams params, IElasticIngest ingest)
