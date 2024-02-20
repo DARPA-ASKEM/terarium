@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.ingests.IElasticPass;
@@ -16,6 +15,7 @@ import software.uncharted.terarium.esingest.models.input.model.ModelEmbedding;
 import software.uncharted.terarium.esingest.models.output.Embedding;
 import software.uncharted.terarium.esingest.models.output.model.Model;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
+import software.uncharted.terarium.esingest.util.ConcurrentBiMap;
 
 @Slf4j
 public class ModelAddEmbeddingsPass
@@ -23,9 +23,9 @@ public class ModelAddEmbeddingsPass
 
 	final String EMBEDDING_PATH = "embeddings";
 
-	ConcurrentMap<String, UUID> uuidLookup;
+	ConcurrentBiMap<String, UUID> uuidLookup;
 
-	ModelAddEmbeddingsPass(ConcurrentMap<String, UUID> uuidLookup) {
+	ModelAddEmbeddingsPass(ConcurrentBiMap<String, UUID> uuidLookup) {
 		this.uuidLookup = uuidLookup;
 	}
 
@@ -50,7 +50,7 @@ public class ModelAddEmbeddingsPass
 		for (ModelEmbedding in : input) {
 
 			if (!uuidLookup.containsKey(in.getId())) {
-				// no embedding for this model
+				// no amr for this model
 				continue;
 			}
 

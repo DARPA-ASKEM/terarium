@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.ingests.IElasticPass;
@@ -15,6 +14,8 @@ import software.uncharted.terarium.esingest.iterators.JSONFileIterator;
 import software.uncharted.terarium.esingest.models.input.model.ModelAMR;
 import software.uncharted.terarium.esingest.models.output.model.Model;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
+import software.uncharted.terarium.esingest.util.ConcurrentBiMap;
+import software.uncharted.terarium.esingest.util.UUIDUtil;
 
 @Slf4j
 public class ModelInsertAMRPass
@@ -22,9 +23,9 @@ public class ModelInsertAMRPass
 
 	final String AMR_PATH = "amr";
 
-	ConcurrentMap<String, UUID> uuidLookup;
+	ConcurrentBiMap<String, UUID> uuidLookup;
 
-	ModelInsertAMRPass(ConcurrentMap<String, UUID> uuidLookup) {
+	ModelInsertAMRPass(ConcurrentBiMap<String, UUID> uuidLookup) {
 		this.uuidLookup = uuidLookup;
 	}
 
@@ -48,7 +49,17 @@ public class ModelInsertAMRPass
 		List<Model> res = new ArrayList<>();
 		for (ModelAMR in : input) {
 
-			UUID uuid = UUID.randomUUID();
+			if (in.getHeader() == null || in.getModel() == null) {
+				// no model for this amr
+				continue;
+			}
+
+			UUID uuid = UUIDUtil.generateSeededUUID(in.getId());
+			if (uuidLookup.containsValue(uuid)) {
+				log.warn("Duplicate UUID generated for document: {}, generating non-deterministic id instead",
+						in.getId());
+				uuid = UUID.randomUUID();
+			}
 			uuidLookup.put(in.getId(), uuid);
 
 			Model doc = new Model();
