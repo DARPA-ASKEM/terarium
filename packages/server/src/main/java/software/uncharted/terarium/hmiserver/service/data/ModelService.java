@@ -43,7 +43,8 @@ public class ModelService extends TerariumAssetService<Model >{
 				.size(pageSize)
 				.query(q -> q.bool(b -> b
 					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
+					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
+				  .mustNot(mn -> mn.term(t -> t.field("isPublic").value(false)))))
 				.source(source)
 				.build();
 
