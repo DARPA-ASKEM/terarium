@@ -1,42 +1,28 @@
 import { LogBuffer } from '@/utils/log-buffer';
-// HMI-Client logger service
 import { useToastService } from '@/services/toast';
 
 // TODO: add logic for different modes
 const isProduction = process.env.NODE_ENV === 'production';
-
 const toast = useToastService();
 
-/**
- * @enum {string}
- */
 enum LogLevels {
 	INFO = 'info',
 	ERROR = 'error',
 	WARN = 'warn',
-	DEBUG = 'debug'
+	SUCCESS = 'success'
 }
 
-/**
- * @interface LoggerMessageOptionsType
- */
 interface LoggerMessageOptionsType {
 	showToast?: boolean;
 	toastTitle?: string;
 	silent?: boolean; // do not transmit to backend
 }
 
-/**
- * @interface LoggerHooksOptionsType
- */
 interface LoggerHooksOptionsType {
 	before?: (level: string, message: string, callerInfo?: string) => void;
 	after?: (level: string, message: string, callerInfo?: string) => void;
 }
 
-/**
- * @interface LoggerOptionsType
- */
 interface LoggerOptionsType {
 	consoleEnabled: boolean;
 	callerInfoEnabled: boolean;
@@ -50,11 +36,6 @@ const defaultOptions: LoggerOptionsType = {
 	showToast: false
 };
 
-/**
- * Main system logger class
- *
- * @class Logger
- */
 class Logger {
 	private options: LoggerOptionsType;
 
@@ -69,13 +50,6 @@ class Logger {
 		this.logBuffer.startService();
 	}
 
-	/**
-	 * Get the caller info as a string
-	 *
-	 * @private
-	 * @return {*}  {string}
-	 * @memberof Logger
-	 */
 	private getCallerInfo(): string {
 		if (!this.options.callerInfoEnabled) {
 			return '';
@@ -84,18 +58,9 @@ class Logger {
 		try {
 			throw new Error();
 		} catch (error: any) {
-			const stack = error.stack.split('\n');
-			const callerLine = stack[3];
-			return callerLine;
+			return error.stack.split('\n')[3];
 		}
 	}
-	/**
-	 *
-	 * @param {string} level "info" | "warn" | "error" | "debug"
-	 * @param {string} message message to
-	 * @param {LoggerMessageOptionsType} [messageOptions]
-	 * @memberof Logger
-	 */
 
 	log(
 		level: string,
@@ -123,69 +88,30 @@ class Logger {
 		this.queueLogs(level, message);
 	}
 
-	/**
-	 *
-	 * @param {string} level
-	 * @param {*} message
-	 */
-	async queueLogs(level: string, message: any) {
+	queueLogs(level: string, message: any) {
 		this.logBuffer.add({ level, message });
 	}
 
-	/**
-	 *
-	 * @param {*} message
-	 * @param {LoggerMessageOptionsType} [messageOptions]
-	 * @memberof Logger
-	 */
 	info(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]): void {
 		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.INFO, message.toString(), messageOptions, optionalParams);
 	}
 
-	/**
-	 *
-	 * @param {string} message message to
-	 * @param {LoggerMessageOptionsType} [messageOptions]
-	 * @memberof Logger
-	 */
 	warn(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.WARN, message.toString(), messageOptions, optionalParams);
 	}
 
-	/**
-	 *
-	 *
-	 * @param {string} message message to
-	 * @param {LoggerMessageOptionsType} [messageOptions]
-	 * @memberof Logger
-	 */
-	debug(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
+	success(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
-		this.log(LogLevels.DEBUG, message.toString(), messageOptions, optionalParams);
+		this.log(LogLevels.SUCCESS, message.toString(), messageOptions, optionalParams);
 	}
 
-	/**
-	 *
-	 *
-	 * @param {string} message message to
-	 * @param {LoggerMessageOptionsType} [messageOptions]
-	 * @memberof Logger
-	 */
 	error(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.ERROR, message.toString(), messageOptions, optionalParams);
 	}
 
-	/**
-	 *
-	 * @private
-	 * @param {string} level
-	 * @param {string} message
-	 * @param {LoggerMessageOptionsType} [messageOptions]
-	 * @memberof Logger
-	 */
 	private displayToast(level: string, message: string, messageOptions?: LoggerMessageOptionsType) {
 		switch (level) {
 			case LogLevels.INFO:
@@ -196,6 +122,9 @@ class Logger {
 				break;
 			case LogLevels.WARN:
 				toast.warn(messageOptions?.toastTitle, message);
+				break;
+			case LogLevels.SUCCESS:
+				toast.success(messageOptions?.toastTitle, message);
 				break;
 			default:
 				toast.info(messageOptions?.toastTitle, message);
