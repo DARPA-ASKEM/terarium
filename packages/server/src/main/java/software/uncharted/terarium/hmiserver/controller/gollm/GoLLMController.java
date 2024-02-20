@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.controller.gollm;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.json.Json;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,6 +21,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -26,9 +30,12 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.TaskResponseHandler;
 import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,6 +49,7 @@ public class GoLLMController {
 	final private TaskService taskService;
 	final private DocumentAssetService documentAssetService;
 	final private ModelService modelService;
+	final private ModelConfigurationService modelConfigurationService;
 
 	final private String MODEL_CARD_SCRIPT = "gollm:model_card";
 	final private String CONFIGURE_MODEL_SCRIPT = "gollm:configure_model";
@@ -123,6 +131,35 @@ public class GoLLMController {
 
 				final Model model = modelService.getAsset(props.getModelId())
 						.orElseThrow();
+				final ConfigureModelResponse configurations = objectMapper.readValue(resp.getOutput(), ConfigureModelResponse.class);
+
+				configurations.response.get("conditions").forEach((condition) -> {
+
+
+					final Model modelCopy = model;
+					final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
+					modelParameters.forEach((parameter) -> {
+						JsonNode conditionParameters = condition.get("parameters");
+						conditionParameters.forEach((conditionParameter) -> {
+							if (parameter.getId().equals(conditionParameter.get("id").asText())) {
+								parameter.setValue(conditionParameter.get("value").doubleValue());
+							}
+						});
+					});
+					modelCopy.getSemantics().getOde().setParameters(modelParameters);
+
+					final ModelConfiguration configuration = new ModelConfiguration();
+					configuration.setModelId(model.getId());
+					configuration.setName(condition.get("name").asText());
+					configuration.setDescription(condition.get("description").asText());
+					configuration.setConfiguration(modelCopy);
+
+					try {
+						modelConfigurationService.createAsset(configuration);
+					} catch (IOException e) {
+						log.error("Failed to set model configuration", e);
+					}
+				});
 				
 			} catch (final IOException e) {
 				log.error("Failed to configure model", e);

@@ -31,8 +31,16 @@
 						/>
 					</AccordionTab>
 					<AccordionTab header="Suggested Configurations">
-						<DataTable :value="suggestedConfigurationsTableData" size="small">
-							<Column field="name" header="Name"></Column>
+						<DataTable :value="suggestedConfigurationsTableData" size="small" data-key="id">
+							<Column field="name" header="Name">
+								<template #body="{ data }">
+									<Button
+										:label="data.name"
+										text
+										@click="openConfigurationDrilldown = true"
+									></Button>
+								</template>
+							</Column>
 							<Column field="description" header="Description"></Column>
 							<Column field="source" header="Source"></Column>
 							<Column style="width: 6rem">
@@ -103,6 +111,30 @@
 			</div>
 		</template>
 	</tera-drilldown>
+	<tera-drilldown
+		v-if="openConfigurationDrilldown"
+		title="Model Configuration"
+		@on-close-clicked="openConfigurationDrilldown = false"
+	>
+		<tera-drilldown-section>
+			<Accordion multiple :active-index="[0, 1]">
+				<AccordionTab header="Initials">
+					<tera-model-config-table
+						v-if="modelConfiguration"
+						:model-configuration="modelConfiguration"
+						:data="tableFormattedInitials"
+					/>
+				</AccordionTab>
+				<AccordionTab header="Parameters">
+					<tera-model-config-table
+						v-if="modelConfiguration"
+						:model-configuration="modelConfiguration"
+						:data="tableFormattedParams"
+					/>
+				</AccordionTab>
+			</Accordion>
+		</tera-drilldown-section>
+	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
@@ -114,7 +146,7 @@ import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel } from '@/services/model';
+import { getModel, getModelConfigurations } from '@/services/model';
 import {
 	createModelConfiguration,
 	getModelConfigurationById
@@ -175,13 +207,8 @@ const selectedConfigId = computed(
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
 const modelId = computed(() => props.node.inputs?.[0]?.value?.[0]);
 
-const suggestedConfigurationsTableData = ref<
-	{
-		name: string;
-		description: string;
-		source: string;
-	}[]
->([{ name: 'test', description: 'test', source: 'test' }]);
+const openConfigurationDrilldown = ref(false);
+const suggestedConfigurationsTableData = ref<ModelConfiguration[]>([]);
 const configCache = ref<Record<string, ModelConfiguration>>({});
 
 const configName = ref<string>(props.node.state.name);
@@ -445,6 +472,12 @@ const onUpdateSelection = (id) => {
 	emit('update-output-port', outputPort);
 };
 
+const fetchConfigurations = async () => {
+	if (model.value) {
+		suggestedConfigurationsTableData.value = await getModelConfigurations(model.value.id);
+	}
+};
+
 watch(
 	() => props.node.state,
 	() => {
@@ -486,6 +519,7 @@ onMounted(async () => {
 		const m = await getModel(input.value[0]);
 		if (m) {
 			model.value = m;
+			fetchConfigurations();
 			if (isEmpty(outputs.value)) {
 				const state = _.cloneDeep(props.node.state);
 				state.initials = m.semantics?.ode.initials;
