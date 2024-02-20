@@ -25,41 +25,24 @@ interface LoggerHooksOptionsType {
 
 interface LoggerOptionsType {
 	consoleEnabled: boolean;
-	callerInfoEnabled: boolean;
 	showToast: boolean;
 	hooks?: LoggerHooksOptionsType;
 }
 
 const defaultOptions: LoggerOptionsType = {
 	consoleEnabled: !isProduction,
-	callerInfoEnabled: false,
 	showToast: false
 };
 
 class Logger {
 	private options: LoggerOptionsType;
 
-	private callerInfo: string;
-
 	private logBuffer: LogBuffer;
 
 	constructor(options: LoggerOptionsType = defaultOptions) {
 		this.options = { ...defaultOptions, ...options };
-		this.callerInfo = '';
 		this.logBuffer = new LogBuffer();
 		this.logBuffer.startService();
-	}
-
-	private getCallerInfo(): string {
-		if (!this.options.callerInfoEnabled) {
-			return '';
-		}
-
-		try {
-			throw new Error();
-		} catch (error: any) {
-			return error.stack.split('\n')[3];
-		}
 	}
 
 	log(
@@ -69,11 +52,11 @@ class Logger {
 		...optionalParams: any[]
 	): void {
 		if (this.options.hooks?.before) {
-			this.options.hooks.before(level, message.toString(), this.callerInfo);
+			this.options.hooks.before(level, message.toString());
 		}
 
 		if (this.options.consoleEnabled) {
-			console[level](`[${level}] ${message} ${this.callerInfo}`, ...optionalParams);
+			console[level](`[${level}] ${message}`, ...optionalParams);
 		}
 
 		if (this.options.showToast && messageOptions?.showToast) {
@@ -82,7 +65,7 @@ class Logger {
 			this.displayToast(level, message.toString(), messageOptions);
 		}
 		if (this.options.hooks?.after && messageOptions?.silent !== true) {
-			this.options.hooks.after(level, message.toString(), this.callerInfo);
+			this.options.hooks.after(level, message.toString());
 		}
 
 		this.queueLogs(level, message);
@@ -93,22 +76,18 @@ class Logger {
 	}
 
 	info(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]): void {
-		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.INFO, message.toString(), messageOptions, optionalParams);
 	}
 
 	warn(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
-		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.WARN, message.toString(), messageOptions, optionalParams);
 	}
 
 	success(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
-		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.SUCCESS, message.toString(), messageOptions, optionalParams);
 	}
 
 	error(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
-		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.ERROR, message.toString(), messageOptions, optionalParams);
 	}
 
@@ -134,6 +113,5 @@ class Logger {
 
 export const logger = new Logger({
 	consoleEnabled: !isProduction,
-	callerInfoEnabled: true,
 	showToast: true
 });
