@@ -10,13 +10,25 @@
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
-			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
+			<tera-drilldown-section id="notebook-section">
+				<div class="toolbar-right-side">
+					<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
+					<Button
+						icon="pi pi-play"
+						label="Run"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="runFromCodeWrapper"
+					/>
+				</div>
+
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
 						:defaultOptions="sampleAgentOptions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
+						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -26,44 +38,49 @@
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
+					:options="{ showPrintMargin: false }"
 				/>
-				<template #footer
-					><Button style="margin-right: auto" label="Reset" @click="resetModel" />
-					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
-				</template>
 			</tera-drilldown-section>
-			<tera-drilldown-preview
-				title="Model Preview"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:options="outputs"
-				is-selectable
-			>
-				<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Model Provided</h4>
-				</div>
-				<template #footer>
-					<InputText
-						v-model="newModelName"
-						placeholder="model name"
-						type="text"
-						class="input-small"
-					/>
-					<Button
-						:disabled="!amr"
-						outlined
-						style="margin-right: auto"
-						label="Save as new Model"
-						@click="
-							() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-						"
-					/>
-					<Button label="Close" @click="emit('close')" />
-				</template>
-			</tera-drilldown-preview>
+			<div class="preview-container">
+				<tera-drilldown-preview
+					title="Model Preview"
+					v-model:output="selectedOutputId"
+					@update:output="onUpdateOutput"
+					@update:selection="onUpdateSelection"
+					:options="outputs"
+					is-selectable
+					class="h-full"
+				>
+					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
+					<div v-else>
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+						<h4>No Model Provided</h4>
+					</div>
+					<template #footer>
+						<InputText
+							v-model="newModelName"
+							placeholder="model name"
+							type="text"
+							class="input-small"
+						/>
+						<div class="flex gap-2">
+							<Button
+								:disabled="!amr"
+								size="large"
+								severity="secondary"
+								outlined
+								class="white-space-nowrap"
+								style="margin-right: auto"
+								label="Save as new model"
+								@click="
+									() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
+								"
+							/>
+							<Button label="Close" size="large" @click="emit('close')" />
+						</div>
+					</template>
+				</tera-drilldown-preview>
+			</div>
 		</div>
 	</tera-drilldown>
 </template>
@@ -344,16 +361,47 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* The wizard of this operator is atypical and needs the outside margins to be removed */
+.overlay-container:deep(main) {
+	padding: 0 0 0 0;
+}
+
 .input {
 	width: 95%;
 }
+
 .code-container {
 	display: flex;
 	flex-direction: column;
 }
 
+#notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
+}
+
+.ai-assistant-container {
+	margin-left: var(--gap);
+}
+
+.preview-container {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem;
+}
+
 .input-small {
 	padding: 0.5rem;
+	width: 100%;
 }
 
 .code-executed-warning {
