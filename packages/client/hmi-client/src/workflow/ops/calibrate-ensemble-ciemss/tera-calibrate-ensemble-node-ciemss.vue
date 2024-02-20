@@ -75,7 +75,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
@@ -161,7 +161,7 @@ const getStatus = async (simulationId: string) => {
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
-	emit('append-output-port', {
+	emit('append-output', {
 		type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: { runId }

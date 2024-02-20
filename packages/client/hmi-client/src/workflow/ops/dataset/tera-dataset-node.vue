@@ -76,7 +76,7 @@ const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
 const datasets = useProjects().getActiveProjectAssets(AssetType.Dataset);
 
@@ -106,7 +106,7 @@ async function getDatasetById(id: string) {
 				datasetId: dataset.value.id
 			});
 
-			emit('append-output-port', {
+			emit('append-output', {
 				type: 'datasetId',
 				label: dataset.value.name,
 				value: [dataset.value.id]

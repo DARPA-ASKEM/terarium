@@ -242,16 +242,12 @@ main {
 			top: 50%;
 			left: 50%;
 			transform: translate(-50%, -50%);
-			/* Centers the pseudo-element */
 			width: 10px;
-			/* Size of the circle */
 			height: 10px;
-			/* Size of the circle */
 			border-radius: 50%;
-			/* Makes it round */
 			background-color: var(--text-color-subdued);
-			/* Circle color */
 		}
+
 
 		&:deep(.port-connected:hover .port) {
 			background-color: var(--text-color-subdued);

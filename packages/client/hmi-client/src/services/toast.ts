@@ -46,30 +46,14 @@ export const useToastService = () => {
 		});
 	};
 
-	const error = (summary: string | undefined, detail: string, life: number = DEFAULT_DURATION) => {
+	const error = (summary: string | undefined, detail: string) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.error,
 			summary: summary || ToastSummaries.ERROR,
 			group: ToastSeverity.error,
-			detail,
-			life
+			detail
 		});
 	};
-
-	// Why isn't this a standard toast? It doesn't seem to work, fwiw.
-	// const success = (
-	// 	summary: string | undefined,
-	// 	detail: string,
-	// 	life: number = DEFAULT_DURATION
-	// ) => {
-	// 	ToastEventBus.emit('add', {
-	// 		severity: ToastSeverity.success,
-	// 		summary: summary || ToastSummaries.INFO,
-	// 		group: ToastSeverity.success,
-	// 		detail,
-	// 		life
-	// 	});
-	// };
 
 	const success = (
 		summary: string | undefined,

@@ -136,7 +136,7 @@ const outputs = computed(() => {
 });
 
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'update-state',
 	'select-output',
 	'update-output-port',
@@ -189,12 +189,26 @@ const stratifiedModelType = computed(() => {
 
 const parameters = computed<Map<string, string[]>>(() => {
 	if (!model.value) return new Map();
-	return getUnstratifiedParameters(model.value);
+	if (stratifiedModelType.value) {
+		return getUnstratifiedParameters(model.value);
+	}
+	const result = new Map<string, string[]>();
+	model.value.semantics?.ode.parameters?.forEach((p) => {
+		result.set(p.id, [p.id]);
+	});
+	return result;
 });
 
 const initials = computed<Map<string, string[]>>(() => {
 	if (!model.value) return new Map();
-	return getUnstratifiedInitials(model.value);
+	if (stratifiedModelType.value) {
+		return getUnstratifiedInitials(model.value);
+	}
+	const result = new Map<string, string[]>();
+	model.value.semantics?.ode.initials?.forEach((initial) => {
+		result.set(initial.target, [initial.target]);
+	});
+	return result;
 });
 
 const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
@@ -360,7 +374,7 @@ const createConfiguration = async () => {
 	}
 
 	useToastService().success('', 'Created model configuration');
-	emit('append-output-port', {
+	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: state.name,
 		value: data.id,
