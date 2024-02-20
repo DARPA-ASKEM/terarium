@@ -23,7 +23,8 @@ export enum WorkflowOperationTypes {
 	MODEL_COUPLING = 'ModelCoupling',
 	MODEL_EDIT = 'ModelEdit',
 	DOCUMENT = 'Document',
-	MODEL_FROM_DOCUMENT = 'ModelFromDocument'
+	MODEL_FROM_DOCUMENT = 'ModelFromDocument',
+	TEXT_BLOCK = 'TextBlock'
 }
 
 export enum OperatorStatus {

@@ -1415,6 +1415,7 @@ export enum WorkflowOperationTypes {
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
     Document = "DOCUMENT",
+    TextBlock = "TEXT_BLOCK",
 }
 
 export enum OperatorStatus {

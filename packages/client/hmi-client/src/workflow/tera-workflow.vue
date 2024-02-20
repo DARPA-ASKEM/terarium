@@ -239,6 +239,7 @@ import * as ModelOptimizeOp from './ops/model-optimize/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as TextBlock from './ops/text-block/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -555,6 +556,11 @@ const contextMenuItems: MenuItem[] = [
 	{
 		label: "Ask 'em LLM tool",
 		disabled: true
+	},
+	// TextBlock
+	{
+		label: 'Text block',
+		command: addOperatorToWorkflow(TextBlock)
 	}
 ];
 
