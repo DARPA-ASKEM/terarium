@@ -160,7 +160,7 @@ const outputs = computed(() => {
 });
 
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'update-state',
 	'select-output',
 	'update-output-port',
@@ -394,7 +394,7 @@ const createConfiguration = async () => {
 	}
 
 	useToastService().success('', 'Created model configuration');
-	emit('append-output-port', {
+	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
 		label: state.name,
 		value: data.id,

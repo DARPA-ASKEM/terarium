@@ -178,7 +178,7 @@ const emit = defineEmits([
 	'close',
 	'update-state',
 	'select-output',
-	'append-output-port',
+	'append-output',
 	'update-output-port'
 ]);
 
@@ -364,7 +364,7 @@ async function handleCode() {
 
 		clonedState.value.modelId = modelId;
 
-		emit('append-output-port', {
+		emit('append-output', {
 			label: `Output - ${props.node.outputs.length + 1}`,
 			state: cloneDeep(clonedState.value),
 			isSelected: false,
@@ -429,7 +429,7 @@ async function handleDecapodesPreview(data: any) {
 		const m = await getModel(response.id);
 		if (m && m.id) {
 			clonedState.value.modelId = m.id;
-			emit('append-output-port', {
+			emit('append-output', {
 				label: `Output - ${props.node.outputs.length + 1}`,
 				state: cloneDeep(clonedState.value),
 				isSelected: false,
