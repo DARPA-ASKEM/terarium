@@ -35,7 +35,7 @@ import { getDocumentAsset } from '@/services/document-assets';
 import teraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { DocumentOperationState } from './document-operation';
 
-const emit = defineEmits(['open-drilldown', 'update-state', 'append-output-port']);
+const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();
@@ -97,13 +97,14 @@ watch(
 			emit('update-state', state);
 
 			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
-				emit('append-output-port', {
+				emit('append-output', {
 					type: 'documentId',
 					label: `document`,
 					value: [document.value.id]
 				});
 			}
 
+			/*
 			if (!props.node.outputs.find((port) => port.type === 'equations') && !isEmpty(equations)) {
 				const selected = equations.filter((e) => e.includeInProcess);
 				emit('append-output-port', {
@@ -145,6 +146,7 @@ watch(
 					]
 				});
 			}
+			*/
 		}
 	},
 	{ immediate: true }

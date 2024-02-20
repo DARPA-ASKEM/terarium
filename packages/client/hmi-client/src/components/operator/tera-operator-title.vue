@@ -9,7 +9,7 @@ h6 {
 	text-overflow: ellipsis;
 	overflow: hidden;
 	-webkit-line-clamp: 3;
-	font-weight: 600;
+	font-weight: var(--font-weight-semibold);
 }
 
 h6:empty {
