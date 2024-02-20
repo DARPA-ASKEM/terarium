@@ -16,13 +16,16 @@ export const createModelConfiguration = async (
 	model_id: string | undefined,
 	name: string,
 	description: string,
-	configuration: Model
+	configuration: Model,
+	isTemporary?: boolean
 ) => {
 	if (!model_id) {
 		return null;
 	}
+	const temporary = isTemporary ?? false;
 	const response = await API.post(`/model-configurations`, {
 		model_id,
+		temporary,
 		name,
 		description,
 		configuration

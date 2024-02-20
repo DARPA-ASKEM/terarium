@@ -260,7 +260,6 @@ const runFromCode = () => {
 		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;
-
 			handleModelPreview(data);
 
 			if (executedCode) {
@@ -528,7 +527,8 @@ const createTempModelConfig = async () => {
 		model.value.id,
 		'Temp_config_name',
 		'Utilized in model config node for beaker purposes',
-		model.value
+		model.value,
+		true
 	);
 
 	state.initials = knobs.value.initials;
