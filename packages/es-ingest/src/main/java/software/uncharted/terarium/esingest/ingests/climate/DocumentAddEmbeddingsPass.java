@@ -1,4 +1,4 @@
-package software.uncharted.terarium.esingest.ingests.document;
+package software.uncharted.terarium.esingest.ingests.climate;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -11,16 +11,22 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.ingests.IElasticPass;
 import software.uncharted.terarium.esingest.iterators.IInputIterator;
 import software.uncharted.terarium.esingest.iterators.JSONLineIterator;
-import software.uncharted.terarium.esingest.models.input.document.DocumentEmbedding;
+import software.uncharted.terarium.esingest.models.input.climate.DocumentEmbedding;
 import software.uncharted.terarium.esingest.models.output.Embedding;
 import software.uncharted.terarium.esingest.models.output.document.Document;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
+import software.uncharted.terarium.esingest.util.ConcurrentBiMap;
 
 @Slf4j
 public class DocumentAddEmbeddingsPass
 		implements IElasticPass<DocumentEmbedding, Document> {
 
 	final String EMBEDDING_PATH = "embeddings";
+	ConcurrentBiMap<String, UUID> uuidLookup;
+
+	DocumentAddEmbeddingsPass(ConcurrentBiMap<String, UUID> uuidLookup) {
+		this.uuidLookup = uuidLookup;
+	}
 
 	public void setup(final ElasticIngestParams params) {
 	}
@@ -75,7 +81,12 @@ public class DocumentAddEmbeddingsPass
 				continue;
 			}
 
-			UUID uuid = UUID.fromString(in.getId());
+			if (!uuidLookup.containsKey(in.getId())) {
+				// no amr for this model
+				continue;
+			}
+
+			UUID uuid = uuidLookup.get(in.getId());
 
 			if (currentId == null) {
 				// create a new partial

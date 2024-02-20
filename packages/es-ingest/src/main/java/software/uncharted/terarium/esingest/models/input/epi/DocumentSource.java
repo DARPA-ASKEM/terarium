@@ -1,4 +1,4 @@
-package software.uncharted.terarium.esingest.models.input.document;
+package software.uncharted.terarium.esingest.models.input.epi;
 
 import java.sql.Timestamp;
 import java.util.List;
