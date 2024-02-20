@@ -56,7 +56,8 @@ class Logger {
 		}
 
 		if (this.options.consoleEnabled) {
-			console[level](`[${level}] ${message}`, ...optionalParams);
+			const consoleLevel = level === LogLevels.SUCCESS ? LogLevels.INFO : level;
+			console[consoleLevel](`[${level}] ${message}`, ...optionalParams);
 		}
 
 		if (this.options.showToast && messageOptions?.showToast) {
