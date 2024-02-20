@@ -103,7 +103,7 @@
 				:options="outputs"
 				is-selectable
 			>
-				<div>OUTPUT HERE</div>
+				<div>{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</section>
 		<template #footer>
@@ -202,7 +202,6 @@ const isSaveDisabled = computed(() => {
 });
 
 const kernelManager = new KernelSessionManager();
-// const isKernelReady = ref(false);
 let editor: VAceEditorInstance['_editor'] | null;
 const buildJupyterContext = () => {
 	const contextId = selectedConfigId.value ?? props.node.state.tempConfigId;
@@ -221,7 +220,11 @@ const buildJupyterContext = () => {
 const codeText = ref(
 	'# This environment contains the variable "model" \n# which is displayed on the right'
 );
-const sampleAgentQuestions = ['What are the current parameters values?'];
+const notebookResponse = ref();
+const sampleAgentQuestions = [
+	'What are the current parameters values?',
+	'update the parameters {beta: 0, gamma: 1}'
+];
 
 const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
@@ -249,7 +252,7 @@ const runFromCode = () => {
 			executedCode = data.content.code;
 		})
 		.register('stream', (data) => {
-			console.log('stream', data);
+			notebookResponse.value = data.content.text;
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
