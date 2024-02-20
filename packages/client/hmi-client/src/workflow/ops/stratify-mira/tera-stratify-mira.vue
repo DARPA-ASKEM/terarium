@@ -128,7 +128,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -291,7 +291,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 
 	if (options.appendOutputPort) {
-		emit('append-output-port', {
+		emit('append-output', {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',

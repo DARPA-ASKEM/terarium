@@ -259,7 +259,7 @@ const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'update-state',
 	'select-output',
 	'update-output-port',
@@ -473,7 +473,7 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	const state = _.cloneDeep(props.node.state);
 	state.intermediateLoss = lossValues;
 
-	emit('append-output-port', {
+	emit('append-output', {
 		type: CalibrationOperationJulia.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
 		value: runIdList,
