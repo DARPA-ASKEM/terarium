@@ -135,6 +135,7 @@ main {
 	box-shadow: var(--overlayMenuShadow);
 	min-width: 15rem;
 	transition: box-shadow 80ms ease;
+
 	&:hover {
 		box-shadow: var(--overlayMenuShadowHover);
 		z-index: 2;
@@ -144,9 +145,11 @@ main {
 		padding: 0.5rem;
 	}
 
-	& > ul,
-	& > .content,
-	& > .content:deep(> *)  /* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
+	&>ul,
+	&>.content,
+	&>.content:deep(> *)
+
+	/* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
 		display: flex;
 		flex-direction: column;
 		justify-content: space-evenly;
@@ -171,14 +174,17 @@ main {
 			gap: 0.25rem;
 			cursor: pointer;
 		}
+
 		&:deep(> li:hover) {
 			background-color: var(--surface-highlight);
 		}
+
 		&:deep(li:hover .port) {
 			/* Not sure what color was intended */
 			background-color: var(--primary-color);
 			background-color: var(--surface-border);
 		}
+
 		&:deep(> li > section) {
 			display: flex;
 			align-items: center;
@@ -222,11 +228,31 @@ main {
 		}
 
 		&:deep(.port-connected .port) {
+			position: relative;
 			width: calc(var(--port-base-size) * 2);
-			border: 2px solid var(--text-color-subdued);
+			border: 2px solid var(--surface-border);
 			border-radius: var(--port-base-size);
-			background-color: var(--text-color-subdued);
+			background-color: var(--surface-100);
 		}
+
+		&:deep(.port-connected .port)::after {
+			content: '';
+			position: absolute;
+			/* This is crucial for positioning inside the parent */
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			/* Centers the pseudo-element */
+			width: 10px;
+			/* Size of the circle */
+			height: 10px;
+			/* Size of the circle */
+			border-radius: 50%;
+			/* Makes it round */
+			background-color: var(--text-color-subdued);
+			/* Circle color */
+		}
+
 		&:deep(.port-connected:hover .port) {
 			background-color: var(--text-color-subdued);
 		}
