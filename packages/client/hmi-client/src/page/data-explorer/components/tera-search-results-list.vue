@@ -4,8 +4,8 @@
 			<template v-if="isLoading">Loading...</template>
 			<template v-else-if="props.searchTerm || searchByExampleOptionsStr">
 				{{ resultsText }}
-				<span v-if="searchByExampleOptionsStr.length === 0"> "{{ props.searchTerm }}" </span>
-				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
+				<span v-if="isEmpty(searchByExampleOptionsStr)"> "{{ props.searchTerm }}" </span>
+				<div v-else-if="!isEmpty(searchByExampleOptionsStr)" class="search-by-example-card">
 					<tera-asset-card
 						:asset="searchByExampleItem!"
 						:resource-type="resultType as ResourceType"
@@ -60,6 +60,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { computed, PropType, ref } from 'vue';
 import type { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -306,15 +307,7 @@ ul {
 }
 
 .result-details {
-	color: var(--text-color-subdued);
-}
-
-.result-count {
-	font-size: var(--font-caption);
-}
-
-.result-count span {
-	color: var(--text-color-primary);
+	margin-left: 0.5rem;
 }
 
 .facet-chips {

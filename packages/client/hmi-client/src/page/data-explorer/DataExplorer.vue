@@ -1,5 +1,5 @@
 <template>
-	<main class="data-explorer-container flex flex-column">
+	<main>
 		<section class="flex h-full relative overflow-hidden">
 			<tera-slider-panel
 				content-width="240px"
@@ -18,33 +18,30 @@
 				</template>
 			</tera-slider-panel>
 			<div class="results-content">
-				<div class="search-nav">
+				<div class="search">
+					<nav>
+						<SelectButton
+							:model-value="resourceType"
+							@change="if ($event.value) resourceType = $event.value;"
+							:options="assetOptions"
+							option-value="value"
+							option-label="label"
+						/>
+						<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+					</nav>
 					<tera-searchbar
-						class="search-bar"
 						ref="searchBarRef"
 						@query-changed="updateRelatedTerms"
 						@toggle-search-by-example="searchByExampleModalToggled"
 						:show-suggestions="false"
 					/>
-					<aside class="suggested-terms" v-if="!isEmpty(terms)">
+					<!-- <aside class="suggested-terms" v-if="!isEmpty(terms)">
 						Suggested terms:
 						<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
 							<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
 						</Chip>
-					</aside>
-					<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+					</aside> -->
 				</div>
-				<SelectButton
-					:model-value="resourceType"
-					@change="if ($event.value) resourceType = $event.value;"
-					:options="assetOptions"
-					option-value="value"
-				>
-					<template #option="slotProps">
-						<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-						<span class="p-button-label">{{ slotProps.option.label }}</span>
-					</template>
-				</SelectButton>
 				<tera-search-results-list
 					:data-items="dataItems"
 					:facets="filteredFacets"
@@ -100,7 +97,7 @@ import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.v
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
-import Chip from 'primevue/chip';
+// import Chip from 'primevue/chip';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
 
@@ -138,9 +135,9 @@ const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 const clientFilters = computed(() => queryStore.clientFilters);
 
 const assetOptions = ref([
-	{ label: 'Documents', value: ResourceType.XDD, icon: 'pi pi-file' },
-	{ label: 'Models', value: ResourceType.MODEL, icon: 'pi pi-share-alt' },
-	{ label: 'Datasets', value: ResourceType.DATASET, icon: 'pi pi-database' }
+	{ label: 'Documents', value: ResourceType.XDD },
+	{ label: 'Models', value: ResourceType.MODEL },
+	{ label: 'Datasets', value: ResourceType.DATASET }
 ]);
 
 const topicOptions = ref([
@@ -571,8 +568,9 @@ function searchByExampleModalToggled() {
 </script>
 
 <style scoped>
-.data-explorer-container {
-	background-color: var(--surface-100);
+main {
+	display: flex;
+	flex-direction: column;
 }
 .results-content {
 	display: flex;
@@ -588,15 +586,17 @@ main > section:first-of-type {
 	flex-direction: row;
 }
 
-.search-nav {
+.p-selectbutton:deep(.p-button) {
+	min-width: 7rem;
+}
+
+.search {
 	display: flex;
-
-	& > *:first-child {
-		flex-grow: 2;
-	}
-
-	& > *:last-child {
-		margin-left: auto;
+	flex-direction: column;
+	gap: 0.5rem;
+	& > nav {
+		display: flex;
+		justify-content: space-between;
 	}
 }
 </style>
