@@ -234,7 +234,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOptimizeOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 enum OptimizeTabs {
 	Wizard = 'Wizard',

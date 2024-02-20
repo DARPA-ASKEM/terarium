@@ -35,6 +35,7 @@
 					tabName="Description"
 					:dataset="dataset"
 					:raw-content="rawContent"
+					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
 			<section class="tab data-tab" tabName="Data">
@@ -132,6 +133,11 @@ async function updateDatasetName() {
 		useProjects().refresh();
 		isRenamingDataset.value = false;
 	}
+}
+
+async function updateAndFetchDataset(ds: Dataset) {
+	await updateDataset(ds);
+	fetchDataset();
 }
 
 const fetchDataset = async () => {
