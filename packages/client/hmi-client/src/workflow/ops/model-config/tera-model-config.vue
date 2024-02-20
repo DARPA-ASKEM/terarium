@@ -223,7 +223,7 @@ const codeText = ref(
 const notebookResponse = ref();
 const sampleAgentQuestions = [
 	'What are the current parameters values?',
-	'update the parameters {beta: 0, gamma: 1}'
+	'update the parameters {gamma: 0.13}'
 ];
 
 const appendCode = (data: any, property: string, runUpdatedCode = false) => {
@@ -288,7 +288,9 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const handleModelPreview = (data: any) => {
-	model.value = data.content['application/json'];
+	if (!model.value) return;
+	// Only update the keys provided in the model preview (not ID, temporary ect)
+	Object.assign(model.value, data.content['application/json']);
 };
 
 const selectedOutputId = ref<string>('');
@@ -485,7 +487,6 @@ const createConfiguration = async () => {
 	if (!model.value) return;
 
 	const state = _.cloneDeep(props.node.state);
-
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value.name,
