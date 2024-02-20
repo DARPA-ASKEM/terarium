@@ -607,10 +607,7 @@ watch(
 	() => props.node.active,
 	async () => {
 		if (props.node.active) {
-			// Update selected output
-			// TODO:
-			// activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
-			// selectedOutputId.value = props.node.active;
+			selectedOutputId.value = props.node.active;
 			await initialize();
 		}
 	},
