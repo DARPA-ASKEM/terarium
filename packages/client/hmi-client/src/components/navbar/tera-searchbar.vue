@@ -295,9 +295,9 @@ watch(
 .p-autocomplete:deep(.p-inputtext),
 .p-autocomplete:deep(.p-inputtext:hover),
 .p-autocomplete:deep(.p-inputtext:focus) {
-	/**TODO: Make this a gradient border like the design */
-	border: 4px solid #cae8c0;
-	padding-left: 3rem;
+	/**TODO: Make this a gradient border like the design #cae8c0*/
+	border: 4px solid var(--primary-color);
+	padding-left: 2.5rem;
 }
 
 .p-autocomplete[active='true']:deep(.p-inputtext) {
@@ -318,6 +318,7 @@ watch(
 
 i {
 	color: var(--text-color-subdued);
+	margin-left: 0.5rem;
 	z-index: 1;
 }
 
