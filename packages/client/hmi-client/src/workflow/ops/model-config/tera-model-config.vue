@@ -218,7 +218,7 @@ const buildJupyterContext = () => {
 	};
 };
 const codeText = ref(
-	'# This environment contains the variable "model" \n# which is displayed on the right'
+	'# This environment contains the variable "model_config" to be read and updated'
 );
 const notebookResponse = ref();
 const sampleAgentQuestions = [
