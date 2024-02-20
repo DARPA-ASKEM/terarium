@@ -313,7 +313,6 @@ const runMakeQuery = async () => {
 			modelMassExpression as string,
 			parametersMap
 		);
-		console.log(mass);
 
 		if (request.request.config) {
 			request.request.config.normalization_constant = parseFloat(mass);
@@ -488,6 +487,7 @@ watch(
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
 		state.numSteps = knobs.value.numberOfSteps;
+		state.useCompartmentalConstraint = knobs.value.useCompartmentalConstraint;
 
 		emit('update-state', state);
 	},
