@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<template v-if="!isEmpty(node.state)">
+		<template v-if="node.inputs[0].value">
 			<ul>
 				<li v-for="config of modelConfigs" :key="config.id">
 					{{ config.name }}
@@ -17,7 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import { watch, ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import { ModelConfiguration } from '@/types/Types';
