@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -147,14 +148,20 @@ public class SearchByAssetTypeController {
 				queryVectorCache.put(hash, vector, CACHE_TTL_SECONDS, TimeUnit.SECONDS);
 			}
 
-			KnnQuery query = new KnnQuery.Builder()
+			KnnQuery knn = new KnnQuery.Builder()
 					.field("embeddings.vector")
 					.queryVector(vector)
 					.k(k)
 					.numCandidates(numCandidates)
 					.build();
 
-			List<JsonNode> docs = esService.knnSearch(index, query, numResults, JsonNode.class);
+			Query query = new Query.Builder()
+					.bool(b -> b
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+					.build();
+
+			List<JsonNode> docs = esService.knnSearch(index, knn, query, numResults, JsonNode.class);
 
 			return ResponseEntity.ok(docs);
 
