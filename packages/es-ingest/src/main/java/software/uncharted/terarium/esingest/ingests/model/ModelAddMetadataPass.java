@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -17,6 +16,7 @@ import software.uncharted.terarium.esingest.iterators.JSONKeyIterator;
 import software.uncharted.terarium.esingest.models.input.model.ModelMetadata;
 import software.uncharted.terarium.esingest.models.output.model.Model;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
+import software.uncharted.terarium.esingest.util.ConcurrentBiMap;
 
 @Slf4j
 public class ModelAddMetadataPass
@@ -25,9 +25,9 @@ public class ModelAddMetadataPass
 	final ObjectMapper mapper = new ObjectMapper();
 	final String MODEL_PATH = "models";
 
-	ConcurrentMap<String, UUID> uuidLookup;
+	ConcurrentBiMap<String, UUID> uuidLookup;
 
-	ModelAddMetadataPass(ConcurrentMap<String, UUID> uuidLookup) {
+	ModelAddMetadataPass(ConcurrentBiMap<String, UUID> uuidLookup) {
 		this.uuidLookup = uuidLookup;
 	}
 
@@ -52,7 +52,7 @@ public class ModelAddMetadataPass
 		for (ModelMetadata in : input) {
 
 			if (!uuidLookup.containsKey(in.getId())) {
-				// no embeddings for this model
+				// no amr for this model
 				continue;
 			}
 
