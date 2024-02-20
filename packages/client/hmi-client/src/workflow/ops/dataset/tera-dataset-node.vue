@@ -183,6 +183,10 @@ section {
 .p-datatable.p-datatable-xsm:deep(.p-datatable-thead > tr > th) {
 	padding: 0 0.5rem;
 	background-color: var(--surface-50);
+	white-space: nowrap;
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .p-datatable.p-datatable-xsm:deep(.p-datatable-tbody > tr > td:not(:first-child)),
