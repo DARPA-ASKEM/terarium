@@ -57,7 +57,7 @@
 									<Button
 										:label="data.name"
 										text
-										@click="suggestedConfirgurationContext.isOpen = true"
+										@click="onOpenSuggestedConfiguration(data)"
 									></Button>
 								</template>
 							</Column>
@@ -184,26 +184,15 @@
 	</tera-drilldown>
 	<tera-drilldown
 		v-if="suggestedConfirgurationContext.isOpen"
-		title="Model Configuration"
+		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
 		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
 	>
 		<tera-drilldown-section>
-			<Accordion multiple :active-index="[0, 1]">
-				<AccordionTab header="Initials">
-					<tera-model-config-table
-						v-if="modelConfiguration"
-						:model-configuration="modelConfiguration"
-						:data="tableFormattedInitials"
-					/>
-				</AccordionTab>
-				<AccordionTab header="Parameters">
-					<tera-model-config-table
-						v-if="modelConfiguration"
-						:model-configuration="modelConfiguration"
-						:data="tableFormattedParams"
-					/>
-				</AccordionTab>
-			</Accordion>
+			<tera-model-semantic-tables
+				v-if="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				readonly
+				:model="suggestedConfirgurationContext.modelConfiguration?.configuration"
+			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
 </template>
@@ -243,6 +232,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -407,9 +397,11 @@ const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;
 	tableData: ModelConfiguration[];
+	modelConfiguration: ModelConfiguration | null;
 }>({
 	isOpen: false,
-	tableData: []
+	tableData: [],
+	modelConfiguration: null
 });
 
 const loadingConfigs = ref(false);
@@ -723,6 +715,11 @@ const extractConfigurations = async () => {
 	await configureModel(documentId.value, model.value.id);
 	loadingConfigs.value = false;
 	fetchConfigurations(model.value.id);
+};
+
+const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
+	suggestedConfirgurationContext.value.modelConfiguration = config;
+	suggestedConfirgurationContext.value.isOpen = true;
 };
 
 onMounted(async () => {

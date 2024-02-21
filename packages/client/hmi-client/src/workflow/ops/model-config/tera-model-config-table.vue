@@ -92,7 +92,6 @@
 				>
 					<InputText
 						size="small"
-						invalid
 						:placeholder="'(e.g., 0:500, 10:550, 25:700 etc)'"
 						v-model.lazy="slotProps.data.timeseries"
 						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
