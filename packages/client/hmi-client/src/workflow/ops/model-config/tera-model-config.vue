@@ -238,9 +238,6 @@ const runFromCode = () => {
 	const messageContent = {
 		silent: false,
 		store_history: false,
-		user_expressions: {},
-		allow_stdin: true,
-		stop_on_error: false,
 		code
 	};
 
