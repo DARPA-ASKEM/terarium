@@ -30,30 +30,38 @@
 							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
 							<template v-if="cell.content.id">
-								<InputText
-									v-if="editableCellStates[rowIdx][colIdx]"
-									class="cell-input"
-									v-model.lazy="valueToEdit"
-									v-focus
-									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
-									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
-								/>
-								<section v-else>
-									<div>
+								<section class="flex">
+									<InputText
+										v-if="editableCellStates[rowIdx][colIdx]"
+										class="cell-input"
+										v-model.lazy="valueToEdit"
+										v-focus
+										@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+										@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+									/>
+									<div v-else>
 										<div
-											class="mathml-container"
-											v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
-										/>
-										<template v-if="cell?.content?.controllers">
-											controllers: {{ cell?.content?.controllers }}
-										</template>
-									</div>
-									<div class="subdue">
-										{{ cell?.content.id }}
+											class="subdue mb-1"
+											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
+										>
+											{{ cell?.content.id }}
+										</div>
+										<div>
+											<div
+												v-if="props.shouldEval"
+												class="mathml-container"
+												v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+											/>
+											<template v-if="cell?.content?.controllers">
+												<span class="controllers">
+													controllers: {{ cell?.content?.controllers }}</span
+												>
+											</template>
+										</div>
 									</div>
 								</section>
 							</template>
-							<span v-else class="subdue">N/A</span>
+							<span v-else class="subdue">n/a</span>
 						</td>
 					</tr>
 				</tbody>
@@ -272,6 +280,7 @@ onMounted(() => {
 
 .p-datatable .p-datatable-tbody > tr > td.is-editing {
 	padding: 0;
+	padding-bottom: 0;
 }
 
 .editable-cell {
@@ -283,10 +292,10 @@ onMounted(() => {
 }
 
 .cell-input {
-	height: 4rem;
 	min-width: 8rem;
 	width: 100%;
 	padding-left: 12px;
+	margin-bottom: 0 !important;
 }
 
 .p-datatable-scrollable .p-frozen-column {
@@ -301,6 +310,9 @@ onMounted(() => {
 	color: var(--text-color-subdued);
 }
 
+.controllers {
+	font-size: var(--font-caption);
+}
 section {
 	display: flex;
 	justify-content: space-between;
