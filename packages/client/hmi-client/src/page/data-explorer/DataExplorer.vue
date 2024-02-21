@@ -21,8 +21,8 @@
 				<div class="search">
 					<nav>
 						<SelectButton
-							:model-value="resourceType"
-							@change="if ($event.value) resourceType = $event.value;"
+							:model-value="assetType"
+							@change="if ($event.value) assetType = $event.value;"
 							:options="assetOptions"
 							option-value="value"
 							option-label="label"
@@ -58,7 +58,6 @@
 				direction="right"
 				v-model:preview-item="previewItem"
 				:resource-type="resourceType"
-				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 			/>
 		</section>
@@ -125,8 +124,7 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 const docCount = ref(0);
 const filteredFacets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
-//
-const resourceType = ref<ResourceType>(ResourceType.XDD);
+
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
@@ -134,11 +132,24 @@ const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 
 const clientFilters = computed(() => queryStore.clientFilters);
 
+const assetType = ref(AssetType.Document);
 const assetOptions = ref([
-	{ label: 'Documents', value: ResourceType.XDD },
-	{ label: 'Models', value: ResourceType.MODEL },
-	{ label: 'Datasets', value: ResourceType.DATASET }
+	{ label: 'Documents', value: AssetType.Document },
+	{ label: 'Models', value: AssetType.Model },
+	{ label: 'Datasets', value: AssetType.Dataset }
 ]);
+// TODO: Get rid of this once we have fully moved to the new search (search-by-asset-type)
+// This is here now for preservation of the hacky services/data.ts
+// Child components should be updated to accept AssetType instead of ResourceType
+const resourceType = computed(() => {
+	if (assetType.value === AssetType.Document) {
+		return ResourceType.XDD;
+	}
+	if (assetType.value === AssetType.Model) {
+		return ResourceType.MODEL;
+	}
+	return ResourceType.DATASET;
+});
 
 const topicOptions = ref([
 	{ label: 'Covid-19', value: 'xdd-covid-19' },
@@ -148,8 +159,6 @@ const topicOptions = ref([
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
 );
-
-defineExpose({ resourceType });
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -189,8 +198,6 @@ const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
 	if (!dirtyResults.value[resourceType.value]) return;
 
-	// only search (or fetch data) relevant to the currently selected tab or the search by example item
-	let searchType = resourceType.value;
 	isLoading.value = true;
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
@@ -200,16 +207,16 @@ const executeSearch = async () => {
 
 	let searchWords = searchTerm.value;
 
-	const isValidDOI = validate(searchWords);
-
 	const matchAll =
 		!isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
 	const allSearchTerms = searchWords.split(' ');
-	if (matchAll && allSearchTerms.length > 0) {
+	if (matchAll && !isEmpty(allSearchTerms)) {
 		// multiple words are provided as search term and the user requested to match all of them
 		// the XDD api expects all search terms to be comma-separated if the user requested inclusive results
 		searchWords = allSearchTerms.join(',');
 	}
+
+	const isValidDOI = validate(searchWords);
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
@@ -246,7 +253,7 @@ const executeSearch = async () => {
 				searchParams.xdd.related_search_enabled = executeSearchByExample.value;
 			}
 			searchParams.xdd.related_search_id = id;
-			searchType = ResourceType.XDD;
+			assetType.value = AssetType.Document;
 		}
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
@@ -254,7 +261,7 @@ const executeSearch = async () => {
 		if (isModel(searchByExampleItem.value) && searchParams.model) {
 			searchParams.model.related_search_enabled = executeSearchByExample.value;
 			searchParams.model.related_search_id = id;
-			searchType = ResourceType.MODEL;
+			assetType.value = AssetType.Model;
 		}
 		//
 		// find related datasets (which utilizes the TDS provenance API through the HMI server)
@@ -262,7 +269,7 @@ const executeSearch = async () => {
 		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
 			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
 			searchParams.dataset.related_search_id = id;
-			searchType = ResourceType.DATASET;
+			assetType.value = AssetType.Dataset;
 		}
 	}
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
@@ -324,39 +331,28 @@ const executeSearch = async () => {
 		searchWords,
 		searchParams,
 		searchParamsWithFacetFilters,
-		searchType
+		resourceType.value
 	);
 
-	let assetType: AssetType = AssetType.Document;
-	if (searchType === ResourceType.MODEL) {
-		assetType = AssetType.Model;
-	} else if (searchType === ResourceType.DATASET) {
-		assetType = AssetType.Dataset;
-	} else {
-		assetType = AssetType.Document;
-	}
-
-	const searchResults = await search(searchWords, assetType);
-	console.log(searchWords, assetType, searchResults);
+	const searchResults = await search(searchWords, assetType.value);
 
 	// cache unfiltered data
 	dataItemsUnfiltered.value = mergeResultsKeepRecentDuplicates(dataItemsUnfiltered.value, allData);
-
 	// the list of results displayed in the data explorer is always the final filtered data
 	dataItems.value = mergeResultsKeepRecentDuplicates(dataItems.value, allDataFilteredWithFacets);
-
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
+
+	// dataItems.value.results = searchResults;
 
 	let total = 0;
 	allData.forEach((res) => {
 		const count = res?.hits ?? res?.results.length;
 		total += count;
 	});
-
 	docCount.value = total;
 
-	console.log(dataItems.value, searchResults);
+	dataItems.value[1].results = searchResults;
 
 	isLoading.value = false;
 };

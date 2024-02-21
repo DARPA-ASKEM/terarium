@@ -15,7 +15,7 @@
 			<template v-else>{{ itemsText }} </template>
 		</span>
 	</div>
-	<div v-if="chosenFacets.length > 0" class="facet-chips">
+	<div v-if="!isEmpty(chosenFacets)" class="facet-chips">
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"

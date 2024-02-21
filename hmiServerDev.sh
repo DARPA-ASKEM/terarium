@@ -45,7 +45,7 @@ function deploy_local() {
 function deploy_full() {
   echo "Locally run all containers"
   cat containers/common.env containers/secrets.env > containers/.env
-  # docker compose --env-file containers/.env --file containers/docker-compose-full.yml pull
+  docker compose --env-file containers/.env --file containers/docker-compose-full.yml pull
   docker compose --env-file containers/.env --file containers/docker-compose-full.yml up --detach --wait
 }
 
