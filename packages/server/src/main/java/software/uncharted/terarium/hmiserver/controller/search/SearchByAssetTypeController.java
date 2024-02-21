@@ -10,8 +10,8 @@ import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -81,7 +81,7 @@ public class SearchByAssetTypeController {
 		queryVectorCache = redissonClient.getMapCache(REDIS_EMBEDDING_CACHE_KEY);
 	}
 
-	@GetMapping("/{asset-type}")
+	@PostMapping("/{asset-type}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Executes a knn search against the provided asset type")
 	@ApiResponses(value = {
