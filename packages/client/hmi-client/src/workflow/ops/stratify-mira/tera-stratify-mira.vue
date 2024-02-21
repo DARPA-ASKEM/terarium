@@ -44,16 +44,18 @@
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview
+				title="Stratify output"
+				:options="outputs"
+				@update:output="onUpdateOutput"
+				@update:selection="onUpdateSelection"
+				v-model:output="selectedOutputId"
+				is-selectable
+			>
 				<div>
-					<template v-if="amr">
-						<tera-model-diagram
-							ref="teraModelDiagramRef"
-							:model="amr"
-							:is-editable="false"
-							:model-configuration="modelConfig!"
-						/>
-						<TeraModelSemanticTables :model="amr" :is-editable="false" />
+					<template v-if="stratifiedAmr">
+						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
+						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -86,17 +88,14 @@
 			/>
 		</form>
 		<template #footer>
-			<Button
-				label="Save"
-				@click="() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })"
-			/>
+			<Button label="Save" @click="() => saveNewModel(newModelName)" />
 			<Button class="p-button-secondary" label="Cancel" @click="isNewModelModalVisible = false" />
 		</template>
 	</tera-modal>
 </template>
 
 <script setup lang="ts">
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -116,6 +115,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { useToastService } from '@/services/toast';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -128,41 +128,41 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits([
+	'append-output',
+	'update-state',
+	'close',
+	'update-output-port',
+	'select-output'
+]);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }
 
-interface SaveOptions {
-	addToProject?: boolean;
-	appendOutputPort?: boolean;
-}
-
-const kernelManager = new KernelSessionManager();
-
 const amr = ref<Model | null>(null);
+const stratifiedAmr = ref<Model | null>(null);
+
 const modelNodeOptions = ref<string[]>([]);
-const teraModelDiagramRef = ref();
 
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
 
-const modelConfig = computed<ModelConfiguration | null>(() => {
-	if (!amr.value || !amr.value.id) return null;
-	return {
-		id: 'temporary config',
-		name: 'temporary config',
-		model_id: amr.value.id,
-		configuration: {
-			header: _.cloneDeep(amr.value.header),
-			model: _.cloneDeep(amr.value.model),
-			semantics: _.cloneDeep(amr.value.semantics),
-			metadata: _.cloneDeep(amr.value.metadata)
-		}
-	};
+const selectedOutputId = ref<string>();
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
 });
+
+const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
@@ -179,7 +179,6 @@ const stratifyModel = () => {
 
 const resetModel = () => {
 	if (!amr.value) return;
-
 	kernelManager
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
@@ -230,8 +229,23 @@ const handleStratifyResponse = (data: any) => {
 	}
 };
 
-const handleModelPreview = (data: any) => {
-	amr.value = data.content['application/json'];
+const handleModelPreview = async (data: any) => {
+	stratifiedAmr.value = data.content['application/json'];
+
+	// Create output
+	const modelData = await createModel(stratifiedAmr.value);
+	if (!modelData) return;
+
+	emit('append-output', {
+		id: uuidv4(),
+		label: `Output ${Date.now()}`,
+		type: 'modelId',
+		state: {
+			strataGroup: _.cloneDeep(props.node.state.strataGroup),
+			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
+		},
+		value: [modelData.id]
+	});
 };
 
 const buildJupyterContext = () => {
@@ -276,29 +290,17 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!amr.value || !modelName) return;
-	amr.value.header.name = modelName;
+const saveNewModel = async (modelName: string) => {
+	if (!stratifiedAmr.value || !modelName) return;
+	stratifiedAmr.value.header.name = modelName;
 
 	const projectResource = useProjects();
-	const modelData = await createModel(amr.value);
+	const modelData = await createModel(stratifiedAmr.value);
 	const projectId = projectResource.activeProject.value?.id;
 
 	if (!modelData) return;
-
-	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-	}
-
-	if (options.appendOutputPort) {
-		emit('append-output-port', {
-			id: uuidv4(),
-			label: modelName,
-			type: 'modelId',
-			value: [modelData.id]
-		});
-		emit('close');
-	}
+	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
+	useToastService().success('', `Saved to project ${projectResource.activeProject.value?.name}`);
 
 	isNewModelModalVisible.value = false;
 };
@@ -364,7 +366,37 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
-// Set model, modelConfiguration, modelNodeOptions
+const onUpdateSelection = (id: string) => {
+	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
+	if (!outputPort) return;
+	outputPort.isSelected = !outputPort?.isSelected;
+	emit('update-output-port', outputPort);
+};
+
+const onUpdateOutput = (id: string) => {
+	emit('select-output', id);
+};
+
+watch(
+	() => props.node.active,
+	async () => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+
+			const output = props.node.outputs.find((d) => d.id === selectedOutputId.value);
+			if (!output) {
+				console.error(`cannot find active output ${selectedOutputId.value}`);
+				return;
+			}
+			const modelIdToLoad = output.value?.[0];
+			stratifiedAmr.value = await getModel(modelIdToLoad);
+			codeText.value = _.last(props.node.state.strataCodeHistory)?.code ?? '';
+		}
+	},
+	{ immediate: true }
+);
+
+// Set model, modelNodeOptions
 watch(
 	() => props.node.inputs[0],
 	async () => {

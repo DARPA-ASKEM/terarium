@@ -4,7 +4,7 @@
 	<Button
 		v-if="node.inputs[0].value"
 		@click="emit('open-drilldown')"
-		label="Configure"
+		label="Edit"
 		severity="secondary"
 		outlined
 	/>
@@ -19,12 +19,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 const props = defineProps<{
 	node: WorkflowNode<any>;
 }>();
-const emit = defineEmits([
-	'open-drilldown',
-	'append-input-port',
-	'append-output-port',
-	'update-state'
-]);
+const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state']);
 
 watch(
 	() => props.node.inputs,

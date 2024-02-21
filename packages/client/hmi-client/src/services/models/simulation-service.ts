@@ -278,7 +278,7 @@ export async function simulationPollAction(
 	simulationIds: string[],
 	node: WorkflowNode<any>,
 	progress: Ref<{ status: ProgressState; value: number }>,
-	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
+	emitFn: (event: 'append-output' | 'update-state', ...args: any[]) => void
 ) {
 	const requestList: Promise<Simulation | null>[] = [];
 
