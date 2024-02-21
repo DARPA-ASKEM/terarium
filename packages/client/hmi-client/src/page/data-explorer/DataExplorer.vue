@@ -334,7 +334,7 @@ const executeSearch = async () => {
 	if (assetType.value !== AssetType.Dataset) {
 		searchResults.value = [
 			{
-				results: await searchAsset(searchWords, assetType.value),
+				results: await searchAsset(searchTerm.value, assetType.value),
 				searchSubsystem: resourceType.value
 			}
 		];
