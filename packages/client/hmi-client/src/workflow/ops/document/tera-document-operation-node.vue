@@ -5,7 +5,7 @@
 				<span class="truncate-after-three-lines">{{ document?.name }}</span>
 			</h6>
 			<tera-operator-placeholder :operation-type="node.operationType" />
-			<Button label="Open document" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
