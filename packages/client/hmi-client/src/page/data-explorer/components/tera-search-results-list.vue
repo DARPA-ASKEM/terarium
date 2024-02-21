@@ -307,7 +307,7 @@ ul {
 }
 
 .result-details {
-	margin-left: 0.5rem;
+	margin-left: var(--gap-small);
 }
 
 .facet-chips {
