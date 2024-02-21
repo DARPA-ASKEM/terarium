@@ -6,7 +6,7 @@
 					{{ config.name }}
 				</li>
 			</ul>
-			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<tera-operator-placeholder :operation-type="node.operationType">

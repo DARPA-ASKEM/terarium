@@ -83,7 +83,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 			.size(pageSize)
 			.query(q -> q.bool(b -> b
 				.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-				.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
+				.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
+				.mustNot(mn -> mn.term(t -> t.field("isPublic").value(false)))))
 			.build();
 		return elasticService.search(req, assetClass);
 	}
