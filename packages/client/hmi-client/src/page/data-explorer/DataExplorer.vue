@@ -69,7 +69,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
 import { fetchData, getDocumentById, getRelatedTerms } from '@/services/data';
-import { search } from '@/services/search';
+import { searchAsset } from '@/services/search';
 import {
 	ResourceType,
 	ResultType,
@@ -334,7 +334,7 @@ const executeSearch = async () => {
 	if (assetType.value !== AssetType.Dataset) {
 		searchResults.value = [
 			{
-				results: await search(searchWords, assetType.value),
+				results: await searchAsset(searchWords, assetType.value),
 				searchSubsystem: resourceType.value
 			}
 		];
