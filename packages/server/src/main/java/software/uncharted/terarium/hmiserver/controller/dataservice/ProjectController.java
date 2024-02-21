@@ -19,24 +19,20 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.*;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.TerariumAssetService;
+import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
-import java.io.IOException;
 import java.util.*;
 
 @RequestMapping("/projects")
@@ -55,7 +51,7 @@ public class ProjectController {
 
 	final ProjectAssetService projectAssetService;
 
-	final TerariumAssetService terariumAssetService;
+	final TerariumAssetServices terariumAssetServices;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -274,7 +270,9 @@ public class ProjectController {
 					.canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
 				if (project.isPresent()) {
-					final Optional<TerariumAsset> asset = terariumAssetService.getAsset(assetId);
+
+					final TerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices.getServiceByType(assetType);
+					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
 					if (asset.isPresent()) {
 						final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(project.get(), assetType, asset.get());
 						// underlying asset does not exist

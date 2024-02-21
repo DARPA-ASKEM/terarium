@@ -16,6 +16,7 @@ public enum AssetType {
 	MODEL_CONFIGURATION("model-configuration"),
 	ARTIFACT("artifact"),
 	PUBLICATION("publication"),
+	NOTEBOOK_SESSION("notebook-session"),
 	;
 
 	@JsonValue

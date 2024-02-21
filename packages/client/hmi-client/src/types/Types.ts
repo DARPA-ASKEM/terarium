@@ -1240,6 +1240,7 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     Publication = "publication",
+    NotebookSession = "notebook-session",
 }
 
 export enum EvaluationScenarioStatus {
