@@ -186,6 +186,7 @@ interface BasicKnobs {
 	initials: Initial[];
 	parameters: ModelParameter[];
 	timeseries: { [index: string]: any };
+	tempConfigId: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -193,7 +194,8 @@ const knobs = ref<BasicKnobs>({
 	description: '',
 	initials: [],
 	parameters: [],
-	timeseries: {}
+	timeseries: {},
+	tempConfigId: ''
 });
 
 const isSaveDisabled = computed(() => {
@@ -265,6 +267,7 @@ const runFromCode = () => {
 		});
 };
 
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
@@ -534,25 +537,22 @@ const createTempModelConfig = async () => {
 		true
 	);
 
-	state.initials = knobs.value.initials;
-	state.parameters = knobs.value.parameters;
-	state.timeseries = knobs.value.timeseries;
-	state.tempConfigId = data.id;
-	emit('update-state', state);
+	knobs.value.tempConfigId = data.id;
 };
 
 // Fill the form with the config data
 const initialize = async () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
 	model.value = await getModel(modelId);
 
 	knobs.value.name = state.name;
 	knobs.value.description = state.description;
+	knobs.value.tempConfigId = state.tempConfigId;
 
 	// State has never been set up:
-	if (state.tempConfigId === '') {
+	if (knobs.value.tempConfigId === '') {
 		// Grab these values from model to inialize them
 		const ode = model.value?.semantics?.ode;
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
@@ -592,6 +592,7 @@ watch(
 		state.initials = knobs.value.initials;
 		state.parameters = knobs.value.parameters;
 		state.timeseries = knobs.value.timeseries;
+		state.tempConfigId = knobs.value.tempConfigId;
 		emit('update-state', state);
 	},
 	{ deep: true }

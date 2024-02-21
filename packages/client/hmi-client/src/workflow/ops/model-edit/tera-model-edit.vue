@@ -306,6 +306,7 @@ const initialize = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
