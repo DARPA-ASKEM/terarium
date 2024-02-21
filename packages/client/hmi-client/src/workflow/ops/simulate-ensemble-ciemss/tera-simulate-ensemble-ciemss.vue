@@ -77,30 +77,6 @@
 									/>
 								</td>
 							</tr>
-
-							<!--
-							<tr>
-								<div class="row-header">
-									<td
-										v-for="(element, i) in Object.keys(ensembleConfigs[0].solutionMappings)"
-										:key="i"
-									>
-										{{ element }}
-									</td>
-								</div>
-								<td v-for="i in ensembleConfigs.length" :key="i">
-									<template
-										v-for="element in Object.keys(ensembleConfigs[i - 1].solutionMappings)"
-										:key="element"
-									>
-										<Dropdown
-											v-model="ensembleConfigs[i - 1].solutionMappings[element]"
-											:options="allModelOptions[i - 1]"
-										/>
-									</template>
-								</td>
-							</tr>
-							-->
 						</table>
 					</template>
 
@@ -240,16 +216,11 @@ const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
-// const allModelOptions = ref<string[][]>([]);
-
 const allModelOptions = ref<{ [key: string]: string[] }>({});
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
-// const completedRunId = computed<string>(
-// 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
-// );
 
 // const showSaveInput = ref(<boolean>false);
 // const saveAsName = ref(<string | null>'');
@@ -445,7 +416,6 @@ onMounted(async () => {
 			tempList.push(element.id);
 		});
 		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
-		// allModelOptions.value.push(tempList);
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
 	calculateWeights();
@@ -463,19 +433,6 @@ onMounted(async () => {
 			});
 		}
 	}
-
-	// FIXME: There can be existing mappings of different length
-	/* if (state.mapping.length > 0) {
-		state.mapping = [];
-		listModelIds.value.forEach((id) => {
-			state.mapping.push({
-				id,
-				solutionMappings: {},
-				weight: 0.0
-			});
-		});
-	}
-	*/
 
 	if (state.chartConfigs.length === 0) {
 		state.chartConfigs.push({ selectedVariable: [], selectedRun: '' });
