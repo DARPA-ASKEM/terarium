@@ -43,7 +43,7 @@
 					</aside> -->
 				</div>
 				<tera-search-results-list
-					:data-items="dataItems"
+					:data-items="assetType === AssetType.Model ? searchResults : dataItems"
 					:facets="filteredFacets"
 					:result-type="resourceType"
 					:search-term="searchTerm"
@@ -107,8 +107,11 @@ const queryStore = useQueryStore();
 const resources = useResourcesStore();
 
 const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
+
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
+const searchResults = ref<SearchResults[]>([]);
+
 const selectedSearchItems = ref<ResultType[]>([]);
 const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
@@ -326,6 +329,18 @@ const executeSearch = async () => {
 	searchParamsWithFacetFilters.model = modelSearchParams;
 	searchParamsWithFacetFilters.dataset = datasetSearchParams;
 
+	// TODO: Make this the main method of fetching data
+	// Works for models and documents
+	if (assetType.value !== AssetType.Dataset) {
+		searchResults.value = [
+			{
+				results: await search(searchWords, assetType.value),
+				searchSubsystem: resourceType.value
+			}
+		];
+	}
+
+	// TODO: Remove old method of fetching data
 	// fetch the data
 	const { allData, allDataFilteredWithFacets } = await fetchData(
 		searchWords,
@@ -334,8 +349,6 @@ const executeSearch = async () => {
 		resourceType.value
 	);
 
-	const searchResults = await search(searchWords, assetType.value);
-
 	// cache unfiltered data
 	dataItemsUnfiltered.value = mergeResultsKeepRecentDuplicates(dataItemsUnfiltered.value, allData);
 	// the list of results displayed in the data explorer is always the final filtered data
@@ -343,16 +356,12 @@ const executeSearch = async () => {
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
 
-	// dataItems.value.results = searchResults;
-
 	let total = 0;
 	allData.forEach((res) => {
 		const count = res?.hits ?? res?.results.length;
 		total += count;
 	});
 	docCount.value = total;
-
-	dataItems.value[1].results = searchResults;
 
 	isLoading.value = false;
 };

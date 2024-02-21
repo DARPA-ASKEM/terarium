@@ -74,7 +74,7 @@ export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
 	rawConceptFacets?: ConceptFacets | null;
-	searchSubsystem: string;
+	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
 	nextPage?: string;
