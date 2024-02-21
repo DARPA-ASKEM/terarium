@@ -67,6 +67,18 @@
 									{{ element.id }}
 								</th>
 							</tr>
+
+							<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
+								<td>{{ key }}</td>
+								<td v-for="config in ensembleConfigs" :key="config.id">
+									<Dropdown
+										:options="allModelOptions[config.id]"
+										v-model="config.solutionMappings[key]"
+									/>
+								</td>
+							</tr>
+
+							<!--
 							<tr>
 								<div class="row-header">
 									<td
@@ -88,6 +100,7 @@
 									</template>
 								</td>
 							</tr>
+							-->
 						</table>
 					</template>
 
@@ -227,7 +240,9 @@ const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
-const allModelOptions = ref<string[][]>([]);
+// const allModelOptions = ref<string[][]>([]);
+
+const allModelOptions = ref<{ [key: string]: string[] }>({});
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
@@ -422,7 +437,7 @@ onMounted(async () => {
 		modelConfigurationIds.map((id) => getModelConfigurationById(id))
 	);
 
-	allModelOptions.value = [];
+	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
 		const tempList: string[] = [];
 		const amr = allModelConfigurations[i].configuration;
@@ -430,7 +445,8 @@ onMounted(async () => {
 			tempList.push(element.id);
 		});
 		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
-		allModelOptions.value.push(tempList);
+		// allModelOptions.value.push(tempList);
+		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
 	calculateWeights();
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
@@ -438,8 +454,18 @@ onMounted(async () => {
 	const state = _.cloneDeep(props.node.state);
 	state.modelConfigIds = modelConfigurationIds;
 
+	if (state.mapping && state.mapping.length === 0) {
+		for (let i = 0; i < allModelConfigurations.length; i++) {
+			ensembleConfigs.value.push({
+				id: allModelConfigurations[i].id as string,
+				solutionMappings: {},
+				weight: 0
+			});
+		}
+	}
+
 	// FIXME: There can be existing mappings of different length
-	if (state.mapping.length > 0) {
+	/* if (state.mapping.length > 0) {
 		state.mapping = [];
 		listModelIds.value.forEach((id) => {
 			state.mapping.push({
@@ -449,6 +475,8 @@ onMounted(async () => {
 			});
 		});
 	}
+	*/
+
 	if (state.chartConfigs.length === 0) {
 		state.chartConfigs.push({ selectedVariable: [], selectedRun: '' });
 	}
