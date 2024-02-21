@@ -6,11 +6,11 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<tera-external-publication
+			<tera-document-asset
 				v-if="previewItemResourceType === ResourceType.XDD"
-				:xdd-uri="previewItemId"
-				:previewLineLimit="3"
+				:asset-id="previewItemId"
 				:highlight="searchTerm"
+				:previewLineLimit="10"
 				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
@@ -39,7 +39,7 @@ import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
-import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
+import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 
 const props = defineProps({
 	// slider props

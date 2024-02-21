@@ -43,7 +43,7 @@
 					</aside> -->
 				</div>
 				<tera-search-results-list
-					:data-items="assetType === AssetType.Model ? searchResults : dataItems"
+					:data-items="assetType !== AssetType.Dataset ? searchResults : dataItems"
 					:facets="filteredFacets"
 					:result-type="resourceType"
 					:search-term="searchTerm"
@@ -334,10 +334,15 @@ const executeSearch = async () => {
 	if (assetType.value !== AssetType.Dataset) {
 		searchResults.value = [
 			{
-				results: await search(searchWords, assetType.value),
-				searchSubsystem: resourceType.value
+				results: await search(searchWords, AssetType.Document),
+				searchSubsystem: ResourceType.XDD
+			},
+			{
+				results: await search(searchWords, AssetType.Model),
+				searchSubsystem: ResourceType.MODEL
 			}
 		];
+		console.log(searchResults.value);
 	}
 
 	// TODO: Remove old method of fetching data

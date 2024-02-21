@@ -8,7 +8,7 @@
 		<main>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
-				<div
+				<!-- <div
 					class="asset-filters"
 					v-if="
 						resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects
@@ -29,8 +29,8 @@
 							@click.stop="updateExtractionFilter(icon.type)"
 						/>
 					</template>
-				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">
+				</div> -->
+				<div v-if="resourceType === ResourceType.MODEL">
 					{{ (asset as Model).header.schema_name }}
 				</div>
 				<ul>
@@ -41,9 +41,9 @@
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
-			<ul class="snippets" v-if="snippets">
+			<!-- <ul class="snippets" v-if="snippets">
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
-			</ul>
+			</ul> -->
 			<div
 				class="description"
 				v-if="resourceType === ResourceType.MODEL"
@@ -53,6 +53,11 @@
 				class="description"
 				v-else-if="resourceType === ResourceType.DATASET"
 				v-html="highlightSearchTerms((asset as Dataset).description)"
+			/>
+			<div
+				class="description"
+				v-else-if="resourceType === ResourceType.XDD"
+				v-html="highlightSearchTerms((asset as DocumentAsset).description)"
 			/>
 			<div
 				class="parameters"
@@ -68,7 +73,7 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
-		<aside>
+		<!-- <aside>
 			<tera-carousel
 				v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)"
 				is-numeric
@@ -113,25 +118,24 @@
 				</template>
 			</tera-carousel>
 			<slot name="default"></slot>
-		</aside>
+		</aside> -->
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, ComputedRef, ref, watch } from 'vue';
-import { isEmpty } from 'lodash';
+import { computed, ref, watch } from 'vue';
 import { XDDExtractionType } from '@/types/XDD';
-import type { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
+import type { DocumentAsset, Dataset, Model } from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
-import TeraCarousel from '@/components/widgets/tera-carousel.vue';
+// import TeraCarousel from '@/components/widgets/tera-carousel.vue';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
-type UrlExtraction = {
-	askemClass: XDDExtractionType;
-	urlExtraction: XDDUrlExtraction;
-};
+// type UrlExtraction = {
+// 	askemClass: XDDExtractionType;
+// 	urlExtraction: XDDUrlExtraction;
+// };
 
 const props = defineProps<{
 	asset: ResultType;
@@ -152,56 +156,56 @@ const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
 const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
-const urlExtractions = computed(() => {
-	const urls: UrlExtraction[] = [];
+// const urlExtractions = computed(() => {
+// 	const urls: UrlExtraction[] = [];
 
-	if ((props.asset as Document).knownEntities.askemObjects) {
-		const documentsWithUrls = (props.asset as Document).knownEntities.askemObjects.filter(
-			(ex) =>
-				ex.askemClass === XDDExtractionType.Doc &&
-				ex.properties.documentBibjson?.knownEntities &&
-				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
-		);
+// 	if ((props.asset as Document).knownEntities.askemObjects) {
+// 		const documentsWithUrls = (props.asset as Document).knownEntities.askemObjects.filter(
+// 			(ex) =>
+// 				ex.askemClass === XDDExtractionType.Doc &&
+// 				ex.properties.documentBibjson?.knownEntities &&
+// 				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
+// 		);
 
-		for (let i = 0; i < documentsWithUrls.length; i++) {
-			const knownEntities = documentsWithUrls[i].properties.documentBibjson.knownEntities;
+// 		for (let i = 0; i < documentsWithUrls.length; i++) {
+// 			const knownEntities = documentsWithUrls[i].properties.documentBibjson.knownEntities;
 
-			if (knownEntities) {
-				for (let j = 0; i < knownEntities.urlExtractions.length; j++) {
-					urls.push({
-						askemClass: XDDExtractionType.URL,
-						urlExtraction: knownEntities.urlExtractions[j]
-					});
-				}
-			}
-		}
-	}
-	return urls;
-});
+// 			if (knownEntities) {
+// 				for (let j = 0; i < knownEntities.urlExtractions.length; j++) {
+// 					urls.push({
+// 						askemClass: XDDExtractionType.URL,
+// 						urlExtraction: knownEntities.urlExtractions[j]
+// 					});
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return urls;
+// });
 
-const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
-	if ((props.asset as Document).knownEntities.askemObjects) {
-		const allExtractions = [
-			...((props.asset as Document).knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
-			...(urlExtractions.value as UrlExtraction[] & Extraction[])
-		];
+// const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
+// 	if ((props.asset as Document).knownEntities.askemObjects) {
+// 		const allExtractions = [
+// 			...((props.asset as Document).knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
+// 			...(urlExtractions.value as UrlExtraction[] & Extraction[])
+// 		];
 
-		if (chosenExtractionFilter.value === 'Asset') return allExtractions;
+// 		if (chosenExtractionFilter.value === 'Asset') return allExtractions;
 
-		return allExtractions.filter((ex) => ex.askemClass === chosenExtractionFilter.value);
-	}
-	return [];
-});
+// 		return allExtractions.filter((ex) => ex.askemClass === chosenExtractionFilter.value);
+// 	}
+// 	return [];
+// });
 
-const snippets = computed(() =>
-	(props.asset as Document).highlight
-		? Array.from((props.asset as Document).highlight).splice(0, 3)
-		: null
-);
+// const snippets = computed(() =>
+// 	(props.asset as Document).highlight
+// 		? Array.from((props.asset as Document).highlight).splice(0, 3)
+// 		: null
+// );
 const title = computed(() => {
 	let value = '';
 	if (props.resourceType === ResourceType.XDD) {
-		value = (props.asset as Document).title;
+		value = (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
 		value = (props.asset as Model).header.name;
 	} else if (props.resourceType === ResourceType.DATASET) {
@@ -218,10 +222,10 @@ watch(
 	}
 );
 
-function updateExtractionFilter(extractionType: XDDExtractionType) {
-	chosenExtractionFilter.value =
-		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
-}
+// function updateExtractionFilter(extractionType: XDDExtractionType) {
+// 	chosenExtractionFilter.value =
+// 		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
+// }
 
 //
 // in case we decided to display matching concepts associated with artifacts
@@ -241,12 +245,12 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // Return formatted author, year, journal
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
-	if (props.resourceType === ResourceType.XDD) {
-		const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
-			(props.asset as Document).year
-		}) ${(props.asset as Document).journal}`;
-		return highlightSearchTerms(details);
-	}
+	// if (props.resourceType === ResourceType.XDD) {
+	// 	const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
+	// 		(props.asset as Document).year
+	// 	}) ${(props.asset as Document).journal}`;
+	// 	return highlightSearchTerms(details);
+	// }
 
 	if (props.resourceType === ResourceType.DATASET) {
 		return (props.asset as Dataset).datasetUrl;
