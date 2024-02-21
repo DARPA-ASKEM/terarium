@@ -11,7 +11,7 @@
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 			</template>
-			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration
@@ -144,6 +144,7 @@ section {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 }
+
 .image {
 	height: 8.75rem;
 	margin-bottom: 0.5rem;

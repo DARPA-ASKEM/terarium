@@ -20,6 +20,7 @@ export interface FunmanOperationState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;
+	useCompartmentalConstraint: boolean;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
 }
@@ -36,9 +37,10 @@ export const FunmanOperation: Operation = {
 		const init: FunmanOperationState = {
 			currentTimespan: { start: 0, end: 100 },
 			numSteps: 10,
-			tolerance: 0.89,
+			tolerance: 0.5,
 			constraintGroups: [],
-			requestParameters: []
+			requestParameters: [],
+			useCompartmentalConstraint: true
 		};
 		return init;
 	}

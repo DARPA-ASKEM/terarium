@@ -525,29 +525,29 @@ const contextMenuItems: MenuItem[] = [
 		items: [
 			{
 				label: CalibrateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateJuliaOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(CalibrateJuliaOp)
 			},
 			{
 				label: SimulateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateJuliaOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(SimulateJuliaOp)
 			},
 			{ separator: true },
 			{
 				label: SimulateCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(SimulateCiemssOp)
 			},
 			{
 				label: CalibrateCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(CalibrateCiemssOp)
 			},
 			{ separator: true },
 			{
 				label: CalibrateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
 			},
 			{
 				label: SimulateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
 			}
 		]
 	},

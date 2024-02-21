@@ -2,7 +2,7 @@
 	<main>
 		<Button
 			v-if="areInputsFilled"
-			label="Configure"
+			label="Edit"
 			@click="emit('open-drilldown')"
 			severity="secondary"
 			outlined
