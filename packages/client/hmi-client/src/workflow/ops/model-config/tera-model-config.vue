@@ -13,7 +13,7 @@
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<Accordion multiple :active-index="[0, 1, 2, 3]" class="pb-6">
+				<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="pb-6">
 					<AccordionTab header="Context">
 						<p class="text-sm mb-1">Name</p>
 						<InputText
@@ -29,23 +29,67 @@
 						/>
 					</AccordionTab>
 					<AccordionTab header="Suggested Configurations">
-						<DataTable :value="suggestedConfigurationsTableData" size="small" data-key="id">
-							<Column field="name" header="Name">
+						<template #header>
+							<Button
+								v-if="documentId && model?.id"
+								outlined
+								label="Extract configurations from document"
+								size="small"
+								icon="pi pi-cog"
+								@click.stop="extractConfigurations"
+								:disabled="loadingConfigs"
+								style="margin-left: auto"
+							/>
+						</template>
+
+						<DataTable
+							:value="suggestedConfirgurationContext.tableData"
+							size="small"
+							data-key="id"
+							paginator
+							:rows="5"
+							sort-field="createdOn"
+							:sort-order="-1"
+							:loading="loadingConfigs"
+						>
+							<Column field="name" header="Name" style="width: 15%">
 								<template #body="{ data }">
 									<Button
 										:label="data.name"
 										text
-										@click="openConfigurationDrilldown = true"
+										@click="suggestedConfirgurationContext.isOpen = true"
 									></Button>
 								</template>
 							</Column>
-							<Column field="description" header="Description"></Column>
-							<Column field="source" header="Source"></Column>
-							<Column style="width: 6rem">
+							<Column field="description" header="Description" style="width: 30%"></Column>
+							<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
 								<template #body="{ data }">
-									<Button label="+ Use" @click="console.log(data)" text />
+									<span>{{ new Date(data.createdOn).toISOString() }}</span>
 								</template>
 							</Column>
+							<Column header="Source" style="width: 30%">
+								<template #body="{ data }">
+									<span>{{ data.configuration.metadata?.source?.join(',') || '--' }}</span>
+								</template>
+							</Column>
+							<Column style="width: 6rem">
+								<template #body="{ data }">
+									<Button label="+ Use" @click="useSuggestedConfig(data)" text />
+								</template>
+							</Column>
+							<template #loading>
+								<div>
+									<Vue3Lottie
+										:animationData="LoadingWateringCan"
+										:height="200"
+										:width="200"
+									></Vue3Lottie>
+									<p>Loading suggested configurations.</p>
+								</div>
+							</template>
+							<template #empty>
+								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
+							</template>
 						</DataTable>
 					</AccordionTab>
 					<AccordionTab header="Diagram">
@@ -78,11 +122,30 @@
 						/>
 					</AccordionTab>
 				</Accordion>
+				<template #footer>
+					<Button
+						outlined
+						:disabled="isSaveDisabled"
+						label="Run"
+						icon="pi pi-play"
+						@click="createConfiguration"
+					/>
+					<Button style="margin-left: auto" label="Close" @click="emit('close')" />
+				</template>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="ConfigTabs.Notebook">
-			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
+			<tera-drilldown-section id="notebook-section">
+				<div class="toolbar-right-side">
+					<Button
+						icon="pi pi-play"
+						label="Run"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="runFromCode"
+					/>
+				</div>
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
@@ -99,7 +162,6 @@
 					class="ace-editor"
 				/>
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="runFromCode" />
 					<InputText
 						v-model="knobs.name"
 						placeholder="Configuration Name"
@@ -115,40 +177,15 @@
 					/>
 				</template>
 			</tera-drilldown-section>
-			<tera-drilldown-preview
-				title="Output Preview"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:options="outputs"
-				is-selectable
-			>
+			<tera-drilldown-preview title="Output Preview">
 				<div>{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</section>
-		<template #footer>
-			<Button
-				v-if="model"
-				outlined
-				label="Configure"
-				size="large"
-				icon="pi pi-cog"
-				@click="configureModel(documentId, model.id!)"
-			/>
-			<Button
-				outlined
-				:disabled="isSaveDisabled"
-				label="Run"
-				icon="pi pi-play"
-				@click="createConfiguration"
-			/>
-			<Button style="margin-left: auto" label="Close" @click="emit('close')" />
-		</template>
 	</tera-drilldown>
 	<tera-drilldown
-		v-if="openConfigurationDrilldown"
+		v-if="suggestedConfirgurationContext.isOpen"
 		title="Model Configuration"
-		@on-close-clicked="openConfigurationDrilldown = false"
+		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
 	>
 		<tera-drilldown-section>
 			<Accordion multiple :active-index="[0, 1]">
@@ -203,8 +240,11 @@ import { VAceEditor } from 'vue3-ace-editor';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import TeraModelConfigTable from './tera-model-config-table.vue';
+import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import { Vue3Lottie } from 'vue3-lottie';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import TeraModelConfigTable from './tera-model-config-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -241,6 +281,7 @@ interface BasicKnobs {
 	initials: Initial[];
 	parameters: ModelParameter[];
 	timeseries: { [index: string]: any };
+	sources: { [index: string]: any };
 	tempConfigId: string;
 }
 
@@ -250,6 +291,7 @@ const knobs = ref<BasicKnobs>({
 	initials: [],
 	parameters: [],
 	timeseries: {},
+	sources: {},
 	tempConfigId: ''
 });
 
@@ -351,6 +393,8 @@ const handleModelPreview = (data: any) => {
 	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 	knobs.value.timeseries =
 		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
+	knobs.value.sources =
+		model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
 };
 
 const selectedOutputId = ref<string>('');
@@ -360,8 +404,15 @@ const selectedConfigId = computed(
 
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
 
-const openConfigurationDrilldown = ref(false);
-const suggestedConfigurationsTableData = ref<ModelConfiguration[]>([]);
+const suggestedConfirgurationContext = ref<{
+	isOpen: boolean;
+	tableData: ModelConfiguration[];
+}>({
+	isOpen: false,
+	tableData: []
+});
+
+const loadingConfigs = ref(false);
 const model = ref<Model | null>();
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
@@ -378,6 +429,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 		cloneModel.semantics.ode.initials = knobs.value.initials;
 		cloneModel.semantics.ode.parameters = knobs.value.parameters;
 		cloneModel.metadata.timeseries = knobs.value.timeseries;
+		cloneModel.metadata.sources = knobs.value.sources;
 	}
 	const modelConfig: ModelConfiguration = {
 		id: '',
@@ -424,12 +476,13 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const initial = knobs.value.initials.find((i) => i.target === v);
+				const sourceValue = knobs.value.sources[initial!.target];
 				return {
 					id: v,
 					name: v,
 					type: ParamType.EXPRESSION,
 					value: initial,
-					source: '',
+					source: sourceValue,
 					visibility: false
 				};
 			});
@@ -445,12 +498,15 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		initials.value.forEach((vals, init) => {
+			const initial = knobs.value.initials.find((i) => i.target === vals[0]);
+			const sourceValue = knobs.value.sources[initial!.target];
+
 			formattedInitials.push({
 				id: init,
 				name: init,
 				type: ParamType.EXPRESSION,
-				value: knobs.value.initials.find((i) => i.target === vals[0]),
-				source: '',
+				value: initial,
+				source: sourceValue,
 				visibility: false
 			});
 		});
@@ -468,12 +524,13 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				const param = knobs.value.parameters.find((i) => i.id === v);
 				const paramType = getParamType(param);
 				const timeseriesValue = knobs.value.timeseries[param!.id];
+				const sourceValue = knobs.value.sources[param!.id];
 				return {
 					id: v,
 					name: v,
 					type: paramType,
 					value: param,
-					source: '',
+					source: sourceValue,
 					visibility: false,
 					timeseries: timeseriesValue
 				};
@@ -494,12 +551,13 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			const paramType = getParamType(param);
 
 			const timeseriesValue = knobs.value.timeseries[param!.id];
+			const sourceValue = knobs.value.sources[param!.id];
 			formattedParams.push({
 				id: init,
 				name: init,
 				type: paramType,
 				value: param,
-				source: '',
+				source: sourceValue,
 				visibility: false,
 				timeseries: timeseriesValue
 			});
@@ -545,6 +603,7 @@ const updateFromConfig = (config: ModelConfiguration) => {
 	knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
 	knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
 	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
+	knobs.value.sources = config.configuration?.metadata?.sources ?? {};
 };
 
 const createConfiguration = async () => {
@@ -583,9 +642,11 @@ const onUpdateSelection = (id) => {
 	emit('update-output-port', outputPort);
 };
 
-const fetchConfigurations = async () => {
-	if (model.value) {
-		suggestedConfigurationsTableData.value = await getModelConfigurations(model.value.id);
+const fetchConfigurations = async (modelId: string) => {
+	if (modelId) {
+		loadingConfigs.value = true;
+		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		loadingConfigs.value = false;
 	}
 };
 
@@ -610,8 +671,8 @@ const initialize = async () => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
+	fetchConfigurations(modelId);
 	model.value = await getModel(modelId);
-	fetchConfigurations();
 
 	knobs.value.name = state.name;
 	knobs.value.description = state.description;
@@ -625,6 +686,8 @@ const initialize = async () => {
 		knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
+		knobs.value.sources =
+			model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
@@ -632,6 +695,7 @@ const initialize = async () => {
 		knobs.value.initials = state.initials;
 		knobs.value.parameters = state.parameters;
 		knobs.value.timeseries = state.timeseries;
+		knobs.value.sources = state.sources;
 	}
 
 	// Create a new session and context based on model
@@ -643,6 +707,22 @@ const initialize = async () => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
+};
+
+const useSuggestedConfig = (config: ModelConfiguration) => {
+	knobs.value.initials = config.configuration.semantics.ode.initials;
+	knobs.value.parameters = config.configuration.semantics.ode.parameters;
+	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
+	knobs.value.sources = config.configuration.metadata?.sources ?? {};
+	logger.success(`Configuration applied ${config.name}`);
+};
+
+const extractConfigurations = async () => {
+	if (!documentId.value || !model.value?.id) return;
+	loadingConfigs.value = true;
+	await configureModel(documentId.value, model.value.id);
+	loadingConfigs.value = false;
+	fetchConfigurations(model.value.id);
 };
 
 onMounted(async () => {
@@ -658,6 +738,7 @@ watch(
 		state.initials = knobs.value.initials;
 		state.parameters = knobs.value.parameters;
 		state.timeseries = knobs.value.timeseries;
+		state.sources = knobs.value.sources;
 		state.tempConfigId = knobs.value.tempConfigId;
 		emit('update-state', state);
 	},
@@ -705,5 +786,23 @@ onUnmounted(() => {
 }
 :deep(.p-button:disabled.p-button-outlined) {
 	background-color: var(--surface-0) !important;
+}
+
+#notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
+}
+
+:deep(.p-datatable-loading-overlay.p-component-overlay) {
+	background-color: #fff;
 }
 </style>

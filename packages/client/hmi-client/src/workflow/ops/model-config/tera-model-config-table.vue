@@ -101,7 +101,16 @@
 				</span>
 			</template>
 		</Column>
-		<Column field="source" header="Source" style="width: 40%"></Column>
+		<Column field="source" header="Source" style="width: 40%">
+			<template #body="{ data }">
+				<InputText
+					v-if="data.type !== ParamType.MATRIX"
+					size="small"
+					v-model.lazy="data.source"
+					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
+				/>
+			</template>
+		</Column>
 
 		<!-- Hiding for now until functionality is available
 		<Column field="visibility" header="Visibility" style="width: 10%">
@@ -195,6 +204,12 @@ const updateTimeseries = (id: string, value: string) => {
 	if (!validateTimeSeries(value)) return;
 	const clonedConfig = cloneDeep(props.modelConfiguration);
 	clonedConfig.configuration.metadata.timeseries[id] = value;
+	emit('update-configuration', clonedConfig);
+};
+
+const updateSource = (id: string, value: string) => {
+	const clonedConfig = cloneDeep(props.modelConfiguration);
+	clonedConfig.configuration.metadata.sources[id] = value;
 	emit('update-configuration', clonedConfig);
 };
 

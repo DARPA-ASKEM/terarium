@@ -23,6 +23,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -32,6 +35,7 @@ import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,6 +54,7 @@ public class GoLLMController {
 	final private DocumentAssetService documentAssetService;
 	final private ModelService modelService;
 	final private ModelConfigurationService modelConfigurationService;
+	final private ProvenanceService provenanceService;
 
 	final private String MODEL_CARD_SCRIPT = "gollm:model_card";
 	final private String CONFIGURE_MODEL_SCRIPT = "gollm:configure_model";
@@ -155,7 +160,13 @@ public class GoLLMController {
 					configuration.setConfiguration(modelCopy);
 
 					try {
-						modelConfigurationService.createAsset(configuration);
+						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+						provenanceService.createProvenance(new Provenance()
+							.setLeft(newConfig.getId())
+							.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+							.setRight(props.documentId)
+							.setRightType(ProvenanceType.DOCUMENT)
+							.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
 					} catch (IOException e) {
 						log.error("Failed to set model configuration", e);
 					}

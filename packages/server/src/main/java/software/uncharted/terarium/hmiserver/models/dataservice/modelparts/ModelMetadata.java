@@ -44,6 +44,9 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	private Map<String, Object> timeseries;
 
+	@TSOptional 
+	private Map<String, Object> sources;
+
 	@TSOptional
 	private Card card;
 

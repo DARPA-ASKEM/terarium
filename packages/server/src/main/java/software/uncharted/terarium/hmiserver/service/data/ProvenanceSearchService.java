@@ -268,6 +268,38 @@ public class ProvenanceSearchService {
 
 	/**
 	 *
+	 * Identifies the document from which a model configuration was extracted
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
+	public Set<String> modelConfigFromDocument(final ProvenanceQueryParam payload) {
+		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
+			throw new IllegalArgumentException(
+					"Document used for model configuration extraction can only be found by providing a Model confirguration");
+		}
+
+		try (final Session session = neo4jService.getSession()) {
+			final UUID modelId = payload.getRootId();
+
+			final String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
+					modelId);
+
+			final Result response = session.run(query);
+
+			log.info("Response: " + response.toString());
+			final Set<String> responseData = new HashSet<>();
+			while (response.hasNext()) {
+				responseData.add(response.next().get("d").get("id").asString());
+			}
+
+			log.info("Response Data: "  + responseData.toString());
+			return responseData;
+		}
+	}
+
+	/**
+	 *
 	 * Identifies the document from which a model was extracted
 	 *
 	 * @param payload - Search param payload.
