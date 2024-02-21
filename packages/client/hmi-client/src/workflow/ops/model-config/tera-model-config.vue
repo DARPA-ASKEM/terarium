@@ -72,9 +72,9 @@
 									<span>{{ data.configuration.metadata?.source?.join(',') || '--' }}</span>
 								</template>
 							</Column>
-							<Column style="width: 6rem">
+							<Column style="width: 7rem">
 								<template #body="{ data }">
-									<Button label="+ Use" @click="useSuggestedConfig(data)" text />
+									<Button class="use-button" label="+ Use" @click="useSuggestedConfig(data)" text />
 								</template>
 							</Column>
 							<template #loading>
@@ -801,5 +801,9 @@ onUnmounted(() => {
 
 :deep(.p-datatable-loading-overlay.p-component-overlay) {
 	background-color: #fff;
+}
+
+.use-button {
+	white-space: nowrap;
 }
 </style>
