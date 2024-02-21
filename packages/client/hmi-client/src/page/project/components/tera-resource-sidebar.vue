@@ -65,7 +65,7 @@
 							label="New"
 							text
 							size="small"
-							@click="emit('open-new-asset', AssetType.Model)"
+							@click.stop="emit('open-new-asset', AssetType.Model)"
 						/>
 						<Button
 							class="new-button"
@@ -74,7 +74,7 @@
 							label="New"
 							text
 							size="small"
-							@click="emit('open-new-asset', AssetType.Code)"
+							@click.stop="emit('open-new-asset', AssetType.Code)"
 						/>
 						<Button
 							class="new-button"
@@ -83,7 +83,7 @@
 							label="New"
 							text
 							size="small"
-							@click="emit('open-new-asset', AssetType.Workflow)"
+							@click.stop="emit('open-new-asset', AssetType.Workflow)"
 						/>
 					</div>
 				</template>
