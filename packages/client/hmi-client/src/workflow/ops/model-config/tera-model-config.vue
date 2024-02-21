@@ -121,7 +121,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch, onUnmounted } from 'vue';
+import { computed, ref, watch, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -292,7 +292,7 @@ const handleModelPreview = (data: any) => {
 	knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
 	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 	knobs.value.timeseries =
-		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : [];
+		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 };
 
 const selectedOutputId = ref<string>('');
@@ -558,7 +558,7 @@ const initialize = async () => {
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
 		knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 		knobs.value.timeseries =
-			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : [];
+			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
@@ -579,13 +579,9 @@ const initialize = async () => {
 	}
 };
 
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		await initialize();
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	await initialize();
+});
 
 watch(
 	() => knobs.value,
