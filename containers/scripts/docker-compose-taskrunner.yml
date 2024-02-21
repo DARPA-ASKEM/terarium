@@ -12,7 +12,6 @@ services:
       TERARIUM_MQ-PASSWORD: "terarium123"
       TERARIUM_MQ-USERNAME: "terarium"
       OPENAI_API_KEY: "${secret_gollm_openai_key}"
-      LOGGING_LEVEL_ROOT: "DEBUG"
     depends_on:
       rabbitmq:
         condition: service_healthy
