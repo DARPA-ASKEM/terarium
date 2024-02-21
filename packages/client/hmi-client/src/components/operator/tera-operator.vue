@@ -222,11 +222,25 @@ main {
 		}
 
 		&:deep(.port-connected .port) {
+			position: relative;
 			width: calc(var(--port-base-size) * 2);
 			border: 2px solid var(--text-color-subdued);
 			border-radius: var(--port-base-size);
 			background-color: var(--text-color-subdued);
+			transition: background-color 0.125s ease-in-out;
 		}
+		&:deep(.port-connected .port)::before {
+			content: ''; /* Essential for generating the pseudo-element */
+			position: absolute;
+			width: calc(var(--port-base-size) * 1.25);
+			height: calc(var(--port-base-size) * 1.25);
+			background-color: var(--text-color-subdued);
+			border-radius: 50%; /* Make it a circle */
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%); /* Center the circle */
+		}
+
 		&:deep(.port-connected:hover .port) {
 			background-color: var(--text-color-subdued);
 		}

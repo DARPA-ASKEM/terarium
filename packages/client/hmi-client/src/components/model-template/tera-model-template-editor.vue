@@ -46,7 +46,7 @@
 						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
 						:model-value="currentModelFormat"
-						@change="if ($event.value) currentModelFormat = $event.value;"
+						@change="if ($event.value) onEditorFormatSwitch($event.value);"
 						:options="modelFormatOptions"
 					>
 						<template #option="{ option }">
@@ -191,7 +191,7 @@ const currentTemplates = computed(() =>
 		: flattenedTemplates.value
 );
 const cards = computed<ModelTemplateCard[]>(
-	() => currentTemplates.value.models.map(({ metadata }) => metadata.templateCard) ?? []
+	() => currentTemplates.value.models.map(({ metadata }) => metadata?.templateCard) ?? []
 );
 const junctions = computed<ModelTemplateJunction[]>(() => currentTemplates.value.junctions);
 
@@ -207,7 +207,6 @@ const isCreatingNewEdge = computed(
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
-
 	return cards.value.some(({ x, y, width, height }) => {
 		const withinXRange = p.x >= x - buffer && p.x <= x + width + buffer;
 		const withinYRange = p.y >= y - buffer && p.y <= y + height + buffer;
@@ -274,17 +273,36 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		junctionIdForNewEdge &&
 		target.cardId !== newEdge.value.target.cardId // Prevents connecting to the same card
 	) {
-		modelTemplatingService.addEdgeInKernel(
-			props.kernelManager,
-			currentTemplates.value,
-			junctionIdForNewEdge,
-			target,
-			newEdge.value.target,
-			currentPortPosition,
-			outputCode,
-			syncWithMiraModel,
-			interpolatePointsForCurve
-		);
+		if (currentModelFormat.value === EditorFormat.Decomposed) {
+			modelTemplatingService.addEdgeInKernel(
+				props.kernelManager,
+				currentTemplates.value,
+				junctionIdForNewEdge,
+				target,
+				newEdge.value.target,
+				currentPortPosition,
+				outputCode,
+				syncWithMiraModel,
+				interpolatePointsForCurve
+			);
+		} else {
+			modelTemplatingService.addEdgeInView(
+				currentTemplates.value,
+				junctionIdForNewEdge,
+				target,
+				currentPortPosition,
+				interpolatePointsForCurve
+			);
+			// Once the second edge is drawn, reflect changes in decomposed view - once done, everything in the flattened view will be "merged"
+			modelTemplatingService.reflectFlattenedEditInDecomposedView(
+				props.kernelManager,
+				flattenedTemplates.value,
+				decomposedTemplates.value,
+				outputCode,
+				syncWithMiraModel,
+				interpolatePointsForCurve
+			);
+		}
 		cancelNewEdge();
 	}
 }
@@ -337,13 +355,27 @@ function updateNewCardPosition(event) {
 function onDrop(event) {
 	updateNewCardPosition(event);
 
-	modelTemplatingService.addDecomposedTemplateInKernel(
-		props.kernelManager,
-		currentTemplates.value,
-		newModelTemplate.value,
-		outputCode,
-		syncWithMiraModel
-	);
+	if (currentModelFormat.value === EditorFormat.Decomposed) {
+		modelTemplatingService.addDecomposedTemplateInKernel(
+			props.kernelManager,
+			decomposedTemplates.value,
+			newModelTemplate.value,
+			outputCode,
+			syncWithMiraModel
+		);
+	}
+	// Add decomposed template to the flattened view
+	else {
+		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
+		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
+		const decomposedTemplateToAdd = modelTemplatingService.prepareDecomposedTemplateAddition(
+			flattenedTemplates.value,
+			newModelTemplate.value
+		);
+		if (decomposedTemplateToAdd) {
+			modelTemplatingService.addTemplateInView(flattenedTemplates.value, decomposedTemplateToAdd);
+		}
+	}
 
 	newModelTemplate.value = null;
 }
@@ -403,15 +435,21 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-// Triggered after syncWithMiraModel() in parent
+function refreshFlattenedTemplate() {
+	if (props.model) {
+		flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
+		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
+	}
+}
+
+function onEditorFormatSwitch(newFormat: EditorFormat) {
+	currentModelFormat.value = newFormat;
+	if (newFormat === EditorFormat.Decomposed) refreshFlattenedTemplate(); // Removes unlinked decomposed templates
+}
+
 watch(
 	() => [props.model],
-	() => {
-		if (props.model) {
-			flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
-			modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
-		}
-	}
+	() => refreshFlattenedTemplate() // Triggered after syncWithMiraModel() in parent
 );
 
 onMounted(() => {
@@ -454,8 +492,8 @@ aside {
 	display: flex;
 	flex-direction: column;
 	background-color: #f4f7fa;
-	border-right: 1px solid var(--surface-border-alt);
-	padding: var(--gap) 0;
+	border-right: 1px solid var(--surface-border-light);
+	padding: var(--gap);
 	gap: 0.5rem;
 	overflow: hidden;
 	z-index: 1;
@@ -492,22 +530,21 @@ header {
 }
 
 .template-options {
-	overflow: hidden;
+	overflow: scroll;
+	min-width: 15rem;
 
 	& > ul {
 		height: 85%;
 		padding: 0.25rem 0 0.25rem var(--gap-small);
-		overflow-y: scroll;
 	}
 }
 
 .trash {
-	margin: auto 0.5rem 0 0.5rem;
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	border: 1px dashed #9fa9b7;
 	border-radius: var(--border-radius);
-	background-color: #eff2f5;
+	background-color: var(--surface-a);
 	text-align: center;
 	padding: 1rem;
 

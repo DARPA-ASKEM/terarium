@@ -6,7 +6,7 @@
 					{{ config.name }}
 				</li>
 			</ul>
-			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<tera-operator-placeholder :operation-type="node.operationType">
@@ -29,14 +29,14 @@ import { ModelConfigOperationState } from './model-config-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'open-drilldown']);
 
 const modelConfigs = ref<ModelConfiguration[]>([]);
 
 const refresh = async (modelId: string) => {
 	modelConfigs.value = await getModelConfigurations(modelId);
 	modelConfigs.value.forEach((config) => {
-		emit('append-output-port', {
+		emit('append-output', {
 			type: 'modelConfigId',
 			label: config.name,
 			value: [config.id]
