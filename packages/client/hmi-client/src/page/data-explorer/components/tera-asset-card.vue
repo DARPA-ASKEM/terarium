@@ -73,8 +73,8 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
-		<!-- <aside>
-			<tera-carousel
+		<aside>
+			<!-- <tera-carousel
 				v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)"
 				is-numeric
 				height="6rem"
@@ -116,9 +116,9 @@
 						{{ extraction.urlExtraction.resourceTitle }}
 					</a>
 				</template>
-			</tera-carousel>
+			</tera-carousel>-->
 			<slot name="default"></slot>
-		</aside> -->
+		</aside>
 	</div>
 </template>
 
