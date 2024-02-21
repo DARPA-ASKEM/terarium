@@ -21,8 +21,24 @@
 				/>
 			</section>
 			<template v-if="modelConfigIds && datasetId">
-				<Button label="Configure" @click="emit('open-drilldown')" severity="secondary" outlined />
-				<Button label="Run" @click="runEnsemble" :disabled="disableRunButton" icon="pi pi-play" />
+				<div class="flex gap-2">
+					<Button
+						label="Edit"
+						@click="emit('open-drilldown')"
+						severity="secondary"
+						outlined
+						class="w-full"
+					/>
+					<Button
+						label="Run"
+						@click="runEnsemble"
+						severity="secondary"
+						outlined
+						:disabled="disableRunButton"
+						icon="pi pi-play"
+						class="w-full"
+					/>
+				</div>
 			</template>
 			<tera-operator-placeholder
 				v-else-if="node.status === OperatorStatus.INVALID"
@@ -240,6 +256,7 @@ section {
 	padding: 10px;
 	background: var(--surface-overlay);
 }
+
 .helpMessage {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
