@@ -28,15 +28,6 @@
 					</template>
 				</AutoComplete>
 				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
-				<!-- <Button
-					class="search-by-example-button"
-					icon="pi pi-upload"
-					text
-					rounded
-					size="small"
-					@click="searchByExampleToggle = !searchByExampleToggle"
-					:active="isSearchByExampleVisible"
-				/> -->
 			</span>
 		</div>
 		<section v-if="isSearchByExampleVisible" class="search-by-example">
