@@ -207,7 +207,8 @@ const stratifyRequest = () => {
 			key: strataOption.name,
 			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
 			concepts_to_stratify: strataOption.selectedVariables,
-			cartesian_control: strataOption.cartesianProduct
+			cartesian_control: strataOption.cartesianProduct,
+			structure: strataOption.useStructure === true ? null : []
 		}
 	};
 
