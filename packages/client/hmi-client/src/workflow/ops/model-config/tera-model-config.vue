@@ -288,13 +288,9 @@ const handleModelPreview = (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, _.cloneDeep(data.content['application/json']));
-
-	knobs.value.initials =
-		model.value?.semantics?.ode.initials !== undefined ? model.value?.semantics?.ode.initials : [];
-	knobs.value.parameters =
-		model.value?.semantics?.ode.parameters !== undefined
-			? model.value?.semantics?.ode.parameters
-			: [];
+	const ode = model.value?.semantics?.ode;
+	knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
+	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 	knobs.value.timeseries =
 		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : [];
 };
@@ -558,14 +554,9 @@ const initialize = async () => {
 	// State has never been set up:
 	if (state.tempConfigId === '') {
 		// Grab these values from model to inialize them
-		knobs.value.initials =
-			model.value?.semantics?.ode.initials !== undefined
-				? model.value?.semantics?.ode.initials
-				: [];
-		knobs.value.parameters =
-			model.value?.semantics?.ode.parameters !== undefined
-				? model.value?.semantics?.ode.parameters
-				: [];
+		const ode = model.value?.semantics?.ode;
+		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
+		knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : [];
 		await createTempModelConfig();
