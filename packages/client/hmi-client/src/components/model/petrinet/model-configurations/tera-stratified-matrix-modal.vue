@@ -4,7 +4,7 @@
 			<div class="flex align-items-center justify-space-between">
 				<h4 class="w-full">Matrix: {{ id }}</h4>
 				<div class="flex align-items-center gap-2 white-space-nowrap">
-					<label for="matrixShouldEval" class="mr-2"> Evaluate expressions</label>
+					<label for="matrixShouldEval" class="mr-2">Evaluate expressions</label>
 					<InputSwitch
 						inputId="matrixShouldEval"
 						v-model="matrixShouldEval"
