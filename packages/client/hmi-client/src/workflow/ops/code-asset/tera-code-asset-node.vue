@@ -2,12 +2,7 @@
 	<main>
 		<template v-if="code">
 			<h6>{{ code?.name }}</h6>
-			<Button
-				label="Open code editor"
-				@click="emit('open-drilldown')"
-				severity="secondary"
-				outlined
-			/>
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
