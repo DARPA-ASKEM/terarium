@@ -55,11 +55,6 @@ const props = defineProps({
 		type: String,
 		default: '0'
 	},
-	// slider-panel props
-	selectedSearchItems: {
-		type: Array as PropType<ResultType[]>,
-		default: () => []
-	},
 	previewItem: {
 		type: Object as PropType<ResultType | null>,
 		default: null
