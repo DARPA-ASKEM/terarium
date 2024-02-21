@@ -2,12 +2,12 @@
 	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
 		<div class="input-row">
 			<div class="sub-header">
-				<label class="multi-line-label">Create new transitions between stratas</label>
+				<label class="multi-line-label">Create new transitions between stratum</label>
 				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="useStructure" />
 			</div>
 			<div class="sub-header">
 				<label class="multi-line-label"
-					>Allow existing interactions to invole multiple stratas</label
+					>Allow existing interactions to invole multiple stratum</label
 				>
 				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
 			</div>
