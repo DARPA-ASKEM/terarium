@@ -1,8 +1,11 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { AssetType } from '@/types/Types';
+import { AssetType, TerariumAssetThatSupportsAdditionalProperties } from '@/types/Types';
 
-export async function searchAsset(text: string, assetType: AssetType) {
+export async function searchByAssetType(
+	text: string,
+	assetType: AssetType
+): Promise<TerariumAssetThatSupportsAdditionalProperties[]> {
 	try {
 		const response = await API.post(`/search-by-asset-type/${assetType}`, { text });
 		return response?.data ?? [];
