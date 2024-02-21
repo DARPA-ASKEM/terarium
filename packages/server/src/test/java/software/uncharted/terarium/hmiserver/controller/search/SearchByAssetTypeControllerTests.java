@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
@@ -27,12 +28,12 @@ public class SearchByAssetTypeControllerTests extends TerariumApplicationTests {
 	private static final String TEST_INDEX = "tds_document_tera_2.0";
 	private static final String TEST_ASSET = "DOCUMENT";
 
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.ADAM)
 	public void testKnnSearch() throws Exception {
 
 		// Test that we get a 404 if we provide a project id that doesn't exist
-		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/search-by-asset-type/" + TEST_ASSET)
+		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/search-by-asset-type/" + TEST_ASSET)
 				.param("text", "Was COVID-19 invented by aliens?")
 				.param("index", TEST_INDEX) // index override
 				.with(csrf()))
