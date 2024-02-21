@@ -28,9 +28,9 @@ public class ProjectAssetService {
 
 	/**
 	 * Find all active assets for a project.  Active assets are defined as those that are not deleted and not temporary.
-	 * @param projectId
-	 * @param types
-	 * @return
+	 * @param projectId The ID of the project to find assets for
+	 * @param types The types of assets to find
+	 * @return A list of active assets for the project
 	 */
 	public List<ProjectAsset> findActiveAssetsForProject(@NotNull final UUID projectId,
 			final Collection<@NotNull AssetType> types) {
