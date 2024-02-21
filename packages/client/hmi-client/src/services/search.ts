@@ -7,10 +7,12 @@ export async function searchByAssetType(
 	assetType: AssetType
 ): Promise<TerariumAssetThatSupportsAdditionalProperties[]> {
 	try {
-		const response = await API.post(`/search-by-asset-type/${assetType}`, { text });
+		const response = await API.post(
+			`/search-by-asset-type/${assetType}?text=${encodeURIComponent(text)}`
+		);
 		return response?.data ?? [];
 	} catch (error) {
-		logger.error(error);
+		logger.error(`Unable to fetch results from the question: ${text}`);
 		return [];
 	}
 }
