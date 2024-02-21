@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.function.BiFunction;
 
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import software.uncharted.terarium.esingest.util.FileUtil;
 @Slf4j
 public class JSONLineIterator<T extends IInputDocument> implements IInputIterator<T> {
 
-	ObjectMapper mapper = new ObjectMapper();
+	ObjectMapper mapper;
 	Queue<Path> files;
 	BufferedReader reader;
 	long batchSize;
@@ -35,6 +36,8 @@ public class JSONLineIterator<T extends IInputDocument> implements IInputIterato
 			throw new IOException("No input files found for path: " + inputPath.toString());
 		}
 		this.reader = Files.newBufferedReader(files.poll());
+		this.mapper = new ObjectMapper();
+		this.mapper.enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature());
 	}
 
 	public JSONLineIterator(Path inputPath, Class<T> classType, BiFunction<List<T>, T, Boolean> batcher)
@@ -46,6 +49,8 @@ public class JSONLineIterator<T extends IInputDocument> implements IInputIterato
 			throw new IOException("No input files found for path: " + inputPath.toString());
 		}
 		this.reader = Files.newBufferedReader(files.poll());
+		this.mapper = new ObjectMapper();
+		this.mapper.enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature());
 	}
 
 	private List<T> returnAndClearResults(T toAddAfterClear) {

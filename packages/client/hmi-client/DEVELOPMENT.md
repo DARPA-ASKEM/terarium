@@ -99,7 +99,6 @@ An instance of the logger is created and exported once in `logger.ts`
 
 ```export const logger = new Logger({
  consoleEnabled: !isProduction,
- callerInfoEnabled: true,
  **showToast: false** // show all logs recorded as toasts - currently off by default.
 });
 ```

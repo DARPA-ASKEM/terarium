@@ -4,8 +4,7 @@ version: "3.9"
 services:
   sciml-service:
     container_name: sciml-service
-    image: ghcr.io/darpa-askem/sciml-service:tds-migration
-    platform: linux/amd64
+    image: ghcr.io/darpa-askem/sciml-service:latest
     networks:
       - terarium
     ports:
@@ -14,7 +13,8 @@ services:
       SIMSERVICE_TDS_URL: "http://${local_host_name}:3000"
       SIMSERVICE_TDS_USER: "${secret_service_account_username}"
       SIMSERVICE_TDS_PASSWORD: "${secret_service_account_password}"
-      SIMSERVICE_RABBITMQ_ENABLED: "false"
+      SIMSERVICE_ENABLE_TDS: "true"
+      SIMSERVICE_RABBITMQ_ENABLED: "true"
       SIMSERVICE_RABBITMQ_LOGIN: "terarium"
       SIMSERVICE_RABBITMQ_PASSWORD: "terarium123"
       SIMSERVICE_RABBITMQ_ROUTE: "sciml-queue"

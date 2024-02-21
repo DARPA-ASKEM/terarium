@@ -1,12 +1,20 @@
 <template>
 	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
-		<div class="sub-header">
-			<label for="strata-name">Cartesian product</label>
-			<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
+		<div class="input-row">
+			<div class="sub-header">
+				<label class="multi-line-label">Create new transitions between stratum</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="useStructure" />
+			</div>
+			<div class="sub-header">
+				<label class="multi-line-label"
+					>Allow existing interactions to invole multiple stratum</label
+				>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
+			</div>
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">
-				<label for="strata-name">Name of strata</label>
+				<label>Name of strata</label>
 				<InputText
 					v-model="strataName"
 					placeholder="Age group"
@@ -14,7 +22,7 @@
 				/>
 			</div>
 			<div class="label-and-input">
-				<label for="variables-select">Select variables and parameters to stratify</label>
+				<label>Select variables and parameters to stratify</label>
 				<MultiSelect
 					v-model="selectedVariables"
 					:options="props.modelNodeOptions"
@@ -26,7 +34,7 @@
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">
-				<label for="group-labels">
+				<label>
 					Enter a comma separated list of labels for each group.
 					<span class="subdued-text">(Max 100)</span>
 				</label>
@@ -58,13 +66,19 @@ const strataName = ref(props.config.name);
 const selectedVariables = ref<string[]>(props.config.selectedVariables);
 const labels = ref(props.config.groupLabels);
 const cartesianProduct = ref<boolean>(props.config.cartesianProduct);
+const directed = ref<boolean>(props.config.directed); // Currently not used, assume to be true
+const structure = ref<any>(props.config.structure); // Proxied by "useStructure"
+const useStructure = ref<any>(props.config.useStructure);
 
 const updatedConfig = computed<StratifyGroup>(() => ({
 	borderColour: props.config.borderColour,
 	name: strataName.value,
 	selectedVariables: selectedVariables.value,
 	groupLabels: labels.value,
-	cartesianProduct: cartesianProduct.value
+	cartesianProduct: cartesianProduct.value,
+	directed: directed.value,
+	structure: structure.value,
+	useStructure: useStructure.value
 }));
 
 watch(
@@ -74,6 +88,8 @@ watch(
 		selectedVariables.value = props.config.selectedVariables;
 		labels.value = props.config.groupLabels;
 		cartesianProduct.value = props.config.cartesianProduct;
+		structure.value = props.config.structure;
+		useStructure.value = props.config.useStructure;
 	}
 );
 </script>
@@ -106,6 +122,10 @@ watch(
 
 .subdued-text {
 	color: var(--text-color-subdued);
+}
+
+.multi-line-label {
+	max-width: 12rem;
 }
 
 .input-row {

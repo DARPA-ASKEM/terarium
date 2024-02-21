@@ -24,11 +24,7 @@ import software.uncharted.terarium.esingest.util.TimeFormatter;
 public class ElasticIngestService extends ConcurrentWorkerService {
 
 	private final ElasticInsertService esInsertService;
-
 	private final ElasticUpdateService esUpdateService;
-
-	private final ElasticsearchService esService;
-
 	private final ElasticsearchConfiguration esConfig;
 
 	public void ingest(ElasticIngestParams params, IElasticIngest ingest)
@@ -38,17 +34,6 @@ public class ElasticIngestService extends ConcurrentWorkerService {
 		String indexName = esConfig.getIndex(params.getOutputIndexRoot());
 
 		try {
-			// ensure the index is empty
-			if (params.isClearBeforeIngest()) {
-				if (esService.containsIndex(indexName)) {
-					esService.deleteIndex(indexName);
-				}
-				esService.createIndex(indexName);
-			} else {
-				if (!esService.containsIndex(indexName)) {
-					esService.createIndex(indexName);
-				}
-			}
 
 			// setup ingest
 			ingest.setup(params);

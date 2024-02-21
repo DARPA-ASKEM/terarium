@@ -158,7 +158,7 @@ main {
 		padding: 0.5rem 0;
 		list-style: none;
 		font-size: var(--font-caption);
-		color: var(--text-color-secondary);
+		color: var(--text-color-subdued);
 
 		&:empty {
 			display: none;
@@ -169,7 +169,6 @@ main {
 			display: flex;
 			flex-direction: column;
 			gap: 0.25rem;
-			width: fit-content;
 			cursor: pointer;
 		}
 		&:deep(> li:hover) {
@@ -201,7 +200,6 @@ main {
 			display: block;
 			color: var(--text-color-primary);
 			padding: 0.25rem 0.5rem;
-			margin: 0.5rem;
 			background-color: var(--surface-0);
 			border: solid 1px var(--surface-border);
 		}
@@ -211,7 +209,7 @@ main {
 		}
 
 		&:deep(.port-container) {
-			width: calc(var(--port-base-size) * 2);
+			width: calc(var(--port-base-size) * 1.25);
 		}
 
 		&:deep(.port) {
@@ -220,16 +218,31 @@ main {
 			position: relative;
 			width: var(--port-base-size);
 			height: calc(var(--port-base-size) * 2);
+			top: 2px;
 		}
 
 		&:deep(.port-connected .port) {
+			position: relative;
 			width: calc(var(--port-base-size) * 2);
-			border: 2px solid var(--primary-color);
+			border: 2px solid var(--text-color-subdued);
 			border-radius: var(--port-base-size);
-			background-color: var(--primary-color);
+			background-color: var(--text-color-subdued);
+			transition: background-color 0.125s ease-in-out;
 		}
+		&:deep(.port-connected .port)::before {
+			content: ''; /* Essential for generating the pseudo-element */
+			position: absolute;
+			width: calc(var(--port-base-size) * 1.25);
+			height: calc(var(--port-base-size) * 1.25);
+			background-color: var(--text-color-subdued);
+			border-radius: 50%; /* Make it a circle */
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%); /* Center the circle */
+		}
+
 		&:deep(.port-connected:hover .port) {
-			background-color: var(--primary-color);
+			background-color: var(--text-color-subdued);
 		}
 	}
 }

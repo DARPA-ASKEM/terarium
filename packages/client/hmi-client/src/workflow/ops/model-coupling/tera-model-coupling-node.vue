@@ -1,9 +1,10 @@
 <template>
-	<main>Model coupling</main>
+	<tera-operator-placeholder :operation-type="node.operationType" />
+
 	<Button
 		v-if="node.inputs[0].value"
 		@click="emit('open-drilldown')"
-		label="Configure"
+		label="Edit"
 		severity="secondary"
 		outlined
 	/>
@@ -13,16 +14,12 @@
 import { watch } from 'vue';
 import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
 }>();
-const emit = defineEmits([
-	'open-drilldown',
-	'append-input-port',
-	'append-output-port',
-	'update-state'
-]);
+const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state']);
 
 watch(
 	() => props.node.inputs,

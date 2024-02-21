@@ -35,7 +35,8 @@
         ["Dataset","Document"],
         ["Model", "Code"],
         ["Model","Equation"],
-        ["Equation", "Document"]
+        ["Equation", "Document"],
+        ["Model", "Artifact"]
     ],
     "CONTAINS":[
         ["Project","Document"],

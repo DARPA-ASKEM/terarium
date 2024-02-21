@@ -15,20 +15,21 @@
 				<div class="port-container">
 					<div class="port" />
 				</div>
-				<span>
-					<label>{{ getPortLabel(input) }}</label>
+				<div class="relative w-full">
+					<div class="truncate text-left">{{ getPortLabel(input) }}</div>
 					<!--TODO: label is a string type not an array consider adding this back in if we support an array of labels-->
 					<!-- <label v-for="(label, labelIdx) in input.label?.split(',') ?? []" :key="labelIdx">
 					{{ label }}
-				</label> -->
-				</span>
-				<Button
-					class="unlink"
-					label="Unlink"
-					size="small"
-					text
-					@click.stop="emit('remove-edges', input.id)"
-				/>
+					</label> -->
+					<Button
+						class="unlink"
+						label="Unlink"
+						size="small"
+						icon="pi pi-unlock"
+						text
+						@click.stop="emit('remove-edges', input.id)"
+					/>
+				</div>
 			</section>
 		</li>
 	</ul>
@@ -74,5 +75,18 @@ li {
 
 label:not(:last-child)::after {
 	content: ', ';
+}
+
+.truncate {
+	max-width: 180px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.unlink {
+	position: absolute;
+	top: -0.35rem;
+	right: -0.35rem;
 }
 </style>

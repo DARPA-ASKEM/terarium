@@ -15,12 +15,19 @@ import software.uncharted.terarium.esingest.models.input.model.ModelEmbedding;
 import software.uncharted.terarium.esingest.models.output.Embedding;
 import software.uncharted.terarium.esingest.models.output.model.Model;
 import software.uncharted.terarium.esingest.service.ElasticIngestParams;
+import software.uncharted.terarium.esingest.util.ConcurrentBiMap;
 
 @Slf4j
-public class ModelInsertEmbeddingsPass
+public class ModelAddEmbeddingsPass
 		implements IElasticPass<ModelEmbedding, Model> {
 
 	final String EMBEDDING_PATH = "embeddings";
+
+	ConcurrentBiMap<String, UUID> uuidLookup;
+
+	ModelAddEmbeddingsPass(ConcurrentBiMap<String, UUID> uuidLookup) {
+		this.uuidLookup = uuidLookup;
+	}
 
 	public void setup(final ElasticIngestParams params) {
 	}
@@ -41,9 +48,17 @@ public class ModelInsertEmbeddingsPass
 	public List<Model> process(List<ModelEmbedding> input) {
 		List<Model> res = new ArrayList<>();
 		for (ModelEmbedding in : input) {
+
+			if (!uuidLookup.containsKey(in.getId())) {
+				// no amr for this model
+				continue;
+			}
+
+			UUID uuid = uuidLookup.get(in.getId());
+
 			Model doc = new Model();
-			doc.setId(in.getId());
-			doc.setModelCard(in.getModelCard().toString());
+			doc.setId(uuid);
+			doc.getMetadata().setModelCard(in.getModelCard().toString());
 
 			Embedding embedding = new Embedding();
 			embedding.setEmbeddingId(UUID.randomUUID().toString());

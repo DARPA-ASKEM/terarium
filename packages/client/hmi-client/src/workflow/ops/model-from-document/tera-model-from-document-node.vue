@@ -1,10 +1,9 @@
 <template>
 	<main>
-		model from code node
 		<tera-carousel>
 			<img v-for="(image, index) in images" :src="image" alt="alt" :key="index" />
 		</tera-carousel>
-		<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
+		<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 	</main>
 </template>
 

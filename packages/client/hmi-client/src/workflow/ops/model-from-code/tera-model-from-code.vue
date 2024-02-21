@@ -93,16 +93,12 @@
 			<tera-drilldown-preview :is-loading="isProcessing">
 				<section v-if="selectedModel">
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
-						<!--FIXME: currently not parsing the goLLM card so just printing its JSON for now-->
-						<ul v-if="goLLMCard">
-							<li v-for="(key, index) in Object.keys(goLLMCard)" :key="index">
-								<h3>{{ key }}</h3>
-								<p>{{ goLLMCard[key] }}</p>
-							</li>
-						</ul>
-						<tera-model-card v-else :model="selectedModel" />
-						<tera-model-diagram :model="selectedModel" :is-editable="false"></tera-model-diagram>
-						<tera-model-semantic-tables :model="selectedModel" readonly />
+						<tera-model-description
+							:model="selectedModel"
+							:feature-config="{
+								isPreview: true
+							}"
+						/>
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
 						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
@@ -159,21 +155,19 @@ import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, generateModelCard, getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getCodeAsset } from '@/services/code';
 import { codeBlocksToAmr } from '@/services/knowledge';
 import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
-import TeraModelCard from '@/components/model/petrinet/tera-model-card.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { ModelServiceType } from '@/types/common';
 import { extensionFromProgrammingLanguage } from '@/utils/data-util';
 import { getDocumentAsset } from '@/services/document-assets';
+import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -184,7 +178,7 @@ const emit = defineEmits([
 	'close',
 	'update-state',
 	'select-output',
-	'append-output-port',
+	'append-output',
 	'update-output-port'
 ]);
 
@@ -317,7 +311,7 @@ function buildJupyterContext() {
 	const contextName =
 		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
 	const languageName =
-		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.9' : null;
+		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.10' : null;
 
 	return {
 		context: contextName,
@@ -370,7 +364,7 @@ async function handleCode() {
 
 		clonedState.value.modelId = modelId;
 
-		emit('append-output-port', {
+		emit('append-output', {
 			label: `Output - ${props.node.outputs.length + 1}`,
 			state: cloneDeep(clonedState.value),
 			isSelected: false,
@@ -435,7 +429,7 @@ async function handleDecapodesPreview(data: any) {
 		const m = await getModel(response.id);
 		if (m && m.id) {
 			clonedState.value.modelId = m.id;
-			emit('append-output-port', {
+			emit('append-output', {
 				label: `Output - ${props.node.outputs.length + 1}`,
 				state: cloneDeep(clonedState.value),
 				isSelected: false,

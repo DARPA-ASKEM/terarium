@@ -29,13 +29,25 @@
 						class="p-inputtext-sm timespan-list"
 						v-model="requestStepListString"
 					/>
-					<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-						Show additional options
-					</p>
-					<p v-if="showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-						Hide additional options
-					</p>
+					<h4
+						class="primary-text green-text"
+						v-if="!showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					>
+						<i class="pi pi-angle-right" /> Show additional options
+					</h4>
+					<h4
+						class="primary-text green-text"
+						v-if="showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					>
+						<i class="pi pi-angle-down" /> Hide additional options
+					</h4>
 					<div v-if="showAdditionalOptions">
+						<div class="button-column">
+							<label>Compartmental constraints</label>
+							<InputSwitch v-model="knobs.useCompartmentalConstraint" />
+						</div>
 						<div class="button-column">
 							<label>Tolerance</label>
 							<InputNumber
@@ -128,6 +140,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
+import InputSwitch from 'primevue/inputswitch';
 
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
@@ -146,13 +159,14 @@ import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { Poller, PollerState } from '@/api/api';
+import { pythonInstance } from '@/python/PyodideController';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'select-output', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
 
 enum FunmanTabs {
 	Wizard = 'Wizard',
@@ -172,12 +186,14 @@ interface BasicKnobs {
 		end: number;
 	};
 	numberOfSteps: number;
+	useCompartmentalConstraint: boolean;
 }
 
 const knobs = ref<BasicKnobs>({
 	tolerance: 0,
 	currentTimespan: { start: 0, end: 0 },
-	numberOfSteps: 0
+	numberOfSteps: 0,
+	useCompartmentalConstraint: false
 });
 
 const requestStepList = computed(() => getStepList());
@@ -274,13 +290,34 @@ const runMakeQuery = async () => {
 				}
 			],
 			config: {
-				use_compartmental_constraints: true,
+				// use_compartmental_constraints: true,
+				use_compartmental_constraints: knobs.value.useCompartmentalConstraint,
 				normalization_constant: 1,
 				tolerance: knobs.value.tolerance
 			}
 		}
 	};
 
+	// Calculate the normalization mass of the model = Sum(initials)
+	const semantics = model.value.semantics;
+	if (knobs.value.useCompartmentalConstraint && semantics) {
+		const modelInitials = semantics.ode.initials;
+		const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
+
+		const parametersMap = {};
+		semantics.ode.parameters?.forEach((d) => {
+			parametersMap[d.id] = d.value;
+		});
+
+		const mass = await pythonInstance.evaluateExpression(
+			modelMassExpression as string,
+			parametersMap
+		);
+
+		if (request.request.config) {
+			request.request.config.normalization_constant = parseFloat(mass);
+		}
+	}
 	const response = await makeQueries(request);
 	getStatus(response.id);
 };
@@ -316,7 +353,7 @@ const getStatus = async (runId: string) => {
 
 const addOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
-	emit('append-output-port', {
+	emit('append-output', {
 		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
 		type: FunmanOperation.outputs[0].type,
 		value: runId,
@@ -398,6 +435,7 @@ const setModelOptions = async () => {
 	knobs.value.numberOfSteps = state.numSteps;
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
+	knobs.value.useCompartmentalConstraint = state.useCompartmentalConstraint;
 
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
@@ -449,6 +487,7 @@ watch(
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
 		state.numSteps = knobs.value.numberOfSteps;
+		state.useCompartmentalConstraint = knobs.value.useCompartmentalConstraint;
 
 		emit('update-state', state);
 	},

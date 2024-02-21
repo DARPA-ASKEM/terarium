@@ -232,7 +232,7 @@ const dataLabelPlugin = [ChartDataLabels];
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 enum CalibrateView {
 	Input = 'Input',
@@ -551,8 +551,7 @@ td {
 	flex-basis: 0;
 }
 
-::v-deep .p-inputnumber-input,
-.p-inputwrapper {
+:deep(.p-inputnumber-input, .p-inputwrapper) {
 	width: 100%;
 }
 </style>

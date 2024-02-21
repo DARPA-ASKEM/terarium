@@ -13,7 +13,7 @@ $colors: (
 );
 
 $emphasis-high: rgba(16, 24, 40, 1) !default;
-$emphasis-medium: rgba(0, 0, 0, .60) !default;
+$emphasis-medium: #6A7682 !default;
 $emphasis-low: var(--surface-border) !default;
 $emphasis-lower: rgba(208, 213, 221, 1) !default;
 $overlayColor: #000000 !default;
@@ -96,7 +96,7 @@ $inputBorder: 1px solid var(--surface-border) !default;
 $inputHoverBorderColor: $emphasis-medium !default;
 $inputFocusBorderColor: $primaryColor !default;
 $inputErrorBorderColor: $errorColor !default;
-$inputPlaceholderTextColor: $emphasis-medium !default;
+$inputPlaceholderTextColor: $emphasis-medium !important;
 $inputFilledBg: #f5f5f5 !default;
 $inputFilledHoverBg: #ececec !default;
 $inputFilledFocusBg: #dcdcdc !default;
@@ -127,7 +127,7 @@ $inputListHeaderMargin: 0 !default;
 $inputListHeaderBg: #ffffff !default;
 $inputListHeaderTextColor: $textColor !default;
 $inputListHeaderBorder: 1px solid rgba(0, 0, 0, .12) !default;
-$inputListMaxWidth: 24rem !default;
+$inputListMaxWidth: 48rem !default;
 
 //inputs with overlays (e.g. autocomplete, dropdown, multiselect)
 $inputOverlayBg: $inputListBg !default;
@@ -502,7 +502,7 @@ $tableHeaderFontWeight: 500 !default;
 $tableHeaderPadding: 1rem 1rem !default;
 
 $tableHeaderCellPadding: 1rem 0.25rem 1rem !default;
-$tableHeaderCellBg: #ffffff !default;
+$tableHeaderCellBg: #F8F9FA !default;
 $tableHeaderCellTextColor: var(--text-color-primary) !default;
 $tableHeaderCellFontWeight: 600 !default;
 $tableHeaderCellBorder: 1px solid var(--surface-border-light) !default;
@@ -931,6 +931,7 @@ $petri-inputBox: var(--surface-0);
 	--surface-overlay: #ffffff;
 	--surface-ground: var(--gray-100);
 	--surface-ground-transparent: rgba(245, 245, 245, .85);
+	--surface-glass: rgba(255, 255, 255, 0.8);
 	--surface-disabled: #F4F4F4;
 	--surface-highlight: #EBF4F3;
 	--surface-highlight-hover: #bddad6;
@@ -953,6 +954,7 @@ $petri-inputBox: var(--surface-0);
 	--constrain-width: 55rem;
 	color-scheme: light;
 	--gap: 1rem;
+	--gap-xsmall: 0.25rem;
 	--gap-small: .5rem;
 	--gap-large: 2rem;
 	--petri-nodeBorder: var(--gray-300);

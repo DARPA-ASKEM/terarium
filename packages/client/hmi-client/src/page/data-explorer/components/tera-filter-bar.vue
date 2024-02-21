@@ -1,6 +1,6 @@
 <template>
 	<div class="flex align-items-center">
-		<p class="p-text-secondary pr-2">Topic Filter</p>
+		<p class="pr-2">Topic Filter</p>
 		<Dropdown
 			class="topic-dropdown"
 			:modelValue="topic"
@@ -39,6 +39,7 @@ const onTopicChange = (e) => {
 <style scoped>
 .topic-dropdown {
 	min-width: 210px;
+	height: 100%;
 	border-radius: 6px;
 }
 .topic-dropdown:deep(.p-inputtext) {

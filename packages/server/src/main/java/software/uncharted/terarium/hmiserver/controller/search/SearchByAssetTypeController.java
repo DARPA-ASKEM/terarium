@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.search;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -9,8 +10,8 @@ import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,10 +20,14 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,6 +37,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -53,9 +59,8 @@ public class SearchByAssetTypeController {
 	private RMapCache<byte[], List<Float>> queryVectorCache;
 
 	static final private long CACHE_TTL_SECONDS = 60 * 60 * 2; // 2 hours
-	static final private long REQUEST_TIMEOUT_SECONDS = 10;
+	static final private long REQUEST_TIMEOUT_SECONDS = 30;
 	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
-	static final private String SEARCHABLE_INDEX_PREFIX = "searchable_";
 	static final private String REDIS_EMBEDDING_CACHE_KEY = "knn-vector-cache";
 
 	@Data
@@ -76,7 +81,7 @@ public class SearchByAssetTypeController {
 		queryVectorCache = redissonClient.getMapCache(REDIS_EMBEDDING_CACHE_KEY);
 	}
 
-	@GetMapping("/{asset-type}")
+	@PostMapping("/{asset-type}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Executes a knn search against the provided asset type")
 	@ApiResponses(value = {
@@ -85,7 +90,7 @@ public class SearchByAssetTypeController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
 	})
 	public ResponseEntity<List<JsonNode>> searchByAssetType(
-			@PathVariable("asset-type") final String assetType,
+			@PathVariable("asset-type") final AssetType assetType,
 			@RequestParam(value = "text", required = true) final String text,
 			@RequestParam(value = "k", defaultValue = "10") final int k,
 			@RequestParam(value = "num-results", defaultValue = "100") final int numResults,
@@ -96,11 +101,12 @@ public class SearchByAssetTypeController {
 		try {
 
 			if (index.equals("")) {
-				index = esConfig.getIndex(SEARCHABLE_INDEX_PREFIX + assetType);
-				if (!esService.containsIndex(index)) {
-					log.error("Unsupported asset type: {}, index does not exist", assetType);
-					return ResponseEntity.badRequest().build();
-				}
+				index = esConfig.getIndex(assetType.toString().toLowerCase());
+			}
+
+			if (!esService.containsIndex(index)) {
+				log.error("Unsupported asset type: {}, index {} does not exist", assetType, index);
+				return ResponseEntity.badRequest().build();
 			}
 
 			if (k > numCandidates) {
@@ -146,14 +152,29 @@ public class SearchByAssetTypeController {
 				queryVectorCache.put(hash, vector, CACHE_TTL_SECONDS, TimeUnit.SECONDS);
 			}
 
-			KnnQuery query = new KnnQuery.Builder()
+			KnnQuery knn = new KnnQuery.Builder()
 					.field("embeddings.vector")
 					.queryVector(vector)
 					.k(k)
 					.numCandidates(numCandidates)
 					.build();
 
-			List<JsonNode> docs = esService.knnSearch(index, query, numResults, JsonNode.class);
+			Query query = new Query.Builder()
+					.bool(b -> b
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+					.build();
+
+			SearchResponse<JsonNode> res = esService.knnSearch(index, knn, query, numResults, JsonNode.class);
+
+			final List<JsonNode> docs = new ArrayList<>();
+			for (final Hit<JsonNode> hit : res.hits().hits()) {
+				ObjectNode source = (ObjectNode) hit.source();
+				if (source != null) {
+					source.put("id", hit.id());
+					docs.add(source);
+				}
+			}
 
 			return ResponseEntity.ok(docs);
 
