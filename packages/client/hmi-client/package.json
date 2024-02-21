@@ -40,7 +40,7 @@
 		"@vue/runtime-dom": "3.3.13",
 		"@vueup/vue-quill": "1.2.0",
 		"ace-builds": "1.32.6",
-		"axios": "1.6.5",
+		"axios": "1.6.7",
 		"chart.js": "4.4.1",
 		"chartjs-plugin-datalabels": "2.2.0",
 		"chroma-js": "2.4.2",
