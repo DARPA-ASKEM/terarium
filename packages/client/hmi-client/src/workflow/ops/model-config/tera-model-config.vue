@@ -58,11 +58,30 @@
 						/>
 					</AccordionTab>
 				</Accordion>
+				<template #footer>
+					<Button
+						outlined
+						:disabled="isSaveDisabled"
+						label="Run"
+						icon="pi pi-play"
+						@click="createConfiguration"
+					/>
+					<Button style="margin-left: auto" label="Close" @click="emit('close')" />
+				</template>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="ConfigTabs.Notebook">
-			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
+			<tera-drilldown-section id="notebook-section">
+				<div class="toolbar-right-side">
+					<Button
+						icon="pi pi-play"
+						label="Run"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="runFromCode"
+					/>
+				</div>
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
@@ -79,7 +98,6 @@
 					class="ace-editor"
 				/>
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="runFromCode" />
 					<InputText
 						v-model="knobs.name"
 						placeholder="Configuration Name"
@@ -106,16 +124,6 @@
 				<div>{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</section>
-		<template #footer>
-			<Button
-				outlined
-				:disabled="isSaveDisabled"
-				label="Run"
-				icon="pi pi-play"
-				@click="createConfiguration"
-			/>
-			<Button style="margin-left: auto" label="Close" @click="emit('close')" />
-		</template>
 	</tera-drilldown>
 </template>
 
@@ -639,5 +647,19 @@ onUnmounted(() => {
 }
 :deep(.p-button:disabled.p-button-outlined) {
 	background-color: var(--surface-0) !important;
+}
+
+#notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
 }
 </style>
