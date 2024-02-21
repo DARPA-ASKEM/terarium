@@ -6,15 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
-import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -26,13 +20,7 @@ import java.util.*;
 @Slf4j
 public class ProjectAssetService {
 
-	final ProjectRepository projectRepository;
 	final ProjectAssetRepository projectAssetRepository;
-	final DatasetService datasetService;
-	final ModelService modelService;
-	final DocumentAssetService documentService;
-	final WorkflowService workflowService;
-	final CodeService codeService;
 
 	public List<ProjectAsset> findAllByProjectId(@NotNull final UUID projectId) {
 		return projectAssetRepository.findAllByProjectId(projectId);
@@ -104,8 +92,8 @@ public class ProjectAssetService {
 		return Optional.of(projectAssetRepository.save(projectAsset));
 	}
 
-	public void updateByAsset(TerariumAsset asset) {
-		Optional<ProjectAsset> projectAsset = projectAssetRepository.findByAssetId(asset.getId());
+	public void updateByAsset(final TerariumAsset asset) {
+		final Optional<ProjectAsset> projectAsset = projectAssetRepository.findByAssetId(asset.getId());
 		if (projectAsset.isPresent()) {
 			projectAsset.get().setAssetName(asset.getName());
 			updateProjectAsset(projectAsset.get());
