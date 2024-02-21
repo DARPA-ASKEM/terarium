@@ -598,7 +598,7 @@ main > section:first-of-type {
 .search {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-small);
 	& > nav {
 		display: flex;
 		justify-content: space-between;
