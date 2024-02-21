@@ -207,7 +207,8 @@ const stratifyRequest = () => {
 			key: strataOption.name,
 			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
 			concepts_to_stratify: strataOption.selectedVariables,
-			cartesian_control: strataOption.cartesianProduct
+			cartesian_control: strataOption.cartesianProduct,
+			structure: strataOption.useStructure === true ? null : []
 		}
 	};
 
@@ -350,6 +351,7 @@ const runCodeStratify = () => {
 	});
 };
 
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
