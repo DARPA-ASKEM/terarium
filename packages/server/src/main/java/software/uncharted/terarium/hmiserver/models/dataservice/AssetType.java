@@ -7,15 +7,16 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @RequiredArgsConstructor
 @TSModel
 public enum AssetType {
-	DATASET("dataset"),
-	MODEL_CONFIGURATION("model-configuration"),
-	MODEL("model"),
-	PUBLICATION("publication"),
-	SIMULATION("simulation"),
 	WORKFLOW("workflow"),
-	ARTIFACT("artifact"),
+	MODEL("model"),
+	DATASET("dataset"),
+	SIMULATION("simulation"),
+	DOCUMENT("document"),
 	CODE("code"),
-	DOCUMENT("document");
+	MODEL_CONFIGURATION("model-configuration"),
+	ARTIFACT("artifact"),
+	PUBLICATION("publication"),
+	;
 
 	@JsonValue
 	private final String value;

@@ -1231,15 +1231,15 @@ export enum RoleType {
 }
 
 export enum AssetType {
-    Dataset = "dataset",
-    ModelConfiguration = "model-configuration",
-    Model = "model",
-    Publication = "publication",
-    Simulation = "simulation",
     Workflow = "workflow",
-    Artifact = "artifact",
-    Code = "code",
+    Model = "model",
+    Dataset = "dataset",
+    Simulation = "simulation",
     Document = "document",
+    Code = "code",
+    ModelConfiguration = "model-configuration",
+    Artifact = "artifact",
+    Publication = "publication",
 }
 
 export enum EvaluationScenarioStatus {
