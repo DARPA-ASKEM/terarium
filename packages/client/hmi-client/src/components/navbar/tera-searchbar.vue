@@ -318,7 +318,7 @@ watch(
 
 i {
 	color: var(--text-color-subdued);
-	margin-left: 0.5rem;
+	margin-left: var(--gap-small);
 	z-index: 1;
 }
 
