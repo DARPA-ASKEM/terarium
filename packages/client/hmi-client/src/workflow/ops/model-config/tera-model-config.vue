@@ -28,16 +28,15 @@
 							v-model="knobs.description"
 						/>
 					</AccordionTab>
-					<AccordionTab header="Suggested Configurations">
+					<AccordionTab v-if="model" header="Suggested Configurations">
 						<template #header>
 							<Button
-								v-if="documentId && model?.id"
 								outlined
 								label="Extract configurations from document"
 								size="small"
 								icon="pi pi-cog"
 								@click.stop="extractConfigurations"
-								:disabled="loadingConfigs"
+								:disabled="loadingConfigs || !documentId || !model.id"
 								style="margin-left: auto"
 							/>
 						</template>
@@ -182,6 +181,7 @@
 		v-if="suggestedConfirgurationContext.isOpen"
 		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
 		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
+		class="popover"
 	>
 		<tera-drilldown-section>
 			<tera-model-semantic-tables
@@ -801,5 +801,9 @@ onUnmounted(() => {
 
 .use-button {
 	white-space: nowrap;
+}
+
+.popover.overlay-container > :deep(section) {
+	margin: 3rem 2.5rem 0rem 2.5rem;
 }
 </style>
