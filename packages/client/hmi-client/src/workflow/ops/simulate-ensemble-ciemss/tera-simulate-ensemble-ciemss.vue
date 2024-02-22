@@ -477,15 +477,6 @@ watch(
 </script>
 
 <style scoped>
-.row-header {
-	display: flex;
-	flex-direction: column;
-}
-
-.row-header td {
-	margin: 1rem 0;
-}
-
 .ensemble-calibration-mode {
 	display: flex;
 	flex-direction: column;
