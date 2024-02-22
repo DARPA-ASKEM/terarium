@@ -1370,6 +1370,7 @@ export enum SimulationType {
     Ensemble = "ENSEMBLE",
     Simulation = "SIMULATION",
     Calibration = "CALIBRATION",
+    Optimization = "OPTIMIZATION",
 }
 
 export enum ProgressState {
