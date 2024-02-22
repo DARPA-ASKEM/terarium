@@ -2,13 +2,13 @@
 	<section class="search-bar-container">
 		<div class="search">
 			<span class="p-input-icon-left p-input-icon-right">
-				<i class="pi pi-search" />
+				<vue-feather type="message-square" size="1.25rem" stroke="var(--text-color-subdued)" />
 				<AutoComplete
 					ref="searchBarRef"
 					:active="searchBarRef?.overlayVisible"
 					v-model="query"
 					:suggestions="autocompleteMenuItems"
-					placeholder="Search"
+					:placeholder="placeholder ?? 'Search'"
 					:autoOptionFocus="false"
 					:minLength="3"
 					scrollHeight="400px"
@@ -29,12 +29,6 @@
 				</AutoComplete>
 				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
 			</span>
-			<Button
-				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small search-by-example-button"
-				icon="pi pi-upload"
-				@click="searchByExampleToggle = !searchByExampleToggle"
-				:active="isSearchByExampleVisible"
-			/>
 		</div>
 		<section v-if="isSearchByExampleVisible" class="search-by-example">
 			<header>
@@ -137,6 +131,7 @@ import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	showSuggestions: boolean;
+	placeholder?: string;
 }>();
 
 const emit = defineEmits(['query-changed']);
@@ -263,7 +258,6 @@ watch(
 	display: flex;
 	align-items: center;
 	flex-direction: column;
-	max-width: 50%;
 	overflow: hidden;
 }
 
@@ -280,8 +274,9 @@ watch(
 }
 
 .p-autocomplete:deep(.p-inputtext) {
-	border-radius: 1.5rem;
 	width: 100%;
+	border-radius: var(--border-radius-medium);
+	background: rgba(216, 234, 227, 0.3);
 }
 
 .p-autocomplete:deep(.p-inputtext:focus) {
@@ -291,8 +286,9 @@ watch(
 .p-autocomplete:deep(.p-inputtext),
 .p-autocomplete:deep(.p-inputtext:hover),
 .p-autocomplete:deep(.p-inputtext:focus) {
-	border: 1px solid var(--surface-border);
-	padding-left: 3rem;
+	/**TODO: Make this a gradient border like the design #cae8c0*/
+	border: 4px solid var(--primary-color);
+	padding-left: 2.5rem;
 }
 
 .p-autocomplete[active='true']:deep(.p-inputtext) {
@@ -308,22 +304,18 @@ watch(
 }
 
 .p-input-icon-left {
-	margin-right: 1rem;
 	flex: 1;
 }
 
 i {
 	color: var(--text-color-subdued);
+	margin-left: var(--gap-small);
 	z-index: 1;
 }
 
 .auto-complete-term {
 	display: inline-flex;
 	width: 100%;
-}
-
-.pi-search {
-	margin-right: 1rem;
 }
 
 .pi-arrow-right {
@@ -437,14 +429,9 @@ i {
 	margin-bottom: 0rem;
 }
 
-.p-button.search-by-example-button {
-	right: 4rem;
-}
-
 .p-button[active='false'].search-by-example-button,
 .p-button[active='false'].search-by-example-button:focus,
 .p-button[active='false'].search-by-example-button:enabled {
-	background-color: var(--surface-section);
 	border-radius: var(--border-radius-bigger);
 	color: var(--text-color-subdued);
 }
