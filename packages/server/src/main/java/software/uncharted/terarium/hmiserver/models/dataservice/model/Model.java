@@ -59,7 +59,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		}
 
 		if(other.getDeletedOn() != null) {
-			this.setDeletedOn((Timestamp) other.getDeletedOn().clone());
+			this.setDeletedOn((Timestamp) other.getDeletedOn());
 		}
 
         this.header = other.header; 
