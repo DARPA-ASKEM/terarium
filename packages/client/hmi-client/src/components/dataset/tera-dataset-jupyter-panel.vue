@@ -188,7 +188,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const contextInfo: any = {};
 	props.assetIds.forEach((assetId, i) => {
 		const key = `d${i + 1}`;
-		contextInfo.asset_ids[key] = {
+		contextInfo[key] = {
 			id: assetId,
 			asset_type: 'dataset'
 		};
