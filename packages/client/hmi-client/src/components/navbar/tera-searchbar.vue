@@ -1,6 +1,6 @@
 <template>
 	<section class="search-bar-container">
-		<span class="p-input-icon-left p-input-icon-right">
+		<div class="p-input-icon-left p-input-icon-right">
 			<vue-feather type="message-square" size="1.25rem" stroke="var(--text-color-subdued)" />
 			<Textarea
 				v-model="query"
@@ -12,7 +12,7 @@
 			<i>
 				<Button :class="{ hidden: !query }" rounded text icon="pi pi-times" @click="clearQuery"
 			/></i>
-		</span>
+		</div>
 		<section v-if="isSearchByExampleVisible" class="search-by-example">
 			<header>
 				<h4>Search by example</h4>
@@ -245,7 +245,7 @@ watch(
 	overflow: hidden;
 }
 
-span.p-input-icon-left {
+.p-input-icon-left {
 	width: 100%;
 	display: flex;
 	align-items: start;
@@ -273,65 +273,6 @@ textarea.p-inputtext {
 			box-shadow: none;
 		}
 	}
-}
-
-.p-autocomplete:deep(.p-inputtext) {
-	width: 100%;
-	border-radius: var(--border-radius-medium);
-	background: rgba(216, 234, 227, 0.3);
-}
-
-.p-autocomplete:deep(.p-inputtext:focus) {
-	box-shadow: none;
-}
-
-.p-autocomplete:deep(.p-inputtext),
-.p-autocomplete:deep(.p-inputtext:hover),
-.p-autocomplete:deep(.p-inputtext:focus) {
-	border: 4px solid var(--primary-color);
-	padding-left: 2.5rem;
-}
-
-.p-autocomplete[active='true']:deep(.p-inputtext) {
-	border-bottom-left-radius: 0;
-	border-bottom-right-radius: 0;
-	border-bottom: none;
-	/* Required for smooth transition */
-	border-bottom-color: transparent;
-}
-
-*:deep(.p-autocomplete-panel) {
-	width: 686px;
-}
-
-.auto-complete-term {
-	display: inline-flex;
-	width: 100%;
-}
-
-.pi-arrow-right {
-	margin-left: auto;
-}
-
-.pi.pi-times.clear-search {
-	padding: 0.5rem;
-	border-radius: var(--border-radius-bigger);
-	top: 1rem;
-	right: 4rem;
-}
-
-.clear-search:hover {
-	background-color: var(--surface-hover);
-	color: var(--text-color-primary);
-	padding: 0.5rem;
-	border-radius: var(--border-radius-bigger);
-	top: 1rem;
-	right: 4rem;
-}
-
-.clear-search.hidden {
-	visibility: hidden;
-	right: 4rem;
 }
 
 .search-by-example {
