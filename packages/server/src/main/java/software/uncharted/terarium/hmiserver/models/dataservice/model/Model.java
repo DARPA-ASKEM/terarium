@@ -45,6 +45,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	}
 	// Copy constructor
     public Model(Model other) {
+		super();
 		this.setId(other.getId());
 		this.setTemporary(other.getTemporary());
 		this.setPublicAsset(other.getPublicAsset());
