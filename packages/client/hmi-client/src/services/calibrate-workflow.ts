@@ -135,10 +135,11 @@ export const autoCalibrationMapping = async (
 	});
 	// Get all data column groundings
 	datasetOptions.forEach((col) => {
-		const dataGroundingList = Object.entries(col.metadata?.groundings?.identifiers).map((ele) =>
-			ele.join(':')
-		);
-		dataGroundingList.forEach((ele) => allDataGroundings.push(ele));
+		if (col.metadata?.groundings?.identifiers) {
+			Object.entries(col.metadata?.groundings?.identifiers)
+				.map((ele) => ele.join(':'))
+				.forEach((ele) => allDataGroundings.push(ele));
+		}
 	});
 
 	// take out duplicates:
