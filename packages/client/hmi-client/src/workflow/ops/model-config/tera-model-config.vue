@@ -698,6 +698,8 @@ const initialize = async () => {
 };
 
 const useSuggestedConfig = (config: ModelConfiguration) => {
+	knobs.value.name = config.name;
+	knobs.value.description = config.description ?? '';
 	knobs.value.initials = config.configuration.semantics.ode.initials;
 	knobs.value.parameters = config.configuration.semantics.ode.parameters;
 	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
