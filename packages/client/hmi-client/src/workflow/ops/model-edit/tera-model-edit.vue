@@ -269,6 +269,10 @@ const inputChangeHandler = async () => {
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				await kernelManager.shutdown();
+			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
 		}
