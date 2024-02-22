@@ -117,7 +117,7 @@ const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 // default slider state
-const isSliderFacetsOpen = ref(true);
+const isSliderFacetsOpen = ref(false);
 const isSliderResourcesOpen = ref(false);
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
