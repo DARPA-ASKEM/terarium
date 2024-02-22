@@ -185,12 +185,12 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
 
-	const contextInfo = {};
+	const contextInfo: any = {};
 	props.assetIds.forEach((assetId, i) => {
 		const key = `d${i + 1}`;
-		contextInfo["asset_ids"][key] = {
+		contextInfo.asset_ids[key] = {
 			id: assetId,
-			asset_type: 'dataset',
+			asset_type: 'dataset'
 		};
 	});
 	if (kernel?.name === 'beaker_kernel') {
