@@ -119,7 +119,7 @@ public class GoLLMController {
 				document.getMetadata().put("gollmCard", card.response);
 				
 				documentAssetService.updateAsset(document);
-			} catch (final IOException e) {
+			} catch (final Exception e) {
 				log.error("Failed to write model card to database", e);
 			}
 		});
@@ -202,19 +202,19 @@ public class GoLLMController {
 			// Grab the document
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 			if (document.isEmpty()) {
-				return ResponseEntity.notFound().build();
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
 			}
 
 			// make sure there is text in the document
 			if (document.get().getText() == null || document.get().getText().isEmpty()) {
 				log.warn("Document {} has no text to send", documentId);
-				return ResponseEntity.notFound().build();
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
 			}
 
 			// check for input length
 			if (document.get().getText().length() > 600000) {
 				log.warn("Document {} text too long for GoLLM model card task", documentId);
-				return ResponseEntity.badRequest().build();
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
 			}
 
 			final ModelCardInput input = new ModelCardInput();
@@ -261,19 +261,19 @@ public class GoLLMController {
 			// Grab the document
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 			if (document.isEmpty()) {
-				return ResponseEntity.notFound().build();
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
 			}
 
 			// make sure there is text in the document
 			if (document.get().getText() == null || document.get().getText().isEmpty()) {
 				log.warn("Document {} has no text to send", documentId);
-				return ResponseEntity.notFound().build();
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
 			}
 
 			// Grab the model
 			final Optional<Model> model = modelService.getAsset(modelId);
 			if (model.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found.");
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 			}
 
 			final ConfigureModelInput input = new ConfigureModelInput();
