@@ -106,10 +106,11 @@ public class ModelService extends TerariumAssetService<Model >{
 				.size(pageSize)
 				.query(q -> q
 						.bool(b -> b
-								.mustNot(mn -> mn.exists(e -> e.field("deletedOn"))) // its ok to return temporary here because we're asking for it by id
-								.must(m -> m.term(e -> e.field("modelId").value(id.toString())))))
+								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
+								.must(m -> m.term(e -> e.field("model_id").value(id.toString())))))
 				.sort(new SortOptions.Builder()
-						.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build())
+						.field(new FieldSort.Builder().field("updatedOn").order(SortOrder.Asc).build()).build())
 				.build();
 
 		return elasticService.search(req, ModelConfiguration.class);

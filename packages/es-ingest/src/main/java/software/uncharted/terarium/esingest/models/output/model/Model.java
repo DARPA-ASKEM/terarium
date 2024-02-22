@@ -31,7 +31,7 @@ public class Model implements IOutputDocument {
 		private String publisher;
 		private String year;
 		private List<Author> author;
-		private String modelCard;
+		private Object gollmCard;
 		private JsonNode annotations;
 	}
 

@@ -11,6 +11,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 
 import java.io.Serial;
+import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
@@ -19,7 +21,7 @@ import java.util.Map;
 @TSModel
 public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
-	@Serial
+    @Serial
 	private static final long serialVersionUID = 398195277271188277L;
 
 	private ModelHeader header;
@@ -37,4 +39,34 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@TSOptional
 	private ModelMetadata metadata;
+
+	public Model() {
+		super();
+	}
+	// Copy constructor
+    public Model(Model other) {
+		super();
+		this.setId(other.getId());
+		this.setTemporary(other.getTemporary());
+		this.setPublicAsset(other.getPublicAsset());
+
+		if(other.getCreatedOn() != null) {
+			this.setCreatedOn((Timestamp) other.getCreatedOn());
+		}
+
+		if(other.getUpdatedOn() != null) {
+			this.setUpdatedOn((Timestamp) other.getUpdatedOn());
+		}
+
+		if(other.getDeletedOn() != null) {
+			this.setDeletedOn((Timestamp) other.getDeletedOn());
+		}
+
+        this.header = other.header; 
+        this.userId = other.userId;
+        this.model = new HashMap<>(other.model); 
+        this.properties = other.properties; 
+        this.semantics = other.semantics;
+        this.metadata = other.metadata;
+    }
 }

@@ -363,21 +363,30 @@ public class ElasticsearchService {
 		return null;
 	}
 
-	public <T> SearchResponse<T> knnSearch(final String index, final KnnQuery query, final Query additional,
-			final int numResults,
+	public <T> SearchResponse<T> knnSearch(
+			final String index,
+			final KnnQuery knn,
+			final Query query,
+			final Integer page,
+			final Integer pageSize,
 			final Class<T> tClass)
 			throws IOException {
 		log.info("KNN search on: {}", index);
 
-		if (query.numCandidates() < query.k()) {
-			throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
-		}
 		SearchRequest.Builder builder = new SearchRequest.Builder()
 				.index(index)
-				.size(numResults)
-				.knn(query);
-		if (additional != null) {
-			builder.query(additional);
+				.from(page)
+				.size(pageSize);
+
+		if (knn != null) {
+			if (knn.numCandidates() < knn.k()) {
+				throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
+			}
+			builder.knn(knn);
+		}
+
+		if (query != null) {
+			builder.query(query);
 		}
 
 		final SearchRequest req = builder.build();

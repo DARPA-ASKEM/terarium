@@ -18,6 +18,12 @@ public class TaskRequest implements Serializable {
 	private String script;
 	private byte[] input;
 	private int timeoutMinutes = 30;
+
+	// Sometimes we have context specific variables what we want to associate with a
+	// request but aren't actually used by the task on the other side but are
+	// necessary for the response to be processed correctly. This property is used
+	// to put those variables in. They aren't used by the taskrunner or the task
+	// itself, but are passed through to every response.
 	private Object additionalProperties;
 
 	public void setInput(byte[] bytes) throws JsonProcessingException {
