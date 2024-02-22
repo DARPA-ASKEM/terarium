@@ -7,30 +7,15 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="start-time">Start time</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="startTime"
-								@update:model-value="() => updateState({ startTime })"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.startTime" />
 						</div>
 						<div class="label-and-input">
 							<label for="end-time">End time</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="endTime"
-								@update:model-value="() => updateState({ endTime })"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 						<div class="label-and-input">
 							<label for="num-points">Number of time points</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="numTimePoints"
-								@update:model-value="() => updateState({ numTimePoints })"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numTimePoints" />
 						</div>
 						<div class="label-and-input">
 							<label for="time-unit">Unit</label>
@@ -39,7 +24,6 @@
 								:options="['Days', 'Hours', 'Minutes', 'Seconds']"
 								v-model="timeUnit"
 								placeholder="Select"
-								@update:model-value="() => updateState({ timeUnit })"
 							/>
 						</div>
 					</div>
@@ -71,15 +55,8 @@
 									class="p-inputtext-sm"
 									inputId="integeronly"
 									v-model="numStochasticSamples"
-									@update:model-value="() => updateState({ numStochasticSamples })"
 								/>
-								<Slider
-									v-model="numStochasticSamples"
-									:min="1"
-									:max="100"
-									:step="1"
-									@change="() => debouncedUpdateState({ numStochasticSamples })"
-								/>
+								<Slider v-model="numStochasticSamples" :min="1" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -89,7 +66,6 @@
 								:options="['dopri5', 'euler']"
 								v-model="solverMethod"
 								placeholder="Select"
-								@update:model-value="() => updateState({ solverMethod })"
 							/>
 						</div>
 					</div>
@@ -117,13 +93,12 @@
 					<h4>Constraint</h4>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label for="target-variable">Target-variables</label>
+							<label for="target-variable">Target-variable(s)</label>
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="['S', 'I', 'R']"
 								v-model="targetVariable"
 								placeholder="Select"
-								@update:model-value="() => updateState({ targetVariable })"
 							/>
 						</div>
 						<div class="label-and-input">
@@ -133,36 +108,19 @@
 								:options="['Mean', 'Median']"
 								v-model="statistic"
 								placeholder="Select"
-								@update:model-value="() => updateState({ statistic })"
 							/>
 						</div>
 						<div class="label-and-input">
 							<label for="num-days">Over number of days</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="numDays"
-								@update:model-value="() => updateState({ numDays })"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numDays" />
 						</div>
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label for="risk-tolerance">Risk tolerance</label>
 							<div class="input-and-slider">
-								<InputNumber
-									class="p-inputtext-sm"
-									inputId="integeronly"
-									v-model="riskTolerance"
-									@update:model-value="() => updateState({ riskTolerance })"
-								/>
-								<Slider
-									v-model="riskTolerance"
-									:min="0"
-									:max="100"
-									:step="1"
-									@change="() => debouncedUpdateState({ riskTolerance })"
-								/>
+								<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="riskTolerance" />
+								<Slider v-model="riskTolerance" :min="0" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -172,17 +130,11 @@
 								:options="['Above', 'Below']"
 								v-model="aboveOrBelow"
 								placeholder="Select"
-								@update:model-value="() => updateState({ aboveOrBelow })"
 							/>
 						</div>
 						<div class="label-and-input">
 							<label for="threshold">Threshold</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="threshold"
-								@update:model-value="() => updateState({ threshold })"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="threshold" />
 						</div>
 					</div>
 				</div>
@@ -212,7 +164,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
@@ -247,6 +199,16 @@ interface PolicyDropdowns {
 	costBenefitFns: string[];
 }
 
+interface BasicKnobs {
+	startTime: number;
+	endTime: number;
+}
+
+const knobs = ref<BasicKnobs>({
+	startTime: 0,
+	endTime: 0
+});
+
 const modelNodeOptions = ref<PolicyDropdowns>({
 	parameters: ['beta', 'gamma'],
 	goals: ['Minimize', 'Maximize'],
@@ -255,16 +217,13 @@ const modelNodeOptions = ref<PolicyDropdowns>({
 
 const showAdditionalOptions = ref(true);
 
-// Settings
-const startTime = ref<number>(props.node.state.startTime);
-const endTime = ref<number>(props.node.state.endTime);
 const numTimePoints = ref<number>(props.node.state.numTimePoints);
 const timeUnit = ref<string>(props.node.state.timeUnit);
 const timeSamples = computed<string>(() => {
 	const samples: number[] = [];
-	const timeStep = (endTime.value - startTime.value) / (numTimePoints.value - 1);
+	const timeStep = (knobs.value.endTime - knobs.value.startTime) / (numTimePoints.value - 1);
 	for (let i = 0; i < numTimePoints.value; i++) {
-		samples.push(Math.round(startTime.value + i * timeStep));
+		samples.push(Math.round(knobs.value.startTime + i * timeStep));
 	}
 	return samples.join(', ');
 });
@@ -307,15 +266,15 @@ const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
 
-const updateState = (updatedField) => {
-	let state = _.cloneDeep(props.node.state);
-	if (!state.interventionPolicyGroups) return;
+const initialize = async () => {
+	const modelConfigurationId = props.node.inputs[0].value?.[0];
+	if (!modelConfigurationId) return;
+	// modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+	// model.value = modelConfiguration.value.configuration as Model;
 
-	state = { ...state, ...updatedField };
-	emit('update-state', state);
+	knobs.value.startTime = props.node.state.startTime;
+	knobs.value.endTime = props.node.state.endTime;
 };
-
-const debouncedUpdateState = _.debounce(updateState, 500);
 
 const runOptimize = () => {
 	console.log('run optimize');
@@ -324,6 +283,10 @@ const runOptimize = () => {
 const saveModel = () => {
 	console.log('save model');
 };
+
+onMounted(async () => {
+	initialize();
+});
 </script>
 
 <style scoped>
