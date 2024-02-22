@@ -244,7 +244,7 @@ header aside {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
-	max-width: var(--constrain-width);
+	/* max-width: var(--constrain-width); */
 }
 
 header aside {
