@@ -46,6 +46,7 @@ export enum WorkflowPortStatus {
 export interface OperationData {
 	type: string;
 	label?: string;
+	isOptional?: boolean;
 	acceptMultiple?: boolean;
 }
 

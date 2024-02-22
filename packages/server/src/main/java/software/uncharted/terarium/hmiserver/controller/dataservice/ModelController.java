@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -261,7 +263,48 @@ public class ModelController {
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize) {
 
 		try {
-			return ResponseEntity.ok(modelService.getModelConfigurationsByModelId(id, page, pageSize));
+			final List<ModelConfiguration> modelConfigurations = modelService.getModelConfigurationsByModelId(id, page, pageSize);
+
+			modelConfigurations.forEach(config -> {
+				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
+				
+				// check if configuration has a metadata field, if it doesnt make it an empty object
+				if (configuration.get("metadata") == null) {
+					((ObjectNode) configuration).putObject("metadata");
+				}
+
+
+				// Find the Document Assets linked via provenance to the model configuration
+				final ProvenanceQueryParam body = new ProvenanceQueryParam();
+				body.setRootId(config.getId());
+				body.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+				body.setTypes(List.of(ProvenanceType.DOCUMENT));
+				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(body);
+
+				List<String> documentSourceNames = new ArrayList<String>();
+				documentIds.forEach(documentId -> {
+					try {
+						// Fetch the Document extractions
+						final Optional<DocumentAsset> document = documentAssetService
+								.getAsset(UUID.fromString(documentId));
+						if (document.isPresent()) {
+							final String name = document.get().getName();
+							documentSourceNames.add(name);
+						}
+					} catch (final Exception e) {
+						log.error("Unable to get the document " + documentId, e);
+					}
+				});
+				final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
+
+				metadata.set("source", objectMapper.valueToTree(documentSourceNames));
+
+				((ObjectNode) configuration).set("metadata", metadata);
+
+				config.setConfiguration(configuration);
+			});
+
+			return ResponseEntity.ok(modelConfigurations);
 		} catch (final IOException e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
