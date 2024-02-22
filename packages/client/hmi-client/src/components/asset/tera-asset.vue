@@ -214,14 +214,12 @@ header {
 }
 
 header.shrinked {
-	height: 3rem;
 	position: sticky;
 	top: 0px;
 	z-index: 100;
 	isolation: isolate;
 	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
-	padding: var(--gap-small) var(--gap);
 	border-bottom: 1px solid var(--surface-border-light);
 }
 
@@ -231,7 +229,7 @@ header.shrinked h4 {
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	max-width: var(--constrain-width);
+	max-width: fit-content;
 }
 
 h4,
