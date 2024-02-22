@@ -142,11 +142,10 @@ public class GoLLMController {
 				final ConfigureModelResponse configurations = objectMapper.readValue(resp.getOutput(), ConfigureModelResponse.class);
 
 				// For each configuration, create a new model configuration with parameters set
-				configurations.response.get("conditions").forEach((condition) -> {
-
-					//FIXME: It would be best to create a copy of a model, but we need to look into make a copy constructor
+				configurations.response.get("conditions").forEach((condition) -> {	
 					// Map the parameters values to the model
-					final List<ModelParameter> modelParameters = model.getSemantics().getOde().getParameters();
+					final Model modelCopy = new Model(model);
+					final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
 					modelParameters.forEach((parameter) -> {
 						JsonNode conditionParameters = condition.get("parameters");
 						conditionParameters.forEach((conditionParameter) -> {
@@ -161,7 +160,7 @@ public class GoLLMController {
 					configuration.setModelId(model.getId());
 					configuration.setName(condition.get("name").asText());
 					configuration.setDescription(condition.get("description").asText());
-					configuration.setConfiguration(model);
+					configuration.setConfiguration(modelCopy);
 
 					try {
 						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
