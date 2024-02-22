@@ -40,6 +40,7 @@
 					</template>
 					<template #editor="{ index }">
 						<AutoComplete
+							v-if="!readonly"
 							v-model="conceptSearchTerm.name"
 							:suggestions="curies"
 							@complete="onSearch"
