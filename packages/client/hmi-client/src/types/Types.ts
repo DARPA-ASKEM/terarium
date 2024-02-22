@@ -900,6 +900,7 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
+    sources?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
     processed_at?: number;
