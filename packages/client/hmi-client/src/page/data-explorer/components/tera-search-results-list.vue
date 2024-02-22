@@ -46,7 +46,7 @@
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<tera-search-item
-				:asset="asset as Document & Model & Dataset"
+				:asset="asset"
 				:is-previewed="previewedAsset === asset"
 				:is-adding-asset="isAdding && selectedAsset === asset"
 				:resource-type="resultType as ResourceType"
@@ -62,7 +62,7 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { computed, PropType, ref } from 'vue';
-import type { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
+import type { DocumentAsset, XDDFacetsItemResponse } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
@@ -74,8 +74,7 @@ import {
 	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
 import { useProjects } from '@/composables/project';
-import { createDocumentFromXDD } from '@/services/document-assets';
-import { isDataset, isDocument, isModel } from '@/utils/data-util';
+import { isDataset, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
 import { Vue3Lottie } from 'vue3-lottie';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
@@ -127,13 +126,6 @@ const projectOptions = computed(() => [
 					let assetName = '';
 					isAdding.value = true;
 
-					if (isDocument(selectedAsset.value)) {
-						const document = selectedAsset.value as Document;
-						await createDocumentFromXDD(document, project.id as string);
-						// finally add asset to project
-						response = await useProjects().get(project.id);
-						assetName = selectedAsset.value.title;
-					}
 					if (isModel(selectedAsset.value)) {
 						// FIXME: handle cases where assets is already added to the project
 						const modelId = selectedAsset.value.id;
@@ -141,8 +133,7 @@ const projectOptions = computed(() => [
 						const assetType = AssetType.Model;
 						response = await useProjects().addAsset(assetType, modelId, project.id);
 						assetName = selectedAsset.value.header.name;
-					}
-					if (isDataset(selectedAsset.value)) {
+					} else if (isDataset(selectedAsset.value)) {
 						// FIXME: handle cases where assets is already added to the project
 						const datasetId = selectedAsset.value.id;
 						// then, link and store in the project assets
@@ -151,6 +142,11 @@ const projectOptions = computed(() => [
 							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
+					} else {
+						const document = selectedAsset.value as DocumentAsset;
+						const assetType = AssetType.Document;
+						response = await useProjects().addAsset(assetType, document.id, project.id);
+						assetName = selectedAsset.value.name;
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
@@ -204,7 +200,7 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resultType === ResourceType.XDD) {
-			const documentSearchResults = searchResults.results as Document[];
+			const documentSearchResults = searchResults.results as DocumentAsset[];
 
 			return [...documentSearchResults];
 		}
