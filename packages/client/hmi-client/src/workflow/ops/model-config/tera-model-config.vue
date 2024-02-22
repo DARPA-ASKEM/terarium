@@ -383,7 +383,7 @@ const handleModelPreview = (data: any) => {
 		model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
 };
 
-const selectedOutputId = ref<string>('');
+const selectedOutputId = ref<string>(props.node.active ?? '');
 const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
@@ -690,6 +690,10 @@ const initialize = async () => {
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				await kernelManager.shutdown();
+			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 		}
 	} catch (error) {
@@ -748,7 +752,7 @@ watch(
 			await initialize();
 		}
 	},
-	{ immediate: true, deep: true }
+	{ deep: true }
 );
 
 onUnmounted(() => {
