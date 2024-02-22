@@ -32,8 +32,10 @@ public class SearchByAssetTypeControllerTests extends TerariumApplicationTests {
 	public void testKnnSearch() throws Exception {
 
 		// Test that we get a 404 if we provide a project id that doesn't exist
-		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/search-by-asset-type/" + TEST_ASSET)
+		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/search-by-asset-type/" + TEST_ASSET)
 				.param("text", "Was COVID-19 invented by aliens?")
+				.param("page", "100")
+				.param("page-size", "100")
 				.param("index", TEST_INDEX) // index override
 				.with(csrf()))
 				.andExpect(status().isOk())
