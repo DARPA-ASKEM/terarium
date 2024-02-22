@@ -147,22 +147,28 @@ export const autoCalibrationMapping = async (
 	const distinctDataGroundings = [...new Set(allDataGroundings)];
 	const allSimilarity = await getEntitySimilarity(distinctModelGroundings, distinctDataGroundings);
 	if (!allSimilarity) return result;
-
-	const filteredSim = allSimilarity.filter((ele) => ele.similarity < acceptableDistance);
+	// normalized cosine similarities
+	const filteredSim = allSimilarity.filter((ele) => ele.similarity > acceptableDistance);
 	filteredSim.forEach((sim) => {
 		// Find all states assosiated with this sim
 		const validStates = modelOptions.filter((state) => {
 			if (state.grounding?.identifiers) {
-				const modelTemp = Object.entries(state.grounding?.identifiers);
-				const modelGroundingList = modelTemp.map((ele) => ele.join(':'));
+				const modelGroundingList = Object.entries(state.grounding?.identifiers).map((ele) =>
+					ele.join(':')
+				);
 				return modelGroundingList.includes(sim.source);
 			}
 			return false;
 		});
 		// Find all columns assosiated with this sim
 		const validCols = datasetOptions.filter((col) => {
-			const dataGroundingList = Object.keys(col.metadata?.groundings?.identifiers);
-			return dataGroundingList.includes(sim.target);
+			if (col.metadata?.groundings?.identifiers) {
+				const dataGroundingList = Object.entries(col.metadata?.groundings?.identifiers).map((ele) =>
+					ele.join(':')
+				);
+				return dataGroundingList.includes(sim.target);
+			}
+			return false;
 		});
 		// For all states and columns that have short distances throw them into results
 		validStates.forEach((state) => {
