@@ -181,7 +181,7 @@
 		v-if="suggestedConfirgurationContext.isOpen"
 		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
 		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
-		class="popover"
+		popover
 	>
 		<tera-drilldown-section>
 			<tera-model-semantic-tables
@@ -803,9 +803,5 @@ onUnmounted(() => {
 
 .use-button {
 	white-space: nowrap;
-}
-
-.popover.overlay-container > :deep(section) {
-	margin: 3rem 2.5rem 0rem 2.5rem;
 }
 </style>
