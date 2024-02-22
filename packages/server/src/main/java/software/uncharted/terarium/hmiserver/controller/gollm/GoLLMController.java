@@ -13,8 +13,11 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.util.SerializationUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -138,11 +141,12 @@ public class GoLLMController {
 						.orElseThrow();
 				final ConfigureModelResponse configurations = objectMapper.readValue(resp.getOutput(), ConfigureModelResponse.class);
 
+				// For each configuration, create a new model configuration with parameters set
 				configurations.response.get("conditions").forEach((condition) -> {
 
-
-					final Model modelCopy = model;
-					final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
+					//FIXME: It would be best to create a copy of a model, but we need to look into make a copy constructor
+					// Map the parameters values to the model
+					final List<ModelParameter> modelParameters = model.getSemantics().getOde().getParameters();
 					modelParameters.forEach((parameter) -> {
 						JsonNode conditionParameters = condition.get("parameters");
 						conditionParameters.forEach((conditionParameter) -> {
@@ -151,16 +155,17 @@ public class GoLLMController {
 							}
 						});
 					});
-					modelCopy.getSemantics().getOde().setParameters(modelParameters);
 
+					// Create the new configuration
 					final ModelConfiguration configuration = new ModelConfiguration();
 					configuration.setModelId(model.getId());
 					configuration.setName(condition.get("name").asText());
 					configuration.setDescription(condition.get("description").asText());
-					configuration.setConfiguration(modelCopy);
+					configuration.setConfiguration(model);
 
 					try {
 						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+						// add provenance
 						provenanceService.createProvenance(new Provenance()
 							.setLeft(newConfig.getId())
 							.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
@@ -172,7 +177,7 @@ public class GoLLMController {
 					}
 				});
 				
-			} catch (final IOException e) {
+			} catch (final Exception e) {
 				log.error("Failed to configure model", e);
 			}
 			log.info("Model configured successfully");
@@ -186,6 +191,7 @@ public class GoLLMController {
 	@Operation(summary = "Dispatch a `GoLLM Model Card task")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
 			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
@@ -202,7 +208,7 @@ public class GoLLMController {
 			// make sure there is text in the document
 			if (document.get().getText() == null || document.get().getText().isEmpty()) {
 				log.warn("Document {} has no text to send", documentId);
-				return ResponseEntity.badRequest().build();
+				return ResponseEntity.notFound().build();
 			}
 
 			// check for input length
@@ -261,13 +267,13 @@ public class GoLLMController {
 			// make sure there is text in the document
 			if (document.get().getText() == null || document.get().getText().isEmpty()) {
 				log.warn("Document {} has no text to send", documentId);
-				return ResponseEntity.badRequest().build();
+				return ResponseEntity.notFound().build();
 			}
 
 			// Grab the model
 			final Optional<Model> model = modelService.getAsset(modelId);
 			if (model.isEmpty()) {
-				return ResponseEntity.notFound().build();
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found.");
 			}
 
 			final ConfigureModelInput input = new ConfigureModelInput();

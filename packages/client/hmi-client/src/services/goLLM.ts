@@ -54,7 +54,7 @@ export async function configureModel(documentId: string, modelId: string): Promi
 			}
 		});
 	} catch (err) {
-		logger.error(err);
+		logger.error(`An issue occured while exctracting a model configuration. ${err}`);
 	}
 }
 

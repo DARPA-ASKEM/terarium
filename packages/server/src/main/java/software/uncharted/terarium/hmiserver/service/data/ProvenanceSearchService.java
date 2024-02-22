@@ -276,7 +276,7 @@ public class ProvenanceSearchService {
 	public Set<String> modelConfigFromDocument(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
 			throw new IllegalArgumentException(
-					"Document used for model configuration extraction can only be found by providing a Model confirguration");
+					"Document used for model-configuration extraction can only be found by providing a model-confirguration");
 		}
 
 		try (final Session session = neo4jService.getSession()) {
@@ -286,14 +286,10 @@ public class ProvenanceSearchService {
 					modelId);
 
 			final Result response = session.run(query);
-
-			log.info("Response: " + response.toString());
 			final Set<String> responseData = new HashSet<>();
 			while (response.hasNext()) {
 				responseData.add(response.next().get("d").get("id").asString());
 			}
-
-			log.info("Response Data: "  + responseData.toString());
 			return responseData;
 		}
 	}

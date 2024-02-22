@@ -54,22 +54,18 @@
 						>
 							<Column field="name" header="Name" style="width: 15%">
 								<template #body="{ data }">
-									<Button
-										:label="data.name"
-										text
-										@click="onOpenSuggestedConfiguration(data)"
-									></Button>
+									<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
 								</template>
 							</Column>
 							<Column field="description" header="Description" style="width: 30%"></Column>
 							<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
 								<template #body="{ data }">
-									<span>{{ new Date(data.createdOn).toISOString() }}</span>
+									{{ new Date(data.createdOn).toISOString() }}
 								</template>
 							</Column>
 							<Column header="Source" style="width: 30%">
 								<template #body="{ data }">
-									<span>{{ data.configuration.metadata?.source?.join(',') || '--' }}</span>
+									{{ data.configuration.metadata?.source?.join(',') || '--' }}
 								</template>
 							</Column>
 							<Column style="width: 7rem">
@@ -84,7 +80,7 @@
 										:height="200"
 										:width="200"
 									></Vue3Lottie>
-									<p>Loading suggested configurations.</p>
+									<p>Fetching suggested configurations.</p>
 								</div>
 							</template>
 							<template #empty>
