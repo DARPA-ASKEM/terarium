@@ -1,4 +1,5 @@
-import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
+// import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
+import { EventSource } from 'extended-eventsource';
 import type { ClientEvent } from '@/types/Types';
 import { ClientEventType } from '@/types/Types';
 import useAuthStore from '@/stores/auth';
@@ -35,49 +36,46 @@ class RetriableError extends Error {}
  */
 export async function init(): Promise<void> {
 	const authStore = useAuthStore();
-	const options = {
+
+	const eventSource = new EventSource('/api/client-event', {
 		headers: {
 			Authorization: `Bearer ${authStore.token}`
 		},
-		onmessage(message: EventSourceMessage) {
-			// Parse the data as a ClientEvent and pass it on to the subscribers
-			const data = JSON.parse(message.data) as ClientEvent<any>;
-			if (data.type === ClientEventType.Heartbeat) {
-				lastHeartbeat = new Date().valueOf();
-				return;
-			}
-			const handlers = subscribers.get(data.type);
-			if (handlers) {
-				handlers.forEach((handler) => handler(data));
-			}
-		},
-		async onopen(response: Response) {
-			if (response.status === 401) {
-				// redirect to the login page
-				authStore.keycloak?.login({
-					redirectUri: window.location.href
-				});
-			} else if (response.status >= 500) {
-				throw new RetriableError('Internal server error');
-			} else {
-				// Reset the backoff time as we've made a connection successfully
-				backoffMs = 1000;
-			}
-		},
-		onerror(error: any) {
-			// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
-			if (error instanceof RetriableError) {
-				backoffMs *= 2;
-				return Math.min(backoffMs, 60000);
-			}
-			throw error; // fatal
-		},
-		onclose() {
-			init();
-		},
-		openWhenHidden: true
+		retry: 3000
+	});
+	eventSource.onmessage = (message: MessageEvent) => {
+		// Parse the data as a ClientEvent and pass it on to the subscribers
+		const data = JSON.parse(message.data) as ClientEvent<any>;
+		if (data.type === ClientEventType.Heartbeat) {
+			lastHeartbeat = new Date().valueOf();
+			return;
+		}
+		const handlers = subscribers.get(data.type);
+		if (handlers) {
+			handlers.forEach((handler) => handler(data));
+		}
 	};
-	await fetchEventSource('/api/client-event', options);
+	eventSource.onopen = async (response: Response) => {
+		if (response.status === 401) {
+			// redirect to the login page
+			authStore.keycloak?.login({
+				redirectUri: window.location.href
+			});
+		} else if (response.status >= 500) {
+			throw new RetriableError('Internal server error');
+		} else {
+			// Reset the backoff time as we've made a connection successfully
+			backoffMs = 1000;
+		}
+	};
+	eventSource.onerror = (error: any) => {
+		// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
+		if (error instanceof RetriableError) {
+			backoffMs *= 2;
+			return Math.min(backoffMs, 60000);
+		}
+		throw error; // fatal
+	};
 }
 
 /**
