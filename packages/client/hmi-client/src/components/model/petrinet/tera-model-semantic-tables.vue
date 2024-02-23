@@ -55,21 +55,6 @@
 						/>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.STATE, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
@@ -116,21 +101,6 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.PARAMETER, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
@@ -156,21 +126,6 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.OBSERVABLE, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
@@ -197,21 +152,6 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.TRANSITION, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
@@ -280,7 +220,6 @@
 			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
 				<Column field="id" header="Symbol" />
 				<Column field="units.expression" header="Unit" />
-				<Column header="Extractions" />
 			</DataTable>
 		</AccordionTab>
 	</Accordion>
@@ -305,12 +244,10 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import InputText from 'primevue/inputtext';
-import TeraModelExtraction from './tera-model-extraction.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -402,20 +339,6 @@ const otherConcepts = computed(() => {
 
 	return unalignedExtractions ?? [];
 });
-
-function openExtractions(variableType: VariableTypes, data: any) {
-	const clonedExpandedRows = cloneDeep(expandedRows.value);
-
-	if (clonedExpandedRows[variableType].find((row: any) => row.id === data.id)) {
-		clonedExpandedRows[variableType] = clonedExpandedRows[variableType].filter(
-			(row: any) => row.id !== data.id
-		);
-	} else {
-		clonedExpandedRows[variableType].push(data);
-	}
-
-	expandedRows.value = clonedExpandedRows;
-}
 
 function updateTable(tableType: string, idx: number, key: string, value: any) {
 	transientTableValue.value = {
