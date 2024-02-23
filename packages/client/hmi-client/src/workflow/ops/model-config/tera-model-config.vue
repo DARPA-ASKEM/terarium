@@ -7,8 +7,7 @@
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
@@ -253,13 +252,7 @@ const outputs = computed(() => {
 	return [];
 });
 
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'update-output-port',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	name: string;
@@ -620,14 +613,8 @@ const createConfiguration = async () => {
 	});
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 const fetchConfigurations = async (modelId: string) => {
