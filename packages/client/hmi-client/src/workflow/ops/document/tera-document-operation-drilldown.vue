@@ -112,7 +112,6 @@ onMounted(async () => {
 				pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
 			} else {
 				docText.value = await getDocumentFileAsText(document.value.id, filename);
-				console.log(document.value);
 			}
 		}
 		isFetchingPDF.value = false;
