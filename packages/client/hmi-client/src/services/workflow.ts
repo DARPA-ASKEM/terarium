@@ -136,7 +136,10 @@ export const addEdge = (
 
 	// Check if type is compatible
 	if (sourceOutputPort.value === null) return;
-	if (sourceOutputPort.type !== targetInputPort.type) return;
+
+	const allowedTypes = targetInputPort.type.split('|');
+	if (!allowedTypes.includes(sourceOutputPort.type)) return;
+
 	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
 		return;
 	}
@@ -148,6 +151,12 @@ export const addEdge = (
 	} else {
 		targetInputPort.label = sourceOutputPort.label;
 		targetInputPort.value = sourceOutputPort.value;
+	}
+
+	// Transfer concrete type information where it can accept multiple types
+	// Note this will lock in the typing, even after unlink
+	if (allowedTypes.length > 1) {
+		targetInputPort.type = sourceOutputPort.type;
 	}
 
 	const edge: WorkflowEdge = {

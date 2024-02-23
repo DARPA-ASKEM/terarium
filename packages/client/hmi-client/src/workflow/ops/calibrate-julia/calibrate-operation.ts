@@ -41,7 +41,7 @@ export const CalibrationOperationJulia: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset' }
 	],
-	outputs: [{ type: 'number' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	// TODO: Figure out mapping
