@@ -182,7 +182,8 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 	kernel?.sendJupyterMessage(message);
 };
 
-// FIXME: this is a bit fragile
+// FIXME: this is a bit fragile, the output is meant to match the terms used in askem-beaker
+// and not necessarily asset type enums
 const toAssetType = (t: string) => {
 	if (t.endsWith('Id')) {
 		return t.substring(0, t.length - 2);
