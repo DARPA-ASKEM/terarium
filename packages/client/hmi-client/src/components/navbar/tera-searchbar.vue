@@ -35,6 +35,7 @@
 						<tera-asset-card
 							:asset="searchByExampleSelectedAsset"
 							:resourceType="searchByExampleSelectedResourceType"
+							:source="source"
 							class="asset-card-in-searchByExample-dropzone"
 						>
 						</tera-asset-card>
@@ -114,6 +115,7 @@ import { useProjects } from '@/composables/project';
 
 defineProps<{
 	showSuggestions: boolean;
+	source: string;
 	placeholder?: string;
 }>();
 

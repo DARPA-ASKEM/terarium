@@ -39,6 +39,7 @@
 						ref="searchBarRef"
 						@query-changed="updateRelatedTerms"
 						@toggle-search-by-example="searchByExampleModalToggled"
+						:source="chosenSource"
 						:show-suggestions="false"
 					/>
 					<!-- <aside class="suggested-terms" v-if="!isEmpty(terms)">
