@@ -10,5 +10,5 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 public class EntitySimilarityResult {
 	private String source;
 	private String target;
-	private Float distance;
+	private Float similarity;
 }

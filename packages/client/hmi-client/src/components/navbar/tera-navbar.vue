@@ -29,16 +29,30 @@
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
+				class="evaluation-scneario-modal"
 			>
 				<template #header>
-					<h4>Evaluation Scenario</h4>
+					<div class="flex w-full justify-content-between align-items-center">
+						<h4>Evaluation scenario</h4>
+						<div>
+							<span class="text-sm">Status</span
+							><span class="ml-2 status-chip">{{
+								evaluationScenarioCurrentStatus ? evaluationScenarioCurrentStatus : 'Ready to start'
+							}}</span>
+						</div>
+					</div>
 				</template>
 				<template #default>
 					<form>
-						<label for="evaluation-scenario-name">Scenario</label>
-						<InputText id="evaluation-scenario-name" type="text" v-model="evaluationScenarioName" />
+						<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
+						<InputText
+							id="evaluation-scenario-name"
+							type="text"
+							v-model="evaluationScenarioName"
+							placeholder="What is the scenario name?"
+						/>
 
-						<label for="evaluation-scenario-task">Task</label>
+						<label class="text-sm" for="evaluation-scenario-task">Task</label>
 						<InputText
 							id="evaluation-scenario-task"
 							type="text"
@@ -46,7 +60,7 @@
 							placeholder="What is the scenario question?"
 						/>
 
-						<label for="evaluation-scenario-description">Description</label>
+						<label class="text-sm" for="evaluation-scenario-description">Description</label>
 						<Textarea
 							id="evaluation-scenario-description"
 							rows="5"
@@ -54,48 +68,69 @@
 							placeholder="Describe what you are working on"
 						/>
 
-						<label for="evaluation-scenario-notes">Notes</label>
+						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
-
-						<p>Status: {{ evaluationScenarioCurrentStatus }}</p>
-						<p>Runtime: {{ evaluationScenarioRuntimeString }}</p>
 					</form>
 				</template>
 				<template #footer>
-					<Button class="p-button-secondary" @click="isEvaluationScenarioModalVisible = false"
-						>Close</Button
-					>
-					<Button
-						class="p-button-danger"
-						v-if="
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
-						"
-						:disabled="!isEvaluationScenarioValid"
-						@click="stopEvaluationScenario"
-						>Stop</Button
-					>
-					<Button
-						class="p-button-warning"
-						v-if="
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
-						"
-						@click="pauseEvaluationScenario"
-						>Pause</Button
-					>
-					<Button
-						class="p-button-warning"
-						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
-						@click="resumeEvaluationScenario"
-						>Resume</Button
-					>
-					<Button
-						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
-						@click="beginEvaluationScenario"
-						>Begin</Button
-					>
+					<div class="flex gap-2">
+						<Button
+							size="large"
+							class="p-button-danger"
+							v-if="
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
+							"
+							:disabled="!isEvaluationScenarioValid"
+							@click="stopEvaluationScenario"
+							>Stop</Button
+						>
+						<Button
+							size="large"
+							class="p-button-warning"
+							v-if="
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
+							"
+							@click="pauseEvaluationScenario"
+							>Pause</Button
+						>
+						<Button
+							size="large"
+							class="p-button-warning"
+							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
+							@click="resumeEvaluationScenario"
+							>Resume</Button
+						>
+
+						<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
+						<div
+							class="hidden"
+							v-if="
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
+								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
+							"
+						/>
+						<Button
+							v-else
+							size="large"
+							:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
+							@click="beginEvaluationScenario"
+							>Begin</Button
+						>
+						<Button
+							size="large"
+							class="p-button-secondary"
+							outlined
+							@click="isEvaluationScenarioModalVisible = false"
+							>Close</Button
+						>
+					</div>
+					<div class="align-self-center">
+						<p>Runtime {{ evaluationScenarioRuntimeString }}</p>
+					</div>
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -375,7 +410,7 @@ const userMenu = ref();
 const isLogoutDialog = ref(false);
 const userMenuItems = ref([
 	{
-		label: 'Evaluation Scenario',
+		label: 'Evaluation scenario',
 		command: () => {
 			isEvaluationScenarioModalVisible.value = true;
 		}
@@ -568,5 +603,18 @@ nav {
 	justify-content: space-between;
 	width: 100%;
 	color: var(--text-color-subdued);
+}
+
+.evaluation-scneario-modal:deep(section) {
+	width: 60vw;
+}
+
+.evaluation-scneario-modal:deep(footer) {
+	justify-content: space-between;
+}
+.status-chip {
+	background-color: var(--surface-highlight);
+	padding: var(--gap-small);
+	border-radius: 3rem;
 }
 </style>
