@@ -153,8 +153,9 @@ export const addEdge = (
 		targetInputPort.value = sourceOutputPort.value;
 	}
 
-	// Transfer type information where type needs to be confirmed
-	if (allowedTypes.length > 0) {
+	// Transfer concrete type information where it can accept multiple types
+	// Note this will lock in the typing, even after unlink
+	if (allowedTypes.length > 1) {
 		targetInputPort.type = sourceOutputPort.type;
 	}
 
