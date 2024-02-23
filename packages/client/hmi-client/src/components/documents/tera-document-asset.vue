@@ -160,7 +160,7 @@ const viewOptions = computed(() => {
 
 	if (isPdf) {
 		options.push(pdfOption);
-	} else if ((filename && document.value?.id) || document.value?.text) {
+	} else if (docText.value) {
 		options.push(txtOption);
 	} else {
 		options.push(notFoundOption);
@@ -171,12 +171,6 @@ const viewOptions = computed(() => {
 const docText = ref<string | null>(null);
 
 const documentLoading = ref(false);
-
-const docLink = computed(() =>
-	document.value?.fileNames && document.value.fileNames.length > 0
-		? document.value.fileNames[0]
-		: null
-);
 
 const figures = computed(
 	() =>
@@ -208,17 +202,19 @@ watch(
 	() => props.assetId,
 	async () => {
 		if (props.assetId) {
+			view.value = DocumentView.EXTRACTIONS;
+			pdfLink.value = null;
 			documentLoading.value = true;
 			document.value = await getDocumentAsset(props.assetId);
 			const filename = document.value?.fileNames?.[0];
-			const isPdf = filename?.endsWith('.pdf');
 
-			if (isPdf) {
+			if (filename?.endsWith('.pdf')) {
+				pdfLink.value = await downloadDocumentAsset(props.assetId, filename); // Generate PDF download link on (doi change)
 				view.value = DocumentView.PDF;
 			} else {
 				docText.value =
 					filename && document.value?.id
-						? await getDocumentFileAsText(document.value.id, filename)
+						? document.value?.text ?? (await getDocumentFileAsText(document.value.id, filename))
 						: document.value?.text ?? null;
 				if (docText.value !== null) view.value = DocumentView.TXT;
 			}
@@ -234,15 +230,6 @@ watch(
 const formattedAbstract = computed(() => {
 	if (!document.value || !document.value.description) return '';
 	return highlightSearchTerms(document.value.description);
-});
-
-watch(docLink, async (currentValue, oldValue) => {
-	if (currentValue !== oldValue) {
-		// fetchDocumentArtifacts();
-		// fetchAssociatedResources();
-		pdfLink.value = null;
-		pdfLink.value = await downloadDocumentAsset(props.assetId, docLink.value!); // Generate PDF download link on (doi change)
-	}
 });
 
 onUpdated(() => {

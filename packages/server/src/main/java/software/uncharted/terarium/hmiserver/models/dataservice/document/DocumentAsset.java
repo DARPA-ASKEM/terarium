@@ -35,7 +35,7 @@ public class DocumentAsset extends TerariumAsset {
 	private String userId;
 
 	@TSOptional
-	@JsonAlias("file_names")
+	@JsonAlias("filenames")
 	private List<String> fileNames;
 
 	@TSOptional
