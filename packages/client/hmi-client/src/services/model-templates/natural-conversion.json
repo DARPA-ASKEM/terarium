@@ -46,8 +46,8 @@
             "rates": [
                 {
                     "target": "Natural conversion",
-                    "expression": "A*B*p",
-                    "expression_mathml": "<apply><times/><ci>A</ci><ci>B</ci><ci>p</ci></apply>"
+                    "expression": "p*A",
+                    "expression_mathml": "<apply><times/><ci>p</ci><ci>A</ci></apply>"
                 }
             ],
             "initials": [
