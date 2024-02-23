@@ -8,7 +8,8 @@
 				<div v-else-if="!isEmpty(searchByExampleOptionsStr)" class="search-by-example-card">
 					<tera-asset-card
 						:asset="searchByExampleItem!"
-						:resource-type="resultType as ResourceType"
+						:resource-type="resourceType"
+						:source="source"
 					/>
 				</div>
 			</template>
@@ -47,9 +48,10 @@
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<tera-search-item
 				:asset="asset"
-				:is-previewed="previewedAsset === asset"
+				:source="source"
+				:resource-type="resourceType"
 				:is-adding-asset="isAdding && selectedAsset === asset"
-				:resource-type="resultType as ResourceType"
+				:is-previewed="previewedAsset === asset"
 				:search-term="searchTerm"
 				:project-options="projectOptions"
 				@select-asset="updateSelection(asset)"
@@ -62,7 +64,7 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { computed, PropType, ref } from 'vue';
-import type { DocumentAsset, XDDFacetsItemResponse } from '@/types/Types';
+import type { DocumentAsset, XDDFacetsItemResponse, Document } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
@@ -74,7 +76,8 @@ import {
 	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
 import { useProjects } from '@/composables/project';
-import { isDataset, isModel } from '@/utils/data-util';
+import { createDocumentFromXDD } from '@/services/document-assets';
+import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
 import { Vue3Lottie } from 'vue3-lottie';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
@@ -94,8 +97,8 @@ const props = defineProps({
 		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
 		required: true
 	},
-	resultType: {
-		type: String,
+	resourceType: {
+		type: String as PropType<ResourceType>,
 		default: ResourceType.ALL
 	},
 	searchTerm: {
@@ -109,6 +112,10 @@ const props = defineProps({
 	docCount: {
 		type: Number,
 		default: 0
+	},
+	source: {
+		type: String,
+		default: 'XDD'
 	}
 });
 
@@ -142,7 +149,13 @@ const projectOptions = computed(() => [
 							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
-					} else {
+					} else if (isDocument(selectedAsset.value) && props.source === 'XDD') {
+						const document = selectedAsset.value as Document;
+						await createDocumentFromXDD(document, project.id as string);
+						// finally add asset to project
+						response = await useProjects().get(project.id);
+						assetName = selectedAsset.value.title;
+					} else if (props.source === 'Terarium') {
 						const document = selectedAsset.value as DocumentAsset;
 						const assetType = AssetType.Document;
 						response = await useProjects().addAsset(assetType, document.id, project.id);
@@ -163,7 +176,7 @@ const projectOptions = computed(() => [
 // 	const projs =
 // 		useProjects().allProjects.value?.forEach(async (project) => {
 // 			const assets = await useProjects().get(project.id);
-// 		    console.log(project, props.resultType, assets);
+// 		    console.log(project, props.resourceType, assets);
 // 		}) ?? [];
 // 	console.log(projs);
 // });
@@ -188,7 +201,7 @@ const togglePreview = (asset: ResultType) => {
 };
 
 // const rawConceptFacets = computed(() => {
-// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType);
 // 	if (searchResults) {
 // 		return searchResults.rawConceptFacets;
 // 	}
@@ -196,15 +209,20 @@ const togglePreview = (asset: ResultType) => {
 // });
 
 const filteredAssets = computed(() => {
-	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType);
 
 	if (searchResults) {
-		if (props.resultType === ResourceType.XDD) {
-			const documentSearchResults = searchResults.results as DocumentAsset[];
-
-			return [...documentSearchResults];
+		if (props.resourceType === ResourceType.XDD) {
+			if (props.source === 'XDD') {
+				const documentSearchResults = searchResults.results as Document[];
+				return [...documentSearchResults];
+			}
+			if (props.source === 'Terarium') {
+				const documentSearchResults = searchResults.results as DocumentAsset[];
+				return [...documentSearchResults];
+			}
 		}
-		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+		if (props.resourceType === ResourceType.MODEL || props.resourceType === ResourceType.DATASET) {
 			return searchResults.results;
 		}
 	}
@@ -213,7 +231,7 @@ const filteredAssets = computed(() => {
 
 const resultsCount = computed(() => {
 	let total = 0;
-	if (props.resultType === ResourceType.ALL) {
+	if (props.resourceType === ResourceType.ALL) {
 		// count the results from all subsystems
 		props.dataItems.forEach((res) => {
 			const count = res?.hits ?? res?.results.length;
