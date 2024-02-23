@@ -105,7 +105,7 @@
 			<tera-drilldown-preview
 				title="Validation results"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
+				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
 			>
@@ -474,7 +474,7 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 };
 
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
