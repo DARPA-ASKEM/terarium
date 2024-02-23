@@ -11,7 +11,6 @@
 				data-key="id"
 				:value="states"
 				@cell-edit-complete="onCellEditComplete"
-				v-model:expanded-rows="expandedRows[VariableTypes.STATE]"
 			>
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
@@ -66,7 +65,6 @@
 				:edit-mode="readonly ? undefined : 'cell'"
 				data-key="id"
 				:value="parameters"
-				:expanded-rows="expandedRows[VariableTypes.PARAMETER]"
 			>
 				<Column field="id" header="Symbol">
 					<template #editor="{ data, index }">
@@ -107,13 +105,7 @@
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
 			</template>
-			<DataTable
-				v-if="!isEmpty(observables)"
-				edit-mode="cell"
-				data-key="id"
-				:value="observables"
-				:expanded-rows="expandedRows[VariableTypes.OBSERVABLE]"
-			>
+			<DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
 				<Column field="expression" header="Expression">
@@ -132,12 +124,7 @@
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 			</template>
-			<DataTable
-				v-if="!isEmpty(transitions)"
-				data-key="id"
-				:value="transitions"
-				:expanded-rows="expandedRows[VariableTypes.TRANSITION]"
-			>
+			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
 				<Column field="input" header="Input" />
@@ -257,13 +244,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
-enum VariableTypes {
-	STATE = 'state',
-	OBSERVABLE = 'observable',
-	PARAMETER = 'parameter',
-	TRANSITION = 'transition'
-}
-
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
 	tableType: string;
@@ -280,17 +260,7 @@ const conceptSearchTerm = ref({
 	curie: '',
 	name: ''
 });
-const expandedRows = ref<{
-	[VariableTypes.STATE]: any[];
-	[VariableTypes.PARAMETER]: any[];
-	[VariableTypes.OBSERVABLE]: any[];
-	[VariableTypes.TRANSITION]: any[];
-}>({
-	[VariableTypes.STATE]: [],
-	[VariableTypes.PARAMETER]: [],
-	[VariableTypes.OBSERVABLE]: [],
-	[VariableTypes.TRANSITION]: []
-});
+
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
