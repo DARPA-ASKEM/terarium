@@ -21,7 +21,7 @@ import java.util.Map;
 @TSModel
 public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
-    @Serial
+	@Serial
 	private static final long serialVersionUID = 398195277271188277L;
 
 	private ModelHeader header;
@@ -62,10 +62,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 			this.setDeletedOn((Timestamp) other.getDeletedOn());
 		}
 
-        this.header = other.header; 
+        this.header = other.header;
         this.userId = other.userId;
-        this.model = new HashMap<>(other.model); 
-        this.properties = other.properties; 
+        this.model = new HashMap<>(other.model);
+        this.properties = other.properties;
         this.semantics = other.semantics;
         this.metadata = other.metadata;
     }
