@@ -677,7 +677,7 @@ export interface DKG {
 export interface EntitySimilarityResult {
     source: string;
     target: string;
-    distance: number;
+    similarity: number;
 }
 
 export interface PermissionGroup {
