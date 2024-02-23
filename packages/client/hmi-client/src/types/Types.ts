@@ -677,7 +677,7 @@ export interface DKG {
 export interface EntitySimilarityResult {
     source: string;
     target: string;
-    distance: number;
+    similarity: number;
 }
 
 export interface PermissionGroup {
@@ -901,6 +901,7 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
+    sources?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
     processed_at?: number;
@@ -1370,6 +1371,7 @@ export enum SimulationType {
     Ensemble = "ENSEMBLE",
     Simulation = "SIMULATION",
     Calibration = "CALIBRATION",
+    Optimization = "OPTIMIZATION",
 }
 
 export enum ProgressState {

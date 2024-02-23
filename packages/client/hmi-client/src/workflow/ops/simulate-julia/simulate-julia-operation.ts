@@ -15,7 +15,7 @@ export const SimulateJuliaOperation: Operation = {
 	displayName: 'Simulate (deterministic)',
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
-	outputs: [{ type: 'simOutput' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {

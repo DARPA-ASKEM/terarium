@@ -58,7 +58,7 @@ public class ModelAddEmbeddingsPass
 
 			Model doc = new Model();
 			doc.setId(uuid);
-			doc.getMetadata().setModelCard(in.getModelCard().toString());
+			doc.getMetadata().setGollmCard(in.getModelCard());
 
 			Embedding embedding = new Embedding();
 			embedding.setEmbeddingId(UUID.randomUUID().toString());
