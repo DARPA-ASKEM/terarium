@@ -60,7 +60,7 @@
 					</AccordionTab>
 				</Accordion>
 				<template #footer?>
-					<Button label="Close" @click="emit('close')"></Button>
+					<Button label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
 		</div>
@@ -72,6 +72,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import Button from 'primevue/button';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { onMounted, ref, watch } from 'vue';
 import { ExtractionAssetType } from '@/types/Types';
@@ -106,12 +107,14 @@ onMounted(async () => {
 		document.value = await getDocumentAsset(props.node.state.documentId);
 		const filename = document.value?.fileNames?.[0];
 		const isPdf = document.value?.fileNames?.[0]?.endsWith('.pdf');
-		if (document.value?.id && filename)
+		if (document.value?.id && filename) {
 			if (isPdf) {
 				pdfLink.value = await downloadDocumentAsset(document.value.id, filename);
 			} else {
 				docText.value = await getDocumentFileAsText(document.value.id, filename);
+				console.log(document.value);
 			}
+		}
 		isFetchingPDF.value = false;
 	}
 });

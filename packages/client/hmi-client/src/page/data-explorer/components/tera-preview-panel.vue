@@ -89,7 +89,6 @@ watch(
 		if (previewItem) {
 			previewItemState.value = previewItem;
 			previewItemResourceType.value = props.resourceType;
-			console.log(previewItem);
 		}
 	}
 );
