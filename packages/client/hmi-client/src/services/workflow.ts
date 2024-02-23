@@ -348,9 +348,14 @@ export function selectOutput(
 	operator: WorkflowNode<any>,
 	selectedWorkflowOutputId: WorkflowOutput<any>['id']
 ) {
+	operator.outputs.forEach((output) => {
+		output.isSelected = false;
+	});
+
 	// Update the Operator state with the selected one
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
 	if (selected) {
+		selected.isSelected = true;
 		operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
 		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
 		operator.active = selected.id;
