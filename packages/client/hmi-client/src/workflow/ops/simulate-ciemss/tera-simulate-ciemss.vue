@@ -61,8 +61,7 @@
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
 			>
@@ -182,13 +181,7 @@ import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulat
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'update-output-port',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
@@ -364,15 +357,8 @@ const lazyLoadSimulationData = async (runId: string) => {
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value[runId]);
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {

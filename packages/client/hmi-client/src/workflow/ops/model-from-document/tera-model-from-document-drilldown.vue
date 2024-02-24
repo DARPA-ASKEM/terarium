@@ -5,8 +5,7 @@
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				:is-loading="assetLoading"
 				is-selectable
 			/>
@@ -224,7 +223,7 @@ const savingAsset = ref(false);
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
-		onUpdateOutput(selectedOutputId.value);
+		onSelection(selectedOutputId.value);
 	}
 
 	const documentId = props.node.inputs?.[0]?.value?.[0];
@@ -277,16 +276,9 @@ function onUpdateInclude(asset: AssetBlock<EquationBlock | EquationFromImageBloc
 	emit('update-state', clonedState.value);
 }
 
-function onUpdateOutput(id) {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-}
-
-function onUpdateSelection(id) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-}
+};
 
 async function onRun() {
 	const equations = clonedState.value.equations

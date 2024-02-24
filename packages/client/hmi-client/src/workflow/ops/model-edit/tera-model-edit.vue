@@ -45,8 +45,7 @@
 				<tera-drilldown-preview
 					title="Model Preview"
 					v-model:output="selectedOutputId"
-					@update:output="onUpdateOutput"
-					@update:selection="onUpdateSelection"
+					@update:selection="onSelection"
 					:options="outputs"
 					is-selectable
 					class="h-full"
@@ -111,13 +110,7 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'select-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -327,15 +320,8 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 watch(
