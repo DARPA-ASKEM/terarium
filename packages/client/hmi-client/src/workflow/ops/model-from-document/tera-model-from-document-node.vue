@@ -55,21 +55,17 @@ const view = ref(View.Diagram);
 const viewOptions = ref([View.Diagram, View.Equation]);
 const model = ref(null as Model | null);
 
-onMounted(
-	async () => {
-		if (props.node?.active?.state?.modelId) {
-			model.value = await getModel(props.node.active.state.modelId);
-		}
+onMounted(async () => {
+	if (props.node?.active?.state?.modelId) {
+		model.value = await getModel(props.node.active.state.modelId);
 	}
-);
+});
 
-onUpdated(
-	async () => {
-		if (props.node?.active?.state?.modelId) {
-			model.value = await getModel(props.node.active.state.modelId);
-		}
+onUpdated(async () => {
+	if (props.node?.active?.state?.modelId) {
+		model.value = await getModel(props.node.active.state.modelId);
 	}
-);
+});
 </script>
 
 <style scoped>
