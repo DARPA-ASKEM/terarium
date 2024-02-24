@@ -372,14 +372,12 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
-	console.log('Select output', node.displayName, selectedOutputId);
 	workflowService.selectOutput(node, selectedOutputId);
 	workflowDirty = true;
 }
 
 function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
 	if (!node) return;
-	console.error('doh doh doh');
 	workflowService.updateOutputPort(node, workflowOutput);
 	workflowDirty = true;
 }
