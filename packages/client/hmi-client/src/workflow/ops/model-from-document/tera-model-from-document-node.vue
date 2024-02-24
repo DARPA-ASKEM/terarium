@@ -9,13 +9,13 @@
 			/>
 			<div class="container">
 				<tera-model-diagram
-					v-if="view === ModelNodeView.Diagram"
+					v-if="view === View.Diagram"
 					:model="model"
 					:is-editable="false"
 					is-preview
 				/>
 				<tera-model-equation
-					v-else-if="view === ModelNodeView.Equation"
+					v-else-if="view === View.Equation"
 					:model="model"
 					:is-editable="false"
 				/>
@@ -45,12 +45,12 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-enum ModelNodeView {
+enum View {
 	Diagram = 'Diagram',
 	Equation = 'Equation'
 }
-const view = ref(ModelNodeView.Diagram);
-const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
+const view = ref(View.Diagram);
+const viewOptions = ref([View.Diagram, View.Equation]);
 
 const model = ref(null as Model | null);
 
@@ -59,8 +59,6 @@ onMounted(
 		if (props.node?.outputs[0]?.state?.modelId) {
 			model.value = await getModel(props.node.outputs[0].state.modelId);
 		}
-		console.log('model', model.value);
-		console.log('props.node.state.modelId', props.node);
 	},
 	{ immediate: true }
 );
