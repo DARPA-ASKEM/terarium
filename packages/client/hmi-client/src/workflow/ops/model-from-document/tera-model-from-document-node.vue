@@ -45,31 +45,31 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
+const emit = defineEmits(['open-drilldown']);
+
 enum View {
 	Diagram = 'Diagram',
 	Equation = 'Equation'
 }
 const view = ref(View.Diagram);
 const viewOptions = ref([View.Diagram, View.Equation]);
-
 const model = ref(null as Model | null);
 
 onMounted(
 	async () => {
-		if (props.node?.outputs[0]?.state?.modelId) {
-			model.value = await getModel(props.node.outputs[0].state.modelId);
+		if (props.node?.active?.state?.modelId) {
+			model.value = await getModel(props.node.active.state.modelId);
 		}
-	},
-	{ immediate: true }
+	}
 );
 
-onUpdated(async () => {
-	if (props.node?.outputs[0]?.state?.modelId) {
-		model.value = await getModel(props.node.outputs[0].state.modelId);
+onUpdated(
+	async () => {
+		if (props.node?.active?.state?.modelId) {
+			model.value = await getModel(props.node.active.state.modelId);
+		}
 	}
-});
-
-const emit = defineEmits(['open-drilldown']);
+);
 </script>
 
 <style scoped>
