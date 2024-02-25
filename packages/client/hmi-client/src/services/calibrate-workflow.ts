@@ -10,6 +10,16 @@ export interface CalibrateMap {
 	datasetVariable: string;
 }
 
+interface Entity {
+	id: string;
+	groundings?: any[];
+}
+
+interface EntityMap {
+	source: string;
+	target: string;
+}
+
 // Used in the setup of calibration node and drill down
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
@@ -117,76 +127,135 @@ export const renderLossGraph = (
 	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
 };
 
+// Takes in 2 lists of generic {id, groundings} and returns the singular
+// closest match for each element in list one
+export const autoEntityMapping = async (
+	sourceEntities: Entity[],
+	targetEntities: Entity[],
+	acceptableDist?: number
+) => {
+	const result = [] as EntityMap[];
+	const acceptableDistance = acceptableDist ?? 0.5;
+	const allSourceGroundings: string[] = [];
+	const allTargetGroundings: string[] = [];
+
+	sourceEntities.forEach((ele) => {
+		if (ele.groundings) {
+			ele.groundings.forEach((grounding) => allSourceGroundings.push(grounding));
+		}
+	});
+	targetEntities.forEach((ele) => {
+		if (ele.groundings) {
+			ele.groundings.forEach((grounding) => allTargetGroundings.push(grounding));
+		}
+	});
+
+	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
+	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
+	const allSimilarity = await getEntitySimilarity(
+		distinctSourceGroundings,
+		distinctTargetGroundings
+	);
+	if (!allSimilarity) return result;
+	const filteredSimilarity = allSimilarity.filter((ele) => ele.similarity >= acceptableDistance);
+	const validSources: any[] = [];
+	const validTargets: any[] = [];
+
+	filteredSimilarity.forEach((similarity) => {
+		// Find all Sources assosiated with this similarity
+		sourceEntities.forEach((source) => {
+			if (source.groundings && source.groundings.includes(similarity.source)) {
+				validSources.push({
+					sourceId: source.id,
+					sourceKey: similarity.source,
+					targetKey: similarity.target,
+					distance: similarity.similarity
+				});
+			}
+		});
+		// Find all targets assosiated with this similarity
+		targetEntities.forEach((target) => {
+			if (target.groundings && target.groundings.includes(similarity.target)) {
+				validTargets.push({
+					targetId: target.id,
+					sourceKey: similarity.source,
+					targetKey: similarity.target,
+					distance: similarity.similarity
+				});
+			}
+		});
+	});
+
+	// for each source, find its highest matching target:
+	const distinctSource = [...new Set(validSources.map((ele) => ele.sourceId))];
+	distinctSource.forEach((distinctSourceId) => {
+		let currentDistance = -Infinity;
+		let currentTargetId = '';
+		validSources.forEach((source) => {
+			if (distinctSourceId === source.sourceId) {
+				validTargets.forEach((target) => {
+					// Note here we are using the source and target groundings as a key to ensure we are checking like and like
+					if (
+						source.sourceKey === target.sourceKey &&
+						source.targetKey === target.targetKey &&
+						target.distance > currentDistance
+					) {
+						currentDistance = target.distance;
+						currentTargetId = target.targetId;
+					}
+				});
+			}
+		});
+		result.push({ source: distinctSourceId, target: currentTargetId });
+	});
+
+	return result;
+};
+
+// Takes in a list of states and a list of datasetcolumns.
+// Transforms them into generic entities with {id, groundings}
+// Uses autoEntityMapping to determine 1:1 mapping
+// rewrites result in form {modelVariable, datasetVariable}
 export const autoCalibrationMapping = async (
 	modelOptions: State[],
 	datasetOptions: DatasetColumn[]
 ) => {
 	const result = [] as CalibrateMap[];
-	const allModelGroundings: string[] = [];
-	const allDataGroundings: string[] = [];
 	const acceptableDistance = 0.5;
-	// Get all model groundings
+	const sourceEntities: Entity[] = [];
+	const targetEntities: Entity[] = [];
+
+	// Fill sourceEntities with modelOptions
 	modelOptions.forEach((state) => {
 		if (state.grounding?.identifiers) {
-			Object.entries(state.grounding?.identifiers)
-				.map((ele) => ele.join(':'))
-				.forEach((e) => allModelGroundings.push(e));
+			sourceEntities.push({
+				id: state.id,
+				groundings: Object.entries(state.grounding?.identifiers).map((ele) => ele.join(':'))
+			});
+		} else {
+			sourceEntities.push({ id: state.id });
 		}
 	});
-	// Get all data column groundings
+
+	// Fill targetEntities with datasetOptions
 	datasetOptions.forEach((col) => {
 		if (col.metadata?.groundings?.identifiers) {
-			Object.entries(col.metadata?.groundings?.identifiers)
-				.map((ele) => ele.join(':'))
-				.forEach((ele) => allDataGroundings.push(ele));
+			targetEntities.push({
+				id: col.name,
+				groundings: Object.entries(col.metadata?.groundings?.identifiers).map((ele) =>
+					ele.join(':')
+				)
+			});
+		} else {
+			targetEntities.push({ id: col.name });
 		}
 	});
 
-	// take out duplicates:
-	const distinctModelGroundings = [...new Set(allModelGroundings)];
-	const distinctDataGroundings = [...new Set(allDataGroundings)];
-	const allSimilarity = await getEntitySimilarity(distinctModelGroundings, distinctDataGroundings);
-	if (!allSimilarity) return result;
-	// normalized cosine similarities
-	const filteredSim = allSimilarity.filter((ele) => ele.similarity > acceptableDistance);
-	filteredSim.forEach((sim) => {
-		// Find all states assosiated with this sim
-		const validStates = modelOptions.filter((state) => {
-			if (state.grounding?.identifiers) {
-				const modelGroundingList = Object.entries(state.grounding?.identifiers).map((ele) =>
-					ele.join(':')
-				);
-				return modelGroundingList.includes(sim.source);
-			}
-			return false;
-		});
-		// Find all columns assosiated with this sim
-		const validCols = datasetOptions.filter((col) => {
-			if (col.metadata?.groundings?.identifiers) {
-				const dataGroundingList = Object.entries(col.metadata?.groundings?.identifiers).map((ele) =>
-					ele.join(':')
-				);
-				return dataGroundingList.includes(sim.target);
-			}
-			return false;
-		});
-		// For all states and columns that have short distances throw them into results
-		validStates.forEach((state) => {
-			validCols.forEach((col) => {
-				result.push({ modelVariable: state.id, datasetVariable: col.name });
-			});
-		});
+	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
+
+	// rename result to CalibrateMap for users of this function
+	entityResult.forEach((entity) => {
+		result.push({ modelVariable: entity.source, datasetVariable: entity.target });
 	});
-
-	// due to a state and a column having potential for multiple pairwise matches, lets remove duplicates from results.
-	const distinctResults = result.filter(
-		(value, index) =>
-			index ===
-			result.findIndex(
-				(obj) =>
-					obj.datasetVariable === value.datasetVariable && obj.modelVariable === value.modelVariable
-			)
-	);
-
-	return distinctResults;
+	return result;
 };
