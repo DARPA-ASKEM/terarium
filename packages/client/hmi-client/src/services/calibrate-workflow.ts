@@ -259,3 +259,46 @@ export const autoCalibrationMapping = async (
 	});
 	return result;
 };
+
+// Takes in two lists of states
+// Transforms them into generic entities with {id, groundings}
+// Uses autoEntityMapping to determine 1:1 mapping
+// rewrites result in form {modelOneVariable, modelTwoVariable}
+export const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions: State[]) => {
+	const result = [] as any[];
+	const acceptableDistance = 0.5;
+	const sourceEntities: Entity[] = [];
+	const targetEntities: Entity[] = [];
+
+	// Fill sourceEntities with modelOneOptions
+	modelOneOptions.forEach((state) => {
+		if (state.grounding?.identifiers) {
+			sourceEntities.push({
+				id: state.id,
+				groundings: Object.entries(state.grounding?.identifiers).map((ele) => ele.join(':'))
+			});
+		} else {
+			sourceEntities.push({ id: state.id });
+		}
+	});
+
+	// Fill targetEntities with datasetOptions
+	modelTwoOptions.forEach((state) => {
+		if (state.grounding?.identifiers) {
+			sourceEntities.push({
+				id: state.id,
+				groundings: Object.entries(state.grounding?.identifiers).map((ele) => ele.join(':'))
+			});
+		} else {
+			sourceEntities.push({ id: state.id });
+		}
+	});
+
+	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
+
+	// rename result to CalibrateMap for users of this function
+	entityResult.forEach((entity) => {
+		result.push({ modelOneVariable: entity.source, modelTwoVariable: entity.target });
+	});
+	return result;
+};
