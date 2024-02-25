@@ -98,8 +98,7 @@
 				title="Preview"
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				is-selectable
 			>
 				<h4>Loss</h4>
@@ -202,13 +201,7 @@ import { CalibrationOperationStateCiemss } from './calibrate-operation';
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'close',
-	'select-output',
-	'update-output-port',
-	'update-state'
-]);
+const emit = defineEmits(['append-output', 'close', 'select-output', 'update-state']);
 const toast = useToastService();
 
 enum CalibrateTabs {
@@ -421,11 +414,11 @@ const getCalibrateStatus = async (simulationId: string) => {
 	const output = await getRunResultCiemss(sampleSimulateId, 'result.csv');
 	runResults.value = output.runResults;
 
-	updateOutputPorts(simulationId, sampleSimulateId);
+	appendOutput(simulationId, sampleSimulateId);
 	showSpinner.value = false;
 };
 
-const updateOutputPorts = async (calibrationId: string, simulationId: string) => {
+const appendOutput = async (calibrationId: string, simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
 
@@ -462,15 +455,8 @@ const addChart = () => {
 	emit('update-state', state);
 };
 
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 // Used from button to add new entry to the mapping object

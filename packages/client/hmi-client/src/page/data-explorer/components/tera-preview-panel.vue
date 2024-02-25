@@ -7,10 +7,19 @@
 	>
 		<template v-slot:content>
 			<tera-external-publication
-				v-if="previewItemResourceType === ResourceType.XDD"
+				v-if="previewItemResourceType === ResourceType.XDD && source === 'XDD'"
 				:xdd-uri="previewItemId"
-				:previewLineLimit="3"
+				:asset-id="previewItemId"
 				:highlight="searchTerm"
+				:previewLineLimit="10"
+				:feature-config="{ isPreview: true }"
+				@close-preview="closePreview"
+			/>
+			<tera-document-asset
+				v-else-if="previewItemResourceType === ResourceType.XDD && source === 'Terarium'"
+				:asset-id="previewItemId"
+				:highlight="searchTerm"
+				:previewLineLimit="10"
 				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"
 			/>
@@ -39,6 +48,7 @@ import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
+import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 
 const props = defineProps({
@@ -66,6 +76,10 @@ const props = defineProps({
 	searchTerm: {
 		type: String,
 		default: null
+	},
+	source: {
+		type: String,
+		default: 'XDD'
 	}
 });
 

@@ -47,8 +47,7 @@
 			<tera-drilldown-preview
 				title="Stratify output"
 				:options="outputs"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
@@ -368,14 +367,7 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
-const onUpdateSelection = (id: string) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-};
-
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 

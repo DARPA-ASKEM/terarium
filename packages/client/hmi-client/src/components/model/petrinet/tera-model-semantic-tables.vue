@@ -11,7 +11,6 @@
 				data-key="id"
 				:value="states"
 				@cell-edit-complete="onCellEditComplete"
-				v-model:expanded-rows="expandedRows[VariableTypes.STATE]"
 			>
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
@@ -55,21 +54,6 @@
 						/>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.STATE, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
@@ -81,7 +65,6 @@
 				:edit-mode="readonly ? undefined : 'cell'"
 				data-key="id"
 				:value="parameters"
-				:expanded-rows="expandedRows[VariableTypes.PARAMETER]"
 			>
 				<Column field="id" header="Symbol">
 					<template #editor="{ data, index }">
@@ -116,34 +99,13 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.PARAMETER, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
 			</template>
-			<DataTable
-				v-if="!isEmpty(observables)"
-				edit-mode="cell"
-				data-key="id"
-				:value="observables"
-				:expanded-rows="expandedRows[VariableTypes.OBSERVABLE]"
-			>
+			<DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
 				<Column field="expression" header="Expression">
@@ -156,33 +118,13 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.OBSERVABLE, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 			</template>
-			<DataTable
-				v-if="!isEmpty(transitions)"
-				data-key="id"
-				:value="transitions"
-				:expanded-rows="expandedRows[VariableTypes.TRANSITION]"
-			>
+			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
 				<Column field="input" header="Input" />
@@ -197,21 +139,6 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.TRANSITION, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<template #expansion="{ data }">
-					<tera-model-extraction :extractions="extractions[data.id]" />
-				</template>
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
@@ -280,7 +207,6 @@
 			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
 				<Column field="id" header="Symbol" />
 				<Column field="units.expression" header="Unit" />
-				<Column header="Extractions" />
 			</DataTable>
 		</AccordionTab>
 	</Accordion>
@@ -305,12 +231,10 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import InputText from 'primevue/inputtext';
-import TeraModelExtraction from './tera-model-extraction.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -319,13 +243,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-model']);
-
-enum VariableTypes {
-	STATE = 'state',
-	OBSERVABLE = 'observable',
-	PARAMETER = 'parameter',
-	TRANSITION = 'transition'
-}
 
 // Used to keep track of the values of the current row being edited
 interface ModelTableTypes {
@@ -343,17 +260,7 @@ const conceptSearchTerm = ref({
 	curie: '',
 	name: ''
 });
-const expandedRows = ref<{
-	[VariableTypes.STATE]: any[];
-	[VariableTypes.PARAMETER]: any[];
-	[VariableTypes.OBSERVABLE]: any[];
-	[VariableTypes.TRANSITION]: any[];
-}>({
-	[VariableTypes.STATE]: [],
-	[VariableTypes.PARAMETER]: [],
-	[VariableTypes.OBSERVABLE]: [],
-	[VariableTypes.TRANSITION]: []
-});
+
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
@@ -402,20 +309,6 @@ const otherConcepts = computed(() => {
 
 	return unalignedExtractions ?? [];
 });
-
-function openExtractions(variableType: VariableTypes, data: any) {
-	const clonedExpandedRows = cloneDeep(expandedRows.value);
-
-	if (clonedExpandedRows[variableType].find((row: any) => row.id === data.id)) {
-		clonedExpandedRows[variableType] = clonedExpandedRows[variableType].filter(
-			(row: any) => row.id !== data.id
-		);
-	} else {
-		clonedExpandedRows[variableType].push(data);
-	}
-
-	expandedRows.value = clonedExpandedRows;
-}
 
 function updateTable(tableType: string, idx: number, key: string, value: any) {
 	transientTableValue.value = {
