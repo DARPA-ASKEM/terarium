@@ -4,7 +4,7 @@
 			<tera-drilldown-section>
 				<div class="form-section">
 					<h4>Stratify model</h4>
-					<p>The model will be stratified with the following settings.</p>
+					<p class="mb-2">The model will be stratified with the following settings.</p>
 					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 						Note: Code has been executed which may not be reflected here.
 					</p>
