@@ -32,7 +32,7 @@
 				<label for="parameter">Parameter</label>
 				<Dropdown
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.parameters"
+					:options="props.parameterOptions"
 					v-model="config.parameter"
 					placeholder="Select"
 					@update:model-value="emit('update-self', config)"
@@ -42,7 +42,7 @@
 				<label for="goal">Goal</label>
 				<Dropdown
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.goals"
+					:options="goalOptions"
 					v-model="config.goal"
 					placeholder="Select"
 					@update:model-value="emit('update-self', config)"
@@ -52,7 +52,7 @@
 				<label for="cost-benefit">Cost/Benefit function</label>
 				<Dropdown
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.costBenefitFns"
+					:options="costBenefitOptions"
 					v-model="config.costBenefitFn"
 					placeholder="Select"
 					@update:model-value="emit('update-self', config)"
@@ -107,11 +107,14 @@ import InputSwitch from 'primevue/inputswitch';
 import { InterventionPolicyGroup } from '@/workflow/ops/model-optimize/model-optimize-operation';
 
 const props = defineProps<{
-	modelNodeOptions: Record<string, string[]>;
+	parameterOptions: string[];
 	config: InterventionPolicyGroup;
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
+
+const goalOptions = ['Minimize', 'Maximize'];
+const costBenefitOptions = ['L1 Norm', 'L2 Norm'];
 
 const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));
 const isEditing = ref<boolean>(false);

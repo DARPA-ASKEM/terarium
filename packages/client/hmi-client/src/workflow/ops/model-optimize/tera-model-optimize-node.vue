@@ -12,8 +12,6 @@
 					outlined
 					class="w-full"
 				/>
-				<!--TODO: Run button isn't functional-->
-				<Button label="Run" severity="secondary" outlined disabled class="w-full" />
 			</div>
 		</template>
 	</main>

@@ -15,14 +15,18 @@
 						</div>
 						<div class="label-and-input">
 							<label for="num-points">Number of time points</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numTimePoints" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numTimePoints"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="time-unit">Unit</label>
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="['Days', 'Hours', 'Minutes', 'Seconds']"
-								v-model="timeUnit"
+								v-model="knobs.timeUnit"
 								placeholder="Select"
 							/>
 						</div>
@@ -54,9 +58,9 @@
 								<InputNumber
 									class="p-inputtext-sm"
 									inputId="integeronly"
-									v-model="numStochasticSamples"
+									v-model="knobs.numStochasticSamples"
 								/>
-								<Slider v-model="numStochasticSamples" :min="1" :max="100" :step="1" />
+								<Slider v-model="knobs.numStochasticSamples" :min="1" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -76,7 +80,7 @@
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
-						:model-node-options="modelNodeOptions"
+						:parameter-options="parameterOptions"
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
@@ -193,41 +197,34 @@ enum OptimizeTabs {
 	Notebook = 'Notebook'
 }
 
-interface PolicyDropdowns {
-	parameters: string[];
-	goals: string[];
-	costBenefitFns: string[];
-}
-
 interface BasicKnobs {
 	startTime: number;
 	endTime: number;
+	numTimePoints: number;
+	timeUnit: string;
+	numStochasticSamples: number;
 }
 
 const knobs = ref<BasicKnobs>({
-	startTime: 0,
-	endTime: 0
+	startTime: props.node.state.startTime ?? 0,
+	endTime: props.node.state.endTime ?? 0,
+	numTimePoints: props.node.state.numTimePoints ?? 0,
+	timeUnit: props.node.state.timeUnit ?? '',
+	numStochasticSamples: props.node.state.numStochasticSamples ?? 0
 });
 
-const modelNodeOptions = ref<PolicyDropdowns>({
-	parameters: ['beta', 'gamma'],
-	goals: ['Minimize', 'Maximize'],
-	costBenefitFns: ['L1 Norm', 'L2 Norm']
-});
+const parameterOptions = ref<string[]>(['beta', 'gamma']);
 
 const showAdditionalOptions = ref(true);
 
-const numTimePoints = ref<number>(props.node.state.numTimePoints);
-const timeUnit = ref<string>(props.node.state.timeUnit);
 const timeSamples = computed<string>(() => {
 	const samples: number[] = [];
-	const timeStep = (knobs.value.endTime - knobs.value.startTime) / (numTimePoints.value - 1);
-	for (let i = 0; i < numTimePoints.value; i++) {
+	const timeStep = (knobs.value.endTime - knobs.value.startTime) / (knobs.value.numTimePoints - 1);
+	for (let i = 0; i < knobs.value.numTimePoints; i++) {
 		samples.push(Math.round(knobs.value.startTime + i * timeStep));
 	}
 	return samples.join(', ');
 });
-const numStochasticSamples = ref<number>(props.node.state.numStochasticSamples);
 const solverMethod = ref<string>(props.node.state.solverMethod);
 
 // Constraints
