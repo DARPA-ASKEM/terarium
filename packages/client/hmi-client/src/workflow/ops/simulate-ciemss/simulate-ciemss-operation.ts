@@ -20,7 +20,7 @@ export const SimulateCiemssOperation: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false }
 	],
-	outputs: [{ type: 'simOutput' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {

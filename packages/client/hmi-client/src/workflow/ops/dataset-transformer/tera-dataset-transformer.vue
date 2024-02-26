@@ -3,7 +3,7 @@
 		<div class="background">
 			<Suspense>
 				<tera-dataset-jupyter-panel
-					:asset-ids="assetIds"
+					:assets="assets"
 					:show-kernels="showKernels"
 					:show-chat-thoughts="showChatThoughts"
 					@new-dataset-saved="addOutputPort"
@@ -34,11 +34,13 @@ const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
-const assetIds = computed(
-	() =>
-		props.node?.inputs
-			.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
-			.map((inputNode) => inputNode.value![0])
+const assets = computed(() =>
+	props.node.inputs
+		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
+		.map((inputNode) => ({
+			type: inputNode.type,
+			id: inputNode.value![0]
+		}))
 );
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);

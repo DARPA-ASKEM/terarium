@@ -1,20 +1,19 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-action-row>
+			<tera-output-dropdown
+				@click.stop
+				style="margin-left: auto"
+				:output="selectedOutputId"
+				is-selectable
+				:options="outputs"
+				@update:selection="onSelection"
+			/>
+		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<Accordion multiple :active-index="[0, 1, 2, 3]" class="pb-6">
+				<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="pb-6">
 					<AccordionTab header="Context">
-						<template #header>
-							<tera-output-dropdown
-								@click.stop
-								style="margin-left: auto"
-								:output="selectedOutputId"
-								is-selectable
-								:options="outputs"
-								@update:output="onUpdateOutput"
-								@update:selection="onUpdateSelection"
-							/>
-						</template>
 						<p class="text-sm mb-1">Name</p>
 						<InputText
 							class="context-item"
@@ -27,6 +26,65 @@
 							placeholder="Enter a description"
 							v-model="knobs.description"
 						/>
+					</AccordionTab>
+					<AccordionTab v-if="model" header="Suggested Configurations">
+						<template #header>
+							<Button
+								outlined
+								label="Extract configurations from document"
+								size="small"
+								icon="pi pi-cog"
+								@click.stop="extractConfigurations"
+								:disabled="loadingConfigs || !documentId || !model.id"
+								style="margin-left: auto"
+							/>
+						</template>
+
+						<DataTable
+							:value="suggestedConfirgurationContext.tableData"
+							size="small"
+							data-key="id"
+							paginator
+							:rows="5"
+							sort-field="createdOn"
+							:sort-order="-1"
+							:loading="loadingConfigs"
+						>
+							<Column field="name" header="Name" style="width: 15%">
+								<template #body="{ data }">
+									<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
+								</template>
+							</Column>
+							<Column field="description" header="Description" style="width: 30%"></Column>
+							<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
+								<template #body="{ data }">
+									{{ new Date(data.createdOn).toISOString() }}
+								</template>
+							</Column>
+							<Column header="Source" style="width: 30%">
+								<template #body="{ data }">
+									{{ data.configuration.metadata?.source?.join(',') || '--' }}
+								</template>
+							</Column>
+							<Column style="width: 7rem">
+								<template #body="{ data }">
+									<Button class="use-button" label="+ Use" @click="useSuggestedConfig(data)" text />
+								</template>
+							</Column>
+							<template #loading>
+								<div>
+									<Vue3Lottie
+										:animationData="LoadingWateringCan"
+										:height="200"
+										:width="200"
+									></Vue3Lottie>
+									<p>Fetching suggested configurations.</p>
+								</div>
+							</template>
+							<template #empty>
+								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
+							</template>
+						</DataTable>
 					</AccordionTab>
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
@@ -113,17 +171,24 @@
 					/>
 				</template>
 			</tera-drilldown-section>
-			<tera-drilldown-preview
-				title="Output Preview"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:options="outputs"
-				is-selectable
-			>
+			<tera-drilldown-preview title="Output Preview">
 				<div>{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</section>
+	</tera-drilldown>
+	<tera-drilldown
+		v-if="suggestedConfirgurationContext.isOpen"
+		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
+		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
+		popover
+	>
+		<tera-drilldown-section>
+			<tera-model-semantic-tables
+				v-if="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				readonly
+				:model="suggestedConfirgurationContext.modelConfiguration?.configuration"
+			/>
+		</tera-drilldown-section>
 	</tera-drilldown>
 </template>
 
@@ -136,7 +201,7 @@ import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel } from '@/services/model';
+import { getModel, getModelConfigurations } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
 import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
 import { ModelConfigTableData, ParamType } from '@/types/common';
@@ -151,13 +216,20 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import { configureModel } from '@/services/goLLM';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import TeraModelConfigTable from './tera-model-config-table.vue';
+import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import { Vue3Lottie } from 'vue3-lottie';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import TeraModelConfigTable from './tera-model-config-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -180,13 +252,7 @@ const outputs = computed(() => {
 	return [];
 });
 
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'update-output-port',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	name: string;
@@ -194,6 +260,7 @@ interface BasicKnobs {
 	initials: Initial[];
 	parameters: ModelParameter[];
 	timeseries: { [index: string]: any };
+	sources: { [index: string]: any };
 	tempConfigId: string;
 }
 
@@ -203,6 +270,7 @@ const knobs = ref<BasicKnobs>({
 	initials: [],
 	parameters: [],
 	timeseries: {},
+	sources: {},
 	tempConfigId: ''
 });
 
@@ -304,13 +372,28 @@ const handleModelPreview = (data: any) => {
 	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 	knobs.value.timeseries =
 		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
+	knobs.value.sources =
+		model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
 };
 
-const selectedOutputId = ref<string>('');
+const selectedOutputId = ref<string>(props.node.active ?? '');
 const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
+const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+
+const suggestedConfirgurationContext = ref<{
+	isOpen: boolean;
+	tableData: ModelConfiguration[];
+	modelConfiguration: ModelConfiguration | null;
+}>({
+	isOpen: false,
+	tableData: [],
+	modelConfiguration: null
+});
+
+const loadingConfigs = ref(false);
 const model = ref<Model | null>();
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
@@ -327,6 +410,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 		cloneModel.semantics.ode.initials = knobs.value.initials;
 		cloneModel.semantics.ode.parameters = knobs.value.parameters;
 		cloneModel.metadata.timeseries = knobs.value.timeseries;
+		cloneModel.metadata.sources = knobs.value.sources;
 	}
 	const modelConfig: ModelConfiguration = {
 		id: '',
@@ -373,12 +457,13 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const initial = knobs.value.initials.find((i) => i.target === v);
+				const sourceValue = knobs.value.sources[initial!.target];
 				return {
 					id: v,
 					name: v,
 					type: ParamType.EXPRESSION,
 					value: initial,
-					source: '',
+					source: sourceValue,
 					visibility: false
 				};
 			});
@@ -394,12 +479,15 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		initials.value.forEach((vals, init) => {
+			const initial = knobs.value.initials.find((i) => i.target === vals[0]);
+			const sourceValue = knobs.value.sources[initial!.target];
+
 			formattedInitials.push({
 				id: init,
 				name: init,
 				type: ParamType.EXPRESSION,
-				value: knobs.value.initials.find((i) => i.target === vals[0]),
-				source: '',
+				value: initial,
+				source: sourceValue,
 				visibility: false
 			});
 		});
@@ -417,12 +505,13 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				const param = knobs.value.parameters.find((i) => i.id === v);
 				const paramType = getParamType(param);
 				const timeseriesValue = knobs.value.timeseries[param!.id];
+				const sourceValue = knobs.value.sources[param!.id];
 				return {
 					id: v,
 					name: v,
 					type: paramType,
 					value: param,
-					source: '',
+					source: sourceValue,
 					visibility: false,
 					timeseries: timeseriesValue
 				};
@@ -443,12 +532,13 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			const paramType = getParamType(param);
 
 			const timeseriesValue = knobs.value.timeseries[param!.id];
+			const sourceValue = knobs.value.sources[param!.id];
 			formattedParams.push({
 				id: init,
 				name: init,
 				type: paramType,
 				value: param,
-				source: '',
+				source: sourceValue,
 				visibility: false,
 				timeseries: timeseriesValue
 			});
@@ -494,6 +584,7 @@ const updateFromConfig = (config: ModelConfiguration) => {
 	knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
 	knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
 	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
+	knobs.value.sources = config.configuration?.metadata?.sources ?? {};
 };
 
 const createConfiguration = async () => {
@@ -522,14 +613,16 @@ const createConfiguration = async () => {
 	});
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
 };
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
+
+const fetchConfigurations = async (modelId: string) => {
+	if (modelId) {
+		loadingConfigs.value = true;
+		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		loadingConfigs.value = false;
+	}
 };
 
 // Creates a temp config (if doesnt exist in state)
@@ -553,6 +646,7 @@ const initialize = async () => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
+	fetchConfigurations(modelId);
 	model.value = await getModel(modelId);
 
 	knobs.value.name = state.name;
@@ -567,6 +661,8 @@ const initialize = async () => {
 		knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
+		knobs.value.sources =
+			model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
@@ -574,17 +670,45 @@ const initialize = async () => {
 		knobs.value.initials = state.initials;
 		knobs.value.parameters = state.parameters;
 		knobs.value.timeseries = state.timeseries;
+		knobs.value.sources = state.sources;
 	}
 
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				await kernelManager.shutdown();
+			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
+};
+
+const useSuggestedConfig = (config: ModelConfiguration) => {
+	knobs.value.name = config.name;
+	knobs.value.description = config.description ?? '';
+	knobs.value.initials = config.configuration.semantics.ode.initials;
+	knobs.value.parameters = config.configuration.semantics.ode.parameters;
+	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
+	knobs.value.sources = config.configuration.metadata?.sources ?? {};
+	logger.success(`Configuration applied ${config.name}`);
+};
+
+const extractConfigurations = async () => {
+	if (!documentId.value || !model.value?.id) return;
+	loadingConfigs.value = true;
+	await configureModel(documentId.value, model.value.id);
+	loadingConfigs.value = false;
+	fetchConfigurations(model.value.id);
+};
+
+const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
+	suggestedConfirgurationContext.value.modelConfiguration = config;
+	suggestedConfirgurationContext.value.isOpen = true;
 };
 
 onMounted(async () => {
@@ -600,6 +724,7 @@ watch(
 		state.initials = knobs.value.initials;
 		state.parameters = knobs.value.parameters;
 		state.timeseries = knobs.value.timeseries;
+		state.sources = knobs.value.sources;
 		state.tempConfigId = knobs.value.tempConfigId;
 		emit('update-state', state);
 	},
@@ -614,7 +739,7 @@ watch(
 			await initialize();
 		}
 	},
-	{ immediate: true, deep: true }
+	{ deep: true }
 );
 
 onUnmounted(() => {
@@ -661,5 +786,13 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
+}
+
+:deep(.p-datatable-loading-overlay.p-component-overlay) {
+	background-color: #fff;
+}
+
+.use-button {
+	white-space: nowrap;
 }
 </style>
