@@ -34,7 +34,7 @@ export const blankStratifyGroup: StratifyGroup = {
 
 export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
-	displayName: 'Stratify MIRA',
+	displayName: 'Stratify model',
 	description: 'Stratify a model',
 	inputs: [{ type: 'modelId', label: 'Model', acceptMultiple: false }],
 	outputs: [{ type: 'model' }],
