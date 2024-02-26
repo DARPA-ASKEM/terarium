@@ -139,6 +139,7 @@ export const autoEntityMapping = async (
 	const allSourceGroundings: string[] = [];
 	const allTargetGroundings: string[] = [];
 
+	// join all source and target for 1 mira call
 	sourceEntities.forEach((ele) => {
 		if (ele.groundings) {
 			ele.groundings.forEach((grounding) => allSourceGroundings.push(grounding));
@@ -150,6 +151,7 @@ export const autoEntityMapping = async (
 		}
 	});
 
+	// Take out any duplicates
 	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
 	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
 	const allSimilarity = await getEntitySimilarity(
@@ -157,10 +159,12 @@ export const autoEntityMapping = async (
 		distinctTargetGroundings
 	);
 	if (!allSimilarity) return result;
+	// Filter out anything with a similarity too small
 	const filteredSimilarity = allSimilarity.filter((ele) => ele.similarity >= acceptableDistance);
 	const validSources: any[] = [];
 	const validTargets: any[] = [];
 
+	// Join results back with source and target
 	filteredSimilarity.forEach((similarity) => {
 		// Find all Sources assosiated with this similarity
 		sourceEntities.forEach((source) => {
@@ -186,7 +190,7 @@ export const autoEntityMapping = async (
 		});
 	});
 
-	// for each source, find its highest matching target:
+	// for each distinct source, find its highest matching target:
 	const distinctSource = [...new Set(validSources.map((ele) => ele.sourceId))];
 	distinctSource.forEach((distinctSourceId) => {
 		let currentDistance = -Infinity;
@@ -194,7 +198,7 @@ export const autoEntityMapping = async (
 		validSources.forEach((source) => {
 			if (distinctSourceId === source.sourceId) {
 				validTargets.forEach((target) => {
-					// Note here we are using the source and target groundings as a key to ensure we are checking like and like
+					// Note here we are using the source and target groundings as a key
 					if (
 						source.sourceKey === target.sourceKey &&
 						source.targetKey === target.targetKey &&
