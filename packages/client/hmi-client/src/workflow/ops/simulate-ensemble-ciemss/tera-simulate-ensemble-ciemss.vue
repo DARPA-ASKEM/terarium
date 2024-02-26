@@ -120,8 +120,7 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 				:is-loading="showSpinner"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 			>
 				<tera-simulate-chart
 					v-for="(cfg, index) of node.state.chartConfigs"
@@ -184,13 +183,7 @@ import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'select-output',
-	'update-output-port',
-	'update-state',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
 
 const dataLabelPlugin = [ChartDataLabels];
 
@@ -251,15 +244,8 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	emit('update-state', state);
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 const calculateWeights = () => {

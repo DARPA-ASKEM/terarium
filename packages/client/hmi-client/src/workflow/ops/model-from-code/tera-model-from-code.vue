@@ -5,8 +5,7 @@
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				:is-loading="isProcessing"
 				is-selectable
 			/>
@@ -280,7 +279,7 @@ onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 
 	if (selectedOutputId.value) {
-		onUpdateOutput(selectedOutputId.value);
+		onSelection(selectedOutputId.value);
 	}
 
 	if (documentId.value) {
@@ -547,21 +546,14 @@ watch(
 	{ deep: true }
 );
 
-function onUpdateOutput(id) {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-}
+};
 
 function updateNodeLabel(id: string, label: string) {
 	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
 	if (!outputPort) return;
 	outputPort.label = label;
-	emit('update-output-port', outputPort);
-}
-
-function onUpdateSelection(id) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
 	emit('update-output-port', outputPort);
 }
 </script>
