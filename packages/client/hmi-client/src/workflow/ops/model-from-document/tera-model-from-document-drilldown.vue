@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<template #header-action-row>
-			<label class="ml-auto">Output</label>
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -9,6 +8,7 @@
 				@update:selection="onUpdateSelection"
 				:is-loading="assetLoading"
 				is-selectable
+				class="ml-auto mb-2"
 			/>
 		</template>
 		<div>
@@ -55,21 +55,22 @@
 				</ul>
 				<template #footer>
 					<span>
-						<label>Model framework:</label>
+						<label>Model framework</label>
 						<Dropdown
-							class="w-full md:w-14rem"
+							class="w-full md:w-14rem ml-2"
 							v-model="clonedState.modelFramework"
 							:options="modelFrameworks"
 							@change="onChangeModelFramework"
 						/>
 					</span>
-					<span class="mr-auto">
+					<span class="ml-3 mr-auto">
 						<label>Service</label>
 						<Dropdown
 							size="small"
 							v-model="clonedState.modelService"
 							:options="modelServices"
 							@change="emit('update-state', clonedState)"
+							class="ml-2"
 						/>
 					</span>
 				</template>
@@ -99,12 +100,19 @@
 						:loading="savingAsset"
 						@click="isNewModelModalVisible = true"
 					></Button>
-					<Button label="Close" @click="emit('close')" outlined></Button>
+					<Button
+						label="Close"
+						@click="emit('close')"
+						severity="secondary"
+						outlined
+						size="large"
+					></Button>
 					<Button
 						label="Run"
 						@click="onRun"
 						:diabled="assetLoading"
 						:loading="loadingModel"
+						size="large"
 					></Button>
 				</template>
 			</tera-drilldown-preview>
