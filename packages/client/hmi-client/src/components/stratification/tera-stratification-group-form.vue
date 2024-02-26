@@ -1,16 +1,6 @@
 <template>
 	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
 		<div class="input-row">
-			<div class="sub-header">
-				<label>Directed</label>
-				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="directed" />
-			</div>
-			<div class="sub-header">
-				<label>Cartesian product</label>
-				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
-			</div>
-		</div>
-		<div class="input-row">
 			<div class="label-and-input">
 				<label>Name of strata</label>
 				<InputText
@@ -30,7 +20,7 @@
 				></MultiSelect>
 			</div>
 		</div>
-		<div class="input-row">
+		<div class="input-row mt-2">
 			<div class="label-and-input">
 				<label>
 					Enter a comma separated list of labels for each group.
@@ -41,6 +31,16 @@
 					placeholder="e.g., Young, Old"
 					@focusout="emit('update-self', updatedConfig)"
 				/>
+			</div>
+		</div>
+		<div class="input-row">
+			<div class="sub-header">
+				<label>Directed</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="directed" />
+			</div>
+			<div class="sub-header">
+				<label>Cartesian product</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
 			</div>
 		</div>
 	</div>
@@ -108,9 +108,10 @@ watch(
 .sub-header {
 	display: flex;
 	padding-bottom: 0px;
-	justify-content: flex-end;
+	padding-top: var(--gap);
+	justify-content: flex-start;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-small);
 	align-self: stretch;
 }
 

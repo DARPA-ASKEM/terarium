@@ -3,7 +3,7 @@
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
+					<h4>Stratify model</h4>
 					<p>The model will be stratified with the following settings.</p>
 					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 						Note: Code has been executed which may not be reflected here.
@@ -15,8 +15,15 @@
 					/>
 				</div>
 				<template #footer>
-					<Button outlined label="Stratify" icon="pi pi-play" @click="stratifyModel" />
-					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
+					<Button outlined label="Run" icon="pi pi-play" @click="stratifyModel" size="large" />
+					<Button
+						style="margin-right: auto"
+						label="Reset"
+						@click="resetModel"
+						severity="secondary"
+						outlined
+						size="large"
+					/>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -67,8 +74,9 @@
 						outlined
 						label="Save as new Model"
 						@click="isNewModelModalVisible = true"
+						size="large"
 					/>
-					<Button label="Close" @click="emit('close')" />
+					<Button label="Close" @click="emit('close')" size="large" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
