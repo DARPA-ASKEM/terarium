@@ -2,7 +2,7 @@
 	<main>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
 			<AccordionTab header="Description">
-				<section class="description">
+				<section v-if="!generatingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
 
 					<template v-if="modelType">
@@ -73,6 +73,9 @@
 						<h5>Usage</h5>
 						<p v-html="usage" />
 					</template>
+				</section>
+				<section v-else>
+					<tera-progress-spinner is-centered> Generating card... </tera-progress-spinner>
 				</section>
 			</AccordionTab>
 			<AccordionTab header="Diagram">
@@ -145,6 +148,7 @@ import TeraModelObservable from '@/components/model/petrinet/tera-model-observab
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
@@ -152,6 +156,7 @@ const props = defineProps<{
 	modelConfigurations?: ModelConfiguration[];
 	highlight?: string;
 	featureConfig?: FeatureConfig;
+	generatingCard?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);

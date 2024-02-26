@@ -7,8 +7,6 @@
 			</tera-drilldown-section>
 			<tera-drilldown-preview hide-header>
 				<h5>{{ document?.name }}</h5>
-
-				<p class="clamp-text">{{ document?.text }}</p>
 				<Accordion multiple :active-index="[0, 1, 2]">
 					<AccordionTab v-if="!isEmpty(clonedState.equations)">
 						<template #header>
@@ -58,6 +56,9 @@
 							<Image id="img" :src="getAssetUrl(table)" :alt="''" preview />
 						</tera-asset-block>
 					</AccordionTab>
+					<AccordionTab v-if="!isEmpty(document?.text)" header="Text">
+						<tera-show-more-text :text="document?.text ?? ''" :lines="5" />
+					</AccordionTab>
 				</Accordion>
 				<template #footer?>
 					<Button label="Close" @click="emit('close')" />
@@ -88,6 +89,7 @@ import Image from 'primevue/image';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['close', 'update-state', 'update-output-port']);
@@ -127,13 +129,11 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 	const portType = assetTypeToPortType(asset.asset.assetType);
 	if (!portType) return;
 
-	outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === portType)) || null;
+	outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === 'documentId')) || null;
 	if (!outputPort) return;
-	const selected = clonedState.value[portType]?.filter((a) => a.includeInProcess) ?? [];
-	outputPort.label = `${portType} (${selected?.length}/${clonedState.value[portType]?.length})`;
 	outputPort.value = [
 		{
-			documentId: outputPort.value?.[0]?.documentId,
+			...outputPort.value?.[0],
 			[portType]: clonedState.value[portType]
 		}
 	];
@@ -169,14 +169,4 @@ watch(
 );
 </script>
 
-<style scoped>
-.clamp-text {
-	font-size: var(--font-caption);
-	font-weight: var(--font-weight-semibold);
-	max-height: 2em;
-	color: var(--gray-700);
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
-}
-</style>
+<style scoped></style>

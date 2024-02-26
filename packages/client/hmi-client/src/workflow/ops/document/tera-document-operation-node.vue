@@ -100,7 +100,14 @@ watch(
 				emit('append-output', {
 					type: 'documentId',
 					label: `document`,
-					value: [document.value.id]
+					value: [
+						{
+							documentId: document.value.id,
+							figures,
+							tables,
+							equations
+						}
+					]
 				});
 			}
 
