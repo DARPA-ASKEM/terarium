@@ -54,18 +54,6 @@
 						/>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.STATE, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
 				<template #expansion="{ data }">
 					<tera-model-extraction :extractions="extractions[data.id]" />
 				</template>
