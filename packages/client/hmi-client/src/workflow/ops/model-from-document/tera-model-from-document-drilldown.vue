@@ -38,10 +38,15 @@
 										preview
 									/>
 								</template>
-								<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false" />
+								<tera-math-editor
+									v-if="equation.asset.text"
+									:latex-equation="equation.asset.text"
+									:is-editable="false"
+								/>
+								<div v-else class="mt-2" />
 								<InputText
 									v-model="equation.asset.text"
-									placeholder="Unable to automatically extract LaTeX from the image. Please manually input the expression."
+									placeholder="Add an expression with LaTeX"
 									@update:model-value="emit('update-state', clonedState)"
 								/>
 							</div>
@@ -454,14 +459,14 @@ watch(
 	overflow-y: hidden;
 }
 
-:deep(.math-editor) {
-	background-color: var(--surface-disabled);
-}
-
 .blocks-container {
 	overflow-y: auto;
 	> li:not(:last-child) {
 		margin-bottom: var(--gap-small);
 	}
+}
+
+.p-panel:deep(.p-panel-footer) {
+	display: none;
 }
 </style>
