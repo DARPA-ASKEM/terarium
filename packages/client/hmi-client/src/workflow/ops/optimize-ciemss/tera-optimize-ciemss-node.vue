@@ -21,12 +21,12 @@
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
-import { ModelOptimizeOperationState } from './model-optimize-operation';
+import { OptimizeCiemssOperationState } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown']);
 
 defineProps<{
-	node: WorkflowNode<ModelOptimizeOperationState>;
+	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 </script>
 

@@ -104,7 +104,7 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import InputSwitch from 'primevue/inputswitch';
-import { InterventionPolicyGroup } from '@/workflow/ops/model-optimize/model-optimize-operation';
+import { InterventionPolicyGroup } from '@/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
 	parameterOptions: string[];

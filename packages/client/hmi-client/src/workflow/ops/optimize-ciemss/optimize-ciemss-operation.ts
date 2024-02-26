@@ -12,7 +12,7 @@ export interface InterventionPolicyGroup {
 	isActive: boolean;
 }
 
-export interface ModelOptimizeOperationState {
+export interface OptimizeCiemssOperationState {
 	// Settings
 	startTime: number;
 	endTime: number;
@@ -43,7 +43,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	isActive: true
 };
 
-export const ModelOptimizeOperation: Operation = {
+export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_OPTIMIZE,
 	description: 'Optimize a model',
 	displayName: 'Optimize model',
@@ -52,7 +52,7 @@ export const ModelOptimizeOperation: Operation = {
 	isRunnable: true,
 
 	initState: () => {
-		const init: ModelOptimizeOperationState = {
+		const init: OptimizeCiemssOperationState = {
 			startTime: 0,
 			endTime: 0,
 			numTimePoints: 0,

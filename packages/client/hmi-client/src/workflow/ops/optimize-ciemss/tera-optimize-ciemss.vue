@@ -196,13 +196,13 @@ import {
 	OptimizeRequestCiemss
 } from '@/types/Types';
 import {
-	ModelOptimizeOperationState,
+	OptimizeCiemssOperationState,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
-} from './model-optimize-operation';
+} from './optimize-ciemss-operation';
 
 const props = defineProps<{
-	node: WorkflowNode<ModelOptimizeOperationState>;
+	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
 const emit = defineEmits(['append-output', 'update-state', 'close']);
