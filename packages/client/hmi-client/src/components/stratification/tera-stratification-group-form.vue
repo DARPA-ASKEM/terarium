@@ -38,7 +38,7 @@
 				</label>
 				<InputText
 					v-model="labels"
-					placeholder="Young, Old"
+					placeholder="e.g., Young, Old"
 					@focusout="emit('update-self', updatedConfig)"
 				/>
 			</div>
