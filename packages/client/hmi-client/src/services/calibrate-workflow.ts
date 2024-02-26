@@ -221,28 +221,18 @@ export const autoCalibrationMapping = async (
 
 	// Fill sourceEntities with modelOptions
 	modelOptions.forEach((state) => {
-		if (state.grounding?.identifiers) {
-			sourceEntities.push({
-				id: state.id,
-				groundings: Object.entries(state.grounding?.identifiers).map((ele) => ele.join(':'))
-			});
-		} else {
-			sourceEntities.push({ id: state.id });
-		}
+		const groundings = state.grounding?.identifiers
+			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		sourceEntities.push({ id: state.id, groundings });
 	});
 
 	// Fill targetEntities with datasetOptions
 	datasetOptions.forEach((col) => {
-		if (col.metadata?.groundings?.identifiers) {
-			targetEntities.push({
-				id: col.name,
-				groundings: Object.entries(col.metadata?.groundings?.identifiers).map((ele) =>
-					ele.join(':')
-				)
-			});
-		} else {
-			targetEntities.push({ id: col.name });
-		}
+		const groundings = col.metadata?.groundings?.identifiers
+			? Object.entries(col.metadata.groundings.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		targetEntities.push({ id: col.name, groundings });
 	});
 
 	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
@@ -266,26 +256,18 @@ export const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions
 
 	// Fill sourceEntities with modelOneOptions
 	modelOneOptions.forEach((state) => {
-		if (state.grounding?.identifiers) {
-			sourceEntities.push({
-				id: state.id,
-				groundings: Object.entries(state.grounding?.identifiers).map((ele) => ele.join(':'))
-			});
-		} else {
-			sourceEntities.push({ id: state.id });
-		}
+		const groundings = state.grounding?.identifiers
+			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		sourceEntities.push({ id: state.id, groundings });
 	});
 
 	// Fill targetEntities with datasetOptions
 	modelTwoOptions.forEach((state) => {
-		if (state.grounding?.identifiers) {
-			sourceEntities.push({
-				id: state.id,
-				groundings: Object.entries(state.grounding?.identifiers).map((ele) => ele.join(':'))
-			});
-		} else {
-			sourceEntities.push({ id: state.id });
-		}
+		const groundings = state.grounding?.identifiers
+			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		targetEntities.push({ id: state.id, groundings });
 	});
 
 	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
