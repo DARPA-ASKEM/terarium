@@ -56,8 +56,14 @@
 			</section>
 		</section>
 		<template #footer>
-			<Button label="Cancel" class="p-button-secondary xsm" @click="visible = false" />
-			<Button label="Done" class="xsm" @click="setPermissions" />
+			<Button
+				label="Cancel"
+				class="p-button-secondary"
+				outlined
+				@click="visible = false"
+				size="large"
+			/>
+			<Button label="Done" @click="setPermissions" size="large" />
 		</template>
 	</Dialog>
 </template>
@@ -83,7 +89,9 @@ const visible = ref(props.modelValue);
 const permissions = ref<PermissionRelationships | null>(null);
 const users = ref<PermissionUser[]>([]);
 const usersMenu = computed(() =>
-	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+	users.value
+		.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+		.sort((a, b) => a.name.localeCompare(b.name))
 );
 const selectedUser = ref(null);
 const existingUsers = ref<Set<PermissionUser>>(new Set());
@@ -238,6 +246,7 @@ h6 {
 .selected-users {
 	display: flex;
 	flex-direction: column;
+	padding-bottom: var(--gap-small);
 }
 
 li {
