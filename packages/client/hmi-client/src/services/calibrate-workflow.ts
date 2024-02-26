@@ -136,20 +136,10 @@ export const autoEntityMapping = async (
 ) => {
 	const result = [] as EntityMap[];
 	const acceptableDistance = acceptableDist ?? 0.5;
-	const allSourceGroundings: string[] = [];
-	const allTargetGroundings: string[] = [];
 
 	// join all source and target for 1 mira call
-	sourceEntities.forEach((ele) => {
-		if (ele.groundings) {
-			ele.groundings.forEach((grounding) => allSourceGroundings.push(grounding));
-		}
-	});
-	targetEntities.forEach((ele) => {
-		if (ele.groundings) {
-			ele.groundings.forEach((grounding) => allTargetGroundings.push(grounding));
-		}
-	});
+	const allSourceGroundings = sourceEntities.flatMap(({ groundings }) => groundings ?? []);
+	const allTargetGroundings = targetEntities.flatMap(({ groundings }) => groundings ?? []);
 
 	// Take out any duplicates
 	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
