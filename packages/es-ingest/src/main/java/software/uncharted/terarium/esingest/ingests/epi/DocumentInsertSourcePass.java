@@ -62,7 +62,7 @@ public class DocumentInsertSourcePass
 			doc.setDoi(in.getSource().getFeature().getDoi());
 
 			final String filename = "source.txt";
-			doc.setFilenames(List.of(filename));
+			doc.setFileNames(List.of(filename));
 
 			final String bucket = config.getFileStorageS3BucketName();
 			final String key = getPath(id, filename);

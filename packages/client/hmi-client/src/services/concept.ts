@@ -5,9 +5,27 @@
 import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
-import type { Curies, DKG, EntitySimilarityResult } from '@/types/Types';
+import type {
+	Curies,
+	DKG,
+	EntitySimilarityResult,
+	AssetType,
+	State,
+	DatasetColumn
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
+import { CalibrateMap } from '@/services/calibrate-workflow';
+
+interface Entity {
+	id: string;
+	groundings?: any[];
+}
+
+interface EntityMap {
+	source: string;
+	target: string;
+}
 
 /**
  * Get concept facets
@@ -15,14 +33,9 @@ import { isEmpty } from 'lodash';
  *        Available values : datasets, features, intermediates, model_parameters, models, projects, publications, qualifiers, simulation_parameters, simulation_plans, simulation_runs
  * @return ConceptFacets|null - the concept facets, or null if none returned by API
  */
-async function getFacets(types: string[], curies?: ClauseValue[]): Promise<ConceptFacets | null> {
+async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<ConceptFacets | null> {
 	try {
-		let url = '/concepts/facets';
-		if (types) {
-			types.forEach((type, indx) => {
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
-			});
-		}
+		let url = `/concepts/facets&types=${type}`;
 		if (curies) {
 			curies.forEach((curie) => {
 				url += `&curies=${curie}`;
@@ -128,6 +141,155 @@ function parseCurie(curie: string) {
 	return { [key]: value };
 }
 
+// Takes in 2 lists of generic {id, groundings} and returns the singular
+// closest match for each element in list one
+const autoEntityMapping = async (
+	sourceEntities: Entity[],
+	targetEntities: Entity[],
+	acceptableDist?: number
+) => {
+	const result = [] as EntityMap[];
+	const acceptableDistance = acceptableDist ?? 0.5;
+
+	// join all source and target for 1 mira call
+	const allSourceGroundings = sourceEntities.flatMap(({ groundings }) => groundings ?? []);
+	const allTargetGroundings = targetEntities.flatMap(({ groundings }) => groundings ?? []);
+
+	// Take out any duplicates
+	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
+	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
+	const allSimilarity = await getEntitySimilarity(
+		distinctSourceGroundings,
+		distinctTargetGroundings
+	);
+	if (!allSimilarity) return result;
+	// Filter out anything with a similarity too small
+	const filteredSimilarity = allSimilarity.filter((ele) => ele.similarity >= acceptableDistance);
+	const validSources: any[] = [];
+	const validTargets: any[] = [];
+
+	// Join results back with source and target
+	filteredSimilarity.forEach((similarity) => {
+		// Find all Sources assosiated with this similarity
+		sourceEntities.forEach((source) => {
+			if (source.groundings?.includes(similarity.source)) {
+				validSources.push({
+					sourceId: source.id,
+					sourceKey: similarity.source,
+					targetKey: similarity.target,
+					distance: similarity.similarity
+				});
+			}
+		});
+		// Find all targets assosiated with this similarity
+		targetEntities.forEach((target) => {
+			if (target.groundings?.includes(similarity.target)) {
+				validTargets.push({
+					targetId: target.id,
+					sourceKey: similarity.source,
+					targetKey: similarity.target,
+					distance: similarity.similarity
+				});
+			}
+		});
+	});
+
+	// for each distinct source, find its highest matching target:
+	const distinctSource = [...new Set(validSources.map((ele) => ele.sourceId))];
+	distinctSource.forEach((distinctSourceId) => {
+		let currentDistance = -Infinity;
+		let currentTargetId = '';
+		validSources.forEach((source) => {
+			if (distinctSourceId === source.sourceId) {
+				validTargets.forEach((target) => {
+					// Note here we are using the source and target groundings as a key
+					if (
+						source.sourceKey === target.sourceKey &&
+						source.targetKey === target.targetKey &&
+						target.distance > currentDistance
+					) {
+						currentDistance = target.distance;
+						currentTargetId = target.targetId;
+					}
+				});
+			}
+		});
+		result.push({ source: distinctSourceId, target: currentTargetId });
+	});
+
+	return result;
+};
+
+// Takes in a list of states and a list of datasetcolumns.
+// Transforms them into generic entities with {id, groundings}
+// Uses autoEntityMapping to determine 1:1 mapping
+// rewrites result in form {modelVariable, datasetVariable}
+const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: DatasetColumn[]) => {
+	const result = [] as CalibrateMap[];
+	const acceptableDistance = 0.5;
+	const sourceEntities: Entity[] = [];
+	const targetEntities: Entity[] = [];
+
+	// Fill sourceEntities with modelOptions
+	modelOptions.forEach((state) => {
+		const groundings = state.grounding?.identifiers
+			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		sourceEntities.push({ id: state.id, groundings });
+	});
+
+	// Fill targetEntities with datasetOptions
+	datasetOptions.forEach((col) => {
+		const groundings = col.metadata?.groundings?.identifiers
+			? Object.entries(col.metadata.groundings.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		targetEntities.push({ id: col.name, groundings });
+	});
+
+	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
+
+	// rename result to CalibrateMap for users of this function
+	entityResult.forEach((entity) => {
+		result.push({ modelVariable: entity.source, datasetVariable: entity.target });
+	});
+	return result;
+};
+
+// Takes in two lists of states
+// Transforms them into generic entities with {id, groundings}
+// Uses autoEntityMapping to determine 1:1 mapping
+// rewrites result in form {modelOneVariable, modelTwoVariable}
+const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions: State[]) => {
+	const result = [] as any[];
+	const acceptableDistance = 0.5;
+	const sourceEntities: Entity[] = [];
+	const targetEntities: Entity[] = [];
+
+	// Fill sourceEntities with modelOneOptions
+	modelOneOptions.forEach((state) => {
+		const groundings = state.grounding?.identifiers
+			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		sourceEntities.push({ id: state.id, groundings });
+	});
+
+	// Fill targetEntities with datasetOptions
+	modelTwoOptions.forEach((state) => {
+		const groundings = state.grounding?.identifiers
+			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
+			: undefined;
+		targetEntities.push({ id: state.id, groundings });
+	});
+
+	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
+
+	// rename result to CalibrateMap for users of this function
+	entityResult.forEach((entity) => {
+		result.push({ modelOneVariable: entity.source, modelTwoVariable: entity.target });
+	});
+	return result;
+};
+
 export {
 	getCuriesEntities,
 	getFacets,
@@ -136,5 +298,8 @@ export {
 	getNameOfCurieCached,
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
-	parseCurie
+	parseCurie,
+	autoModelMapping,
+	autoCalibrationMapping,
+	autoEntityMapping
 };
