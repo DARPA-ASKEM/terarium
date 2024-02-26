@@ -237,6 +237,7 @@ import * as ModelOptimizeOp from './ops/model-optimize/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as DecapodesSimulationOp from './ops/decapodes-simulation/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -261,6 +262,7 @@ registry.registerOp(ModelOptimizeOp);
 registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
+registry.registerOp(DecapodesSimulationOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -511,6 +513,11 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: SimulateEnsembleCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
+			},
+			{ separator: true },
+			{
+				label: DecapodesSimulationOp.operation.displayName,
+				command: addOperatorToWorkflow(DecapodesSimulationOp)
 			}
 		]
 	},
