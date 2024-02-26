@@ -40,11 +40,13 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	private ModelMetadata metadata;
 
+	private String test2;
+
 	public Model() {
 		super();
 	}
 	// Copy constructor
-    public Model(Model other) {
+    public Model(final Model other) {
 		super();
 		this.setId(other.getId());
 		this.setTemporary(other.getTemporary());
