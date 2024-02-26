@@ -158,7 +158,7 @@ export const autoEntityMapping = async (
 	filteredSimilarity.forEach((similarity) => {
 		// Find all Sources assosiated with this similarity
 		sourceEntities.forEach((source) => {
-			if (source.groundings && source.groundings.includes(similarity.source)) {
+			if (source.groundings?.includes(similarity.source)) {
 				validSources.push({
 					sourceId: source.id,
 					sourceKey: similarity.source,
@@ -169,7 +169,7 @@ export const autoEntityMapping = async (
 		});
 		// Find all targets assosiated with this similarity
 		targetEntities.forEach((target) => {
-			if (target.groundings && target.groundings.includes(similarity.target)) {
+			if (target.groundings?.includes(similarity.target)) {
 				validTargets.push({
 					targetId: target.id,
 					sourceKey: similarity.source,
