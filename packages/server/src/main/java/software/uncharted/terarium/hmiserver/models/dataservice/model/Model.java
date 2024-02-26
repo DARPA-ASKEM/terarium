@@ -40,7 +40,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	private ModelMetadata metadata;
 
-	private String test2;
+	private String test3;
 
 	public Model() {
 		super();

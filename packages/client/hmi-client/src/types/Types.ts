@@ -221,7 +221,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
-    test: string;
+    test3: string;
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
