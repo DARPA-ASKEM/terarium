@@ -85,7 +85,7 @@ watch(
 					?.filter((asset) => asset.assetType === ExtractionAssetType.Equation)
 					.map((asset, i) => ({
 						name: `Equation ${i + 1}`,
-						includeInProcess: true,
+						includeInProcess: false,
 						asset
 					})) || [];
 
