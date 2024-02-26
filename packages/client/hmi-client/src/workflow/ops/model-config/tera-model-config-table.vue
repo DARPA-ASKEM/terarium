@@ -100,11 +100,11 @@
 			</template>
 		</Column>
 		<Column field="source" header="Source" style="width: 35%"></Column>
-		<Column field="visibility" header="Visibility" style="width: 10%">
+		<!-- <Column field="visibility" header="Visibility" style="width: 10%">
 			<template #body="slotProps">
 				<InputSwitch v-model="slotProps.data.visibility" @click.stop />
 			</template>
-		</Column>
+		</Column> -->
 		<template #expansion="slotProps">
 			<tera-model-config-table
 				hide-header
@@ -144,7 +144,7 @@ import Column from 'primevue/column';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
-import InputSwitch from 'primevue/inputswitch';
+// import InputSwitch from 'primevue/inputswitch';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import { cloneDeep } from 'lodash';
