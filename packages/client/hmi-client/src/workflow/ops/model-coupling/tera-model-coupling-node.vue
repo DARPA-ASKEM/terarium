@@ -5,7 +5,7 @@
 	<Button
 		v-if="node.inputs[0].value"
 		@click="emit('open-drilldown')"
-		label="Configure"
+		label="Edit"
 		severity="secondary"
 		outlined
 	/>

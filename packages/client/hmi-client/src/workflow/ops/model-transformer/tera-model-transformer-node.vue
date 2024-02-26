@@ -3,7 +3,7 @@
 		<!--FIXME: See fetchModel()-->
 		<template v-if="node.inputs[0].value">
 			<tera-model-diagram :model="model" :is-editable="false" is-preview />
-			<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
+			<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<tera-operator-placeholder :operation-type="node.operationType">
