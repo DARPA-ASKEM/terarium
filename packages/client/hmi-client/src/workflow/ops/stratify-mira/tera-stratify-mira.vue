@@ -59,7 +59,6 @@
 					</template>
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
 					</div>
 				</div>
 				<template #footer>
