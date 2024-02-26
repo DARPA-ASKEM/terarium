@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -212,10 +213,15 @@ public class ConceptController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
 	})
 	public ResponseEntity<ConceptFacetSearchResponse> searchConceptsUsingFacets(
-			@RequestParam(value = "types", required = false) final List<TaggableType> types,
+			@RequestParam(value = "types", required = false) final List<String> types,
 			@RequestParam(value = "curies", required = false) final List<String> curies) {
 		try {
-			return ResponseEntity.ok(conceptService.searchConceptsUsingFacets(types, curies));
+			List<TaggableType> types2 = new ArrayList<>(types.size());
+			for (String type : types) {
+				TaggableType t = TaggableType.findByType(type);
+				types2.add(t);
+			}
+			return ResponseEntity.ok(conceptService.searchConceptsUsingFacets(types2, curies));
 		} catch (RuntimeException e) {
 			final String error = "Unable to search concepts using facets";
 			log.error(error, e);

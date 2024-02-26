@@ -9,7 +9,7 @@ public enum TaggableType {
 	MODEL_PARAMETERS("model_parameters"),
 	MODELS("models"),
 	PROJECTS("projects"),
-	PUBLICATIONS("publications"),
+	PUBLICATIONS("PUBLICATION"),
 	QUALIFIERS("qualifiers"),
 	SIMULATION_PARAMETERS("simulation_parameters"),
 	SIMULATION_PLANS("simulation_plans"),
