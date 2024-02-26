@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
+	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]" class="mt-3">
 		<AccordionTab>
 			<template #header>
 				State variables<span class="artifact-amount">({{ states.length }})</span>
@@ -16,16 +16,19 @@
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
 				<Column field="units.expression" header="Unit" />
-				<Column field="grounding.identifiers" header="Concept">
+				<Column field="grounding.identifiers" header="Concept" class="w-full">
 					<template #body="{ data }">
 						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
-							{{
-								getNameOfCurieCached(
-									nameOfCurieCache,
-									getCurieFromGroudingIdentifier(data.grounding.identifiers)
-								)
-							}}
-
+							<!-- fake dropdown -->
+							<span class="cursor-pointer">
+								{{
+									getNameOfCurieCached(
+										nameOfCurieCache,
+										getCurieFromGroudingIdentifier(data.grounding.identifiers)
+									)
+								}}
+								<i class="pi pi-chevron-down pl-1 pr-2" />
+							</span>
 							<a
 								target="_blank"
 								rel="noopener noreferrer"
@@ -33,7 +36,7 @@
 								@click.stop
 								aria-label="Open Concept"
 							>
-								<i class="pi pi-external-link" />
+								<i class="pi pi-external-link ml-2 text-xs" title="'Open ontology'" />
 							</a>
 						</template>
 						<template v-else>--</template>
@@ -51,6 +54,7 @@
 							optionLabel="name"
 							:forceSelection="true"
 							:inputStyle="{ width: '100%' }"
+							class="w-full"
 						/>
 					</template>
 				</Column>
@@ -103,18 +107,6 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.PARAMETER, data)"
-							/>
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
 				<template #expansion="{ data }">
 					<tera-model-extraction :extractions="extractions[data.id]" />
 				</template>
@@ -140,18 +132,6 @@
 							:expression="data.expression"
 							:throw-on-error="false"
 						/>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.OBSERVABLE, data)"
-							/>
-						</template>
 						<template v-else>--</template>
 					</template>
 				</Column>
@@ -181,18 +161,6 @@
 							:expression="data.expression"
 							:throw-on-error="false"
 						/>
-						<template v-else>--</template>
-					</template>
-				</Column>
-				<Column header="Extractions">
-					<template #body="{ data }">
-						<template v-if="extractions?.[data?.id]">
-							<Tag
-								class="clickable-tag"
-								:value="extractions?.[data?.id].length"
-								@click="openExtractions(VariableTypes.TRANSITION, data)"
-							/>
-						</template>
 						<template v-else>--</template>
 					</template>
 				</Column>
@@ -267,7 +235,6 @@
 			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
 				<Column field="id" header="Symbol" />
 				<Column field="units.expression" header="Unit" />
-				<Column header="Extractions" />
 			</DataTable>
 		</AccordionTab>
 	</Accordion>
@@ -292,12 +259,10 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import InputText from 'primevue/inputtext';
-import TeraModelExtraction from './tera-model-extraction.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -390,20 +355,6 @@ const otherConcepts = computed(() => {
 	return unalignedExtractions ?? [];
 });
 
-function openExtractions(variableType: VariableTypes, data: any) {
-	const clonedExpandedRows = cloneDeep(expandedRows.value);
-
-	if (clonedExpandedRows[variableType].find((row: any) => row.id === data.id)) {
-		clonedExpandedRows[variableType] = clonedExpandedRows[variableType].filter(
-			(row: any) => row.id !== data.id
-		);
-	} else {
-		clonedExpandedRows[variableType].push(data);
-	}
-
-	expandedRows.value = clonedExpandedRows;
-}
-
 function updateTable(tableType: string, idx: number, key: string, value: any) {
 	transientTableValue.value = {
 		...transientTableValue.value,
@@ -485,5 +436,11 @@ section {
 
 .clickable-tag:hover {
 	cursor: pointer;
+}
+
+.artifact-amount {
+	font-size: var(--font-body-small);
+	margin-left: var(--gap-xsmall);
+	color: var(--text-color-subdued);
 }
 </style>
