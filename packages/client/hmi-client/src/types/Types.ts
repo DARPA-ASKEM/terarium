@@ -778,6 +778,8 @@ export interface OptimizeRequestCiemss {
     initialGuessInterventions: number[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
+    engine: string;
+    userId: string;
 }
 
 export interface ScimlStatusUpdate {

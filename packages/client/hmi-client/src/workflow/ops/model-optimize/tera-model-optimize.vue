@@ -32,6 +32,7 @@
 						</div>
 					</div>
 					<InputText
+						:disabled="true"
 						:style="{ width: '100%' }"
 						v-model="timeSamples"
 						:readonly="true"
@@ -187,7 +188,13 @@ import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-interven
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { makeOptimizeJobCiemss } from '@/services/models/simulation-service';
-import { Model, State, ModelParameter, OptimizeRequestCiemss } from '@/types/Types';
+import {
+	ModelConfiguration,
+	Model,
+	State,
+	ModelParameter,
+	OptimizeRequestCiemss
+} from '@/types/Types';
 import {
 	ModelOptimizeOperationState,
 	InterventionPolicyGroup,
@@ -237,6 +244,7 @@ const knobs = ref<BasicKnobs>({
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateOptions = ref<State[]>([]);
+const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
 
@@ -280,8 +288,8 @@ const toggleAdditonalOptions = () => {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-	const model = modelConfiguration.configuration as Model;
+	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+	const model = modelConfiguration.value.configuration as Model;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
 	modelStateOptions.value = model.model.states ?? ([] as State[]);
@@ -289,21 +297,28 @@ const initialize = async () => {
 
 const runOptimize = async () => {
 	console.log('run optimize');
+	if (!modelConfiguration.value?.id) {
+		console.log('no model config id:');
+		return;
+	}
+
 	const test: OptimizeRequestCiemss = {
-		modelConfigId: 'ba8da8d4-047d-11ee-be56',
+		userId: 'no_user_provided',
+		engine: 'ciemss',
+		modelConfigId: modelConfiguration.value.id,
 		timespan: {
-			start: 0,
-			end: 90
+			start: knobs.value.startTime,
+			end: knobs.value.endTime
 		},
 		interventions: [[1, 'beta']],
 		stepSize: 1,
-		qoi: ['string'],
-		riskBound: 0,
+		qoi: knobs.value.targetVariables,
+		riskBound: knobs.value.riskTolerance,
 		initialGuessInterventions: [0],
 		boundsInterventions: [[0]],
 		extra: {
 			numSamples: 100,
-			inferredParameters: 'string',
+			// inferredParameters: 'string',
 			maxiter: 5,
 			maxfeval: 5
 		}

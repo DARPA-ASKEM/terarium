@@ -199,9 +199,9 @@ export async function makeCalibrateJobCiemss(calibrationParams: CalibrationReque
 	}
 }
 
-export async function makeOptimizeJobCiemss(calibrationParams: OptimizeRequestCiemss) {
+export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/optimize', calibrationParams);
+		const resp = await API.post('simulation-request/ciemss/optimize', optimizeParams);
 		const output = resp.data;
 		return output;
 	} catch (err) {

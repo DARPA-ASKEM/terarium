@@ -28,5 +28,7 @@ public class OptimizeRequestCiemss implements Serializable {
 	@JsonAlias("bounds_interventions")
 	private List<List<Float>> boundsInterventions;
 	private OptimizeExtra extra;
-
+	private String engine;
+	@JsonAlias("user_id")
+	private String userId;
 }
