@@ -7,9 +7,9 @@
 		size="small"
 		:class="{ 'hide-header': hideHeader }"
 	>
-		<Column expander style="width: 5rem" />
+		<Column expander style="width: 2%" />
 		<Column field="id" header="ID" style="width: 10%"></Column>
-		<Column field="name" header="Name" style="width: 15%"></Column>
+		<Column field="name" header="Name" style="width: 10%"></Column>
 		<Column field="type" header="Value type" style="width: 10%">
 			<template #body="slotProps">
 				<Button
@@ -27,12 +27,13 @@
 					:options="typeOptions"
 					optionLabel="label"
 					optionValue="value"
+					class="w-8"
 					placeholder="Select a parameter type"
 					@update:model-value="(val) => changeType(slotProps.data.value, val)"
 				/>
 			</template>
 		</Column>
-		<Column field="value" header="Value" style="width: 15%">
+		<Column field="value" header="Value" style="width: 10%">
 			<template #body="slotProps">
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
@@ -43,6 +44,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
 					<InputText
 						size="small"
+						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
@@ -77,6 +79,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.CONSTANT">
 					<InputNumber
 						size="small"
+						class="constant-number w-full"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -152,7 +155,7 @@ import { cloneDeep } from 'lodash';
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT },
 	{ label: 'Distribution', value: ParamType.DISTRIBUTION },
-	{ label: 'Time Varying', value: ParamType.TIME_SERIES }
+	{ label: 'Time varying', value: ParamType.TIME_SERIES }
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -282,13 +285,25 @@ const updateExpression = async (value: Initial) => {
 }
 
 .distribution-item > :deep(input) {
-	width: 4rem;
+	width: 100%;
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
+}
+
+.constant-number > :deep(input) {
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
+}
+.tabular-numbers {
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
 }
 .invalid-message {
 	color: var(--text-color-danger);
-	font-size: var(--font-caption);
 }
-
 .timeseries-container {
 	display: flex;
 	flex-direction: column;
