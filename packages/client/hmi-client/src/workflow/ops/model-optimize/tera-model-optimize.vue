@@ -186,7 +186,8 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { Model, State, ModelParameter } from '@/types/Types';
+import { makeOptimizeJobCiemss } from '@/services/models/simulation-service';
+import { Model, State, ModelParameter, OptimizeRequestCiemss } from '@/types/Types';
 import {
 	ModelOptimizeOperationState,
 	InterventionPolicyGroup,
@@ -286,8 +287,29 @@ const initialize = async () => {
 	modelStateOptions.value = model.model.states ?? ([] as State[]);
 };
 
-const runOptimize = () => {
+const runOptimize = async () => {
 	console.log('run optimize');
+	const test: OptimizeRequestCiemss = {
+		modelConfigId: 'ba8da8d4-047d-11ee-be56',
+		timespan: {
+			start: 0,
+			end: 90
+		},
+		interventions: [[1, 'beta']],
+		stepSize: 1,
+		qoi: ['string'],
+		riskBound: 0,
+		initialGuessInterventions: [0],
+		boundsInterventions: [[0]],
+		extra: {
+			numSamples: 100,
+			inferredParameters: 'string',
+			maxiter: 5,
+			maxfeval: 5
+		}
+	};
+
+	console.log(await makeOptimizeJobCiemss(test));
 };
 
 const saveModel = () => {
