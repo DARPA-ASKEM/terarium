@@ -111,6 +111,7 @@ const generateTemplatePreview = async () => {
 			.register('reset_response', () => null) // noop
 			.register('model_preview', (data) => {
 				templatePreview.value = `data:image/png;base64, ${data?.content?.['image/png']}`;
+				kernelManager.shutdown();
 			});
 	} catch (err) {
 		console.error(err);
