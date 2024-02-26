@@ -21,7 +21,7 @@ public class Document implements IOutputDocument {
 	private String description;
 	private String text;
 	private List<String> doi;
-	private List<String> filenames;
+	private List<String> fileNames;
 
 	private Timestamp createdOn = new Timestamp(System.currentTimeMillis());
 	private Timestamp updatedOn = createdOn;

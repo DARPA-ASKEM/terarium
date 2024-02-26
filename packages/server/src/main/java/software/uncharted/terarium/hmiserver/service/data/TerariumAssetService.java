@@ -52,6 +52,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	public Optional<T> getAsset(final UUID id) throws IOException {
 		final T asset = elasticService.get(getAssetIndex(), id.toString(), assetClass);
 		if (asset != null && asset.getDeletedOn() == null) {
+			// TODO: This is a hack to fix the fact that the id was not added during the mass es-ingestion
+			asset.setId(id);
 			return Optional.of(asset);
 		}
 		return Optional.empty();

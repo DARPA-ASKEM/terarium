@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.Data;
@@ -31,21 +29,11 @@ public class Model implements IOutputDocument {
 		private String publisher;
 		private String year;
 		private List<Author> author;
-		private String modelCard;
+		private Object gollmCard;
 		private JsonNode annotations;
 	}
 
 	private UUID id;
-
-	@JsonProperty
-	public void setId(UUID id) {
-		this.id = id;
-	}
-
-	@JsonIgnore
-	public UUID getId() {
-		return id;
-	}
 
 	private JsonNode header;
 	private JsonNode model;

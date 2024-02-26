@@ -3,6 +3,7 @@
 		:asset="asset"
 		:resourceType="resourceType"
 		:active="isPreviewed"
+		:source="source"
 		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
@@ -21,6 +22,7 @@ import { MenuItem } from 'primevue/menuitem';
 
 defineProps<{
 	asset: ResultType;
+	source: string;
 	projectOptions: { label: string; items: MenuItem[] }[];
 	isAddingAsset: boolean;
 	isPreviewed: boolean;
