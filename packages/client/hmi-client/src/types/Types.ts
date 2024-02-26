@@ -761,6 +761,25 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface OptimizeExtra {
+    numSamples: number;
+    inferredParameters?: string;
+    maxiter: number;
+    maxfeval: number;
+}
+
+export interface OptimizeRequestCiemss {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    interventions: any[];
+    stepSize: number;
+    qoi: string[];
+    riskBound: number;
+    initialGuessInterventions: number[];
+    boundsInterventions: number[][];
+    extra: OptimizeExtra;
+}
+
 export interface ScimlStatusUpdate {
     loss: number;
     iter: number;
