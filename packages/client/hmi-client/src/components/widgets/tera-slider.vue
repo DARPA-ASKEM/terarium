@@ -62,7 +62,8 @@ const sidePanelTabStyle = computed(
 <style scoped>
 .slider,
 .slider-content,
-.slider-tab {
+.slider-tab,
+footer {
 	transition: all 0.2s ease-out;
 }
 
@@ -85,7 +86,8 @@ const sidePanelTabStyle = computed(
 }
 
 .slider.open .slider-tab,
-.slider.closed .slider-content {
+.slider.closed .slider-content,
+.slider.closed footer {
 	visibility: hidden;
 	opacity: 0;
 }
@@ -104,6 +106,7 @@ footer:empty {
 
 footer {
 	position: relative;
+	overflow: hidden;
 	border-top: 1px solid var(--surface-border-light);
 	box-shadow: 0px -4px 8px -7px #b8b8b8;
 	background-color: var(--surface-section);
@@ -111,5 +114,6 @@ footer {
 	width: 100%;
 	display: flex;
 	align-items: center;
+	justify-content: space-evenly;
 }
 </style>

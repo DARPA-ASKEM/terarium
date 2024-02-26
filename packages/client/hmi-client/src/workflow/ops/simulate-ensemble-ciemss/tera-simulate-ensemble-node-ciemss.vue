@@ -11,7 +11,7 @@
 					@configuration-change="chartConfigurationChange(index, $event)"
 				/>
 			</template>
-			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration
@@ -54,7 +54,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
 const showSpinner = ref(false);
 const completedRunId = ref<string>();
@@ -100,7 +100,7 @@ const getStatus = async (simulationId: string) => {
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
-	emit('append-output-port', {
+	emit('append-output', {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: { runId }
@@ -144,6 +144,7 @@ section {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 }
+
 .image {
 	height: 8.75rem;
 	margin-bottom: 0.5rem;

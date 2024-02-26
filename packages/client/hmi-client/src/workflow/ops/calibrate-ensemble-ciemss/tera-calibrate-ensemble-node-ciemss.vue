@@ -21,8 +21,24 @@
 				/>
 			</section>
 			<template v-if="modelConfigIds && datasetId">
-				<Button label="Configure" @click="emit('open-drilldown')" severity="secondary" outlined />
-				<Button label="Run" @click="runEnsemble" :disabled="disableRunButton" icon="pi pi-play" />
+				<div class="flex gap-2">
+					<Button
+						label="Edit"
+						@click="emit('open-drilldown')"
+						severity="secondary"
+						outlined
+						class="w-full"
+					/>
+					<Button
+						label="Run"
+						@click="runEnsemble"
+						severity="secondary"
+						outlined
+						:disabled="disableRunButton"
+						icon="pi pi-play"
+						class="w-full"
+					/>
+				</div>
 			</template>
 			<tera-operator-placeholder
 				v-else-if="node.status === OperatorStatus.INVALID"
@@ -75,7 +91,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
 const showSpinner = ref(false);
 const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
@@ -161,7 +177,7 @@ const getStatus = async (simulationId: string) => {
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
-	emit('append-output-port', {
+	emit('append-output', {
 		type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
 		value: { runId }
@@ -240,6 +256,7 @@ section {
 	padding: 10px;
 	background: var(--surface-overlay);
 }
+
 .helpMessage {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
