@@ -68,7 +68,7 @@
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="['dopri5', 'euler']"
-								v-model="solverMethod"
+								v-model="knobs.solverMethod"
 								placeholder="Select"
 							/>
 						</div>
@@ -80,7 +80,7 @@
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
-						:parameter-options="parameterOptions"
+						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
@@ -98,10 +98,10 @@
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label for="target-variable">Target-variable(s)</label>
-							<Dropdown
+							<MultiSelect
 								class="p-inputtext-sm"
-								:options="['S', 'I', 'R']"
-								v-model="targetVariable"
+								:options="modelStateOptions.map((ele) => ele.id)"
+								v-model="knobs.targetVariables"
 								placeholder="Select"
 							/>
 						</div>
@@ -171,6 +171,7 @@ import _ from 'lodash';
 import { computed, ref, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
@@ -180,6 +181,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { Model, State, ModelParameter } from '@/types/Types';
 import {
 	ModelOptimizeOperationState,
 	InterventionPolicyGroup,
@@ -203,6 +206,8 @@ interface BasicKnobs {
 	numTimePoints: number;
 	timeUnit: string;
 	numStochasticSamples: number;
+	solverMethod: string;
+	targetVariables: string[];
 }
 
 const knobs = ref<BasicKnobs>({
@@ -210,10 +215,13 @@ const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 0,
 	numTimePoints: props.node.state.numTimePoints ?? 0,
 	timeUnit: props.node.state.timeUnit ?? '',
-	numStochasticSamples: props.node.state.numStochasticSamples ?? 0
+	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
+	solverMethod: props.node.state.solverMethod ?? '',
+	targetVariables: props.node.state.targetVariables ?? []
 });
 
-const parameterOptions = ref<string[]>(['beta', 'gamma']);
+const modelParameterOptions = ref<ModelParameter[]>([]);
+const modelStateOptions = ref<State[]>([]);
 
 const showAdditionalOptions = ref(true);
 
@@ -225,10 +233,8 @@ const timeSamples = computed<string>(() => {
 	}
 	return samples.join(', ');
 });
-const solverMethod = ref<string>(props.node.state.solverMethod);
 
 // Constraints
-const targetVariable = ref<string>(props.node.state.targetVariable);
 const statistic = ref<string>(props.node.state.statistic);
 const numDays = ref<number>(props.node.state.numDays);
 const riskTolerance = ref<number>(props.node.state.riskTolerance);
@@ -266,9 +272,11 @@ const toggleAdditonalOptions = () => {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	// modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	// model.value = modelConfiguration.value.configuration as Model;
+	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
+	const model = modelConfiguration.configuration as Model;
 
+	modelParameterOptions.value = model.semantics?.ode.parameters ?? [];
+	modelStateOptions.value = model.model.states as State[];
 	knobs.value.startTime = props.node.state.startTime;
 	knobs.value.endTime = props.node.state.endTime;
 };

@@ -23,7 +23,7 @@ export interface ModelOptimizeOperationState {
 	// Intervention policies
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
-	targetVariable: string;
+	targetVariables: string[];
 	statistic: string;
 	numDays: number;
 	riskTolerance: number;
@@ -60,7 +60,7 @@ export const ModelOptimizeOperation: Operation = {
 			numStochasticSamples: 0,
 			solverMethod: '',
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
-			targetVariable: '',
+			targetVariables: [],
 			statistic: '',
 			numDays: 0,
 			riskTolerance: 0,
