@@ -429,4 +429,7 @@ onUnmounted(() => {
 	flex-direction: column;
 	gap: var(--gap-small);
 }
+:deep(.p-multiselect-label-container) {
+	width: 10rem;
+}
 </style>
