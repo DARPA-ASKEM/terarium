@@ -16,27 +16,6 @@
 					<i class="pi pi-filter"></i>
 				</span>
 			</div>
-			<!-- 			
-			<SplitButton
-				class="new-resource-button"
-				label="New"
-				size="small"
-				severity="secondary"
-				outlined
-				@click="toggleOptionsMenu"
-				:model="optionsMenuItems"
-			/>
-			<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true">
-				<template #item="slotProps">
-					<a class="p-menuitem-link">
-						<tera-asset-icon :asset-type="slotProps.item.key as AssetType" />
-						<span class="p-menuitem-text">
-							{{ slotProps.item.label }}
-						</span>
-					</a>
-				</template>
-			</Menu>
--->
 		</header>
 		<Button
 			class="asset-button"
@@ -159,17 +138,6 @@
 				</Button>
 			</AccordionTab>
 		</Accordion>
-		<!-- This is the upload button, fixed at the bottom of the panel -->
-		<div class="fixed-upload-button">
-			<Button
-				label="Upload resources"
-				size="small"
-				icon="pi pi-cloud-upload"
-				severity="primary"
-				class="w-full"
-				@click="isUploadResourcesModalVisible = true"
-			/>
-		</div>
 
 		<div v-if="useProjects().projectLoading.value" class="skeleton-container">
 			<Skeleton v-for="i in 10" :key="i" width="85%" />
@@ -199,10 +167,6 @@
 			</tera-modal>
 		</Teleport>
 	</nav>
-	<tera-upload-resources-modal
-		:visible="isUploadResourcesModalVisible"
-		@close="isUploadResourcesModalVisible = false"
-	/>
 </template>
 
 <script setup lang="ts">
@@ -213,17 +177,14 @@ import { useDragEvent } from '@/services/drag-drop';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import { AssetItem, AssetRoute } from '@/types/common';
-import { generateProjectAssetsMap } from '@/utils/map-project-assets';
+import { generateProjectAssetsMap, getNonNullSetOfVisibleItems } from '@/utils/map-project-assets';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-// import SplitButton from 'primevue/splitbutton';
 import InputText from 'primevue/inputtext';
-// import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
-import TeraUploadResourcesModal from './tera-upload-resources-modal.vue';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
@@ -241,13 +202,14 @@ const assetToDelete = ref<AssetItem | null>(null);
 const searchAsset = ref<string>('');
 const inputFocused = ref(false);
 
+const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
+const assetItemsKeysNotEmpty = computed(() => getNonNullSetOfVisibleItems(assetItemsMap.value));
 const activeAccordionTabs = ref(
 	new Set(
-		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6]
+		localStorage.getItem('activeResourceBarTabs')?.split(',').map(Number) ??
+			assetItemsKeysNotEmpty.value ?? [0, 1, 2, 3, 4, 5, 6]
 	)
 );
-
-const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 
 function clearSearch() {
 	searchAsset.value = '';
@@ -277,37 +239,6 @@ function endDrag() {
 	deleteDragData('assetNode');
 	draggedAsset.value = null;
 }
-
-// const optionsMenu = ref();
-// const optionsMenuItems = ref([
-// 	{
-// 		key: AssetType.Code,
-// 		label: 'New code',
-// 		command() {
-// 			emit('open-new-asset', AssetType.Code);
-// 		}
-// 	},
-// 	{
-// 		key: AssetType.Model,
-// 		label: 'New model',
-// 		command() {
-// 			emit('open-new-asset', AssetType.Model);
-// 		}
-// 	},
-// 	{
-// 		key: AssetType.Workflow,
-// 		label: 'New workflow',
-// 		command() {
-// 			emit('open-new-asset', AssetType.Workflow);
-// 		}
-// 	}
-// ]);
-
-// const toggleOptionsMenu = (event) => {
-// 	optionsMenu.value.toggle(event);
-// };
-
-const isUploadResourcesModalVisible = ref(false);
 </script>
 
 <style scoped>
@@ -346,36 +277,6 @@ header {
 	overflow: visible;
 }
 
-/* Split button
- * This needs to be into its own component
- */
-
-:deep(.new-resource-button) {
-	color: var(--text-color-primary);
-}
-
-:deep(.new-resource-button.p-splitbutton .p-button:first-of-type) {
-	border-top-right-radius: 0;
-	border-bottom-right-radius: 0;
-	border-right: 0 none;
-	padding-left: 0;
-	color: var(--text-color);
-}
-
-:deep(.new-resource-button.p-splitbutton .p-button:last-of-type) {
-	background-color: var(--surface-200);
-	border-top-left-radius: 0;
-	border-bottom-left-radius: 0;
-	color: var(--text-color-light);
-	padding: 0.65rem 0;
-	width: 2rem;
-
-	&:hover {
-		background-color: var(--surface-50);
-		color: var(--text-color);
-	}
-}
-
 .removeResourceButton {
 	color: var(--text-color-subdued);
 	margin-right: 0.75rem;
@@ -400,15 +301,6 @@ header {
 	border-radius: var(--border-radius);
 }
 
-.fixed-upload-button {
-	position: fixed;
-	bottom: 3rem;
-	left: 0;
-	z-index: 10;
-	width: 240px;
-	white-space: nowrap;
-	padding: 0rem 1rem 1rem;
-}
 :deep(.p-accordion .p-accordion-content) {
 	display: flex;
 	flex-direction: column;
@@ -431,7 +323,7 @@ header {
 	overflow: hidden;
 	padding: 0;
 	border-radius: 0;
-	/* Remove the border-radius to end nitely with the border of the sidebar */
+	/* Remove the border-radius to end neatly with the border of the sidebar */
 }
 
 :deep(.asset-button.p-button > span) {

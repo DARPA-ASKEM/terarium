@@ -196,7 +196,7 @@ const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
 const emit = defineEmits([
-	'append-output-port',
+	'append-output',
 	'select-output',
 	'update-output-port',
 	'update-state',
@@ -400,7 +400,7 @@ const getStatus = async (simulationId: string) => {
 const updateOutputPorts = (simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = props.node.state;
-	emit('append-output-port', {
+	emit('append-output', {
 		type: 'simulationId',
 		label: `${portLabel} Result`,
 		value: [simulationId],

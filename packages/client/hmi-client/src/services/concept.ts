@@ -122,6 +122,12 @@ function getCurieFromGroudingIdentifier(identifier: Object | undefined): string 
 	return '';
 }
 
+function parseCurie(curie: string) {
+	const key = curie.split(':')[0];
+	const value = curie.split(':')[1];
+	return { [key]: value };
+}
+
 export {
 	getCuriesEntities,
 	getFacets,
@@ -129,5 +135,6 @@ export {
 	searchCuriesEntities,
 	getNameOfCurieCached,
 	getCurieFromGroudingIdentifier,
-	getCurieUrl
+	getCurieUrl,
+	parseCurie
 };

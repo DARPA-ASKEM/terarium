@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.search;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -19,10 +20,14 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -147,14 +152,29 @@ public class SearchByAssetTypeController {
 				queryVectorCache.put(hash, vector, CACHE_TTL_SECONDS, TimeUnit.SECONDS);
 			}
 
-			KnnQuery query = new KnnQuery.Builder()
+			KnnQuery knn = new KnnQuery.Builder()
 					.field("embeddings.vector")
 					.queryVector(vector)
 					.k(k)
 					.numCandidates(numCandidates)
 					.build();
 
-			List<JsonNode> docs = esService.knnSearch(index, query, numResults, JsonNode.class);
+			Query query = new Query.Builder()
+					.bool(b -> b
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+					.build();
+
+			SearchResponse<JsonNode> res = esService.knnSearch(index, knn, query, numResults, JsonNode.class);
+
+			final List<JsonNode> docs = new ArrayList<>();
+			for (final Hit<JsonNode> hit : res.hits().hits()) {
+				ObjectNode source = (ObjectNode) hit.source();
+				if (source != null) {
+					source.put("id", hit.id());
+					docs.add(source);
+				}
+			}
 
 			return ResponseEntity.ok(docs);
 

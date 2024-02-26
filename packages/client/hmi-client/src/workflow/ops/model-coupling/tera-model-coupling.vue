@@ -38,7 +38,7 @@
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
-				<!-- 
+				<!--
 				<template #footer>
 					<Button style="margin-right: auto" icon="pi pi-play" label="Run" size="large" @click="runCodeModelCoupling" />
 				</template> -->
@@ -109,7 +109,7 @@ import { ModelCouplingState } from './model-coupling-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelCouplingState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close']);
 const modelCouplingResult = ref<any>(null);
 
 enum ModelCouplingTabgs {
@@ -199,7 +199,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 
 	if (options.appendOutputPort) {
-		emit('append-output-port', {
+		emit('append-output', {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',
