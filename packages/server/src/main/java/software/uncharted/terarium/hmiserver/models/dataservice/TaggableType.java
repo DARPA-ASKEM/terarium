@@ -3,11 +3,11 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 import java.util.Arrays;
 
 public enum TaggableType {
-	DATASETS("datasets"),
+	DATASETS("DATASET"),
 	FEATURES("features"),
 	INTERMEDIATES("intermediates"),
 	MODEL_PARAMETERS("model_parameters"),
-	MODELS("models"),
+	MODELS("MODEL"),
 	PROJECTS("projects"),
 	PUBLICATIONS("PUBLICATION"),
 	QUALIFIERS("qualifiers"),
