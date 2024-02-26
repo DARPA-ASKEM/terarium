@@ -168,7 +168,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
@@ -275,10 +275,8 @@ const initialize = async () => {
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
 	const model = modelConfiguration.configuration as Model;
 
-	modelParameterOptions.value = model.semantics?.ode.parameters ?? [];
-	modelStateOptions.value = model.model.states as State[];
-	knobs.value.startTime = props.node.state.startTime;
-	knobs.value.endTime = props.node.state.endTime;
+	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
+	modelStateOptions.value = model.model.states ?? ([] as State[]);
 };
 
 const runOptimize = () => {
@@ -292,6 +290,22 @@ const saveModel = () => {
 onMounted(async () => {
 	initialize();
 });
+
+watch(
+	() => knobs.value,
+	async () => {
+		const state = _.cloneDeep(props.node.state);
+		state.startTime = knobs.value.startTime;
+		state.endTime = knobs.value.endTime;
+		state.numTimePoints = knobs.value.numTimePoints;
+		state.timeUnit = knobs.value.timeUnit;
+		state.numStochasticSamples = knobs.value.numStochasticSamples;
+		state.solverMethod = knobs.value.solverMethod;
+		state.targetVariables = knobs.value.targetVariables;
+		emit('update-state', state);
+	},
+	{ deep: true }
+);
 </script>
 
 <style scoped>
