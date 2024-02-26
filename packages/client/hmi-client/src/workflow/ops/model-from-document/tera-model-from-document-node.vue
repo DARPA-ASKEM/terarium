@@ -4,8 +4,8 @@
 			<SelectButton
 				class="p-button-xsm"
 				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
 				:options="viewOptions"
+				@change="handleChange"
 			/>
 			<div class="container">
 				<tera-model-diagram
@@ -53,19 +53,26 @@ enum View {
 }
 const view = ref(View.Diagram);
 const viewOptions = ref([View.Diagram, View.Equation]);
+const handleChange = (event) => {
+	if (event.value) {
+		view.value = event.value;
+	}
+};
+
 const model = ref(null as Model | null);
 
-onMounted(async () => {
-	if (props.node?.active?.state?.modelId) {
-		model.value = await getModel(props.node.active.state.modelId);
+// Update the model preview when the active output changes
+const activeOutputId = ref(props.node?.active ?? props.node?.outputs?.[0].id);
+const activeModelId = ref(
+	props.node?.outputs?.find((output) => output.id === activeOutputId.value)?.state?.modelId
+);
+const updateModel = async () => {
+	if (activeModelId.value) {
+		model.value = await getModel(activeModelId.value);
 	}
-});
-
-onUpdated(async () => {
-	if (props.node?.active?.state?.modelId) {
-		model.value = await getModel(props.node.active.state.modelId);
-	}
-});
+};
+onMounted(updateModel);
+onUpdated(updateModel);
 </script>
 
 <style scoped>
