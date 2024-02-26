@@ -38,7 +38,6 @@
 										preview
 									/>
 								</template>
-								<label>Interpreted As:</label>
 								<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false" />
 								<InputText
 									v-model="equation.asset.text"
