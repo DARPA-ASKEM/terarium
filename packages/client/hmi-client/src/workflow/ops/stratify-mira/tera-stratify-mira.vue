@@ -217,7 +217,7 @@ const stratifyRequest = () => {
 			key: strataOption.name,
 			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
 			concepts_to_stratify: conceptsToStratify,
-			parameters_to_stratify: parametersToStratify,
+			params_to_stratify: parametersToStratify,
 			cartesian_control: strataOption.cartesianProduct,
 			structure: strataOption.useStructure === true ? null : []
 		}
