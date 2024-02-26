@@ -19,7 +19,7 @@ export enum WorkflowOperationTypes {
 	FUNMAN = 'Funman',
 	CODE = 'Code',
 	MODEL_CONFIG = 'ModelConfiguraiton',
-	MODEL_OPTIMIZE = 'ModelOptimize',
+	OPTIMIZE_CIEMSS = 'OptimizeCiemss',
 	MODEL_COUPLING = 'ModelCoupling',
 	MODEL_EDIT = 'ModelEdit',
 	DOCUMENT = 'Document',

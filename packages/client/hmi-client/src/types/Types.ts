@@ -1434,7 +1434,7 @@ export enum WorkflowOperationTypes {
     Funman = "FUNMAN",
     Code = "CODE",
     ModelConfig = "MODEL_CONFIG",
-    ModelOptimize = "MODEL_OPTIMIZE",
+    OptimizeCiemss = "OPTIMIZE_CIEMSS",
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
     Document = "DOCUMENT",
