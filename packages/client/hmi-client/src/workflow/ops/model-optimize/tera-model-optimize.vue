@@ -110,21 +110,25 @@
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="['Mean', 'Median']"
-								v-model="statistic"
+								v-model="knobs.statistic"
 								placeholder="Select"
 							/>
 						</div>
 						<div class="label-and-input">
 							<label for="num-days">Over number of days</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numDays" />
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numDays" />
 						</div>
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label for="risk-tolerance">Risk tolerance</label>
 							<div class="input-and-slider">
-								<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="riskTolerance" />
-								<Slider v-model="riskTolerance" :min="0" :max="100" :step="1" />
+								<InputNumber
+									class="p-inputtext-sm"
+									inputId="integeronly"
+									v-model="knobs.riskTolerance"
+								/>
+								<Slider v-model="knobs.riskTolerance" :min="0" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -132,13 +136,13 @@
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="['Above', 'Below']"
-								v-model="aboveOrBelow"
+								v-model="knobs.aboveOrBelow"
 								placeholder="Select"
 							/>
 						</div>
 						<div class="label-and-input">
 							<label for="threshold">Threshold</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="threshold" />
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.threshold" />
 						</div>
 					</div>
 				</div>
@@ -208,6 +212,11 @@ interface BasicKnobs {
 	numStochasticSamples: number;
 	solverMethod: string;
 	targetVariables: string[];
+	statistic: string;
+	numDays: number;
+	riskTolerance: number;
+	aboveOrBelow: string;
+	threshold: number;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -217,7 +226,12 @@ const knobs = ref<BasicKnobs>({
 	timeUnit: props.node.state.timeUnit ?? '',
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '',
-	targetVariables: props.node.state.targetVariables ?? []
+	targetVariables: props.node.state.targetVariables ?? [],
+	statistic: props.node.state.statistic ?? '',
+	numDays: props.node.state.numDays ?? 0,
+	riskTolerance: props.node.state.riskTolerance ?? 0,
+	aboveOrBelow: props.node.state.aboveOrBelow ?? '',
+	threshold: props.node.state.threshold ?? 0
 });
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
@@ -233,13 +247,6 @@ const timeSamples = computed<string>(() => {
 	}
 	return samples.join(', ');
 });
-
-// Constraints
-const statistic = ref<string>(props.node.state.statistic);
-const numDays = ref<number>(props.node.state.numDays);
-const riskTolerance = ref<number>(props.node.state.riskTolerance);
-const aboveOrBelow = ref<string>(props.node.state.aboveOrBelow);
-const threshold = ref<number>(props.node.state.threshold);
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -302,6 +309,11 @@ watch(
 		state.numStochasticSamples = knobs.value.numStochasticSamples;
 		state.solverMethod = knobs.value.solverMethod;
 		state.targetVariables = knobs.value.targetVariables;
+		state.statistic = knobs.value.statistic;
+		state.numDays = knobs.value.numDays;
+		state.riskTolerance = knobs.value.riskTolerance;
+		state.aboveOrBelow = knobs.value.aboveOrBelow;
+		state.threshold = knobs.value.threshold;
 		emit('update-state', state);
 	},
 	{ deep: true }
