@@ -43,6 +43,7 @@ public class ElasticInsertService extends ConcurrentWorkerService {
 				for (Output out : output) {
 					out.addTopics(params.getTopics());
 				}
+				log.info("Processed {} docs in {}ms", output.size(), (System.currentTimeMillis() - start));
 
 				if (output.isEmpty()) {
 					log.warn("Batch had not processed output, skipping");
@@ -53,6 +54,8 @@ public class ElasticInsertService extends ConcurrentWorkerService {
 				long backpressureWait = lastTookMs.get() - sinceLastTook;
 				if (backpressureWait > 0) {
 					// apply backpressure
+					log.info("Backpressure applied, waiting for {}ms, took was {}ms", backpressureWait,
+							lastTookMs.get());
 					Thread.sleep(backpressureWait);
 				}
 

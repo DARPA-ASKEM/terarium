@@ -47,8 +47,7 @@
 			<tera-drilldown-preview
 				title="Stratify output"
 				:options="outputs"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
@@ -145,6 +144,8 @@ const amr = ref<Model | null>(null);
 const stratifiedAmr = ref<Model | null>(null);
 
 const modelNodeOptions = ref<string[]>([]);
+let modelStates: string[] = [];
+let modelParameters: string[] = [];
 
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
@@ -201,12 +202,22 @@ const handleResetResponse = (data: any) => {
 const stratifyRequest = () => {
 	if (!amr.value) return;
 
+	// Sanity check states vs parameters
+	const conceptsToStratify: string[] = [];
+	const parametersToStratify: string[] = [];
 	const strataOption = props.node.state.strataGroup;
+
+	strataOption.selectedVariables.forEach((v) => {
+		if (modelStates.includes(v)) conceptsToStratify.push(v);
+		if (modelParameters.includes(v)) parametersToStratify.push(v);
+	});
+
 	const messageContent = {
 		stratify_args: {
 			key: strataOption.name,
 			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
-			concepts_to_stratify: strataOption.selectedVariables,
+			concepts_to_stratify: conceptsToStratify,
+			params_to_stratify: parametersToStratify,
 			cartesian_control: strataOption.cartesianProduct,
 			structure: strataOption.useStructure === true ? null : []
 		}
@@ -271,13 +282,28 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
+	modelStates = [];
+	modelParameters = [];
+
 	const modelColumnNameOptions: string[] = amr.value.model.states.map((state: any) => state.id);
+	modelStates = _.cloneDeep(modelColumnNameOptions);
+
 	// add observables
 	if (amr.value.model.semantics?.ode?.observables) {
 		amr.value.model.semantics.ode.observables.forEach((o) => {
 			modelColumnNameOptions.push(o.id);
+			modelStates.push(o.id);
 		});
 	}
+
+	// add parameters
+	if (amr.value.semantics?.ode?.parameters) {
+		amr.value.semantics.ode.parameters.forEach((p) => {
+			modelColumnNameOptions.push(p.id);
+			modelParameters.push(p.id);
+		});
+	}
+
 	modelNodeOptions.value = modelColumnNameOptions;
 
 	// Create a new session and context based on model
@@ -368,14 +394,7 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
-const onUpdateSelection = (id: string) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-};
-
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 

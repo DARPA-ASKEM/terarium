@@ -16,7 +16,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	displayName: 'Simulate ensemble (probabilistic)',
 	description: '',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
-	outputs: [{ type: 'number' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	// TODO: Figure out mapping

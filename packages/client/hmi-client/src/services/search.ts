@@ -1,13 +1,13 @@
 import API from '@/api/api';
-import { logger } from '@/utils/logger';
 import { AssetType, TerariumAssetThatSupportsAdditionalProperties } from '@/types/Types';
+import { logger } from '@/utils/logger';
 
 export async function searchByAssetType(
 	text: string,
 	assetType: AssetType
 ): Promise<TerariumAssetThatSupportsAdditionalProperties[]> {
 	try {
-		const response = await API.post(
+		const response = await API.get(
 			`/search-by-asset-type/${assetType}?text=${encodeURIComponent(text)}`
 		);
 		return response?.data ?? [];

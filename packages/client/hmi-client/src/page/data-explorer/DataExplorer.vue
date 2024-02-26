@@ -27,12 +27,19 @@
 							option-value="value"
 							option-label="label"
 						/>
-						<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+						<div class="toggles">
+							<span>
+								<label>Source</label>
+								<Dropdown v-model="chosenSource" :options="sourceOptions" />
+							</span>
+							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+						</div>
 					</nav>
 					<tera-searchbar
 						ref="searchBarRef"
 						@query-changed="updateRelatedTerms"
 						@toggle-search-by-example="searchByExampleModalToggled"
+						:source="chosenSource"
 						:show-suggestions="false"
 					/>
 					<!-- <aside class="suggested-terms" v-if="!isEmpty(terms)">
@@ -43,11 +50,12 @@
 					</aside> -->
 				</div>
 				<tera-search-results-list
-					:data-items="assetType === AssetType.Model ? searchResults : dataItems"
+					:data-items="resultsToShow"
 					:facets="filteredFacets"
-					:result-type="resourceType"
+					:resource-type="resourceType"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
+					:source="chosenSource"
 					:doc-count="docCount"
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
@@ -57,6 +65,7 @@
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
+				:source="chosenSource"
 				:resource-type="resourceType"
 				:search-term="searchTerm"
 			/>
@@ -68,6 +77,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
+import Dropdown from 'primevue/dropdown';
 import { fetchData, getDocumentById, getRelatedTerms } from '@/services/data';
 import { searchByAssetType } from '@/services/search';
 import {
@@ -117,7 +127,7 @@ const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 // default slider state
-const isSliderFacetsOpen = ref(true);
+const isSliderFacetsOpen = ref(false);
 const isSliderResourcesOpen = ref(false);
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
@@ -159,9 +169,23 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
+const sourceOptions = ref(['XDD', 'Terarium']);
+const chosenSource = ref('XDD');
+
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
 );
+
+// Chooses source for search
+const resultsToShow = computed(() => {
+	if (
+		(assetType.value === AssetType.Document && chosenSource.value === 'Terarium') ||
+		assetType.value === AssetType.Model
+	) {
+		return searchResults.value;
+	}
+	return dataItems.value;
+});
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -334,8 +358,12 @@ const executeSearch = async () => {
 	if (assetType.value !== AssetType.Dataset) {
 		searchResults.value = [
 			{
-				results: await searchByAssetType(searchTerm.value, assetType.value),
-				searchSubsystem: resourceType.value
+				results: await searchByAssetType(searchWords, AssetType.Document),
+				searchSubsystem: ResourceType.XDD
+			},
+			{
+				results: await searchByAssetType(searchWords, AssetType.Model),
+				searchSubsystem: ResourceType.MODEL
 			}
 		];
 	}
@@ -584,6 +612,21 @@ main {
 	flex-grow: 1;
 	gap: 0.5rem;
 	margin: 0.5rem 0.5rem 0;
+}
+
+.toggles {
+	display: flex;
+	gap: 1rem;
+
+	& > span {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	& .p-dropdown {
+		min-width: 8rem;
+	}
 }
 
 main > section:first-of-type {

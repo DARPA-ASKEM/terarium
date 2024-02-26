@@ -29,7 +29,7 @@ public class ElasticIngestParams {
 	int errorsThreshold = 10;
 
 	// The number of documents to process in a single batch.
-	int batchSize = 500;
+	int batchSize = 200;
 
 	// The classname used for the ingest.
 	String ingestClass;

@@ -1,34 +1,17 @@
 <template>
 	<section class="search-bar-container">
-		<div class="search">
-			<span class="p-input-icon-left p-input-icon-right">
-				<vue-feather type="message-square" size="1.25rem" stroke="var(--text-color-subdued)" />
-				<AutoComplete
-					ref="searchBarRef"
-					:active="searchBarRef?.overlayVisible"
-					v-model="query"
-					:suggestions="autocompleteMenuItems"
-					:placeholder="placeholder ?? 'Search'"
-					:autoOptionFocus="false"
-					:minLength="3"
-					scrollHeight="400px"
-					loadingIcon="null"
-					@complete="fillAutocomplete"
-					@keyup.enter="initiateSearch"
-					@item-select="initiateSearch"
-					@dragover.prevent
-					@dragenter.prevent
-				>
-					<template #option="prop">
-						<span class="auto-complete-term">
-							<i class="pi pi-search" />
-							<span>{{ prop.option }}</span>
-							<i class="pi pi-arrow-right"
-						/></span>
-					</template>
-				</AutoComplete>
-				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
-			</span>
+		<div class="p-input-icon-left p-input-icon-right">
+			<vue-feather type="message-square" size="1.25rem" stroke="var(--text-color-subdued)" />
+			<Textarea
+				v-model="query"
+				:placeholder="placeholder ?? 'Search'"
+				autoResize
+				rows="1"
+				@keydown.enter.prevent="initiateSearch"
+			/>
+			<i>
+				<Button :class="{ hidden: !query }" rounded text icon="pi pi-times" @click="clearQuery"
+			/></i>
 		</div>
 		<section v-if="isSearchByExampleVisible" class="search-by-example">
 			<header>
@@ -52,6 +35,7 @@
 						<tera-asset-card
 							:asset="searchByExampleSelectedAsset"
 							:resourceType="searchByExampleSelectedResourceType"
+							:source="source"
 							class="asset-card-in-searchByExample-dropzone"
 						>
 						</tera-asset-card>
@@ -111,11 +95,11 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import AutoComplete from 'primevue/autocomplete';
+import Textarea from 'primevue/textarea';
 import { RouteName } from '@/router/routes';
-import { getRelatedTerms, getAutocomplete } from '@/services/data';
+// import { getRelatedTerms, getAutocomplete } from '@/services/data';
 import * as EventService from '@/services/event';
-import useResourcesStore from '@/stores/resources';
+// import useResourcesStore from '@/stores/resources';
 import { EventType } from '@/types/Types';
 import Button from 'primevue/button';
 import { useDragEvent } from '@/services/drag-drop';
@@ -129,8 +113,9 @@ import {
 import { getResourceID } from '@/utils/data-util';
 import { useProjects } from '@/composables/project';
 
-const props = defineProps<{
+defineProps<{
 	showSuggestions: boolean;
+	source: string;
 	placeholder?: string;
 }>();
 
@@ -138,11 +123,11 @@ const emit = defineEmits(['query-changed']);
 
 const route = useRoute();
 const router = useRouter();
-const resources = useResourcesStore();
+// const resources = useResourcesStore();
 
 const query = ref<string>('');
 const searchBarRef = ref();
-const autocompleteMenuItems = ref<string[]>([]);
+// const autocompleteMenuItems = ref<string[]>([]);
 
 const searchByExampleToggle = ref(false);
 const isDraggedOver = ref(false);
@@ -188,21 +173,22 @@ function addToQuery(term: string) {
 }
 defineExpose({ addToQuery });
 
-const fillAutocomplete = async () => {
-	const appendToQuery = query.value[query.value.length - 1] === ' ' && props.showSuggestions;
+// FIXME: We may add some sort of auto complete back in later
+// const fillAutocomplete = async () => {
+// 	const appendToQuery = query.value[query.value.length - 1] === ' ' && props.showSuggestions;
 
-	const promise: Promise<string[]> = appendToQuery
-		? getRelatedTerms(query.value.trim(), resources.xddDataset) // Appends to what you're typing while searching for an xdd document
-		: getAutocomplete(query.value); // Replaces what you're typing
+// 	const promise: Promise<string[]> = appendToQuery
+// 		? getRelatedTerms(query.value.trim(), resources.xddDataset) // Appends to what you're typing while searching for an xdd document
+// 		: getAutocomplete(query.value); // Replaces what you're typing
 
-	promise.then((response) => {
-		autocompleteMenuItems.value = appendToQuery
-			? response.map((term) => `${query.value}${term}`) // Append your input in front of suggested terms
-			: response;
-		// @ts-ignore
-		searchBarRef.value?.$el.focus();
-	});
-};
+// 	promise.then((response) => {
+// 		autocompleteMenuItems.value = appendToQuery
+// 			? response.map((term) => `${query.value}${term}`) // Append your input in front of suggested terms
+// 			: response;
+// 		// @ts-ignore
+// 		searchBarRef.value?.$el.focus();
+// 	});
+// };
 
 const isSearchByExampleVisible = computed(
 	() => getDragData('asset') || searchByExampleToggle.value
@@ -261,86 +247,34 @@ watch(
 	overflow: hidden;
 }
 
-.search {
+.p-input-icon-left {
+	width: 100%;
 	display: flex;
-	align-items: center;
+	align-items: start;
+
+	/* TODO: Make the chat and close icons stick to the top as the textarea grows */
+	& i:last-of-type {
+		margin-top: -0.85rem;
+	}
+}
+
+textarea.p-inputtext {
 	width: 100%;
-}
-
-.p-autocomplete {
-	border-color: var(--surface-border);
-	height: 3rem;
-	width: 100%;
-}
-
-.p-autocomplete:deep(.p-inputtext) {
-	width: 100%;
-	border-radius: var(--border-radius-medium);
-	background: rgba(216, 234, 227, 0.3);
-}
-
-.p-autocomplete:deep(.p-inputtext:focus) {
-	box-shadow: none;
-}
-
-.p-autocomplete:deep(.p-inputtext),
-.p-autocomplete:deep(.p-inputtext:hover),
-.p-autocomplete:deep(.p-inputtext:focus) {
+	padding-top: 0.5rem;
+	padding-bottom: 1rem;
 	/**TODO: Make this a gradient border like the design #cae8c0*/
 	border: 4px solid var(--primary-color);
-	padding-left: 2.5rem;
-}
+	border-radius: var(--border-radius-medium);
+	background: rgba(216, 234, 227, 0.3);
 
-.p-autocomplete[active='true']:deep(.p-inputtext) {
-	border-bottom-left-radius: 0;
-	border-bottom-right-radius: 0;
-	border-bottom: none;
-	/* Required for smooth transition */
-	border-bottom-color: transparent;
-}
-
-*:deep(.p-autocomplete-panel) {
-	width: 686px;
-}
-
-.p-input-icon-left {
-	flex: 1;
-}
-
-i {
-	color: var(--text-color-subdued);
-	margin-left: var(--gap-small);
-	z-index: 1;
-}
-
-.auto-complete-term {
-	display: inline-flex;
-	width: 100%;
-}
-
-.pi-arrow-right {
-	margin-left: auto;
-}
-
-.pi.pi-times.clear-search {
-	padding: 0.5rem;
-	border-radius: var(--border-radius-bigger);
-	top: 1rem;
-	right: 4rem;
-}
-
-.clear-search:hover {
-	background-color: var(--surface-hover);
-	color: var(--text-color-primary);
-	padding: 0.5rem;
-	border-radius: var(--border-radius-bigger);
-	top: 1rem;
-	right: 4rem;
-}
-
-.clear-search.hidden {
-	visibility: hidden;
-	right: 4rem;
+	&:enabled {
+		&:hover {
+			border: 4px solid var(--primary-color);
+		}
+		&:focus {
+			box-shadow: none;
+		}
+	}
 }
 
 .search-by-example {
@@ -361,6 +295,12 @@ i {
 	box-shadow:
 		0px 4px 6px -1px rgb(0 0 0 / 8%),
 		0px 2px 4px -1px rgb(0 0 0 / 6%);
+
+	& i {
+		color: var(--text-color-subdued);
+		margin-left: var(--gap-small);
+		z-index: 1;
+	}
 }
 
 .search-by-example header {

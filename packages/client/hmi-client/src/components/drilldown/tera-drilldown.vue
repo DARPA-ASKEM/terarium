@@ -1,6 +1,6 @@
 <template>
 	<aside class="overlay-container">
-		<section>
+		<section :class="{ popover: props.popover }">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
 				:views="views"
@@ -42,6 +42,7 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 const props = defineProps<{
 	title: string;
 	tooltip?: string;
+	popover?: boolean;
 }>();
 
 const emit = defineEmits(['on-close-clicked']);
@@ -94,6 +95,9 @@ than the main application behind the modal when these render issues come, howeve
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	&.popover {
+		margin: 3rem 2.5rem 0rem 2.5rem;
+	}
 }
 
 main {

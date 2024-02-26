@@ -131,7 +131,7 @@ const runningSessions = ref<any[]>([]);
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assetIds: string[];
+	assets: { id: string; type: string }[];
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
@@ -182,13 +182,25 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 	kernel?.sendJupyterMessage(message);
 };
 
+// FIXME: this is a bit fragile, the output is meant to match the terms used in askem-beaker
+// and not necessarily asset type enums
+const toAssetType = (t: string) => {
+	if (t.endsWith('Id')) {
+		return t.substring(0, t.length - 2);
+	}
+	throw new Error(`Cannot convert type ${t}`);
+};
+
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
 
-	const contextInfo = {};
-	props.assetIds.forEach((assetId, i) => {
+	const contextInfo: any = {};
+	props.assets.forEach((asset, i) => {
 		const key = `d${i + 1}`;
-		contextInfo[key] = assetId;
+		contextInfo[key] = {
+			id: asset.id,
+			asset_type: toAssetType(asset.type)
+		};
 	});
 	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
@@ -265,7 +277,7 @@ const saveAsNewDataset = async () => {
 		session: session?.name || '',
 		channel: 'shell',
 		content: {
-			parent_dataset_id: String(props.assetIds[0]),
+			parent_dataset_id: String(props.assets[0].id),
 			name: datasetName,
 			var_name: actionTarget.value
 		},
