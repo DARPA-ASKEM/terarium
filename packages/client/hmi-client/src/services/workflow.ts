@@ -12,7 +12,8 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	WorkflowAnnotation
 } from '@/types/workflow';
 import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 
@@ -55,6 +56,20 @@ function getOperatorNodeSize(size: OperatorNodeSize): Size {
 			return { width: 180, height: 220 };
 	}
 }
+
+export const addAnnotation = (wf: Workflow, pos: Position) => {
+	const annotation: WorkflowAnnotation = {
+		id: uuidv4(),
+		x: pos.x,
+		y: pos.y,
+		text: 'I am a note',
+		references: []
+	};
+	if (!wf.annotations) {
+		wf.annotations = [];
+	}
+	wf.annotations.push(annotation);
+};
 
 export const addNode = (
 	wf: Workflow,

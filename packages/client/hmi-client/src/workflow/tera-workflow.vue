@@ -77,6 +77,16 @@
 				:model="contextMenuItems"
 				style="white-space: nowrap; width: auto"
 			/>
+
+			<tera-canvas-item
+				v-for="annotation in wf.annotations"
+				:key="annotation.id"
+				:style="{ width: `300px`, top: `${annotation.y}px`, left: `${annotation.x}px` }"
+				@dragging="(event) => updateAnnotationPosition(annotation, event)"
+			>
+				<div>{{ annotation.text }}</div>
+			</tera-canvas-item>
+
 			<tera-canvas-item
 				v-for="(node, index) in wf.nodes"
 				:key="index"
@@ -197,7 +207,8 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	WorkflowAnnotation
 } from '@/types/workflow';
 import { WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 // Operation imports
@@ -395,6 +406,11 @@ const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
 };
 
+const addAnnotationToWorkflow = () => {
+	workflowService.addAnnotation(wf.value, newNodePosition);
+	workflowDirty = true;
+};
+
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
 	() => {
@@ -513,6 +529,14 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
 			}
 		]
+	},
+	// Add annotations
+	{
+		label: 'Add annotation',
+		command: () => {
+			console.log('adding annotation');
+			addAnnotationToWorkflow();
+		}
 	},
 	// Agent LLM
 	{
@@ -759,6 +783,13 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 		}
 	});
 }
+
+const updateAnnotationPosition = (annotation: WorkflowAnnotation, { x, y }) => {
+	if (!isMouseOverCanvas) return;
+	annotation.x += x / canvasTransform.k;
+	annotation.y += y / canvasTransform.k;
+	workflowDirty = true;
+};
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	if (!isMouseOverCanvas) return;
