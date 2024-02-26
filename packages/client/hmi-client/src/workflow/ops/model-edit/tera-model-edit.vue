@@ -43,7 +43,7 @@
 			</tera-drilldown-section>
 			<div class="preview-container">
 				<tera-drilldown-preview
-					title="Model Preview"
+					title="Preview"
 					v-model:output="selectedOutputId"
 					@update:output="onUpdateOutput"
 					@update:selection="onUpdateSelection"
@@ -54,7 +54,6 @@
 					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
 					</div>
 					<template #footer>
 						<InputText
@@ -399,6 +398,12 @@ onUnmounted(() => {
 	padding: 1rem;
 }
 
+:deep(.diagram-container) {
+	height: calc(100vh - 270px) !important;
+}
+:deep(.resize-handle) {
+	display: none;
+}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;
