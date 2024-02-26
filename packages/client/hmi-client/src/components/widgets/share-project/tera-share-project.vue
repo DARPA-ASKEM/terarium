@@ -6,7 +6,7 @@
 		header="Share project"
 		@hide="$emit('update:modelValue', false)"
 		@after-hide="onAfterHide"
-		:style="{ width: '30rem' }"
+		:style="{ width: '35rem' }"
 	>
 		<section class="container">
 			<Dropdown
@@ -132,6 +132,9 @@ function addNewSelectedUser(id: string) {
 		newSelectedUsers.value.add(user);
 		newSelectedUserPermissions.set(id, 'writer');
 	}
+
+	// Clear the selected user to allow for re-selection
+	selectedUser.value = null;
 }
 
 function onAfterHide() {
