@@ -10,7 +10,7 @@ if (( MODIFIED_FILES == 0 )); then
   ./gradlew generateTypeScript
   MODIFIED_FILES=`git status -s | grep "Types.ts" | wc -l`
   if (( MODIFIED_FILES > 0 )); then
-    echo "BUILD ERROR: Types.ts was not pre-generated and has now been created. Please make sure the front end is updated accordingly"
+    echo "ERROR: Types.ts was not pre-generated and has now been created. Please make sure the front end is updated accordingly"
     exit 1
   fi
 else
@@ -20,7 +20,7 @@ else
   ./gradlew generateTypeScript
   NEW_FILE_HASH=md5 ${TYPES_FILE}
   if [ "$ORG_FILE_HASH" != "$NEW_FILE_HASH" ]; then
-    echo "BUILD ERROR: Types.ts has been modified. Please make sure the front end is updated accordingly"
+    echo "ERROR: Types.ts has been modified. Please make sure the front end is updated accordingly"
     exit 1
   fi
 fi
