@@ -5,7 +5,12 @@
 				<Toolbar>
 					<template #start>
 						<span>
-							<Button @click="resetZoom" label="Reset zoom" class="p-button-sm p-button-outlined" />
+							<Button
+								@click="resetZoom"
+								label="Reset zoom"
+								class="p-button-sm p-button-outlined"
+								severity="secondary"
+							/>
 						</span>
 					</template>
 					<template #center> </template>
