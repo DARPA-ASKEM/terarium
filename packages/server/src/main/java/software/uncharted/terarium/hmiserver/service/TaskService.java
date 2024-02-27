@@ -112,7 +112,7 @@ public class TaskService {
 
 		try {
 			// send the request to the task runner
-			log.info("Dispatching request {} on queue: {}", req, requestQueue);
+			log.info("Dispatching request {} on queue: {}", new String(req.getInput()), requestQueue);
 			final String jsonStr = objectMapper.writeValueAsString(req);
 			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 		} catch (Exception e) {
@@ -151,7 +151,7 @@ public class TaskService {
 				return;
 			}
 
-			log.info("Received response {} for task {}", resp, resp.getId());
+			log.info("Received response {} for task {}", new String(resp.getOutput()), resp.getId());
 
 			try {
 				if (responseQueues.containsKey(resp.getId())) {
