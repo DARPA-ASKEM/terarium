@@ -22,7 +22,7 @@ services:
 
   knowledge-middleware-api:
     container_name: knowledge-middleware-api
-    image: ghcr.io/darpa-askem/knowledge-middleware-api:tds-migration
+    image: ghcr.io/darpa-askem/knowledge-middleware-api:latest
     networks:
       - terarium
     ports:
@@ -44,7 +44,7 @@ services:
 
   knowledge-middleware-worker:
     container_name: knowledge-middleware-worker
-    image: ghcr.io/darpa-askem/knowledge-middleware-worker:tds-migration
+    image: ghcr.io/darpa-askem/knowledge-middleware-worker:latest
     networks:
       - terarium
     environment:
