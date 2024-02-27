@@ -100,13 +100,7 @@
 						:loading="savingAsset"
 						@click="isNewModelModalVisible = true"
 					></Button>
-					<Button
-						label="Close"
-						@click="emit('close')"
-						severity="secondary"
-						outlined
-						size="large"
-					/>
+					<Button label="Close" @click="emit('close')" severity="secondary" outlined size="large" />
 					<Button
 						label="Run"
 						@click="onRun"
