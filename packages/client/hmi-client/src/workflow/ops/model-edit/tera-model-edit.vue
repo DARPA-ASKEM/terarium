@@ -19,7 +19,7 @@
 						outlined
 						severity="secondary"
 						size="small"
-						@click="runFromCodeWrapper"
+						@click="runFromCodeWrapper(editor?.getValue() as string)"
 					/>
 				</div>
 
@@ -33,7 +33,7 @@
 				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
-					@init="initialize"
+					@init="initializeAceEditor"
 					lang="python"
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
@@ -43,7 +43,7 @@
 			</tera-drilldown-section>
 			<div class="preview-container">
 				<tera-drilldown-preview
-					title="Model Preview"
+					title="Preview"
 					v-model:output="selectedOutputId"
 					@update:selection="onSelection"
 					:options="outputs"
@@ -53,7 +53,6 @@
 					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
 					</div>
 					<template #footer>
 						<InputText
@@ -86,7 +85,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onUnmounted, ref, watch, computed } from 'vue';
+import { onMounted, onUnmounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
@@ -167,20 +166,14 @@ const syncWithMiraModel = (data: any) => {
 };
 
 // Reset model, then execute the code
-const runFromCodeWrapper = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
+const runFromCodeWrapper = (code: string) => {
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode();
+		runFromCode(code);
 	});
 };
 
-const runFromCode = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
+const runFromCode = (code: string) => {
 	const messageContent = {
 		silent: false,
 		store_history: false,
@@ -258,16 +251,22 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
+	codeText.value = props.node.state.modelEditCodeHistory[0].code;
+
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
 				// when coming from output dropdown change we should shutdown first
-				await kernelManager.shutdown();
+				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
+		}
+
+		if (codeText.value && codeText.value.length > 0) {
+			runFromCodeWrapper(codeText.value);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -293,13 +292,14 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',
+			state: _.cloneDeep(props.node.state),
 			value: [modelData.id]
 		});
 		emit('close');
 	}
 };
 
-const initialize = (editorInstance: any) => {
+const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
@@ -331,20 +331,16 @@ watch(
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
+
 			await inputChangeHandler();
 		}
 	},
 	{ immediate: true }
 );
 
-// Set model, modelConfiguration, modelNodeOptions
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		await inputChangeHandler();
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	await inputChangeHandler();
+});
 
 onUnmounted(() => {
 	kernelManager.shutdown();
@@ -390,6 +386,12 @@ onUnmounted(() => {
 	padding: 1rem;
 }
 
+:deep(.diagram-container) {
+	height: calc(100vh - 270px) !important;
+}
+:deep(.resize-handle) {
+	display: none;
+}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;

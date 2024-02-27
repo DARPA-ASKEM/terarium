@@ -225,9 +225,9 @@ import {
 	setupModelInput,
 	setupDatasetInput,
 	renderLossGraph,
-	CalibrateMap,
-	autoCalibrationMapping
+	CalibrateMap
 } from '@/services/calibrate-workflow';
+import { autoCalibrationMapping } from '@/services/concept';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';

@@ -16,26 +16,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.*;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.TerariumAssetService;
+import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
-import java.io.IOException;
 import java.util.*;
 
 @RequestMapping("/projects")
@@ -54,12 +51,7 @@ public class ProjectController {
 
 	final ProjectAssetService projectAssetService;
 
-	// TODO: These are all to be removed once we get rid of getAssets
-	final DatasetService datasetService;
-	final ModelService modelService;
-	final DocumentAssetService documentService;
-	final WorkflowService workflowService;
-	final CodeService codeService;
+	final TerariumAssetServices terariumAssetServices;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -260,121 +252,12 @@ public class ProjectController {
 	// Project Assets
 	// --------------------------------------------------------------------------
 
-	@Operation(summary = "DEPRECATED Gets the assets belonging to a specific project, by asset type")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Assets found", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Assets.class))),
-			@ApiResponse(responseCode = "204", description = "Currently unimplemented. This is all you'll get for now!", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)))),
-			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
-	@GetMapping("/{id}/assets")
-	@Secured(Roles.USER)
-	@Deprecated(forRemoval = true)
-	public ResponseEntity<Assets> getAssets(
-			@PathVariable("id") final UUID projectId,
-			@RequestParam("types") final List<AssetType> types) {
-		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canRead(new RebacProject(projectId, reBACService))) {
-
-				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
-
-				// sort our list of assets by type, caring only about the UUID of the
-				// projectAsset
-				final Map<AssetType, List<UUID>> assetTypeListMap = assets.stream()
-						.collect(
-								HashMap::new,
-								(map, asset) -> {
-									if (!map.containsKey(asset.getAssetType())) {
-										map.put(asset.getAssetType(), new ArrayList<>());
-									}
-									map.get(asset.getAssetType()).add(asset.getAssetId());
-								},
-								HashMap::putAll);
-
-				final Assets assetsResponse = new Assets();
-				for (final AssetType type : assetTypeListMap.keySet()) {
-					switch (type) {
-						case DATASET:
-							final List<Dataset> datasets = new ArrayList<>();
-							for (final UUID id : assetTypeListMap.get(type)) {
-								try {
-									final Optional<Dataset> dataset = datasetService.getAsset(id);
-									dataset.ifPresent(datasets::add);
-								} catch (final IOException e) {
-									log.error("Error getting dataset", e);
-								}
-							}
-							assetsResponse.setDataset(datasets);
-							break;
-						case MODEL:
-							final List<Model> models = new ArrayList<>();
-							for (final UUID id : assetTypeListMap.get(type)) {
-								try {
-									final Optional<Model> model = modelService.getAsset(id);
-									model.ifPresent(models::add);
-								} catch (final IOException e) {
-									log.error("Error getting model", e);
-								}
-							}
-							assetsResponse.setModel(models);
-							break;
-						case DOCUMENT:
-							final List<DocumentAsset> documents = new ArrayList<>();
-							for (final UUID id : assetTypeListMap.get(type)) {
-								try {
-									final Optional<DocumentAsset> document = documentService.getAsset(id);
-									document.ifPresent(documents::add);
-								} catch (final IOException e) {
-									log.error("Error getting document", e);
-								}
-							}
-							assetsResponse.setDocument(documents);
-							break;
-						case WORKFLOW:
-							final List<Workflow> workflows = new ArrayList<>();
-							for (final UUID id : assetTypeListMap.get(type)) {
-								try {
-									final Optional<Workflow> workflow = workflowService.getAsset(id);
-									workflow.ifPresent(workflows::add);
-								} catch (final IOException e) {
-									log.error("Error getting workflow", e);
-								}
-							}
-							assetsResponse.setWorkflow(workflows);
-							break;
-						case CODE:
-							final List<Code> code = new ArrayList<>();
-							for (final UUID id : assetTypeListMap.get(type)) {
-								try {
-									final Optional<Code> codeAsset = codeService.getAsset(id);
-									codeAsset.ifPresent(code::add);
-								} catch (final IOException e) {
-									log.error("Error getting code", e);
-								}
-							}
-							assetsResponse.setCode(code);
-							break;
-						default:
-							break;
-					}
-				}
-
-				return ResponseEntity.ok(assetsResponse);
-			}
-			return ResponseEntity.notFound().build();
-		} catch (final Exception e) {
-			log.error("Error getting project assets", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR,
-					"Failed to get project assets");
-		}
-
-	}
-
 	@Operation(summary = "Creates an asset inside of a given project")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
 			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "409", description = "Asset already exists in this project", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
@@ -384,15 +267,29 @@ public class ProjectController {
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canWrite(new RebacProject(projectId, reBACService))) {
+			if (new RebacUser(currentUserService.get().getId(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
+
 				if (project.isPresent()) {
-					final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
-							assetType, assetId);
-					// underlying asset does not exist
-					return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset)).orElseGet(() -> ResponseEntity.notFound().build());
+
+
+					//double check that this asset is not already a part of this project, and if it does exist throw an error to the front end
+					final Optional<ProjectAsset> existingAsset = projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
+					if (existingAsset.isPresent()) {
+						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset already exists in this project");
+					}
+
+					final TerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices.getServiceByType(assetType);
+					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
+					if (asset.isPresent()) {
+						final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(project.get(), assetType, asset.get());
+						return projectAsset.map(pa -> ResponseEntity.status(HttpStatus.CREATED).body(pa)).orElseGet(() -> ResponseEntity.notFound().build());
+					} else {
+						return ResponseEntity.notFound().build();
+					}
+
 				}
+
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
