@@ -62,9 +62,11 @@ const handleChange = (event) => {
 const model = ref(null as Model | null);
 
 // Update the model preview when the active output changes
-const activeOutputId = ref(props.node?.active ?? props.node?.outputs?.[0].id);
+const activeOutputId = ref(props.node?.active ?? props.node?.outputs?.[0]?.id ?? null);
 const activeModelId = ref(
-	props.node?.outputs?.find((output) => output.id === activeOutputId.value)?.state?.modelId
+	activeOutputId.value
+		? props.node?.outputs?.find((output) => output.id === activeOutputId.value)?.state?.modelId
+		: null
 );
 const updateModel = async () => {
 	if (activeModelId.value) {
