@@ -5,6 +5,8 @@ import { toQueryString } from '@/utils/query-string';
 export async function generatePdfDownloadLink(doi: string) {
 	if (!doi) return null;
 
+	console.log(doi);
+
 	const query = { doi };
 	const URL = `/download?${toQueryString(query)}`;
 

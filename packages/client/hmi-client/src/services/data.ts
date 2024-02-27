@@ -184,10 +184,9 @@ const searchXDDDocuments = async (
 
 	const res = await API.get(url + searchParams);
 
-	if (res?.data?.success) {
-		return res.data.success;
-	}
-	return undefined;
+	console.log(res?.data?.success);
+
+	return res?.data?.success ?? null;
 };
 
 const filterAssets = <T extends Model | Dataset>(
