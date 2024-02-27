@@ -26,8 +26,8 @@ import java.util.UUID;
 @Service
 public class ModelService extends TerariumAssetService<Model >{
 
-	public ModelService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService) {
-		super(elasticConfig, config, elasticService, projectAssetService, Model.class);
+	public ModelService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService) {
+		super(elasticConfig, config, elasticService, Model.class);
 	}
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
