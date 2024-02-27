@@ -56,13 +56,6 @@
 			</section>
 		</section>
 		<template #footer>
-			<Button
-				label="Cancel"
-				class="p-button-secondary"
-				outlined
-				@click="visible = false"
-				size="large"
-			/>
 			<Button label="Done" @click="setPermissions" size="large" />
 		</template>
 	</Dialog>
@@ -107,7 +100,7 @@ const isUpdatingAccessibility = ref(false);
 const generalAccess = computed(() => {
 	if (isUpdatingAccessibility.value) return { label: 'Loading...' };
 
-	return props.project.publicProject
+	return useProjects().activeProject.value?.publicProject
 		? generalAccessOptions.value[1]
 		: generalAccessOptions.value[0];
 });
