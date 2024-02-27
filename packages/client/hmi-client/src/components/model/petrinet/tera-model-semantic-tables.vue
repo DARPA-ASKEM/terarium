@@ -1,6 +1,7 @@
 <template>
+	<!-- FIXME: Looks like petrinet and stockflow somewhat share some table values, just using the petrinet tables to show stockflow for now... -->
 	<tera-petrinet-tables
-		v-if="modelType === AMRSchemaNames.PETRINET"
+		v-if="modelType === AMRSchemaNames.PETRINET || modelType === AMRSchemaNames.STOCKFLOW"
 		:model="model"
 		:modelConfigurations="modelConfigurations"
 		:readonly="readonly"

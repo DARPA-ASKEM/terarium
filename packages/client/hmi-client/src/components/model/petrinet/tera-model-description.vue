@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
+		<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />

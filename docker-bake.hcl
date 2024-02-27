@@ -26,15 +26,15 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner"]
 }
 
 group "staging" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "gollm-taskrunner-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "gollm-taskrunner-base", "mira-taskrunner-base"]
 }
 
 # ---------------------------------
@@ -80,4 +80,14 @@ target "gollm-taskrunner-base" {
 
 target "gollm-taskrunner" {
   inherits = ["_platforms", "gollm-taskrunner-base"]
+}
+
+target "mira-taskrunner-base" {
+	context = "." # root of the repo
+	dockerfile = "./packages/taskrunner/docker/Dockerfile.Mira"
+	tags = tag("mira-taskrunner", "", "")
+}
+
+target "mira-taskrunner" {
+  inherits = ["_platforms", "mira-taskrunner-base"]
 }
