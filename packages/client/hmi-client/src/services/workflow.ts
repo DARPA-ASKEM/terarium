@@ -62,7 +62,7 @@ export const addAnnotation = (wf: Workflow, pos: Position) => {
 		id: uuidv4(),
 		x: pos.x,
 		y: pos.y,
-		text: 'I am a note',
+		text: '',
 		references: []
 	};
 	if (!wf.annotations) {

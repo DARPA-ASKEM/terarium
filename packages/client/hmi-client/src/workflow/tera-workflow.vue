@@ -84,7 +84,14 @@
 				:style="{ width: `300px`, top: `${annotation.y}px`, left: `${annotation.x}px` }"
 				@dragging="(event) => updateAnnotationPosition(annotation, event)"
 			>
-				<div>{{ annotation.text }}</div>
+				<Inplace :closable="true" close-icon="pi pi-check" class="inplace">
+					<template #display>
+						{{ annotation.text || 'Click to edit' }}
+					</template>
+					<template #content>
+						<InputText v-model="annotation.text" autofocus class="annotation-input" />
+					</template>
+				</Inplace>
 			</tera-canvas-item>
 
 			<tera-canvas-item
@@ -223,6 +230,7 @@ import * as d3 from 'd3';
 import { AssetType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
+import Inplace from 'primevue/inplace';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
@@ -532,9 +540,8 @@ const contextMenuItems: MenuItem[] = [
 	},
 	// Add annotations
 	{
-		label: 'Add annotation',
+		label: 'Annotate canvas',
 		command: () => {
-			console.log('adding annotation');
 			addAnnotationToWorkflow();
 		}
 	},
@@ -887,5 +894,10 @@ function resetZoom() {
 	align-items: center;
 	flex-direction: row;
 	gap: var(--gap-small);
+}
+
+.inplace:deep(.p-button.p-button-icon-only) {
+	color: var(--surface-0);
+	border: solid 1px var(--primary-color);
 }
 </style>
