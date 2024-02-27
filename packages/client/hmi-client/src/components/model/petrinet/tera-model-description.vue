@@ -2,77 +2,108 @@
 	<main>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
 			<AccordionTab header="Description">
-				<section class="description">
+				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
 
 					<template v-if="modelType">
-						<label class="p-text-secondary">Model type</label>
-						<p>{{ modelType }}</p>
+						<div class="label-value-pair">
+							<label class="p-text-secondary">Model type</label>
+							<p>{{ modelType }}</p>
+						</div>
 					</template>
 					<template v-if="fundedBy">
-						<label class="p-text-secondary">Funded by</label>
-						<p>{{ fundedBy }}</p>
+						<div class="label-value-pair">
+							<label class="p-text-secondary">Funded by</label>
+							<p>{{ fundedBy }}</p>
+						</div>
 					</template>
 					<template v-if="authors">
-						<label class="p-text-secondary">Authors</label>
-						<p>{{ authors }}</p>
+						<div class="label-value-pair">
+							<label class="p-text-secondary">Authors</label>
+							<p>{{ authors }}</p>
+						</div>
 					</template>
 					<template v-if="uses">
-						<h5>Uses</h5>
-						<label class="p-text-secondary">Direct use</label>
-						<p>{{ uses.DirectUse }}</p>
-						<label class="p-text-secondary">Out of scope use</label>
-						<p>{{ uses.OutOfScopeUse }}</p>
+						<div class="label-value-pair mt-2">
+							<h6>Uses</h6>
+							<label class="p-text-secondary">Direct use</label>
+							<p>{{ uses.DirectUse }}</p>
+						</div>
+						<div class="label-value-pair">
+							<label class="p-text-secondary">Out of scope use</label>
+							<p>{{ uses.OutOfScopeUse }}</p>
+						</div>
 					</template>
 
 					<template v-if="biasAndRiskLimitations">
-						<h5>Bias and Risk Limitations</h5>
-						<p>{{ biasAndRiskLimitations }}</p>
+						<div class="label-value-pair mt-2">
+							<h6>Bias and Risk Limitations</h6>
+							<p>{{ biasAndRiskLimitations }}</p>
+						</div>
 					</template>
 
 					<template v-if="evaluation">
-						<h5>Evaluation</h5>
-						<p>{{ evaluation }}</p>
+						<div class="label-value-pair mt-2">
+							<h6>Evaluation</h6>
+							<p>{{ evaluation }}</p>
+						</div>
 					</template>
 
 					<template v-if="technicalSpecifications">
-						<h5>Technical Specifications</h5>
-						<p>{{ technicalSpecifications }}</p>
+						<div class="label-value-pair mt-2">
+							<h6>Technical Specifications</h6>
+							<p>{{ technicalSpecifications }}</p>
+						</div>
 					</template>
 
 					<template v-if="!isEmpty(glossary)">
-						<h5>Glossary</h5>
-						<p>{{ glossary.join(', ') }}</p>
+						<div class="label-value-pair mt-2">
+							<h6>Glossary</h6>
+							<p>{{ glossary.join(', ') }}</p>
+						</div>
 					</template>
 
 					<template v-if="!isEmpty(moreInformation)">
-						<h5>More Information</h5>
-						<a
-							v-for="(link, index) in moreInformation"
-							:href="link"
-							target="_blank"
-							rel="noopener noreferrer"
-							:key="index"
-							>{{ link }}</a
-						>
+						<div class="label-value-pair mt-2">
+							<h6>More Information</h6>
+							<a
+								v-for="(link, index) in moreInformation"
+								:href="link"
+								target="_blank"
+								rel="noopener noreferrer"
+								:key="index"
+								>{{ link }}</a
+							>
+						</div>
 					</template>
 
 					<template v-if="!isEmpty(provenance)">
-						<h5>Provenance</h5>
-						<p v-html="provenance" />
+						<div class="label-value-pair mt-2">
+							<h6>Provenance</h6>
+							<p v-html="provenance" />
+						</div>
 					</template>
 					<template v-if="!isEmpty(schema)">
-						<h5>Schema</h5>
-						<p v-html="schema" />
+						<div class="label-value-pair mt-2">
+							<h6>Schema</h6>
+							<p v-html="schema" />
+						</div>
 					</template>
 					<template v-if="!isEmpty(sourceDataset)">
-						<h5>Source dataset</h5>
-						<p v-html="sourceDataset" />
+						<div class="label-value-pair mt-2">
+							<h6>Source dataset</h6>
+							<p v-html="sourceDataset" />
+						</div>
 					</template>
 					<template v-if="!isEmpty(usage)">
-						<h5>Usage</h5>
-						<p v-html="usage" />
+						<div class="label-value-pair mt-2">
+							<h6>Usage</h6>
+							<p v-html="usage" />
+						</div>
 					</template>
+				</section>
+				<section v-else>
+					<tera-progress-spinner is-centered> Generating card... </tera-progress-spinner>
 				</section>
 			</AccordionTab>
 			<AccordionTab header="Diagram">
@@ -145,6 +176,7 @@ import TeraModelObservable from '@/components/model/petrinet/tera-model-observab
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
@@ -152,6 +184,7 @@ const props = defineProps<{
 	modelConfigurations?: ModelConfiguration[];
 	highlight?: string;
 	featureConfig?: FeatureConfig;
+	isGeneratingCard?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
@@ -283,13 +316,17 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	gap: 0.5rem;
 	margin-left: 1.5rem;
 }
-
 .details-column {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
 }
 
+.label-value-pair {
+	display: flex;
+	flex-direction: column;
+	gap: 0rem;
+}
 .framework {
 	text-transform: capitalize;
 }
