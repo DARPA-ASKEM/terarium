@@ -30,10 +30,7 @@ export const ModelFromDocumentOperation: Operation = {
 	description: 'Create model from equations',
 	displayName: 'Create model from equations',
 	isRunnable: true,
-	inputs: [
-		// { type: 'equations', label: 'Equations' },
-		{ type: 'documentId', label: 'Document' }
-	],
+	inputs: [{ type: 'documentId', label: 'Document' }],
 	outputs: [],
 	action: () => {},
 
