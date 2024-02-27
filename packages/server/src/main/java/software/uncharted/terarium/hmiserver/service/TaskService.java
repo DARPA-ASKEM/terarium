@@ -151,7 +151,9 @@ public class TaskService {
 				return;
 			}
 
-			log.info("Received response {} for task {}", new String(resp.getOutput()), resp.getId());
+			if (resp.getOutput() != null) {
+				log.info("Received response {} for task {}", new String(resp.getOutput()), resp.getId());
+			}
 
 			try {
 				if (responseQueues.containsKey(resp.getId())) {

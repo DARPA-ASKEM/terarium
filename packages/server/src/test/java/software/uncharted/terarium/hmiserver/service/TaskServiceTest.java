@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.controller.mira.MiraController;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -159,7 +160,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		TaskRequest req = new TaskRequest();
 		req.setId(taskId);
-		req.setScript("mira:mdl_to_stockflow");
+		req.setScript(MiraController.MDL_TO_STOCKFLOW);
 		req.setInput(content.getBytes());
 
 		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA);

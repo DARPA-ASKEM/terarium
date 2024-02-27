@@ -32,8 +32,8 @@ RUN wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/refs/heads/main
 	pip install -e .[sbml,biomodels]
 
 # Copy the Mira Conversion package
-COPY ./packages/mira /mira
-WORKDIR /mira
+COPY ./packages/mira /mira_task
+WORKDIR /mira_task
 RUN pip install -e .
 
 WORKDIR /

@@ -160,10 +160,10 @@ public class TaskRunnerService {
 
 		} catch (Exception e) {
 			if (task.getStatus() == TaskStatus.FAILED) {
-				log.error("Task failed");
+				log.error("Task {} failed", task.getId(), e);
 			} else if (task.getStatus() != TaskStatus.CANCELLED) {
 				// only log exception if it failed
-				log.error("Unexpected failure for task {}: {}", task.getId(), e);
+				log.error("Unexpected failure for task {}", task.getId(), e);
 			}
 
 			TaskResponse failedResp = req.createResponse(

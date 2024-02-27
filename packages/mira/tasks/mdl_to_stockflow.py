@@ -1,6 +1,5 @@
 import sys
 import os
-import logging
 from core.taskrunner import TaskRunnerInterface
 from mira.sources.system_dynamics.vensim import template_model_from_mdl_file
 from mira.modeling.amr.stockflow import template_model_to_stockflow_json
