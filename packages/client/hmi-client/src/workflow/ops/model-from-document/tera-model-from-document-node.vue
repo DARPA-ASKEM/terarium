@@ -62,6 +62,7 @@ const handleChange = (event) => {
 const model = ref(null as Model | null);
 
 // Update the model preview when the active output changes
+// TODO - Make this into a utility to fetch the active output or the first one.
 const activeOutputId = ref(props.node?.active ?? props.node?.outputs?.[0]?.id ?? null);
 const activeModelId = ref(
 	activeOutputId.value
