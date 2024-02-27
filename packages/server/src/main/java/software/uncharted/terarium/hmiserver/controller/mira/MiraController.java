@@ -40,9 +40,9 @@ public class MiraController {
 	final private TaskService taskService;
 	final private ModelService modelService;
 
-	final private String STELLA_TO_STOCKFLOW = "mirac:stella_to_stockflow";
-	final private String MDL_TO_STOCKFLOW = "mirac:mdl_to_stockflow";
-	final private String SBML_TO_PETRINET = "mirac:sbml_to_petrinet";
+	final private String STELLA_TO_STOCKFLOW = "mira:stella_to_stockflow";
+	final private String MDL_TO_STOCKFLOW = "mira:mdl_to_stockflow";
+	final private String SBML_TO_PETRINET = "mira:sbml_to_petrinet";
 	static final private long REQUEST_TIMEOUT_SECONDS = 30;
 
 	@Data
