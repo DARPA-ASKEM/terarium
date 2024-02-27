@@ -1,10 +1,10 @@
 <template>
 	<main>
-		{{ selectedRunId }}
 		<tera-simulate-chart
 			v-if="hasData"
 			:run-results="runResults[selectedRunId]"
-			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: ['S_state'] }"
+			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: ['S'] }"
+			:size="{ width: 180, height: 120 }"
 			has-mean-line
 		/>
 
