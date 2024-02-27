@@ -23,12 +23,11 @@
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
 				<Dropdown
 					v-else
-					class="value-type-dropdown"
+					class="value-type-dropdown w-8"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
 					optionValue="value"
-					class="w-8"
 					placeholder="Select a parameter type"
 					@update:model-value="(val) => changeType(slotProps.data.value, val)"
 				/>
