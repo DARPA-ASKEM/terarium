@@ -761,17 +761,10 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
-export interface OptimizeExtra {
-    numSamples: number;
-    inferredParameters?: string;
-    maxiter: number;
-    maxfeval: number;
-}
-
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    interventions: any[];
+    interventions?: OptimizedIntervention[];
     stepSize: number;
     qoi: string[];
     riskBound: number;
@@ -816,6 +809,19 @@ export interface Intervention {
     name: string;
     timestep: number;
     value: number;
+}
+
+export interface OptimizeExtra {
+    numSamples: number;
+    inferredParameters?: string;
+    maxiter: number;
+    maxfeval: number;
+    _minimized: boolean;
+}
+
+export interface OptimizedIntervention {
+    name: string;
+    timestep: number;
 }
 
 export interface TimeSpan {
