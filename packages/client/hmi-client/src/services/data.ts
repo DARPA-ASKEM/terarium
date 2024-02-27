@@ -184,8 +184,6 @@ const searchXDDDocuments = async (
 
 	const res = await API.get(url + searchParams);
 
-	console.log(res?.data?.success);
-
 	return res?.data?.success ?? null;
 };
 
