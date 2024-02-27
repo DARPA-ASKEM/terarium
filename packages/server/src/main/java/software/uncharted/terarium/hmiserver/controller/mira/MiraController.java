@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.controller.mirac;
+package software.uncharted.terarium.hmiserver.controller.mira;
 
 import java.util.List;
 
@@ -83,7 +83,7 @@ public class MiraController {
 						"Unknown model type");
 			}
 
-			List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRAC,
+			List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA,
 					REQUEST_TIMEOUT_SECONDS);
 
 			TaskResponse resp = responses.get(responses.size() - 1);
