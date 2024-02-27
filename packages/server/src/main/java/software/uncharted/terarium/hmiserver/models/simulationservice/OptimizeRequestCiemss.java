@@ -6,7 +6,10 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizedIntervention;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeExtra;
+
+
 import java.util.List;
 import java.io.Serializable;
 
@@ -19,7 +22,7 @@ public class OptimizeRequestCiemss implements Serializable {
 	private String modelConfigId;
 	private TimeSpan timespan;
 	@TSOptional
-	private List<Intervention> interventions;
+	private List<OptimizedIntervention> interventions;
 	@JsonAlias("step_size")
 	private Float stepSize;
 	private List<String> qoi;
