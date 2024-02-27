@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.simulationservice;
+package software.uncharted.terarium.hmiserver.models.simulationservice.parts;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
