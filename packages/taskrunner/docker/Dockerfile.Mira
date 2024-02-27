@@ -14,27 +14,26 @@ FROM python:3.10-slim
 
 WORKDIR /
 
-# Install OpenJDK JRE
+# Install OpenJDK JRE and git
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends openjdk-17-jre-headless && \
+	apt-get install -y --no-install-recommends wget && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 
-# Install wget
-RUN apt-get update && \
-	apt-get install -y --no-install-recommends wget && \
-	rm -rf /var/lib/apt/lists/*
+# Install Mira
+RUN echo "Cache bust so we can always pull latest Mira" $(date -u)
+RUN wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/refs/heads/main.tar.gz && \
+	tar -zxvf mira.tar.gz && \
+	mv mira-* mira && \
+	cd /mira && \
+	pip install -e .[sbml,biomodels]
 
-RUN echo "Cache bust so we can always pull latest GoLLM" $(date -u)
-RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/main.tar.gz && \
-	tar -zxvf gollm.tar.gz && \
-	mv GoLLM-* GoLLM
-
-WORKDIR /GoLLM
-
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the Mira Conversion package
+COPY ./packages/mira /mira_task
+WORKDIR /mira_task
 RUN pip install -e .
 
 WORKDIR /
