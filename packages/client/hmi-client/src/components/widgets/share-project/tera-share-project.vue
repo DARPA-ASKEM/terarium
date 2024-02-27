@@ -56,7 +56,6 @@
 			</section>
 		</section>
 		<template #footer>
-			<Button label="Cancel" class="p-button-secondary xsm" @click="visible = false" />
 			<Button label="Done" class="xsm" @click="setPermissions" />
 		</template>
 	</Dialog>
