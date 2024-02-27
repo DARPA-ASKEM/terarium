@@ -10,67 +10,82 @@
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
-			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
+			<tera-drilldown-section id="notebook-section">
+				<div class="toolbar-right-side">
+					<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
+					<Button
+						icon="pi pi-play"
+						label="Run"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="runFromCodeWrapper(editor?.getValue() as string)"
+					/>
+				</div>
+
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentOptions"
+						:defaultOptions="sampleAgentQuestions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
+						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
-					@init="initialize"
+					@init="initializeAceEditor"
 					lang="python"
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
+					:options="{ showPrintMargin: false }"
 				/>
-				<template #footer
-					><Button style="margin-right: auto" label="Reset" @click="resetModel" />
-					<Button style="margin-right: auto" label="Run" @click="runFromCodeWrapper" />
-				</template>
 			</tera-drilldown-section>
-			<tera-drilldown-preview
-				title="Model Preview"
-				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
-				:options="outputs"
-				is-selectable
-			>
-				<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Model Provided</h4>
-				</div>
-				<template #footer>
-					<InputText
-						v-model="newModelName"
-						placeholder="model name"
-						type="text"
-						class="input-small"
-					/>
-					<Button
-						:disabled="!amr"
-						outlined
-						style="margin-right: auto"
-						label="Save as new Model"
-						@click="
-							() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-						"
-					/>
-					<Button label="Close" @click="emit('close')" />
-				</template>
-			</tera-drilldown-preview>
+			<div class="preview-container">
+				<tera-drilldown-preview
+					title="Preview"
+					v-model:output="selectedOutputId"
+					@update:selection="onSelection"
+					:options="outputs"
+					is-selectable
+					class="h-full"
+				>
+					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
+					<div v-else>
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+					</div>
+					<template #footer>
+						<InputText
+							v-model="newModelName"
+							placeholder="model name"
+							type="text"
+							class="input-small"
+						/>
+						<div class="flex gap-2">
+							<Button
+								:disabled="!amr"
+								size="large"
+								severity="secondary"
+								outlined
+								class="white-space-nowrap"
+								style="margin-right: auto"
+								label="Save as new model"
+								@click="
+									() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
+								"
+							/>
+							<Button label="Close" size="large" @click="emit('close')" />
+						</div>
+					</template>
+				</tera-drilldown-preview>
+			</div>
 		</div>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onUnmounted, ref, watch, computed } from 'vue';
+import { onMounted, onUnmounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
@@ -94,13 +109,7 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output-port',
-	'update-state',
-	'close',
-	'select-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -132,7 +141,7 @@ const amr = ref<Model | null>(null);
 const modelId = props.node.inputs[0].value?.[0];
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
-const sampleAgentOptions = [
+const sampleAgentQuestions = [
 	'Add a new transition from S to R with the name vaccine with the rate of v.',
 	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u',
 	'Add a new transition (from nowhere) to S with a rate constant of f.',
@@ -157,20 +166,14 @@ const syncWithMiraModel = (data: any) => {
 };
 
 // Reset model, then execute the code
-const runFromCodeWrapper = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
+const runFromCodeWrapper = (code: string) => {
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode();
+		runFromCode(code);
 	});
 };
 
-const runFromCode = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
+const runFromCode = (code: string) => {
 	const messageContent = {
 		silent: false,
 		store_history: false,
@@ -248,12 +251,22 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
+	codeText.value = props.node.state.modelEditCodeHistory[0].code;
+
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				kernelManager.shutdown();
+			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
+		}
+
+		if (codeText.value && codeText.value.length > 0) {
+			runFromCodeWrapper(codeText.value);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -275,20 +288,22 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 
 	if (options.appendOutputPort) {
-		emit('append-output-port', {
+		emit('append-output', {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',
+			state: _.cloneDeep(props.node.state),
 			value: [modelData.id]
 		});
 		emit('close');
 	}
 };
 
-const initialize = (editorInstance: any) => {
+const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
@@ -305,15 +320,8 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 watch(
@@ -323,20 +331,16 @@ watch(
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
+
 			await inputChangeHandler();
 		}
 	},
 	{ immediate: true }
 );
 
-// Set model, modelConfiguration, modelNodeOptions
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		await inputChangeHandler();
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	await inputChangeHandler();
+});
 
 onUnmounted(() => {
 	kernelManager.shutdown();
@@ -344,16 +348,53 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* The wizard of this operator is atypical and needs the outside margins to be removed */
+.overlay-container:deep(main) {
+	padding: 0 0 0 0;
+}
+
 .input {
 	width: 95%;
 }
+
 .code-container {
 	display: flex;
 	flex-direction: column;
 }
 
+#notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
+}
+
+.ai-assistant-container {
+	margin-left: var(--gap);
+}
+
+.preview-container {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem;
+}
+
+:deep(.diagram-container) {
+	height: calc(100vh - 270px) !important;
+}
+:deep(.resize-handle) {
+	display: none;
+}
 .input-small {
 	padding: 0.5rem;
+	width: 100%;
 }
 
 .code-executed-warning {

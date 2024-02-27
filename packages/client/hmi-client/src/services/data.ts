@@ -292,7 +292,7 @@ const getAssets = async (params: GetAssetsParams) => {
 	}));
 
 	// first get un-filtered concept facets
-	let conceptFacets = await getConceptFacets([projectAssetType]);
+	let conceptFacets = await getConceptFacets(projectAssetType);
 
 	// FIXME: this client-side computation of facets from "models" data should be done
 	//        at the HMI server
@@ -399,7 +399,7 @@ const getAssets = async (params: GetAssetsParams) => {
 			// re-create the concept facets if the user has applyied any concept filters
 			const uniqueCuries = uniq(curies);
 			if (!isEmpty(uniqueCuries)) {
-				conceptFacets = await getConceptFacets([projectAssetType], uniqueCuries);
+				conceptFacets = await getConceptFacets(projectAssetType, uniqueCuries);
 			}
 
 			// FIXME: this client-side computation of facets from "models" data should be done

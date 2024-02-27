@@ -31,8 +31,8 @@ export const ModelFromDocumentOperation: Operation = {
 	displayName: 'Create model from equations',
 	isRunnable: true,
 	inputs: [
-		{ type: 'equations', label: 'Equations' },
-		{ type: 'documentId', label: 'Text' }
+		// { type: 'equations', label: 'Equations' },
+		{ type: 'documentId', label: 'Document' }
 	],
 	outputs: [],
 	action: () => {},

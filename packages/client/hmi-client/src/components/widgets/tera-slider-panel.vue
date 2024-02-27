@@ -30,6 +30,9 @@
 			</div>
 			<slot name="tab"></slot>
 		</template>
+		<template v-if="$slots.footerButtons" v-slot:footerButtons>
+			<slot name="footerButtons"></slot>
+		</template>
 	</tera-slider>
 </template>
 

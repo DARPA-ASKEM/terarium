@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -92,7 +93,7 @@ public class DownloadService {
 			.disableRedirectHandling()
 			.build();
 
-		final HttpGet get = new HttpGet(url);
+		final HttpGet get = new HttpGet(URLEncoder.encode(url, StandardCharsets.UTF_8));
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document
@@ -146,7 +147,7 @@ public class DownloadService {
 			.disableRedirectHandling()
 			.build();
 
-		final HttpGet get = new HttpGet(url);
+		final HttpGet get = new HttpGet(URLEncoder.encode(url, StandardCharsets.UTF_8));
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document

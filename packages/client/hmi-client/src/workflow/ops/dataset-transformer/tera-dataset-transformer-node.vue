@@ -3,7 +3,7 @@
 		<tera-operator-placeholder v-if="!node.inputs[0].value" :operation-type="node.operationType">
 			Attach one or more resources
 		</tera-operator-placeholder>
-		<Button v-else label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-else label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
 
@@ -24,8 +24,9 @@ watch(
 	// add another input port when all inputs are connected, we want to add as many datasets as we can
 	() => props.node.inputs,
 	() => {
-		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
-			emit('append-input-port', { type: 'datasetId', label: 'Dataset' });
+		const inputs = props.node.inputs;
+		if (inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
+			emit('append-input-port', { type: 'datasetId|simulationId', label: 'Dataset or Simulation' });
 		}
 	},
 	{ deep: true }

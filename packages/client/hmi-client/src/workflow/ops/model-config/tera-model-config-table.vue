@@ -7,10 +7,10 @@
 		size="small"
 		:class="{ 'hide-header': hideHeader }"
 	>
-		<Column expander style="width: 5rem" />
+		<Column expander style="width: 2%" />
 		<Column field="id" header="ID" style="width: 10%"></Column>
 		<Column field="name" header="Name" style="width: 15%"></Column>
-		<Column field="type" header="Value type" style="width: 10%">
+		<Column field="type" header="Value type" style="width: 15%">
 			<template #body="slotProps">
 				<Button
 					text
@@ -23,6 +23,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
 				<Dropdown
 					v-else
+					class="value-type-dropdown w-8"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
@@ -32,7 +33,7 @@
 				/>
 			</template>
 		</Column>
-		<Column field="value" header="Value" style="width: 15%">
+		<Column field="value" header="Value" style="width: 10%">
 			<template #body="slotProps">
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
@@ -43,6 +44,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
 					<InputText
 						size="small"
+						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
@@ -77,6 +79,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.CONSTANT">
 					<InputNumber
 						size="small"
+						class="constant-number w-full"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -99,12 +102,23 @@
 				</span>
 			</template>
 		</Column>
-		<Column field="source" header="Source" style="width: 35%"></Column>
+		<Column field="source" header="Source" style="width: 40%">
+			<template #body="{ data }">
+				<InputText
+					v-if="data.type !== ParamType.MATRIX"
+					size="small"
+					v-model.lazy="data.source"
+					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
+				/>
+			</template>
+		</Column>
+
+		<!-- Hiding for now until functionality is available
 		<Column field="visibility" header="Visibility" style="width: 10%">
 			<template #body="slotProps">
 				<InputSwitch v-model="slotProps.data.visibility" @click.stop />
 			</template>
-		</Column>
+		</Column> -->
 		<template #expansion="slotProps">
 			<tera-model-config-table
 				hide-header
@@ -144,7 +158,6 @@ import Column from 'primevue/column';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
-import InputSwitch from 'primevue/inputswitch';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import { cloneDeep } from 'lodash';
@@ -152,7 +165,7 @@ import { cloneDeep } from 'lodash';
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT },
 	{ label: 'Distribution', value: ParamType.DISTRIBUTION },
-	{ label: 'Time Varying', value: ParamType.TIME_SERIES }
+	{ label: 'Time varying', value: ParamType.TIME_SERIES }
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -195,8 +208,14 @@ const updateTimeseries = (id: string, value: string) => {
 	emit('update-configuration', clonedConfig);
 };
 
+const updateSource = (id: string, value: string) => {
+	const clonedConfig = cloneDeep(props.modelConfiguration);
+	clonedConfig.configuration.metadata.sources[id] = value;
+	emit('update-configuration', clonedConfig);
+};
+
 const validateTimeSeries = (values: string) => {
-	const message = 'Incorrect Format (e.g., 0:500, 10:550, 25:700 etc)';
+	const message = 'Incorrect format (e.g., 0:500)';
 	if (typeof values !== 'string') {
 		errorMessage.value = message;
 		return false;
@@ -282,13 +301,25 @@ const updateExpression = async (value: Initial) => {
 }
 
 .distribution-item > :deep(input) {
-	width: 4rem;
+	width: 100%;
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
+}
+
+.constant-number > :deep(input) {
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
+}
+.tabular-numbers {
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
 }
 .invalid-message {
 	color: var(--text-color-danger);
-	font-size: var(--font-caption);
 }
-
 .timeseries-container {
 	display: flex;
 	flex-direction: column;
@@ -296,5 +327,9 @@ const updateExpression = async (value: Initial) => {
 
 .secondary-text {
 	color: var(--text-color-subdued);
+}
+
+.value-type-dropdown {
+	min-width: 10rem;
 }
 </style>

@@ -18,9 +18,9 @@ export const SimulateCiemssOperation: Operation = {
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false }
+		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
 	],
-	outputs: [{ type: 'simOutput' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {

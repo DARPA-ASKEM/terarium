@@ -5,7 +5,7 @@
 				<span class="truncate-after-three-lines">{{ document?.name }}</span>
 			</h6>
 			<tera-operator-placeholder :operation-type="node.operationType" />
-			<Button label="Open document" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
@@ -35,7 +35,7 @@ import { getDocumentAsset } from '@/services/document-assets';
 import teraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { DocumentOperationState } from './document-operation';
 
-const emit = defineEmits(['open-drilldown', 'update-state', 'append-output-port']);
+const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();
@@ -85,7 +85,7 @@ watch(
 					?.filter((asset) => asset.assetType === ExtractionAssetType.Equation)
 					.map((asset, i) => ({
 						name: `Equation ${i + 1}`,
-						includeInProcess: true,
+						includeInProcess: false,
 						asset
 					})) || [];
 
@@ -97,13 +97,21 @@ watch(
 			emit('update-state', state);
 
 			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
-				emit('append-output-port', {
+				emit('append-output', {
 					type: 'documentId',
 					label: `document`,
-					value: [document.value.id]
+					value: [
+						{
+							documentId: document.value.id,
+							figures,
+							tables,
+							equations
+						}
+					]
 				});
 			}
 
+			/*
 			if (!props.node.outputs.find((port) => port.type === 'equations') && !isEmpty(equations)) {
 				const selected = equations.filter((e) => e.includeInProcess);
 				emit('append-output-port', {
@@ -145,6 +153,7 @@ watch(
 					]
 				});
 			}
+			*/
 		}
 	},
 	{ immediate: true }

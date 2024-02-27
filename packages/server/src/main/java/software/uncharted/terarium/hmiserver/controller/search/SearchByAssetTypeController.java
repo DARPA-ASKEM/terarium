@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.search;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -19,10 +20,14 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -86,13 +91,13 @@ public class SearchByAssetTypeController {
 	})
 	public ResponseEntity<List<JsonNode>> searchByAssetType(
 			@PathVariable("asset-type") final AssetType assetType,
-			@RequestParam(value = "text", required = true) final String text,
+			@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
+			@RequestParam(value = "text", defaultValue = "") final String text,
 			@RequestParam(value = "k", defaultValue = "10") final int k,
-			@RequestParam(value = "num-results", defaultValue = "100") final int numResults,
 			@RequestParam(value = "num-candidates", defaultValue = "100") final int numCandidates,
 			@RequestParam(value = "embedding-model", defaultValue = EMBEDDING_MODEL) final String embeddingModel,
 			@RequestParam(value = "index", defaultValue = "") String index) {
-
 		try {
 
 			if (index.equals("")) {
@@ -108,53 +113,71 @@ public class SearchByAssetTypeController {
 				return ResponseEntity.badRequest().build();
 			}
 
-			// sha256 the text to use as a cache key
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			byte[] hash = md.digest(text.getBytes(StandardCharsets.UTF_8));
+			KnnQuery knn = null;
+			if (text != null && !text.isEmpty()) {
+				// sha256 the text to use as a cache key
+				MessageDigest md = MessageDigest.getInstance("SHA-256");
+				byte[] hash = md.digest(text.getBytes(StandardCharsets.UTF_8));
 
-			// check if we already have the vectors cached
-			List<Float> vector = queryVectorCache.get(hash);
-			if (vector == null) {
+				// check if we already have the vectors cached
+				List<Float> vector = queryVectorCache.get(hash);
+				if (vector == null) {
 
-				// set the embedding model
+					// set the embedding model
 
-				GoLLMSearchRequest embeddingRequest = new GoLLMSearchRequest();
-				embeddingRequest.setText(text);
-				embeddingRequest.setEmbeddingModel(EMBEDDING_MODEL);
+					GoLLMSearchRequest embeddingRequest = new GoLLMSearchRequest();
+					embeddingRequest.setText(text);
+					embeddingRequest.setEmbeddingModel(EMBEDDING_MODEL);
 
-				TaskRequest req = new TaskRequest();
-				req.setInput(embeddingRequest);
-				req.setScript("gollm:embedding");
+					TaskRequest req = new TaskRequest();
+					req.setInput(embeddingRequest);
+					req.setScript("gollm:embedding");
 
-				List<TaskResponse> responses = taskService.runTaskBlocking(req, REQUEST_TIMEOUT_SECONDS);
+					List<TaskResponse> responses = taskService.runTaskBlocking(req, REQUEST_TIMEOUT_SECONDS);
 
-				TaskResponse resp = responses.get(responses.size() - 1);
+					TaskResponse resp = responses.get(responses.size() - 1);
 
-				if (resp.getStatus() != TaskStatus.SUCCESS) {
-					throw new ResponseStatusException(
-							org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-							"Unable to generate vectors for knn search");
+					if (resp.getStatus() != TaskStatus.SUCCESS) {
+						throw new ResponseStatusException(
+								org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+								"Unable to generate vectors for knn search");
+					}
+
+					byte[] outputBytes = resp.getOutput();
+					JsonNode output = objectMapper.readTree(outputBytes);
+
+					EmbeddingsResponse embeddingResp = objectMapper.convertValue(output, EmbeddingsResponse.class);
+
+					vector = embeddingResp.getResponse();
+
+					// store the vectors in the cache
+					queryVectorCache.put(hash, vector, CACHE_TTL_SECONDS, TimeUnit.SECONDS);
 				}
 
-				byte[] outputBytes = resp.getOutput();
-				JsonNode output = objectMapper.readTree(outputBytes);
-
-				EmbeddingsResponse embeddingResp = objectMapper.convertValue(output, EmbeddingsResponse.class);
-
-				vector = embeddingResp.getResponse();
-
-				// store the vectors in the cache
-				queryVectorCache.put(hash, vector, CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+				knn = new KnnQuery.Builder()
+						.field("embeddings.vector")
+						.queryVector(vector)
+						.k(k)
+						.numCandidates(numCandidates)
+						.build();
 			}
 
-			KnnQuery query = new KnnQuery.Builder()
-					.field("embeddings.vector")
-					.queryVector(vector)
-					.k(k)
-					.numCandidates(numCandidates)
+			Query query = new Query.Builder()
+					.bool(b -> b
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
 					.build();
 
-			List<JsonNode> docs = esService.knnSearch(index, query, numResults, JsonNode.class);
+			SearchResponse<JsonNode> res = esService.knnSearch(index, knn, query, page, pageSize, JsonNode.class);
+
+			final List<JsonNode> docs = new ArrayList<>();
+			for (final Hit<JsonNode> hit : res.hits().hits()) {
+				ObjectNode source = (ObjectNode) hit.source();
+				if (source != null) {
+					source.put("id", hit.id());
+					docs.add(source);
+				}
+			}
 
 			return ResponseEntity.ok(docs);
 

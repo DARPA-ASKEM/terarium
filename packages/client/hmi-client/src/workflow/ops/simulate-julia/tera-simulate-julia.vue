@@ -37,8 +37,7 @@
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
 			>
@@ -159,13 +158,7 @@ import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output-port',
-	'update-state',
-	'select-output',
-	'update-output-port',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 
@@ -292,7 +285,7 @@ const watchCompletedRunId = async (runId: string) => {
 
 	const sim = await getSimulation(runId);
 
-	emit('append-output-port', {
+	emit('append-output', {
 		type: SimulateJuliaOperation.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
 		value: runId,
@@ -330,15 +323,8 @@ const lazyLoadSimulationData = async (runId: string) => {
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
@@ -370,7 +356,9 @@ watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
 watch(
 	() => selectedRunId.value,
 	() => {
-		lazyLoadSimulationData(selectedRunId.value);
+		if (selectedRunId.value) {
+			lazyLoadSimulationData(selectedRunId.value);
+		}
 	},
 	{ immediate: true }
 );

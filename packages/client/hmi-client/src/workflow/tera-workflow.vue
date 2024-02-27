@@ -104,7 +104,7 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output-port="(event: any) => appendOutputPort(node, event)"
+							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="openDrilldown(node)"
@@ -175,11 +175,11 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			@append-output-port="(event: any) => appendOutputPort(currentActiveNode, event)"
+			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		>
 		</component>
 	</Teleport>
@@ -237,6 +237,7 @@ import * as ModelOptimizeOp from './ops/model-optimize/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as ModelComparisonOp from './ops/model-comparison/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -261,6 +262,7 @@ registry.registerOp(ModelOptimizeOp);
 registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
+registry.registerOp(ModelComparisonOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -328,14 +330,18 @@ function appendInputPort(
 	});
 }
 
-function appendOutputPort(
+/**
+ * The operator creates a new output, this will mark the
+ * output as selected, and revert the selection status of
+ * existing outputs
+ * */
+function appendOutput(
 	node: WorkflowNode<any> | null,
 	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
 ) {
 	if (!node) return;
 
 	const uuid = uuidv4();
-
 	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
 		type: port.type,
@@ -344,11 +350,16 @@ function appendOutputPort(
 		isOptional: false,
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
+		isSelected: true,
 		timestamp: new Date()
 	};
 
-	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
+	// Revert
+	node.outputs.forEach((o) => {
+		o.isSelected = false;
+	});
 
+	// Append and set active
 	node.outputs.push(outputPort);
 	node.active = uuid;
 
@@ -433,6 +444,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelCouplingOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelCouplingOp)
+			},
+			{
+				label: ModelComparisonOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelComparisonOp)
 			}
 		]
 	},
@@ -479,29 +494,29 @@ const contextMenuItems: MenuItem[] = [
 		items: [
 			{
 				label: CalibrateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateJuliaOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(CalibrateJuliaOp)
 			},
 			{
 				label: SimulateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateJuliaOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(SimulateJuliaOp)
 			},
 			{ separator: true },
 			{
 				label: SimulateCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(SimulateCiemssOp)
 			},
 			{
 				label: CalibrateCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(CalibrateCiemssOp)
 			},
 			{ separator: true },
 			{
 				label: CalibrateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
 			},
 			{
 				label: SimulateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp, OperatorNodeSize.xlarge)
+				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
 			}
 		]
 	},

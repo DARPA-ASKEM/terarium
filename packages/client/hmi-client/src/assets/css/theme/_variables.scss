@@ -127,7 +127,7 @@ $inputListHeaderMargin: 0 !default;
 $inputListHeaderBg: #ffffff !default;
 $inputListHeaderTextColor: $textColor !default;
 $inputListHeaderBorder: 1px solid rgba(0, 0, 0, .12) !default;
-$inputListMaxWidth: 24rem !default;
+$inputListMaxWidth: 48rem !default;
 
 //inputs with overlays (e.g. autocomplete, dropdown, multiselect)
 $inputOverlayBg: $inputListBg !default;
@@ -637,7 +637,7 @@ $dialogHeaderBg: #ffffff;
 $dialogHeaderBorder: 0 none;
 $dialogHeaderTextColor: $textColor;
 $dialogHeaderFontWeight: $fontWeightSemiBold;
-$dialogHeaderFontSize: $fontBodyMedium;
+$dialogHeaderFontSize: $fontBodyLarge;
 $dialogHeaderPadding: 1rem 1.33rem 0rem 1.33rem;
 $dialogContentPadding: 0 1.33rem 1.33rem 1.33rem;
 $dialogFooterBorder: 0 none;
@@ -954,6 +954,7 @@ $petri-inputBox: var(--surface-0);
 	--constrain-width: 55rem;
 	color-scheme: light;
 	--gap: 1rem;
+	--gap-xsmall: 0.25rem;
 	--gap-small: .5rem;
 	--gap-large: 2rem;
 	--petri-nodeBorder: var(--gray-300);
