@@ -2,20 +2,10 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
-import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 import java.io.IOException;
@@ -31,7 +21,6 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public abstract class TerariumAssetService<T extends TerariumAsset> {
 
 	/** The configuration for the Elasticsearch service */
@@ -40,9 +29,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	/** The configuration for the application */
 	protected final Config config;
 
-	/** Services */
+	/** The Elasticsearch service */
 	protected final ElasticsearchService elasticService;
-	protected final ProjectAssetService projectAssetService;
 
 	/** The class of the asset this service manages */
 	private final Class<T> assetClass;
@@ -120,6 +108,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		return asset;
 	}
 
+
 	/**
 	 * Update an asset and saves to ES
 	 * @param asset The asset to update
@@ -141,11 +130,6 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 
 		asset.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
-
-		// Update the related ProjectAsset
-		projectAssetService.updateByAsset(asset);
-
 		return Optional.of(asset);
 	}
-
 }
