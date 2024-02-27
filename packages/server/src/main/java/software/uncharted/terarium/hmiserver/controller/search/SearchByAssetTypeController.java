@@ -43,6 +43,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.TaskService;
+import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @RequestMapping("/search-by-asset-type")
@@ -133,7 +134,8 @@ public class SearchByAssetTypeController {
 					req.setInput(embeddingRequest);
 					req.setScript("gollm:embedding");
 
-					List<TaskResponse> responses = taskService.runTaskBlocking(req, REQUEST_TIMEOUT_SECONDS);
+					List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM,
+							REQUEST_TIMEOUT_SECONDS);
 
 					TaskResponse resp = responses.get(responses.size() - 1);
 
