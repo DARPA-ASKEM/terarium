@@ -223,7 +223,9 @@ const description = computed(() =>
 const biasAndRiskLimitations = computed(
 	() => card.value?.BiasRisksLimitations?.bias_risks_limitations ?? ''
 );
-const modelType = computed(() => card.value?.ModelDetails?.ModelType ?? '');
+const modelType = computed(
+	() => card.value?.ModelDetails?.ModelType ?? props.model.header.schema_name ?? ''
+);
 const fundedBy = computed(() => card.value?.ModelDetails?.FundedBy ?? '');
 const evaluation = computed(() => card.value?.Evaluation?.TestingDataFactorsMetrics ?? '');
 const technicalSpecifications = computed(
