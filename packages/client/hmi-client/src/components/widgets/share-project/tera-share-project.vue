@@ -6,7 +6,7 @@
 		header="Share project"
 		@hide="$emit('update:modelValue', false)"
 		@after-hide="onAfterHide"
-		:style="{ width: '30rem' }"
+		:style="{ width: '35rem' }"
 	>
 		<section class="container">
 			<Dropdown
@@ -56,7 +56,7 @@
 			</section>
 		</section>
 		<template #footer>
-			<Button label="Done" class="xsm" @click="setPermissions" />
+			<Button label="Done" @click="setPermissions" size="large" />
 		</template>
 	</Dialog>
 </template>
@@ -82,7 +82,9 @@ const visible = ref(props.modelValue);
 const permissions = ref<PermissionRelationships | null>(null);
 const users = ref<PermissionUser[]>([]);
 const usersMenu = computed(() =>
-	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+	users.value
+		.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+		.sort((a, b) => a.name.localeCompare(b.name))
 );
 const selectedUser = ref(null);
 const existingUsers = ref<Set<PermissionUser>>(new Set());
@@ -131,6 +133,9 @@ function addNewSelectedUser(id: string) {
 		newSelectedUsers.value.add(user);
 		newSelectedUserPermissions.set(id, 'writer');
 	}
+
+	// Clear the selected user to allow for re-selection
+	selectedUser.value = null;
 }
 
 function onAfterHide() {
@@ -234,6 +239,7 @@ h6 {
 .selected-users {
 	display: flex;
 	flex-direction: column;
+	padding-bottom: var(--gap-small);
 }
 
 li {

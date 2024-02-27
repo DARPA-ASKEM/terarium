@@ -180,11 +180,11 @@ import {
 // import InputNumber from 'primevue/inputnumber';
 import {
 	CalibrateMap,
-	autoCalibrationMapping,
 	renderLossGraph,
 	setupDatasetInput,
 	setupModelInput
 } from '@/services/calibrate-workflow';
+import { autoCalibrationMapping } from '@/services/concept';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
