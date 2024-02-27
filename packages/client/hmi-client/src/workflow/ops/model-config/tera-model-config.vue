@@ -68,7 +68,12 @@
 							</Column>
 							<Column style="width: 7rem">
 								<template #body="{ data }">
-									<Button class="use-button" label="+ Use" @click="useSuggestedConfig(data)" text />
+									<Button
+										class="use-button"
+										label="Apply configuration values"
+										@click="useSuggestedConfig(data)"
+										text
+									/>
 								</template>
 							</Column>
 							<template #loading>
