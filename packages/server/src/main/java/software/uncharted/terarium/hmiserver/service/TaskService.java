@@ -30,7 +30,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -42,6 +41,21 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 @Slf4j
 @RequiredArgsConstructor
 public class TaskService {
+
+	static public enum TaskType {
+		GOLLM("gollm"),
+		MIRAC("mirac");
+
+		private String value;
+
+		TaskType(String value) {
+			this.value = value;
+		}
+
+		public String toString() {
+			return value;
+		}
+	}
 
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
@@ -82,12 +96,13 @@ public class TaskService {
 		rabbitAdmin.declareQueue(queue);
 	}
 
-	@PostConstruct
-	void init() {
-		declareQueue(TASK_RUNNER_REQUEST_QUEUE);
-	}
+	public void sendTaskRequest(TaskRequest req, TaskType requestType) throws JsonProcessingException {
 
-	public void sendTaskRequest(TaskRequest req) throws JsonProcessingException {
+		String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, requestType.toString());
+
+		// ensure the request queue exists
+		declareQueue(requestQueue);
+
 		// create the cancellation queue _BEFORE_ sending the request, because a
 		// cancellation can be send before the request is consumed on the other end if
 		// there is contention. We need this queue to exist to hold the message.
@@ -97,8 +112,9 @@ public class TaskService {
 
 		try {
 			// send the request to the task runner
+			log.info("Dispatching request on queue: {}", requestQueue);
 			final String jsonStr = objectMapper.writeValueAsString(req);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_REQUEST_QUEUE, jsonStr);
+			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 		} catch (Exception e) {
 			rabbitAdmin.deleteQueue(queueName);
 			throw e;
@@ -192,7 +208,7 @@ public class TaskService {
 		}
 	}
 
-	public List<TaskResponse> runTaskBlocking(TaskRequest req, long timeoutSeconds)
+	public List<TaskResponse> runTaskBlocking(TaskRequest req, TaskType requestType, long timeoutSeconds)
 			throws JsonProcessingException, IOException, InterruptedException {
 
 		if (req.getId() == null) {
@@ -205,7 +221,7 @@ public class TaskService {
 			responseQueues.put(req.getId(), queue);
 
 			// send the request
-			sendTaskRequest(req);
+			sendTaskRequest(req, requestType);
 
 			// add the queued response
 			List<TaskResponse> responses = new ArrayList<>();
@@ -240,9 +256,9 @@ public class TaskService {
 		}
 	}
 
-	public List<TaskResponse> runTaskBlocking(TaskRequest req)
+	public List<TaskResponse> runTaskBlocking(TaskRequest req, TaskType requestType)
 			throws JsonProcessingException, IOException, InterruptedException {
-		return runTaskBlocking(req, 60);
+		return runTaskBlocking(req, requestType, 60);
 	}
 
 }

@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -16,6 +17,7 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
 
 @Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
@@ -38,7 +40,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -81,7 +83,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -108,7 +110,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setScript("gollm:model_card");
 		req.setInput(content.getBytes());
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req, 300);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM, 300);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -122,7 +124,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		log.info(new String(responses.get(responses.size() - 1).getOutput()));
 	}
 
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 
@@ -135,7 +137,33 @@ public class TaskServiceTest extends TerariumApplicationTests {
 				("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}")
 						.getBytes());
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
+
+		Assertions.assertEquals(3, responses.size());
+		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(2).getStatus());
+
+		for (TaskResponse resp : responses) {
+			Assertions.assertEquals(taskId, resp.getId());
+		}
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendMiracMdlToStockflowRequest() throws Exception {
+
+		UUID taskId = UUID.randomUUID();
+
+		ClassPathResource resource = new ClassPathResource("mirac/IndiaNonSubscriptedPulsed.mdl");
+		String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript("mirac:mdl_to_stockflow");
+		req.setInput(content.getBytes());
+
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRAC);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
