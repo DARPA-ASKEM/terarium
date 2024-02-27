@@ -256,8 +256,9 @@ public class ProjectController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
-			@ApiResponse(responseCode = "404", description = "Project or Asset not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "Error finding project or asset", content = @Content) })
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "409", description = "Asset already exists in this project", content = @Content),
+			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
@@ -266,21 +267,29 @@ public class ProjectController {
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canWrite(new RebacProject(projectId, reBACService))) {
+			if (new RebacUser(currentUserService.get().getId(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
+
 				if (project.isPresent()) {
+
+
+					//double check that this asset is not already a part of this project, and if it does exist throw an error to the front end
+					final Optional<ProjectAsset> existingAsset = projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
+					if (existingAsset.isPresent()) {
+						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset already exists in this project");
+					}
 
 					final TerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices.getServiceByType(assetType);
 					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
 					if (asset.isPresent()) {
 						final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(project.get(), assetType, asset.get());
-						// underlying asset does not exist
 						return projectAsset.map(pa -> ResponseEntity.status(HttpStatus.CREATED).body(pa)).orElseGet(() -> ResponseEntity.notFound().build());
 					} else {
 						return ResponseEntity.notFound().build();
 					}
+
 				}
+
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {

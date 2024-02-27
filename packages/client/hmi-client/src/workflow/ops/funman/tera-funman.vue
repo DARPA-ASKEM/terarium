@@ -105,14 +105,13 @@
 			<tera-drilldown-preview
 				title="Validation results"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
+				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
 			>
 				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Output</h4>
+				<div v-else class="flex flex-column h-full justify-content-center">
+					<tera-operator-placeholder :operation-type="node.operationType" />
 				</div>
 			</tera-drilldown-preview>
 		</template>
@@ -125,9 +124,10 @@
 				label="Run"
 				icon="pi pi-play"
 				@click="runMakeQuery"
+				size="large"
 			/>
-			<Button outlined label="Save as a new model" />
-			<Button label="Close" @click="emit('close')" />
+			<Button outlined label="Save as a new model" size="large" />
+			<Button label="Close" @click="emit('close')" size="large" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -147,6 +147,7 @@ import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -474,7 +475,7 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 };
 
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 

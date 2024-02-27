@@ -104,7 +104,6 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output-port="() => appendOutputPort()"
 							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
@@ -176,12 +175,11 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			@append-output-port="() => appendOutputPort()"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		>
 		</component>
 	</Teleport>
@@ -364,41 +362,6 @@ function appendOutput(
 	node.active = uuid;
 
 	workflowDirty = true;
-}
-
-// @deprecated
-// FIXME: Leaving this in here to warn against existing development - remove after hackathon, Feb 2022.
-function appendOutputPort() {
-	/*
-	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
-	*/
-	console.error('This function is no longer supported, use <append-output> intstead');
-	throw new Error('This function is no longer supported, use <append-output> intstead');
-
-	/*
-	if (!node) return;
-
-	const uuid = uuidv4();
-
-	const outputPort: WorkflowOutput<any> = {
-		id: uuid,
-		type: port.type,
-		label: port.label,
-		value: isArray(port.value) ? port.value : [port.value],
-		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED,
-		state: port.state,
-		timestamp: new Date()
-	};
-
-	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
-
-	node.outputs.push(outputPort);
-	node.active = uuid;
-
-	workflowDirty = true;
-	*/
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {

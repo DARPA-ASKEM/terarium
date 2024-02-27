@@ -7,8 +7,7 @@
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
@@ -69,7 +68,12 @@
 							</Column>
 							<Column style="width: 7rem">
 								<template #body="{ data }">
-									<Button class="use-button" label="+ Use" @click="useSuggestedConfig(data)" text />
+									<Button
+										class="use-button"
+										label="Apply configuration values"
+										@click="useSuggestedConfig(data)"
+										text
+									/>
 								</template>
 							</Column>
 							<template #loading>
@@ -253,13 +257,7 @@ const outputs = computed(() => {
 	return [];
 });
 
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'update-output-port',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	name: string;
@@ -388,7 +386,7 @@ const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;
@@ -620,14 +618,8 @@ const createConfiguration = async () => {
 	});
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 const fetchConfigurations = async (modelId: string) => {

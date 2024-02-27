@@ -22,49 +22,27 @@ public class ProjectAssetService {
 
 	final ProjectAssetRepository projectAssetRepository;
 
-	public List<ProjectAsset> findAllByProjectId(@NotNull final UUID projectId) {
-		return projectAssetRepository.findAllByProjectId(projectId);
-	}
 
 	/**
 	 * Find all active assets for a project.  Active assets are defined as those that are not deleted and not temporary.
-	 * @param projectId The ID of the project to find assets for
+	 * @param projectId The project ID
 	 * @param types The types of assets to find
-	 * @return A list of active assets for the project
+	 * @return The list of active assets for the project
 	 */
 	public List<ProjectAsset> findActiveAssetsForProject(@NotNull final UUID projectId,
 			final Collection<@NotNull AssetType> types) {
 		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(projectId, types);
 	}
 
-	public ProjectAsset save(final ProjectAsset asset) {
-		return projectAssetRepository.save(asset);
-	}
 
-	public boolean deleteByAssetId(@NotNull final UUID projectId, @NotNull final AssetType type,
-			@NotNull final UUID originalAssetId) {
-		final ProjectAsset asset = projectAssetRepository
-				.findByProjectIdAndAssetIdAndAssetType(projectId, originalAssetId, type);
+	public boolean deleteByAssetId(@NotNull final UUID projectId, @NotNull final AssetType type, @NotNull final UUID originalAssetId) {
+		final ProjectAsset asset = projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, originalAssetId, type);
 		if (asset == null) {
 			return false;
 		}
 		asset.setDeletedOn(Timestamp.from(Instant.now()));
-		return (save(asset) != null);
-	}
-
-	public boolean delete(final UUID id) {
-		final ProjectAsset asset = projectAssetRepository.findById(id).orElse(null);
-		if (asset == null) {
-			return false;
-		}
-		asset.setDeletedOn(Timestamp.from(Instant.now()));
-		return (save(asset) != null);
-	}
-
-	public ProjectAsset findByProjectIdAndAssetIdAndAssetType(@NotNull final UUID projectId,
-			@NotNull final UUID assetId,
-			@NotNull final AssetType type) {
-		return projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, assetId, type);
+		projectAssetRepository.save(asset);
+		return true;
 	}
 
 	public Optional<ProjectAsset> createProjectAsset(final Project project, final AssetType assetType, final TerariumAsset asset)
@@ -111,6 +89,10 @@ public class ProjectAssetService {
 			final AssetType assetType) {
 		return Optional.ofNullable(projectAssetRepository
 				.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType));
+	}
+
+	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(final UUID id, final UUID assetId) {
+		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetId(id, assetId));
 	}
 
 }

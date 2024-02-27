@@ -136,7 +136,10 @@ export const addEdge = (
 
 	// Check if type is compatible
 	if (sourceOutputPort.value === null) return;
-	if (sourceOutputPort.type !== targetInputPort.type) return;
+
+	const allowedTypes = targetInputPort.type.split('|');
+	if (!allowedTypes.includes(sourceOutputPort.type)) return;
+
 	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
 		return;
 	}
@@ -148,6 +151,12 @@ export const addEdge = (
 	} else {
 		targetInputPort.label = sourceOutputPort.label;
 		targetInputPort.value = sourceOutputPort.value;
+	}
+
+	// Transfer concrete type information where it can accept multiple types
+	// Note this will lock in the typing, even after unlink
+	if (allowedTypes.length > 1) {
+		targetInputPort.type = sourceOutputPort.type;
 	}
 
 	const edge: WorkflowEdge = {
@@ -339,9 +348,14 @@ export function selectOutput(
 	operator: WorkflowNode<any>,
 	selectedWorkflowOutputId: WorkflowOutput<any>['id']
 ) {
+	operator.outputs.forEach((output) => {
+		output.isSelected = false;
+	});
+
 	// Update the Operator state with the selected one
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
 	if (selected) {
+		selected.isSelected = true;
 		operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
 		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
 		operator.active = selected.id;
