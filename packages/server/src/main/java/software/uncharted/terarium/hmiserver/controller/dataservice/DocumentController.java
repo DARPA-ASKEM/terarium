@@ -440,21 +440,21 @@ public class DocumentController {
 
 			// Upload the document to TDS in order to get a new ID to pair our files we want
 			// to upload with.
-			final DocumentAsset newDocumentAsset = documentAssetService.createAsset(documentAsset);
-			response.setDocumentAssetId(newDocumentAsset.getId());
+			final UUID newDocumentAssetId = documentAssetService.createAsset(documentAsset).getId();
+			response.setDocumentAssetId(newDocumentAssetId);
 
 			// Upload the PDF from unpaywall
-			final String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAsset.getId());
+			final String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
 			if (extractionJobId == null)
 				response.setPdfUploadError(true);
 			else
 				response.setExtractionJobId(extractionJobId);
 
 			// Now upload additional extraction files
-			uploadXDDExtractions(newDocumentAsset.getId(), extractionResponse.getSuccess().getData());
+			uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
 
 			// add asset to project
-			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, newDocumentAsset);
+			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, newDocumentAssetId);
 
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(response);
