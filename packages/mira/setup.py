@@ -4,9 +4,7 @@ setup(
     name="mira",
     version="0.1.0",
     packages=find_packages(),
-    install_requires=[
-
-    ],
+    install_requires=[],
     entry_points={
         "console_scripts": [
             "mira:sbml_to_petrinet=tasks.sbml_to_petrinet:main",
