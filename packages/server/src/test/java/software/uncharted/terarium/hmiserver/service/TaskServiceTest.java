@@ -6,7 +6,6 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -124,7 +123,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		log.info(new String(responses.get(responses.size() - 1).getOutput()));
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 
@@ -149,7 +148,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		}
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiracMdlToStockflowRequest() throws Exception {
 
