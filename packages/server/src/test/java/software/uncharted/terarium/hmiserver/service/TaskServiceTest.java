@@ -150,19 +150,19 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSendMiracMdlToStockflowRequest() throws Exception {
+	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
 
 		UUID taskId = UUID.randomUUID();
 
-		ClassPathResource resource = new ClassPathResource("mirac/IndiaNonSubscriptedPulsed.mdl");
+		ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
 		String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
 		TaskRequest req = new TaskRequest();
 		req.setId(taskId);
-		req.setScript("mirac:mdl_to_stockflow");
+		req.setScript("mira:mdl_to_stockflow");
 		req.setInput(content.getBytes());
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRAC);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());

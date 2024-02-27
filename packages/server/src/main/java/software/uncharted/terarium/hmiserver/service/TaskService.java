@@ -44,7 +44,7 @@ public class TaskService {
 
 	static public enum TaskType {
 		GOLLM("gollm"),
-		MIRAC("mirac");
+		MIRA("mira");
 
 		private String value;
 

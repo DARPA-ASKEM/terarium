@@ -19,16 +19,16 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
 
-    mirac-taskrunner:
-        container_name: mirac-taskrunner
-        image: ghcr.io/darpa-askem/mirac-taskrunner:latest
+    mira-taskrunner:
+        container_name: mira-taskrunner
+        image: ghcr.io/darpa-askem/mira-taskrunner:latest
         networks:
             - terarium
         environment:
             TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
             TERARIUM_MQ-PASSWORD: "terarium123"
             TERARIUM_MQ-USERNAME: "terarium"
-            TERARIUM_TASKRUNNER_REQUEST-TYPE: "mirac"
+            TERARIUM_TASKRUNNER_REQUEST-TYPE: "mira"
         depends_on:
             rabbitmq:
                 condition: service_healthy

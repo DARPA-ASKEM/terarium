@@ -26,15 +26,15 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mirac-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner"]
 }
 
 group "staging" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mirac-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "gollm-taskrunner-base", "mirac-taskrunner-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "gollm-taskrunner-base", "mira-taskrunner-base"]
 }
 
 # ---------------------------------
@@ -82,12 +82,12 @@ target "gollm-taskrunner" {
   inherits = ["_platforms", "gollm-taskrunner-base"]
 }
 
-target "mirac-taskrunner-base" {
+target "mira-taskrunner-base" {
 	context = "." # root of the repo
-	dockerfile = "./packages/taskrunner/docker/Dockerfile.MiraC"
-	tags = tag("mirac-taskrunner", "", "")
+	dockerfile = "./packages/taskrunner/docker/Dockerfile.Mira"
+	tags = tag("mira-taskrunner", "", "")
 }
 
-target "mirac-taskrunner" {
-  inherits = ["_platforms", "mirac-taskrunner-base"]
+target "mira-taskrunner" {
+  inherits = ["_platforms", "mira-taskrunner-base"]
 }

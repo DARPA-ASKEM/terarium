@@ -35,5 +35,5 @@ out/
 
 ### VS Code ###
 .vscode/
-mirac.egg-info
+mira.egg-info
 __pycache__

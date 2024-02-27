@@ -30,11 +30,11 @@ import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
-@RequestMapping("/mirac")
+@RequestMapping("/mira")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class MiraCController {
+public class MiraController {
 
 	final private ObjectMapper objectMapper;
 	final private TaskService taskService;
