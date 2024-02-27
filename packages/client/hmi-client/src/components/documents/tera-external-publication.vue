@@ -340,7 +340,7 @@ const otherUrls = computed(() =>
 		: []
 );
 const sectionSummaries = computed(
-	() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections ?? '') ?? []
+	() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []
 );
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 const otherExtractions = computed(() => {
