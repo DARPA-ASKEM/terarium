@@ -11,8 +11,8 @@ services:
             TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
             TERARIUM_MQ-PASSWORD: "terarium123"
             TERARIUM_MQ-USERNAME: "terarium"
-            OPENAI_API_KEY: "${secret_gollm_openai_key}"
             TERARIUM_TASKRUNNER_REQUEST-TYPE: "gollm"
+            OPENAI_API_KEY: "${secret_gollm_openai_key}"
         depends_on:
             rabbitmq:
                 condition: service_healthy
@@ -32,7 +32,5 @@ services:
         depends_on:
             rabbitmq:
                 condition: service_healthy
-        volumes:
-            - ../../packages/taskrunner/tasks/mirac:/MiraC
         extra_hosts:
             - "host.docker.internal:host-gateway"

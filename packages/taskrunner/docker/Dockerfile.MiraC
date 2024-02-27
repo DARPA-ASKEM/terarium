@@ -31,9 +31,9 @@ RUN wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/refs/heads/main
 	cd /mira && \
 	pip install -e .[sbml,biomodels]
 
-# Copy the Mira tasks
-COPY ./packages/taskrunner/tasks/mirac /MiraC
-WORKDIR /MiraC
+# Copy the Mira Conversion package
+COPY ./packages/mirac /mirac
+WORKDIR /mirac
 RUN pip install -e .
 
 WORKDIR /

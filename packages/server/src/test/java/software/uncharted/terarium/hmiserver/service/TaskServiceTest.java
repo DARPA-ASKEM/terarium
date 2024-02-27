@@ -173,6 +173,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		for (TaskResponse resp : responses) {
 			Assertions.assertEquals(taskId, resp.getId());
 		}
+
+		log.info(new String(responses.get(responses.size() - 1).getOutput()));
 	}
 
 }
