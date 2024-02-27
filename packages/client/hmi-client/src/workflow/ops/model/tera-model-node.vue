@@ -21,7 +21,7 @@
 					:is-editable="false"
 				/>
 			</div>
-			<div class="container">
+			<div class="container" v-if="model && model.header.schema_name !== 'petrinet'">
 				<img :src="templatePreview" alt="" style="max-height: 180px" />
 			</div>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
