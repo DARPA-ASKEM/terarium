@@ -17,37 +17,9 @@
 				{{ useProjects().activeProject.value?.description }}
 			</p>
 		</template>
-		<section class="content-container">
-			<!-- Quick link buttons go here -->
-			<section class="quick-links">
-				<Button
-					label="New model"
-					size="large"
-					icon="pi pi-share-alt"
-					severity="secondary"
-					outlined
-					@click="emit('open-new-asset', AssetType.Model)"
-				/>
-				<Button
-					size="large"
-					severity="secondary"
-					outlined
-					@click="emit('open-new-asset', AssetType.Workflow)"
-				>
-					<vue-feather
-						class="p-button-icon-left"
-						type="git-merge"
-						size="1.25rem"
-						stroke="rgb(16, 24, 40)"
-					/>
-					<span class="p-button-label">New workflow</span>
-				</Button>
-			</section>
-
-			<!-- PrimeVue editor-container go here -->
-			<section class="editor-container">
-				<Editor v-model="editorContent" class="editor h-full"> </Editor>
-			</section>
+		<!-- PrimeVue editor-container -->
+		<section class="editor-container">
+			<Editor v-model="editorContent" class="editor h-full"> </Editor>
 		</section>
 	</tera-asset>
 </template>
@@ -55,14 +27,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Editor from 'primevue/editor';
-import Button from 'primevue/button';
 import * as DateUtils from '@/utils/date';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 
-const emit = defineEmits(['open-asset', 'open-new-asset']);
 const isRenamingProject = ref(false);
 
 const editorContent = ref(`
@@ -116,29 +85,26 @@ a {
 .content-container {
 	background-color: var(--surface-b);
 }
-.quick-links {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	margin-bottom: 1rem;
-	gap: 1rem;
-}
-.quick-links .p-button.p-button-secondary {
-	width: 100%;
-	font-size: 1rem;
-}
-/* Ensure the parent container fills the height of its parent or set a specific height */
+
 .editor-container {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 }
+
 .editor-container .p-editor .ql-container {
 	height: 100%;
 }
+
 .editor-container:deep(.ql-editor) {
-	height: calc(100vh - 328px);
+	height: calc(100vh - 240px);
 	font-family: var(--font-family);
+}
+/* Editor toolbar formatting */
+:deep(.p-editor-container .p-editor-toolbar) {
+	border-radius: 0px;
+	border-color: var(--surface-border-light) !important;
+	border-top: none !important;
 }
 
 :deep(.ql-picker-label) {
@@ -153,6 +119,7 @@ a {
 :deep(.ql-active .ql-stroke) {
 	stroke: var(--text-color-subdued) !important;
 }
+
 :deep(.ql-selected) {
 	background-color: var(--surface-highlight) !important;
 }
