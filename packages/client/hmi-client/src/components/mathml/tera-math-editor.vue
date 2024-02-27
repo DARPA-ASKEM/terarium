@@ -294,12 +294,7 @@ math-field[disabled] {
 }
 
 .expanded-div {
-	background-color: var(--gray-0);
-	padding: 10px;
-	margin: 10px;
-	box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius-big);
+	/* removed all this styling */
 }
 
 .editing {
@@ -312,18 +307,8 @@ math-field[disabled] {
 	cursor: pointer;
 }
 
-.editing2 {
-	border: 1px solid var(--surface-border);
-	background-color: var(--gray-0);
-	margin-right: 10px;
-}
-
-.editing2:hover {
-	background-color: var(--gray-0);
-}
-
 .editeq {
-	border: 1px solid var(--gray-300);
+	border: 1px solid var(--gray-200);
 }
 
 .spacer {
@@ -332,7 +317,7 @@ math-field[disabled] {
 .latex-input-text {
 	flex-direction: row;
 	background-color: var(--gray-0);
-	border-color: var(--gray-300);
+	border-color: var(--gray-200);
 	padding: 1rem;
 	height: auto;
 	resize: none;
