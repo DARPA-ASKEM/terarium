@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
+		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
@@ -154,6 +154,7 @@
 			:model="model"
 			:model-configurations="modelConfigurations"
 			@update-model="(modelClone) => emit('update-model', modelClone)"
+			class="mt-0"
 		/>
 	</main>
 </template>
