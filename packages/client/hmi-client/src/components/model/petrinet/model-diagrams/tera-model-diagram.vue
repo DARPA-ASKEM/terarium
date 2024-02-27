@@ -5,7 +5,12 @@
 				<Toolbar>
 					<template #start>
 						<span>
-							<Button @click="resetZoom" label="Reset zoom" class="p-button-sm p-button-outlined" />
+							<Button
+								@click="resetZoom"
+								label="Reset zoom"
+								class="p-button-sm p-button-outlined"
+								severity="secondary"
+							/>
 						</span>
 					</template>
 					<template #center> </template>
@@ -306,9 +311,11 @@ main {
 	margin-left: 1rem;
 	display: flex;
 	gap: 1rem;
-	background-color: var(--surface-section);
+	background-color: var(--surface-glass);
+	backdrop-filter: blur(5px);
 	border-radius: 0.5rem;
 	padding: 0.5rem;
+	max-width: 95%;
 }
 
 .modal-input-container {

@@ -5,11 +5,11 @@
 	<Toast position="top-right" group="info" />
 	<Toast position="top-right" group="success" />
 	<header>
-		<tera-navbar :active="displayNavBar" :show-suggestions="showSuggestions" />
+		<tera-navbar :active="displayNavBar" />
 	</header>
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" />
+			<component class="page" :is="Component" />
 		</router-view>
 	</main>
 	<footer>
@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import Toast from 'primevue/toast';
 
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
@@ -27,7 +27,6 @@ import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import TeraFooter from '@/components/navbar/tera-footer.vue';
-import { ResourceType } from '@/types/common';
 import { useProjects } from '@/composables/project';
 import { Project } from '@/types/Types';
 import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
@@ -43,16 +42,6 @@ const router = useRouter();
 const currentRoute = useCurrentRoute();
 
 const displayNavBar = computed(() => currentRoute.value.name !== 'unauthorized');
-
-// This pageRef is used to grab the assetType being searched for in data-explorer.vue, it is accessed using defineExpose
-const pageRef = ref();
-// For navbar.vue -> search-bar.vue
-// Later the asset type searched for in the data explorer should be in the route,
-// so we won't have to pass this from here
-const showSuggestions = computed(() => {
-	const assetType = pageRef.value?.resourceType ?? ResourceType.XDD;
-	return assetType === ResourceType.XDD;
-});
 
 /**
  * Project

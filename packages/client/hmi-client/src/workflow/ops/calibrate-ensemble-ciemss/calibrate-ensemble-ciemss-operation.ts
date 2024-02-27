@@ -26,7 +26,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true },
 		{ type: 'datasetId', label: 'Dataset' }
 	],
-	outputs: [{ type: 'number' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	// TODO: Figure out mapping

@@ -26,7 +26,7 @@
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentOptions"
+						:defaultOptions="sampleAgentQuestions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
 						class="ai-assistant-container"
 					/>
@@ -43,10 +43,9 @@
 			</tera-drilldown-section>
 			<div class="preview-container">
 				<tera-drilldown-preview
-					title="Model Preview"
+					title="Preview"
 					v-model:output="selectedOutputId"
-					@update:output="onUpdateOutput"
-					@update:selection="onUpdateSelection"
+					@update:selection="onSelection"
 					:options="outputs"
 					is-selectable
 					class="h-full"
@@ -54,7 +53,6 @@
 					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
 					</div>
 					<template #footer>
 						<InputText
@@ -111,13 +109,7 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'select-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -149,7 +141,7 @@ const amr = ref<Model | null>(null);
 const modelId = props.node.inputs[0].value?.[0];
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
-const sampleAgentOptions = [
+const sampleAgentQuestions = [
 	'Add a new transition from S to R with the name vaccine with the rate of v.',
 	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u',
 	'Add a new transition (from nowhere) to S with a rate constant of f.',
@@ -269,6 +261,10 @@ const inputChangeHandler = async () => {
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				await kernelManager.shutdown();
+			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
 		}
@@ -306,6 +302,7 @@ const initialize = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
@@ -322,15 +319,8 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 watch(
@@ -399,6 +389,12 @@ onUnmounted(() => {
 	padding: 1rem;
 }
 
+:deep(.diagram-container) {
+	height: calc(100vh - 270px) !important;
+}
+:deep(.resize-handle) {
+	display: none;
+}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;

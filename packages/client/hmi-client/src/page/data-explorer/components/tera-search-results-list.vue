@@ -4,18 +4,19 @@
 			<template v-if="isLoading">Loading...</template>
 			<template v-else-if="props.searchTerm || searchByExampleOptionsStr">
 				{{ resultsText }}
-				<span v-if="searchByExampleOptionsStr.length === 0"> "{{ props.searchTerm }}" </span>
-				<div v-else-if="searchByExampleOptionsStr.length > 0" class="search-by-example-card">
+				<span v-if="isEmpty(searchByExampleOptionsStr)"> "{{ props.searchTerm }}" </span>
+				<div v-else-if="!isEmpty(searchByExampleOptionsStr)" class="search-by-example-card">
 					<tera-asset-card
 						:asset="searchByExampleItem!"
-						:resource-type="resultType as ResourceType"
+						:resource-type="resourceType"
+						:source="source"
 					/>
 				</div>
 			</template>
 			<template v-else>{{ itemsText }} </template>
 		</span>
 	</div>
-	<div v-if="chosenFacets.length > 0" class="facet-chips">
+	<div v-if="!isEmpty(chosenFacets)" class="facet-chips">
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"
@@ -46,10 +47,11 @@
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<tera-search-item
-				:asset="asset as Document & Model & Dataset"
-				:is-previewed="previewedAsset === asset"
+				:asset="asset"
+				:source="source"
+				:resource-type="resourceType"
 				:is-adding-asset="isAdding && selectedAsset === asset"
-				:resource-type="resultType as ResourceType"
+				:is-previewed="previewedAsset === asset"
 				:search-term="searchTerm"
 				:project-options="projectOptions"
 				@select-asset="updateSelection(asset)"
@@ -60,8 +62,15 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { computed, PropType, ref } from 'vue';
-import type { Document, XDDFacetsItemResponse, Dataset, Model } from '@/types/Types';
+import type {
+	AddDocumentAssetFromXDDResponse,
+	Document,
+	DocumentAsset,
+	ProjectAsset,
+	XDDFacetsItemResponse
+} from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
@@ -94,8 +103,8 @@ const props = defineProps({
 		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
 		required: true
 	},
-	resultType: {
-		type: String,
+	resourceType: {
+		type: String as PropType<ResourceType>,
 		default: ResourceType.ALL
 	},
 	searchTerm: {
@@ -109,6 +118,10 @@ const props = defineProps({
 	docCount: {
 		type: Number,
 		default: 0
+	},
+	source: {
+		type: String,
+		default: 'XDD'
 	}
 });
 
@@ -122,27 +135,17 @@ const projectOptions = computed(() => [
 			useProjects().allProjects.value?.map((project) => ({
 				label: project.name,
 				command: async () => {
-					let response: any = null;
+					let response: ProjectAsset['id'] | null = null;
 					let assetName = '';
 					isAdding.value = true;
 
-					if (isDocument(selectedAsset.value)) {
-						const document = selectedAsset.value as Document;
-						await createDocumentFromXDD(document, project.id as string);
-						// finally add asset to project
-						response = await useProjects().get(project.id);
-						assetName = selectedAsset.value.title;
-					}
 					if (isModel(selectedAsset.value)) {
-						// FIXME: handle cases where assets is already added to the project
 						const modelId = selectedAsset.value.id;
 						// then, link and store in the project assets
 						const assetType = AssetType.Model;
 						response = await useProjects().addAsset(assetType, modelId, project.id);
 						assetName = selectedAsset.value.header.name;
-					}
-					if (isDataset(selectedAsset.value)) {
-						// FIXME: handle cases where assets is already added to the project
+					} else if (isDataset(selectedAsset.value)) {
 						const datasetId = selectedAsset.value.id;
 						// then, link and store in the project assets
 						const assetType = AssetType.Dataset;
@@ -150,10 +153,31 @@ const projectOptions = computed(() => [
 							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
+					} else if (isDocument(selectedAsset.value) && props.source === 'XDD') {
+						const document = selectedAsset.value as Document;
+						const xddDoc: AddDocumentAssetFromXDDResponse | null = await createDocumentFromXDD(
+							document,
+							project.id as string
+						);
+						// finally add asset to project
+						response = xddDoc
+							? await useProjects().addAsset(AssetType.Document, xddDoc.documentAssetId, project.id)
+							: null;
+						assetName = selectedAsset.value.title;
+					} else if (props.source === 'Terarium') {
+						const document = selectedAsset.value as DocumentAsset;
+						const assetType = AssetType.Document;
+						response = await useProjects().addAsset(assetType, document.id, project.id);
+						assetName = selectedAsset.value.name;
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
-					else logger.error(`Failed adding ${assetName} to ${project.name}`);
+					else {
+						// TODO: 'response' here is just an id, and we've lost the error message by this point. We may want to
+						// eventually pass up the error code and message to this point in the code so that we can show the user
+						// more helpful information than just "failed".
+						logger.error(`Failed adding ${assetName} to ${project.name}`);
+					}
 
 					isAdding.value = false;
 				}
@@ -166,7 +190,7 @@ const projectOptions = computed(() => [
 // 	const projs =
 // 		useProjects().allProjects.value?.forEach(async (project) => {
 // 			const assets = await useProjects().get(project.id);
-// 		    console.log(project, props.resultType, assets);
+// 		    console.log(project, props.resourceType, assets);
 // 		}) ?? [];
 // 	console.log(projs);
 // });
@@ -191,7 +215,7 @@ const togglePreview = (asset: ResultType) => {
 };
 
 // const rawConceptFacets = computed(() => {
-// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType);
 // 	if (searchResults) {
 // 		return searchResults.rawConceptFacets;
 // 	}
@@ -199,15 +223,20 @@ const togglePreview = (asset: ResultType) => {
 // });
 
 const filteredAssets = computed(() => {
-	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType);
 
 	if (searchResults) {
-		if (props.resultType === ResourceType.XDD) {
-			const documentSearchResults = searchResults.results as Document[];
-
-			return [...documentSearchResults];
+		if (props.resourceType === ResourceType.XDD) {
+			if (props.source === 'XDD') {
+				const documentSearchResults = searchResults.results as Document[];
+				return [...documentSearchResults];
+			}
+			if (props.source === 'Terarium') {
+				const documentSearchResults = searchResults.results as DocumentAsset[];
+				return [...documentSearchResults];
+			}
 		}
-		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+		if (props.resourceType === ResourceType.MODEL || props.resourceType === ResourceType.DATASET) {
 			return searchResults.results;
 		}
 	}
@@ -216,7 +245,7 @@ const filteredAssets = computed(() => {
 
 const resultsCount = computed(() => {
 	let total = 0;
-	if (props.resultType === ResourceType.ALL) {
+	if (props.resourceType === ResourceType.ALL) {
 		// count the results from all subsystems
 		props.dataItems.forEach((res) => {
 			const count = res?.hits ?? res?.results.length;
@@ -306,15 +335,7 @@ ul {
 }
 
 .result-details {
-	color: var(--text-color-subdued);
-}
-
-.result-count {
-	font-size: var(--font-caption);
-}
-
-.result-count span {
-	color: var(--text-color-primary);
+	margin-left: var(--gap-small);
 }
 
 .facet-chips {
