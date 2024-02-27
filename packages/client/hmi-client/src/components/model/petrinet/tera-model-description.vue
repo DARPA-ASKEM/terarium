@@ -2,7 +2,7 @@
 	<main>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
 			<AccordionTab header="Description">
-				<section v-if="!generatingCard" class="description">
+				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
 
 					<template v-if="modelType">
@@ -184,7 +184,7 @@ const props = defineProps<{
 	modelConfigurations?: ModelConfiguration[];
 	highlight?: string;
 	featureConfig?: FeatureConfig;
-	generatingCard?: boolean;
+	isGeneratingCard?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);

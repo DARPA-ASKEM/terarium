@@ -78,7 +78,7 @@
 						:feature-config="{
 							isPreview: true
 						}"
-						:generating-card="generatingCard"
+						:generating-card="isGeneratingCard"
 					/>
 				</section>
 				<tera-operator-placeholder
@@ -220,7 +220,7 @@ const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const isNewModelModalVisible = ref(false);
 const savingAsset = ref(false);
-const generatingCard = ref(false);
+const isGeneratingCard = ref(false);
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
@@ -396,9 +396,9 @@ async function generateCard(docId, modelId) {
 		return;
 	}
 
-	generatingCard.value = true;
+	isGeneratingCard.value = true;
 	await generateModelCard(docId, modelId, clonedState.value.modelService);
-	generatingCard.value = false;
+	isGeneratingCard.value = false;
 	fetchModel();
 }
 

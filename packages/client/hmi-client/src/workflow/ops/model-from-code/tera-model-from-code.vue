@@ -97,7 +97,7 @@
 							:feature-config="{
 								isPreview: true
 							}"
-							:generating-card="generatingCard"
+							:is-generating-card="isGeneratingCard"
 						/>
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
@@ -223,7 +223,7 @@ const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => {
 });
 
 const savingAsset = ref(false);
-const generatingCard = ref(false);
+const isGeneratingCard = ref(false);
 
 const clonedState = ref<ModelFromCodeState>({
 	codeLanguage: ProgrammingLanguage.Python,
@@ -517,9 +517,9 @@ async function generateCard(docId, modelId) {
 		return;
 	}
 
-	generatingCard.value = true;
+	isGeneratingCard.value = true;
 	await generateModelCard(docId, modelId, clonedState.value.modelService);
-	generatingCard.value = false;
+	isGeneratingCard.value = false;
 	fetchModel();
 }
 
