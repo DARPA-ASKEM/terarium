@@ -1,9 +1,26 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.json.Json;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,14 +30,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.util.SerializationUtils;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -35,16 +44,11 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.TaskResponseHandler;
 import software.uncharted.terarium.hmiserver.service.TaskService;
+import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/gollm")
 @RestController
@@ -68,7 +72,7 @@ public class GoLLMController {
 		String researchPaper;
 	}
 
-    @Data
+	@Data
 	private static class ModelCardResponse {
 		JsonNode response;
 	}
@@ -97,7 +101,7 @@ public class GoLLMController {
 		UUID modelId;
 	}
 
-    @PostConstruct
+	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(MODEL_CARD_SCRIPT, getModelCardResponseHandler());
 		taskService.addResponseHandler(CONFIGURE_MODEL_SCRIPT, configureModelResponseHandler());
@@ -113,11 +117,11 @@ public class GoLLMController {
 				final DocumentAsset document = documentAssetService.getAsset(props.getDocumentId())
 						.orElseThrow();
 				final ModelCardResponse card = objectMapper.readValue(resp.getOutput(), ModelCardResponse.class);
-				if (document.getMetadata() == null){
+				if (document.getMetadata() == null) {
 					document.setMetadata(new java.util.HashMap<>());
 				}
 				document.getMetadata().put("gollmCard", card.response);
-				
+
 				documentAssetService.updateAsset(document);
 			} catch (final Exception e) {
 				log.error("Failed to write model card to database", e);
@@ -135,14 +139,16 @@ public class GoLLMController {
 		handler.onSuccess((TaskResponse resp) -> {
 			try {
 				final String serializedString = objectMapper.writeValueAsString(resp.getAdditionalProperties());
-				final ConfigureModelProperties props = objectMapper.readValue(serializedString, ConfigureModelProperties.class);
+				final ConfigureModelProperties props = objectMapper.readValue(serializedString,
+						ConfigureModelProperties.class);
 
 				final Model model = modelService.getAsset(props.getModelId())
 						.orElseThrow();
-				final ConfigureModelResponse configurations = objectMapper.readValue(resp.getOutput(), ConfigureModelResponse.class);
+				final ConfigureModelResponse configurations = objectMapper.readValue(resp.getOutput(),
+						ConfigureModelResponse.class);
 
 				// For each configuration, create a new model configuration with parameters set
-				configurations.response.get("conditions").forEach((condition) -> {	
+				configurations.response.get("conditions").forEach((condition) -> {
 					// Map the parameters values to the model
 					final Model modelCopy = new Model(model);
 					final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
@@ -166,16 +172,16 @@ public class GoLLMController {
 						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
 						// add provenance
 						provenanceService.createProvenance(new Provenance()
-							.setLeft(newConfig.getId())
-							.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-							.setRight(props.documentId)
-							.setRightType(ProvenanceType.DOCUMENT)
-							.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+								.setLeft(newConfig.getId())
+								.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+								.setRight(props.documentId)
+								.setRightType(ProvenanceType.DOCUMENT)
+								.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
 					} catch (IOException e) {
 						log.error("Failed to set model configuration", e);
 					}
 				});
-				
+
 			} catch (final Exception e) {
 				log.error("Failed to configure model", e);
 			}
@@ -230,7 +236,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			taskService.sendTaskRequest(req);
+			taskService.sendTaskRequest(req, TaskType.GOLLM);
 
 			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 			return ResponseEntity.ok().body(resp);
@@ -253,7 +259,7 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-id", required = true) final UUID documentId){
+			@RequestParam(name = "document-id", required = true) final UUID documentId) {
 
 		try {
 
@@ -291,7 +297,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			taskService.sendTaskRequest(req);
+			taskService.sendTaskRequest(req, TaskType.GOLLM);
 
 			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 			return ResponseEntity.ok().body(resp);

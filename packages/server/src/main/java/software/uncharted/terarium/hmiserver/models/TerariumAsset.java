@@ -27,9 +27,6 @@ public abstract class TerariumAsset implements Serializable {
 	private UUID id;
 
 	@TSOptional
-	private String name;
-
-	@TSOptional
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
