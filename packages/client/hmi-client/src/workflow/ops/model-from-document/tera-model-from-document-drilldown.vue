@@ -5,8 +5,7 @@
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				:is-loading="assetLoading"
 				is-selectable
 			/>
@@ -79,6 +78,7 @@
 						:feature-config="{
 							isPreview: true
 						}"
+						:generating-card="isGeneratingCard"
 					/>
 				</section>
 				<tera-operator-placeholder
@@ -220,14 +220,14 @@ const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const isNewModelModalVisible = ref(false);
 const savingAsset = ref(false);
-
+const isGeneratingCard = ref(false);
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
-		onUpdateOutput(selectedOutputId.value);
+		onSelection(selectedOutputId.value);
 	}
 
-	const documentId = props.node.inputs?.[0]?.value?.[0];
+	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 	const equations: AssetBlock<DocumentExtraction>[] =
 		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
 	assetLoading.value = true;
@@ -236,18 +236,16 @@ onMounted(async () => {
 
 		const state = cloneDeep(props.node.state);
 
-		// equations that have not been run in image -> equation
+		// we want to add any new equation from images to the current state without running the image -> equations for the ones that already ran
 		const nonRunEquations = equations?.filter((e) => {
 			const foundEquation = state.equations.find(
 				(eq) => instanceOfEquationFromImageBlock(eq.asset) && eq.asset.fileName === e.asset.fileName
 			);
 			return !foundEquation;
 		});
-
-		const equationsDocumentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 		const promises =
 			nonRunEquations?.map(async (e) => {
-				const equationText = await getEquationFromImageUrl(equationsDocumentId, e.asset.fileName);
+				const equationText = await getEquationFromImageUrl(documentId, e.asset.fileName);
 				const equationBlock: EquationFromImageBlock = {
 					...e.asset,
 					text: equationText ?? '',
@@ -265,7 +263,14 @@ onMounted(async () => {
 
 		const newEquations = await Promise.all(promises);
 
-		state.equations = unionBy(newEquations, state.equations, 'asset.fileName');
+		let extractedEquations = state.equations.filter((e) =>
+			instanceOfEquationFromImageBlock(e.asset)
+		);
+		extractedEquations = unionBy(newEquations, extractedEquations, 'asset.fileName');
+		const inputEquations = state.equations.filter(
+			(e) => !instanceOfEquationFromImageBlock(e.asset)
+		);
+		state.equations = [...extractedEquations, ...inputEquations];
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
@@ -277,16 +282,9 @@ function onUpdateInclude(asset: AssetBlock<EquationBlock | EquationFromImageBloc
 	emit('update-state', clonedState.value);
 }
 
-function onUpdateOutput(id) {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-}
-
-function onUpdateSelection(id) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-}
+};
 
 async function onRun() {
 	const equations = clonedState.value.equations
@@ -398,7 +396,9 @@ async function generateCard(docId, modelId) {
 		return;
 	}
 
+	isGeneratingCard.value = true;
 	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	isGeneratingCard.value = false;
 	fetchModel();
 }
 

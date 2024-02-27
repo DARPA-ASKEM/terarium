@@ -32,7 +32,7 @@ export const ModelFromDocumentOperation: Operation = {
 	isRunnable: true,
 	inputs: [
 		// { type: 'equations', label: 'Equations' },
-		{ type: 'documentId', label: 'Text' }
+		{ type: 'documentId', label: 'Document' }
 	],
 	outputs: [],
 	action: () => {},

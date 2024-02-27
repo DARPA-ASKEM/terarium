@@ -33,6 +33,31 @@ export async function modelCard(documentId: string): Promise<void> {
 	}
 }
 
+export async function configureModel(documentId: string, modelId: string): Promise<void> {
+	try {
+		const response = await API.get<TaskResponse>('/gollm/configure-model', {
+			params: {
+				'model-id': modelId,
+				'document-id': documentId
+			}
+		});
+
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					throw new FatalError('Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					closeConnection();
+				}
+			}
+		});
+	} catch (err) {
+		logger.error(`An issue occured while exctracting a model configuration. ${err}`);
+	}
+}
+
 /**
  * Handles task for a given task ID.
  * @param {string} id - The task ID.

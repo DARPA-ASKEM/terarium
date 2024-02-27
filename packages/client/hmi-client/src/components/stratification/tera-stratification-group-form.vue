@@ -2,11 +2,13 @@
 	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
 		<div class="input-row">
 			<div class="sub-header">
-				<label>Directed</label>
-				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="directed" />
+				<label class="multi-line-label">Create new transitions between stratum</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="useStructure" />
 			</div>
 			<div class="sub-header">
-				<label>Cartesian product</label>
+				<label class="multi-line-label"
+					>Allow existing interactions to invole multiple stratum</label
+				>
 				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
 			</div>
 		</div>
@@ -64,8 +66,9 @@ const strataName = ref(props.config.name);
 const selectedVariables = ref<string[]>(props.config.selectedVariables);
 const labels = ref(props.config.groupLabels);
 const cartesianProduct = ref<boolean>(props.config.cartesianProduct);
-const directed = ref<boolean>(props.config.directed);
-const structure = ref<any>(props.config.structure); // currently not used
+const directed = ref<boolean>(props.config.directed); // Currently not used, assume to be true
+const structure = ref<any>(props.config.structure); // Proxied by "useStructure"
+const useStructure = ref<any>(props.config.useStructure);
 
 const updatedConfig = computed<StratifyGroup>(() => ({
 	borderColour: props.config.borderColour,
@@ -74,7 +77,8 @@ const updatedConfig = computed<StratifyGroup>(() => ({
 	groupLabels: labels.value,
 	cartesianProduct: cartesianProduct.value,
 	directed: directed.value,
-	structure: structure.value
+	structure: structure.value,
+	useStructure: useStructure.value
 }));
 
 watch(
@@ -84,6 +88,8 @@ watch(
 		selectedVariables.value = props.config.selectedVariables;
 		labels.value = props.config.groupLabels;
 		cartesianProduct.value = props.config.cartesianProduct;
+		structure.value = props.config.structure;
+		useStructure.value = props.config.useStructure;
 	}
 );
 </script>
@@ -116,6 +122,10 @@ watch(
 
 .subdued-text {
 	color: var(--text-color-subdued);
+}
+
+.multi-line-label {
+	max-width: 12rem;
 }
 
 .input-row {

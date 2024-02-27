@@ -17,6 +17,8 @@ public class TaskResponse implements Serializable {
 	private String script;
 	private TaskStatus status;
 	private byte[] output;
+
+	// The value of this will be whatever it was set to on the TaskRequest.
 	private Object additionalProperties;
 
 	public <T> T getAdditionalProperties(Class<T> type) {
