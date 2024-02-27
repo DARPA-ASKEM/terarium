@@ -5,7 +5,14 @@
 import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
-import type { Curies, DKG, EntitySimilarityResult, State, DatasetColumn } from '@/types/Types';
+import type {
+	Curies,
+	DKG,
+	EntitySimilarityResult,
+	AssetType,
+	State,
+	DatasetColumn
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
@@ -26,14 +33,9 @@ interface EntityMap {
  *        Available values : datasets, features, intermediates, model_parameters, models, projects, publications, qualifiers, simulation_parameters, simulation_plans, simulation_runs
  * @return ConceptFacets|null - the concept facets, or null if none returned by API
  */
-async function getFacets(types: string[], curies?: ClauseValue[]): Promise<ConceptFacets | null> {
+async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<ConceptFacets | null> {
 	try {
-		let url = '/concepts/facets';
-		if (types) {
-			types.forEach((type, indx) => {
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
-			});
-		}
+		let url = `/concepts/facets&types=${type}`;
 		if (curies) {
 			curies.forEach((curie) => {
 				url += `&curies=${curie}`;
