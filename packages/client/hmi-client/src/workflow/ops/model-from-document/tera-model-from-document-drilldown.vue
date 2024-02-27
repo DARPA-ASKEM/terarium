@@ -106,7 +106,7 @@
 						severity="secondary"
 						outlined
 						size="large"
-					></Button>
+					/>
 					<Button
 						label="Run"
 						@click="onRun"
