@@ -544,6 +544,21 @@ const optionsMenuItems = ref([
 		command() {
 			isRenamingCode.value = true;
 		}
+	},
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						await useProjects().addAsset(AssetType.Code, props.assetId, project.id);
+					}
+				})) ?? []
 	}
 ]);
 const toggleOptionsMenu = (event) => {

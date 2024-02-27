@@ -50,7 +50,7 @@ import Menu from 'primevue/menu';
 import { updateModelConfiguration, addDefaultConfiguration } from '@/services/model-configurations';
 import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 
 const props = defineProps({
@@ -88,7 +88,7 @@ const toggleOptionsMenu = (event) => {
 
 // User menu
 const optionsMenu = ref();
-const optionsMenuItems = ref([
+const optionsMenuItems = computed(() => [
 	{
 		icon: 'pi pi-pencil',
 		label: 'Rename',
@@ -96,7 +96,23 @@ const optionsMenuItems = ref([
 			isRenaming.value = true;
 			newName.value = model.value?.header.name ?? '';
 		}
+	},
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
+					}
+				})) ?? []
 	}
+
 	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);

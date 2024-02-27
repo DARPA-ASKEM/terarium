@@ -49,7 +49,7 @@ import { ref, watch, onUpdated, Ref, PropType } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import type { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
+import { AssetType, type CsvAsset, type Dataset, type DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
@@ -120,6 +120,21 @@ const optionsMenuItems = ref([
 			isRenamingDataset.value = true;
 			newDatasetName.value = dataset.value?.name ?? '';
 		}
+	},
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						await useProjects().addAsset(AssetType.Dataset, props.assetId, project.id);
+					}
+				})) ?? []
 	}
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
