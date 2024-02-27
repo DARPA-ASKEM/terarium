@@ -381,7 +381,7 @@ const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;
