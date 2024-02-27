@@ -382,4 +382,8 @@ main:deep(.p-button.p-button-outlined) {
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
 }
+
+:deep(.p-tabview .p-tabview-nav) {
+	background-color: transparent;
+}
 </style>

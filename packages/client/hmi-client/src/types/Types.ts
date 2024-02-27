@@ -24,7 +24,6 @@ export interface ClientLog {
 
 export interface TerariumAsset {
     id?: string;
-    name?: string;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
@@ -69,8 +68,8 @@ export interface GithubRepo {
 }
 
 export interface Artifact extends TerariumAsset {
-    name: string;
     userId: string;
+    name: string;
     description?: string;
     fileNames: string[];
     metadata?: any;
@@ -131,8 +130,8 @@ export interface Dynamics {
 }
 
 export interface ActiveConcept extends TerariumAsset {
-    name: string;
     curie: string;
+    name: string;
 }
 
 export interface OntologyConcept {
@@ -148,8 +147,8 @@ export interface OntologyConcept {
 }
 
 export interface Dataset extends TerariumAsset {
-    name: string;
     userId?: string;
+    name: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
@@ -182,6 +181,7 @@ export interface AddDocumentAssetFromXDDResponse {
 }
 
 export interface DocumentAsset extends TerariumAsset {
+    name?: string;
     description?: string;
     userId?: string;
     fileNames?: string[];
@@ -196,6 +196,7 @@ export interface DocumentAsset extends TerariumAsset {
 
 export interface Equation extends TerariumAsset {
     userId?: string;
+    name?: string;
     equationType: EquationType;
     content: string;
     metadata?: { [index: string]: any };
@@ -1004,7 +1005,7 @@ export interface AuthorityInstance {
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
-    summaries: string[];
+    summaries: any[];
 }
 
 export interface KnownEntitiesCounts {
@@ -1232,16 +1233,15 @@ export enum RoleType {
 }
 
 export enum AssetType {
-    Workflow = "workflow",
-    Model = "model",
-    Dataset = "dataset",
-    Simulation = "simulation",
-    Document = "document",
-    Code = "code",
-    ModelConfiguration = "model-configuration",
-    Artifact = "artifact",
-    Publication = "publication",
-    NotebookSession = "notebook-session",
+    Dataset = "DATASET",
+    ModelConfiguration = "MODEL_CONFIGURATION",
+    Model = "MODEL",
+    Publication = "PUBLICATION",
+    Simulation = "SIMULATION",
+    Workflow = "WORKFLOW",
+    Artifact = "ARTIFACT",
+    Code = "CODE",
+    Document = "DOCUMENT",
 }
 
 export enum EvaluationScenarioStatus {
