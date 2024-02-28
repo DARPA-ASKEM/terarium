@@ -81,7 +81,7 @@
 					<!-- compartmental constraints -->
 					<div></div>
 
-					<tera-compartment-constraint :variables="modelNodeOptions" />
+					<tera-compartment-constraint :variables="modelNodeOptions" :mass="mass" />
 
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
@@ -204,6 +204,8 @@ const knobs = ref<BasicKnobs>({
 	useCompartmentalConstraint: false
 });
 
+const mass = ref('0');
+
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
@@ -309,21 +311,21 @@ const runMakeQuery = async () => {
 	// Calculate the normalization mass of the model = Sum(initials)
 	const semantics = model.value.semantics;
 	if (knobs.value.useCompartmentalConstraint && semantics) {
-		const modelInitials = semantics.ode.initials;
-		const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
+		// const modelInitials = semantics.ode.initials;
+		// const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
 
-		const parametersMap = {};
-		semantics.ode.parameters?.forEach((d) => {
-			parametersMap[d.id] = d.value;
-		});
+		// const parametersMap = {};
+		// semantics.ode.parameters?.forEach((d) => {
+		// 	parametersMap[d.id] = d.value;
+		// });
 
-		const mass = await pythonInstance.evaluateExpression(
-			modelMassExpression as string,
-			parametersMap
-		);
+		// const mass = await pythonInstance.evaluateExpression(
+		// 	modelMassExpression as string,
+		// 	parametersMap
+		// );
 
 		if (request.request.config) {
-			request.request.config.normalization_constant = parseFloat(mass);
+			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
 	const response = await makeQueries(request);
@@ -422,6 +424,22 @@ const initialize = async () => {
 
 const setModelOptions = async () => {
 	if (!model.value) return;
+
+	// Calculate mass
+	const semantics = model.value.semantics;
+	const modelInitials = semantics?.ode.initials;
+	const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
+
+	const parametersMap = {};
+	semantics?.ode.parameters?.forEach((d) => {
+		parametersMap[d.id] = d.value;
+	});
+
+	const massValue = await pythonInstance.evaluateExpression(
+		modelMassExpression as string,
+		parametersMap
+	);
+	mass.value = massValue;
 
 	// const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);

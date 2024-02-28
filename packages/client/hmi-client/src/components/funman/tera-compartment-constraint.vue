@@ -4,9 +4,8 @@
 			<label>Compartmental constraint</label>
 		</div>
 		<div class="section-row" v-if="props.variables">
-			<div>
-				{{ props.variables.join(' + ') }}
-			</div>
+			<div>{{ props.variables.join(' + ') }} = {{ props.mass }}</div>
+			<span v-for="v of props.variables" :key="v"> {{ v }} &#8805; 0, </span>
 		</div>
 	</div>
 </template>
@@ -14,6 +13,7 @@
 <script setup lang="ts">
 const props = defineProps<{
 	variables: string[];
+	mass: number;
 }>();
 
 // const emit = defineEmits(['delete-self', 'update-self']);
