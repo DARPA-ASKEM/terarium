@@ -13,6 +13,7 @@ export const ModelOperation: Operation = {
 	inputs: [],
 	outputs: [{ type: 'modelId' }],
 	action: async () => ({}),
+
 	initState: () => {
 		const init: ModelOperationState = {
 			modelId: null,

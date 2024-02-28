@@ -18,6 +18,7 @@ import { ModelOperationState } from '@/workflow/ops/model/model-operation';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
 import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
+import operator from '@/services/operator';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
@@ -26,8 +27,9 @@ const props = defineProps<{
 const emit = defineEmits(['open-drilldown']);
 
 const model = ref(null as Model | null);
+
 const updateModel = async () => {
-	const modelId = props.node.active;
+	const modelId = operator.getActiveOutputState(props.node)?.modelId;
 	if (modelId) model.value = await getModel(modelId);
 };
 onMounted(updateModel);
