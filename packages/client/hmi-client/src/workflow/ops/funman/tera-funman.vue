@@ -78,6 +78,11 @@
 						<h4>Add sanity checks</h4>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
+					<!-- compartmental constraints -->
+					<div></div>
+
+					<tera-compartment-constraint :variables="modelNodeOptions" />
+
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="index"
@@ -143,6 +148,8 @@ import MultiSelect from 'primevue/multiselect';
 import InputSwitch from 'primevue/inputswitch';
 
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import TeraCompartmentConstraint from '@/components/funman/tera-compartment-constraint.vue';
+
 import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -416,13 +423,14 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
-	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
+	// const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
 
-	model.value.semantics?.ode.parameters?.forEach((param) => {
-		if (initialVars?.includes(param.id)) return;
-		modelColumnNameOptions.push(param.id);
-	});
+	// FIXME
+	// model.value.semantics?.ode.parameters?.forEach((param) => {
+	// 	if (initialVars?.includes(param.id)) return;
+	// 	modelColumnNameOptions.push(param.id);
+	// });
 
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
