@@ -289,7 +289,7 @@ onMounted(() => {
 
 .p-chart {
 	width: 100%;
-	height: 200px;
+	/* height: 200px; */
 	margin-top: 0.5em;
 }
 
