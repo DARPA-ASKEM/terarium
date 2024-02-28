@@ -14,17 +14,30 @@
 					/>
 				</li>
 			</ul>
-			<div class="extraction-commands">
-				<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
-				<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
+			<footer class="flex gap-2">
 				<Button
-					text
+					severity="secondary"
+					size="small"
+					label="Enrich description"
+					:loading="isLoading"
+					@click="dialogForEnrichment"
+				/>
+				<Button
+					severity="secondary"
+					size="small"
+					label="Extract variables"
+					:loading="isLoading"
+					@click="dialogForExtraction"
+				/>
+				<Button
+					severity="secondary"
+					size="small"
 					:disabled="props.assetType != AssetType.Model"
 					:label="`Align extractions to ${assetType}`"
 					:loading="isLoading"
 					@click="dialogForAlignment"
 				/>
-			</div>
+			</footer>
 		</section>
 		<Dialog
 			v-model:visible="visible"
@@ -272,17 +285,10 @@ async function getRelatedDocuments() {
 </script>
 
 <style scoped>
-main {
-	background-color: var(--surface-highlight);
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border);
-	padding: var(--gap-small) var(--gap);
-
-	& > section {
-		display: flex;
-		gap: var(--gap-small);
-		flex-direction: column;
-	}
+main > section {
+	display: flex;
+	gap: var(--gap-small);
+	flex-direction: column;
 }
 
 ul {
@@ -298,10 +304,6 @@ ul:empty {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-}
-
-.extraction-commands > .p-button {
-	padding: 0.25rem var(--gap-small);
 }
 
 .no-documents-img {
