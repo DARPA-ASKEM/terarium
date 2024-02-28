@@ -113,6 +113,7 @@
 			</AccordionTab>
 			<AccordionTab header="Provenance">
 				<tera-related-documents
+					class="m-2"
 					:documents="documents"
 					:asset-type="AssetType.Model"
 					:assetId="model.id"

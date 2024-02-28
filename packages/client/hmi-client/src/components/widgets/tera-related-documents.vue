@@ -1,10 +1,12 @@
 <template>
 	<main>
-		<section>
-			<h5>Related publications</h5>
+		<p v-if="isEmpty(relatedDocuments)">
+			Terarium can extract information from documents to add relevant information to this resource.
+		</p>
+		<template v-else>
 			<p>
-				Terarium can extract information from documents to add relevant information to this
-				resource.
+				Related publications, documents, and other resources that are relevant to this
+				{{ assetType }}.
 			</p>
 			<ul>
 				<li v-for="document in relatedDocuments" :key="document.id">
@@ -14,31 +16,31 @@
 					/>
 				</li>
 			</ul>
-			<footer class="flex gap-2">
-				<Button
-					severity="secondary"
-					size="small"
-					label="Enrich description"
-					:loading="isLoading"
-					@click="dialogForEnrichment"
-				/>
-				<Button
-					severity="secondary"
-					size="small"
-					label="Extract variables"
-					:loading="isLoading"
-					@click="dialogForExtraction"
-				/>
-				<Button
-					severity="secondary"
-					size="small"
-					:disabled="props.assetType != AssetType.Model"
-					:label="`Align extractions to ${assetType}`"
-					:loading="isLoading"
-					@click="dialogForAlignment"
-				/>
-			</footer>
-		</section>
+		</template>
+		<footer class="flex gap-2">
+			<Button
+				severity="secondary"
+				size="small"
+				label="Enrich description"
+				:loading="isLoading"
+				@click="dialogForEnrichment"
+			/>
+			<Button
+				severity="secondary"
+				size="small"
+				label="Extract variables"
+				:loading="isLoading"
+				@click="dialogForExtraction"
+			/>
+			<Button
+				severity="secondary"
+				size="small"
+				:disabled="props.assetType != AssetType.Model"
+				:label="`Align extractions to ${assetType}`"
+				:loading="isLoading"
+				@click="dialogForAlignment"
+			/>
+		</footer>
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -285,7 +287,7 @@ async function getRelatedDocuments() {
 </script>
 
 <style scoped>
-main > section {
+main {
 	display: flex;
 	gap: var(--gap-small);
 	flex-direction: column;
