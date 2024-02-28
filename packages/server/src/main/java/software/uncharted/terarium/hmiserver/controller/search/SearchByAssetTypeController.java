@@ -64,6 +64,8 @@ public class SearchByAssetTypeController {
 	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
 	static final private String REDIS_EMBEDDING_CACHE_KEY = "knn-vector-cache";
 
+	static final private List<String> EXCLUDE_FIELDS = List.of("embeggings", "text", "topics");
+
 	@Data
 	static public class GoLLMSearchRequest {
 		private String text;
@@ -170,7 +172,8 @@ public class SearchByAssetTypeController {
 							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
 					.build();
 
-			SearchResponse<JsonNode> res = esService.knnSearch(index, knn, query, page, pageSize, JsonNode.class);
+			SearchResponse<JsonNode> res = esService.knnSearch(index, knn, query, page, pageSize, EXCLUDE_FIELDS,
+					JsonNode.class);
 
 			final List<JsonNode> docs = new ArrayList<>();
 			for (final Hit<JsonNode> hit : res.hits().hits()) {
