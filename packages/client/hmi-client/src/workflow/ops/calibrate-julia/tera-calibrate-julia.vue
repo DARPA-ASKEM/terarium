@@ -225,9 +225,9 @@ import {
 	setupModelInput,
 	setupDatasetInput,
 	renderLossGraph,
-	CalibrateMap,
-	autoCalibrationMapping
+	CalibrateMap
 } from '@/services/calibrate-workflow';
+import { autoCalibrationMapping } from '@/services/concept';
 import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
@@ -602,7 +602,7 @@ watch(
 // Fetch simulation run results whenever output changes
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
-const lazyLoadCalibrationData = async (runId?: string) => {
+const lazyLoadCalibrationData = async (runId: string) => {
 	if (!runId || runResults.value[runId]) return;
 
 	const result = await getRunResultJulia(runId, 'result.json');
@@ -627,7 +627,7 @@ watch([() => selectedRunId.value, () => staticLossPlotRef.value], () => {
 		const lossVals = props.node.state.intermediateLoss;
 		if (lossVals && staticLossPlotRef.value) {
 			const width = staticLossPlotRef.value.offsetWidth;
-			renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 300 });
+			renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 150 });
 		}
 	}
 });

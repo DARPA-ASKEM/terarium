@@ -7,11 +7,13 @@
 	>
 		<main>
 			<div class="type-and-filters">
-				{{ resourceType.toUpperCase() }}
+				{{ resourceType !== ResourceType.XDD ? resourceType.toUpperCase() : 'DOCUMENT' }}
 				<div
 					class="asset-filters"
 					v-if="
-						resourceType === ResourceType.XDD && (asset as Document).knownEntities?.askemObjects
+						resourceType === ResourceType.XDD &&
+						source === 'XDD' &&
+						(asset as Document).knownEntities?.askemObjects
 					"
 				>
 					<template
@@ -30,7 +32,7 @@
 						/>
 					</template>
 				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">
+				<div v-if="resourceType === ResourceType.MODEL">
 					{{ (asset as Model).header.schema_name }}
 				</div>
 				<ul>
@@ -55,6 +57,11 @@
 				v-html="highlightSearchTerms((asset as Dataset).description)"
 			/>
 			<div
+				class="description"
+				v-else-if="resourceType === ResourceType.XDD"
+				v-html="highlightSearchTerms((asset as DocumentAsset).description)"
+			/>
+			<div
 				class="parameters"
 				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
 			>
@@ -70,7 +77,7 @@
 		</main>
 		<aside>
 			<tera-carousel
-				v-if="resourceType === ResourceType.XDD && !isEmpty(extractions)"
+				v-if="resourceType === ResourceType.XDD && source === 'XDD' && !isEmpty(extractions)"
 				is-numeric
 				height="6rem"
 				width="8rem"
@@ -118,10 +125,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ComputedRef, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
+import { computed, ref, watch, ComputedRef } from 'vue';
 import { XDDExtractionType } from '@/types/XDD';
-import type { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
+import type {
+	Extraction,
+	XDDUrlExtraction,
+	DocumentAsset,
+	Dataset,
+	Model,
+	Document
+} from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
@@ -136,6 +150,7 @@ type UrlExtraction = {
 const props = defineProps<{
 	asset: ResultType;
 	resourceType: ResourceType;
+	source: string;
 	highlight?: string;
 }>();
 
@@ -201,7 +216,10 @@ const snippets = computed(() =>
 const title = computed(() => {
 	let value = '';
 	if (props.resourceType === ResourceType.XDD) {
-		value = (props.asset as Document).title;
+		value =
+			props.source === 'XDD'
+				? (props.asset as Document).title
+				: (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
 		value = (props.asset as Model).header.name;
 	} else if (props.resourceType === ResourceType.DATASET) {
@@ -241,7 +259,7 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // Return formatted author, year, journal
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
-	if (props.resourceType === ResourceType.XDD) {
+	if (props.resourceType === ResourceType.XDD && props.source === 'XDD') {
 		const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
 			(props.asset as Document).year
 		}) ${(props.asset as Document).journal}`;

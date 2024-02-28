@@ -4,24 +4,7 @@
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
-			<div class="flex gap-2">
-				<Button
-					@click="emit('open-drilldown')"
-					label="Edit"
-					severity="secondary"
-					outlined
-					class="w-full"
-				/>
-				<!--TODO: Run button isn't functional-->
-				<Button
-					label="Run"
-					severity="secondary"
-					icon="pi pi-play"
-					outlined
-					disabled
-					class="w-full"
-				/>
-			</div>
+			<Button @click="emit('open-drilldown')" label="Review checks" severity="secondary" outlined />
 		</template>
 	</section>
 </template>

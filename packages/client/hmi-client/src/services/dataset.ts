@@ -184,7 +184,7 @@ async function createNewDatasetFromFile(
 				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
 			);
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	if (!urlResponse || urlResponse.status >= 400) {

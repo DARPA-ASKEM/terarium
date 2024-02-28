@@ -1,14 +1,13 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<template #header-action-row>
-			<label class="ml-auto">Output</label>
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				:is-loading="assetLoading"
 				is-selectable
+				class="ml-auto mb-2"
 			/>
 		</template>
 		<div>
@@ -38,11 +37,15 @@
 										preview
 									/>
 								</template>
-								<label>Interpreted As:</label>
-								<tera-math-editor :latex-equation="equation.asset.text" :is-editable="false" />
+								<tera-math-editor
+									v-if="equation.asset.text"
+									:latex-equation="equation.asset.text"
+									:is-editable="false"
+								/>
+								<div v-else class="mt-2" />
 								<InputText
 									v-model="equation.asset.text"
-									placeholder="Unable to automatically extract LaTeX from the image. Please manually input the expression."
+									placeholder="Add an expression with LaTeX"
 									@update:model-value="emit('update-state', clonedState)"
 								/>
 							</div>
@@ -51,21 +54,22 @@
 				</ul>
 				<template #footer>
 					<span>
-						<label>Model framework:</label>
+						<label>Model framework</label>
 						<Dropdown
-							class="w-full md:w-14rem"
+							class="w-full md:w-14rem ml-2"
 							v-model="clonedState.modelFramework"
 							:options="modelFrameworks"
 							@change="onChangeModelFramework"
 						/>
 					</span>
-					<span class="mr-auto">
+					<span class="ml-3 mr-auto">
 						<label>Service</label>
 						<Dropdown
 							size="small"
 							v-model="clonedState.modelService"
 							:options="modelServices"
 							@change="emit('update-state', clonedState)"
+							class="ml-2"
 						/>
 					</span>
 				</template>
@@ -79,6 +83,7 @@
 						:feature-config="{
 							isPreview: true
 						}"
+						:generating-card="isGeneratingCard"
 					/>
 				</section>
 				<tera-operator-placeholder
@@ -95,12 +100,13 @@
 						:loading="savingAsset"
 						@click="isNewModelModalVisible = true"
 					></Button>
-					<Button label="Close" @click="emit('close')" outlined></Button>
+					<Button label="Close" @click="emit('close')" severity="secondary" outlined size="large" />
 					<Button
 						label="Run"
 						@click="onRun"
 						:diabled="assetLoading"
 						:loading="loadingModel"
+						size="large"
 					></Button>
 				</template>
 			</tera-drilldown-preview>
@@ -220,14 +226,14 @@ const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const isNewModelModalVisible = ref(false);
 const savingAsset = ref(false);
-
+const isGeneratingCard = ref(false);
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
-		onUpdateOutput(selectedOutputId.value);
+		onSelection(selectedOutputId.value);
 	}
 
-	const documentId = props.node.inputs?.[0]?.value?.[0];
+	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 	const equations: AssetBlock<DocumentExtraction>[] =
 		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
 	assetLoading.value = true;
@@ -236,18 +242,16 @@ onMounted(async () => {
 
 		const state = cloneDeep(props.node.state);
 
-		// equations that have not been run in image -> equation
+		// we want to add any new equation from images to the current state without running the image -> equations for the ones that already ran
 		const nonRunEquations = equations?.filter((e) => {
 			const foundEquation = state.equations.find(
 				(eq) => instanceOfEquationFromImageBlock(eq.asset) && eq.asset.fileName === e.asset.fileName
 			);
 			return !foundEquation;
 		});
-
-		const equationsDocumentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 		const promises =
 			nonRunEquations?.map(async (e) => {
-				const equationText = await getEquationFromImageUrl(equationsDocumentId, e.asset.fileName);
+				const equationText = await getEquationFromImageUrl(documentId, e.asset.fileName);
 				const equationBlock: EquationFromImageBlock = {
 					...e.asset,
 					text: equationText ?? '',
@@ -265,7 +269,14 @@ onMounted(async () => {
 
 		const newEquations = await Promise.all(promises);
 
-		state.equations = unionBy(newEquations, state.equations, 'asset.fileName');
+		let extractedEquations = state.equations.filter((e) =>
+			instanceOfEquationFromImageBlock(e.asset)
+		);
+		extractedEquations = unionBy(newEquations, extractedEquations, 'asset.fileName');
+		const inputEquations = state.equations.filter(
+			(e) => !instanceOfEquationFromImageBlock(e.asset)
+		);
+		state.equations = [...extractedEquations, ...inputEquations];
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
@@ -277,16 +288,9 @@ function onUpdateInclude(asset: AssetBlock<EquationBlock | EquationFromImageBloc
 	emit('update-state', clonedState.value);
 }
 
-function onUpdateOutput(id) {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-}
-
-function onUpdateSelection(id) {
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
-}
+};
 
 async function onRun() {
 	const equations = clonedState.value.equations
@@ -398,7 +402,9 @@ async function generateCard(docId, modelId) {
 		return;
 	}
 
+	isGeneratingCard.value = true;
 	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	isGeneratingCard.value = false;
 	fetchModel();
 }
 
@@ -455,14 +461,14 @@ watch(
 	overflow-y: hidden;
 }
 
-:deep(.math-editor) {
-	background-color: var(--surface-disabled);
-}
-
 .blocks-container {
 	overflow-y: auto;
 	> li:not(:last-child) {
 		margin-bottom: var(--gap-small);
 	}
+}
+
+.p-panel:deep(.p-panel-footer) {
+	display: none;
 }
 </style>

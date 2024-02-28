@@ -18,6 +18,7 @@ export enum WorkflowOperationTypes {
 	MODEL_FROM_CODE = 'ModelFromCode',
 	FUNMAN = 'Funman',
 	CODE = 'Code',
+	MODEL_COMPARISON = 'ModelComparison',
 	MODEL_CONFIG = 'ModelConfiguraiton',
 	MODEL_OPTIMIZE = 'ModelOptimize',
 	MODEL_COUPLING = 'ModelCoupling',
@@ -46,6 +47,7 @@ export enum WorkflowPortStatus {
 export interface OperationData {
 	type: string;
 	label?: string;
+	isOptional?: boolean;
 	acceptMultiple?: boolean;
 }
 

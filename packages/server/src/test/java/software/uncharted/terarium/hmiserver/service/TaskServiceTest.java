@@ -13,9 +13,11 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.controller.mira.MiraController;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
 
 @Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
@@ -38,7 +40,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -81,7 +83,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -108,7 +110,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setScript("gollm:model_card");
 		req.setInput(content.getBytes());
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req, 300);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM, 300);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -135,7 +137,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 				("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}")
 						.getBytes());
 
-		List<TaskResponse> responses = taskService.runTaskBlocking(req);
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
@@ -145,6 +147,90 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		for (TaskResponse resp : responses) {
 			Assertions.assertEquals(taskId, resp.getId());
 		}
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
+
+		UUID taskId = UUID.randomUUID();
+
+		ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
+		String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript(MiraController.MDL_TO_STOCKFLOW);
+		req.setInput(content.getBytes());
+
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA);
+
+		Assertions.assertEquals(3, responses.size());
+		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(2).getStatus());
+
+		for (TaskResponse resp : responses) {
+			Assertions.assertEquals(taskId, resp.getId());
+		}
+
+		log.info(new String(responses.get(responses.size() - 1).getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendMiraStellaToStockflowRequest() throws Exception {
+
+		UUID taskId = UUID.randomUUID();
+
+		ClassPathResource resource = new ClassPathResource("mira/SIR.xmile");
+		String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript(MiraController.STELLA_TO_STOCKFLOW);
+		req.setInput(content.getBytes());
+
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA);
+
+		Assertions.assertEquals(3, responses.size());
+		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(2).getStatus());
+
+		for (TaskResponse resp : responses) {
+			Assertions.assertEquals(taskId, resp.getId());
+		}
+
+		log.info(new String(responses.get(responses.size() - 1).getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendMiraSBMLToPetrinetRequest() throws Exception {
+
+		UUID taskId = UUID.randomUUID();
+
+		ClassPathResource resource = new ClassPathResource("mira/BIOMD0000000001.xml");
+		String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript(MiraController.SBML_TO_PETRINET);
+		req.setInput(content.getBytes());
+
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA);
+
+		Assertions.assertEquals(3, responses.size());
+		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(2).getStatus());
+
+		for (TaskResponse resp : responses) {
+			Assertions.assertEquals(taskId, resp.getId());
+		}
+
+		log.info(new String(responses.get(responses.size() - 1).getOutput()));
 	}
 
 }

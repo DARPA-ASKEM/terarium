@@ -375,6 +375,7 @@ public class ProjectController {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)) }),
 			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "409", description = "Asset already exists in this project", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content) })
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
@@ -384,15 +385,22 @@ public class ProjectController {
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canWrite(new RebacProject(projectId, reBACService))) {
+			if (new RebacUser(currentUserService.get().getId(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
+
 				if (project.isPresent()) {
-					final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
-							assetType, assetId);
+
+					//double check that this asset is not already a part of this project, and if it does exist throw an error to the front end
+					final Optional<ProjectAsset> existingAsset = projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
+					if (existingAsset.isPresent()) {
+						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset already exists in this project");
+					}
+
+					final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(), assetType, assetId);
 					// underlying asset does not exist
 					return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset)).orElseGet(() -> ResponseEntity.notFound().build());
 				}
+
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {

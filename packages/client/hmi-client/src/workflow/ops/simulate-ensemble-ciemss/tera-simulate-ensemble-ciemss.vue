@@ -67,25 +67,14 @@
 									{{ element.id }}
 								</th>
 							</tr>
-							<tr>
-								<div class="row-header">
-									<td
-										v-for="(element, i) in Object.keys(ensembleConfigs[0].solutionMappings)"
-										:key="i"
-									>
-										{{ element }}
-									</td>
-								</div>
-								<td v-for="i in ensembleConfigs.length" :key="i">
-									<template
-										v-for="element in Object.keys(ensembleConfigs[i - 1].solutionMappings)"
-										:key="element"
-									>
-										<Dropdown
-											v-model="ensembleConfigs[i - 1].solutionMappings[element]"
-											:options="allModelOptions[i - 1]"
-										/>
-									</template>
+
+							<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
+								<td>{{ key }}</td>
+								<td v-for="config in ensembleConfigs" :key="config.id">
+									<Dropdown
+										:options="allModelOptions[config.id]"
+										v-model="config.solutionMappings[key]"
+									/>
 								</td>
 							</tr>
 						</table>
@@ -131,8 +120,7 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 				:is-loading="showSpinner"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 			>
 				<tera-simulate-chart
 					v-for="(cfg, index) of node.state.chartConfigs"
@@ -195,13 +183,7 @@ import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'select-output',
-	'update-output-port',
-	'update-state',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
 
 const dataLabelPlugin = [ChartDataLabels];
 
@@ -227,14 +209,11 @@ const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
-const allModelOptions = ref<string[][]>([]);
+const allModelOptions = ref<{ [key: string]: string[] }>({});
 const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
-// const completedRunId = computed<string>(
-// 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
-// );
 
 // const showSaveInput = ref(<boolean>false);
 // const saveAsName = ref(<string | null>'');
@@ -265,15 +244,8 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	emit('update-state', state);
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 const calculateWeights = () => {
@@ -422,7 +394,7 @@ onMounted(async () => {
 		modelConfigurationIds.map((id) => getModelConfigurationById(id))
 	);
 
-	allModelOptions.value = [];
+	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
 		const tempList: string[] = [];
 		const amr = allModelConfigurations[i].configuration;
@@ -430,7 +402,7 @@ onMounted(async () => {
 			tempList.push(element.id);
 		});
 		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
-		allModelOptions.value.push(tempList);
+		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
 	calculateWeights();
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
@@ -438,17 +410,16 @@ onMounted(async () => {
 	const state = _.cloneDeep(props.node.state);
 	state.modelConfigIds = modelConfigurationIds;
 
-	// FIXME: There can be existing mappings of different length
-	if (state.mapping.length > 0) {
-		state.mapping = [];
-		listModelIds.value.forEach((id) => {
-			state.mapping.push({
-				id,
+	if (state.mapping && state.mapping.length === 0) {
+		for (let i = 0; i < allModelConfigurations.length; i++) {
+			ensembleConfigs.value.push({
+				id: allModelConfigurations[i].id as string,
 				solutionMappings: {},
-				weight: 0.0
+				weight: 0
 			});
-		});
+		}
 	}
+
 	if (state.chartConfigs.length === 0) {
 		state.chartConfigs.push({ selectedVariable: [], selectedRun: '' });
 	}
@@ -492,15 +463,6 @@ watch(
 </script>
 
 <style scoped>
-.row-header {
-	display: flex;
-	flex-direction: column;
-}
-
-.row-header td {
-	margin: 1rem 0;
-}
-
 .ensemble-calibration-mode {
 	display: flex;
 	flex-direction: column;

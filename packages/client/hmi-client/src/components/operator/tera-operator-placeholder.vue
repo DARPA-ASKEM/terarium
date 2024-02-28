@@ -17,6 +17,7 @@ import pottedPlants from '@/assets/svg/potted-plants.svg';
 // import talkingPlant from '@/assets/svg/talking-plant.svg'
 // import pdfExtract from '@/assets/svg/pdf-extract.svg'
 import trimmingPlant from '@assets/svg/trimming-plant.svg';
+import equationsToModel from '@assets/svg/equations-to-model.svg';
 
 const props = defineProps<{
 	operationType: WorkflowOperationTypes;
@@ -33,7 +34,8 @@ const operatorGraphics = {
 	[WorkflowOperationTypes.MODEL_EDIT]: plantAndShovel,
 	[WorkflowOperationTypes.SIMULATE_CIEMSS]: plantsSmallToBig,
 	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS]: plantsSmallToBig,
-	[WorkflowOperationTypes.SIMULATE_JULIA]: plantsSmallToBig
+	[WorkflowOperationTypes.SIMULATE_JULIA]: plantsSmallToBig,
+	[WorkflowOperationTypes.MODEL_FROM_DOCUMENT]: equationsToModel
 };
 
 const placeholderGraphic = operatorGraphics[props.operationType] ?? plants;

@@ -1,5 +1,5 @@
 <template>
-	<main class="data-explorer-container flex flex-column">
+	<main>
 		<section class="flex h-full relative overflow-hidden">
 			<tera-slider-panel
 				content-width="240px"
@@ -18,39 +18,44 @@
 				</template>
 			</tera-slider-panel>
 			<div class="results-content">
-				<div class="search-nav">
+				<div class="search">
+					<nav>
+						<SelectButton
+							:model-value="assetType"
+							@change="if ($event.value) assetType = $event.value;"
+							:options="assetOptions"
+							option-value="value"
+							option-label="label"
+						/>
+						<div class="toggles">
+							<span v-if="assetType === AssetType.Document">
+								<label>Source</label>
+								<Dropdown v-model="chosenSource" :options="sourceOptions" />
+							</span>
+							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+						</div>
+					</nav>
 					<tera-searchbar
-						class="search-bar"
 						ref="searchBarRef"
 						@query-changed="updateRelatedTerms"
 						@toggle-search-by-example="searchByExampleModalToggled"
+						:source="chosenSource"
 						:show-suggestions="false"
 					/>
-					<aside class="suggested-terms" v-if="!isEmpty(terms)">
+					<!-- <aside class="suggested-terms" v-if="!isEmpty(terms)">
 						Suggested terms:
 						<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
 							<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
 						</Chip>
-					</aside>
-					<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+					</aside> -->
 				</div>
-				<SelectButton
-					:model-value="resourceType"
-					@change="if ($event.value) resourceType = $event.value;"
-					:options="assetOptions"
-					option-value="value"
-				>
-					<template #option="slotProps">
-						<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-						<span class="p-button-label">{{ slotProps.option.label }}</span>
-					</template>
-				</SelectButton>
 				<tera-search-results-list
-					:data-items="dataItems"
+					:data-items="resultsToShow"
 					:facets="filteredFacets"
-					:result-type="resourceType"
+					:resource-type="resourceType"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
+					:source="chosenSource"
 					:doc-count="docCount"
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
@@ -60,8 +65,8 @@
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
+				:source="chosenSource"
 				:resource-type="resourceType"
-				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 			/>
 		</section>
@@ -72,7 +77,9 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
+import Dropdown from 'primevue/dropdown';
 import { fetchData, getDocumentById, getRelatedTerms } from '@/services/data';
+import { searchByAssetType } from '@/services/search';
 import {
 	ResourceType,
 	ResultType,
@@ -97,9 +104,9 @@ import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
-import type { XDDFacetsItemResponse } from '@/types/Types';
+import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
-import Chip from 'primevue/chip';
+// import Chip from 'primevue/chip';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
 
@@ -110,14 +117,17 @@ const queryStore = useQueryStore();
 const resources = useResourcesStore();
 
 const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
+
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
+const searchResults = ref<SearchResults[]>([]);
+
 const selectedSearchItems = ref<ResultType[]>([]);
 const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 // default slider state
-const isSliderFacetsOpen = ref(true);
+const isSliderFacetsOpen = ref(false);
 const isSliderResourcesOpen = ref(false);
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
@@ -127,8 +137,7 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 const docCount = ref(0);
 const filteredFacets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
-//
-const resourceType = ref<ResourceType>(ResourceType.XDD);
+
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
@@ -136,22 +145,47 @@ const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 
 const clientFilters = computed(() => queryStore.clientFilters);
 
+const assetType = ref(AssetType.Document);
 const assetOptions = ref([
-	{ label: 'Documents', value: ResourceType.XDD, icon: 'pi pi-file' },
-	{ label: 'Models', value: ResourceType.MODEL, icon: 'pi pi-share-alt' },
-	{ label: 'Datasets', value: ResourceType.DATASET, icon: 'pi pi-database' }
+	{ label: 'Documents', value: AssetType.Document },
+	{ label: 'Models', value: AssetType.Model },
+	{ label: 'Datasets', value: AssetType.Dataset }
 ]);
+// TODO: Get rid of this once we have fully moved to the new search (search-by-asset-type)
+// This is here now for preservation of the hacky services/data.ts
+// Child components should be updated to accept AssetType instead of ResourceType
+const resourceType = computed(() => {
+	if (assetType.value === AssetType.Document) {
+		return ResourceType.XDD;
+	}
+	if (assetType.value === AssetType.Model) {
+		return ResourceType.MODEL;
+	}
+	return ResourceType.DATASET;
+});
 
 const topicOptions = ref([
 	{ label: 'Covid-19', value: 'xdd-covid-19' },
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
+const sourceOptions = ref(['XDD', 'Terarium']);
+const chosenSource = ref('XDD');
+
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
 );
 
-defineExpose({ resourceType });
+// Chooses source for search
+const resultsToShow = computed(() => {
+	if (
+		(assetType.value === AssetType.Document && chosenSource.value === 'Terarium') ||
+		assetType.value === AssetType.Model
+	) {
+		return searchResults.value;
+	}
+	return dataItems.value;
+});
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -191,8 +225,6 @@ const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
 	if (!dirtyResults.value[resourceType.value]) return;
 
-	// only search (or fetch data) relevant to the currently selected tab or the search by example item
-	let searchType = resourceType.value;
 	isLoading.value = true;
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
@@ -202,16 +234,16 @@ const executeSearch = async () => {
 
 	let searchWords = searchTerm.value;
 
-	const isValidDOI = validate(searchWords);
-
 	const matchAll =
 		!isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
 	const allSearchTerms = searchWords.split(' ');
-	if (matchAll && allSearchTerms.length > 0) {
+	if (matchAll && !isEmpty(allSearchTerms)) {
 		// multiple words are provided as search term and the user requested to match all of them
 		// the XDD api expects all search terms to be comma-separated if the user requested inclusive results
 		searchWords = allSearchTerms.join(',');
 	}
+
+	const isValidDOI = validate(searchWords);
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
@@ -248,7 +280,7 @@ const executeSearch = async () => {
 				searchParams.xdd.related_search_enabled = executeSearchByExample.value;
 			}
 			searchParams.xdd.related_search_id = id;
-			searchType = ResourceType.XDD;
+			assetType.value = AssetType.Document;
 		}
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
@@ -256,7 +288,7 @@ const executeSearch = async () => {
 		if (isModel(searchByExampleItem.value) && searchParams.model) {
 			searchParams.model.related_search_enabled = executeSearchByExample.value;
 			searchParams.model.related_search_id = id;
-			searchType = ResourceType.MODEL;
+			assetType.value = AssetType.Model;
 		}
 		//
 		// find related datasets (which utilizes the TDS provenance API through the HMI server)
@@ -264,7 +296,7 @@ const executeSearch = async () => {
 		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
 			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
 			searchParams.dataset.related_search_id = id;
-			searchType = ResourceType.DATASET;
+			assetType.value = AssetType.Dataset;
 		}
 	}
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
@@ -321,20 +353,34 @@ const executeSearch = async () => {
 	searchParamsWithFacetFilters.model = modelSearchParams;
 	searchParamsWithFacetFilters.dataset = datasetSearchParams;
 
+	// TODO: Make this the main method of fetching data
+	// Works for models and documents
+	if (assetType.value !== AssetType.Dataset) {
+		searchResults.value = [
+			{
+				results: await searchByAssetType(searchWords, AssetType.Document),
+				searchSubsystem: ResourceType.XDD
+			},
+			{
+				results: await searchByAssetType(searchWords, AssetType.Model),
+				searchSubsystem: ResourceType.MODEL
+			}
+		];
+	}
+
+	// TODO: Remove old method of fetching data
 	// fetch the data
 	const { allData, allDataFilteredWithFacets } = await fetchData(
 		searchWords,
 		searchParams,
 		searchParamsWithFacetFilters,
-		searchType
+		resourceType.value
 	);
 
 	// cache unfiltered data
 	dataItemsUnfiltered.value = mergeResultsKeepRecentDuplicates(dataItemsUnfiltered.value, allData);
-
 	// the list of results displayed in the data explorer is always the final filtered data
 	dataItems.value = mergeResultsKeepRecentDuplicates(dataItems.value, allDataFilteredWithFacets);
-
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
 
@@ -343,7 +389,6 @@ const executeSearch = async () => {
 		const count = res?.hits ?? res?.results.length;
 		total += count;
 	});
-
 	docCount.value = total;
 
 	isLoading.value = false;
@@ -556,8 +601,9 @@ function searchByExampleModalToggled() {
 </script>
 
 <style scoped>
-.data-explorer-container {
-	background-color: var(--surface-100);
+main {
+	display: flex;
+	flex-direction: column;
 }
 .results-content {
 	display: flex;
@@ -568,20 +614,37 @@ function searchByExampleModalToggled() {
 	margin: 0.5rem 0.5rem 0;
 }
 
+.toggles {
+	display: flex;
+	gap: 1rem;
+
+	& > span {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	& .p-dropdown {
+		min-width: 8rem;
+	}
+}
+
 main > section:first-of-type {
 	display: flex;
 	flex-direction: row;
 }
 
-.search-nav {
+.p-selectbutton:deep(.p-button) {
+	min-width: 7rem;
+}
+
+.search {
 	display: flex;
-
-	& > *:first-child {
-		flex-grow: 2;
-	}
-
-	& > *:last-child {
-		margin-left: auto;
+	flex-direction: column;
+	gap: var(--gap-small);
+	& > nav {
+		display: flex;
+		justify-content: space-between;
 	}
 }
 </style>
