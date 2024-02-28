@@ -21,8 +21,6 @@
 								{{ row[0].rowCriteria }}
 							</template>
 						</td>
-
-						<!-- cell.content.id -->
 						<td
 							v-for="(cell, colIdx) in row"
 							:key="colIdx"
@@ -35,7 +33,7 @@
 							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
 							<template v-if="cell.content.id">
-								<section class="flex">
+								<section class="flex flex-column">
 									<InputText
 										v-if="editableCellStates[rowIdx][colIdx]"
 										class="cell-input"
@@ -45,7 +43,10 @@
 										@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 										@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 									/>
-									<div v-else class="w-full">
+									<div
+										class="w-full"
+										:class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }"
+									>
 										<div
 											class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
 											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
@@ -295,14 +296,16 @@ onMounted(() => {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	visibility: visible;
-	width: 100%;
 }
 .n-a-cell {
 	background-color: var(--surface-b);
 }
+.hide-content {
+	visibility: hidden;
+	height: 0px;
+	padding-left: 2rem;
+}
 .cell-input {
-	min-width: 8rem;
 	padding-left: var(--gap-small);
 	padding-right: var(--gap);
 	margin-bottom: 0 !important;
