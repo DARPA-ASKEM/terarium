@@ -156,7 +156,7 @@ import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import { ModelConfigTableData, ParamType } from '@/types/common';
+import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
@@ -180,6 +180,10 @@ const matrixModalContext = ref({
 	stratifiedMatrixType: StratifiedMatrix.Initials,
 	matrixId: ''
 });
+
+const modelType = computed(
+	() => props.modelConfiguration?.configuration?.header?.schema_name ?? AMRSchemaNames.PETRINET
+);
 
 const errorMessage = ref('');
 
@@ -231,14 +235,18 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
 	const type = typeOptions[typeIndex];
 	const clonedConfig = cloneDeep(props.modelConfiguration);
-	const idx = clonedConfig.configuration.semantics.ode.parameters.findIndex(
-		(p) => p.id === param.id
-	);
+
+	let idx;
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		idx = clonedConfig.configuration.semantics.ode.parameters.findIndex((p) => p.id === param.id);
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		idx = clonedConfig.configuration.model.parameters.findIndex((p) => p.id === param.id);
+	}
 	switch (type.value) {
 		case ParamType.CONSTANT:
 			delete param.distribution;
 			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			replaceParam(clonedConfig, param, idx);
 			break;
 		case ParamType.DISTRIBUTION:
 			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
@@ -249,14 +257,14 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 					maximum: 0
 				}
 			};
-			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			replaceParam(clonedConfig, param, idx);
 			break;
 		case ParamType.TIME_SERIES:
 			delete param.distribution;
 			if (!clonedConfig.configuration.metadata?.timeseries) {
 				clonedConfig.configuration.metadata.timeseries = {};
 			}
-			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			replaceParam(clonedConfig, param, idx);
 			clonedConfig.configuration.metadata.timeseries[param.id] = '';
 			break;
 		default:
@@ -268,6 +276,14 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 const stratifiedModelType = computed(() =>
 	getStratificationType(props.modelConfiguration.configuration)
 );
+
+const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		config.configuration.semantics.ode.parameters[index] = param;
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		config.configuration.model.parameters[index] = param;
+	}
+};
 
 const updateExpression = async (value: Initial) => {
 	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
