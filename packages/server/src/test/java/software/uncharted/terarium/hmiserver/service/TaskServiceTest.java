@@ -4,12 +4,16 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
@@ -235,6 +239,45 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(content.getBytes());
 
 		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA);
+
+		Assertions.assertEquals(3, responses.size());
+		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(2).getStatus());
+
+		for (TaskResponse resp : responses) {
+			Assertions.assertEquals(taskId, resp.getId());
+		}
+
+		log.info(new String(responses.get(responses.size() - 1).getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMConfigFromDatasetRequest() throws Exception {
+
+		UUID taskId = UUID.randomUUID();
+
+		ClassPathResource datasetResource = new ClassPathResource("gollm/Epi Sc 4 Interaction matrix.csv");
+		String dataset = new String(Files.readAllBytes(datasetResource.getFile().toPath()));
+
+		ClassPathResource amrResource = new ClassPathResource("gollm/scenario4_4spec_regnet_empty.json");
+		String amr = new String(Files.readAllBytes(amrResource.getFile().toPath()));
+		JsonNode amrJson = new ObjectMapper().readTree(amr);
+
+		String content = "{\"datasets\": [\"" + dataset.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n"))
+				+ "\"], \"amr\":"
+				+ amrJson.toString() + "}";
+
+		JsonNode json = new ObjectMapper().readTree(content);
+		log.info(json.toPrettyString());
+
+		TaskRequest req = new TaskRequest();
+		req.setId(taskId);
+		req.setScript("gollm:dataset_configure");
+		req.setInput(content.getBytes());
+
+		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.QUEUED, responses.get(0).getStatus());

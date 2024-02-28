@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -423,7 +424,9 @@ public class GoLLMController {
 					try {
 						Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
 						if (dataset.isPresent()) {
-							datasets.add(datasetText.get());
+							// ensure unescaped newlines are escaped
+							datasets.add(
+									datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
 						}
 					} catch (Exception e) {
 						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to fetch file for dataset");
