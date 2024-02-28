@@ -2,7 +2,7 @@
 	<tera-modal @modal-mask-clicked="emit('close-modal')">
 		<template #header>
 			<div class="flex align-items-center justify-space-between">
-				<h4 class="w-full">Matrix: {{ id }}</h4>
+				<h4 class="w-full">{{ id }} matrix</h4>
 				<div class="flex align-items-center gap-2 white-space-nowrap">
 					<label for="matrixShouldEval" class="mr-2">Evaluate expressions</label>
 					<InputSwitch
@@ -79,3 +79,9 @@ const emit = defineEmits(['close-modal', 'update-configuration']);
 
 const matrixShouldEval = ref(true);
 </script>
+
+<style scoped>
+main:deep(.content) {
+	min-width: 40rem;
+}
+</style>

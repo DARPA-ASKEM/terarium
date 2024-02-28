@@ -21,11 +21,16 @@
 								{{ row[0].rowCriteria }}
 							</template>
 						</td>
+
+						<!-- cell.content.id -->
 						<td
 							v-for="(cell, colIdx) in row"
 							:key="colIdx"
 							tabindex="0"
-							:class="editableCellStates[rowIdx][colIdx] && 'is-editing'"
+							:class="{
+								'is-editing': editableCellStates[rowIdx][colIdx],
+								'n-a-cell': !cell.content.id
+							}"
 							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
@@ -34,14 +39,15 @@
 									<InputText
 										v-if="editableCellStates[rowIdx][colIdx]"
 										class="cell-input"
+										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
 										v-model.lazy="valueToEdit"
 										v-focus
 										@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 										@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 									/>
-									<div v-else>
+									<div v-else class="w-full">
 										<div
-											class="subdue mb-1 flex align-items-center gap-1"
+											class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
 											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 										>
 											{{ cell?.content.id }}
@@ -292,16 +298,32 @@ onMounted(() => {
 	visibility: visible;
 	width: 100%;
 }
-
+.n-a-cell {
+	background-color: var(--surface-b);
+}
 .cell-input {
 	min-width: 8rem;
-	width: 100%;
-	padding-left: 12px;
+	padding-left: var(--gap-small);
+	padding-right: var(--gap);
 	margin-bottom: 0 !important;
 	font-feature-settings: 'tnum';
 	text-align: right;
+	height: 44px;
 }
 
+.big-cell-input {
+	height: 66px;
+}
+
+.mathml-container {
+	width: 100%;
+	text-align: right;
+}
+.mathml-container:deep(mn) {
+	font-family: var(--font-family);
+	font-feature-settings: 'tnum';
+	text-align: right !important;
+}
 .p-datatable-scrollable .p-frozen-column {
 	padding-right: 1rem;
 }
