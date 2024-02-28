@@ -27,7 +27,6 @@ const props = defineProps<{
 const emit = defineEmits(['open-drilldown']);
 
 const model = ref(null as Model | null);
-
 const updateModel = async () => {
 	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
 	if (modelId && modelId !== model?.value?.id) {

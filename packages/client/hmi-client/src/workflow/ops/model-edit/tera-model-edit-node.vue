@@ -18,8 +18,8 @@ import { ModelEditOperationState } from '@/workflow/ops/model-edit/model-edit-op
 import { onMounted, onUpdated, ref } from 'vue';
 import { Model } from '@/types/Types';
 import operator from '@/services/operator';
-import { getModel } from '@/services/model';
 import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
+import { getModel } from '@/services/model';
 
 const emit = defineEmits(['open-drilldown']);
 
@@ -28,7 +28,6 @@ const props = defineProps<{
 }>();
 
 const model = ref(null as Model | null);
-
 const updateModel = async () => {
 	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
 	if (modelId && modelId !== model?.value?.id) {
