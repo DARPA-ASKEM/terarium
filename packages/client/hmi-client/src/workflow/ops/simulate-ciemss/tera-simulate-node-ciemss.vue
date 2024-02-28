@@ -1,10 +1,13 @@
 <template>
 	<main>
-		{{ selectedRunId }}
 		<tera-simulate-chart
 			v-if="hasData"
 			:run-results="runResults[selectedRunId]"
-			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: ['S_state'] }"
+			:chartConfig="{
+				selectedRun: selectedRunId,
+				selectedVariable: props.node.state.chartConfigs[0]
+			}"
+			:size="{ width: 180, height: 120 }"
 			has-mean-line
 		/>
 
@@ -50,8 +53,10 @@ const hasData = ref(false);
 watch(
 	() => selectedRunId.value,
 	async () => {
+		if (!selectedRunId.value) return;
 		const output = await getRunResultCiemss(selectedRunId.value);
 		runResults.value[selectedRunId.value] = output.runResults;
+
 		hasData.value = true;
 	},
 	{ immediate: true }
