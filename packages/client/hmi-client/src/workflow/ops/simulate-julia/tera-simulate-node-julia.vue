@@ -3,7 +3,10 @@
 		<tera-simulate-chart
 			v-if="hasData"
 			:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
-			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: ['S'] }"
+			:chartConfig="{
+				selectedRun: selectedRunId,
+				selectedVariable: props.node.state.chartConfigs[0]
+			}"
 			:size="{ width: 180, height: 120 }"
 		/>
 
