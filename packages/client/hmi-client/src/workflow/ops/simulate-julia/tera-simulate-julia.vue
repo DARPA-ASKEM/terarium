@@ -120,13 +120,7 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type {
-	CsvAsset,
-	Model,
-	ModelConfiguration,
-	SimulationRequest,
-	TimeSpan
-} from '@/types/Types';
+import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -139,7 +133,6 @@ import {
 	querySimulationInProgress,
 	pollAction
 } from '@/services/models/simulation-service';
-import { getModel } from '@/services/model';
 import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
@@ -177,8 +170,6 @@ const viewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const model = ref<{ [runId: string]: Model | null }>({});
-const modelConfigurations = ref<{ [runId: string]: ModelConfiguration | null }>({});
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const showSpinner = ref(false);
@@ -205,18 +196,6 @@ const selectedRunId = computed(
 );
 
 const poller = new Poller();
-
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length === 1) {
-		// there should only be one run happening at a time
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -295,14 +274,11 @@ const lazyLoadSimulationData = async (runId: string) => {
 	// there's only a single input config
 	const modelConfigId = props.node.inputs[0].value?.[0];
 	const modelConfiguration = await getModelConfigurationById(modelConfigId);
-	modelConfigurations.value[runId] = modelConfiguration;
 
 	const resultCsv = await getRunResult(runId, 'result.csv');
 	const csvData = csvParse(resultCsv);
 
 	if (modelConfiguration) {
-		model.value[runId] = await getModel(modelConfiguration.model_id);
-
 		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
 		csvData.forEach((row) =>
 			parameters.forEach((parameter) => {
@@ -342,6 +318,18 @@ async function saveDatasetToProject() {
 		showSaveInput.value = false;
 	}
 }
+
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length === 1) {
+		// there should only be one run happening at a time
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 watch(
 	() => selectedRunId.value,
