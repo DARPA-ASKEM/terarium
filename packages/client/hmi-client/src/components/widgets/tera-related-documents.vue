@@ -126,7 +126,7 @@ import { isDocumentAsset } from '@/utils/data-util';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
-	documents?: Array<{ name: string | undefined; id: string | undefined }>;
+	documents: { name: string; id: string }[];
 	assetType: AssetType;
 	assetId: TerariumAsset['id'];
 }>();
@@ -269,9 +269,10 @@ watch(
 
 async function getRelatedDocuments() {
 	if (!props.assetType) return;
-	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 
+	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
+
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
 		ProvenanceType.Document
 	]);

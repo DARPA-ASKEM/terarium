@@ -36,12 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import { computed } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import type { CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
+import type { CsvAsset, Dataset, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { AcceptedExtensions, FeatureConfig } from '@/types/common';
+import { FeatureConfig } from '@/types/common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
@@ -77,23 +76,13 @@ const description = computed(() =>
 );
 const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
 
-const documents = computed(
+const documents = computed<{ name: string; id: string }[]>(
 	() =>
 		useProjects()
 			.getActiveProjectAssets(AssetType.Document)
-			.filter((document: DocumentAsset) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
-					(extension) => {
-						if (document.fileNames && !isEmpty(document.fileNames)) {
-							return document.fileNames[0]?.endsWith(extension);
-						}
-						return false;
-					}
-				)
-			)
-			.map((document: DocumentAsset) => ({
-				name: document.name,
-				id: document.id
+			.map((projectAsset: ProjectAsset) => ({
+				name: projectAsset.assetName,
+				id: projectAsset.assetId
 			})) ?? []
 );
 
