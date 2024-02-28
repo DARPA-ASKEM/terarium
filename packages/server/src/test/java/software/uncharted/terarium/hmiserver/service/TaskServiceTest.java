@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -124,7 +125,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		log.info(new String(responses.get(responses.size() - 1).getOutput()));
 	}
 
-	// @Test
+	static class AdditionalProps {
+		public String str;
+		public Integer num;
+	}
+
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 
@@ -137,6 +143,11 @@ public class TaskServiceTest extends TerariumApplicationTests {
 				("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}")
 						.getBytes());
 
+		AdditionalProps add = new AdditionalProps();
+		add.str = "this is my str";
+		add.num = 123;
+		req.setAdditionalProperties(add);
+
 		List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM);
 
 		Assertions.assertEquals(3, responses.size());
@@ -146,6 +157,10 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		for (TaskResponse resp : responses) {
 			Assertions.assertEquals(taskId, resp.getId());
+
+			AdditionalProps respAdd = resp.getAdditionalProperties(AdditionalProps.class);
+			Assertions.assertEquals(add.str, respAdd.str);
+			Assertions.assertEquals(add.num, respAdd.num);
 		}
 	}
 
