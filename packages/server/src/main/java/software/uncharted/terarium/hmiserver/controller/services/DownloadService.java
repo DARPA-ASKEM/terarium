@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,7 +25,7 @@ public class DownloadService {
 	 * @param relativeUrl the fragment
 	 * @param baseUrl     the base url
 	 * @return a fully qualified url
-	 * @throws URISyntaxException
+	 * @throws URISyntaxException if the url is not a valid URI
 	 */
 	private static String normalizeRelativeUrl(final String relativeUrl, final String baseUrl) throws URISyntaxException {
 		final URI uri = new URI(baseUrl);
@@ -37,7 +36,7 @@ public class DownloadService {
 	 * Checks if the given byte array is a PDF file
 	 *
 	 * @param data the byte array
-	 * @throws IOException
+	 * @throws IOException if the data is not a valid PDF
 	 */
 	public static Boolean IsPdf(final byte[] data) {
 		// check if data is null or less than 5 bytes
@@ -85,15 +84,17 @@ public class DownloadService {
 	 *
 	 * @param url the url location (that may contain redirects)
 	 * @return the pdf file
-	 * @throws IOException
-	 * @throws URISyntaxException
+	 * @throws IOException 			if the url is not reachable
+	 * @throws URISyntaxException if the url is not a valid URI
 	 */
-	public static byte[] getPDF(final String url) throws IOException, URISyntaxException {
+	public static byte[] getPDF(String url) throws IOException, URISyntaxException {
 		final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build();
 
-		final HttpGet get = new HttpGet(URLEncoder.encode(url, StandardCharsets.UTF_8));
+		url = url.replace(" ", "%20");
+
+		final HttpGet get = new HttpGet(url);
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document
@@ -139,15 +140,17 @@ public class DownloadService {
 	 *
 	 * @param url the url location (that may contain redirects)
 	 * @return the pdf url
-	 * @throws IOException
-	 * @throws URISyntaxException
+	 * @throws IOException 			if the url is not reachable
+	 * @throws URISyntaxException if the url is not a valid URI
 	 */
-	public static String getPDFURL(final String url) throws IOException, URISyntaxException {
+	public static String getPDFURL(String url) throws IOException, URISyntaxException {
 		final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
 			.build();
 
-		final HttpGet get = new HttpGet(URLEncoder.encode(url, StandardCharsets.UTF_8));
+		url = url.replace(" ", "%20");
+
+		final HttpGet get = new HttpGet(url);
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document
