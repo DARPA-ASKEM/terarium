@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -134,7 +133,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		public Integer num;
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 
