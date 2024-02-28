@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -150,11 +149,8 @@ public class GoLLMController {
 				documentAssetService.updateAsset(document);
 			} catch (final Exception e) {
 				log.error("Failed to write model card to database", e);
+				throw new RuntimeException(e);
 			}
-		});
-
-		handler.onRunning((TaskResponse resp) -> {
-			log.info(resp.toString());
 		});
 		return handler;
 	}
@@ -170,7 +166,7 @@ public class GoLLMController {
 						ConfigureModelResponse.class);
 
 				// For each configuration, create a new model configuration with parameters set
-				configurations.response.get("conditions").forEach((condition) -> {
+				for (JsonNode condition : configurations.response.get("conditions")) {
 					// Map the parameters values to the model
 					final Model modelCopy = new Model(model);
 					final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
@@ -190,26 +186,22 @@ public class GoLLMController {
 					configuration.setDescription(condition.get("description").asText());
 					configuration.setConfiguration(modelCopy);
 
-					try {
-						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
-						// add provenance
-						provenanceService.createProvenance(new Provenance()
-								.setLeft(newConfig.getId())
-								.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-								.setRight(props.documentId)
-								.setRightType(ProvenanceType.DOCUMENT)
-								.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-					} catch (IOException e) {
-						log.error("Failed to set model configuration", e);
-					}
-				});
+					final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+					// add provenance
+					provenanceService.createProvenance(new Provenance()
+							.setLeft(newConfig.getId())
+							.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+							.setRight(props.documentId)
+							.setRightType(ProvenanceType.DOCUMENT)
+							.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+				}
 
 			} catch (final Exception e) {
 				log.error("Failed to configure model", e);
+				throw new RuntimeException(e);
 			}
 			log.info("Model configured successfully");
 		});
-
 		return handler;
 	}
 
@@ -226,7 +218,7 @@ public class GoLLMController {
 						ConfigureModelResponse.class);
 
 				// For each configuration, create a new model configuration with parameters set
-				configurations.response.get("conditions").forEach((condition) -> {
+				for (JsonNode condition : configurations.response.get("conditions")) {
 					// Map the parameters values to the model
 					final Model modelCopy = new Model(model);
 					final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
@@ -246,29 +238,24 @@ public class GoLLMController {
 					configuration.setDescription(condition.get("description").asText());
 					configuration.setConfiguration(modelCopy);
 
-					try {
-						for (UUID datasetId : props.datasetIds) {
-							final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
-							// add provenance
-							provenanceService.createProvenance(new Provenance()
-									.setLeft(newConfig.getId())
-									.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-									.setRight(datasetId)
-									.setRightType(ProvenanceType.DATASET)
-									.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-						}
-
-					} catch (IOException e) {
-						log.error("Failed to set model configuration", e);
+					for (UUID datasetId : props.datasetIds) {
+						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+						// add provenance
+						provenanceService.createProvenance(new Provenance()
+								.setLeft(newConfig.getId())
+								.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+								.setRight(datasetId)
+								.setRightType(ProvenanceType.DATASET)
+								.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
 					}
-				});
+				}
 
-			} catch (final Exception e) {
+			} catch (Exception e) {
 				log.error("Failed to configure model", e);
+				throw new RuntimeException(e);
 			}
 			log.info("Model configured successfully");
 		});
-
 		return handler;
 	}
 
