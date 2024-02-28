@@ -142,27 +142,6 @@
 					</template>
 					<AccordionTab>
 						<template #header>
-							Initial variable values<span class="artifact-amount"
-								>({{ tableFormattedInitials.length }})</span
-							>
-						</template>
-						<tera-model-config-table
-							v-if="modelConfiguration && tableFormattedInitials.length > 0"
-							:model-configuration="modelConfiguration"
-							:data="tableFormattedInitials"
-							@update-value="updateConfigInitial"
-							@update-configuration="
-								(configToUpdate: ModelConfiguration) => {
-									updateFromConfig(configToUpdate);
-								}
-							"
-						/>
-						<section v-else>
-							<p class="empty-section">No initial values found.</p>
-						</section>
-					</AccordionTab>
-					<AccordionTab>
-						<template #header>
 							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
 						</template>
 						<tera-model-config-table
