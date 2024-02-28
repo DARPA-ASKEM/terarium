@@ -172,3 +172,15 @@ export async function generateModelCard(
 		await modelCard(documentId);
 	}
 }
+
+// helper fucntion to get the model type, will always default to petrinet if the model is not found
+export function getModelType(model: Model | null | undefined): AMRSchemaNames {
+	const schemaName = model?.header?.schema_name?.toLowerCase();
+	if (schemaName === 'regnet') {
+		return AMRSchemaNames.REGNET;
+	}
+	if (schemaName === 'stockflow') {
+		return AMRSchemaNames.STOCKFLOW;
+	}
+	return AMRSchemaNames.PETRINET;
+}

@@ -1,16 +1,18 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.ImmutableList;
-import com.google.common.math.Quantiles;
-import com.google.common.math.Stats;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -28,12 +30,42 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableList;
+import com.google.common.math.Quantiles;
+import com.google.common.math.Stats;
+
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
-import software.uncharted.terarium.hmiserver.models.dataservice.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
@@ -44,13 +76,6 @@ import ucar.ma2.Array;
 import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RequestMapping("/datasets")
 @RestController
@@ -65,6 +90,8 @@ public class DatasetController {
 
 	final JsDelivrProxy githubProxy;
 
+	private final List<String> SEARCH_FIELDS = List.of("name", "description");
+
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all datasets")
@@ -75,10 +102,57 @@ public class DatasetController {
 	})
 	public ResponseEntity<List<Dataset>> getDatasets(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page,
+			@RequestParam(name = "terms", defaultValue = "", required = false) final String terms) {
 		try {
-			return ResponseEntity.ok(datasetService.getAssets(page, pageSize));
-		} catch (final IOException e) {
+
+			List<String> ts = new ArrayList<>();
+			if (terms != null && !terms.isEmpty()) {
+				ts = Arrays.asList(terms.split("[,\\s]"));
+			}
+
+			Query query = null;
+
+			if (ts.size() > 0) {
+
+				List<FieldValue> values = new ArrayList<>();
+				for (String term : ts) {
+					values.add(FieldValue.of(term));
+				}
+
+				TermsQueryField termsQueryField = new TermsQueryField.Builder()
+						.value(values)
+						.build();
+
+				List<TermsQuery> shouldQueries = new ArrayList<>();
+
+				for (String field : SEARCH_FIELDS) {
+
+					TermsQuery termsQuery = new TermsQuery.Builder()
+							.field(field)
+							.terms(termsQueryField)
+							.build();
+
+					shouldQueries.add(termsQuery);
+				}
+
+				query = new Query.Builder()
+						.bool(b -> {
+							shouldQueries.forEach(sq -> b.should(s -> s.terms(sq)));
+							return b;
+						})
+						.build();
+			}
+
+			if (query == null) {
+				return ResponseEntity.ok(datasetService.getAssets(page, pageSize));
+			} else {
+				return ResponseEntity.ok(datasetService.getAssets(page, pageSize, query));
+			}
+
+		} catch (
+
+		final IOException e) {
 			final String error = "Unable to get datasets";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -309,7 +383,7 @@ public class DatasetController {
 		// download CSV from github
 		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 
-		if(csvString == null) {
+		if (csvString == null) {
 			final String error = "Unable to download csv from github";
 			log.error(error);
 			throw new ResponseStatusException(
@@ -382,7 +456,7 @@ public class DatasetController {
 			if (res.getStatusCode() == HttpStatus.OK) {
 				// add the filename to existing file names
 				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
-				if(updatedDataset.isEmpty()) {
+				if (updatedDataset.isEmpty()) {
 					final String error = "Failed to get dataset after upload";
 					log.error(error);
 					throw new ResponseStatusException(
@@ -568,27 +642,28 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a preview of the data asset")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Dataset preview.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
-		@ApiResponse(responseCode = "404", description = "Dataset could not be found to create a preview for", content = @Content),
-		@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
-		@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Dataset preview.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
+			@ApiResponse(responseCode = "404", description = "Dataset could not be found to create a preview for", content = @Content),
+			@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
 	})
 	public ResponseEntity<JsonNode> getPreview(
-		@PathVariable("id") final UUID id,
-		@RequestParam("filename") final String filename) {
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
 
 		try {
 			if (filename.endsWith(".nc")) {
 				return climateDataProxy.previewEsgf(id.toString(), null, null, null);
 			} else {
 				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
-				// TODO: This attempts to check the file, but fails to open the file, might need to write a NetcdfFiles Stream reader
+				// TODO: This attempts to check the file, but fails to open the file, might need
+				// to write a NetcdfFiles Stream reader
 				try (NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
 					ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
 					for (Attribute attribute : globalAttributes) {
 						String name = attribute.getName();
 						Array values = attribute.getValues();
-						//				log.info("[{},{}]", name, values);
+						// log.info("[{},{}]", name, values);
 					}
 					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
 				} catch (IOException ioe) {
@@ -599,8 +674,8 @@ public class DatasetController {
 			final String error = "Unable to get download url";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 }
