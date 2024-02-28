@@ -369,6 +369,7 @@ public class ElasticsearchService {
 			final Query query,
 			final Integer page,
 			final Integer pageSize,
+			final List<String> excludes,
 			final Class<T> tClass)
 			throws IOException {
 		log.info("KNN search on: {}", index);
@@ -376,6 +377,7 @@ public class ElasticsearchService {
 		SearchRequest.Builder builder = new SearchRequest.Builder()
 				.index(index)
 				.from(page)
+				.source(s -> s.filter(f -> f.excludes(excludes)))
 				.size(pageSize);
 
 		if (knn != null) {

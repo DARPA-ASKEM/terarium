@@ -32,7 +32,7 @@
 								class="p-inputtext-sm"
 								v-model="numSamples"
 								inputId="integeronly"
-								:min="2"
+								:min="1"
 								@update:model-value="updateState"
 							/>
 						</div>

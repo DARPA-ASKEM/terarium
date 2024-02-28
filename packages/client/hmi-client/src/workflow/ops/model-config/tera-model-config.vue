@@ -13,25 +13,14 @@
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
 				<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="pb-6">
-					<AccordionTab header="Context">
-						<p class="text-sm mb-1">Name</p>
-						<InputText
-							class="context-item"
-							placeholder="Enter a name for this configuration"
-							v-model="knobs.name"
-						/>
-						<p class="text-sm mb-1 mt-3">Description</p>
-						<Textarea
-							class="context-item"
-							placeholder="Enter a description"
-							v-model="knobs.description"
-						/>
-					</AccordionTab>
-					<AccordionTab v-if="model" header="Suggested Configurations">
+					<AccordionTab v-if="model">
 						<template #header>
+							Suggested configurations<span class="artifact-amount"
+								>({{ suggestedConfirgurationContext.tableData.length }})</span
+							>
 							<Button
 								outlined
-								label="Extract configurations from document"
+								label="Extract configurations from a document"
 								size="small"
 								icon="pi pi-cog"
 								@click.stop="extractConfigurations"
@@ -41,10 +30,11 @@
 						</template>
 
 						<DataTable
+							v-if="suggestedConfirgurationContext.tableData.length > 0"
 							:value="suggestedConfirgurationContext.tableData"
 							size="small"
 							data-key="id"
-							paginator
+							:paginator="suggestedConfirgurationContext.tableData.length > 5"
 							:rows="5"
 							sort-field="createdOn"
 							:sort-order="-1"
@@ -90,13 +80,35 @@
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 							</template>
 						</DataTable>
+						<section v-else>
+							<p class="empty-section">No configurations found.</p>
+						</section>
+					</AccordionTab>
+					<AccordionTab header="Context">
+						<p class="text-sm mb-1">Name</p>
+						<InputText
+							class="context-item"
+							placeholder="Enter a name for this configuration"
+							v-model="knobs.name"
+						/>
+						<p class="text-sm mb-1 mt-3">Description</p>
+						<Textarea
+							class="context-item"
+							placeholder="Enter a description"
+							v-model="knobs.description"
+						/>
 					</AccordionTab>
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
-					<AccordionTab header="Initials">
+					<AccordionTab>
+						<template #header>
+							Initial variable values<span class="artifact-amount"
+								>({{ tableFormattedInitials.length }})</span
+							>
+						</template>
 						<tera-model-config-table
-							v-if="modelConfiguration"
+							v-if="modelConfiguration && tableFormattedInitials.length > 0"
 							:model-configuration="modelConfiguration"
 							:data="tableFormattedInitials"
 							@update-value="updateConfigInitial"
@@ -106,10 +118,16 @@
 								}
 							"
 						/>
+						<section v-else>
+							<p class="empty-section">No initial values found.</p>
+						</section>
 					</AccordionTab>
-					<AccordionTab header="Parameters">
+					<AccordionTab>
+						<template #header>
+							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
+						</template>
 						<tera-model-config-table
-							v-if="modelConfiguration"
+							v-if="modelConfiguration && tableFormattedParams.length > 0"
 							:model-configuration="modelConfiguration"
 							:data="tableFormattedParams"
 							@update-value="updateConfigParam"
@@ -119,17 +137,21 @@
 								}
 							"
 						/>
+						<section v-else>
+							<p class="empty-section">No parameters found.</p>
+						</section>
 					</AccordionTab>
 				</Accordion>
 				<template #footer>
 					<Button
 						outlined
+						size="large"
 						:disabled="isSaveDisabled"
 						label="Run"
 						icon="pi pi-play"
 						@click="createConfiguration"
 					/>
-					<Button style="margin-left: auto" label="Close" @click="emit('close')" />
+					<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-section>
 		</section>
@@ -141,7 +163,7 @@
 						label="Run"
 						outlined
 						severity="secondary"
-						size="small"
+						size="large"
 						@click="runFromCode"
 					/>
 				</div>
@@ -759,6 +781,17 @@ onUnmounted(() => {
 	gap: var(--gap);
 }
 
+.artifact-amount {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
+}
+.empty-section {
+	color: var(--text-color-subdued);
+}
+.p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
+	padding: 0;
+}
 .context-item {
 	width: 100%;
 }
