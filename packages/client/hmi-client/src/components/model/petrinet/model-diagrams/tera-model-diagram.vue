@@ -124,7 +124,9 @@ const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
-const modelType = computed(() => props.model?.header?.schema_name ?? AMRSchemaNames.PETRINET);
+const modelType = computed(
+	() => props.model?.header?.schema_name?.toLowerCase() ?? AMRSchemaNames.PETRINET
+);
 const templatePreview = ref('');
 const isGeneratingModelPreview = ref(false);
 
