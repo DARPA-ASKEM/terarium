@@ -258,19 +258,20 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		UUID taskId = UUID.randomUUID();
 
-		ClassPathResource datasetResource = new ClassPathResource("gollm/Epi Sc 4 Interaction matrix.csv");
-		String dataset = new String(Files.readAllBytes(datasetResource.getFile().toPath()));
+		ClassPathResource datasetResource1 = new ClassPathResource("gollm/Epi Sc 4 Interaction matrix.csv");
+		String dataset1 = new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
+		ClassPathResource datasetResource2 = new ClassPathResource("gollm/other-dataset.csv");
+		String dataset2 = new String(Files.readAllBytes(datasetResource2.getFile().toPath()));
 
 		ClassPathResource amrResource = new ClassPathResource("gollm/scenario4_4spec_regnet_empty.json");
 		String amr = new String(Files.readAllBytes(amrResource.getFile().toPath()));
 		JsonNode amrJson = new ObjectMapper().readTree(amr);
 
-		String content = "{\"datasets\": [\"" + dataset.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n"))
+		String content = "{\"datasets\": ["
+				+ "\"" + dataset1.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")) + "\","
+				+ "\"" + dataset2.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n"))
 				+ "\"], \"amr\":"
 				+ amrJson.toString() + "}";
-
-		JsonNode json = new ObjectMapper().readTree(content);
-		log.info(json.toPrettyString());
 
 		TaskRequest req = new TaskRequest();
 		req.setId(taskId);
