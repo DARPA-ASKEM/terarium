@@ -23,6 +23,12 @@
 					<span class="p-button-label">{{ option.value }}</span>
 				</template>
 			</SelectButton>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</template>
 		<Accordion
 			v-if="view === DocumentView.EXTRACTIONS"
@@ -119,7 +125,7 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { DocumentAsset } from '@/types/Types';
-import { ExtractionAssetType } from '@/types/Types';
+import { AssetType, ExtractionAssetType } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
@@ -129,6 +135,10 @@ import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import { useProjects } from '@/composables/project';
+import { logger } from '@/utils/logger';
+import Button from 'primevue/button';
+import ContextMenu from 'primevue/contextmenu';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -186,7 +196,37 @@ const equations = computed(
 		[]
 );
 
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						const response = await useProjects().addAsset(
+							AssetType.Document,
+							props.assetId,
+							project.id
+						);
+						if (response) logger.info(`Added asset to ${project.name}`);
+						else logger.error('Failed to add asset to project');
+					}
+				})) ?? []
+	}
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
+]);
+
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
