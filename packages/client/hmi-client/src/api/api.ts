@@ -1,11 +1,6 @@
 import { ToastSummaries } from '@/services/toast';
 import { logger } from '@/utils/logger';
 import axios, { AxiosHeaders } from 'axios';
-// import {
-// 	EventSourceMessage,
-// 	FetchEventSourceInit,
-// 	fetchEventSource
-// } from '@microsoft/fetch-event-source';
 import { EventSource } from 'extended-eventsource';
 import useAuthStore from '../stores/auth';
 
