@@ -816,7 +816,7 @@ export interface OptimizeExtra {
     inferredParameters?: string;
     maxiter: number;
     maxfeval: number;
-    _minimized: boolean;
+    isMinimized?: boolean;
 }
 
 export interface OptimizedIntervention {

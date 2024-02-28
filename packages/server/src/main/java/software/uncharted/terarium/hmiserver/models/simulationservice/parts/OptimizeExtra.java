@@ -19,6 +19,7 @@ public class OptimizeExtra implements Serializable {
 	private String inferredParameters;
 	private int maxiter;
 	private int maxfeval;
+	@JsonAlias("is_minimized")
 	@TSOptional
-	private boolean is_minimized;
+	private Boolean isMinimized;
 }
