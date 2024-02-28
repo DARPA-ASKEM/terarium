@@ -101,7 +101,12 @@
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
-					<AccordionTab header="Initials">
+					<AccordionTab>
+						<template #header>
+							Initial variable values<span class="artifact-amount"
+								>({{ tableFormattedInitials.length }})</span
+							>
+						</template>
 						<tera-model-config-table
 							v-if="modelConfiguration"
 							:model-configuration="modelConfiguration"
@@ -114,7 +119,10 @@
 							"
 						/>
 					</AccordionTab>
-					<AccordionTab header="Parameters">
+					<AccordionTab>
+						<template #header>
+							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
+						</template>
 						<tera-model-config-table
 							v-if="modelConfiguration"
 							:model-configuration="modelConfiguration"
