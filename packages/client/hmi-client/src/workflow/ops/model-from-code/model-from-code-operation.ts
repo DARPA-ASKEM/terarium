@@ -18,7 +18,7 @@ export const ModelFromCodeOperation: Operation = {
 	isRunnable: true,
 	inputs: [
 		{ type: 'codeAssetId', label: 'Code' },
-		{ type: 'documentId', label: 'Text' }
+		{ type: 'documentId', label: 'Document' }
 	],
 	outputs: [],
 	action: () => {},

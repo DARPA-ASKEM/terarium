@@ -28,7 +28,7 @@
 							option-label="label"
 						/>
 						<div class="toggles">
-							<span>
+							<span v-if="assetType === AssetType.Document">
 								<label>Source</label>
 								<Dropdown v-model="chosenSource" :options="sourceOptions" />
 							</span>

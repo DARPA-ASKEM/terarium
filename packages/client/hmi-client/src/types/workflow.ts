@@ -18,6 +18,7 @@ export enum WorkflowOperationTypes {
 	MODEL_FROM_CODE = 'ModelFromCode',
 	FUNMAN = 'Funman',
 	CODE = 'Code',
+	MODEL_COMPARISON = 'ModelComparison',
 	MODEL_CONFIG = 'ModelConfiguraiton',
 	OPTIMIZE_CIEMSS = 'OptimizeCiemss',
 	MODEL_COUPLING = 'ModelCoupling',

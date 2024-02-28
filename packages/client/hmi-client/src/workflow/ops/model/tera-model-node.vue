@@ -8,7 +8,7 @@
 				@change="if ($event.value) view = $event.value;"
 				:options="viewOptions"
 			/>
-			<div class="container">
+			<div class="container" v-if="model">
 				<tera-model-diagram
 					v-if="view === ModelNodeView.Diagram"
 					:model="model"

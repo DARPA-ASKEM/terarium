@@ -28,7 +28,7 @@ repositories {
 dependencies {
     implementation 'org.springframework:spring-web'
     implementation 'co.elastic.clients:elasticsearch-java:8.8.1'
-    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.1'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.18'
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
     implementation 'commons-io:commons-io:2.8.0'
