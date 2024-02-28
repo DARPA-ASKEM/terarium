@@ -765,7 +765,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     interventions?: OptimizedIntervention[];
-    stepSize: number;
+    stepSize?: number;
     qoi: string[];
     riskBound: number;
     initialGuessInterventions: number[];
@@ -814,8 +814,8 @@ export interface Intervention {
 export interface OptimizeExtra {
     numSamples: number;
     inferredParameters?: string;
-    maxiter: number;
-    maxfeval: number;
+    maxiter?: number;
+    maxfeval?: number;
     isMinimized?: boolean;
 }
 

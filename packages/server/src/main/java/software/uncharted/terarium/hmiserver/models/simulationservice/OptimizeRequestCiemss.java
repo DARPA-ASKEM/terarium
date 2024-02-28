@@ -24,6 +24,7 @@ public class OptimizeRequestCiemss implements Serializable {
 	@TSOptional
 	private List<OptimizedIntervention> interventions;
 	@JsonAlias("step_size")
+	@TSOptional
 	private Float stepSize;
 	private List<String> qoi;
 	@JsonAlias("risk_bound")

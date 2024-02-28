@@ -17,7 +17,9 @@ public class OptimizeExtra implements Serializable {
 	@JsonAlias("inferred_parameters")
 	@TSOptional
 	private String inferredParameters;
+	@TSOptional
 	private int maxiter;
+	@TSOptional
 	private int maxfeval;
 	@JsonAlias("is_minimized")
 	@TSOptional

@@ -34,9 +34,9 @@
 					<InputText
 						:disabled="true"
 						:style="{ width: '100%' }"
-						v-model="timeSamples"
+						v-model="timespan"
 						:readonly="true"
-						:value="timeSamples"
+						:value="timespan"
 					/>
 					<div>
 						<Button
@@ -117,7 +117,11 @@
 						</div>
 						<div class="label-and-input">
 							<label for="num-days">Over number of days</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numDays" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numSamples"
+							/>
 						</div>
 					</div>
 					<div class="constraint-row">
@@ -187,14 +191,22 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { makeOptimizeJobCiemss } from '@/services/models/simulation-service';
+import {
+	makeOptimizeJobCiemss,
+	makeForecastJobCiemss,
+	simulationPollAction
+} from '@/services/models/simulation-service';
 import {
 	ModelConfiguration,
 	Model,
 	State,
 	ModelParameter,
-	OptimizeRequestCiemss
+	OptimizeRequestCiemss,
+	SimulationRequest,
+	ProgressState
 } from '@/types/Types';
+import { Poller, PollerState } from '@/api/api';
+import { logger } from '@/utils/logger';
 import {
 	OptimizeCiemssOperationState,
 	InterventionPolicyGroup,
@@ -221,7 +233,7 @@ interface BasicKnobs {
 	solverMethod: string;
 	targetVariables: string[];
 	statistic: string;
-	numDays: number;
+	numSamples: number;
 	riskTolerance: number;
 	aboveOrBelow: string;
 	threshold: number;
@@ -229,18 +241,23 @@ interface BasicKnobs {
 
 const knobs = ref<BasicKnobs>({
 	startTime: props.node.state.startTime ?? 0,
-	endTime: props.node.state.endTime ?? 0,
+	endTime: props.node.state.endTime ?? 1,
 	numTimePoints: props.node.state.numTimePoints ?? 0,
 	timeUnit: props.node.state.timeUnit ?? '',
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '',
 	targetVariables: props.node.state.targetVariables ?? [],
 	statistic: props.node.state.statistic ?? '',
-	numDays: props.node.state.numDays ?? 0,
+	numSamples: props.node.state.numSamples ?? 1,
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	aboveOrBelow: props.node.state.aboveOrBelow ?? '',
 	threshold: props.node.state.threshold ?? 0
 });
+
+const showSpinner = ref(false);
+const poller = new Poller();
+const progress = ref({ status: ProgressState.Retrieving, value: 0 });
+const completedRunId = ref<string>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateOptions = ref<State[]>([]);
@@ -248,7 +265,7 @@ const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
 
-const timeSamples = computed<string>(() => {
+const timespan = computed<string>(() => {
 	const samples: number[] = [];
 	const timeStep = (knobs.value.endTime - knobs.value.startTime) / (knobs.value.numTimePoints - 1);
 	for (let i = 0; i < knobs.value.numTimePoints; i++) {
@@ -302,29 +319,134 @@ const runOptimize = async () => {
 		return;
 	}
 
-	const test: OptimizeRequestCiemss = {
-		userId: 'no_user_provided',
+	// TOM TODO set proper payload
+	// const optimizePayload: OptimizeRequestCiemss = {
+	// 	userId: 'no_user_provided',
+	// 	engine: 'ciemss',
+	// 	modelConfigId: modelConfiguration.value.id,
+	// 	timespan: {
+	// 		start: knobs.value.startTime,
+	// 		end: knobs.value.endTime
+	// 	},
+	// 	interventions: [{name: "beta", timestep: 1}],
+	// 	stepSize: 1,
+	// 	qoi: knobs.value.targetVariables,
+	// 	riskBound: knobs.value.riskTolerance,
+	// 	initialGuessInterventions: [0],
+	// 	boundsInterventions: [[0]],
+	// 	extra: {
+	// 		numSamples: 100,
+	// 		// inferredParameters: 'string',
+	// 		maxiter: 5,
+	// 		maxfeval: 5
+	// 	}
+	// };
+
+	const sampleTest: OptimizeRequestCiemss = {
 		engine: 'ciemss',
+		userId: 'not_provided',
+		modelConfigId: '3c35c95c-c44c-41e7-a30a-8af7fd444d6f',
+		interventions: [
+			{
+				timestep: 1.0,
+				name: 'beta'
+			}
+		],
+		timespan: {
+			start: 0,
+			end: 90
+		},
+		qoi: ['Infected'],
+		riskBound: 10.0,
+		initialGuessInterventions: [1.0],
+		boundsInterventions: [[0.0], [3.0]],
+		extra: {
+			numSamples: 4,
+			isMinimized: true
+		}
+	};
+
+	const optResult = await makeOptimizeJobCiemss(sampleTest);
+	// TOM TODO: Use getStatus and get run results. Will need them.
+	// policy.json, optimize_results.dill
+
+	console.log(optResult);
+
+	// TOM TODO:
+	const simulationPayload: SimulationRequest = {
+		projectId: '',
 		modelConfigId: modelConfiguration.value.id,
 		timespan: {
 			start: knobs.value.startTime,
 			end: knobs.value.endTime
 		},
-		interventions: [[1, 'beta']],
-		stepSize: 1,
-		qoi: knobs.value.targetVariables,
-		riskBound: knobs.value.riskTolerance,
-		initialGuessInterventions: [0],
-		boundsInterventions: [[0]],
 		extra: {
-			numSamples: 100,
-			// inferredParameters: 'string',
-			maxiter: 5,
-			maxfeval: 5
-		}
+			num_samples: knobs.value.numSamples,
+			method: knobs.value.solverMethod
+		},
+		engine: 'ciemss'
 	};
 
-	console.log(await makeOptimizeJobCiemss(test));
+	// if (inferredParameters.value) {
+	// 	payload.extra.inferred_parameters = inferredParameters.value[0];
+	// }
+
+	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
+	console.log('Simulation Response:');
+	console.log(simulationResponse);
+	getStatus(simulationResponse.id);
+};
+
+const getStatus = async (runId: string) => {
+	showSpinner.value = true;
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => simulationPollAction([runId], props.node, progress, emit));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		showSpinner.value = false;
+		return;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		showSpinner.value = false;
+		logger.error(`Simulation: ${runId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+		throw Error('Failed Runs');
+	}
+
+	completedRunId.value = runId;
+	showSpinner.value = false;
+};
+
+const watchCompletedRunId = async (runId: string) => {
+	console.log('Watch completed run ID:');
+	console.log(runId);
+	// TOM TODO:
+	// if (!runId) return;
+
+	// const state = _.cloneDeep(props.node.state);
+	// if (state.chartConfigs.length === 0) {
+	// 	addChart();
+	// }
+
+	// const sim = await getSimulation(runId);
+
+	// emit('append-output', {
+	// 	type: OptimizeCiemssOperation.outputs[0].type,
+	// 	label: `Output - ${props.node.outputs.length + 1}`,
+	// 	value: runId,
+	// 	state: {
+	// 		currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
+	// 		numSamples: sim?.executionPayload.extra.num_samples ?? knobs.value.numSamples,
+	// 		method: sim?.executionPayload.extra.method ?? knobs.value.solverMethod,
+	// 		simulationsInProgress: state.simulationsInProgress
+	// 	},
+	// 	isSelected: false
+	// });
 };
 
 const saveModel = () => {
@@ -347,7 +469,7 @@ watch(
 		state.solverMethod = knobs.value.solverMethod;
 		state.targetVariables = knobs.value.targetVariables;
 		state.statistic = knobs.value.statistic;
-		state.numDays = knobs.value.numDays;
+		state.numSamples = knobs.value.numSamples;
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.aboveOrBelow = knobs.value.aboveOrBelow;
 		state.threshold = knobs.value.threshold;
@@ -355,6 +477,8 @@ watch(
 	},
 	{ deep: true }
 );
+
+watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
 </script>
 
 <style scoped>

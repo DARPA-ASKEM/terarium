@@ -25,7 +25,7 @@ export interface OptimizeCiemssOperationState {
 	// Constraints
 	targetVariables: string[];
 	statistic: string;
-	numDays: number;
+	numSamples: number;
 	riskTolerance: number;
 	aboveOrBelow: string;
 	threshold: number;
@@ -44,7 +44,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 };
 
 export const OptimizeCiemssOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_OPTIMIZE,
+	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
 	description: 'Optimize a model',
 	displayName: 'Optimize model',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
@@ -62,7 +62,7 @@ export const OptimizeCiemssOperation: Operation = {
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
 			statistic: '',
-			numDays: 0,
+			numSamples: 0,
 			riskTolerance: 0,
 			aboveOrBelow: '',
 			threshold: 0
