@@ -335,7 +335,7 @@ const runOptimize = async () => {
 	// 	initialGuessInterventions: [0],
 	// 	boundsInterventions: [[0]],
 	// 	extra: {
-	// 		numSamples: 100,
+	// 		numSamples: knobs.value.numSamples,
 	// 		// inferredParameters: 'string',
 	// 		maxiter: 5,
 	// 		maxfeval: 5
@@ -371,8 +371,8 @@ const runOptimize = async () => {
 	// policy.json, optimize_results.dill
 
 	console.log(optResult);
+	const policyResult = 1.0; // TOM TODO, read policy.json for value
 
-	// TOM TODO:
 	const simulationPayload: SimulationRequest = {
 		projectId: '',
 		modelConfigId: modelConfiguration.value.id,
@@ -382,14 +382,11 @@ const runOptimize = async () => {
 		},
 		extra: {
 			num_samples: knobs.value.numSamples,
-			method: knobs.value.solverMethod
+			method: knobs.value.solverMethod,
+			inferredParameters: policyResult
 		},
 		engine: 'ciemss'
 	};
-
-	// if (inferredParameters.value) {
-	// 	payload.extra.inferred_parameters = inferredParameters.value[0];
-	// }
 
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
 	console.log('Simulation Response:');
@@ -422,12 +419,8 @@ const getStatus = async (runId: string) => {
 	showSpinner.value = false;
 };
 
-const watchCompletedRunId = async (runId: string) => {
-	console.log('Watch completed run ID:');
-	console.log(runId);
-	// TOM TODO:
-	// if (!runId) return;
-
+const saveModel = () => {
+	console.log('save model');
 	// const state = _.cloneDeep(props.node.state);
 	// if (state.chartConfigs.length === 0) {
 	// 	addChart();
@@ -447,10 +440,6 @@ const watchCompletedRunId = async (runId: string) => {
 	// 	},
 	// 	isSelected: false
 	// });
-};
-
-const saveModel = () => {
-	console.log('save model');
 };
 
 onMounted(async () => {
@@ -477,8 +466,6 @@ watch(
 	},
 	{ deep: true }
 );
-
-watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
 </script>
 
 <style scoped>
