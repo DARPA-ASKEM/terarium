@@ -29,6 +29,7 @@ export interface OptimizeCiemssOperationState {
 	riskTolerance: number;
 	aboveOrBelow: string;
 	threshold: number;
+	isMinimized: boolean;
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -65,7 +66,8 @@ export const OptimizeCiemssOperation: Operation = {
 			numSamples: 0,
 			riskTolerance: 0,
 			aboveOrBelow: '',
-			threshold: 0
+			threshold: 0,
+			isMinimized: true
 		};
 		return init;
 	}

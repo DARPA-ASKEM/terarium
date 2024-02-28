@@ -55,6 +55,7 @@
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of stochastic samples</label>
+							<!-- TOM TODO Add isMinimized dropdown for this -->
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
@@ -169,7 +170,7 @@
 				icon="pi pi-play"
 				@click="runOptimize"
 			/>
-			<Button outlined label="Save as a new model" @click="saveModel" />
+			<Button outlined label="Save as a new model configuration" @click="saveModelConfiguration" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -237,6 +238,7 @@ interface BasicKnobs {
 	riskTolerance: number;
 	aboveOrBelow: string;
 	threshold: number;
+	isMinimized: boolean;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -251,7 +253,8 @@ const knobs = ref<BasicKnobs>({
 	numSamples: props.node.state.numSamples ?? 1,
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	aboveOrBelow: props.node.state.aboveOrBelow ?? '',
-	threshold: props.node.state.threshold ?? 0
+	threshold: props.node.state.threshold ?? 0,
+	isMinimized: props.node.state.isMinimized ?? true
 });
 
 const showSpinner = ref(false);
@@ -367,11 +370,12 @@ const runOptimize = async () => {
 	};
 
 	const optResult = await makeOptimizeJobCiemss(sampleTest);
+	// await getStatus(optResult.id);
 	// TOM TODO: Use getStatus and get run results. Will need them.
 	// policy.json, optimize_results.dill
 
 	console.log(optResult);
-	const policyResult = 1.0; // TOM TODO, read policy.json for value
+	const policyResult = [1.0]; // TOM TODO, read policy.json for value
 
 	const simulationPayload: SimulationRequest = {
 		projectId: '',
@@ -414,13 +418,18 @@ const getStatus = async (runId: string) => {
 		});
 		throw Error('Failed Runs');
 	}
-
 	completedRunId.value = runId;
 	showSpinner.value = false;
 };
 
-const saveModel = () => {
-	console.log('save model');
+const saveModelConfiguration = () => {
+	console.log('save model Configuration');
+	// This will be a model configuration
+	// that is essentially a duplicate of the inpiut model config
+	// But there will be changes to the model configuration parameter values.
+	// These changes will come from the intervention policy (aka policy.json)
+	// follow this thread: https://askemgroup.slack.com/archives/C03U5FBRSQG/p1709139052459319
+
 	// const state = _.cloneDeep(props.node.state);
 	// if (state.chartConfigs.length === 0) {
 	// 	addChart();
