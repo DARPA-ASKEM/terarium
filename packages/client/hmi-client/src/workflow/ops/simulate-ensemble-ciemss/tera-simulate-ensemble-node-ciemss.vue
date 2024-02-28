@@ -9,6 +9,7 @@
 					:chartConfig="cfg"
 					has-mean-line
 					@configuration-change="chartConfigurationChange(index, $event)"
+					:size="{ width: 190, height: 120 }"
 				/>
 			</template>
 			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
