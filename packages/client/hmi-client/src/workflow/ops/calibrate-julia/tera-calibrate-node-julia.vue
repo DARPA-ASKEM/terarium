@@ -53,6 +53,8 @@ watch(
 
 		// FIXME: outdated, don't need tos upport multiple runs
 		simulationId.value = props.node.outputs.find((d) => d.id === active)?.value?.[0];
+		if (!simulationId.value) return;
+
 		const result = await getRunResultJulia(simulationId.value, 'result.json');
 		if (!result) return;
 
