@@ -1,4 +1,4 @@
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { isEmpty } from 'lodash';
 
 /**
@@ -12,6 +12,18 @@ function getActiveOutputState<S>(node: WorkflowNode<S>): Partial<S> | null {
 	return null;
 }
 
+/**
+ * Get the active output value
+ */
+function getActiveOutputValue<S>(node: WorkflowNode<S>): WorkflowPort['value'] {
+	if (!!node.active && !isEmpty(node.outputs)) {
+		const activeOutput = node.outputs.find((output) => output.id === node.active);
+		if (activeOutput?.value) return activeOutput.value;
+	}
+	return null;
+}
+
 export default {
-	getActiveOutputState
+	getActiveOutputState,
+	getActiveOutputValue
 };
