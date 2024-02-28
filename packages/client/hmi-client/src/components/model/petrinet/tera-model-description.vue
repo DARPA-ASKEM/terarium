@@ -4,34 +4,29 @@
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
-
-					<template v-if="modelType">
-						<div class="label-value-pair">
-							<label class="p-text-secondary">Model type</label>
-							<p>{{ modelType }}</p>
-						</div>
-					</template>
+					<p v-if="modelType">
+						<label class="p-text-secondary mr-2">Model type</label>{{ modelType }}
+					</p>
 					<template v-if="fundedBy">
 						<div class="label-value-pair">
-							<label class="p-text-secondary">Funded by</label>
-							<p>{{ fundedBy }}</p>
+							<p><label class="p-text-secondary mr-2">Funded by</label>{{ fundedBy }}</p>
 						</div>
 					</template>
 					<template v-if="authors">
 						<div class="label-value-pair">
-							<label class="p-text-secondary">Authors</label>
-							<p>{{ authors }}</p>
+							<p><label class="p-text-secondary mr-2">Authors</label>{{ authors }}</p>
 						</div>
 					</template>
 					<template v-if="uses">
 						<div class="label-value-pair mt-2">
 							<h6>Uses</h6>
-							<label class="p-text-secondary">Direct use</label>
-							<p>{{ uses.DirectUse }}</p>
+							<p><label class="p-text-secondary mr-2">Direct use</label>{{ uses.DirectUse }}</p>
 						</div>
 						<div class="label-value-pair">
-							<label class="p-text-secondary">Out of scope use</label>
-							<p>{{ uses.OutOfScopeUse }}</p>
+							<p>
+								<label class="p-text-secondary mr-2">Out of scope use</label>
+								{{ uses.OutOfScopeUse }}
+							</p>
 						</div>
 					</template>
 
@@ -164,7 +159,7 @@ import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { AcceptedExtensions, FeatureConfig, ResultType } from '@/types/common';
-import type { DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import type { Dataset, DocumentAsset, Model, ModelConfiguration } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -324,11 +319,6 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	gap: var(--gap-small);
 }
 
-.label-value-pair {
-	display: flex;
-	flex-direction: column;
-	gap: 0rem;
-}
 .framework {
 	text-transform: capitalize;
 }
