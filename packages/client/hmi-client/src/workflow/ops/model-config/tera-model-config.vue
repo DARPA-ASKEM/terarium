@@ -227,7 +227,7 @@ import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel, getModelConfigurations } from '@/services/model';
+import { getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
 import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
 import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
@@ -591,7 +591,7 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	return formattedParams;
 });
 
-const modelType = computed(() => model.value?.header?.schema_name ?? AMRSchemaNames.PETRINET);
+const modelType = computed(() => getModelType(model.value));
 
 const getParamType = (param: ModelParameter | undefined) => {
 	let type = ParamType.CONSTANT;

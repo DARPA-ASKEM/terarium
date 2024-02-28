@@ -161,6 +161,7 @@ import Dropdown from 'primevue/dropdown';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import { cloneDeep } from 'lodash';
+import { getModelType } from '@/services/model';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT },
@@ -181,9 +182,7 @@ const matrixModalContext = ref({
 	matrixId: ''
 });
 
-const modelType = computed(
-	() => props.modelConfiguration?.configuration?.header?.schema_name ?? AMRSchemaNames.PETRINET
-);
+const modelType = computed(() => getModelType(props.modelConfiguration.configuration));
 
 const errorMessage = ref('');
 
