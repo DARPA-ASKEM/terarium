@@ -44,14 +44,15 @@ const hasData = ref(false);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 
-const selectedOutputId = ref<string>(props.node.active as string);
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedRunId = ref<any>(null);
 
 watch(
-	() => selectedRunId.value,
+	() => props.node.active,
 	async () => {
+		const active = props.node.active;
+		if (!active) return;
+
+		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
 
 		const resultCsv = await getRunResult(selectedRunId.value, 'result.csv');

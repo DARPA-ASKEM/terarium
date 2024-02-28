@@ -120,7 +120,6 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { ProgressState } from '@/types/Types';
 import type {
 	CsvAsset,
 	Model,
@@ -138,7 +137,7 @@ import {
 	getSimulation,
 	makeForecastJob,
 	querySimulationInProgress,
-	simulationPollAction
+	pollAction
 } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
@@ -183,9 +182,7 @@ const modelConfigurations = ref<{ [runId: string]: ModelConfiguration | null }>(
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const showSpinner = ref(false);
-const completedRunId = ref<string>('');
 const runResults = ref<RunResults>({});
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
@@ -255,7 +252,7 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction([runId], props.node, progress, emit));
+		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
@@ -270,13 +267,6 @@ const getStatus = async (runId: string) => {
 		});
 		throw Error('Failed Runs');
 	}
-
-	completedRunId.value = runId;
-	showSpinner.value = false;
-};
-
-const watchCompletedRunId = async (runId: string) => {
-	if (!runId) return;
 
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
@@ -295,6 +285,8 @@ const watchCompletedRunId = async (runId: string) => {
 		},
 		isSelected: false
 	});
+
+	showSpinner.value = false;
 };
 
 const lazyLoadSimulationData = async (runId: string) => {
@@ -350,8 +342,6 @@ async function saveDatasetToProject() {
 		showSaveInput.value = false;
 	}
 }
-
-watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
 
 watch(
 	() => selectedRunId.value,
