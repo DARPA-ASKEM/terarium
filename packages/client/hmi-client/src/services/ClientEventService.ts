@@ -1,4 +1,3 @@
-// import { fetchEventSource, EventSourceMessage } from '@microsoft/fetch-event-source';
 import { EventSource } from 'extended-eventsource';
 import type { ClientEvent } from '@/types/Types';
 import { ClientEventType } from '@/types/Types';
