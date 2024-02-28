@@ -13,25 +13,14 @@
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
 				<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="pb-6">
-					<AccordionTab header="Context">
-						<p class="text-sm mb-1">Name</p>
-						<InputText
-							class="context-item"
-							placeholder="Enter a name for this configuration"
-							v-model="knobs.name"
-						/>
-						<p class="text-sm mb-1 mt-3">Description</p>
-						<Textarea
-							class="context-item"
-							placeholder="Enter a description"
-							v-model="knobs.description"
-						/>
-					</AccordionTab>
-					<AccordionTab v-if="model" header="Suggested Configurations">
+					<AccordionTab v-if="model">
 						<template #header>
+							Suggested configurations<span class="artifact-amount"
+								>({{ suggestedConfirgurationContext.tableData.length }})</span
+							>
 							<Button
 								outlined
-								label="Extract configurations from document"
+								label="Extract configurations from a document"
 								size="small"
 								icon="pi pi-cog"
 								@click.stop="extractConfigurations"
@@ -44,7 +33,7 @@
 							:value="suggestedConfirgurationContext.tableData"
 							size="small"
 							data-key="id"
-							paginator
+							:paginator="suggestedConfirgurationContext.tableData.length > 5"
 							:rows="5"
 							sort-field="createdOn"
 							:sort-order="-1"
@@ -90,6 +79,20 @@
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 							</template>
 						</DataTable>
+					</AccordionTab>
+					<AccordionTab header="Context">
+						<p class="text-sm mb-1">Name</p>
+						<InputText
+							class="context-item"
+							placeholder="Enter a name for this configuration"
+							v-model="knobs.name"
+						/>
+						<p class="text-sm mb-1 mt-3">Description</p>
+						<Textarea
+							class="context-item"
+							placeholder="Enter a description"
+							v-model="knobs.description"
+						/>
 					</AccordionTab>
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
@@ -759,6 +762,11 @@ onUnmounted(() => {
 	gap: var(--gap);
 }
 
+.artifact-amount {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
+}
 .context-item {
 	width: 100%;
 }
