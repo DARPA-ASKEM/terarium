@@ -56,6 +56,15 @@ public class MiraController {
 		public Model response;
 	};
 
+	private boolean endsWith(String filename, List<String> suffixes) {
+		for (String suffix : suffixes) {
+			if (filename.endsWith(suffix)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@PostMapping("/convert_and_create_model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a mira conversion task")
@@ -67,15 +76,14 @@ public class MiraController {
 			@RequestBody final ModelConversionRequest conversionRequest) {
 
 		try {
-
 			TaskRequest req = new TaskRequest();
 			req.setInput(conversionRequest.getModelContent().getBytes());
 
-			if (conversionRequest.getModelName().endsWith(".mdl")) {
+			if (endsWith(conversionRequest.getModelName(), List.of(".mdl"))) {
 				req.setScript(MDL_TO_STOCKFLOW);
-			} else if (conversionRequest.getModelName().endsWith(".stella")) {
+			} else if (endsWith(conversionRequest.getModelName(), List.of(".xmile", ".itmx", ".stmx"))) {
 				req.setScript(STELLA_TO_STOCKFLOW);
-			} else if (conversionRequest.getModelName().endsWith(".sbml")) {
+			} else if (endsWith(conversionRequest.getModelName(), List.of(".sbml", ".xml"))) {
 				req.setScript(SBML_TO_PETRINET);
 			} else {
 				throw new ResponseStatusException(

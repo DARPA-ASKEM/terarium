@@ -274,6 +274,25 @@ export async function unsubscribeToUpdateMessages(
 	await unsubscribe(eventType, messageHandler);
 }
 
+export async function pollAction(id: string) {
+	const simResponse = await getSimulation(id);
+	if (!simResponse) {
+		console.error(`Error occured with simulation ${id}`);
+		return { data: null, progress: null, error: `Failed running simulation ${id}` };
+	}
+
+	if ([ProgressState.Queued || ProgressState.Running].includes(simResponse.status)) {
+		// TODO: untangle progress
+		return { data: null, progress: null, error: null };
+	}
+
+	if ([ProgressState.Error || ProgressState.Failed].includes(simResponse.status)) {
+		return { data: null, progress: null, error: `Failed running simulation ${id}` };
+	}
+	return { data: simResponse, progress: null, error: null };
+}
+
+// @deprecated
 export async function simulationPollAction(
 	simulationIds: string[],
 	node: WorkflowNode<any>,

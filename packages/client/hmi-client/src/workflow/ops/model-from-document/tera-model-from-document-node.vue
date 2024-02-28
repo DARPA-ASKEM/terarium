@@ -1,26 +1,6 @@
 <template>
 	<main>
-		<template v-if="model">
-			<SelectButton
-				class="p-button-xsm"
-				:model-value="view"
-				:options="viewOptions"
-				@change="handleChange"
-			/>
-			<div class="container">
-				<tera-model-diagram
-					v-if="view === View.Diagram"
-					:model="model"
-					:is-editable="false"
-					is-preview
-				/>
-				<tera-model-equation
-					v-else-if="view === View.Equation"
-					:model="model"
-					:is-editable="false"
-				/>
-			</div>
-		</template>
+		<tera-operator-model-preview v-if="model" :model="model" />
 		<tera-operator-placeholder
 			v-else
 			:operation-type="WorkflowOperationTypes.MODEL_FROM_DOCUMENT"
@@ -33,13 +13,12 @@
 import Button from 'primevue/button';
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import SelectButton from 'primevue/selectbutton';
 import { ref, onUpdated, onMounted } from 'vue';
 import { ModelOperationState } from '@/workflow/ops/model/model-operation';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
+import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
+import operator from '@/services/operator';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
@@ -47,43 +26,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-drilldown']);
 
-enum View {
-	Diagram = 'Diagram',
-	Equation = 'Equation'
-}
-const view = ref(View.Diagram);
-const viewOptions = ref([View.Diagram, View.Equation]);
-const handleChange = (event) => {
-	if (event.value) {
-		view.value = event.value;
-	}
-};
-
 const model = ref(null as Model | null);
-
-// Update the model preview when the active output changes
-// TODO - Make this into a utility to fetch the active output or the first one.
-const activeOutputId = ref(props.node?.active ?? props.node?.outputs?.[0]?.id ?? null);
-const activeModelId = ref(
-	activeOutputId.value
-		? props.node?.outputs?.find((output) => output.id === activeOutputId.value)?.state?.modelId
-		: null
-);
 const updateModel = async () => {
-	if (activeModelId.value) {
-		model.value = await getModel(activeModelId.value);
+	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
+	if (modelId && modelId !== model?.value?.id) {
+		model.value = await getModel(modelId);
 	}
 };
 onMounted(updateModel);
 onUpdated(updateModel);
 </script>
-
-<style scoped>
-.p-selectbutton {
-	width: 100%;
-}
-
-.p-selectbutton:deep(.p-button) {
-	flex-grow: 1;
-}
-</style>
