@@ -124,7 +124,7 @@
 						</AccordionTab>
 					</template>
 					<template v-else-if="modelType === AMRSchemaNames.REGNET">
-						<AccordionTab header="Verticies">
+						<AccordionTab header="Vertices">
 							<DataTable v-if="!_.isEmpty(vertices)" data-key="id" :value="vertices">
 								<Column field="id" header="Symbol" />
 								<Column field="name" header="Name" />
