@@ -21,7 +21,7 @@
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="toggleOptionsMenu"
 				/>
-				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
 		</template>
 		<tera-model-description
@@ -46,12 +46,13 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import Menu from 'primevue/menu';
+import ContextMenu from 'primevue/contextmenu';
 import { updateModelConfiguration, addDefaultConfiguration } from '@/services/model-configurations';
 import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import { logger } from '@/utils/logger';
 
 const props = defineProps({
 	assetId: {
@@ -108,7 +109,13 @@ const optionsMenuItems = computed(() => [
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
+						const response = await useProjects().addAsset(
+							AssetType.Model,
+							props.assetId,
+							project.id
+						);
+						if (response) logger.info(`Added asset to ${project.name}`);
+						else logger.error('Failed to add asset to project');
 					}
 				})) ?? []
 	}

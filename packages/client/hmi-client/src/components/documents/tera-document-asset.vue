@@ -23,14 +23,12 @@
 					<span class="p-button-label">{{ option.value }}</span>
 				</template>
 			</SelectButton>
-			<template>
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleOptionsMenu"
-				/>
-				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
-			</template>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</template>
 		<Accordion
 			v-if="view === DocumentView.EXTRACTIONS"
@@ -138,6 +136,9 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import { useProjects } from '@/composables/project';
+import { logger } from '@/utils/logger';
+import Button from 'primevue/button';
+import ContextMenu from 'primevue/contextmenu';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -208,7 +209,13 @@ const optionsMenuItems = ref([
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						await useProjects().addAsset(AssetType.Document, props.assetId, project.id);
+						const response = await useProjects().addAsset(
+							AssetType.Document,
+							props.assetId,
+							project.id
+						);
+						if (response) logger.info(`Added asset to ${project.name}`);
+						else logger.error('Failed to add asset to project');
 					}
 				})) ?? []
 	}
