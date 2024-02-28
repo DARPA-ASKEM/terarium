@@ -131,12 +131,13 @@
 				<template #footer>
 					<Button
 						outlined
+						size="large"
 						:disabled="isSaveDisabled"
 						label="Run"
 						icon="pi pi-play"
 						@click="createConfiguration"
 					/>
-					<Button style="margin-left: auto" label="Close" @click="emit('close')" />
+					<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-section>
 		</section>
@@ -148,7 +149,7 @@
 						label="Run"
 						outlined
 						severity="secondary"
-						size="small"
+						size="large"
 						@click="runFromCode"
 					/>
 				</div>
