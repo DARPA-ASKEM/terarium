@@ -210,9 +210,9 @@ async function buildJupyterContext() {
 	}
 
 	console.log({
-		models: modelsToCompare.value.map((model) => ({
+		models: modelsToCompare.value.map((model, index) => ({
 			model_id: model.id,
-			name: model.header.name
+			name: `model_${index + 1}`
 		}))
 	});
 
