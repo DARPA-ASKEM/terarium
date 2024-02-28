@@ -30,6 +30,7 @@
 						</template>
 
 						<DataTable
+							v-if="suggestedConfirgurationContext.tableData.length > 0"
 							:value="suggestedConfirgurationContext.tableData"
 							size="small"
 							data-key="id"
@@ -79,6 +80,9 @@
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 							</template>
 						</DataTable>
+						<section v-else>
+							<p class="empty-section">No suggested configurations found.</p>
+						</section>
 					</AccordionTab>
 					<AccordionTab header="Context">
 						<p class="text-sm mb-1">Name</p>
@@ -766,6 +770,12 @@ onUnmounted(() => {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
+}
+.empty-section {
+	color: var(--text-color-subdued);
+}
+.p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
+	padding: 0;
 }
 .context-item {
 	width: 100%;
