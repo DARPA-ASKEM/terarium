@@ -57,7 +57,6 @@ watch(
 		if (!result) return;
 
 		csvData.value = csvParse(result.csvData);
-		console.log('debug', csvData.value);
 	},
 	{ immediate: true }
 );

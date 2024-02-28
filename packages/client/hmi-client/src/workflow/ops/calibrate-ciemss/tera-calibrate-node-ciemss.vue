@@ -64,7 +64,6 @@ watch(
 		const datasetId = props.node.inputs[1]?.value?.[0];
 		const { csv } = await setupDatasetInput(datasetId);
 		csvAsset.value = csv;
-		console.log('csv', csvAsset.value);
 	},
 	{ immediate: true }
 );
