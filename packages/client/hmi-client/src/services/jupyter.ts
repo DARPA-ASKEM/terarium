@@ -232,6 +232,8 @@ export class KernelSessionManager {
 			const msgType = message.header.msg_type;
 			const msgId = message.parent_header.msg_id;
 
+			console.log(message);
+
 			if (this.map.has(msgId)) {
 				this.map.get(msgId)?.emit(msgType, message);
 			}
