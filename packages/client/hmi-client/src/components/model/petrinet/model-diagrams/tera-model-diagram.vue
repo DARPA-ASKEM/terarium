@@ -103,6 +103,7 @@ import SelectButton from 'primevue/selectbutton';
 import { AMRSchemaNames } from '@/types/common';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { getModelType } from '@/services/model';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
@@ -124,9 +125,7 @@ const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
-const modelType = computed(
-	() => props.model?.header?.schema_name?.toLowerCase() ?? AMRSchemaNames.PETRINET
-);
+const modelType = computed(() => getModelType(props.model));
 const templatePreview = ref('');
 const isGeneratingModelPreview = ref(false);
 
