@@ -81,7 +81,7 @@
 							</template>
 						</DataTable>
 						<section v-else>
-							<p class="empty-section">No suggested configurations found.</p>
+							<p class="empty-section">No configurations found.</p>
 						</section>
 					</AccordionTab>
 					<AccordionTab header="Context">
@@ -108,7 +108,7 @@
 							>
 						</template>
 						<tera-model-config-table
-							v-if="modelConfiguration"
+							v-if="modelConfiguration && tableFormattedInitials.length > 0"
 							:model-configuration="modelConfiguration"
 							:data="tableFormattedInitials"
 							@update-value="updateConfigInitial"
@@ -118,13 +118,16 @@
 								}
 							"
 						/>
+						<section v-else>
+							<p class="empty-section">No initial values found.</p>
+						</section>
 					</AccordionTab>
 					<AccordionTab>
 						<template #header>
 							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
 						</template>
 						<tera-model-config-table
-							v-if="modelConfiguration"
+							v-if="modelConfiguration && tableFormattedParams.length > 0"
 							:model-configuration="modelConfiguration"
 							:data="tableFormattedParams"
 							@update-value="updateConfigParam"
@@ -134,6 +137,9 @@
 								}
 							"
 						/>
+						<section v-else>
+							<p class="empty-section">No parameters found.</p>
+						</section>
 					</AccordionTab>
 				</Accordion>
 				<template #footer>
