@@ -15,7 +15,7 @@
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
 						<td v-if="matrix.length > 0" class="p-frozen-column">
 							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
-								{{ Object.values(row[0].rowCriteria).join(' / ') }}
+								{{ Object.values(row[0].rowCriteria)[0] }}
 							</template>
 							<template v-else>
 								{{ row[0].rowCriteria }}
@@ -41,22 +41,24 @@
 									/>
 									<div v-else>
 										<div
-											class="subdue mb-1"
+											class="subdue mb-1 flex align-items-center gap-1"
 											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 										>
 											{{ cell?.content.id }}
+											<span
+												v-if="cell?.content?.controllers"
+												class="pi pi-info-circle"
+												v-tooltip.top="{
+													value: `Controllers:\n ${cell?.content?.controllers}`,
+													pt: 'grid col'
+												}"
+											/>
 										</div>
 										<div>
 											<div
-												v-if="props.shouldEval"
 												class="mathml-container"
 												v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
 											/>
-											<template v-if="cell?.content?.controllers">
-												<span class="controllers">
-													controllers: {{ cell?.content?.controllers }}</span
-												>
-											</template>
 										</div>
 									</div>
 								</section>
@@ -296,6 +298,8 @@ onMounted(() => {
 	width: 100%;
 	padding-left: 12px;
 	margin-bottom: 0 !important;
+	font-feature-settings: 'tnum';
+	text-align: right;
 }
 
 .p-datatable-scrollable .p-frozen-column {
