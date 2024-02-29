@@ -477,6 +477,7 @@ onUnmounted(() => {
 	display: flex;
 	flex: 1;
 	overflow: hidden;
+	position: relative;
 }
 
 .view-toggles {
