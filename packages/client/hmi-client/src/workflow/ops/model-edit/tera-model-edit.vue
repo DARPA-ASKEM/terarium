@@ -19,15 +19,14 @@
 						outlined
 						severity="secondary"
 						size="small"
-						@click="runFromCodeWrapper(editor?.getValue() as string)"
+						@click="runFromCodeWrapper"
 					/>
 				</div>
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
+						:default-options="sampleAgentQuestions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
-						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -171,10 +170,10 @@ const syncWithMiraModel = (data: any) => {
 };
 
 // Reset model, then execute the code
-const runFromCodeWrapper = (code: string) => {
+const runFromCodeWrapper = () => {
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode(code);
+		runFromCode(editor?.getValue() as string);
 	});
 };
 
@@ -271,7 +270,7 @@ const inputChangeHandler = async () => {
 		}
 
 		if (codeText.value && codeText.value.length > 0) {
-			runFromCodeWrapper(codeText.value);
+			runFromCodeWrapper();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -379,10 +378,6 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
-}
-
-.ai-assistant-container {
-	margin-left: var(--gap);
 }
 
 .preview-container {
