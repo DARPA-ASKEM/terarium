@@ -43,9 +43,6 @@ public class TaskRunnerService {
 	@Value("${terarium.taskrunner.response-exchange}")
 	public String TASK_RUNNER_RESPONSE_EXCHANGE;
 
-	@Value("${terarium.taskrunner.response-queue}")
-	public String TASK_RUNNER_RESPONSE_QUEUE;
-
 	@Value("${terarium.taskrunner.cancellation-exchange}")
 	public String TASK_RUNNER_CANCELLATION_EXCHANGE;
 

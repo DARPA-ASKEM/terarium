@@ -59,9 +59,4 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
             log.error("Failed to write model card to database", e);
         }
     }
-
-    @Override
-    public void onRunning(Consumer<TaskResponse> resp) {
-            log.info(resp.toString());
-    }
 }

@@ -4,34 +4,29 @@
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
-
-					<template v-if="modelType">
-						<div class="label-value-pair">
-							<label class="p-text-secondary">Model type</label>
-							<p>{{ modelType }}</p>
-						</div>
-					</template>
+					<p v-if="modelType">
+						<label class="p-text-secondary mr-2">Model type</label>{{ modelType }}
+					</p>
 					<template v-if="fundedBy">
 						<div class="label-value-pair">
-							<label class="p-text-secondary">Funded by</label>
-							<p>{{ fundedBy }}</p>
+							<p><label class="p-text-secondary mr-2">Funded by</label>{{ fundedBy }}</p>
 						</div>
 					</template>
 					<template v-if="authors">
 						<div class="label-value-pair">
-							<label class="p-text-secondary">Authors</label>
-							<p>{{ authors }}</p>
+							<p><label class="p-text-secondary mr-2">Authors</label>{{ authors }}</p>
 						</div>
 					</template>
 					<template v-if="uses">
 						<div class="label-value-pair mt-2">
 							<h6>Uses</h6>
-							<label class="p-text-secondary">Direct use</label>
-							<p>{{ uses.DirectUse }}</p>
+							<p><label class="p-text-secondary mr-2">Direct use</label>{{ uses.DirectUse }}</p>
 						</div>
 						<div class="label-value-pair">
-							<label class="p-text-secondary">Out of scope use</label>
-							<p>{{ uses.OutOfScopeUse }}</p>
+							<p>
+								<label class="p-text-secondary mr-2">Out of scope use</label>
+								{{ uses.OutOfScopeUse }}
+							</p>
 						</div>
 					</template>
 
@@ -118,6 +113,7 @@
 			</AccordionTab>
 			<AccordionTab header="Provenance">
 				<tera-related-documents
+					class="m-2"
 					:documents="documents"
 					:asset-type="AssetType.Model"
 					:assetId="model.id"
@@ -163,8 +159,8 @@ import { isEmpty } from 'lodash';
 import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { AcceptedExtensions, FeatureConfig, ResultType } from '@/types/common';
-import type { DocumentAsset, Model, Dataset, ModelConfiguration } from '@/types/Types';
+import { FeatureConfig, ResultType } from '@/types/common';
+import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -248,23 +244,13 @@ const authors = computed(() => {
 	return authorsArray.join(', ');
 });
 
-const documents = computed(
+const documents = computed<{ name: string; id: string }[]>(
 	() =>
 		useProjects()
 			.getActiveProjectAssets(AssetType.Document)
-			.filter((document: DocumentAsset) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
-					(extension) => {
-						if (document.fileNames && !isEmpty(document.fileNames)) {
-							return document.fileNames[0]?.endsWith(extension);
-						}
-						return false;
-					}
-				)
-			)
-			.map((document: DocumentAsset) => ({
-				name: document.name,
-				id: document.id
+			.map((projectAsset: ProjectAsset) => ({
+				name: projectAsset.assetName,
+				id: projectAsset.assetId
 			})) ?? []
 );
 
@@ -324,11 +310,6 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	gap: var(--gap-small);
 }
 
-.label-value-pair {
-	display: flex;
-	flex-direction: column;
-	gap: 0rem;
-}
 .framework {
 	text-transform: capitalize;
 }

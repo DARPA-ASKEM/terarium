@@ -61,15 +61,15 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
     @Override
     public void onSuccess(Consumer<TaskResponse> resp) {
         try {
-            final String serializedString = objectMapper.writeValueAsString(((TaskResponse)resp).getAdditionalProperties());
+            final String serializedString = objectMapper.writeValueAsString(((TaskResponse) resp).getAdditionalProperties());
             final Properties props = objectMapper.readValue(serializedString, Properties.class);
 
             final Model model = modelService.getAsset(props.getModelId())
                     .orElseThrow();
-            final Response configurations = objectMapper.readValue(((TaskResponse)resp).getOutput(), Response.class);
+            final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(), Response.class);
 
             // For each configuration, create a new model configuration with parameters set
-            configurations.response.get("conditions").forEach((condition) -> {
+            for (JsonNode condition : configurations.response.get("conditions")) {
                 // Map the parameters values to the model
                 final Model modelCopy = new Model(model);
                 final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
@@ -89,22 +89,18 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
                 configuration.setDescription(condition.get("description").asText());
                 configuration.setConfiguration(modelCopy);
 
-                try {
-                    final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
-                    // add provenance
-                    provenanceService.createProvenance(new Provenance()
-                            .setLeft(newConfig.getId())
-                            .setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-                            .setRight(props.documentId)
-                            .setRightType(ProvenanceType.DOCUMENT)
-                            .setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-                } catch (IOException e) {
-                    log.error("Failed to set model configuration", e);
-                }
-            });
-
-        } catch (final Exception e) {
+                final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+                // add provenance
+                provenanceService.createProvenance(new Provenance()
+                        .setLeft(newConfig.getId())
+                        .setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+                        .setRight(props.documentId)
+                        .setRightType(ProvenanceType.DOCUMENT)
+                        .setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+            }
+        } catch (Exception e) {
             log.error("Failed to configure model", e);
+            throw new RuntimeException(e);
         }
         log.info("Model configured successfully");
     }
