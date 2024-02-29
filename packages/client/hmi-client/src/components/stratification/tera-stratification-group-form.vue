@@ -5,7 +5,7 @@
 				<label>Name of strata</label>
 				<InputText
 					v-model="strataName"
-					placeholder="Age group"
+					placeholder="e.g., Age group"
 					@focusout="emit('update-self', updatedConfig)"
 				/>
 			</div>
@@ -14,7 +14,7 @@
 				<MultiSelect
 					v-model="selectedVariables"
 					:options="props.modelNodeOptions"
-					placeholder="Model states"
+					placeholder="Click to select"
 					display="chip"
 					@update:model-value="emit('update-self', updatedConfig)"
 				></MultiSelect>
@@ -28,7 +28,7 @@
 				</label>
 				<InputText
 					v-model="labels"
-					placeholder="Young, Old"
+					placeholder="e.g., Young, Old"
 					@focusout="emit('update-self', updatedConfig)"
 				/>
 			</div>
@@ -139,5 +139,6 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
+	width: 0; /* CSS is weird but for some reason this prevents the Multiselect from going nuts */
 }
 </style>
