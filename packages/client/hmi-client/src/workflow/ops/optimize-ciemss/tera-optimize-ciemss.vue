@@ -175,6 +175,16 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
+				<div class="label-and-input">
+					<label>Dataset Name</label>
+					<InputText v-model="knobs.datasetName" />
+				</div>
+				<Button
+					:disabled="knobs.datasetName === '' || knobs.simulationRunId === ''"
+					outlined
+					label="Save as a new dataset"
+					@click="saveDatasetToProject"
+				/>
 				<SelectButton
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
@@ -229,7 +239,12 @@
 				<label> Model Config Description</label>
 				<InputText v-model="knobs.modelConfigDesc" />
 			</div>
-			<Button outlined label="Save as a new model configuration" @click="saveModelConfiguration" />
+			<Button
+				:disabled="knobs.modelConfigName === ''"
+				outlined
+				label="Save as a new model configuration"
+				@click="saveModelConfiguration"
+			/>
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -263,9 +278,9 @@ import {
 	pollAction,
 	getRunResultCiemss
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults } from '@/services/dataset'; // saveDataset
+import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset'; //
 import { Poller, PollerState } from '@/api/api';
-// import { useProjects } from '@/composables/project';
+import { useProjects } from '@/composables/project';
 // Types:
 import {
 	ModelConfiguration,
@@ -319,6 +334,7 @@ interface BasicKnobs {
 	simulationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	datasetName: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -337,7 +353,8 @@ const knobs = ref<BasicKnobs>({
 	isMinimized: props.node.state.isMinimized ?? true,
 	simulationRunId: props.node.state.simulationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
+	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
+	datasetName: props.node.state.datasetName ?? ''
 });
 
 const showSpinner = ref(false);
@@ -485,30 +502,6 @@ const runOptimize = async () => {
 		}
 	};
 
-	// const testOptimizePayload = {
-	// 	"engine": "ciemss",
-	// 	"userId": "not_provided",
-	// 	"modelConfigId": modelConfiguration.value.id,
-	// 	"interventions": [
-	// 		{
-	// 			"timestep": 1.0,
-	// 			"name": "beta"
-	// 		}
-	// 	],
-	// 	"timespan": {
-	// 		"start": 0,
-	// 		"end": 90
-	// 	},
-	// 	"qoi": ["Infected"],
-	// 	"riskBound": 10.0,
-	// 	"initialGuessInterventions": [1.0],
-	// 	"boundsInterventions": [[0.0], [3.0]],
-	// 	"extra": {
-	// 		"numSamples": 4,
-	// 		"isMinimized": true
-	// 	}
-	// }
-
 	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	// await getStatus(optResult.id);
@@ -579,6 +572,7 @@ const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
 	const state = _.cloneDeep(props.node.state);
+	// TODO: This should be taking some values from our output result but its TBD
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
 		knobs.value.modelConfigName,
@@ -599,6 +593,26 @@ const saveModelConfiguration = async () => {
 		isSelected: false,
 		state
 	});
+};
+
+const saveDatasetToProject = async () => {
+	console.log('Save dataset');
+	const { activeProject, refresh } = useProjects();
+	console.log(activeProject);
+	if (activeProject.value?.id) {
+		console.log(activeProject.value.id);
+		console.log(knobs.value.simulationRunId);
+		console.log(knobs.value.datasetName);
+		if (
+			await saveDataset(
+				activeProject.value.id,
+				knobs.value.simulationRunId,
+				knobs.value.datasetName
+			)
+		) {
+			refresh();
+		}
+	}
 };
 
 onMounted(async () => {
@@ -624,6 +638,7 @@ watch(
 		state.simulationRunId = knobs.value.simulationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
+		state.datasetName = knobs.value.datasetName;
 		emit('update-state', state);
 	},
 	{ deep: true }
