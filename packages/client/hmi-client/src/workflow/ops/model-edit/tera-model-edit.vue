@@ -85,7 +85,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, onUnmounted, ref, watch, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
@@ -97,12 +97,12 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
-import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
@@ -153,12 +153,17 @@ const sampleAgentQuestions = [
 	'Rename the transition infection to inf.'
 ];
 
-const codeText = ref(
-	'# This environment contains the variable "model" \n# which is displayed on the right'
-);
+const defaultCodeText =
+	'# This environment contains the variable "model" \n# which is displayed on the right';
+const codeText = ref(defaultCodeText);
 
 const appendCode = (data: any, property: string) => {
-	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+	const code = data.content[property] as string;
+	if (code) {
+		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+	} else {
+		logger.error('No code to append');
+	}
 };
 
 const syncWithMiraModel = (data: any) => {
@@ -221,7 +226,7 @@ const handleResetResponse = (data: any) => {
 	if (data.content.success) {
 		// updateStratifyGroupForm(blankStratifyGroup);
 
-		codeText.value = '';
+		codeText.value = defaultCodeText;
 		saveCodeToState('', false);
 
 		logger.info('Model reset');
