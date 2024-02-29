@@ -442,6 +442,8 @@ export const getModifierMap = (amr: Model) => {
 
 // Check if AMR is a stratified AMR
 export const getStratificationType = (amr: Model) => {
+	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
+
 	const modifierMap = getModifierMap(amr);
 	// eslint-disable-next-line
 	for (const ele of modifierMap) {
