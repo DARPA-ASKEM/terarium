@@ -25,14 +25,14 @@ public class OptimizeRequestCiemss implements Serializable {
 	private List<OptimizedIntervention> interventions;
 	@JsonAlias("step_size")
 	@TSOptional
-	private Float stepSize;
+	private Double stepSize;
 	private List<String> qoi;
 	@JsonAlias("risk_bound")
-	private Float riskBound;
+	private Double riskBound;
 	@JsonAlias("initial_guess_interventions")
-	private List<Float> initialGuessInterventions;
+	private List<Double> initialGuessInterventions;
 	@JsonAlias("bounds_interventions")
-	private List<List<Float>> boundsInterventions;
+	private List<List<Double>> boundsInterventions;
 	private OptimizeExtra extra;
 	private String engine;
 	@JsonAlias("user_id")
