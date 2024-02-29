@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.service;
+package software.uncharted.terarium.hmiserver.service.tasks;
 
 import java.nio.file.Files;
 import java.util.List;
@@ -21,7 +21,7 @@ import software.uncharted.terarium.hmiserver.controller.mira.MiraController;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
-import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskType;
 
 @Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
@@ -126,6 +126,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		}
 
 		log.info(new String(responses.get(responses.size() - 1).getOutput()));
+
+		Thread.sleep(10000);
 	}
 
 	static class AdditionalProps {
