@@ -101,7 +101,7 @@ const fields = computed(
 			...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))
 		] as string[]
 );
-const cellWidth = computed(() => `${100 / modelsToCompare.value.length - 10}%`);
+const cellWidth = computed(() => `${90 / modelsToCompare.value.length}vw`);
 
 const kernelManager = new KernelSessionManager();
 
@@ -168,6 +168,7 @@ table {
 		vertical-align: top;
 		text-align: left;
 		padding: var(--gap) 0;
+		max-width: v-bind('cellWidth');
 	}
 
 	& td {
@@ -179,7 +180,7 @@ table {
 	}
 
 	& td:not(:first-child) {
-		width: v-bind('cellWidth');
+		/* width: v-bind('cellWidth'); */
 		padding: 0 0.25rem;
 	}
 
@@ -191,8 +192,8 @@ table {
 .input:deep(input) {
 	background-image: url('@assets/svg/icons/message.svg');
 	background-size: 1rem;
-	background-position: var(--gap-small);
+	background-position: 12px;
 	background-repeat: no-repeat;
-	text-indent: 24px;
+	text-indent: 30px;
 }
 </style>
