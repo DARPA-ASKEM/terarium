@@ -45,10 +45,6 @@
 					</h4>
 					<div v-if="showAdditionalOptions">
 						<div class="button-column">
-							<label>Compartmental constraints</label>
-							<InputSwitch v-model="knobs.useCompartmentalConstraint" />
-						</div>
-						<div class="button-column">
 							<label>Tolerance</label>
 							<InputNumber
 								mode="decimal"
@@ -145,7 +141,6 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
-import InputSwitch from 'primevue/inputswitch';
 
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
 import TeraCompartmentConstraint from '@/components/funman/tera-compartment-constraint.vue';
@@ -216,8 +211,8 @@ const requestConstraints = computed(
 		props.node.state.constraintGroups?.map((ele) => {
 			// Derivatives
 			// FIXME: need both positive and negative derivatives
-			if (ele.checkDerivative === true) {
-				const monotonicDecrease = {
+			if (ele.constraintType === 'monotonicityConstraint') {
+				const constraint = {
 					soft: true,
 					name: ele.name,
 					timepoints: null,
@@ -231,7 +226,11 @@ const requestConstraints = computed(
 					weights: [1.0],
 					derivative: true
 				};
-				return monotonicDecrease;
+
+				if (ele.derivativeType === 'increasing') {
+					constraint.weights = [-1.0];
+				}
+				return constraint;
 			}
 
 			if (ele.timepoints) {
@@ -404,7 +403,6 @@ const addConstraintForm = () => {
 		name: '',
 		timepoints: { lb: 0, ub: 100 },
 		variables: [],
-		checkDerivative: false,
 		constraintType: '',
 		derivativeType: ''
 	};

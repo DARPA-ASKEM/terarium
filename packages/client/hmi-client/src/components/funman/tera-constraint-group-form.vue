@@ -73,17 +73,6 @@
 				<label>Decreasing</label>
 			</section>
 		</div>
-		<div class="section-row">
-			<label>Check derivative</label>
-			<Checkbox
-				name="similarContent"
-				v-model="checkDerivative"
-				binary
-				@update:model-value="
-					emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-				"
-			/>
-		</div>
 		<div class="section-row" v-if="constraintType !== 'monotonicityConstraint'">
 			<div class="button-row">
 				<label>Start time</label>
@@ -135,7 +124,6 @@ import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
-import Checkbox from 'primevue/checkbox';
 
 const props = defineProps<{
 	modelNodeOptions: string[];
@@ -154,7 +142,6 @@ const endTime = ref(props.config.timepoints?.ub);
 const variables = ref(props.config.variables);
 const weights = ref(props.config.weights);
 const derivativeType = ref(props.config.derivativeType);
-const checkDerivative = ref(props.config.checkDerivative);
 
 const constraintTypes = [
 	{ id: 'stateConstraint', name: 'State constraint' },
@@ -171,7 +158,6 @@ const updatedConfig = computed<ConstraintGroup>(
 			weights: weights.value,
 			timepoints: { lb: startTime.value, ub: endTime.value },
 			interval: { lb: lowerBound.value, ub: upperBound.value },
-			checkDerivative: checkDerivative.value,
 			constraintType: constraintType.value,
 			derivativeType: derivativeType.value
 		}) as ConstraintGroup
