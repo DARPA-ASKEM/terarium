@@ -276,7 +276,8 @@ import {
 	makeOptimizeJobCiemss,
 	makeForecastJobCiemss,
 	pollAction,
-	getRunResultCiemss
+	getRunResultCiemss,
+	getRunResult
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset'; //
 import { Poller, PollerState } from '@/api/api';
@@ -315,6 +316,11 @@ enum OptimizeTabs {
 enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
+}
+
+enum SimulationType {
+	simulation = 'Simulation',
+	optimize = 'Optimize'
 }
 
 interface BasicKnobs {
@@ -503,6 +509,7 @@ const runOptimize = async () => {
 
 	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
+	await getStatus(optResult.id, SimulationType.optimize);
 	// await getStatus(optResult.id);
 	// TOM TODO: Use getStatus and get run results. Will need them.
 	// policy.json, optimize_results.dill
@@ -528,10 +535,10 @@ const runOptimize = async () => {
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
 	console.log('Simulation Response:');
 	console.log(simulationResponse);
-	getStatus(simulationResponse.id);
+	getStatus(simulationResponse.id, SimulationType.simulation);
 };
 
-const getStatus = async (runId: string) => {
+const getStatus = async (runId: string, simulationType: SimulationType) => {
 	showSpinner.value = true;
 	poller
 		.setInterval(3000)
@@ -553,15 +560,18 @@ const getStatus = async (runId: string) => {
 		throw Error('Failed Runs');
 	}
 
-	const state = _.cloneDeep(props.node.state);
-	if (state.chartConfigs.length === 0) {
-		addChart();
-	}
+	if (simulationType === SimulationType.simulation) {
+		const state = _.cloneDeep(props.node.state);
+		if (state.chartConfigs.length === 0) {
+			addChart();
+		}
 
-	knobs.value.simulationRunId = runId;
-	// TOM TODO: This is incorrect
-	// This should not append simulation result's output to node.
-	// It should still save to state as well as be used in output previewer
+		knobs.value.simulationRunId = runId;
+	}
+	if (simulationType === SimulationType.optimize) {
+		console.log(`Getting run results for ${runId}`);
+		console.log(getRunResult(runId, 'policy.json'));
+	}
 
 	showSpinner.value = false;
 };
