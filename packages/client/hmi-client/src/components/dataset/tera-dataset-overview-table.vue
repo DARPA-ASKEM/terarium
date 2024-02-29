@@ -13,7 +13,9 @@
 		<Column field="concept" header="Concept" sortable style="width: 10%">
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
-					{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }}
+					<!-- HACK: just hit the service directly for the curie name -->
+					<!-- {{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }} -->
+					{{ getCurieFromGroudingIdentifier(data.concept) }}
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
@@ -60,15 +62,14 @@
 <script setup lang="ts">
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import type { DKG, Dataset, DatasetColumn } from '@/types/Types';
+import type { Dataset, DatasetColumn, DKG } from '@/types/Types';
 import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import {
-	getNameOfCurieCached,
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
-	searchCuriesEntities,
-	parseCurie
+	parseCurie,
+	searchCuriesEntities
 } from '@/services/concept';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
@@ -83,7 +84,7 @@ const conceptSearchTerm = ref({
 });
 const curies = ref<DKG[]>([]);
 
-const nameOfCurieCache = ref(new Map<string, string>());
+// const nameOfCurieCache = ref(new Map<string, string>());
 
 const formattedData = computed(() => {
 	if (!props.dataset?.columns) return [];
