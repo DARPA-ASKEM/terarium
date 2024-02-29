@@ -327,10 +327,6 @@ const getStatesAndParameters = (amrModel: Model) => {
 		console.error(`Unknown framework ${modelFramework}`);
 		throw new Error(`Unknown framework ${modelFramework}`);
 	}
-	console.log(amr);
-	console.log(modelStates);
-	console.log(modelParameters);
-
 	return { modelStates, modelParameters };
 };
 
