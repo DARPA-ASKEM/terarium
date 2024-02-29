@@ -103,6 +103,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { KernelSessionManager } from '@/services/jupyter';
+import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
