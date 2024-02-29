@@ -8,6 +8,7 @@ export interface ConstraintGroup {
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
 	interval?: FunmanInterval;
+	checkDerivative?: boolean;
 }
 
 export interface RequestParameter {

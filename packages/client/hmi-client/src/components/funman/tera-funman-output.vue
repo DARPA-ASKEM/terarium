@@ -149,7 +149,8 @@ const initalizeParameters = async () => {
 		.map((ele: any) => parameterOptions.value.push(ele.id));
 	selectedParam.value = parameterOptions.value[0];
 	timestepOptions.value = funmanResult.request.structure_parameters[0].schedules[0].timepoints;
-	timestep.value = timestepOptions.value[1];
+	// timestep.value = timestepOptions.value[1];
+	timestep.value = timestepOptions.value[timestepOptions.value.length - 1];
 
 	modelStates.value = [];
 	funmanResult.model.petrinet.model.states.forEach((element) => {

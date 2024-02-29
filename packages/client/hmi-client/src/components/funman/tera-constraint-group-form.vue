@@ -44,6 +44,10 @@
 			</div>
 		</div>
 		<div class="section-row">
+			<label>Check derivative</label>
+			<Checkbox name="similarContent" v-model="checkDerivative" binary />
+		</div>
+		<div class="section-row">
 			<div class="button-row">
 				<label>Start time</label>
 				<InputNumber
@@ -100,6 +104,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
+import Checkbox from 'primevue/checkbox';
 
 const props = defineProps<{
 	modelNodeOptions: string[];
@@ -116,6 +121,7 @@ const startTime = ref(props.config.timepoints?.lb);
 const endTime = ref(props.config.timepoints?.ub);
 const variables = ref(props.config.variables);
 const weights = ref(props.config.weights);
+const checkDerivative = ref(props.config.checkDerivative);
 
 const updatedConfig = computed<ConstraintGroup>(
 	() =>
@@ -125,7 +131,8 @@ const updatedConfig = computed<ConstraintGroup>(
 			variables: variables.value,
 			weights: weights.value,
 			timepoints: { lb: startTime.value, ub: endTime.value },
-			interval: { lb: lowerBound.value, ub: upperBound.value }
+			interval: { lb: lowerBound.value, ub: upperBound.value },
+			checkDerivative: checkDerivative.value
 		}) as ConstraintGroup
 );
 

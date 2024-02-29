@@ -13,7 +13,7 @@
 <script setup lang="ts">
 const props = defineProps<{
 	variables: string[];
-	mass: number;
+	mass: string;
 }>();
 
 // const emit = defineEmits(['delete-self', 'update-self']);
