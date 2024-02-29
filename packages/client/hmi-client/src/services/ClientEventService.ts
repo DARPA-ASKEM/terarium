@@ -54,7 +54,7 @@ export async function init(): Promise<void> {
 			handlers.forEach((handler) => handler(data));
 		}
 	};
-	eventSource.onopen = async (response: Response) => {
+	eventSource.onopen = async (response: any) => {
 		if (response.status === 401) {
 			// redirect to the login page
 			authStore.keycloak?.login({

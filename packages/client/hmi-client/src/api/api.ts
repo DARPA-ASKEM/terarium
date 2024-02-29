@@ -259,14 +259,14 @@ export class TaskHandler {
 				const closeConnection = this.closeConnection.bind(this);
 				this.handlers.ondata(parsedData, closeConnection);
 			};
-			eventSource.onerror = (error: Error) => {
+			eventSource.onerror = (error: any) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
 				if (error instanceof FatalError) {
 					// closes the connection on fatal error otherwise it will keep retrying
 					throw error;
 				}
 			};
-			eventSource.onopen = async (response: Response) => {
+			eventSource.onopen = async (response: any) => {
 				logger.info('Connection opened', { showToast: false });
 				if (handlers.onopen) handlers.onopen(response);
 			};
