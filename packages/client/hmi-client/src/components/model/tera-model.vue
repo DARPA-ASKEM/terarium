@@ -15,6 +15,7 @@
 			/>
 		</template>
 		<template #edit-buttons>
+			<span v-if="model" class="ml-auto">{{ model.header.schema_name }}</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -40,15 +41,15 @@
 </template>
 
 <script setup lang="ts">
-import { watch, PropType, ref, computed } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
+import { computed, PropType, ref, watch } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import { updateModelConfiguration, addDefaultConfiguration } from '@/services/model-configurations';
-import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/services/model';
+import { addDefaultConfiguration, updateModelConfiguration } from '@/services/model-configurations';
+import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
