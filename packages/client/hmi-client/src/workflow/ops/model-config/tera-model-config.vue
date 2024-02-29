@@ -392,6 +392,32 @@ const runFromCode = () => {
 const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);
 const vertices = computed(() => modelConfiguration?.value?.configuration.model?.vertices ?? []);
 
+const extractionMenu = ref();
+const toggleExtractionMenu = (event) => {
+	extractionMenu.value.toggle(event);
+};
+const menuItems = ref<MenuItem[]>([
+	{
+		label: 'From a document',
+		command: () => {
+			extractConfigurationsFromDocument();
+		}
+	},
+	{
+		label: 'From a dataset',
+		command: () => {
+			extractConfigurationsFromDataset();
+		}
+	},
+	{
+		label: 'From both',
+		command: () => {
+			extractConfigurationsFromDataset();
+			extractConfigurationsFromDocument();
+		}
+	}
+]);
+
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
@@ -793,7 +819,7 @@ const extractConfigurationsFromDocument = async () => {
 const extractConfigurationsFromDataset = async () => {
 	if (!datasetId.value || !model.value?.id) return;
 	isFetchingConfigsFromDataset.value = true;
-	await configureModelFromDatasets('0640cb5e-b0dd-49ec-ac50-cff118bbd42f', [datasetId.value]);
+	await configureModelFromDatasets(model.value.id, [datasetId.value]);
 	isFetchingConfigsFromDataset.value = false;
 	fetchConfigurations(model.value.id);
 };
@@ -802,32 +828,6 @@ const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfirgurationContext.value.modelConfiguration = config;
 	suggestedConfirgurationContext.value.isOpen = true;
 };
-
-const extractionMenu = ref();
-const toggleExtractionMenu = (event) => {
-	extractionMenu.value.toggle(event);
-};
-const menuItems = ref<MenuItem[]>([
-	{
-		label: 'From a document',
-		command: () => {
-			extractConfigurationsFromDocument();
-		}
-	},
-	{
-		label: 'From a dataset',
-		command: () => {
-			extractConfigurationsFromDataset();
-		}
-	},
-	{
-		label: 'From both',
-		command: () => {
-			extractConfigurationsFromDataset();
-			extractConfigurationsFromDocument();
-		}
-	}
-]);
 
 onMounted(async () => {
 	await initialize();
