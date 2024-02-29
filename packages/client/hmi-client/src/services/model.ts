@@ -138,8 +138,8 @@ export async function validateAMRFile(file: File) {
  * @returns boolean
  */
 export function isValidAMR(json: Record<string, unknown>) {
-	const schema: string = (json?.header as any)?.schema;
-	const schemaName: string = (json?.header as any)?.schema_name;
+	const schema: string = (json?.header as any)?.schema.toLowerCase();
+	const schemaName: string = (json?.header as any)?.schema_name.toLowerCase();
 	if (!schema || !schemaName) return false;
 	if (!Object.values(AMRSchemaNames).includes(schemaName as AMRSchemaNames)) return false;
 	if (!Object.values(AMRSchemaNames).some((name) => schema.includes(name))) return false;
