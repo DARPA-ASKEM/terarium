@@ -1,10 +1,12 @@
 <template>
 	<main>
-		<section>
-			<h5>Related publications</h5>
+		<p v-if="isEmpty(relatedDocuments)">
+			Terarium can extract information from documents to add relevant information to this resource.
+		</p>
+		<template v-else>
 			<p>
-				Terarium can extract information from documents to add relevant information to this
-				resource.
+				Related publications, documents, and other resources that are relevant to this
+				{{ assetType }}.
 			</p>
 			<ul>
 				<li v-for="document in relatedDocuments" :key="document.id">
@@ -14,18 +16,31 @@
 					/>
 				</li>
 			</ul>
-			<div class="extraction-commands">
-				<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
-				<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
-				<Button
-					text
-					:disabled="props.assetType != AssetType.Model"
-					:label="`Align extractions to ${assetType}`"
-					:loading="isLoading"
-					@click="dialogForAlignment"
-				/>
-			</div>
-		</section>
+		</template>
+		<footer class="flex gap-2">
+			<Button
+				severity="secondary"
+				size="small"
+				label="Enrich description"
+				:loading="isLoading"
+				@click="dialogForEnrichment"
+			/>
+			<Button
+				severity="secondary"
+				size="small"
+				label="Extract variables"
+				:loading="isLoading"
+				@click="dialogForExtraction"
+			/>
+			<Button
+				severity="secondary"
+				size="small"
+				:disabled="props.assetType != AssetType.Model"
+				:label="`Align extractions to ${assetType}`"
+				:loading="isLoading"
+				@click="dialogForAlignment"
+			/>
+		</footer>
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -111,7 +126,7 @@ import { isDocumentAsset } from '@/utils/data-util';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
-	documents?: Array<{ name: string | undefined; id: string | undefined }>;
+	documents: { name: string; id: string }[];
 	assetType: AssetType;
 	assetId: TerariumAsset['id'];
 }>();
@@ -254,9 +269,10 @@ watch(
 
 async function getRelatedDocuments() {
 	if (!props.assetType) return;
-	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 
+	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
+
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
 		ProvenanceType.Document
 	]);
@@ -273,16 +289,9 @@ async function getRelatedDocuments() {
 
 <style scoped>
 main {
-	background-color: var(--surface-highlight);
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border);
-	padding: var(--gap-small) var(--gap);
-
-	& > section {
-		display: flex;
-		gap: var(--gap-small);
-		flex-direction: column;
-	}
+	display: flex;
+	gap: var(--gap-small);
+	flex-direction: column;
 }
 
 ul {
@@ -298,10 +307,6 @@ ul:empty {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-}
-
-.extraction-commands > .p-button {
-	padding: 0.25rem var(--gap-small);
 }
 
 .no-documents-img {

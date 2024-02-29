@@ -50,6 +50,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
+	private final String TASK_RUNNER_RESPONSE_QUEUE = "terarium-response-queue-test";
 
 	@BeforeEach
 	public void setup() {
@@ -57,7 +58,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		taskRunnerService.declareQueues();
 		taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
 				taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE,
-				taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE, "");
+				TASK_RUNNER_RESPONSE_QUEUE, "");
 	}
 
 	@AfterEach
@@ -94,7 +95,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
 				rabbitTemplate.getConnectionFactory());
-		container.setQueueNames(taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE);
+		container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
 			try {
 				TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
@@ -251,7 +252,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
 				rabbitTemplate.getConnectionFactory());
-		container.setQueueNames(taskRunnerService.TASK_RUNNER_RESPONSE_QUEUE);
+		container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
 			try {
 				TaskResponse resp = mapper.readValue(message.getBody(), TaskResponse.class);
