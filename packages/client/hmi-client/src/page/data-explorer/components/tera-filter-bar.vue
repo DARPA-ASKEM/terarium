@@ -1,6 +1,6 @@
 <template>
 	<div class="flex align-items-center">
-		<label class="pr-2">Topic Filter</label>
+		<label class="mr-2">Topic Filter</label>
 		<Dropdown
 			class="topic-dropdown"
 			:modelValue="topic"
@@ -38,6 +38,6 @@ const onTopicChange = (e) => {
 
 <style scoped>
 .topic-dropdown {
-	min-width: 210px;
+	min-width: 12rem;
 }
 </style>

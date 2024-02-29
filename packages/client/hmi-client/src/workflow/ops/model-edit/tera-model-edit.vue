@@ -22,18 +22,16 @@
 						@click="runFromCodeWrapper"
 					/>
 				</div>
-
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
+						:default-options="sampleAgentQuestions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
-						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
-					@init="initialize"
+					@init="initializeAceEditor"
 					lang="python"
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
@@ -43,7 +41,7 @@
 			</tera-drilldown-section>
 			<div class="preview-container">
 				<tera-drilldown-preview
-					title="Model Preview"
+					title="Preview"
 					v-model:output="selectedOutputId"
 					@update:selection="onSelection"
 					:options="outputs"
@@ -53,7 +51,6 @@
 					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
 					</div>
 					<template #footer>
 						<InputText
@@ -86,7 +83,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onUnmounted, ref, watch, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
@@ -98,6 +95,7 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -154,12 +152,17 @@ const sampleAgentQuestions = [
 	'Rename the transition infection to inf.'
 ];
 
-const codeText = ref(
-	'# This environment contains the variable "model" \n# which is displayed on the right'
-);
+const defaultCodeText =
+	'# This environment contains the variable "model" \n# which is displayed on the right';
+const codeText = ref(defaultCodeText);
 
 const appendCode = (data: any, property: string) => {
-	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+	const code = data.content[property] as string;
+	if (code) {
+		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+	} else {
+		logger.error('No code to append');
+	}
 };
 
 const syncWithMiraModel = (data: any) => {
@@ -168,19 +171,13 @@ const syncWithMiraModel = (data: any) => {
 
 // Reset model, then execute the code
 const runFromCodeWrapper = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode();
+		runFromCode(editor?.getValue() as string);
 	});
 };
 
-const runFromCode = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
+const runFromCode = (code: string) => {
 	const messageContent = {
 		silent: false,
 		store_history: false,
@@ -228,7 +225,7 @@ const handleResetResponse = (data: any) => {
 	if (data.content.success) {
 		// updateStratifyGroupForm(blankStratifyGroup);
 
-		codeText.value = '';
+		codeText.value = defaultCodeText;
 		saveCodeToState('', false);
 
 		logger.info('Model reset');
@@ -258,16 +255,22 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
+	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
+
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
 				// when coming from output dropdown change we should shutdown first
-				await kernelManager.shutdown();
+				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
+		}
+
+		if (codeText.value && codeText.value.length > 0) {
+			runFromCodeWrapper();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -293,13 +296,14 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',
+			state: _.cloneDeep(props.node.state),
 			value: [modelData.id]
 		});
 		emit('close');
 	}
 };
 
-const initialize = (editorInstance: any) => {
+const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
@@ -331,20 +335,16 @@ watch(
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
+
 			await inputChangeHandler();
 		}
 	},
 	{ immediate: true }
 );
 
-// Set model, modelConfiguration, modelNodeOptions
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		await inputChangeHandler();
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	await inputChangeHandler();
+});
 
 onUnmounted(() => {
 	kernelManager.shutdown();
@@ -380,16 +380,18 @@ onUnmounted(() => {
 	align-items: center;
 }
 
-.ai-assistant-container {
-	margin-left: var(--gap);
-}
-
 .preview-container {
 	display: flex;
 	flex-direction: column;
 	padding: 1rem;
 }
 
+:deep(.diagram-container) {
+	height: calc(100vh - 270px) !important;
+}
+:deep(.resize-handle) {
+	display: none;
+}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;

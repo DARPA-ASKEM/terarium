@@ -238,6 +238,7 @@ import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-document/mod';
 import * as DecapodesSimulationOp from './ops/decapodes-simulation/mod';
+import * as ModelComparisonOp from './ops/model-comparison/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -263,6 +264,7 @@ registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(DecapodesSimulationOp);
+registry.registerOp(ModelComparisonOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -444,6 +446,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelCouplingOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelCouplingOp)
+			},
+			{
+				label: ModelComparisonOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelComparisonOp)
 			}
 		]
 	},

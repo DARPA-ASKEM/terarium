@@ -1,13 +1,13 @@
 <template>
 	<section v-if="stateTypes || transitionTypes">
-		<ul>
-			<li v-for="(type, i) in stateTypes" :key="i">
+		<ul class="flex flex-row mr-3">
+			<li v-for="(type, i) in stateTypes" :key="i" class="legend-item">
 				<div class="legend-key-circle" :style="getLegendKeyStyle(type)" />
 				{{ type }}
 			</li>
 		</ul>
-		<ul>
-			<li v-for="(type, i) in transitionTypes" :key="i">
+		<ul class="flex flex-row">
+			<li v-for="(type, i) in transitionTypes" :key="i" class="legend-item">
 				<div class="legend-key-square" :style="getLegendKeyStyle(type)" />
 				{{ type }}
 			</li>
@@ -46,28 +46,22 @@ function getLegendKeyStyle(id: string) {
 </script>
 
 <style scoped>
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-xsmall);
+	margin-right: var(--gap-small);
+	font-size: var(--font-caption);
+}
 .legend-key-circle {
-	height: 24px;
-	width: 24px;
+	height: 1rem;
+	width: 1rem;
 	border-radius: 12px;
 }
 
 .legend-key-square {
-	height: 24px;
-	width: 24px;
-	border-radius: 4px;
-}
-
-section.legend ul {
-	display: flex;
-	gap: 0.5rem;
-	list-style-type: none;
-	flex-direction: row;
-}
-
-section.legend li {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
+	height: 1rem;
+	width: 1rem;
+	border-radius: 2px;
 }
 </style>

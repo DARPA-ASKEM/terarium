@@ -1,21 +1,27 @@
 package software.uncharted.terarium.hmiserver.controller.miraservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import feign.FeignException;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.mira.Curies;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
-import software.uncharted.terarium.hmiserver.models.mira.Curies;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
-
 
 @RequestMapping("/mira")
 @RestController
@@ -27,8 +33,7 @@ public class MIRAController {
 	@GetMapping("/{curies}")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> searchConcept(
-		@PathVariable("curies") final String curies
-	) {
+			@PathVariable("curies") final String curies) {
 		try {
 			ResponseEntity<List<DKG>> response = proxy.getEntities(curies);
 			if (response.getStatusCode().is2xxSuccessful()) {
@@ -47,10 +52,9 @@ public class MIRAController {
 	@GetMapping("/search")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> search(
-		@RequestParam("q") final String q,
-		@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
-		@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset
-	) {
+			@RequestParam("q") final String q,
+			@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
+			@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset) {
 		try {
 			ResponseEntity<List<DKG>> response = proxy.search(q, limit, offset);
 			if (response.getStatusCode().is2xxSuccessful()) {
@@ -73,8 +77,7 @@ public class MIRAController {
 	@PostMapping("/reconstruct_ode_semantics")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> reconstructODESemantics(
-		Object amr
-	) {
+			Object amr) {
 		return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
 
 	}
@@ -82,8 +85,7 @@ public class MIRAController {
 	@PostMapping("/entity_similarity")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(
-		@RequestBody Curies obj
-	) {
+			@RequestBody Curies obj) {
 		return ResponseEntity.ok(proxy.entitySimilarity(obj).getBody());
 	}
 }

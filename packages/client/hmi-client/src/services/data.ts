@@ -112,7 +112,7 @@ const searchXDDDocuments = async (
 	if (xddSearchParam?.fields) {
 		searchParams += `&fields=${xddSearchParam.fields}`;
 	}
-	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
+	if (xddSearchParam?.dict && !isEmpty(xddSearchParam.dict)) {
 		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
 	}
 	if (xddSearchParam?.min_published) {
@@ -133,12 +133,7 @@ const searchXDDDocuments = async (
 	if (xddSearchParam?.inclusive) {
 		searchParams += '&inclusive=true';
 	}
-	if (enablePagination) {
-		searchParams += '&full_results';
-	} else {
-		// request results to be ranked
-		searchParams += '&include_score=true';
-	}
+
 	if (xddSearchParam?.facets) {
 		searchParams += '&facets=true';
 	}
@@ -164,7 +159,12 @@ const searchXDDDocuments = async (
 	if (xddSearchParam?.similar_to) {
 		searchParams += `&similar_to=${xddSearchParam?.similar_to}`;
 	}
-
+	if (enablePagination) {
+		searchParams += '&full_results';
+	} else {
+		// request results to be ranked
+		searchParams += '&include_score=true';
+	}
 	//
 	// "max": "Maximum number of documents to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
@@ -184,10 +184,7 @@ const searchXDDDocuments = async (
 
 	const res = await API.get(url + searchParams);
 
-	if (res.data && res.data.success) {
-		return res.data.success;
-	}
-	return undefined;
+	return res?.data?.success ?? null;
 };
 
 const filterAssets = <T extends Model | Dataset>(

@@ -64,7 +64,13 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { computed, PropType, ref } from 'vue';
-import type { DocumentAsset, XDDFacetsItemResponse, Document } from '@/types/Types';
+import type {
+	AddDocumentAssetFromXDDResponse,
+	Document,
+	DocumentAsset,
+	ProjectAsset,
+	XDDFacetsItemResponse
+} from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
@@ -115,7 +121,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String,
-		default: 'XDD'
+		default: 'xDD'
 	}
 });
 
@@ -129,19 +135,17 @@ const projectOptions = computed(() => [
 			useProjects().allProjects.value?.map((project) => ({
 				label: project.name,
 				command: async () => {
-					let response: any = null;
+					let response: ProjectAsset['id'] | null = null;
 					let assetName = '';
 					isAdding.value = true;
 
 					if (isModel(selectedAsset.value)) {
-						// FIXME: handle cases where assets is already added to the project
 						const modelId = selectedAsset.value.id;
 						// then, link and store in the project assets
 						const assetType = AssetType.Model;
 						response = await useProjects().addAsset(assetType, modelId, project.id);
 						assetName = selectedAsset.value.header.name;
 					} else if (isDataset(selectedAsset.value)) {
-						// FIXME: handle cases where assets is already added to the project
 						const datasetId = selectedAsset.value.id;
 						// then, link and store in the project assets
 						const assetType = AssetType.Dataset;
@@ -149,11 +153,16 @@ const projectOptions = computed(() => [
 							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
-					} else if (isDocument(selectedAsset.value) && props.source === 'XDD') {
+					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
 						const document = selectedAsset.value as Document;
-						await createDocumentFromXDD(document, project.id as string);
+						const xddDoc: AddDocumentAssetFromXDDResponse | null = await createDocumentFromXDD(
+							document,
+							project.id as string
+						);
 						// finally add asset to project
-						response = await useProjects().get(project.id);
+						response = xddDoc
+							? await useProjects().addAsset(AssetType.Document, xddDoc.documentAssetId, project.id)
+							: null;
 						assetName = selectedAsset.value.title;
 					} else if (props.source === 'Terarium') {
 						const document = selectedAsset.value as DocumentAsset;
@@ -163,7 +172,12 @@ const projectOptions = computed(() => [
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
-					else logger.error(`Failed adding ${assetName} to ${project.name}`);
+					else {
+						// TODO: 'response' here is just an id, and we've lost the error message by this point. We may want to
+						// eventually pass up the error code and message to this point in the code so that we can show the user
+						// more helpful information than just "failed".
+						logger.error(`Failed adding ${assetName} to ${project.name}`);
+					}
 
 					isAdding.value = false;
 				}
@@ -213,7 +227,7 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resourceType === ResourceType.XDD) {
-			if (props.source === 'XDD') {
+			if (props.source === 'xDD') {
 				const documentSearchResults = searchResults.results as Document[];
 				return [...documentSearchResults];
 			}
