@@ -209,21 +209,43 @@ const mass = ref('0');
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
+const MAX = 99999999999;
 const requestConstraints = computed(
 	() =>
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
+			// Derivatives
+			// FIXME: need both positive and negative derivatives
+			if (ele.checkDerivative === true) {
+				const monotonicDecrease = {
+					soft: true,
+					name: ele.name,
+					timepoints: null,
+					additive_bounds: {
+						lb: -MAX,
+						ub: 0.0,
+						closed_upper_bound: false,
+						original_width: MAX
+					},
+					variables: ele.variables,
+					weights: [1.0],
+					derivative: true
+				};
+				return monotonicDecrease;
+			}
+
 			if (ele.timepoints) {
 				ele.timepoints.closed_upper_bound = true;
 			}
 			if (ele.variables.length === 1) {
 				// State Variable Constraint
-				return {
+				const singleVarConstraint = {
 					name: ele.name,
 					variable: ele.variables[0],
 					interval: ele.interval,
 					timepoints: ele.timepoints
 				};
+				return singleVarConstraint;
 			}
 
 			return {
@@ -381,7 +403,8 @@ const addConstraintForm = () => {
 		borderColour: '#00c387',
 		name: '',
 		timepoints: { lb: 0, ub: 100 },
-		variables: []
+		variables: [],
+		checkDerivative: false
 	};
 	state.constraintGroups.push(newGroup);
 	emit('update-state', state);

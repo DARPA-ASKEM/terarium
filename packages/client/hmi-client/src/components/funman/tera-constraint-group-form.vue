@@ -45,7 +45,14 @@
 		</div>
 		<div class="section-row">
 			<label>Check derivative</label>
-			<Checkbox name="similarContent" v-model="checkDerivative" binary />
+			<Checkbox
+				name="similarContent"
+				v-model="checkDerivative"
+				binary
+				@update:model-value="
+					emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+				"
+			/>
 		</div>
 		<div class="section-row">
 			<div class="button-row">
