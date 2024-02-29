@@ -9,6 +9,21 @@ import { NodeData } from '@/model-representation/petrinet/petrinet-service';
 import CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS from '@/model-representation/petrinet/circle-packing-vectors.json';
 import CIRCLE_PACKING_CHILD_NORMALIZED_RADII from '@/model-representation/petrinet/circle-packing-radii.json';
 
+const FONT_SIZE_SMALL = 18;
+const FONT_SIZE_REGULAR = 24;
+const FONT_SIZE_LARGE = 36;
+
+function setFontSize(label: string) {
+	console.log(label, label.length);
+	if (label.length < 3) {
+		return FONT_SIZE_LARGE;
+	}
+	if (label.length < 10) {
+		return FONT_SIZE_REGULAR;
+	}
+	return FONT_SIZE_SMALL;
+}
+
 export interface NestedPetrinetOptions extends Options {
 	nestedMap?: { [baseNodeId: string]: any };
 	transitionMatrices?: { [baseTransitionId: string]: any[] };
@@ -171,6 +186,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			});
 		});
 
+		/* Don't show transition labels because we're showing matrices here */
 		// transitions label text
 		// transitions
 		// 	.append('text')
@@ -184,7 +200,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		// transitions expression text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height / 2 - 5)
+			.attr('y', (d) => -d.height / 2 - 8)
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('stroke', '#FFF')
@@ -203,8 +222,12 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		// species text
 		species
 			.append('text')
-			.attr('y', () => 8)
-			.style('font-size', '24px')
+			.attr('y', () => 5)
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.attr('stroke-width', '0.5px')
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary)')
