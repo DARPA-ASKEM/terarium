@@ -3,20 +3,28 @@
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
+					<h4>Stratify model</h4>
 					<p>The model will be stratified with the following settings.</p>
 					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 						Note: Code has been executed which may not be reflected here.
 					</p>
 					<tera-stratification-group-form
+						class="mt-2"
 						:modelNodeOptions="modelNodeOptions"
 						:config="node.state.strataGroup"
 						@update-self="updateStratifyGroupForm"
 					/>
 				</div>
 				<template #footer>
-					<Button outlined label="Stratify" icon="pi pi-play" @click="stratifyModel" />
-					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
+					<Button outlined label="Stratify" size="large" icon="pi pi-play" @click="stratifyModel" />
+					<Button
+						style="margin-right: auto"
+						size="large"
+						severity="secondary"
+						outlined
+						label="Reset"
+						@click="resetModel"
+					/>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -30,6 +38,7 @@
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
+					:options="{ showPrintMargin: false }"
 				/>
 
 				<template #footer>
@@ -37,6 +46,7 @@
 						outlined
 						style="margin-right: auto"
 						label="Run"
+						size="large"
 						icon="pi pi-play"
 						@click="runCodeStratify"
 					/>
@@ -64,10 +74,11 @@
 					<Button
 						:disabled="!amr"
 						outlined
+						size="large"
 						label="Save as new Model"
 						@click="isNewModelModalVisible = true"
 					/>
-					<Button label="Close" @click="emit('close')" />
+					<Button label="Close" size="large" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -86,8 +97,13 @@
 			/>
 		</form>
 		<template #footer>
-			<Button label="Save" @click="() => saveNewModel(newModelName)" />
-			<Button class="p-button-secondary" label="Cancel" @click="isNewModelModalVisible = false" />
+			<Button label="Save" size="large" @click="() => saveNewModel(newModelName)" />
+			<Button
+				class="p-button-secondary"
+				size="large"
+				label="Cancel"
+				@click="isNewModelModalVisible = false"
+			/>
 		</template>
 	</tera-modal>
 </template>
