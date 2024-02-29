@@ -4,18 +4,16 @@
 			<tera-drilldown-section>
 				<Dropdown
 					:editable="true"
-					disabled
 					class="input"
-					v-model="questionString"
+					v-model="gollmQuestion"
 					type="text"
-					:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
-					@keydown.enter="submitQuestion"
+					:placeholder="'What would you like to compare?'"
+					@keydown.enter="submitGollmQuestion"
 				/>
-				<Panel v-if="llmAnswer" header="Answer" toggleable>
+				<Panel v-if="llmAnswer || !isEmpty(llmThoughts)" header="Answer" toggleable>
 					<template #togglericon="{ collapsed }">
 						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 					</template>
-					<p>{{ llmAnswer }}</p>
 				</Panel>
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
@@ -59,7 +57,38 @@
 				</div>
 			</tera-drilldown-section>
 		</div>
-		<div :tabName="Tabs.Notebook"></div>
+		<div :tabName="Tabs.Notebook">
+			<tera-drilldown-section>
+				<div class="toolbar-right-side">
+					<Button
+						icon="pi pi-play"
+						label="Run"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="runCode"
+					/>
+				</div>
+				<Dropdown
+					:editable="true"
+					:disabled="!isKernelReady"
+					class="input"
+					v-model="beakerQuestion"
+					type="text"
+					:placeholder="!isKernelReady ? 'Please wait...' : 'What would you like to compare?'"
+					@keydown.enter="submitBeakerQuestion"
+				/>
+				<v-ace-editor
+					v-model:value="code"
+					@init="initializeAceEditor"
+					lang="python"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%"
+					class="ace-editor"
+					:options="{ showPrintMargin: false }"
+				/>
+			</tera-drilldown-section>
+		</div>
 	</tera-drilldown>
 </template>
 
@@ -70,12 +99,15 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import Panel from 'primevue/panel';
+import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { WorkflowNode } from '@/types/workflow';
 import { getModel } from '@/services/model';
 import type { Model } from '@/types/Types';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -89,9 +121,13 @@ enum Tabs {
 	Notebook = 'Notebook'
 }
 
-const questionString = ref('');
+let editor: VAceEditorInstance['_editor'] | null;
+
+const gollmQuestion = ref('');
+const beakerQuestion = ref('');
+const llmThoughts = ref<string[]>([]);
 const llmAnswer = ref('');
-const kernelStatus = ref('');
+const code = ref('');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = computed(() =>
@@ -107,10 +143,9 @@ const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
 const kernelManager = new KernelSessionManager();
 
-async function addModelForComparison(modelId: string) {
-	const model = await getModel(modelId);
-	if (model) modelsToCompare.value.push(model);
-}
+const initializeAceEditor = (editorInstance: any) => {
+	editor = editorInstance;
+};
 
 function formatField(field: string) {
 	const result = field
@@ -120,32 +155,80 @@ function formatField(field: string) {
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-function submitQuestion() {
-	logger.info(`WIP`);
+function submitGollmQuestion() {
+	console.log(gollmQuestion.value);
 }
 
-// FIXME: Placeholder
-const buildJupyterContext = () => {
-	if (!isEmpty(modelsToCompare.value)) {
-		logger.warn('Cannot build Jupyter context without a model');
-		return null;
-	}
-	return {
-		context: 'mira_model_edit',
-		language: 'python3',
-		context_info: {
-			id: props.node.inputs?.[0].value?.[0] ?? ''
-		}
+function runCode() {
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code: editor?.getValue() as string
 	};
-};
 
-onMounted(async () => {
-	props.node.inputs.forEach((input) => {
-		if (input.value) addModelForComparison(input.value[0]);
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		.register('execute_input', (data) => {
+			console.log(data);
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('error', (data) => {
+			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			console.log('error', data.content);
+		});
+}
+
+function submitBeakerQuestion() {
+	console.log(beakerQuestion.value);
+	kernelManager
+		.sendMessage('llm_request', {
+			request: beakerQuestion.value
+		})
+		.register('llm_thought', (d) => {
+			console.log(d.content);
+			llmThoughts.value.push(d.content.thought);
+		})
+		.register('code_cell', (d) => {
+			console.log(d);
+			code.value = d.content.code;
+		});
+}
+
+async function addModelForComparison(modelId: string) {
+	const model = await getModel(modelId);
+	if (model) modelsToCompare.value.push(model);
+	if (modelsToCompare.value.length === 3) buildJupyterContext();
+}
+
+async function buildJupyterContext() {
+	if (modelsToCompare.value.length < 3) {
+		logger.warn('Cannot build Jupyter context without models');
+		return;
+	}
+
+	console.log({
+		models: modelsToCompare.value.map((model, index) => ({
+			model_id: model.id,
+			name: `model_${index + 1}`
+		}))
 	});
 
 	try {
-		const jupyterContext = buildJupyterContext();
+		const jupyterContext = {
+			context: 'mira',
+			language: 'python3',
+			context_info: {
+				models: modelsToCompare.value.map((model, index) => ({
+					model_id: model.id,
+					name: `model_${index + 1}`
+				}))
+			}
+		};
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
 				kernelManager.shutdown();
@@ -156,6 +239,14 @@ onMounted(async () => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
+}
+
+onMounted(async () => {
+	props.node.inputs.forEach((input) => {
+		if (input.value) {
+			addModelForComparison(input.value[0]);
+		}
+	});
 });
 
 onUnmounted(() => {
@@ -201,5 +292,10 @@ table {
 	background-position: 12px;
 	background-repeat: no-repeat;
 	text-indent: 30px;
+}
+
+.toolbar-right-side {
+	display: flex;
+	justify-content: right;
 }
 </style>
