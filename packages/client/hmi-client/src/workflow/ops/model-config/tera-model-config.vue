@@ -181,7 +181,6 @@
 						label="Run"
 						outlined
 						severity="secondary"
-						size="large"
 						@click="runFromCode"
 					/>
 				</div>
