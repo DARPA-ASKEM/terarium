@@ -74,14 +74,11 @@
 						<h4>Add sanity checks</h4>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
-					<!-- compartmental constraints -->
-					<div></div>
 
 					<tera-compartment-constraint :variables="modelNodeOptions" :mass="mass" />
-
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index"
+						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
 						:model-node-options="modelNodeOptions"
@@ -209,8 +206,6 @@ const requestConstraints = computed(
 	() =>
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
-			// Derivatives
-			// FIXME: need both positive and negative derivatives
 			if (ele.constraintType === 'monotonicityConstraint') {
 				const constraint = {
 					soft: true,
@@ -321,7 +316,6 @@ const runMakeQuery = async () => {
 				}
 			],
 			config: {
-				// use_compartmental_constraints: true,
 				use_compartmental_constraints: knobs.value.useCompartmentalConstraint,
 				normalization_constant: 1,
 				tolerance: knobs.value.tolerance
@@ -332,19 +326,6 @@ const runMakeQuery = async () => {
 	// Calculate the normalization mass of the model = Sum(initials)
 	const semantics = model.value.semantics;
 	if (knobs.value.useCompartmentalConstraint && semantics) {
-		// const modelInitials = semantics.ode.initials;
-		// const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
-
-		// const parametersMap = {};
-		// semantics.ode.parameters?.forEach((d) => {
-		// 	parametersMap[d.id] = d.value;
-		// });
-
-		// const mass = await pythonInstance.evaluateExpression(
-		// 	modelMassExpression as string,
-		// 	parametersMap
-		// );
-
 		if (request.request.config) {
 			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
@@ -390,10 +371,6 @@ const addOutputPorts = async (runId: string) => {
 		value: runId,
 		state: _.cloneDeep(props.node.state)
 	});
-	if (props.node.outputs.length === 1) {
-		const portId = props.node.outputs[0].id;
-		emit('select-output', portId);
-	}
 };
 
 const addConstraintForm = () => {
