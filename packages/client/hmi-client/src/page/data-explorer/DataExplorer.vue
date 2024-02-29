@@ -27,9 +27,9 @@
 							option-value="value"
 							option-label="label"
 						/>
-						<div class="toggles">
-							<span v-if="assetType === AssetType.Document">
-								<label>Source</label>
+						<div class="toggles" v-if="assetType === AssetType.Document">
+							<span>
+								<label class="mr-2">Source</label>
 								<Dropdown v-model="chosenSource" :options="sourceOptions" />
 							</span>
 							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
@@ -98,15 +98,14 @@ import {
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils/data-util';
+import { getResourceID, isDataset, isDocument, isModel, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
-import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
-// import Chip from 'primevue/chip';
+import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
 
@@ -169,8 +168,8 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
-const sourceOptions = ref(['XDD', 'Terarium']);
-const chosenSource = ref('XDD');
+const sourceOptions = ref(['xDD', 'Terarium']);
+const chosenSource = ref('xDD');
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
@@ -615,14 +614,9 @@ main {
 }
 
 .toggles {
+	align-items: center;
 	display: flex;
-	gap: 1rem;
-
-	& > span {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
+	gap: var(--gap);
 
 	& .p-dropdown {
 		min-width: 8rem;
