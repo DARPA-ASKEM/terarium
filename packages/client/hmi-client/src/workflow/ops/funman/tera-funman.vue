@@ -404,7 +404,8 @@ const addConstraintForm = () => {
 		name: '',
 		timepoints: { lb: 0, ub: 100 },
 		variables: [],
-		checkDerivative: false
+		checkDerivative: false,
+		constraintType: ''
 	};
 	state.constraintGroups.push(newGroup);
 	emit('update-state', state);

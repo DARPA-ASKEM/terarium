@@ -10,38 +10,58 @@
 				placeholder="Add constraint name"
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
 			/>
-			<label>Target</label>
-			<MultiSelect
-				v-model="variables"
-				:options="props.modelNodeOptions"
-				placeholder="Model states"
-				display="chip"
-				@update:model-value="
-					emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-				"
-			></MultiSelect>
-			<!--
-			<label for="weights">Weights</label>
-			-->
-			<div v-for="(variable, index) of variables" :key="index">
+
+			<div style="display: flex; flex-direction: row; gap: 0.5rem">
 				<div class="button-row">
-					<label v-if="weights">
-						{{ variable + ' Weight' }}
-					</label>
-					<InputNumber
-						v-if="weights"
-						:key="index"
-						:placeholder="variable"
-						mode="decimal"
-						:min-fraction-digits="3"
-						:max-fraction-digits="3"
-						v-model="weights[index]"
+					<label>Constraint type</label>
+					<Dropdown
+						:model-value="constraintType"
+						:options="constraintTypes"
+						option-value="id"
+						option-label="name"
+						placeholder="Select an output"
+						@update:model-value="changeConstraintType($event)"
+					/>
+				</div>
+				<div class="button-row">
+					<label>Target</label>
+					<MultiSelect
+						v-model="variables"
+						:options="props.modelNodeOptions"
+						placeholder="Model states"
+						display="chip"
 						@update:model-value="
 							emit('update-self', { index: props.index, updatedConfig: updatedConfig })
 						"
-					/>
+					></MultiSelect>
 				</div>
 			</div>
+
+			<!--
+			<label for="weights">Weights</label>
+			-->
+			<section v-if="constraintType !== 'monotonicityConstraint'">
+				<div v-for="(variable, index) of variables" :key="index">
+					<div class="button-row">
+						<label v-if="weights">
+							{{ variable + ' Weight' }}
+						</label>
+						<InputNumber
+							v-if="weights"
+							:key="index"
+							:placeholder="variable"
+							mode="decimal"
+							:min-fraction-digits="3"
+							:max-fraction-digits="3"
+							v-model="weights[index]"
+							@update:model-value="
+								emit('update-self', { index: props.index, updatedConfig: updatedConfig })
+							"
+						/>
+					</div>
+				</div>
+			</section>
+			<section v-if="constraintType === 'monotonicityConstraint'"></section>
 		</div>
 		<div class="section-row">
 			<label>Check derivative</label>
@@ -54,7 +74,7 @@
 				"
 			/>
 		</div>
-		<div class="section-row">
+		<div class="section-row" v-if="constraintType !== 'monotonicityConstraint'">
 			<div class="button-row">
 				<label>Start time</label>
 				<InputNumber
@@ -110,6 +130,7 @@ import { watch, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
+import Dropdown from 'primevue/dropdown';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
 import Checkbox from 'primevue/checkbox';
 
@@ -122,6 +143,7 @@ const props = defineProps<{
 const emit = defineEmits(['delete-self', 'update-self']);
 
 const constraintName = ref(props.config.name);
+const constraintType = ref(props.config.constraintType);
 const upperBound = ref(props.config.interval?.ub);
 const lowerBound = ref(props.config.interval?.lb);
 const startTime = ref(props.config.timepoints?.lb);
@@ -129,6 +151,12 @@ const endTime = ref(props.config.timepoints?.ub);
 const variables = ref(props.config.variables);
 const weights = ref(props.config.weights);
 const checkDerivative = ref(props.config.checkDerivative);
+
+const constraintTypes = [
+	{ id: 'stateConstraint', name: 'State constraint' },
+	{ id: 'monotonicityConstraint', name: 'Monotonicity constraint' },
+	{ id: 'parameterConstraint', name: 'Parameter constraint' }
+];
 
 const updatedConfig = computed<ConstraintGroup>(
 	() =>
@@ -142,6 +170,19 @@ const updatedConfig = computed<ConstraintGroup>(
 			checkDerivative: checkDerivative.value
 		}) as ConstraintGroup
 );
+
+// Changing type should wipe out current settings to avoid weird things from happening
+const changeConstraintType = (value: any) => {
+	constraintType.value = value;
+	weights.value = [];
+	variables.value = [];
+	startTime.value = 0;
+	endTime.value = 100;
+	lowerBound.value = 0;
+	upperBound.value = 1;
+
+	emit('update-self', { index: props.index, updatedConfig: updatedConfig.value });
+};
 
 watch(
 	() => variables.value,

@@ -4,6 +4,8 @@ import type { TimeSpan, FunmanInterval } from '@/types/Types';
 export interface ConstraintGroup {
 	borderColour: string;
 	name: string;
+	constraintType: string;
+
 	variables: string[]; // If len = 1, need to rename to "variable" for request formatting
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
