@@ -19,16 +19,14 @@
 						outlined
 						severity="secondary"
 						size="small"
-						@click="runFromCodeWrapper(editor?.getValue() as string)"
+						@click="runFromCodeWrapper"
 					/>
 				</div>
-
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
+						:default-options="sampleAgentQuestions"
 						@llm-output="(data: any) => appendCode(data, 'code')"
-						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -85,7 +83,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, onUnmounted, ref, watch, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
@@ -97,6 +95,7 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -153,12 +152,17 @@ const sampleAgentQuestions = [
 	'Rename the transition infection to inf.'
 ];
 
-const codeText = ref(
-	'# This environment contains the variable "model" \n# which is displayed on the right'
-);
+const defaultCodeText =
+	'# This environment contains the variable "model" \n# which is displayed on the right';
+const codeText = ref(defaultCodeText);
 
 const appendCode = (data: any, property: string) => {
-	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+	const code = data.content[property] as string;
+	if (code) {
+		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+	} else {
+		logger.error('No code to append');
+	}
 };
 
 const syncWithMiraModel = (data: any) => {
@@ -166,10 +170,10 @@ const syncWithMiraModel = (data: any) => {
 };
 
 // Reset model, then execute the code
-const runFromCodeWrapper = (code: string) => {
+const runFromCodeWrapper = () => {
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode(code);
+		runFromCode(editor?.getValue() as string);
 	});
 };
 
@@ -221,7 +225,7 @@ const handleResetResponse = (data: any) => {
 	if (data.content.success) {
 		// updateStratifyGroupForm(blankStratifyGroup);
 
-		codeText.value = '';
+		codeText.value = defaultCodeText;
 		saveCodeToState('', false);
 
 		logger.info('Model reset');
@@ -251,7 +255,7 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
-	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code;
+	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
@@ -266,7 +270,7 @@ const inputChangeHandler = async () => {
 		}
 
 		if (codeText.value && codeText.value.length > 0) {
-			runFromCodeWrapper(codeText.value);
+			runFromCodeWrapper();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -374,10 +378,6 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
-}
-
-.ai-assistant-container {
-	margin-left: var(--gap);
 }
 
 .preview-container {
