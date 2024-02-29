@@ -64,7 +64,7 @@ public class SearchByAssetTypeController {
 	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
 	static final private String REDIS_EMBEDDING_CACHE_KEY = "knn-vector-cache";
 
-	static final private List<String> EXCLUDE_FIELDS = List.of("embeggings", "text", "topics");
+	static final private List<String> EXCLUDE_FIELDS = List.of("embeddings", "text", "topics");
 
 	@Data
 	static public class GoLLMSearchRequest {
