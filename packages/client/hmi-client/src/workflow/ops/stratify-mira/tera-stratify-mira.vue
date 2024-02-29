@@ -131,6 +131,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useToastService } from '@/services/toast';
+import '@/ace-config';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
