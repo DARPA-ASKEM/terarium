@@ -58,8 +58,9 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
             document.getMetadata().put("gollmCard", card.response);
 
             documentAssetService.updateAsset(document);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             log.error("Failed to write model card to database", e);
+            throw new RuntimeException(e);
         }
     }
 }

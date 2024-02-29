@@ -107,8 +107,9 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
                 }
             });
 
-        } catch (final Exception e) {
+        } catch (Exception e) {
             log.error("Failed to configure model", e);
+            throw new RuntimeException(e);
         }
         log.info("Model configured successfully");
     }
