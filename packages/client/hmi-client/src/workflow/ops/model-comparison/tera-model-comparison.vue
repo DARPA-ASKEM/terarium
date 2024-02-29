@@ -21,8 +21,10 @@
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
 							<tr>
-								<th>Field</th>
-								<th v-for="model in modelsToCompare" :key="model.id">{{ model.header.name }}</th>
+								<th></th>
+								<th v-for="model in modelsToCompare" :key="model.id" class="text-lg">
+									{{ model.header.name }}
+								</th>
 							</tr>
 						</thead>
 						<tbody v-if="fields" class="p-datatable-tbody">
@@ -101,7 +103,7 @@ const fields = computed(
 			...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))
 		] as string[]
 );
-const cellWidth = computed(() => `${100 / modelsToCompare.value.length - 10}%`);
+const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
 const kernelManager = new KernelSessionManager();
 
@@ -167,7 +169,10 @@ table {
 	th {
 		vertical-align: top;
 		text-align: left;
-		padding: var(--gap) 0;
+		padding: 0 var(--gap) var(--gap) var(--gap-small);
+		max-width: v-bind('cellWidth');
+		overflow: auto;
+		text-overflow: ellipsis;
 	}
 
 	& td {
@@ -176,11 +181,13 @@ table {
 
 	& td:first-child {
 		width: 10%;
+		padding: var(--gap-small) 0;
+		font-weight: 600;
 	}
 
 	& td:not(:first-child) {
-		width: v-bind('cellWidth');
-		padding: 0 0.25rem;
+		padding: var(--gap-small);
+		padding-right: var(--gap);
 	}
 
 	& .value {
@@ -191,8 +198,8 @@ table {
 .input:deep(input) {
 	background-image: url('@assets/svg/icons/message.svg');
 	background-size: 1rem;
-	background-position: var(--gap-small);
+	background-position: 12px;
 	background-repeat: no-repeat;
-	text-indent: 24px;
+	text-indent: 30px;
 }
 </style>
