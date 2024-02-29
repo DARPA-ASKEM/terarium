@@ -478,6 +478,10 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
+
+	// FIXME: dull out regnet/stockflow Feb 29, 2024
+	if (model.value.header.schema_name !== 'petrinet') return null;
+
 	return getStratificationType(model.value);
 });
 
