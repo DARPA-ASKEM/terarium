@@ -22,7 +22,7 @@
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
+				<p>Code Editor - Python</p>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -45,20 +45,19 @@
 		</div>
 		<template #preview>
 			<tera-drilldown-preview
-				title="Stratify output"
+				title="Preview"
 				:options="outputs"
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
-				<div>
+				<div class="h-full">
 					<template v-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
 						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
+					<div v-else class="flex flex-column h-full justify-content-center">
+						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
 				</div>
 				<template #footer>
@@ -100,6 +99,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
