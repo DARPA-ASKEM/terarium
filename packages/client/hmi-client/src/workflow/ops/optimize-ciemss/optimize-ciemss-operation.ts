@@ -32,6 +32,7 @@ export interface OptimizeCiemssOperationState {
 	isMinimized: boolean;
 	chartConfigs: string[][];
 	simulationsInProgress: string[];
+	simulationRunId: string;
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -71,7 +72,8 @@ export const OptimizeCiemssOperation: Operation = {
 			threshold: 0,
 			isMinimized: true,
 			chartConfigs: [],
-			simulationsInProgress: []
+			simulationsInProgress: [],
+			simulationRunId: ''
 		};
 		return init;
 	}

@@ -186,13 +186,13 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
-				<template v-if="simulationRunResults[selectedRunId]">
+				<template v-if="simulationRunResults[knobs.simulationRunId]">
 					<div v-if="outputViewSelection === OutputView.Charts">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
-							:run-results="simulationRunResults[selectedRunId]"
-							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+							:run-results="simulationRunResults[knobs.simulationRunId]"
+							:chartConfig="{ selectedRun: knobs.simulationRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="configurationChange(idx, $event)"
 						/>
@@ -205,9 +205,9 @@
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
-							v-if="simulationRawContent[selectedRunId]"
+							v-if="simulationRawContent[knobs.simulationRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[selectedRunId]"
+							:raw-content="simulationRawContent[knobs.simulationRunId]"
 						/>
 					</div>
 				</template>
@@ -250,7 +250,6 @@ import {
 	makeOptimizeJobCiemss,
 	makeForecastJobCiemss,
 	pollAction,
-	getSimulation,
 	getRunResultCiemss
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset'; // saveDataset
@@ -270,7 +269,6 @@ import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import {
-	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
@@ -306,6 +304,7 @@ interface BasicKnobs {
 	aboveOrBelow: string;
 	threshold: number;
 	isMinimized: boolean;
+	simulationRunId: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -321,7 +320,8 @@ const knobs = ref<BasicKnobs>({
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	aboveOrBelow: props.node.state.aboveOrBelow ?? '',
 	threshold: props.node.state.threshold ?? 0,
-	isMinimized: props.node.state.isMinimized ?? true
+	isMinimized: props.node.state.isMinimized ?? true,
+	simulationRunId: props.node.state.simulationRunId ?? ''
 });
 
 const showSpinner = ref(false);
@@ -341,9 +341,6 @@ const outputs = computed(() => {
 	return [];
 });
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
 
 const outputViewSelection = ref(OutputView.Charts);
 const outputViewOptions = ref([
@@ -553,21 +550,10 @@ const getStatus = async (runId: string) => {
 		addChart();
 	}
 
-	const sim = await getSimulation(runId);
-
+	knobs.value.simulationRunId = runId;
 	// TOM TODO: This is incorrect
 	// This should not append simulation result's output to node.
 	// It should still save to state as well as be used in output previewer
-	emit('append-output', {
-		type: OptimizeCiemssOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
-		value: runId,
-		state: {
-			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
-			simulationsInProgress: state.simulationsInProgress
-		},
-		isSelected: false
-	});
 
 	showSpinner.value = false;
 };
@@ -621,6 +607,7 @@ watch(
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.aboveOrBelow = knobs.value.aboveOrBelow;
 		state.threshold = knobs.value.threshold;
+		state.simulationRunId = knobs.value.simulationRunId;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -634,7 +621,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 		}
 
-		// Update Wizard form fields with current selected output state
+		// Update knobs with current selected output state
 		// timespan.value = props.node.state.currentTimespan;
 		// numSamples.value = props.node.state.numSamples;
 		// method.value = props.node.state.method;
@@ -643,13 +630,13 @@ watch(
 );
 
 watch(
-	() => selectedRunId.value,
+	() => knobs.value.simulationRunId,
 	async () => {
-		if (selectedRunId.value) {
-			const output = await getRunResultCiemss(selectedRunId.value);
-			simulationRunResults.value[selectedRunId.value] = output.runResults;
-			simulationRawContent.value[selectedRunId.value] = createCsvAssetFromRunResults(
-				simulationRunResults.value[selectedRunId.value]
+		if (knobs.value.simulationRunId !== '') {
+			const output = await getRunResultCiemss(knobs.value.simulationRunId);
+			simulationRunResults.value[knobs.value.simulationRunId] = output.runResults;
+			simulationRawContent.value[knobs.value.simulationRunId] = createCsvAssetFromRunResults(
+				simulationRunResults.value[knobs.value.simulationRunId]
 			);
 		}
 	},
