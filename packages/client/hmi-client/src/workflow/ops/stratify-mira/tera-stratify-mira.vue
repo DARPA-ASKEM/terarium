@@ -144,8 +144,6 @@ const amr = ref<Model | null>(null);
 const stratifiedAmr = ref<Model | null>(null);
 
 const modelNodeOptions = ref<string[]>([]);
-let modelStates: string[] = [];
-let modelParameters: string[] = [];
 
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
@@ -206,6 +204,7 @@ const stratifyRequest = () => {
 	const conceptsToStratify: string[] = [];
 	const parametersToStratify: string[] = [];
 	const strataOption = props.node.state.strataGroup;
+	const { modelStates, modelParameters } = getStatesAndParameters(amr.value);
 
 	strataOption.selectedVariables.forEach((v) => {
 		if (modelStates.includes(v)) conceptsToStratify.push(v);
@@ -275,6 +274,49 @@ const buildJupyterContext = () => {
 	};
 };
 
+const getStatesAndParameters = (amrModel: Model) => {
+	const modelFramework = amrModel.header.schema_name;
+	const modelStates: string[] = [];
+	const modelParameters: string[] = [];
+
+	const model = amrModel.model;
+	const semantics = amrModel.semantics;
+
+	if (modelFramework === 'petrinet' || modelFramework === 'stockflow') {
+		model.states.forEach((state: any) => {
+			modelStates.push(state.id);
+		});
+
+		if (semantics?.ode?.observables) {
+			semantics.ode.observables.forEach((o) => {
+				modelStates.push(o.id);
+			});
+		}
+
+		if (semantics?.ode?.parameters) {
+			semantics.ode.parameters.forEach((p) => {
+				modelParameters.push(p.id);
+			});
+		}
+	} else if (modelFramework === 'regnet') {
+		model.vertices.forEach((v) => {
+			modelStates.push(v.id);
+		});
+
+		model.parameters.forEach((p) => {
+			modelParameters.push(p.id);
+		});
+	} else {
+		console.error(`Unknown framework ${modelFramework}`);
+		throw new Error(`Unknown framework ${modelFramework}`);
+	}
+	console.log(amr);
+	console.log(modelStates);
+	console.log(modelParameters);
+
+	return { modelStates, modelParameters };
+};
+
 const inputChangeHandler = async () => {
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -282,29 +324,8 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
-	modelStates = [];
-	modelParameters = [];
-
-	const modelColumnNameOptions: string[] = amr.value.model.states.map((state: any) => state.id);
-	modelStates = _.cloneDeep(modelColumnNameOptions);
-
-	// add observables
-	if (amr.value.model.semantics?.ode?.observables) {
-		amr.value.model.semantics.ode.observables.forEach((o) => {
-			modelColumnNameOptions.push(o.id);
-			modelStates.push(o.id);
-		});
-	}
-
-	// add parameters
-	if (amr.value.semantics?.ode?.parameters) {
-		amr.value.semantics.ode.parameters.forEach((p) => {
-			modelColumnNameOptions.push(p.id);
-			modelParameters.push(p.id);
-		});
-	}
-
-	modelNodeOptions.value = modelColumnNameOptions;
+	const { modelStates, modelParameters } = getStatesAndParameters(amr.value);
+	modelNodeOptions.value = [...modelStates, ...modelParameters];
 
 	// Create a new session and context based on model
 	try {
