@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.service;
+package software.uncharted.terarium.hmiserver.service.tasks;
 
 import java.nio.file.Files;
 import java.util.List;
@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -21,7 +22,7 @@ import software.uncharted.terarium.hmiserver.controller.mira.MiraController;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
-import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskType;
 
 @Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
@@ -100,7 +101,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		}
 	}
 
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMModelCardRequest() throws Exception {
 
@@ -126,6 +127,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		}
 
 		log.info(new String(responses.get(responses.size() - 1).getOutput()));
+
+		Thread.sleep(10000);
 	}
 
 	static class AdditionalProps {
