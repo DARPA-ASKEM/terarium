@@ -1,18 +1,6 @@
 <template>
 	<div class="strata-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
 		<div class="input-row">
-			<div class="sub-header">
-				<label class="multi-line-label">Create new transitions between stratum</label>
-				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="useStructure" />
-			</div>
-			<div class="sub-header">
-				<label class="multi-line-label"
-					>Allow existing interactions to invole multiple stratum</label
-				>
-				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
-			</div>
-		</div>
-		<div class="input-row">
 			<div class="label-and-input">
 				<label>Name of strata</label>
 				<InputText
@@ -43,6 +31,16 @@
 					placeholder="Young, Old"
 					@focusout="emit('update-self', updatedConfig)"
 				/>
+			</div>
+		</div>
+		<div class="input-row justify-space-between">
+			<div class="flex align-items-center gap-2">
+				<label>Create new transitions between stratum</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="useStructure" />
+			</div>
+			<div class="flex align-items-center gap-2">
+				<label>Allow existing interactions to invole multiple stratum</label>
+				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
 			</div>
 		</div>
 	</div>
@@ -124,17 +122,13 @@ watch(
 	color: var(--text-color-subdued);
 }
 
-.multi-line-label {
-	max-width: 12rem;
-}
-
 .input-row {
 	width: 100%;
 	display: flex;
 	flex-direction: row;
-	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--gap-small);
+	margin-bottom: var(--gap-small);
 
 	& > * {
 		flex: 1;
