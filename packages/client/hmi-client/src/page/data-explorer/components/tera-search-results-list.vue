@@ -121,7 +121,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String,
-		default: 'XDD'
+		default: 'xDD'
 	}
 });
 
@@ -153,7 +153,7 @@ const projectOptions = computed(() => [
 							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
-					} else if (isDocument(selectedAsset.value) && props.source === 'XDD') {
+					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
 						const document = selectedAsset.value as Document;
 						const xddDoc: AddDocumentAssetFromXDDResponse | null = await createDocumentFromXDD(
 							document,
@@ -227,7 +227,7 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resourceType === ResourceType.XDD) {
-			if (props.source === 'XDD') {
+			if (props.source === 'xDD') {
 				const documentSearchResults = searchResults.results as Document[];
 				return [...documentSearchResults];
 			}
