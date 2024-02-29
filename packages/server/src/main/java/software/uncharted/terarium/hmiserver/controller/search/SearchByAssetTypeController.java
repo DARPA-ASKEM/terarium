@@ -98,7 +98,7 @@ public class SearchByAssetTypeController {
 			@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
 			@RequestParam(value = "text", defaultValue = "") final String text,
 			@RequestParam(value = "k", defaultValue = "100") final int k,
-			@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates,
+			@RequestParam(value = "num-candidates", defaultValue = "10000") final int numCandidates,
 			@RequestParam(value = "embedding-model", defaultValue = EMBEDDING_MODEL) final String embeddingModel,
 			@RequestParam(value = "index", defaultValue = "") String index) {
 		try {
