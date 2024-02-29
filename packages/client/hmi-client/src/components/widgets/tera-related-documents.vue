@@ -156,10 +156,18 @@ const isLoading = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
 const dialogActionCopy = computed(() => {
-	if (isEmpty(selectedResources.value)) {
-		return 'Generate descriptions';
+	let result: string = '';
+	if (dialogType.value === DialogType.ENRICH) {
+		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
+	} else if (dialogType.value === DialogType.EXTRACT) {
+		result = 'Extract variables';
+	} else if (dialogType.value === DialogType.ALIGN) {
+		result = `Align extractions to ${props.assetType}`;
 	}
-	return 'Use Document to enrich descriptions';
+	if (isEmpty(selectedResources.value)) {
+		return result;
+	}
+	return `Use Document to ${result.toLowerCase()}`;
 });
 function openDialog() {
 	visible.value = true;
@@ -175,13 +183,11 @@ function dialogForEnrichment() {
 
 function dialogForExtraction() {
 	dialogType.value = DialogType.EXTRACT;
-	dialogActionCopy.value = 'Use this resource to extract variables';
 	openDialog();
 }
 
 function dialogForAlignment() {
 	dialogType.value = DialogType.ALIGN;
-	dialogActionCopy.value = `Use this resource to align the ${props.assetType}`;
 	openDialog();
 }
 
