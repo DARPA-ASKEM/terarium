@@ -7,7 +7,7 @@
 	>
 		<template v-slot:content>
 			<tera-external-publication
-				v-if="previewItemResourceType === ResourceType.XDD && source === 'XDD'"
+				v-if="previewItemResourceType === ResourceType.XDD && source === 'xDD'"
 				:xdd-uri="previewItemId"
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
@@ -79,7 +79,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String,
-		default: 'XDD'
+		default: 'xDD'
 	}
 });
 
