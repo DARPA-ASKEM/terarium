@@ -108,7 +108,8 @@ const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
 const kernelManager = new KernelSessionManager();
 
-async function addModelForComparison(modelId: string) {
+async function addModelForComparison(modelId: string | undefined | null) {
+	if (!modelId) return;
 	const model = await getModel(modelId);
 	if (model) modelsToCompare.value.push(model);
 }
@@ -148,7 +149,7 @@ function processCompareModels(modelIds) {
 
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
-		if (input.status === 'connected') addModelForComparison(input.value);
+		if (input.status === 'connected') addModelForComparison(input.value?.[0]);
 	});
 
 	try {
