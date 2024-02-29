@@ -50,7 +50,11 @@
 			</div>
 			<div class="label-and-input">
 				<label for="cost-benefit">Cost/Benefit function</label>
+				<!-- Disabled until pyciemss-service
+					updates:https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L36-L40
+				-->
 				<Dropdown
+					disabled
 					class="p-inputtext-sm"
 					:options="costBenefitOptions"
 					v-model="config.costBenefitFn"

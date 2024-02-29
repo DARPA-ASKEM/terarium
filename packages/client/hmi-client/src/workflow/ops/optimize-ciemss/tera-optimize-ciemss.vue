@@ -55,7 +55,6 @@
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of stochastic samples</label>
-							<!-- TOM TODO Add isMinimized dropdown for this -->
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
@@ -75,6 +74,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
+							<!-- TODO: This could likely be better explained to user -->
 							<label> Minimized</label>
 							<Dropdown
 								class="toolbar-button"
@@ -448,11 +448,11 @@ const runOptimize = async () => {
 			start: knobs.value.startTime,
 			end: knobs.value.endTime
 		},
-		interventions: [{ name: 'beta', timestep: 1 }],
+		interventions: [{ name: 'beta', timestep: 1 }], // TOM TODO
 		stepSize: 1,
 		qoi: knobs.value.targetVariables,
 		riskBound: knobs.value.riskTolerance,
-		initialGuessInterventions: [0],
+		initialGuessInterventions: [0], // TOM TODO
 		boundsInterventions: [[0]], // TOM TODO
 		extra: {
 			isMinimized: knobs.value.isMinimized,
@@ -461,30 +461,6 @@ const runOptimize = async () => {
 			maxfeval: 5
 		}
 	};
-
-	// const sampleTest: OptimizeRequestCiemss = {
-	// 	engine: 'ciemss',
-	// 	userId: 'not_provided',
-	// 	modelConfigId: '3c35c95c-c44c-41e7-a30a-8af7fd444d6f',
-	// 	interventions: [
-	// 		{
-	// 			timestep: 1.0,
-	// 			name: 'beta'
-	// 		}
-	// 	],
-	// 	timespan: {
-	// 		start: 0,
-	// 		end: 90
-	// 	},
-	// 	qoi: ['Infected'],
-	// 	riskBound: 10.0,
-	// 	initialGuessInterventions: [1.0],
-	// 	boundsInterventions: [[0.0], [3.0]],
-	// 	extra: {
-	// 		numSamples: 4,
-	// 		isMinimized: true
-	// 	}
-	// };
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	// await getStatus(optResult.id);
@@ -543,7 +519,10 @@ const getStatus = async (runId: string) => {
 	}
 
 	const sim = await getSimulation(runId);
-	console.log(sim);
+
+	// TOM TODO: This is incorrect
+	// This should not append simulation result's output to node.
+	// It should still save to state as well as be used in output previewer
 	emit('append-output', {
 		type: OptimizeCiemssOperation.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
