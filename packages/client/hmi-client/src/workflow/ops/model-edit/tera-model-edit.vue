@@ -22,7 +22,6 @@
 						@click="runFromCodeWrapper(editor?.getValue() as string)"
 					/>
 				</div>
-
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
