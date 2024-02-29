@@ -54,6 +54,7 @@ onMounted(() => {
 
 		dragHandle.addEventListener('mousedown', startDrag);
 		document.addEventListener('mousemove', drag);
+		document.addEventListener('click', stopDrag);
 		dragHandle.addEventListener('mouseup', stopDrag);
 	}
 });
