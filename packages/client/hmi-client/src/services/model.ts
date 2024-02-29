@@ -93,8 +93,10 @@ export async function addNewPetrinetModelToProject(modelName: string): Promise<s
 }
 
 export async function processAndAddModelToProject(artifact: Artifact): Promise<string | null> {
-	const response = await API.post(`/mira/convert_and_create_model`, artifact.id);
-	const modelId = response?.id;
+	const response = await API.post(`/mira/convert_and_create_model`, {
+		artifactId: artifact.id
+	});
+	const modelId = response.data.id;
 	return modelId ?? null;
 }
 
