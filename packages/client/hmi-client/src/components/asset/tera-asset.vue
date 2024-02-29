@@ -367,7 +367,6 @@ main:deep(.p-button.p-button-outlined) {
 
 .spread-out {
 	align-items: center;
-	justify-content: space-between;
 	flex-grow: 1;
 }
 

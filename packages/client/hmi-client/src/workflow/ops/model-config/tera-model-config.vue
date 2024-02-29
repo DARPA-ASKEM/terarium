@@ -12,7 +12,7 @@
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="pb-6">
+				<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]" class="pb-6">
 					<AccordionTab v-if="model">
 						<template #header>
 							Suggested configurations<span class="artifact-amount"
@@ -101,27 +101,45 @@
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
-					<AccordionTab>
-						<template #header>
-							Initial variable values<span class="artifact-amount"
-								>({{ tableFormattedInitials.length }})</span
-							>
-						</template>
-						<tera-model-config-table
-							v-if="modelConfiguration && tableFormattedInitials.length > 0"
-							:model-configuration="modelConfiguration"
-							:data="tableFormattedInitials"
-							@update-value="updateConfigInitial"
-							@update-configuration="
-								(configToUpdate: ModelConfiguration) => {
-									updateFromConfig(configToUpdate);
-								}
-							"
-						/>
-						<section v-else>
-							<p class="empty-section">No initial values found.</p>
-						</section>
-					</AccordionTab>
+					<template
+						v-if="modelType === AMRSchemaNames.PETRINET || modelType === AMRSchemaNames.STOCKFLOW"
+					>
+						<AccordionTab>
+							<template #header>
+								Initial variable values<span class="artifact-amount"
+									>({{ tableFormattedInitials.length }})</span
+								>
+							</template>
+							<tera-model-config-table
+								v-if="modelConfiguration"
+								:model-configuration="modelConfiguration"
+								:data="tableFormattedInitials"
+								@update-value="updateConfigInitial"
+								@update-configuration="
+									(configToUpdate: ModelConfiguration) => {
+										updateFromConfig(configToUpdate);
+									}
+								"
+							/>
+						</AccordionTab>
+					</template>
+					<template v-else-if="modelType === AMRSchemaNames.REGNET">
+						<AccordionTab header="Vertices">
+							<DataTable v-if="!_.isEmpty(vertices)" data-key="id" :value="vertices">
+								<Column field="id" header="Symbol" />
+								<Column field="name" header="Name" />
+								<Column field="rate_constant" header="Rate Constant" />
+							</DataTable>
+						</AccordionTab>
+						<AccordionTab header="Edges">
+							<DataTable v-if="!_.isEmpty(edges)" data-key="id" :value="edges">
+								<Column field="id" header="Symbol" />
+								<Column field="source" header="Source" />
+								<Column field="target" header="Target" />
+								<Column field="properties.rate_constant" header="Rate Constant" />
+							</DataTable>
+						</AccordionTab>
+					</template>
 					<AccordionTab>
 						<template #header>
 							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
@@ -163,7 +181,6 @@
 						label="Run"
 						outlined
 						severity="secondary"
-						size="large"
 						@click="runFromCode"
 					/>
 				</div>
@@ -228,10 +245,10 @@ import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel, getModelConfigurations } from '@/services/model';
+import { getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
 import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
-import { ModelConfigTableData, ParamType } from '@/types/common';
+import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
 	getUnstratifiedInitials,
@@ -369,6 +386,8 @@ const runFromCode = () => {
 			}
 		});
 };
+const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);
+const vertices = computed(() => modelConfiguration?.value?.configuration.model?.vertices ?? []);
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
@@ -427,24 +446,33 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
 
 	const cloneModel = _.cloneDeep(model.value);
-	if (cloneModel.semantics) {
-		if (!cloneModel.metadata || !cloneModel.metadata.timeseries) {
-			cloneModel.metadata = {
-				...cloneModel.metadata,
-				timeseries: {}
-			};
-		}
-		cloneModel.semantics.ode.initials = knobs.value.initials;
-		cloneModel.semantics.ode.parameters = knobs.value.parameters;
-		cloneModel.metadata.timeseries = knobs.value.timeseries;
-		cloneModel.metadata.sources = knobs.value.sources;
-	}
+
 	const modelConfig: ModelConfiguration = {
 		id: '',
 		name: '',
 		model_id: cloneModel.id ?? '',
 		configuration: cloneModel
 	};
+
+	if (!cloneModel.metadata || !cloneModel.metadata.timeseries) {
+		cloneModel.metadata = {};
+	}
+
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		if (cloneModel.semantics) {
+			cloneModel.semantics.ode.initials = knobs.value.initials;
+			cloneModel.semantics.ode.parameters = knobs.value.parameters;
+			cloneModel.metadata.timeseries = knobs.value.timeseries;
+			cloneModel.metadata.sources = knobs.value.sources;
+		}
+		modelConfig.configuration = cloneModel;
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		cloneModel.model.parameters = knobs.value.parameters;
+		cloneModel.metadata.timeseries = knobs.value.timeseries;
+		cloneModel.metadata.sources = knobs.value.sources;
+		modelConfig.configuration = cloneModel;
+	}
+
 	return modelConfig;
 });
 
@@ -459,9 +487,15 @@ const parameters = computed<Map<string, string[]>>(() => {
 		return getUnstratifiedParameters(model.value);
 	}
 	const result = new Map<string, string[]>();
-	model.value.semantics?.ode.parameters?.forEach((p) => {
-		result.set(p.id, [p.id]);
-	});
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		model.value.semantics?.ode.parameters?.forEach((p) => {
+			result.set(p.id, [p.id]);
+		});
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		model.value.model.parameters?.forEach((p) => {
+			result.set(p.id, [p.id]);
+		});
+	}
 	return result;
 });
 
@@ -575,6 +609,8 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	return formattedParams;
 });
 
+const modelType = computed(() => getModelType(model.value));
+
 const getParamType = (param: ModelParameter | undefined) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
@@ -608,8 +644,12 @@ const updateConfigInitial = (inits: Initial[]) => {
 };
 
 const updateFromConfig = (config: ModelConfiguration) => {
-	knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
-	knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
+		knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		knobs.value.parameters = config.configuration.model?.parameters ?? [];
+	}
 	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
 	knobs.value.sources = config.configuration?.metadata?.sources ?? {};
 };
@@ -622,7 +662,7 @@ const createConfiguration = async () => {
 		model.value.id,
 		knobs.value.name,
 		knobs.value.description,
-		model.value
+		modelConfiguration.value?.configuration
 	);
 
 	if (!data) {
@@ -685,7 +725,15 @@ const initialize = async () => {
 		// Grab these values from model to inialize them
 		const ode = model.value?.semantics?.ode;
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-		knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
+		if (
+			modelType.value === AMRSchemaNames.PETRINET ||
+			modelType.value === AMRSchemaNames.STOCKFLOW
+		) {
+			knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
+		} else if (modelType.value === AMRSchemaNames.REGNET) {
+			knobs.value.parameters =
+				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
+		}
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.sources =
@@ -718,8 +766,12 @@ const initialize = async () => {
 const useSuggestedConfig = (config: ModelConfiguration) => {
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
-	knobs.value.initials = config.configuration.semantics.ode.initials;
-	knobs.value.parameters = config.configuration.semantics.ode.parameters;
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		knobs.value.initials = config.configuration.semantics.ode.initials;
+		knobs.value.parameters = config.configuration.semantics.ode.parameters;
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		knobs.value.parameters = config.configuration.model.parameters;
+	}
 	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
 	knobs.value.sources = config.configuration.metadata?.sources ?? {};
 	logger.success(`Configuration applied ${config.name}`);

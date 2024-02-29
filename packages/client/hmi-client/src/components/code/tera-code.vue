@@ -21,7 +21,7 @@
 							@click="toggleOptionsMenu"
 						/>
 					</div>
-					<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+					<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 					<div class="right-side flex gap-2">
 						<Button
 							class="toolbar-button"
@@ -211,7 +211,8 @@ import Dropdown from 'primevue/dropdown';
 import { Ace, Range } from 'ace-builds';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import { extractDynamicRows } from '@/utils/code-asset';
-import Menu from 'primevue/menu';
+import ContextMenu from 'primevue/contextmenu';
+import { logger } from '@/utils/logger';
 import TeraDirectory from './tera-directory.vue';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 
@@ -544,6 +545,27 @@ const optionsMenuItems = ref([
 		command() {
 			isRenamingCode.value = true;
 		}
+	},
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						const response = await useProjects().addAsset(
+							AssetType.Code,
+							props.assetId,
+							project.id
+						);
+						if (response) logger.info(`Added asset to ${project.name}`);
+						else logger.error('Failed to add asset to project');
+					}
+				})) ?? []
 	}
 ]);
 const toggleOptionsMenu = (event) => {
