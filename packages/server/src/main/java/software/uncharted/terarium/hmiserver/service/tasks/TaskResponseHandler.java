@@ -9,15 +9,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
 public abstract class TaskResponseHandler {
-	private String name;
-
-	public TaskResponseHandler(String name) {
-		this.name = name;
-	}
-
-	public String getName() {
-		return name;
-	}
+	public abstract String getName();
 
 	private Map<TaskStatus, Consumer<TaskResponse>> responseHandlers = new ConcurrentHashMap<>();
 

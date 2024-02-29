@@ -3,7 +3,9 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,16 +14,17 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+@Component
+@RequiredArgsConstructor
 @Slf4j
 public class ModelCardResponseHandler extends TaskResponseHandler {
     final static public String NAME="gollm:model_card";
     final private ObjectMapper objectMapper;
     final private DocumentAssetService documentAssetService;
 
-    public ModelCardResponseHandler(ObjectMapper objectMapper, DocumentAssetService documentAssetService) {
-        super(NAME);
-        this.objectMapper = objectMapper;
-        this.documentAssetService = documentAssetService;
+    @Override
+    public String getName() {
+        return NAME;
     }
 
     @Data

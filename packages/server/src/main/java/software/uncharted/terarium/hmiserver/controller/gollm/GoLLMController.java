@@ -63,12 +63,17 @@ public class GoLLMController {
 	final private ModelConfigurationService modelConfigurationService;
 	final private ProvenanceService provenanceService;
 
+	final private ModelCardResponseHandler modelCardResponseHandler;
+	final private ConfigureModelResponseHandler configureModelResponseHandler;
+	final private CompareModelResponseHandler compareModelResponseHandler;
+	final private ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
+
 	@PostConstruct
 	void init() {
-		taskService.addResponseHandler(new ModelCardResponseHandler(objectMapper, documentAssetService));
-		taskService.addResponseHandler(new ConfigureModelResponseHandler(objectMapper, modelService, modelConfigurationService, provenanceService));
-		taskService.addResponseHandler(new CompareModelResponseHandler());
-		taskService.addResponseHandler(new ConfigureFromDatasetResponseHandler(objectMapper, modelService, modelConfigurationService, provenanceService));
+		taskService.addResponseHandler(modelCardResponseHandler);
+		taskService.addResponseHandler(configureModelResponseHandler);
+		taskService.addResponseHandler(compareModelResponseHandler);
+		taskService.addResponseHandler(configureFromDatasetResponseHandler);
 	}
 
 	@PostMapping("/model-card")

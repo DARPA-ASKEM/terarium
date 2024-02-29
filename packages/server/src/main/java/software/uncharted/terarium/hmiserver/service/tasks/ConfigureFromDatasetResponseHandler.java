@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -21,6 +23,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+@Component
+@RequiredArgsConstructor
 @Slf4j
 public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
     final public static String NAME="gollm:dataset_configure";
@@ -30,12 +34,9 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
     final private ModelConfigurationService modelConfigurationService;
     final private ProvenanceService provenanceService;
 
-    public ConfigureFromDatasetResponseHandler(ObjectMapper objectMapper, ModelService modelService, ModelConfigurationService modelConfigurationService, ProvenanceService provenanceService) {
-        super(NAME);
-        this.objectMapper = objectMapper;
-        this.modelService = modelService;
-        this.modelConfigurationService = modelConfigurationService;
-        this.provenanceService = provenanceService;
+    @Override
+    public String getName() {
+        return NAME;
     }
 
     @Data
