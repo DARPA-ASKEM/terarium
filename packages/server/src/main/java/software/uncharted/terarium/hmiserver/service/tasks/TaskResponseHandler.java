@@ -1,13 +1,23 @@
-package software.uncharted.terarium.hmiserver.service;
+package software.uncharted.terarium.hmiserver.service.tasks;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
-public class TaskResponseHandler {
+public abstract class TaskResponseHandler {
+	private String name;
+
+	public TaskResponseHandler(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
 
 	private Map<TaskStatus, Consumer<TaskResponse>> responseHandlers = new ConcurrentHashMap<>();
 
