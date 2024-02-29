@@ -60,10 +60,12 @@
 							preview
 						/>
 						<tera-show-more-text
+							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
 						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
 					</li>
 				</ul>
 			</AccordionTab>
@@ -85,10 +87,12 @@
 							preview
 						/>
 						<tera-show-more-text
+							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
 						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
 					</li>
 				</ul>
 			</AccordionTab>
@@ -110,10 +114,13 @@
 							preview
 						/>
 						<tera-show-more-text
+							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
 						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
+
 						<tera-math-editor v-if="ex.metadata.equation" :latex-equation="ex.metadata.equation" />
 					</li>
 				</ul>
@@ -315,14 +322,18 @@ onUpdated(() => {
 	gap: var(--gap);
 }
 
-.extracted-item > .extracted-caption {
-}
-
 .extracted-item > .extracted-image {
 	display: block;
 	padding: 8px;
-	border: 1px solid var(--gray-300);
-	border-radius: 6px;
+	border: 1px solid var(--gray-200);
+	border-radius: var(--border-radius);
 	object-fit: contain;
+}
+
+.no-extracted-text {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	font-style: italic;
+	padding: var(--gap-small);
 }
 </style>
