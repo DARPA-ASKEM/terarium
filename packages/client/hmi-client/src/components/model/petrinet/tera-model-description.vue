@@ -1,8 +1,8 @@
 <template>
 	<main>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true">
+		<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<section class="description">
+				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
 
 					<template v-if="modelType">
@@ -102,6 +102,9 @@
 						</div>
 					</template>
 				</section>
+				<section v-else>
+					<tera-progress-spinner is-centered> Generating card... </tera-progress-spinner>
+				</section>
 			</AccordionTab>
 			<AccordionTab header="Diagram">
 				<tera-model-diagram
@@ -173,6 +176,7 @@ import TeraModelObservable from '@/components/model/petrinet/tera-model-observab
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
@@ -180,6 +184,7 @@ const props = defineProps<{
 	modelConfigurations?: ModelConfiguration[];
 	highlight?: string;
 	featureConfig?: FeatureConfig;
+	isGeneratingCard?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
@@ -218,7 +223,9 @@ const description = computed(() =>
 const biasAndRiskLimitations = computed(
 	() => card.value?.BiasRisksLimitations?.bias_risks_limitations ?? ''
 );
-const modelType = computed(() => card.value?.ModelDetails?.ModelType ?? '');
+const modelType = computed(
+	() => card.value?.ModelDetails?.ModelType ?? props.model.header.schema_name ?? ''
+);
 const fundedBy = computed(() => card.value?.ModelDetails?.FundedBy ?? '');
 const evaluation = computed(() => card.value?.Evaluation?.TestingDataFactorsMetrics ?? '');
 const technicalSpecifications = computed(

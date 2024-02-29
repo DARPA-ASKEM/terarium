@@ -1,6 +1,24 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -9,17 +27,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -27,18 +38,16 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.TaskService;
+import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/gollm")
 @RestController
@@ -49,6 +58,7 @@ public class GoLLMController {
 	final private ObjectMapper objectMapper;
 	final private TaskService taskService;
 	final private DocumentAssetService documentAssetService;
+	final private DatasetService datasetService;
 	final private ModelService modelService;
 	final private ModelConfigurationService modelConfigurationService;
 	final private ProvenanceService provenanceService;
@@ -56,13 +66,14 @@ public class GoLLMController {
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(new ModelCardResponseHandler(objectMapper, documentAssetService));
-		taskService.addResponseHandler(new ConfigureModelResponseHandler(objectMapper, documentAssetService, modelService, modelConfigurationService, provenanceService));
+		taskService.addResponseHandler(new ConfigureModelResponseHandler(objectMapper, modelService, modelConfigurationService, provenanceService));
 		taskService.addResponseHandler(new CompareModelResponseHandler());
+		taskService.addResponseHandler(new ConfigureFromDatasetResponseHandler(objectMapper, modelService, modelConfigurationService, provenanceService));
 	}
 
 	@PostMapping("/model-card")
 	@Secured(Roles.USER)
-	@Operation(summary = "Dispatch a `GoLLM Model Card task")
+	@Operation(summary = "Dispatch a `GoLLM Model Card` task")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
 			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
@@ -105,7 +116,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			taskService.sendTaskRequest(req);
+			taskService.sendTaskRequest(req, TaskType.GOLLM);
 
 			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 			return ResponseEntity.ok().body(resp);
@@ -128,7 +139,7 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-id", required = true) final UUID documentId){
+			@RequestParam(name = "document-id", required = true) final UUID documentId) {
 
 		try {
 
@@ -166,7 +177,89 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			taskService.sendTaskRequest(req);
+			taskService.sendTaskRequest(req, TaskType.GOLLM);
+
+			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
+			return ResponseEntity.ok().body(resp);
+
+		} catch (final Exception e) {
+			final String error = "Unable to dispatch task request";
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@PostMapping("/configure-from-dataset")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Config from Dataset` task")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
+			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
+	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
+			@RequestParam(name = "model-id", required = true) final UUID modelId,
+			@RequestParam(name = "document-ids", required = true) final List<UUID> datasetIds) {
+
+		try {
+
+			// Grab the datasets
+			List<String> datasets = new ArrayList<>();
+			for (UUID datasetId : datasetIds) {
+				final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
+				if (dataset.isEmpty()) {
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset not found");
+				}
+
+				// make sure there is text in the document
+				if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
+					log.warn("Dataset {} has no source files to send", datasetId);
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset has no filenames");
+				}
+
+				for (String filename : dataset.get().getFileNames()) {
+					try {
+						Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
+						if (dataset.isPresent()) {
+							// ensure unescaped newlines are escaped
+							datasets.add(
+									datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
+						}
+					} catch (Exception e) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to fetch file for dataset");
+					}
+				}
+			}
+
+			if (datasets.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No datasets found");
+			}
+
+			// Grab the model
+			final Optional<Model> model = modelService.getAsset(modelId);
+			if (model.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
+			}
+
+			final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
+			input.setDatasets(datasets);
+			input.setAmr(model.get());
+
+			// Create the task
+			final TaskRequest req = new TaskRequest();
+			req.setId(java.util.UUID.randomUUID());
+			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
+			req.setInput(objectMapper.writeValueAsBytes(input));
+
+			final ConfigureFromDatasetResponseHandler.Properties props = new ConfigureFromDatasetResponseHandler.Properties();
+			props.setDatasetIds(datasetIds);
+			props.setModelId(modelId);
+			req.setAdditionalProperties(props);
+
+			// send the request
+			taskService.sendTaskRequest(req, TaskType.GOLLM);
 
 			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 			return ResponseEntity.ok().body(resp);
@@ -213,7 +306,7 @@ public class GoLLMController {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
-			taskService.sendTaskRequest(req);
+			taskService.sendTaskRequest(req, TaskType.GOLLM);
 
 			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
 			return ResponseEntity.ok().body(resp);

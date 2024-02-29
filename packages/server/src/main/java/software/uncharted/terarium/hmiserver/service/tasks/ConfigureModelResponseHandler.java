@@ -27,15 +27,13 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
     final public static String NAME="gollm:configure_model";
 
     final private ObjectMapper objectMapper;
-    final private DocumentAssetService documentAssetService;
     final private ModelService modelService;
     final private ModelConfigurationService modelConfigurationService;
     final private ProvenanceService provenanceService;
 
-    public ConfigureModelResponseHandler(ObjectMapper objectMapper, DocumentAssetService documentAssetService, ModelService modelService, ModelConfigurationService modelConfigurationService, ProvenanceService provenanceService) {
+    public ConfigureModelResponseHandler(ObjectMapper objectMapper, ModelService modelService, ModelConfigurationService modelConfigurationService, ProvenanceService provenanceService) {
         super(NAME);
         this.objectMapper = objectMapper;
-        this.documentAssetService = documentAssetService;
         this.modelService = modelService;
         this.modelConfigurationService = modelConfigurationService;
         this.provenanceService = provenanceService;

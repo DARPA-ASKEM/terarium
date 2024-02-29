@@ -367,7 +367,6 @@ main:deep(.p-button.p-button-outlined) {
 
 .spread-out {
 	align-items: center;
-	justify-content: space-between;
 	flex-grow: 1;
 }
 
@@ -381,5 +380,9 @@ main:deep(.p-button.p-button-outlined) {
 
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
+}
+
+:deep(.p-tabview .p-tabview-nav) {
+	background-color: transparent;
 }
 </style>
