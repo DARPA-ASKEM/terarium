@@ -197,8 +197,10 @@ public class GoLLMController {
 				if (model.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 				}
-				JsonNode modelCard = model.get().getMetadata().getGollmCard();
-				modelCards.add(modelCard);
+				if (model.get().getMetadata().getGollmCard() != null) {
+					JsonNode modelCard = model.get().getMetadata().getGollmCard();
+					modelCards.add(modelCard);
+				}
 			}
 
 			final CompareModelResponseHandler.Input input = new CompareModelResponseHandler.Input();
