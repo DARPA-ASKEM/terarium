@@ -24,6 +24,7 @@
 						<div class="label-and-input">
 							<label for="time-unit">Unit</label>
 							<Dropdown
+								disabled
 								class="p-inputtext-sm"
 								:options="['Days', 'Hours', 'Minutes', 'Seconds']"
 								v-model="knobs.timeUnit"
@@ -440,6 +441,15 @@ const runOptimize = async () => {
 		return;
 	}
 
+	const listInterventions: any[] = [];
+	const listInitialGuessInterventions: number[] = [];
+	const listBoundsInterventions: number[][] = [];
+	props.node.state.interventionPolicyGroups.forEach((ele) => {
+		listInterventions.push({ name: ele.parameter, timestep: ele.startTime });
+		listInitialGuessInterventions.push(ele.initialGuess);
+		listBoundsInterventions.push([ele.lowerBound, ele.upperBound]);
+	});
+
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -448,12 +458,12 @@ const runOptimize = async () => {
 			start: knobs.value.startTime,
 			end: knobs.value.endTime
 		},
-		interventions: [{ name: 'beta', timestep: 1 }], // TOM TODO
+		interventions: listInterventions,
 		stepSize: 1,
 		qoi: knobs.value.targetVariables,
 		riskBound: knobs.value.riskTolerance,
-		initialGuessInterventions: [0], // TOM TODO
-		boundsInterventions: [[0]], // TOM TODO
+		initialGuessInterventions: listInitialGuessInterventions,
+		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: knobs.value.isMinimized,
 			numSamples: knobs.value.numSamples,
@@ -462,6 +472,31 @@ const runOptimize = async () => {
 		}
 	};
 
+	// const testOptimizePayload = {
+	// 	"engine": "ciemss",
+	// 	"userId": "not_provided",
+	// 	"modelConfigId": modelConfiguration.value.id,
+	// 	"interventions": [
+	// 		{
+	// 			"timestep": 1.0,
+	// 			"name": "beta"
+	// 		}
+	// 	],
+	// 	"timespan": {
+	// 		"start": 0,
+	// 		"end": 90
+	// 	},
+	// 	"qoi": ["Infected"],
+	// 	"riskBound": 10.0,
+	// 	"initialGuessInterventions": [1.0],
+	// 	"boundsInterventions": [[0.0], [3.0]],
+	// 	"extra": {
+	// 		"numSamples": 4,
+	// 		"isMinimized": true
+	// 	}
+	// }
+
+	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	// await getStatus(optResult.id);
 	// TOM TODO: Use getStatus and get run results. Will need them.

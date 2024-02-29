@@ -39,15 +39,18 @@
 				/>
 			</div>
 			<div class="label-and-input">
-				<label for="goal">Goal</label>
-				<Dropdown
+				<label for="initial-guess">Initial guess</label>
+				<InputNumber
 					class="p-inputtext-sm"
-					:options="goalOptions"
-					v-model="config.goal"
-					placeholder="Select"
+					inputId="numericInput"
+					mode="decimal"
+					:min-fraction-digits="1"
+					:max-fraction-digits="3"
+					v-model="config.initialGuess"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
+			<div class="label-and-input"></div>
 			<div class="label-and-input">
 				<label for="cost-benefit">Cost/Benefit function</label>
 				<!-- Disabled until pyciemss-service
@@ -117,7 +120,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
-const goalOptions = ['Minimize', 'Maximize'];
 const costBenefitOptions = ['L1 Norm', 'L2 Norm'];
 
 const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));

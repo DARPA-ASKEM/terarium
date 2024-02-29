@@ -4,11 +4,11 @@ export interface InterventionPolicyGroup {
 	borderColour: string;
 	name: string;
 	parameter: string;
-	goal: string;
 	costBenefitFn: string;
 	startTime: number;
 	lowerBound: number;
 	upperBound: number;
+	initialGuess: number;
 	isActive: boolean;
 }
 
@@ -38,11 +38,11 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	borderColour: '#cee2a4',
 	name: 'Policy bounds',
 	parameter: '',
-	goal: '',
 	costBenefitFn: '',
 	startTime: 0,
 	lowerBound: 0,
 	upperBound: 0,
+	initialGuess: 0,
 	isActive: true
 };
 
@@ -60,14 +60,14 @@ export const OptimizeCiemssOperation: Operation = {
 			endTime: 10,
 			numTimePoints: 10,
 			timeUnit: '',
-			numStochasticSamples: 0,
-			solverMethod: 'dopri5',
+			numStochasticSamples: 5,
+			solverMethod: 'euler',
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
-			statistic: '',
+			statistic: 'mean',
 			numSamples: 10,
-			riskTolerance: 0,
-			aboveOrBelow: '',
+			riskTolerance: 95,
+			aboveOrBelow: 'Below',
 			threshold: 0,
 			isMinimized: true,
 			chartConfigs: [],
