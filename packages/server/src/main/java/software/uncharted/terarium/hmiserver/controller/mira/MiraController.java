@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -28,6 +31,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.TaskService;
 import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
+import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 @RequestMapping("/mira")
@@ -39,6 +43,7 @@ public class MiraController {
 	final private ObjectMapper objectMapper;
 	final private TaskService taskService;
 	final private ModelService modelService;
+	final private ArtifactService artifactService;
 
 	static final public String STELLA_TO_STOCKFLOW = "mira_task:stella_to_stockflow";
 	static final public String MDL_TO_STOCKFLOW = "mira_task:mdl_to_stockflow";
@@ -47,8 +52,7 @@ public class MiraController {
 
 	@Data
 	static public class ModelConversionRequest {
-		public String modelName;
-		public String modelContent;
+		public UUID artifactId;
 	};
 
 	@Data
@@ -76,14 +80,37 @@ public class MiraController {
 			@RequestBody final ModelConversionRequest conversionRequest) {
 
 		try {
-			TaskRequest req = new TaskRequest();
-			req.setInput(conversionRequest.getModelContent().getBytes());
 
-			if (endsWith(conversionRequest.getModelName(), List.of(".mdl"))) {
+			Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId);
+			if (artifact.isEmpty()) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST,
+						"Artifact not found");
+			}
+
+			if (artifact.get().getFileNames().isEmpty()) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST,
+						"Artifact has no files");
+			}
+
+			String filename = artifact.get().getFileNames().get(0);
+
+			Optional<String> fileContents = artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
+			if (fileContents.isEmpty()) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST,
+						"Unable to fetch file contents");
+			}
+
+			TaskRequest req = new TaskRequest();
+			req.setInput(fileContents.get().getBytes());
+
+			if (endsWith(filename, List.of(".mdl"))) {
 				req.setScript(MDL_TO_STOCKFLOW);
-			} else if (endsWith(conversionRequest.getModelName(), List.of(".xmile", ".itmx", ".stmx"))) {
+			} else if (endsWith(filename, List.of(".xmile", ".itmx", ".stmx"))) {
 				req.setScript(STELLA_TO_STOCKFLOW);
-			} else if (endsWith(conversionRequest.getModelName(), List.of(".sbml", ".xml"))) {
+			} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
 				req.setScript(SBML_TO_PETRINET);
 			} else {
 				throw new ResponseStatusException(
