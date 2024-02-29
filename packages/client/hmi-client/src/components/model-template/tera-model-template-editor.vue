@@ -480,6 +480,10 @@ onUnmounted(() => {
 	position: relative;
 }
 
+:deep(.card) {
+	cursor: pointer;
+}
+
 .view-toggles {
 	padding: 0.5rem;
 
