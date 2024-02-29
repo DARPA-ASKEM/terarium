@@ -486,10 +486,13 @@ onUnmounted(() => {
 
 .view-toggles {
 	padding: 0.5rem;
-
+	pointer-events: none;
 	.pi-spin {
 		color: var(--text-color-subdued);
 	}
+}
+.view-toggles > * {
+	pointer-events: auto;
 }
 
 aside {

@@ -228,5 +228,6 @@ svg:active {
 
 .foreground-layer {
 	position: relative;
+	pointer-events: none;
 }
 </style>
