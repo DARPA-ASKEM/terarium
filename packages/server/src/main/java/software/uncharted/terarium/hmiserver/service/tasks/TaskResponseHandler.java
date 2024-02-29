@@ -1,43 +1,49 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
 public abstract class TaskResponseHandler {
 	public abstract String getName();
 
-	private Map<TaskStatus, Consumer<TaskResponse>> responseHandlers = new ConcurrentHashMap<>();
-
-	public void onRunning(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.RUNNING, callback);
+	public void onQueued(TaskResponse response) {
 	}
 
-	public void onCancelling(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.CANCELLING, callback);
+	public void onRunning(TaskResponse response) {
 	}
 
-	public void onCancelled(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.CANCELLED, callback);
+	public void onCancelling(TaskResponse response) {
 	}
 
-	public void onSuccess(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.SUCCESS, callback);
+	public void onCancelled(TaskResponse response) {
 	}
 
-	public void onFailure(Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.FAILED, callback);
+	public void onSuccess(TaskResponse response) {
+	}
+
+	public void onFailure(TaskResponse response) {
 	}
 
 	public void handle(TaskResponse response) {
-		if (!responseHandlers.containsKey(response.getStatus())) {
-			return;
+		switch (response.getStatus()) {
+			case QUEUED:
+				onQueued(response);
+				break;
+			case RUNNING:
+				onRunning(response);
+				break;
+			case CANCELLING:
+				onCancelling(response);
+				break;
+			case CANCELLED:
+				onCancelled(response);
+				break;
+			case SUCCESS:
+				onSuccess(response);
+				break;
+			case FAILED:
+				onFailure(response);
+				break;
 		}
-		responseHandlers.get(response.getStatus()).accept(response);
 	}
 
 }

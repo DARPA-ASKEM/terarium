@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.service;
+package software.uncharted.terarium.hmiserver.service.tasks;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,7 +36,6 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskResponseHandler;
 
 @Service
 @Slf4j
