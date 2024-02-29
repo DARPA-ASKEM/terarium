@@ -14,14 +14,6 @@
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 						<div class="label-and-input">
-							<label for="num-points">Number of time points</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numTimePoints"
-							/>
-						</div>
-						<div class="label-and-input">
 							<label for="time-unit">Unit</label>
 							<Dropdown
 								disabled
@@ -32,13 +24,6 @@
 							/>
 						</div>
 					</div>
-					<InputText
-						:disabled="true"
-						:style="{ width: '100%' }"
-						v-model="timespan"
-						:readonly="true"
-						:value="timespan"
-					/>
 					<div>
 						<Button
 							v-if="showAdditionalOptions"
@@ -326,7 +311,6 @@ enum SimulationType {
 interface BasicKnobs {
 	startTime: number;
 	endTime: number;
-	numTimePoints: number;
 	timeUnit: string;
 	numStochasticSamples: number;
 	solverMethod: string;
@@ -346,7 +330,6 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
-	numTimePoints: props.node.state.numTimePoints ?? 2,
 	timeUnit: props.node.state.timeUnit ?? '',
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '',
@@ -394,15 +377,6 @@ const modelStateOptions = ref<State[]>([]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
-
-const timespan = computed<string>(() => {
-	const samples: number[] = [];
-	const timeStep = (knobs.value.endTime - knobs.value.startTime) / (knobs.value.numTimePoints - 1);
-	for (let i = 0; i < knobs.value.numTimePoints; i++) {
-		samples.push(Math.round(knobs.value.startTime + i * timeStep));
-	}
-	return samples.join(', ');
-});
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -482,7 +456,8 @@ const runOptimize = async () => {
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
 		listInterventions.push({ name: ele.parameter, timestep: ele.startTime });
 		listInitialGuessInterventions.push(ele.initialGuess);
-		listBoundsInterventions.push([ele.lowerBound, ele.upperBound]);
+		listBoundsInterventions.push([ele.lowerBound]);
+		listBoundsInterventions.push([ele.upperBound]);
 	});
 
 	const optimizePayload: OptimizeRequestCiemss = {
@@ -509,10 +484,8 @@ const runOptimize = async () => {
 
 	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
-	await getStatus(optResult.id, SimulationType.optimize);
-	// await getStatus(optResult.id);
-	// TOM TODO: Use getStatus and get run results. Will need them.
-	// policy.json, optimize_results.dill
+	console.log(optResult.simulationId);
+	await getStatus(optResult.simulationId, SimulationType.optimize);
 
 	console.log(optResult);
 	const policyResult = [1.0]; // TOM TODO, read policy.json for value
@@ -555,7 +528,7 @@ const getStatus = async (runId: string, simulationType: SimulationType) => {
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
 		logger.error(`Simulate: ${runId} has failed`, {
-			toastTitle: 'Error - Julia'
+			toastTitle: 'Error - Ciemss'
 		});
 		throw Error('Failed Runs');
 	}
@@ -570,7 +543,7 @@ const getStatus = async (runId: string, simulationType: SimulationType) => {
 	}
 	if (simulationType === SimulationType.optimize) {
 		console.log(`Getting run results for ${runId}`);
-		console.log(getRunResult(runId, 'policy.json'));
+		console.log(await getRunResult(runId, 'policy.json'));
 	}
 
 	showSpinner.value = false;
@@ -629,7 +602,6 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.startTime = knobs.value.startTime;
 		state.endTime = knobs.value.endTime;
-		state.numTimePoints = knobs.value.numTimePoints;
 		state.timeUnit = knobs.value.timeUnit;
 		state.numStochasticSamples = knobs.value.numStochasticSamples;
 		state.solverMethod = knobs.value.solverMethod;
