@@ -54,7 +54,32 @@ export async function configureModel(documentId: string, modelId: string): Promi
 			}
 		});
 	} catch (err) {
-		logger.error(`An issue occured while exctracting a model configuration. ${err}`);
+		logger.error(`An issue occured while exctracting a model configuration from document. ${err}`);
+	}
+}
+
+export async function configureModelFromDatasets(modelId: string, datasetIds: string[]) {
+	try {
+		const response = await API.post<TaskResponse>('/gollm/configure-from-dataset', null, {
+			params: {
+				'model-id': modelId,
+				'dataset-ids': datasetIds[0]
+			}
+		});
+
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					throw new FatalError('Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					closeConnection();
+				}
+			}
+		});
+	} catch (err) {
+		logger.error(`An issue occured while exctracting a model configuration from dataset. ${err}`);
 	}
 }
 

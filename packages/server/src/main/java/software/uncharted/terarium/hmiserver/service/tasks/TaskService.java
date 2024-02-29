@@ -214,6 +214,8 @@ public class TaskService {
 			}
 
 			try {
+				log.info("Response handlers:" + responseHandlers.toString());
+				log.info(resp.getScript());
 				if (responseHandlers.containsKey(resp.getScript())) {
 					responseHandlers.get(resp.getScript()).handle(resp);
 				}

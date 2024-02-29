@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -70,20 +71,24 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 					.orElseThrow();
 			final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(),
 					Response.class);
-
-			// For each configuration, create a new model configuration with parameters set
-			configurations.response.get("conditions").forEach((condition) -> {
-				// Map the parameters values to the model
-				final Model modelCopy = new Model(model);
-				final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
-				modelParameters.forEach((parameter) -> {
-					JsonNode conditionParameters = condition.get("parameters");
-					conditionParameters.forEach((conditionParameter) -> {
-						if (parameter.getId().equals(conditionParameter.get("id").asText())) {
-							parameter.setValue(conditionParameter.get("value").doubleValue());
-						}
-					});
-				});
+            // For each configuration, create a new model configuration with parameters set
+            configurations.response.get("conditions").forEach((condition) -> {
+                // Map the parameters values to the model
+                final Model modelCopy = new Model(model);
+                List<ModelParameter> modelParameters;
+					if(modelCopy.getHeader().getSchemaName().toLowerCase().equals("regnet")) {
+						modelParameters = objectMapper.convertValue(modelCopy.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
+					} else {
+						modelParameters = modelCopy.getSemantics().getOde().getParameters();
+					}
+                modelParameters.forEach((parameter) -> {
+                    JsonNode conditionParameters = condition.get("parameters");
+                    conditionParameters.forEach((conditionParameter) -> {
+                        if (parameter.getId().equals(conditionParameter.get("id").asText())) {
+                            parameter.setValue(conditionParameter.get("value").doubleValue());
+                        }
+                    });
+                });
 
 				// Create the new configuration
 				final ModelConfiguration configuration = new ModelConfiguration();

@@ -19,14 +19,14 @@
 								>({{ suggestedConfirgurationContext.tableData.length }})</span
 							>
 							<Button
-								outlined
-								label="Extract configurations from a document"
-								size="small"
 								icon="pi pi-cog"
-								@click.stop="extractConfigurations"
-								:disabled="loadingConfigs || !documentId || !model.id"
+								label="Extract Configurations"
+								outlined
+								@click.stop="toggleExtractionMenu"
 								style="margin-left: auto"
+								:loading="isFetchingConfigsFromDataset || isFetchingConfigsFromDocument"
 							/>
+							<Menu ref="extractionMenu" :model="menuItems" popup />
 						</template>
 
 						<DataTable
@@ -38,7 +38,7 @@
 							:rows="5"
 							sort-field="createdOn"
 							:sort-order="-1"
-							:loading="loadingConfigs"
+							:loading="isFetchingConfigsFromDocument || isFetchingConfigsFromDataset"
 						>
 							<Column field="name" header="Name" style="width: 15%">
 								<template #body="{ data }">
@@ -260,7 +260,7 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { configureModel } from '@/services/goLLM';
+import { configureModel, configureModelFromDatasets } from '@/services/goLLM';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
@@ -273,6 +273,8 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import Menu from 'primevue/menu';
+import { MenuItem } from 'primevue/menuitem';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -429,6 +431,7 @@ const selectedConfigId = computed(
 );
 
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
+const datasetId = computed(() => props.node.inputs?.[2]?.value?.[0]);
 
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;
@@ -440,8 +443,9 @@ const suggestedConfirgurationContext = ref<{
 	modelConfiguration: null
 });
 
-const loadingConfigs = ref(false);
-const model = ref<Model | null>();
+const isFetchingConfigsFromDocument = ref(false);
+const isFetchingConfigsFromDataset = ref(false);
+const model = ref<Model | null>(null);
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
@@ -687,9 +691,9 @@ const onSelection = (id: string) => {
 
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
-		loadingConfigs.value = true;
+		isFetchingConfigsFromDocument.value = true;
 		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-		loadingConfigs.value = false;
+		isFetchingConfigsFromDocument.value = false;
 	}
 };
 
@@ -778,11 +782,19 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const extractConfigurations = async () => {
+const extractConfigurationsFromDocument = async () => {
 	if (!documentId.value || !model.value?.id) return;
-	loadingConfigs.value = true;
+	isFetchingConfigsFromDocument.value = true;
 	await configureModel(documentId.value, model.value.id);
-	loadingConfigs.value = false;
+	isFetchingConfigsFromDocument.value = false;
+	fetchConfigurations(model.value.id);
+};
+
+const extractConfigurationsFromDataset = async () => {
+	if (!datasetId.value || !model.value?.id) return;
+	isFetchingConfigsFromDataset.value = true;
+	await configureModelFromDatasets('0640cb5e-b0dd-49ec-ac50-cff118bbd42f', [datasetId.value]);
+	isFetchingConfigsFromDataset.value = false;
 	fetchConfigurations(model.value.id);
 };
 
@@ -790,6 +802,32 @@ const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfirgurationContext.value.modelConfiguration = config;
 	suggestedConfirgurationContext.value.isOpen = true;
 };
+
+const extractionMenu = ref();
+const toggleExtractionMenu = (event) => {
+	extractionMenu.value.toggle(event);
+};
+const menuItems = ref<MenuItem[]>([
+	{
+		label: 'From a document',
+		command: () => {
+			extractConfigurationsFromDocument();
+		}
+	},
+	{
+		label: 'From a dataset',
+		command: () => {
+			extractConfigurationsFromDataset();
+		}
+	},
+	{
+		label: 'From both',
+		command: () => {
+			extractConfigurationsFromDataset();
+			extractConfigurationsFromDocument();
+		}
+	}
+]);
 
 onMounted(async () => {
 	await initialize();
