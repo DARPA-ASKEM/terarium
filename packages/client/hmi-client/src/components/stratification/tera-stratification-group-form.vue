@@ -35,11 +35,11 @@
 		</div>
 		<div class="input-row justify-space-between">
 			<div class="flex align-items-center gap-2">
-				<label>Create new transitions between stratum</label>
+				<label>Create new transitions between strata</label>
 				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="useStructure" />
 			</div>
 			<div class="flex align-items-center gap-2">
-				<label>Allow existing interactions to invole multiple stratum</label>
+				<label>Allow existing interactions to involve multiple strata</label>
 				<InputSwitch @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" />
 			</div>
 		</div>
