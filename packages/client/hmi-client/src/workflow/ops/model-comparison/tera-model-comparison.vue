@@ -140,16 +140,16 @@ const buildJupyterContext = () => {
 	};
 };
 
+function processCompareModels(modelIds) {
+	compareModels(modelIds).then((response) => {
+		llmAnswer.value = response.response;
+	});
+}
+
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
 		if (input.status === 'connected') addModelForComparison(input.id);
 	});
-
-	// filter modelsToCompare to be a list of ids
-	const modelIds = props.node.inputs
-		.filter((input) => input.status === 'connected')
-		.map((input) => input.value?.[0]);
-	llmAnswer.value = (await compareModels(modelIds)) ?? '';
 
 	try {
 		const jupyterContext = buildJupyterContext();
@@ -163,6 +163,11 @@ onMounted(async () => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
+
+	const modelIds = props.node.inputs
+		.filter((input) => input.status === 'connected')
+		.map((input) => input.value?.[0]);
+	processCompareModels(modelIds);
 });
 
 onUnmounted(() => {

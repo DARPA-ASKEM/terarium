@@ -2,6 +2,7 @@ import API, { FatalError, TaskEventHandlers, TaskHandler } from '@/api/api';
 import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { CompareModelsResponseType } from '@/types/common';
 
 /**
  * Fetches model card data from the server and wait for task to finish.
@@ -58,7 +59,11 @@ export async function configureModel(documentId: string, modelId: string): Promi
 	}
 }
 
-export async function compareModels(modelIds: string[]): Promise<string> {
+export async function compareModels(modelIds: string[]): Promise<CompareModelsResponseType> {
+	let compareResult: CompareModelsResponseType = {
+		response: ''
+	};
+
 	try {
 		const response = await API.get<TaskResponse>('/gollm/compare-models', {
 			params: {
@@ -67,6 +72,7 @@ export async function compareModels(modelIds: string[]): Promise<string> {
 		});
 
 		const taskId = response.data.id;
+
 		await handleTaskById(taskId, {
 			ondata(data, closeConnection) {
 				if (data?.status === TaskStatus.Failed) {
@@ -74,15 +80,18 @@ export async function compareModels(modelIds: string[]): Promise<string> {
 				}
 				if (data.status === TaskStatus.Success) {
 					closeConnection();
-					return data.output;
+
+					// data.output is a base64 encoded json object. We decode it and return the json object.
+					const str = atob(data.output);
+					compareResult = JSON.parse(str);
 				}
-				return '';
 			}
 		});
 	} catch (err) {
 		logger.error(`An issue occurred while comparing models. ${err}`);
 	}
-	return '';
+
+	return compareResult;
 }
 
 /**
