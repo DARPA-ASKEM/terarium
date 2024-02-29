@@ -77,7 +77,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['close-modal', 'update-configuration']);
 
-const matrixShouldEval = ref(true);
+const matrixShouldEval = ref(false);
 </script>
 
 <style scoped>
