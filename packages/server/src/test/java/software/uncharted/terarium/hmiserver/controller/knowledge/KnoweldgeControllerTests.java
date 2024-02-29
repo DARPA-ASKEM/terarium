@@ -129,7 +129,7 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 		log.info(amr.toString());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void base64EquationsToAMRTests() throws Exception {
 
@@ -137,22 +137,18 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 		byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
 		String encodedString1 = Base64.getEncoder().encodeToString(content1);
 
-		// ClassPathResource resource2 = new
-		// ClassPathResource("knowledge/equation2.png");
-		// byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
-		// String encodedString2 = Base64.getEncoder().encodeToString(content2);
+		ClassPathResource resource2 = new ClassPathResource("knowledge/equation2.png");
+		byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
+		String encodedString2 = Base64.getEncoder().encodeToString(content2);
 
-		// ClassPathResource resource3 = new
-		// ClassPathResource("knowledge/equation3.png");
-		// byte[] content3 = Files.readAllBytes(resource3.getFile().toPath());
-		// String encodedString3 = Base64.getEncoder().encodeToString(content3);
+		ClassPathResource resource3 = new ClassPathResource("knowledge/equation3.png");
+		byte[] content3 = Files.readAllBytes(resource3.getFile().toPath());
+		String encodedString3 = Base64.getEncoder().encodeToString(content3);
 
-		// String payload = "{\"images\": [" +
-		// "\"" + encodedString1 + "\"," +
-		// "\"" + encodedString2 + "\"," +
-		// "\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
-
-		String payload = "{\"images\": [\"" + encodedString1 + "\"],\"model\": \"regnet\"}";
+		String payload = "{\"images\": [" +
+				"\"" + encodedString1 + "\"," +
+				"\"" + encodedString2 + "\"," +
+				"\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
 
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/base64-equations-to-model")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -165,7 +161,7 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 		log.info(amr.toString());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void base64EquationsToLatexTests() throws Exception {
 
