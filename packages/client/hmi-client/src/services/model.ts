@@ -138,8 +138,8 @@ export async function validateAMRFile(file: File) {
  * @returns boolean
  */
 export function isValidAMR(json: Record<string, unknown>) {
-	const schema: string = (json?.header as any)?.schema;
-	const schemaName: string = (json?.header as any)?.schema_name;
+	const schema: string = (json?.header as any)?.schema.toLowerCase();
+	const schemaName: string = (json?.header as any)?.schema_name.toLowerCase();
 	if (!schema || !schemaName) return false;
 	if (!Object.values(AMRSchemaNames).includes(schemaName as AMRSchemaNames)) return false;
 	if (!Object.values(AMRSchemaNames).some((name) => schema.includes(name))) return false;
@@ -171,4 +171,16 @@ export async function generateModelCard(
 	if (modelServiceType === ModelServiceType.TA4) {
 		await modelCard(documentId);
 	}
+}
+
+// helper fucntion to get the model type, will always default to petrinet if the model is not found
+export function getModelType(model: Model | null | undefined): AMRSchemaNames {
+	const schemaName = model?.header?.schema_name?.toLowerCase();
+	if (schemaName === 'regnet') {
+		return AMRSchemaNames.REGNET;
+	}
+	if (schemaName === 'stockflow') {
+		return AMRSchemaNames.STOCKFLOW;
+	}
+	return AMRSchemaNames.PETRINET;
 }

@@ -224,9 +224,9 @@ main {
 		&:deep(.port-connected .port) {
 			position: relative;
 			width: calc(var(--port-base-size) * 2);
-			border: 2px solid var(--text-color-subdued);
+			border: 2px solid var(--surface-border);
 			border-radius: var(--port-base-size);
-			background-color: var(--text-color-subdued);
+			background-color: var(--surface-100);
 			transition: background-color 0.125s ease-in-out;
 		}
 		&:deep(.port-connected .port)::before {

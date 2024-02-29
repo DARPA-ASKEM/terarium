@@ -7,7 +7,7 @@
 		size="small"
 		:class="{ 'hide-header': hideHeader }"
 	>
-		<Column expander style="width: 5rem" />
+		<Column expander style="width: 2%" />
 		<Column field="id" header="ID" style="width: 10%"></Column>
 		<Column field="name" header="Name" style="width: 15%"></Column>
 		<Column field="type" header="Value type" style="width: 15%">
@@ -23,7 +23,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
 				<Dropdown
 					v-else
-					class="value-type-dropdown"
+					class="value-type-dropdown w-8"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
@@ -33,7 +33,7 @@
 				/>
 			</template>
 		</Column>
-		<Column field="value" header="Value" style="width: 15%">
+		<Column field="value" header="Value" style="width: 10%">
 			<template #body="slotProps">
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
@@ -44,6 +44,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
 					<InputText
 						size="small"
+						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
@@ -78,6 +79,7 @@
 				<span v-else-if="slotProps.data.type === ParamType.CONSTANT">
 					<InputNumber
 						size="small"
+						class="constant-number w-full"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -154,16 +156,17 @@ import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import { ModelConfigTableData, ParamType } from '@/types/common';
+import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import { cloneDeep } from 'lodash';
+import { getModelType } from '@/services/model';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT },
 	{ label: 'Distribution', value: ParamType.DISTRIBUTION },
-	{ label: 'Time Varying', value: ParamType.TIME_SERIES }
+	{ label: 'Time varying', value: ParamType.TIME_SERIES }
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -178,6 +181,8 @@ const matrixModalContext = ref({
 	stratifiedMatrixType: StratifiedMatrix.Initials,
 	matrixId: ''
 });
+
+const modelType = computed(() => getModelType(props.modelConfiguration.configuration));
 
 const errorMessage = ref('');
 
@@ -229,14 +234,18 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
 	const type = typeOptions[typeIndex];
 	const clonedConfig = cloneDeep(props.modelConfiguration);
-	const idx = clonedConfig.configuration.semantics.ode.parameters.findIndex(
-		(p) => p.id === param.id
-	);
+
+	let idx;
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		idx = clonedConfig.configuration.semantics.ode.parameters.findIndex((p) => p.id === param.id);
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		idx = clonedConfig.configuration.model.parameters.findIndex((p) => p.id === param.id);
+	}
 	switch (type.value) {
 		case ParamType.CONSTANT:
 			delete param.distribution;
 			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			replaceParam(clonedConfig, param, idx);
 			break;
 		case ParamType.DISTRIBUTION:
 			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
@@ -247,14 +256,14 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 					maximum: 0
 				}
 			};
-			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			replaceParam(clonedConfig, param, idx);
 			break;
 		case ParamType.TIME_SERIES:
 			delete param.distribution;
 			if (!clonedConfig.configuration.metadata?.timeseries) {
 				clonedConfig.configuration.metadata.timeseries = {};
 			}
-			clonedConfig.configuration.semantics.ode.parameters[idx] = param;
+			replaceParam(clonedConfig, param, idx);
 			clonedConfig.configuration.metadata.timeseries[param.id] = '';
 			break;
 		default:
@@ -266,6 +275,14 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 const stratifiedModelType = computed(() =>
 	getStratificationType(props.modelConfiguration.configuration)
 );
+
+const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		config.configuration.semantics.ode.parameters[index] = param;
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		config.configuration.model.parameters[index] = param;
+	}
+};
 
 const updateExpression = async (value: Initial) => {
 	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
@@ -299,13 +316,25 @@ const updateExpression = async (value: Initial) => {
 }
 
 .distribution-item > :deep(input) {
-	width: 4rem;
+	width: 100%;
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
+}
+
+.constant-number > :deep(input) {
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
+}
+.tabular-numbers {
+	font-feature-settings: 'tnum';
+	font-size: var(--font-caption);
+	text-align: right;
 }
 .invalid-message {
 	color: var(--text-color-danger);
-	font-size: var(--font-caption);
 }
-
 .timeseries-container {
 	display: flex;
 	flex-direction: column;

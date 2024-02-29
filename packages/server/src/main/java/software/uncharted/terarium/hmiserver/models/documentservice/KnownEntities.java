@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.documentservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -17,7 +18,7 @@ public class KnownEntities implements Serializable {
 	@JsonAlias("askem_object")
 	private List<Extraction> askemObjects;
 
-	private List<String> summaries;
+	private List<JsonNode> summaries;
 
 
 }

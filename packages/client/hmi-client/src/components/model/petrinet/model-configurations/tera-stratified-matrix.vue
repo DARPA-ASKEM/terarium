@@ -15,7 +15,7 @@
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
 						<td v-if="matrix.length > 0" class="p-frozen-column">
 							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
-								{{ Object.values(row[0].rowCriteria).join(' / ') }}
+								{{ Object.values(row[0].rowCriteria)[0] }}
 							</template>
 							<template v-else>
 								{{ row[0].rowCriteria }}
@@ -25,35 +25,52 @@
 							v-for="(cell, colIdx) in row"
 							:key="colIdx"
 							tabindex="0"
-							:class="editableCellStates[rowIdx][colIdx] && 'is-editing'"
+							:class="{
+								'is-editing': editableCellStates[rowIdx][colIdx],
+								'n-a-cell': !cell.content.id
+							}"
 							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
 							<template v-if="cell.content.id">
-								<InputText
-									v-if="editableCellStates[rowIdx][colIdx]"
-									class="cell-input"
-									v-model.lazy="valueToEdit"
-									v-focus
-									@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
-									@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
-								/>
-								<section v-else>
-									<div>
+								<section class="flex flex-column">
+									<InputText
+										v-if="editableCellStates[rowIdx][colIdx]"
+										class="cell-input"
+										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
+										v-model.lazy="valueToEdit"
+										v-focus
+										@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+										@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+									/>
+									<div
+										class="w-full"
+										:class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }"
+									>
 										<div
-											class="mathml-container"
-											v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
-										/>
-										<template v-if="cell?.content?.controllers">
-											controllers: {{ cell?.content?.controllers }}
-										</template>
-									</div>
-									<div class="subdue">
-										{{ cell?.content.id }}
+											class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
+											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
+										>
+											{{ cell?.content.id }}
+											<span
+												v-if="cell?.content?.controllers"
+												class="pi pi-info-circle"
+												v-tooltip.top="{
+													value: `Controllers:\n ${cell?.content?.controllers}`,
+													pt: 'grid col'
+												}"
+											/>
+										</div>
+										<div>
+											<div
+												class="mathml-container"
+												v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+											/>
+										</div>
 									</div>
 								</section>
 							</template>
-							<span v-else class="subdue">N/A</span>
+							<span v-else class="subdue">n/a</span>
 						</td>
 					</tr>
 				</tbody>
@@ -114,7 +131,7 @@ watch(
 							if (!output[cell.row]) {
 								output[cell.row] = [];
 							}
-							output[cell.row][cell.col] = await getMatrixValue(cell.content.id, props.shouldEval);
+							output[cell.row][cell.col] = await getMatrixValue(cell.content.id);
 						}
 					})
 				)
@@ -171,10 +188,10 @@ function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) 
 
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
-async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
+async function getMatrixValue(variableName: string) {
 	const expressionBase = getMatrixExpression(variableName);
 
-	if (shouldEvaluate) {
+	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
 			expressionBase,
 			parametersValueMap.value
@@ -272,23 +289,44 @@ onMounted(() => {
 
 .p-datatable .p-datatable-tbody > tr > td.is-editing {
 	padding: 0;
+	padding-bottom: 0;
 }
 
 .editable-cell {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	visibility: visible;
-	width: 100%;
 }
-
+.n-a-cell {
+	background-color: var(--surface-b);
+}
+.hide-content {
+	visibility: hidden;
+	height: 0px;
+	padding-left: 2rem;
+}
 .cell-input {
-	height: 4rem;
-	min-width: 8rem;
-	width: 100%;
-	padding-left: 12px;
+	padding-left: var(--gap-small);
+	padding-right: var(--gap);
+	margin-bottom: 0 !important;
+	font-feature-settings: 'tnum';
+	text-align: right;
+	height: 44px;
 }
 
+.big-cell-input {
+	height: 66px;
+}
+
+.mathml-container {
+	width: 100%;
+	text-align: right;
+}
+.mathml-container:deep(mn) {
+	font-family: var(--font-family);
+	font-feature-settings: 'tnum';
+	text-align: right !important;
+}
 .p-datatable-scrollable .p-frozen-column {
 	padding-right: 1rem;
 }
@@ -301,6 +339,9 @@ onMounted(() => {
 	color: var(--text-color-subdued);
 }
 
+.controllers {
+	font-size: var(--font-caption);
+}
 section {
 	display: flex;
 	justify-content: space-between;

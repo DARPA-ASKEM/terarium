@@ -97,6 +97,7 @@
 							:feature-config="{
 								isPreview: true
 							}"
+							:is-generating-card="isGeneratingCard"
 						/>
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
@@ -143,9 +144,7 @@ import { cloneDeep, isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-julia';
-import 'ace-builds/src-noconflict/mode-r';
+import '@/ace-config';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
 import type { Card, Code, DocumentAsset, Model } from '@/types/Types';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
@@ -196,7 +195,7 @@ const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 
 const selectedModel = ref<Model | null>(null);
-const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 
 const document = ref<DocumentAsset | null>(null);
 
@@ -222,6 +221,7 @@ const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => {
 });
 
 const savingAsset = ref(false);
+const isGeneratingCard = ref(false);
 
 const clonedState = ref<ModelFromCodeState>({
 	codeLanguage: ProgrammingLanguage.Python,
@@ -515,7 +515,9 @@ async function generateCard(docId, modelId) {
 		return;
 	}
 
+	isGeneratingCard.value = true;
 	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	isGeneratingCard.value = false;
 	fetchModel();
 }
 

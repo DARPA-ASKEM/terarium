@@ -12,7 +12,7 @@
 					class="asset-filters"
 					v-if="
 						resourceType === ResourceType.XDD &&
-						source === 'XDD' &&
+						source === 'xDD' &&
 						(asset as Document).knownEntities?.askemObjects
 					"
 				>
@@ -77,7 +77,7 @@
 		</main>
 		<aside>
 			<tera-carousel
-				v-if="resourceType === ResourceType.XDD && source === 'XDD' && !isEmpty(extractions)"
+				v-if="resourceType === ResourceType.XDD && source === 'xDD' && !isEmpty(extractions)"
 				is-numeric
 				height="6rem"
 				width="8rem"
@@ -217,7 +217,7 @@ const title = computed(() => {
 	let value = '';
 	if (props.resourceType === ResourceType.XDD) {
 		value =
-			props.source === 'XDD'
+			props.source === 'xDD'
 				? (props.asset as Document).title
 				: (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
@@ -259,7 +259,7 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // Return formatted author, year, journal
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
-	if (props.resourceType === ResourceType.XDD && props.source === 'XDD') {
+	if (props.resourceType === ResourceType.XDD && props.source === 'xDD') {
 		const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
 			(props.asset as Document).year
 		}) ${(props.asset as Document).journal}`;

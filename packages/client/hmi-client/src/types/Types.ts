@@ -1005,7 +1005,7 @@ export interface AuthorityInstance {
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
-    summaries: string[];
+    summaries: any[];
 }
 
 export interface KnownEntitiesCounts {
