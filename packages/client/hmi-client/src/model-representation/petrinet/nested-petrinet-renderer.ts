@@ -14,7 +14,6 @@ const FONT_SIZE_REGULAR = 24;
 const FONT_SIZE_LARGE = 36;
 
 function setFontSize(label: string) {
-	console.log(label, label.length);
 	if (label.length < 3) {
 		return FONT_SIZE_LARGE;
 	}
