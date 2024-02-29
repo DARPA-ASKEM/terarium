@@ -103,7 +103,12 @@
 						</div>
 						<div class="label-and-input">
 							<label for="statistic">Statistic</label>
+							<!--
+								This is currently not an option in the pyciemss-service.
+								https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L64-L76
+							 -->
 							<Dropdown
+								disabled
 								class="p-inputtext-sm"
 								:options="['Mean', 'Median']"
 								v-model="knobs.statistic"
@@ -469,7 +474,6 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		interventions: listInterventions,
-		stepSize: 1,
 		qoi: knobs.value.targetVariables,
 		riskBound: knobs.value.riskTolerance,
 		initialGuessInterventions: listInitialGuessInterventions,
