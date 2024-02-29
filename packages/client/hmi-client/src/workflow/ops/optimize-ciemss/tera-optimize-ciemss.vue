@@ -166,8 +166,50 @@
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview title="Output">
-				<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-drilldown-preview
+				title="Simulation output"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:selection="onSelection"
+				:is-loading="showSpinner"
+				is-selectable
+			>
+				<SelectButton
+					:model-value="outputViewSelection"
+					@change="if ($event.value) outputViewSelection = $event.value;"
+					:options="outputViewOptions"
+					option-value="value"
+				>
+					<template #option="{ option }">
+						<i :class="`${option.icon} p-button-icon-left`" />
+						<span class="p-button-label">{{ option.value }}</span>
+					</template>
+				</SelectButton>
+				<template v-if="simulationRunResults[selectedRunId]">
+					<div v-if="outputViewSelection === OutputView.Charts">
+						<tera-simulate-chart
+							v-for="(cfg, idx) in node.state.chartConfigs"
+							:key="idx"
+							:run-results="simulationRunResults[selectedRunId]"
+							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+							has-mean-line
+							@configuration-change="configurationChange(idx, $event)"
+						/>
+						<Button
+							class="p-button-sm p-button-text"
+							@click="addChart"
+							label="Add chart"
+							icon="pi pi-plus"
+						/>
+					</div>
+					<div v-else-if="outputViewSelection === OutputView.Data">
+						<tera-dataset-datatable
+							v-if="simulationRawContent[selectedRunId]"
+							:rows="10"
+							:raw-content="simulationRawContent[selectedRunId]"
+						/>
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -187,36 +229,47 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
+// components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
-import { WorkflowNode } from '@/types/workflow';
+import SelectButton from 'primevue/selectbutton';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+// Services:
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	makeOptimizeJobCiemss,
 	makeForecastJobCiemss,
 	pollAction,
-	getSimulation
+	getSimulation,
+	getRunResultCiemss
 } from '@/services/models/simulation-service';
+import { createCsvAssetFromRunResults } from '@/services/dataset'; // saveDataset
+import { Poller, PollerState } from '@/api/api';
+// import { useProjects } from '@/composables/project';
+// Types:
 import {
 	ModelConfiguration,
 	Model,
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
-	SimulationRequest
+	SimulationRequest,
+	CsvAsset
 } from '@/types/Types';
-import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
+import { WorkflowNode } from '@/types/workflow';
 import {
+	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
@@ -226,11 +279,16 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum OptimizeTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
+}
+
+enum OutputView {
+	Charts = 'Charts',
+	Data = 'Data'
 }
 
 interface BasicKnobs {
@@ -270,6 +328,30 @@ const poller = new Poller();
 // const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 // const completedRunId = ref<string>('');
 
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+const selectedOutputId = ref<string>();
+const selectedRunId = computed(
+	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
+);
+
+const outputViewSelection = ref(OutputView.Charts);
+const outputViewOptions = ref([
+	{ value: OutputView.Charts, icon: 'pi pi-image' },
+	{ value: OutputView.Data, icon: 'pi pi-list' }
+]);
+const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
+const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateOptions = ref<State[]>([]);
 const modelConfiguration = ref<ModelConfiguration>();
@@ -284,6 +366,10 @@ const timespan = computed<string>(() => {
 	}
 	return samples.join(', ');
 });
+
+const onSelection = (id: string) => {
+	emit('select-output', id);
+};
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -308,6 +394,30 @@ const addInterventionPolicyGroupForm = () => {
 	state.interventionPolicyGroups.push(blankInterventionPolicyGroup);
 	emit('update-state', state);
 };
+
+const configurationChange = (index: number, config: ChartConfig) => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config.selectedVariable;
+
+	emit('update-state', state);
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs.push([]);
+
+	emit('update-state', state);
+};
+
+// async function saveDatasetToProject() {
+// 	const { activeProject, refresh } = useProjects();
+// 	if (activeProject.value?.id) {
+// 		if (await saveDataset(activeProject.value.id, selectedRunId.value, saveAsName.value)) {
+// 			refresh();
+// 		}
+// 		showSaveInput.value = false;
+// 	}
+// }
 
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
@@ -427,23 +537,23 @@ const getStatus = async (runId: string) => {
 		throw Error('Failed Runs');
 	}
 
-	// const state = _.cloneDeep(props.node.state);
-	// if (state.chartConfigs.length === 0) {
-	// 	addChart();
-	// }
+	const state = _.cloneDeep(props.node.state);
+	if (state.chartConfigs.length === 0) {
+		addChart();
+	}
 
 	const sim = await getSimulation(runId);
 	console.log(sim);
-	// emit('append-output', {
-	// 	type: OptimizeCiemssOperation.outputs[0].type,
-	// 	label: `Output - ${props.node.outputs.length + 1}`,
-	// 	value: runId,
-	// 	state: {
-	// 		currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
-	// 		simulationsInProgress: state.simulationsInProgress
-	// 	},
-	// 	isSelected: false
-	// });
+	emit('append-output', {
+		type: OptimizeCiemssOperation.outputs[0].type,
+		label: `Output - ${props.node.outputs.length + 1}`,
+		value: runId,
+		state: {
+			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
+			simulationsInProgress: state.simulationsInProgress
+		},
+		isSelected: false
+	});
 
 	showSpinner.value = false;
 };
@@ -500,6 +610,36 @@ watch(
 		emit('update-state', state);
 	},
 	{ deep: true }
+);
+
+watch(
+	() => props.node.active,
+	() => {
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+
+		// Update Wizard form fields with current selected output state
+		// timespan.value = props.node.state.currentTimespan;
+		// numSamples.value = props.node.state.numSamples;
+		// method.value = props.node.state.method;
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => selectedRunId.value,
+	async () => {
+		if (selectedRunId.value) {
+			const output = await getRunResultCiemss(selectedRunId.value);
+			simulationRunResults.value[selectedRunId.value] = output.runResults;
+			simulationRawContent.value[selectedRunId.value] = createCsvAssetFromRunResults(
+				simulationRunResults.value[selectedRunId.value]
+			);
+		}
+	},
+	{ immediate: true }
 );
 </script>
 
