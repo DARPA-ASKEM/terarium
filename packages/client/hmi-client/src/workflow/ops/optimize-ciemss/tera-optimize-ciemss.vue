@@ -221,6 +221,14 @@
 				icon="pi pi-play"
 				@click="runOptimize"
 			/>
+			<div class="label-and-input">
+				<label> Model Config Name</label>
+				<InputText v-model="knobs.modelConfigName" />
+			</div>
+			<div class="label-and-input">
+				<label> Model Config Description</label>
+				<InputText v-model="knobs.modelConfigDesc" />
+			</div>
 			<Button outlined label="Save as a new model configuration" @click="saveModelConfiguration" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
@@ -245,7 +253,10 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
 // Services:
-import { getModelConfigurationById } from '@/services/model-configurations';
+import {
+	getModelConfigurationById,
+	createModelConfiguration
+} from '@/services/model-configurations';
 import {
 	makeOptimizeJobCiemss,
 	makeForecastJobCiemss,
@@ -269,6 +280,7 @@ import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import {
+	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
@@ -305,6 +317,8 @@ interface BasicKnobs {
 	threshold: number;
 	isMinimized: boolean;
 	simulationRunId: string;
+	modelConfigName: string;
+	modelConfigDesc: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -321,7 +335,9 @@ const knobs = ref<BasicKnobs>({
 	aboveOrBelow: props.node.state.aboveOrBelow ?? '',
 	threshold: props.node.state.threshold ?? 0,
 	isMinimized: props.node.state.isMinimized ?? true,
-	simulationRunId: props.node.state.simulationRunId ?? ''
+	simulationRunId: props.node.state.simulationRunId ?? '',
+	modelConfigName: props.node.state.modelConfigName ?? '',
+	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
 });
 
 const showSpinner = ref(false);
@@ -558,33 +574,31 @@ const getStatus = async (runId: string) => {
 	showSpinner.value = false;
 };
 
-const saveModelConfiguration = () => {
+const saveModelConfiguration = async () => {
 	console.log('save model Configuration');
-	// This will be a model configuration
-	// that is essentially a duplicate of the inpiut model config
-	// But there will be changes to the model configuration parameter values.
-	// These changes will come from the intervention policy (aka policy.json)
-	// follow this thread: https://askemgroup.slack.com/archives/C03U5FBRSQG/p1709139052459319
+	if (!modelConfiguration.value) return;
 
-	// const state = _.cloneDeep(props.node.state);
-	// if (state.chartConfigs.length === 0) {
-	// 	addChart();
-	// }
+	const state = _.cloneDeep(props.node.state);
+	const data = await createModelConfiguration(
+		modelConfiguration.value.model_id,
+		knobs.value.modelConfigName,
+		knobs.value.modelConfigDesc,
+		modelConfiguration.value.configuration as Model
+	);
 
-	// const sim = await getSimulation(runId);
+	if (!data) {
+		logger.error('Failed to create model configuration');
+		return;
+	}
 
-	// emit('append-output', {
-	// 	type: OptimizeCiemssOperation.outputs[0].type,
-	// 	label: `Output - ${props.node.outputs.length + 1}`,
-	// 	value: runId,
-	// 	state: {
-	// 		currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
-	// 		numSamples: sim?.executionPayload.extra.num_samples ?? knobs.value.numSamples,
-	// 		method: sim?.executionPayload.extra.method ?? knobs.value.solverMethod,
-	// 		simulationsInProgress: state.simulationsInProgress
-	// 	},
-	// 	isSelected: false
-	// });
+	logger.success('Created model configuration');
+	emit('append-output', {
+		type: OptimizeCiemssOperation.outputs[0].type,
+		label: state.modelConfigName,
+		value: data.id,
+		isSelected: false,
+		state
+	});
 };
 
 onMounted(async () => {
@@ -608,6 +622,8 @@ watch(
 		state.aboveOrBelow = knobs.value.aboveOrBelow;
 		state.threshold = knobs.value.threshold;
 		state.simulationRunId = knobs.value.simulationRunId;
+		state.modelConfigName = knobs.value.modelConfigName;
+		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		emit('update-state', state);
 	},
 	{ deep: true }
