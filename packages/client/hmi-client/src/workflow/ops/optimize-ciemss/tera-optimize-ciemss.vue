@@ -74,6 +74,14 @@
 								placeholder="Select"
 							/>
 						</div>
+						<div class="label-and-input">
+							<label> Minimized</label>
+							<Dropdown
+								class="toolbar-button"
+								v-model="knobs.isMinimized"
+								:options="[true, false]"
+							/>
+						</div>
 					</div>
 				</div>
 				<div class="form-section">
@@ -195,7 +203,8 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	makeOptimizeJobCiemss,
 	makeForecastJobCiemss,
-	simulationPollAction
+	pollAction,
+	getSimulation
 } from '@/services/models/simulation-service';
 import {
 	ModelConfiguration,
@@ -203,8 +212,7 @@ import {
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
-	SimulationRequest,
-	ProgressState
+	SimulationRequest
 } from '@/types/Types';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
@@ -244,7 +252,7 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
-	numTimePoints: props.node.state.numTimePoints ?? 0,
+	numTimePoints: props.node.state.numTimePoints ?? 2,
 	timeUnit: props.node.state.timeUnit ?? '',
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '',
@@ -259,8 +267,8 @@ const knobs = ref<BasicKnobs>({
 
 const showSpinner = ref(false);
 const poller = new Poller();
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
-const completedRunId = ref<string>('');
+// const progress = ref({ status: ProgressState.Retrieving, value: 0 });
+// const completedRunId = ref<string>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateOptions = ref<State[]>([]);
@@ -322,54 +330,53 @@ const runOptimize = async () => {
 		return;
 	}
 
-	// TOM TODO set proper payload
-	// const optimizePayload: OptimizeRequestCiemss = {
-	// 	userId: 'no_user_provided',
-	// 	engine: 'ciemss',
-	// 	modelConfigId: modelConfiguration.value.id,
-	// 	timespan: {
-	// 		start: knobs.value.startTime,
-	// 		end: knobs.value.endTime
-	// 	},
-	// 	interventions: [{name: "beta", timestep: 1}],
-	// 	stepSize: 1,
-	// 	qoi: knobs.value.targetVariables,
-	// 	riskBound: knobs.value.riskTolerance,
-	// 	initialGuessInterventions: [0],
-	// 	boundsInterventions: [[0]],
-	// 	extra: {
-	// 		numSamples: knobs.value.numSamples,
-	// 		// inferredParameters: 'string',
-	// 		maxiter: 5,
-	// 		maxfeval: 5
-	// 	}
-	// };
-
-	const sampleTest: OptimizeRequestCiemss = {
+	const optimizePayload: OptimizeRequestCiemss = {
+		userId: 'no_user_provided',
 		engine: 'ciemss',
-		userId: 'not_provided',
-		modelConfigId: '3c35c95c-c44c-41e7-a30a-8af7fd444d6f',
-		interventions: [
-			{
-				timestep: 1.0,
-				name: 'beta'
-			}
-		],
+		modelConfigId: modelConfiguration.value.id,
 		timespan: {
-			start: 0,
-			end: 90
+			start: knobs.value.startTime,
+			end: knobs.value.endTime
 		},
-		qoi: ['Infected'],
-		riskBound: 10.0,
-		initialGuessInterventions: [1.0],
-		boundsInterventions: [[0.0], [3.0]],
+		interventions: [{ name: 'beta', timestep: 1 }],
+		stepSize: 1,
+		qoi: knobs.value.targetVariables,
+		riskBound: knobs.value.riskTolerance,
+		initialGuessInterventions: [0],
+		boundsInterventions: [[0]], // TOM TODO
 		extra: {
-			numSamples: 4,
-			isMinimized: true
+			isMinimized: knobs.value.isMinimized,
+			numSamples: knobs.value.numSamples,
+			maxiter: 5,
+			maxfeval: 5
 		}
 	};
 
-	const optResult = await makeOptimizeJobCiemss(sampleTest);
+	// const sampleTest: OptimizeRequestCiemss = {
+	// 	engine: 'ciemss',
+	// 	userId: 'not_provided',
+	// 	modelConfigId: '3c35c95c-c44c-41e7-a30a-8af7fd444d6f',
+	// 	interventions: [
+	// 		{
+	// 			timestep: 1.0,
+	// 			name: 'beta'
+	// 		}
+	// 	],
+	// 	timespan: {
+	// 		start: 0,
+	// 		end: 90
+	// 	},
+	// 	qoi: ['Infected'],
+	// 	riskBound: 10.0,
+	// 	initialGuessInterventions: [1.0],
+	// 	boundsInterventions: [[0.0], [3.0]],
+	// 	extra: {
+	// 		numSamples: 4,
+	// 		isMinimized: true
+	// 	}
+	// };
+
+	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	// await getStatus(optResult.id);
 	// TOM TODO: Use getStatus and get run results. Will need them.
 	// policy.json, optimize_results.dill
@@ -403,7 +410,7 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction([runId], props.node, progress, emit));
+		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
@@ -411,14 +418,33 @@ const getStatus = async (runId: string) => {
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		console.log(pollerResults.state);
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Simulation: ${runId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Julia'
 		});
 		throw Error('Failed Runs');
 	}
-	completedRunId.value = runId;
+
+	// const state = _.cloneDeep(props.node.state);
+	// if (state.chartConfigs.length === 0) {
+	// 	addChart();
+	// }
+
+	const sim = await getSimulation(runId);
+	console.log(sim);
+	// emit('append-output', {
+	// 	type: OptimizeCiemssOperation.outputs[0].type,
+	// 	label: `Output - ${props.node.outputs.length + 1}`,
+	// 	value: runId,
+	// 	state: {
+	// 		currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
+	// 		simulationsInProgress: state.simulationsInProgress
+	// 	},
+	// 	isSelected: false
+	// });
+
 	showSpinner.value = false;
 };
 
