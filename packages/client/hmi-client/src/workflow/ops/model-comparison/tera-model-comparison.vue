@@ -148,7 +148,7 @@ function processCompareModels(modelIds) {
 
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
-		if (input.status === 'connected') addModelForComparison(input.id);
+		if (input.status === 'connected') addModelForComparison(input.value);
 	});
 
 	try {
