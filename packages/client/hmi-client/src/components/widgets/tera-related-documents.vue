@@ -18,28 +18,38 @@
 			</ul>
 		</template>
 		<footer class="flex gap-2">
-			<Button
-				severity="secondary"
-				size="small"
-				label="Enrich description"
-				:loading="isLoading"
-				@click="dialogForEnrichment"
-			/>
-			<Button
-				severity="secondary"
-				size="small"
-				label="Extract variables"
-				:loading="isLoading"
-				@click="dialogForExtraction"
-			/>
-			<Button
-				severity="secondary"
-				size="small"
-				:disabled="props.assetType != AssetType.Model"
-				:label="`Align extractions to ${assetType}`"
-				:loading="isLoading"
-				@click="dialogForAlignment"
-			/>
+			<template v-if="assetType === AssetType.Dataset">
+				<Button
+					severity="secondary"
+					size="small"
+					label="Enrich description"
+					:loading="isLoading"
+					@click="dialogForEnrichment"
+				/>
+			</template>
+			<template v-if="assetType === AssetType.Model">
+				<Button
+					severity="secondary"
+					size="small"
+					label="Enrich description"
+					:loading="isLoading"
+					@click="dialogForEnrichment"
+				/>
+				<Button
+					severity="secondary"
+					size="small"
+					label="Extract variables"
+					:loading="isLoading"
+					@click="dialogForExtraction"
+				/>
+				<Button
+					severity="secondary"
+					size="small"
+					:label="`Align extractions to ${assetType}`"
+					:loading="isLoading"
+					@click="dialogForAlignment"
+				/>
+			</template>
 		</footer>
 		<Dialog
 			v-model:visible="visible"
@@ -48,8 +58,8 @@
 			:style="{ width: '50vw' }"
 		>
 			<p class="constrain-width">
-				Terarium can extract information from artifacts to describe this
-				{{ assetType }}. Select the documents you would like to use.
+				Terarium can extract information from documents to describe this
+				{{ assetType }}. Select a document you would like to use.
 			</p>
 			<DataTable
 				v-if="documents && documents.length > 0"
@@ -145,7 +155,12 @@ const extractionService = ref<Extractor>(Extractor.SKEMA);
 const isLoading = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
-const dialogActionCopy = ref('');
+const dialogActionCopy = computed(() => {
+	if (isEmpty(selectedResources.value)) {
+		return 'Generate descriptions';
+	}
+	return 'Use Document to enrich descriptions';
+});
 function openDialog() {
 	visible.value = true;
 }
@@ -155,7 +170,6 @@ function closeDialog() {
 
 function dialogForEnrichment() {
 	dialogType.value = DialogType.ENRICH;
-	dialogActionCopy.value = 'Use this resource to enrich descriptions';
 	openDialog();
 }
 
