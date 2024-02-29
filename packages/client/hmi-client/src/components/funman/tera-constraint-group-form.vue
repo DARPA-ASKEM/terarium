@@ -19,7 +19,7 @@
 						:options="constraintTypes"
 						option-value="id"
 						option-label="name"
-						placeholder="Select an output"
+						placeholder="Select constraint type"
 						@update:model-value="changeConstraintType($event)"
 					/>
 				</div>
@@ -30,9 +30,7 @@
 						:options="props.modelNodeOptions"
 						placeholder="Model states"
 						display="chip"
-						@update:model-value="
-							emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-						"
+						@update:model-value="updateChanges()"
 					></MultiSelect>
 				</div>
 			</div>
@@ -54,14 +52,26 @@
 							:min-fraction-digits="3"
 							:max-fraction-digits="3"
 							v-model="weights[index]"
-							@update:model-value="
-								emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-							"
+							@update:model-value="updateChanges()"
 						/>
 					</div>
 				</div>
 			</section>
-			<section v-if="constraintType === 'monotonicityConstraint'"></section>
+			<section v-if="constraintType === 'monotonicityConstraint'">
+				<RadioButton
+					v-model="derivativeType"
+					@update:model-value="updateChanges()"
+					value="increasing"
+				/>
+				<label>Increasing</label>
+				&nbsp;
+				<RadioButton
+					v-model="derivativeType"
+					@update:model-value="updateChanges()"
+					value="decreasing"
+				/>
+				<label>Decreasing</label>
+			</section>
 		</div>
 		<div class="section-row">
 			<label>Check derivative</label>
@@ -80,9 +90,7 @@
 				<InputNumber
 					class="p-inputtext-sm"
 					v-model="startTime"
-					@update:model-value="
-						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-					"
+					@update:model-value="updateChanges()"
 				/>
 			</div>
 			<div class="button-row">
@@ -90,9 +98,7 @@
 				<InputNumber
 					class="p-inputtext-sm"
 					v-model="endTime"
-					@update:model-value="
-						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-					"
+					@update:model-value="updateChanges()"
 				/>
 			</div>
 			<div class="button-row">
@@ -103,9 +109,7 @@
 					:min-fraction-digits="3"
 					:max-fraction-digits="3"
 					v-model="lowerBound"
-					@update:model-value="
-						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-					"
+					@update:model-value="updateChanges()"
 				/>
 			</div>
 			<div class="button-row">
@@ -116,9 +120,7 @@
 					:min-fraction-digits="3"
 					:max-fraction-digits="3"
 					v-model="upperBound"
-					@update:model-value="
-						emit('update-self', { index: props.index, updatedConfig: updatedConfig })
-					"
+					@update:model-value="updateChanges()"
 				/>
 			</div>
 		</div>
@@ -131,6 +133,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
+import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
 import Checkbox from 'primevue/checkbox';
 
@@ -150,6 +153,7 @@ const startTime = ref(props.config.timepoints?.lb);
 const endTime = ref(props.config.timepoints?.ub);
 const variables = ref(props.config.variables);
 const weights = ref(props.config.weights);
+const derivativeType = ref(props.config.derivativeType);
 const checkDerivative = ref(props.config.checkDerivative);
 
 const constraintTypes = [
@@ -167,7 +171,9 @@ const updatedConfig = computed<ConstraintGroup>(
 			weights: weights.value,
 			timepoints: { lb: startTime.value, ub: endTime.value },
 			interval: { lb: lowerBound.value, ub: upperBound.value },
-			checkDerivative: checkDerivative.value
+			checkDerivative: checkDerivative.value,
+			constraintType: constraintType.value,
+			derivativeType: derivativeType.value
 		}) as ConstraintGroup
 );
 
@@ -181,6 +187,10 @@ const changeConstraintType = (value: any) => {
 	lowerBound.value = 0;
 	upperBound.value = 1;
 
+	updateChanges();
+};
+
+const updateChanges = () => {
 	emit('update-self', { index: props.index, updatedConfig: updatedConfig.value });
 };
 

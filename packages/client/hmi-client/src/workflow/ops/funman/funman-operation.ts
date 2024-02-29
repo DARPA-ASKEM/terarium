@@ -10,6 +10,8 @@ export interface ConstraintGroup {
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
 	interval?: FunmanInterval;
+
+	derivativeType?: string;
 	checkDerivative?: boolean;
 }
 
