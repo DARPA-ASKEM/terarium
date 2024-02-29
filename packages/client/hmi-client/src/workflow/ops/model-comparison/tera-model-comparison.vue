@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
@@ -76,6 +76,7 @@ import { getModel } from '@/services/model';
 import type { Model } from '@/types/Types';
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
+import { compareModels } from '@/services/goLLM';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -141,8 +142,14 @@ const buildJupyterContext = () => {
 
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
-		if (input.value) addModelForComparison(input.value[0]);
+		if (input.status === 'connected') addModelForComparison(input.id);
 	});
+
+	// filter modelsToCompare to be a list of ids
+	const modelIds = props.node.inputs
+		.filter((input) => input.status === 'connected')
+		.map((input) => input.value?.[0]);
+	llmAnswer.value = (await compareModels(modelIds)) ?? '';
 
 	try {
 		const jupyterContext = buildJupyterContext();

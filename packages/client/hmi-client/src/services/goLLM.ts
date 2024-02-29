@@ -1,4 +1,4 @@
-import API, { TaskHandler, FatalError, TaskEventHandlers } from '@/api/api';
+import API, { FatalError, TaskEventHandlers, TaskHandler } from '@/api/api';
 import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { logger } from '@/utils/logger';
@@ -54,8 +54,35 @@ export async function configureModel(documentId: string, modelId: string): Promi
 			}
 		});
 	} catch (err) {
-		logger.error(`An issue occured while exctracting a model configuration. ${err}`);
+		logger.error(`An issue occurred while extracting a model configuration. ${err}`);
 	}
+}
+
+export async function compareModels(modelIds: string[]): Promise<string> {
+	try {
+		const response = await API.get<TaskResponse>('/gollm/compare-models', {
+			params: {
+				models: modelIds.join(',')
+			}
+		});
+
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					throw new FatalError('Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					closeConnection();
+					return data.output;
+				}
+				return '';
+			}
+		});
+	} catch (err) {
+		logger.error(`An issue occurred while comparing models. ${err}`);
+	}
+	return '';
 }
 
 /**
