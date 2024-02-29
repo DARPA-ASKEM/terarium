@@ -1,18 +1,20 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableList;
+import com.google.common.math.Quantiles;
+import com.google.common.math.Stats;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -30,42 +32,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.ImmutableList;
-import com.google.common.math.Quantiles;
-import com.google.common.math.Stats;
-
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
-import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
+import software.uncharted.terarium.hmiserver.models.dataservice.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
@@ -76,6 +48,12 @@ import ucar.ma2.Array;
 import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RequestMapping("/datasets")
 @RestController
@@ -113,22 +91,22 @@ public class DatasetController {
 
 			Query query = null;
 
-			if (ts.size() > 0) {
+			if (!ts.isEmpty()) {
 
-				List<FieldValue> values = new ArrayList<>();
-				for (String term : ts) {
+				final List<FieldValue> values = new ArrayList<>();
+				for (final String term : ts) {
 					values.add(FieldValue.of(term));
 				}
 
-				TermsQueryField termsQueryField = new TermsQueryField.Builder()
+				final TermsQueryField termsQueryField = new TermsQueryField.Builder()
 						.value(values)
 						.build();
 
-				List<TermsQuery> shouldQueries = new ArrayList<>();
+				final List<TermsQuery> shouldQueries = new ArrayList<>();
 
-				for (String field : SEARCH_FIELDS) {
+				for (final String field : SEARCH_FIELDS) {
 
-					TermsQuery termsQuery = new TermsQuery.Builder()
+					final TermsQuery termsQuery = new TermsQuery.Builder()
 							.field(field)
 							.terms(termsQueryField)
 							.build();
@@ -191,7 +169,14 @@ public class DatasetController {
 	})
 	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
 		try {
-			final Optional<Dataset> dataset = datasetService.getAsset(id);
+			Optional<Dataset> dataset = datasetService.getAsset(id);
+			try {
+				dataset = extractColumnsAsNeededAndSave(dataset);
+			} catch (final IOException e) {
+				final String error = "Unable to extract columns from dataset";
+				log.error(error, e);
+				// This doesn't actually warrant a 500 since its just column metadata, so we'll let it pass.
+			}
 			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get dataset";
@@ -201,6 +186,45 @@ public class DatasetController {
 					error);
 		}
 	}
+
+	/**
+	 * Extracts columns from the dataset if they are not already set and saves the dataset.
+	 * @param dataset dataset to extract columns from
+	 * @return the dataset with columns extracted and saved
+	 * @throws IOException if there is an issue saving the dataset after extracting columns
+	 */
+	private Optional<Dataset> extractColumnsAsNeededAndSave(final Optional<Dataset> dataset) throws IOException {
+		if(dataset.isEmpty()){
+			//that's weird. let someone else handle this.
+			return dataset;
+		}
+
+		if(dataset.get().getColumns() != null && !dataset.get().getColumns().isEmpty()){
+			//columns are set. No need to extract
+			return dataset;
+		}
+		if(dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()){
+			//no file names to extract columns from
+			return dataset;
+		}
+
+		for(final String filename : dataset.get().getFileNames()) {
+				try {
+					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId());
+					if(csv == null || csv.isEmpty()){
+						continue;
+					}
+					updateHeaders(dataset.get(), csv.get(0));
+				} catch (final IOException e) {
+						final String error = "Unable to get dataset CSV for file " + filename;
+						log.error(error, e);
+						continue;
+				}
+		}
+
+		return datasetService.updateAsset(dataset.get());
+	}
+
 
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
@@ -271,31 +295,16 @@ public class DatasetController {
 																										// limit
 	) {
 
-		String rawCSV = "";
-		try (final CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build()) {
-
-			final Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
-			if (url.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-
-		} catch (final Exception e) {
-			final String error = "Unable to get dataset CSV";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
-		}
-
 		final List<List<String>> csv;
 		try {
-			csv = csvToRecords(rawCSV);
+			csv = getCSVFile(filename, datasetId);
+			if(csv == null){
+				final String error = "Unable to get CSV";
+				log.error(error);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						error);
+			}
 		} catch (final IOException e) {
 			final String error = "Unable to parse CSV";
 			log.error(error, e);
@@ -320,6 +329,26 @@ public class DatasetController {
 				csv.size());
 
 		return ResponseEntity.ok(csvAsset);
+	}
+
+	private List<List<String>> getCSVFile(final String filename, final UUID datasetId) throws IOException {
+		String rawCSV = "";
+		final CloseableHttpClient httpclient = HttpClients.custom()
+			.disableRedirectHandling()
+			.build();
+
+		final Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
+		if (url.isEmpty()) {
+			return null;
+		}
+		final PresignedURL presignedURL = url.get();
+		final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
+		final HttpResponse response = httpclient.execute(get);
+		rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+
+		final List<List<String>> csv;
+		csv = csvToRecords(rawCSV);
+		return csv;
 	}
 
 	@GetMapping("/{id}/download-file")
@@ -537,24 +566,13 @@ public class DatasetController {
 			if (status == HttpStatus.OK.value()) {
 				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
 
-				final List<DatasetColumn> columns = new ArrayList<>(headers.length);
-				for (final String header : headers) {
-					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
-				}
 				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
 				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
 				}
-				// add the columns to existing columns
-				if (updatedDataset.get().getColumns() == null) {
-					updatedDataset.get()
-							.setColumns(columns);
-				} else {
-					updatedDataset.get()
-							.setColumns(Stream.concat(updatedDataset.get().getColumns().stream(), columns.stream())
-									.collect(Collectors.toList()));
-				}
+
+				updateHeaders(updatedDataset.get(), Arrays.asList(headers));
 
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
@@ -571,6 +589,16 @@ public class DatasetController {
 		} catch (final Exception e) {
 			log.error("Unable to PUT csv data", e);
 			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	private static void updateHeaders(final Dataset dataset, final List<String> headers){
+		if(dataset.getColumns() == null){
+			dataset.setColumns(new ArrayList<>());
+		}
+		for(final String header : headers){
+			final DatasetColumn column = new DatasetColumn().setName(header).setAnnotations(new ArrayList<>());
+			dataset.getColumns().add(column);
 		}
 	}
 
@@ -658,15 +686,15 @@ public class DatasetController {
 				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
 				// TODO: This attempts to check the file, but fails to open the file, might need
 				// to write a NetcdfFiles Stream reader
-				try (NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
-					ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
-					for (Attribute attribute : globalAttributes) {
-						String name = attribute.getName();
-						Array values = attribute.getValues();
+				try (final NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
+					final ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
+					for (final Attribute attribute : globalAttributes) {
+						final String name = attribute.getName();
+						final Array values = attribute.getValues();
 						// log.info("[{},{}]", name, values);
 					}
 					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
-				} catch (IOException ioe) {
+				} catch (final IOException ioe) {
 					return ResponseEntity.status(415).build();
 				}
 			}
