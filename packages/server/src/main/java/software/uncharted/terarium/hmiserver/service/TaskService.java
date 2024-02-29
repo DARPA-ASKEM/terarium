@@ -36,6 +36,7 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskResponseHandler;
 
 @Service
 @Slf4j
@@ -136,8 +137,8 @@ public class TaskService {
 		}
 	}
 
-	public void addResponseHandler(String script, TaskResponseHandler handler) {
-		responseHandlers.put(script, handler);
+	public void addResponseHandler(TaskResponseHandler handler) {
+		responseHandlers.put(handler.getName(), handler);
 	}
 
 	public void cancelTask(final UUID taskId) {
