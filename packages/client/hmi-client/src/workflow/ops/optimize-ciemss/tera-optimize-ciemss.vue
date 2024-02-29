@@ -465,9 +465,8 @@ const initialize = async () => {
 };
 
 const runOptimize = async () => {
-	console.log('run optimize');
 	if (!modelConfiguration.value?.id) {
-		console.log('no model config id:');
+		logger.error('no model config id provided');
 		return;
 	}
 
@@ -596,13 +595,8 @@ const saveModelConfiguration = async () => {
 };
 
 const saveDatasetToProject = async () => {
-	console.log('Save dataset');
 	const { activeProject, refresh } = useProjects();
-	console.log(activeProject);
 	if (activeProject.value?.id) {
-		console.log(activeProject.value.id);
-		console.log(knobs.value.simulationRunId);
-		console.log(knobs.value.datasetName);
 		if (
 			await saveDataset(
 				activeProject.value.id,
