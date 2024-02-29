@@ -14,7 +14,6 @@
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
 					{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }}
-
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
