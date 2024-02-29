@@ -253,19 +253,25 @@ watch(
 	align-items: start;
 
 	/* TODO: Make the chat and close icons stick to the top as the textarea grows */
+	& i:first-of-type {
+		margin-left: 0.5rem;
+	}
 	& i:last-of-type {
-		margin-top: -0.85rem;
+		margin-top: -1rem;
+		margin-right: 0.25rem;
 	}
 }
 
 textarea.p-inputtext {
 	width: 100%;
-	padding-top: 0.5rem;
-	padding-bottom: 1rem;
+	padding-top: 12px;
+	padding-left: 2.5rem;
+	padding-bottom: 12px;
 	/**TODO: Make this a gradient border like the design #cae8c0*/
 	border: 4px solid var(--primary-color);
 	border-radius: var(--border-radius-medium);
-	background: rgba(216, 234, 227, 0.3);
+	background: var(--surface-0);
+	height: initial !important;
 
 	&:enabled {
 		&:hover {
