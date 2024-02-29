@@ -1,37 +1,20 @@
 import ace from 'ace-builds';
-
 import modeJsonUrl from 'ace-builds/src-noconflict/mode-json?url';
-
 import modeJavascriptUrl from 'ace-builds/src-noconflict/mode-javascript?url';
-
 import modeHtmlUrl from 'ace-builds/src-noconflict/mode-html?url';
-
 import modeYamlUrl from 'ace-builds/src-noconflict/mode-yaml?url';
-
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
-
 import themeChromeUrl from 'ace-builds/src-noconflict/theme-chrome?url';
-
 import themeMonokaiUrl from 'ace-builds/src-noconflict/theme-monokai?url';
-
 import workerBaseUrl from 'ace-builds/src-noconflict/worker-base?url';
-
 import workerJsonUrl from 'ace-builds/src-noconflict/worker-json?url';
-
 import workerJavascriptUrl from 'ace-builds/src-noconflict/worker-javascript?url';
-
 import workerHtmlUrl from 'ace-builds/src-noconflict/worker-html?url';
-
 import workerYamlUrl from 'ace-builds/src-noconflict/worker-yaml?url';
-
 import snippetsHtmlUrl from 'ace-builds/src-noconflict/snippets/html?url';
-
 import snippetsJsUrl from 'ace-builds/src-noconflict/snippets/javascript?url';
-
 import snippetsYamlUrl from 'ace-builds/src-noconflict/snippets/yaml?url';
-
 import snippetsJsonUrl from 'ace-builds/src-noconflict/snippets/json?url';
-
 import 'ace-builds/src-noconflict/ext-language_tools';
 
 ace.config.setModuleUrl('ace/mode/json', modeJsonUrl);
