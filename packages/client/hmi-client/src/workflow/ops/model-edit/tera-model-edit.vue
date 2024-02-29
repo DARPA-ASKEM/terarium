@@ -256,7 +256,7 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
-	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code;
+	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
