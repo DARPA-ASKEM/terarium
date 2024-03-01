@@ -18,6 +18,20 @@ export enum NodeType {
 	Transition = 'transition'
 }
 
+const FONT_SIZE_SMALL = 18;
+const FONT_SIZE_REGULAR = 24;
+const FONT_SIZE_LARGE = 36;
+
+function setFontSize(label: string) {
+	if (label.length < 3) {
+		return FONT_SIZE_LARGE;
+	}
+	if (label.length < 10) {
+		return FONT_SIZE_REGULAR;
+	}
+	return FONT_SIZE_SMALL;
+}
+
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 const pathFn = d3
@@ -104,8 +118,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions label text
 		transitions
 			.append('text')
-			.attr('y', () => 5)
+			.attr('y', () => 12)
 			.style('text-anchor', 'middle')
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
@@ -114,7 +132,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions expression text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height / 2 - 5)
+			.attr('y', (d) => -d.height / 2 - 8)
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('stroke', '#FFF')
@@ -147,6 +168,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('text')
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
@@ -179,7 +204,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.classed('multi-edge-label', true)
 				.attr('x', point.x)
 				.attr('y', point.y + 6)
-				.style('font-size', 18)
+				.style('font-family', 'STIX Two Text, serif')
+				.style('font-style', 'italic')
+				.style('font-size', FONT_SIZE_REGULAR)
 				.style('paint-order', 'stroke')
 				.style('stroke', 'var(--gray-50)')
 				.style('stroke-width', '6px')

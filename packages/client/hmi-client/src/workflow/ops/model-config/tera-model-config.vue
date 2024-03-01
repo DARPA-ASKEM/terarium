@@ -268,6 +268,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
@@ -478,6 +479,10 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
+
+	// FIXME: dull out regnet/stockflow Feb 29, 2024
+	if (model.value.header.schema_name !== 'petrinet') return null;
+
 	return getStratificationType(model.value);
 });
 

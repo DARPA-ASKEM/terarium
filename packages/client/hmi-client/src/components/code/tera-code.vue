@@ -185,9 +185,7 @@
 import { computed, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-julia';
-import 'ace-builds/src-noconflict/mode-r';
+import '@/ace-config';
 import Button from 'primevue/button';
 import {
 	getCodeAsset,
