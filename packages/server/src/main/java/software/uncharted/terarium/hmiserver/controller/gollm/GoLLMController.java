@@ -234,7 +234,6 @@ public class GoLLMController {
 				}
 			}
 
-			log.info("Datasets:" + datasets);
 			if (datasets.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No datasets found");
 			}
