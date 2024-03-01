@@ -168,27 +168,23 @@ async function setPermissions() {
 				?.relationship;
 			if (permission === 'remove') {
 				if (currentPermission) {
-					if (
-						(await useProjects().removePermissions(props.project.id, id, currentPermission)) !==
-						null
-					) {
+					if (await useProjects().removePermissions(props.project.id, id, currentPermission)) {
 						removeUser(id);
+					} else {
+						addUser(id);
 					}
 				}
 			} else if (currentPermission) {
 				if (
-					(await useProjects().updatePermissions(
-						props.project.id,
-						id,
-						currentPermission,
-						permission
-					)) !== null
+					await useProjects().updatePermissions(props.project.id, id, currentPermission, permission)
 				) {
 					if (permission === 'reader') {
 						removeUser(id);
+					} else {
+						addUser(id);
 					}
 				}
-			} else if ((await useProjects().setPermissions(props.project.id, id, permission)) !== null) {
+			} else if (await useProjects().setPermissions(props.project.id, id, permission)) {
 				if (permission === 'writer') {
 					addUser(id);
 				}
@@ -212,7 +208,7 @@ function addUser(id) {
 	const user = users.value.find((u) => u.id === id);
 	const name = `${user?.firstName} ${user?.lastName}`;
 	const index = useProjects().activeProject.value?.authors?.indexOf(name);
-	if (index !== undefined && index > -1) {
+	if (index !== undefined && index === -1) {
 		useProjects().activeProject.value?.authors?.push(name);
 	}
 }
