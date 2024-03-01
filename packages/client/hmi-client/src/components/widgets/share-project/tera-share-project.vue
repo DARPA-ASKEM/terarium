@@ -168,16 +168,53 @@ async function setPermissions() {
 				?.relationship;
 			if (permission === 'remove') {
 				if (currentPermission) {
-					await useProjects().removePermissions(props.project.id, id, currentPermission);
+					if (
+						(await useProjects().removePermissions(props.project.id, id, currentPermission)) !==
+						null
+					) {
+						removeUser(id);
+					}
 				}
 			} else if (currentPermission) {
-				await useProjects().updatePermissions(props.project.id, id, currentPermission, permission);
-			} else {
-				await useProjects().setPermissions(props.project.id, id, permission);
+				if (
+					(await useProjects().updatePermissions(
+						props.project.id,
+						id,
+						currentPermission,
+						permission
+					)) !== null
+				) {
+					if (permission === 'reader') {
+						removeUser(id);
+					}
+				}
+			} else if ((await useProjects().setPermissions(props.project.id, id, permission)) !== null) {
+				if (permission === 'writer') {
+					addUser(id);
+				}
 			}
 		}
 	});
 	newSelectedUserPermissions.clear();
+}
+
+function removeUser(id) {
+	const user = users.value.find((u) => u.id === id);
+	const index = useProjects().activeProject.value?.authors?.indexOf(
+		`${user?.firstName} ${user?.lastName}`
+	);
+	if (index !== undefined && index > -1) {
+		useProjects().activeProject.value?.authors?.splice(index, 1);
+	}
+}
+
+function addUser(id) {
+	const user = users.value.find((u) => u.id === id);
+	const name = `${user?.firstName} ${user?.lastName}`;
+	const index = useProjects().activeProject.value?.authors?.indexOf(name);
+	if (index !== undefined && index > -1) {
+		useProjects().activeProject.value?.authors?.push(name);
+	}
 }
 
 async function getPermissions() {
