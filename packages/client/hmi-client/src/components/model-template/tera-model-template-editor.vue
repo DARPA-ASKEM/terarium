@@ -180,12 +180,8 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
-const decomposedCanvas = ref<ModelTemplateCanvas>(
-	modelTemplatingService.initializeModelTemplateCanvas()
-);
-const flattenedCanvas = ref<ModelTemplateCanvas>(
-	modelTemplatingService.initializeModelTemplateCanvas()
-);
+const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
+const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
@@ -437,21 +433,21 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function refreshFlattenedTemplate() {
+function refreshFlattenedCanvas() {
 	if (props.model) {
-		flattenedCanvas.value = modelTemplatingService.initializeModelTemplateCanvas();
-		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedCanvas.value);
+		flattenedCanvas.value = modelTemplatingService.initializeCanvas();
+		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
 	}
 }
 
 function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
-	if (newFormat === EditorFormat.Decomposed) refreshFlattenedTemplate(); // Removes unlinked decomposed templates
+	if (newFormat === EditorFormat.Decomposed) refreshFlattenedCanvas(); // Removes unlinked decomposed templates
 }
 
 watch(
 	() => [props.model],
-	() => refreshFlattenedTemplate() // Triggered after syncWithMiraModel() in parent
+	() => refreshFlattenedCanvas() // Triggered after syncWithMiraModel() in parent
 );
 
 onMounted(() => {
@@ -459,7 +455,7 @@ onMounted(() => {
 
 	if (props.model) {
 		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedCanvas.value);
+		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
 		// Create decomposed view of model
 		modelTemplatingService.flattenedToDecomposedInKernel(
 			props.kernelManager,

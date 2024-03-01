@@ -63,7 +63,7 @@ function findCardIndexById(canvas: ModelTemplateCanvas, id: string) {
 	return canvas.models.findIndex(({ metadata }) => metadata?.templateCard?.id === id);
 }
 
-export function initializeModelTemplateCanvas() {
+export function initializeCanvas() {
 	const canvas: ModelTemplateCanvas = {
 		id: uuidv4(),
 		transform: { x: 0, y: 0, k: 1 },
@@ -501,7 +501,7 @@ export function addEdgeInKernel(
 /**
  * Update/refresh flattened template
  */
-export function updateFlattenedTemplateInView(model: Model, flattenedCanvas: ModelTemplateCanvas) {
+export function updateFlattenedTemplateInView(flattenedCanvas: ModelTemplateCanvas, model: Model) {
 	const flattenedModel = cloneDeep(model);
 	flattenedModel.metadata = {
 		templateCard: {
