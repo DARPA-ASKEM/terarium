@@ -129,6 +129,12 @@
 								<Column field="id" header="Symbol" />
 								<Column field="name" header="Name" />
 								<Column field="rate_constant" header="Rate Constant" />
+								<Column field="initial" header="Initial Value">
+									<template #body="{ data, field }">
+										<!-- FIXME: temporary hack -->
+										<InputText v-model="data[field]" @blur="tempUpdate(data, field)" />
+									</template>
+								</Column>
 							</DataTable>
 						</AccordionTab>
 						<AccordionTab header="Edges">
@@ -845,6 +851,11 @@ const extractConfigurationsFromDataset = async () => {
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfirgurationContext.value.modelConfiguration = config;
 	suggestedConfirgurationContext.value.isOpen = true;
+};
+
+// FIXME: temporary hack, need proper config/states to handle all frameworks and fields
+const tempUpdate = (data: any, field: any) => {
+	data[field] = +data[field];
 };
 
 onMounted(async () => {
