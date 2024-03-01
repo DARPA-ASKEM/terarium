@@ -308,11 +308,6 @@ enum OutputView {
 	Data = 'Data'
 }
 
-enum SimulationType {
-	simulation = 'Simulation',
-	optimize = 'Optimize'
-}
-
 interface BasicKnobs {
 	startTime: number;
 	endTime: number;
@@ -353,6 +348,7 @@ const knobs = ref<BasicKnobs>({
 
 const showSpinner = ref(false);
 const poller = new Poller();
+const pollerTwo = new Poller();
 // const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 // const completedRunId = ref<string>('');
 
@@ -368,6 +364,7 @@ const outputs = computed(() => {
 	return [];
 });
 const selectedOutputId = ref<string>();
+const policyResult = ref<number[]>();
 
 const outputViewSelection = ref(OutputView.Charts);
 const outputViewOptions = ref([
@@ -425,16 +422,6 @@ const addChart = () => {
 	emit('update-state', state);
 };
 
-// async function saveDatasetToProject() {
-// 	const { activeProject, refresh } = useProjects();
-// 	if (activeProject.value?.id) {
-// 		if (await saveDataset(activeProject.value.id, selectedRunId.value, saveAsName.value)) {
-// 			refresh();
-// 		}
-// 		showSaveInput.value = false;
-// 	}
-// }
-
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
@@ -489,10 +476,7 @@ const runOptimize = async () => {
 	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	console.log(optResult.simulationId);
-	await getStatus(optResult.simulationId, SimulationType.optimize);
-
-	console.log(optResult);
-	const policyResult = [1.0]; // TOM TODO, read policy.json for value
+	await setOptimizeResults(optResult.simulationId);
 
 	const simulationPayload: SimulationRequest = {
 		projectId: '',
@@ -504,7 +488,7 @@ const runOptimize = async () => {
 		extra: {
 			num_samples: knobs.value.numSamples,
 			method: knobs.value.solverMethod,
-			inferredParameters: policyResult
+			inferredParameters: policyResult.value
 		},
 		engine: 'ciemss'
 	};
@@ -512,10 +496,10 @@ const runOptimize = async () => {
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
 	console.log('Simulation Response:');
 	console.log(simulationResponse);
-	getStatus(simulationResponse.id, SimulationType.simulation);
+	getStatus(simulationResponse.id);
 };
 
-const getStatus = async (runId: string, simulationType: SimulationType) => {
+const getStatus = async (runId: string) => {
 	showSpinner.value = true;
 	poller
 		.setInterval(3000)
@@ -537,19 +521,37 @@ const getStatus = async (runId: string, simulationType: SimulationType) => {
 		throw Error('Failed Runs');
 	}
 
-	if (simulationType === SimulationType.simulation) {
-		const state = _.cloneDeep(props.node.state);
-		if (state.chartConfigs.length === 0) {
-			addChart();
-		}
-
-		knobs.value.simulationRunId = runId;
-	}
-	if (simulationType === SimulationType.optimize) {
-		console.log(`Getting run results for ${runId}`);
-		console.log(await getRunResult(runId, 'policy.json'));
+	const state = _.cloneDeep(props.node.state);
+	if (state.chartConfigs.length === 0) {
+		addChart();
 	}
 
+	knobs.value.simulationRunId = runId;
+	showSpinner.value = false;
+};
+
+const setOptimizeResults = async (runId: string) => {
+	showSpinner.value = true;
+	pollerTwo
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => pollAction(runId));
+	const pollerResults = await pollerTwo.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		showSpinner.value = false;
+		return;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		console.log(pollerResults.state);
+		// throw if there are any failed runs for now
+		showSpinner.value = false;
+		logger.error(`Simulate (Optimize): ${runId} has failed`, {
+			toastTitle: 'Error - Ciemss'
+		});
+		throw Error('Failed Runs');
+	}
+	policyResult.value = (await getRunResult(runId, 'policy.json')) as number[];
 	showSpinner.value = false;
 };
 
