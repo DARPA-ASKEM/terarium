@@ -8,17 +8,14 @@
 			<section class="template-options">
 				<header>Model templates</header>
 				<ul>
-					<li
-						v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
-						:key="index"
-					>
+					<li v-for="(model, index) in modelTemplatingService.modelTemplateOptions" :key="index">
 						<tera-model-template
-							:model="modelTemplate"
+							:model="model"
 							:is-editable="false"
 							is-decomposed
 							:style="isDecomposedLoading && { cursor: 'wait' }"
 							:draggable="!isDecomposedLoading"
-							@dragstart="newModelTemplate = modelTemplate"
+							@dragstart="sidebarTemplateToAdd = model"
 						/>
 					</li>
 				</ul>
@@ -195,7 +192,7 @@ const cards = computed<ModelTemplateCard[]>(
 );
 const junctions = computed<ModelTemplateJunction[]>(() => currentCanvas.value.junctions);
 
-const newModelTemplate = ref();
+const sidebarTemplateToAdd = ref<Model | null>(null);
 const newEdge = ref();
 
 const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.models));
@@ -344,20 +341,23 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 }
 
 function updateNewCardPosition(event) {
-	newModelTemplate.value.metadata.templateCard.x =
+	if (!sidebarTemplateToAdd.value?.metadata) return;
+	sidebarTemplateToAdd.value.metadata.templateCard.x =
 		(event.offsetX - canvasTransform.x) / canvasTransform.k;
-	newModelTemplate.value.metadata.templateCard.y =
+	sidebarTemplateToAdd.value.metadata.templateCard.y =
 		(event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
 function onDrop(event) {
+	if (!sidebarTemplateToAdd.value?.metadata) return;
+
 	updateNewCardPosition(event);
 
 	if (currentModelFormat.value === EditorFormat.Decomposed) {
 		modelTemplatingService.addDecomposedTemplateInKernel(
 			props.kernelManager,
 			decomposedCanvas.value,
-			newModelTemplate.value,
+			sidebarTemplateToAdd.value,
 			outputCode,
 			syncWithMiraModel
 		);
@@ -368,14 +368,14 @@ function onDrop(event) {
 		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
 		const decomposedTemplateToAdd = modelTemplatingService.prepareDecomposedTemplateAddition(
 			flattenedCanvas.value,
-			newModelTemplate.value
+			sidebarTemplateToAdd.value
 		);
 		if (decomposedTemplateToAdd) {
 			modelTemplatingService.addTemplateInView(flattenedCanvas.value, decomposedTemplateToAdd);
 		}
 	}
 
-	newModelTemplate.value = null;
+	sidebarTemplateToAdd.value = null;
 }
 
 const updatePosition = (
