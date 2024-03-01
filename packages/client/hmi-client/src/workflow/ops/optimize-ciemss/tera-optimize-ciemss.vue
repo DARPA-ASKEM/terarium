@@ -165,16 +165,18 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
-				<div class="label-and-input">
+				<!-- TODO: saveDatasetToProject is failing for all drilldowns -->
+				<div v-if="false" class="label-and-input">
 					<label>Dataset Name</label>
 					<InputText v-model="knobs.datasetName" />
+
+					<Button
+						:disabled="knobs.datasetName === '' || knobs.simulationRunId === ''"
+						outlined
+						label="Save as a new dataset"
+						@click="saveDatasetToProject"
+					/>
 				</div>
-				<Button
-					:disabled="knobs.datasetName === '' || knobs.simulationRunId === ''"
-					outlined
-					label="Save as a new dataset"
-					@click="saveDatasetToProject"
-				/>
 				<SelectButton
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
