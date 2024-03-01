@@ -26,7 +26,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.*;
@@ -104,6 +106,8 @@ public class ProjectController {
 				project.setPublicProject(rebacProject.isPublic());
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 
+				List<Contributor> contributors = getContributors(rebacProject);
+
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
 						assetTypes);
 
@@ -114,6 +118,7 @@ public class ProjectController {
 					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
 				}
 
+				metadata.put("contributor-count", Integer.toString(contributors.size()));
 				metadata.put("datasets-count", counts.getOrDefault(AssetType.DATASET, 0).toString());
 				metadata.put("document-count", counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
 				metadata.put("models-count", counts.getOrDefault(AssetType.MODEL, 0).toString());
@@ -128,6 +133,47 @@ public class ProjectController {
 		});
 
 		return ResponseEntity.ok(projects);
+	}
+
+	private class Contributor {
+		String name;
+		Schema.Relationship permission;
+
+		Contributor(String name, Schema.Relationship permission) {
+			this.name = name;
+			this.permission = permission;
+		}
+	}
+
+	private List<Contributor> getContributors(RebacProject rebacProject) {
+		Map<String, Contributor> contributorMap = new HashMap<>();
+
+		try {
+			List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
+			for (RebacPermissionRelationship permissionRelationship : permissionRelationships) {
+				Schema.Relationship relationship = permissionRelationship.getRelationship();
+				if (relationship.equals(Schema.Relationship.CREATOR)
+						|| relationship.equals(Schema.Relationship.ADMIN)
+						|| relationship.equals(Schema.Relationship.WRITER)) {
+					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+						PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+						String name = user.getFirstName() + " " + user.getLastName();
+						if (!contributorMap.containsKey(name)) {
+							contributorMap.put(name, new Contributor(name, relationship));
+						}
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+						PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
+						if (!contributorMap.containsKey(group.getName())) {
+							contributorMap.put(group.getName(), new Contributor(group.getName(), relationship));
+						}
+					}
+				}
+			}
+		} catch (final Exception e) {
+			log.error("Failed to get project's contributors");
+		}
+
+		return new ArrayList<>(contributorMap.values());
 	}
 
 	/**
@@ -153,8 +199,15 @@ public class ProjectController {
 			if (rebacUser.canRead(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(id);
 				if (project.isPresent()) {
+					List<String> authors = new ArrayList<>();
+					List<Contributor> contributors = getContributors(rebacProject);
+					for (Contributor contributor : contributors) {
+						authors.add(contributor.name);
+					}
+
 					project.get().setPublicProject(rebacProject.isPublic());
 					project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
+					project.get().setAuthors(authors);
 					return ResponseEntity.ok(project.get());
 				}
 			}
