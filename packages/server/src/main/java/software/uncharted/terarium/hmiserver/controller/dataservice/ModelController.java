@@ -337,7 +337,7 @@ public class ModelController {
 			});
 
 			return ResponseEntity.ok(modelConfigurations);
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
 			throw new ResponseStatusException(
