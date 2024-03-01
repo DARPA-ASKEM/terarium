@@ -1,7 +1,7 @@
 <template>
 	<tera-asset
 		:name="useProjects().activeProject.value?.name"
-		:authors="useProjects().activeProject.value?.authors"
+		:authors="useProjects().activeProject.value?.authors?.join(', ')"
 		:is-naming-asset="isRenamingProject"
 		:publisher="`Last updated ${DateUtils.formatLong(
 			useProjects().activeProject.value?.updatedOn ?? useProjects().activeProject.value?.createdOn
