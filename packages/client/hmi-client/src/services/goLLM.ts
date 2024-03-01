@@ -60,6 +60,7 @@ export async function configureModel(documentId: string, modelId: string): Promi
 
 export async function configureModelFromDatasets(modelId: string, datasetIds: string[]) {
 	try {
+		// FIXME: Using first dataset for now...
 		const response = await API.post<TaskResponse>('/gollm/configure-from-dataset', null, {
 			params: {
 				'model-id': modelId,

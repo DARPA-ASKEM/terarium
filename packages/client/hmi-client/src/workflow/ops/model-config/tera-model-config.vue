@@ -396,27 +396,38 @@ const extractionMenu = ref();
 const toggleExtractionMenu = (event) => {
 	extractionMenu.value.toggle(event);
 };
-const menuItems = ref<MenuItem[]>([
-	{
-		label: 'From a document',
-		command: () => {
-			extractConfigurationsFromDocument();
-		}
-	},
-	{
-		label: 'From a dataset',
-		command: () => {
-			extractConfigurationsFromDataset();
-		}
-	},
-	{
-		label: 'From both',
-		command: () => {
-			extractConfigurationsFromDataset();
-			extractConfigurationsFromDocument();
-		}
+const menuItems = computed<MenuItem[]>(() => {
+	const items: MenuItem[] = [];
+	if (documentId.value) {
+		items.push({
+			label: 'From a document',
+			command: () => {
+				extractConfigurationsFromDocument();
+			}
+		});
 	}
-]);
+
+	if (datasetId.value) {
+		items.push({
+			label: 'From a dataset',
+			command: () => {
+				extractConfigurationsFromDataset();
+			}
+		});
+	}
+
+	if (documentId.value && datasetId.value) {
+		items.push({
+			label: 'From both',
+			command: () => {
+				extractConfigurationsFromDataset();
+				extractConfigurationsFromDocument();
+			}
+		});
+	}
+
+	return items;
+});
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
@@ -721,9 +732,12 @@ const onSelection = (id: string) => {
 
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
-		isFetchingConfigsFromDocument.value = true;
-		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-		isFetchingConfigsFromDocument.value = false;
+		// FIXME: since configurations are made on the backend on the fly, we need to wait for the db to update before fetching, here's an artificaial delay
+		setTimeout(async () => {
+			isFetchingConfigsFromDocument.value = true;
+			suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+			isFetchingConfigsFromDocument.value = false;
+		}, 800);
 	}
 };
 
