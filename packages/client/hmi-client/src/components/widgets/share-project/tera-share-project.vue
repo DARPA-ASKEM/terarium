@@ -69,6 +69,7 @@ import Button from 'primevue/button';
 import { getUsers } from '@/services/user';
 import type { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import { cloneDeep } from 'lodash';
 import TeraUserCard from './tera-user-card.vue';
 
 enum Accessibility {
@@ -161,7 +162,7 @@ function selectNewPermissionForUser(permission: string, userId: string) {
 
 async function setPermissions() {
 	visible.value = false;
-	selectedUsers.value.forEach(async ({ id }) => {
+	await selectedUsers.value.forEach(async ({ id }) => {
 		const permission = newSelectedUserPermissions.get(id);
 		if (permission) {
 			const currentPermission = permissions.value?.permissionUsers.find((u) => u.id === id)
@@ -194,23 +195,29 @@ async function setPermissions() {
 	newSelectedUserPermissions.clear();
 }
 
-function removeUser(id) {
+async function removeUser(id) {
 	const user = users.value.find((u) => u.id === id);
-	const index = useProjects().activeProject.value?.authors?.indexOf(
-		`${user?.firstName} ${user?.lastName}`
-	);
-	if (index !== undefined && index > -1) {
-		useProjects().activeProject.value?.authors?.splice(index, 1);
+	const name = `${user?.firstName} ${user?.lastName}`;
+	const updatedProject = cloneDeep(props.project);
+	if (updatedProject.authors) {
+		const index = updatedProject.authors.indexOf(name);
+		if (index !== undefined && index > -1) {
+			updatedProject.authors.splice(index, 1);
+		}
+		await useProjects().update(updatedProject);
 	}
 }
 
-function addUser(id) {
+async function addUser(id) {
 	const user = users.value.find((u) => u.id === id);
 	const name = `${user?.firstName} ${user?.lastName}`;
-	const index = useProjects().activeProject.value?.authors?.indexOf(name);
-	if (index !== undefined && index === -1) {
-		useProjects().activeProject.value?.authors?.push(name);
+	const updatedProject = cloneDeep(props.project);
+	if (updatedProject.authors) {
+		updatedProject.authors.push(name);
+	} else {
+		updatedProject.authors = [name];
 	}
+	await useProjects().update(updatedProject);
 }
 
 async function getPermissions() {
