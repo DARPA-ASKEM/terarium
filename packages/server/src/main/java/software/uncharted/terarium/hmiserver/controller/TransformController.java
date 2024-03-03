@@ -9,12 +9,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
-import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
+import org.springframework.web.bind.annotation.PathVariable;
+import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @RequestMapping("/transforms")
@@ -26,7 +27,7 @@ public class TransformController {
 	SkemaRustProxy skemaProxy;
 
 	@Autowired
-	ModelServiceProxy modelServiceProxy;
+	SimulationServiceProxy simulationServiceProxy;
 
 	@PostMapping("/mathml-to-acset")
 	@Secured(Roles.USER)
@@ -34,19 +35,10 @@ public class TransformController {
 		return skemaProxy.convertMathML2ACSet(list);
 	}
 
-	@PostMapping(value = "/acset-to-latex", produces = {"text/plain", "application/*"})
+	@PostMapping(value = "/model-to-latex/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> acset2Latex(@RequestBody final PetriNet content) {
-
-		if(content.getS().isEmpty() && content.getT().isEmpty() && content.getI().isEmpty() && content.getO().isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-
-		final ResponseEntity<String> res = modelServiceProxy.petrinetToLatex(content);
-
-		// since the model-service returns headers that are duplicated in the hmi-server response,
-		// we need to strip them out. This stops our nginx reverse proxy from thinking that there
-		// is an HTTP smuggling attack.
-		return ResponseEntity.status(res.getStatusCode()).body(res.getBody());
+	public ResponseEntity<JsonNode> model2Latex(@PathVariable("id") final UUID id) {
+		return ResponseEntity
+				.ok(simulationServiceProxy.getModelEquation(id.toString()).getBody());
 	}
 }

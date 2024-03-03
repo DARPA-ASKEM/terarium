@@ -184,3 +184,19 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	}
 	return AMRSchemaNames.PETRINET;
 }
+
+// Converts a model into latex equation, either one of petrinet, stocknflow, or regnet;
+export async function getModelEquation(model: Model) {
+	const supportedFormats = ['regnet', 'stockflow', 'petrinet'];
+	if (!supportedFormats.includes(model.header.schema_name as string)) {
+		console.log(`getModelEquation: ${model.header.schema_name} not suported `);
+		return '';
+	}
+
+	const id = model.id;
+	const response = await API.get(`/transform/model-to-latex/${id}`);
+	const latex = response.data.latex;
+	if (!latex) return '';
+
+	return latex;
+}
