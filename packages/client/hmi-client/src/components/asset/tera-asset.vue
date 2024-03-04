@@ -324,7 +324,6 @@ main:deep(.p-accordion-content) {
 main:deep(.p-accordion-content > p),
 main:deep(.p-accordion-content > ul),
 main:deep(.data-row) {
-	max-width: var(--constrain-width);
 }
 
 main:deep(.p-accordion-content ul) {
