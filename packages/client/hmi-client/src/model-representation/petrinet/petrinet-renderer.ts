@@ -118,7 +118,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions label text
 		transitions
 			.append('text')
-			.attr('y', () => 12)
+			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
 			.style('font-family', 'STIX Two Text, serif')
 			.style('font-style', 'italic')
@@ -166,7 +166,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// species text
 		species
 			.append('text')
-			.attr('y', () => 5)
+			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
 			.style('font-family', 'STIX Two Text, serif')
 			.style('font-style', 'italic')
