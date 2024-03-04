@@ -485,7 +485,8 @@ const runOptimize = async () => {
 	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	console.log(optResult.simulationId);
-	await setOptimizeResults(optResult.simulationId);
+	await getOptimizeStatus(optResult.simulationId); // This does not wait until job is done: https://github.com/DARPA-ASKEM/terarium/issues/2905
+	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 
 	const simulationPayload: SimulationRequest = {
 		projectId: '',
@@ -539,7 +540,7 @@ const getStatus = async (runId: string) => {
 	showSpinner.value = false;
 };
 
-const setOptimizeResults = async (runId: string) => {
+const getOptimizeStatus = async (runId: string) => {
 	showSpinner.value = true;
 	poller
 		.setInterval(3000)
@@ -560,7 +561,6 @@ const setOptimizeResults = async (runId: string) => {
 		});
 		throw Error('Failed Runs');
 	}
-	policyResult.value = (await getRunResult(runId, 'policy.json')) as number[];
 	showSpinner.value = false;
 };
 
