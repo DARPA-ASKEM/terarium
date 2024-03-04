@@ -358,7 +358,6 @@ const knobs = ref<BasicKnobs>({
 
 const showSpinner = ref(false);
 const poller = new Poller();
-const pollerTwo = new Poller();
 // const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 // const completedRunId = ref<string>('');
 
@@ -542,11 +541,11 @@ const getStatus = async (runId: string) => {
 
 const setOptimizeResults = async (runId: string) => {
 	showSpinner.value = true;
-	pollerTwo
+	poller
 		.setInterval(3000)
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
-	const pollerResults = await pollerTwo.start();
+	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
