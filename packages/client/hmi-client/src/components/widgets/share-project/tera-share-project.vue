@@ -69,7 +69,6 @@ import Button from 'primevue/button';
 import { getUsers } from '@/services/user';
 import type { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { cloneDeep } from 'lodash';
 import TeraUserCard from './tera-user-card.vue';
 
 enum Accessibility {
@@ -198,7 +197,7 @@ async function setPermissions() {
 async function removeUser(id) {
 	const user = users.value.find((u) => u.id === id);
 	const name = `${user?.firstName} ${user?.lastName}`;
-	const updatedProject = cloneDeep(props.project);
+	const updatedProject = structuredClone(props.project);
 	if (updatedProject.authors) {
 		const index = updatedProject.authors.indexOf(name);
 		if (index !== undefined && index > -1) {
@@ -211,7 +210,7 @@ async function removeUser(id) {
 async function addUser(id) {
 	const user = users.value.find((u) => u.id === id);
 	const name = `${user?.firstName} ${user?.lastName}`;
-	const updatedProject = cloneDeep(props.project);
+	const updatedProject = structuredClone(props.project);
 	if (updatedProject.authors) {
 		updatedProject.authors.push(name);
 	} else {
