@@ -144,6 +144,9 @@
 			"
 		/>
 	</Teleport>
+
+	<!-- Matrix effect easter egg  -->
+	<canvas id="matrix-canvas"></canvas>
 </template>
 
 <script setup lang="ts">
@@ -190,6 +193,9 @@ const expandedRows = ref([]);
 const isInitial = (obj: Initial | ModelParameter): obj is Initial => 'target' in obj;
 
 const openMatrixModal = (datum: ModelConfigTableData) => {
+	// Matrix effect easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
+	matrixEffect();
+
 	const id = datum.id;
 	if (!datum.tableFormattedMatrix) return;
 	const type = isInitial(datum.tableFormattedMatrix[0].value)
@@ -289,18 +295,78 @@ const updateExpression = async (value: Initial) => {
 	value.expression_mathml = mathml;
 	emit('update-value', [value]);
 };
+
+/* Matrix effect easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
+const matrixEffect = () => {
+	if (Math.random() > 0.1) return;
+	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
+	const ctx = (canvas as HTMLCanvasElement)?.getContext('2d');
+
+	// eslint-disable-next-line no-multi-assign
+	const w = (canvas.width = document.body.offsetWidth);
+	// eslint-disable-next-line no-multi-assign
+	const h = (canvas.height = document.body.offsetHeight);
+	const cols = Math.floor(w / 20) + 1;
+	const ypos = Array(cols).fill(0);
+
+	if (ctx) {
+		ctx.fillStyle = '#FFF';
+		ctx.fillRect(0, 0, w, h);
+	}
+
+	function matrix() {
+		if (ctx) {
+			ctx.fillStyle = '#FFF1';
+			ctx.fillRect(0, 0, w, h);
+
+			ctx.fillStyle = '#1B8073';
+			ctx.font = '15pt monospace';
+
+			ypos.forEach((y, ind) => {
+				const text = String.fromCharCode(Math.random() * 128);
+				const x = ind * 20;
+				ctx.fillText(text, x, y);
+				if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
+				else ypos[ind] = y + 20;
+			});
+		}
+	}
+
+	const intervalId = setInterval(matrix, 33);
+
+	// after 4 seconds begin the fade out
+	setTimeout(() => {
+		if (canvas) {
+			canvas.style.opacity = '0';
+		}
+	}, 3000);
+
+	// after 5 seconds clear the canvas, stop the interval, and reset the opacity
+	setTimeout(() => {
+		clearInterval(intervalId);
+		if (ctx) {
+			ctx.clearRect(0, 0, w, h);
+		}
+		if (canvas) {
+			canvas.style.opacity = '1';
+		}
+	}, 4000);
+};
 </script>
 
 <style scoped>
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
 	padding: 0;
 }
+
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
 	display: none;
 }
+
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
 	background: var(--surface-highlight);
 }
+
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {
 	padding: 0;
 }
@@ -327,14 +393,17 @@ const updateExpression = async (value: Initial) => {
 	font-size: var(--font-caption);
 	text-align: right;
 }
+
 .tabular-numbers {
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
 	text-align: right;
 }
+
 .invalid-message {
 	color: var(--text-color-danger);
 }
+
 .timeseries-container {
 	display: flex;
 	flex-direction: column;
@@ -346,5 +415,18 @@ const updateExpression = async (value: Initial) => {
 
 .value-type-dropdown {
 	min-width: 10rem;
+}
+
+#matrix-canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+	pointer-events: none;
+	mix-blend-mode: darken;
+	opacity: 1;
+	transition: opacity 1s;
 }
 </style>
