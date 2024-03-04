@@ -12,6 +12,29 @@
 			outlined
 			rounded
 		/>
+		<aside
+			v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+			class="evaluation-scenario-widget"
+		>
+			{{ evaluationScenarioName }} &ndash; {{ evaluationScenarioTask }}
+			<span class="evaluation-scenario-widget-timer">{{ evaluationScenarioRuntimeString }}</span>
+			<Button
+				v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+				label="Stop"
+				rounded
+				size="small"
+				severity="primary"
+				@click="stopEvaluationScenario"
+			/>
+			<Button
+				v-else
+				label="Start"
+				rounded
+				size="small"
+				severity="primary"
+				@click="beginEvaluationScenario"
+			/>
+		</aside>
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
@@ -29,7 +52,7 @@
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
-				class="evaluation-scneario-modal"
+				class="evaluation-scenario-modal"
 			>
 				<template #header>
 					<div class="flex w-full justify-content-between align-items-center">
@@ -193,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
@@ -502,7 +525,6 @@ nav {
 	background-color: var(--primary-color-lighter);
 	cursor: pointer;
 }
-
 .avatar:hover {
 	color: var(--text-color);
 	background-color: var(--primary-color-light);
@@ -533,18 +555,24 @@ nav {
 	}
 }
 
+.evaluation-scenario-widget {
+	border-radius: var(--border-radius-bigger);
+	background-color: var(--surface-highlight-hover);
+	display: flex;
+	padding-left: var(--gap);
+	margin-left: auto;
+	margin-right: auto;
+	align-items: center;
+	gap: var(--gap);
+
+	.evaluation-scenario-widget-timer {
+		font-feature-settings: 'tnum';
+	}
+}
+
 .about-modal {
 	max-width: 800px;
 }
-
-.modal-footer {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-	width: 100%;
-}
-
 .about-terarium-logo {
 	width: 20rem;
 	margin-bottom: 1rem;
@@ -605,13 +633,14 @@ nav {
 	color: var(--text-color-subdued);
 }
 
-.evaluation-scneario-modal:deep(section) {
+.evaluation-scenario-modal:deep(section) {
 	width: 60vw;
 }
 
-.evaluation-scneario-modal:deep(footer) {
+.evaluation-scenario-modal:deep(footer) {
 	justify-content: space-between;
 }
+
 .status-chip {
 	background-color: var(--surface-highlight);
 	padding: var(--gap-small);
