@@ -221,7 +221,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		// species text
 		species
 			.append('text')
-			.attr('y', () => 5)
+			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('font-family', 'STIX Two Text, serif')
 			.style('font-style', 'italic')
 			.style('font-size', (d) => setFontSize(d.id))
