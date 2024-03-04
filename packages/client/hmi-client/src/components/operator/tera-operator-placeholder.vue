@@ -29,7 +29,7 @@ const operatorGraphics = {
 	[WorkflowOperationTypes.CALIBRATION_JULIA]: seed,
 	[WorkflowOperationTypes.MODEL_CONFIG]: plantAndRoot,
 	[WorkflowOperationTypes.MODEL_COUPLING]: pottedPlants,
-	[WorkflowOperationTypes.MODEL_OPTIMIZE]: trimmingPlant,
+	[WorkflowOperationTypes.OPTIMIZE_CIEMSS]: trimmingPlant,
 	[WorkflowOperationTypes.MODEL_TRANSFORMER]: trimmingPlant,
 	[WorkflowOperationTypes.MODEL_EDIT]: plantAndShovel,
 	[WorkflowOperationTypes.SIMULATE_CIEMSS]: plantsSmallToBig,
