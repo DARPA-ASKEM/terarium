@@ -7,10 +7,10 @@
 		size="small"
 		:class="{ 'hide-header': hideHeader }"
 	>
-		<Column expander style="width: 2%" />
+		<Column expander style="width: 3%" />
 		<Column field="id" header="ID" style="width: 10%"></Column>
 		<Column field="name" header="Name" style="width: 15%"></Column>
-		<Column field="type" header="Value type" style="width: 15%">
+		<Column field="type" header="Value type" style="width: 10%">
 			<template #body="slotProps">
 				<Button
 					text
@@ -33,7 +33,7 @@
 				/>
 			</template>
 		</Column>
-		<Column field="value" header="Value" style="width: 10%">
+		<Column field="value" header="Value" style="width: 15%" class="pr-5">
 			<template #body="slotProps">
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
@@ -53,9 +53,8 @@
 					v-else-if="slotProps.data.type === ParamType.DISTRIBUTION"
 					class="distribution-container"
 				>
-					<label>Min</label>
 					<InputNumber
-						class="distribution-item"
+						class="distribution-item min-value w-full"
 						size="small"
 						inputId="numericInput"
 						mode="decimal"
@@ -64,9 +63,8 @@
 						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
-					<label>Max</label>
 					<InputNumber
-						class="distribution-item"
+						class="distribution-item max-value w-full"
 						size="small"
 						inputId="numericInput"
 						mode="decimal"
@@ -76,7 +74,10 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
-				<span v-else-if="slotProps.data.type === ParamType.CONSTANT">
+				<span
+					v-else-if="slotProps.data.type === ParamType.CONSTANT"
+					class="flex align-items-center"
+				>
 					<InputNumber
 						size="small"
 						class="constant-number w-full"
@@ -87,6 +88,25 @@
 						v-model.lazy="slotProps.data.value.value"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
+					<!-- Add +/- 10%: This is an input field within a button! -->
+					<Button
+						class="ml-1 w-4 p-0 pl-2"
+						text
+						@click="slotProps.data.type = ParamType.DISTRIBUTION"
+					>
+						<span class="white-space-nowrap text-sm">Add ±</span>
+						<InputNumber
+							v-model="addPlusMinus"
+							size="small"
+							text
+							class="constant-number add-plus-minus"
+							inputId="convert-to-distribution"
+							suffix="%"
+							:min="0"
+							:max="100"
+							@click.stop=""
+						/>
+					</Button>
 				</span>
 				<span
 					class="timeseries-container"
@@ -94,7 +114,7 @@
 				>
 					<InputText
 						size="small"
-						:placeholder="'(e.g., 0:500, 10:550, 25:700 etc)'"
+						:placeholder="'Comma separated step:value, e.g., 0:500, 10:550, etc.'"
 						v-model.lazy="slotProps.data.timeseries"
 						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
 					/>
@@ -102,9 +122,10 @@
 				</span>
 			</template>
 		</Column>
-		<Column field="source" header="Source" style="width: 40%">
+		<Column field="source" header="Source" style="width: 15%">
 			<template #body="{ data }">
 				<InputText
+					class="w-full"
 					v-if="data.type !== ParamType.MATRIX"
 					size="small"
 					v-model.lazy="data.source"
@@ -186,6 +207,8 @@ const matrixModalContext = ref({
 });
 
 const modelType = computed(() => getModelType(props.modelConfiguration.configuration));
+
+const addPlusMinus = ref(10);
 
 const errorMessage = ref('');
 
@@ -394,12 +417,38 @@ const matrixEffect = () => {
 	text-align: right;
 }
 
+.add-plus-minus > :deep(input) {
+	width: 3rem;
+	margin-left: var(--gap-xsmall);
+}
+
 .tabular-numbers {
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
 	text-align: right;
 }
 
+.min-value {
+	position: relative;
+}
+.min-value::before {
+	content: 'Min';
+	position: relative;
+	top: var(--gap-small);
+	left: var(--gap-small);
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	width: 0;
+}
+.max-value::before {
+	content: 'Max';
+	position: relative;
+	top: var(--gap-small);
+	left: var(--gap-small);
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	width: 0;
+}
 .invalid-message {
 	color: var(--text-color-danger);
 }
