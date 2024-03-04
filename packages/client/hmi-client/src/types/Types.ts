@@ -1048,6 +1048,8 @@ export interface Card {
     complexity?: string;
     usage?: string;
     license?: string;
+    assumptions?: string;
+    strengths?: string;
 }
 
 export interface VariableStatement {
