@@ -166,7 +166,7 @@ import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { FeatureConfig, ResultType } from '@/types/common';
-import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
+import type { Card, Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -193,7 +193,7 @@ const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration',
 
 const teraModelDiagramRef = ref();
 
-const card = computed(() => {
+const card: Card | any | null = computed(() => {
 	// prioritize gollm_card over skema card
 	// if (props.model.metadata?.gollmCard) {
 	// 	return props.model.metadata.gollmCard;
