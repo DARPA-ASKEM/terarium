@@ -244,7 +244,6 @@ watch(
 	display: flex;
 	align-items: center;
 	flex-direction: column;
-	/* overflow: hidden; */
 }
 
 .p-input-icon-left {
@@ -331,11 +330,6 @@ textarea.p-inputtext {
 	background-color: var(--surface-hover);
 	color: var(--text-color-primary);
 }
-
-:deep(.p-inputtextarea-resizable) {
-	/* background-color: red !important; */
-}
-
 .search-drag-drop-area {
 	height: 100%;
 }
