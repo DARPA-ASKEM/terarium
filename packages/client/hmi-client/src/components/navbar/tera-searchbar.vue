@@ -244,7 +244,7 @@ watch(
 	display: flex;
 	align-items: center;
 	flex-direction: column;
-	overflow: hidden;
+	/* overflow: hidden; */
 }
 
 .p-input-icon-left {
@@ -252,26 +252,25 @@ watch(
 	display: flex;
 	align-items: start;
 
-	/* TODO: Make the chat and close icons stick to the top as the textarea grows */
+	/* Make the chat and close icons stick to the top as the textarea grows */
 	& i:first-of-type {
 		margin-left: 0.5rem;
+		top: 1.25rem;
 	}
 	& i:last-of-type {
-		margin-top: -1rem;
+		top: 12px;
 		margin-right: 0.25rem;
 	}
 }
 
 textarea.p-inputtext {
 	width: 100%;
-	padding-top: 12px;
 	padding-left: 2.5rem;
-	padding-bottom: 12px;
-	/**TODO: Make this a gradient border like the design #cae8c0*/
+	padding-right: 2.5rem;
 	border: 4px solid var(--primary-color);
 	border-radius: var(--border-radius-medium);
 	background: var(--surface-0);
-	height: initial !important;
+	min-height: 2.75rem;
 
 	&:enabled {
 		&:hover {
@@ -283,6 +282,11 @@ textarea.p-inputtext {
 	}
 }
 
+textarea.p-inputtext {
+	&:focus {
+		padding-bottom: 1rem;
+	}
+}
 .search-by-example {
 	display: flex;
 	flex-direction: column;
@@ -326,6 +330,10 @@ textarea.p-inputtext {
 .search-by-example header .p-button:hover {
 	background-color: var(--surface-hover);
 	color: var(--text-color-primary);
+}
+
+:deep(.p-inputtextarea-resizable) {
+	/* background-color: red !important; */
 }
 
 .search-drag-drop-area {
