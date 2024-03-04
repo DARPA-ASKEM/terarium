@@ -1,12 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPut;
@@ -17,29 +14,47 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
-import java.io.IOException;
-import java.util.*;
-
 @RequestMapping("/knowledge")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 public class KnowledgeController {
+
+	final ObjectMapper mapper;
 
 	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
@@ -48,6 +63,8 @@ public class KnowledgeController {
 	final ProvenanceService provenanceService;
 
 	final CodeService codeService;
+
+	final ExtractionProxy extractionProxy;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -62,36 +79,30 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.getTaskStatus(id).getBody());
 	}
 
-	/**
-	 * Post Equations to SKEMA Unified service to get an AMR
-	 *
-	 * @param requestMap (Map<String, Object>) JSON request body containing the
-	 *                   following fields:
-	 *                   - format (String) the format of the equations. Options:
-	 *                   "latex", "mathml".
-	 *                   - framework (String) the type of AMR to return. Options:
-	 *                   "regnet", "petrinet".
-	 *                   - modelId (String): the id of the model (to update) based
-	 *                   on the set of equations
-	 *                   - equations (List<String>): A list of LaTeX strings
-	 *                   representing the functions that are used to convert to AMR
-	 *                   model
-	 * @return (ExtractionResponse): The response from the extraction service
-	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<ExtractionResponse> postLaTeXToAMR(@RequestBody Map<String, Object> requestMap) {
-		String format = (String) requestMap.getOrDefault("format", "latex");
-		String framework = (String) requestMap.getOrDefault("framework", "petrinet");
-		UUID modelId = null;
-		if (requestMap.containsKey("modelId")) {
-			modelId = UUID.fromString((String) requestMap.get("modelId"));
-		}
-		List<String> equations = (List<String>) requestMap.getOrDefault("equations", Collections.emptyList());
-
-		// http://knowledge-middleware.staging.terarium.ai/#/default/equations_to_amr_equations_to_amr_post
+	public ResponseEntity<Model> equationsToModel(@RequestBody JsonNode req) {
 		return ResponseEntity
-				.ok(knowledgeMiddlewareProxy.postEquationsToAMR(format, framework, modelId != null ? modelId.toString() : null, equations)
+				.ok(skemaUnifiedProxy
+						.consolidatedEquationsToAMR(req)
+						.getBody());
+	}
+
+	@PostMapping("/base64-equations-to-model")
+	@Secured(Roles.USER)
+	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody JsonNode req) {
+		return ResponseEntity
+				.ok(skemaUnifiedProxy
+						.base64EquationsToAMR(req)
+						.getBody());
+	}
+
+	@PostMapping("/base64-equations-to-latex")
+	@Secured(Roles.USER)
+	public ResponseEntity<String> base64EquationsToLatex(@RequestBody JsonNode req) {
+		return ResponseEntity
+				.ok(skemaUnifiedProxy
+						.base64EquationsToLatex(req)
 						.getBody());
 	}
 
@@ -128,35 +139,38 @@ public class KnowledgeController {
 	})
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart Code code, @RequestPart("file") MultipartFile input) throws IOException {
+	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart Code code,
+			@RequestPart("file") MultipartFile input) throws IOException {
 
-		try(final CloseableHttpClient httpClient = HttpClients.custom()
-		.build()) {
-		// 1. create code asset from code blocks
-		Code createdCode = codeService.createAsset(code);
+		try (final CloseableHttpClient httpClient = HttpClients.custom()
+				.build()) {
+			// 1. create code asset from code blocks
+			Code createdCode = codeService.createAsset(code);
 
-		// 2. upload file to code asset
-		byte[] fileAsBytes = input.getBytes();
-		HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			// 2. upload file to code asset
+			byte[] fileAsBytes = input.getBytes();
+			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 
-		// we have pre-formatted the files object already so no need to use uploadCode
-		final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(), input.getOriginalFilename());
-		final HttpPut put = new HttpPut(presignedURL.getUrl());
-		put.setEntity(fileEntity);
-		final HttpResponse response = httpClient.execute(put);
+			// we have pre-formatted the files object already so no need to use uploadCode
+			final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(),
+					input.getOriginalFilename());
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse response = httpClient.execute(put);
 
-		if(response.getStatusLine().getStatusCode() != 200) {
-			throw new Exception("Error uploading file");
-		}
-		// 3. create model from code asset
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false).getBody());
-		}
-		catch (Exception e) {
+			if (response.getStatusLine().getStatusCode() != 200) {
+				throw new Exception("Error uploading file");
+			}
+			// 3. create model from code asset
+			return ResponseEntity.ok(knowledgeMiddlewareProxy
+					.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false)
+					.getBody());
+		} catch (Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Error creating running code to model");
-	 }
+		}
 	}
 
 	/**
@@ -221,7 +235,7 @@ public class KnowledgeController {
 
 		try {
 			final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
-				ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
+					ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
 			provenanceService.createProvenance(provenancePayload);
 		} catch (final Exception e) {
 			final String error = "Unable to create provenance for profile-model";
@@ -229,7 +243,7 @@ public class KnowledgeController {
 		}
 
 		return ResponseEntity
-			.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
+				.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
 	}
 
 	/**
@@ -249,7 +263,7 @@ public class KnowledgeController {
 		if (documentId.isPresent()) {
 			try {
 				final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
-				ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
+						ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
 				provenanceService.createProvenance(provenancePayload);
 			} catch (final Exception e) {
 				final String error = "Unable to create provenance for profile-dataset";
