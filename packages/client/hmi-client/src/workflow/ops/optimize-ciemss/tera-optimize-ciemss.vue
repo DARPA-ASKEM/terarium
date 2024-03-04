@@ -6,15 +6,15 @@
 					<h4>Settings</h4>
 					<div class="input-row">
 						<div class="label-and-input">
-							<label for="start-time">Start time</label>
+							<label>Start time</label>
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.startTime" />
 						</div>
 						<div class="label-and-input">
-							<label for="end-time">End time</label>
+							<label>End time</label>
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 						<div class="label-and-input">
-							<label for="time-unit">Unit</label>
+							<label>Unit</label>
 							<Dropdown
 								disabled
 								class="p-inputtext-sm"
@@ -40,7 +40,7 @@
 					</div>
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
-							<label for="num-samples">Number of stochastic samples</label>
+							<label>Number of stochastic samples</label>
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
@@ -51,7 +51,7 @@
 							</div>
 						</div>
 						<div class="label-and-input">
-							<label for="solver-method">Solver method</label>
+							<label>Solver method</label>
 							<Dropdown
 								disabled
 								class="p-inputtext-sm"
@@ -94,7 +94,7 @@
 					<h4>Constraint</h4>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label for="target-variable">Target-variable(s)</label>
+							<label>Target-variable(s)</label>
 							<MultiSelect
 								class="p-inputtext-sm"
 								:options="modelStateOptions.map((ele) => ele.id)"
@@ -103,7 +103,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label for="statistic">Statistic</label>
+							<label>Statistic</label>
 							<!--
 								This is currently not an option in the pyciemss-service.
 								https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L64-L76
@@ -117,7 +117,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label for="num-days">Over number of days</label>
+							<label>Over number of days</label>
 							<InputNumber
 								disabled
 								class="p-inputtext-sm"
@@ -128,7 +128,7 @@
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label for="risk-tolerance">Risk tolerance</label>
+							<label>Risk tolerance</label>
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
@@ -139,7 +139,7 @@
 							</div>
 						</div>
 						<div class="label-and-input">
-							<label for="above-or-below">Above or below?</label>
+							<label>Above or below?</label>
 							<Dropdown
 								disabled
 								class="p-inputtext-sm"
@@ -149,7 +149,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label for="threshold">Threshold</label>
+							<label>Threshold</label>
 							<InputNumber
 								disabled
 								class="p-inputtext-sm"
