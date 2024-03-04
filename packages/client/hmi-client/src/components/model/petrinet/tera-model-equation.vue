@@ -89,7 +89,6 @@ watch(
 	async () => {
 		// const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
 		const latexFormula = await getModelEquation(props.model);
-		console.log('!!!', props.model, latexFormula);
 		if (latexFormula) {
 			updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
 		}
