@@ -7,10 +7,25 @@
 		size="small"
 		:class="{ 'hide-header': hideHeader }"
 	>
-		<Column expander style="width: 3%" />
-		<Column field="id" header="ID" style="width: 10%"></Column>
-		<Column field="name" header="Name" style="width: 15%"></Column>
-		<Column field="type" header="Value type" style="width: 10%">
+		<!-- Row expander, ID and Name columns -->
+		<Column expander class="w-3rem" />
+		<Column header="ID">
+			<template #body="slotProps">
+				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+					{{ slotProps.data.id }}
+				</span>
+			</template>
+		</Column>
+		<Column header="Name">
+			<template #body="slotProps">
+				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+					{{ slotProps.data.name }}
+				</span>
+			</template>
+		</Column>
+
+		<!-- Value type: Matrix or Expression, or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
+		<Column field="type" header="Value type" class="w-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -20,27 +35,54 @@
 					@click="openMatrixModal(slotProps.data)"
 					class="p-0"
 				/>
-				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">Expression</span>
+				<span
+					v-else-if="slotProps.data.type === ParamType.EXPRESSION"
+					class="flex align-items-center"
+				>
+					<span class="custom-icon-expression mr-2" />
+					Expression
+				</span>
 				<Dropdown
 					v-else
-					class="value-type-dropdown w-8"
+					class="value-type-dropdown w-9"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
 					optionValue="value"
 					placeholder="Select a parameter type"
 					@update:model-value="(val) => changeType(slotProps.data.value, val)"
-				/>
+				>
+					<template #value="slotProps">
+						<span class="flex align-items-center">
+							<span
+								class="p-dropdown-item-icon mr-2"
+								:class="typeOptions[slotProps.value].icon"
+							></span>
+							<span>{{ typeOptions[slotProps.value].label }}</span>
+						</span>
+					</template>
+					<template #option="slotProps">
+						<span class="flex align-items-center">
+							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon"></span>
+							<span>{{ slotProps.option.label }}</span>
+						</span>
+					</template>
+				</Dropdown>
 			</template>
 		</Column>
-		<Column field="value" header="Value" style="width: 15%" class="pr-5">
+
+		<!-- Value: the thing we show depends on the type  -->
+		<Column field="value" header="Value" class="w-3 pr-2">
 			<template #body="slotProps">
+				<!-- Matrix -->
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
 					class="cursor-pointer secondary-text"
-					>Click to view</span
+					>Click to open</span
 				>
+
+				<!-- Expression -->
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
 					<InputText
 						size="small"
@@ -49,12 +91,14 @@
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
 				</span>
+
+				<!-- Distribution -->
 				<div
 					v-else-if="slotProps.data.type === ParamType.DISTRIBUTION"
 					class="distribution-container"
 				>
 					<InputNumber
-						class="distribution-item min-value w-full"
+						class="distribution-item min-value"
 						size="small"
 						inputId="numericInput"
 						mode="decimal"
@@ -64,7 +108,7 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<InputNumber
-						class="distribution-item max-value w-full"
+						class="distribution-item max-value"
 						size="small"
 						inputId="numericInput"
 						mode="decimal"
@@ -74,13 +118,15 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
+
+				<!-- Constant: Includes the value, a button and input box to convert it into a distributions with a customizable range -->
 				<span
 					v-else-if="slotProps.data.type === ParamType.CONSTANT"
 					class="flex align-items-center"
 				>
 					<InputNumber
 						size="small"
-						class="constant-number w-full"
+						class="constant-number"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -88,18 +134,19 @@
 						v-model.lazy="slotProps.data.value.value"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
-					<!-- Add +/- 10%: This is an input field within a button! -->
+					<!-- This is a button with an input field inside it, weird huh?, but it works -->
 					<Button
-						class="ml-1 w-4 p-0 pl-2"
+						class="ml-2 pt-0 pb-0 w-5"
 						text
-						@click="slotProps.data.type = ParamType.DISTRIBUTION"
+						@click="changeType(slotProps.data.value, 1)"
+						v-tooltip="'Convert to distribution'"
 					>
 						<span class="white-space-nowrap text-sm">Add ±</span>
 						<InputNumber
 							v-model="addPlusMinus"
 							size="small"
 							text
-							class="constant-number add-plus-minus"
+							class="constant-number add-plus-minus w-full"
 							inputId="convert-to-distribution"
 							suffix="%"
 							:min="0"
@@ -108,13 +155,15 @@
 						/>
 					</Button>
 				</span>
+
+				<!-- Time series -->
 				<span
-					class="timeseries-container"
+					class="timeseries-container mr-2"
 					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
 				>
 					<InputText
 						size="small"
-						:placeholder="'Comma separated step:value, e.g., 0:500, 10:550, etc.'"
+						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
 						v-model.lazy="slotProps.data.timeseries"
 						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
 					/>
@@ -122,12 +171,14 @@
 				</span>
 			</template>
 		</Column>
-		<Column field="source" header="Source" style="width: 15%">
+
+		<!-- Source  -->
+		<Column field="source" header="Source" class="w-3">
 			<template #body="{ data }">
 				<InputText
-					class="w-full"
 					v-if="data.type !== ParamType.MATRIX"
 					size="small"
+					class="w-full"
 					v-model.lazy="data.source"
 					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
 				/>
@@ -188,9 +239,9 @@ import { cloneDeep } from 'lodash';
 import { getModelType } from '@/services/model';
 
 const typeOptions = [
-	{ label: 'Constant', value: ParamType.CONSTANT },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION },
-	{ label: 'Time varying', value: ParamType.TIME_SERIES }
+	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
+	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
+	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -378,6 +429,12 @@ const matrixEffect = () => {
 </script>
 
 <style scoped>
+.truncate-text {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
 	padding: 0;
 }
@@ -448,6 +505,23 @@ const matrixEffect = () => {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	width: 0;
+}
+
+.custom-icon-distribution {
+	background-image: url('@assets/svg/icons/distribution.svg');
+	background-size: contain;
+	background-repeat: no-repeat;
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+}
+.custom-icon-expression {
+	background-image: url('@assets/svg/icons/expression.svg');
+	background-size: contain;
+	background-repeat: no-repeat;
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
 }
 .invalid-message {
 	color: var(--text-color-danger);
