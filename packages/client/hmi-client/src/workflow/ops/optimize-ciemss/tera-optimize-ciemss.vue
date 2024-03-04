@@ -53,6 +53,7 @@
 						<div class="label-and-input">
 							<label for="solver-method">Solver method</label>
 							<Dropdown
+								disabled
 								class="p-inputtext-sm"
 								:options="['dopri5', 'euler']"
 								v-model="knobs.solverMethod"
@@ -118,6 +119,7 @@
 						<div class="label-and-input">
 							<label for="num-days">Over number of days</label>
 							<InputNumber
+								disabled
 								class="p-inputtext-sm"
 								inputId="integeronly"
 								v-model="knobs.numSamples"
@@ -139,6 +141,7 @@
 						<div class="label-and-input">
 							<label for="above-or-below">Above or below?</label>
 							<Dropdown
+								disabled
 								class="p-inputtext-sm"
 								:options="['Above', 'Below']"
 								v-model="knobs.aboveOrBelow"
@@ -147,7 +150,12 @@
 						</div>
 						<div class="label-and-input">
 							<label for="threshold">Threshold</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.threshold" />
+							<InputNumber
+								disabled
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.threshold"
+							/>
 						</div>
 					</div>
 				</div>
@@ -332,15 +340,15 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
-	timeUnit: props.node.state.timeUnit ?? '',
+	timeUnit: props.node.state.timeUnit ?? '', // Currently not used.
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
-	solverMethod: props.node.state.solverMethod ?? '',
+	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	targetVariables: props.node.state.targetVariables ?? [],
-	statistic: props.node.state.statistic ?? '',
-	numSamples: props.node.state.numSamples ?? 1,
+	statistic: props.node.state.statistic ?? '', // Currently not used.
+	numSamples: props.node.state.numSamples ?? 1, // Currently not used, poor name.
 	riskTolerance: props.node.state.riskTolerance ?? 0,
-	aboveOrBelow: props.node.state.aboveOrBelow ?? '',
-	threshold: props.node.state.threshold ?? 0,
+	aboveOrBelow: props.node.state.aboveOrBelow ?? '', // Currently not used.
+	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
 	simulationRunId: props.node.state.simulationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
@@ -469,7 +477,7 @@ const runOptimize = async () => {
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: knobs.value.isMinimized,
-			numSamples: knobs.value.numSamples,
+			numSamples: knobs.value.numStochasticSamples,
 			maxiter: 5,
 			maxfeval: 5
 		}
@@ -588,6 +596,7 @@ const saveModelConfiguration = async () => {
 const saveDatasetToProject = async () => {
 	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
+		console.log(activeProject.value.id, knobs.value.simulationRunId, knobs.value.datasetName);
 		if (
 			await saveDataset(
 				activeProject.value.id,
