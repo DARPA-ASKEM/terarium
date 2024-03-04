@@ -135,6 +135,10 @@ public class ProjectController {
 		return ResponseEntity.ok(projects);
 	}
 
+	/**
+	 * A Contributor is a User or Group that is capable of editing a Project.
+	 *
+	 */
 	private class Contributor {
 		String name;
 		Schema.Relationship permission;
@@ -145,6 +149,12 @@ public class ProjectController {
 		}
 	}
 
+	/**
+	 * Capture the subset of RebacPermissionRelationships for a given Project.
+	 *
+	 * @param rebacProject the Project to collect RebacPermissionRelationships of.
+	 * @return List of Users and Groups who have edit capability of the rebacProject
+	 */
 	private List<Contributor> getContributors(RebacProject rebacProject) {
 		Map<String, Contributor> contributorMap = new HashMap<>();
 
@@ -152,6 +162,7 @@ public class ProjectController {
 			List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
 			for (RebacPermissionRelationship permissionRelationship : permissionRelationships) {
 				Schema.Relationship relationship = permissionRelationship.getRelationship();
+				// Ensure the relationship is capable of editing the project
 				if (relationship.equals(Schema.Relationship.CREATOR)
 						|| relationship.equals(Schema.Relationship.ADMIN)
 						|| relationship.equals(Schema.Relationship.WRITER)) {
