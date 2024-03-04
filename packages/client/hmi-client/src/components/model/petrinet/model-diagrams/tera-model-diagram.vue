@@ -202,6 +202,10 @@ watch(
 			await renderer?.setData(graphData);
 			await renderer?.render();
 		}
+
+		if (modelType.value === AMRSchemaNames.REGNET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+			generateTemplatePreview();
+		}
 	},
 	{ deep: true }
 );

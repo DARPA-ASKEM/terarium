@@ -129,6 +129,12 @@
 								<Column field="id" header="Symbol" />
 								<Column field="name" header="Name" />
 								<Column field="rate_constant" header="Rate Constant" />
+								<Column field="initial" header="Initial Value">
+									<template #body="{ data, field }">
+										<!-- FIXME: temporary hack -->
+										<InputText v-model="data[field]" @blur="tempUpdate(data, field)" />
+									</template>
+								</Column>
 							</DataTable>
 						</AccordionTab>
 						<AccordionTab header="Edges">
@@ -479,6 +485,10 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
+
+	// FIXME: dull out regnet/stockflow Feb 29, 2024
+	if (model.value.header.schema_name !== 'petrinet') return null;
+
 	return getStratificationType(model.value);
 });
 
@@ -789,6 +799,11 @@ const extractConfigurations = async () => {
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfirgurationContext.value.modelConfiguration = config;
 	suggestedConfirgurationContext.value.isOpen = true;
+};
+
+// FIXME: temporary hack, need proper config/states to handle all frameworks and fields
+const tempUpdate = (data: any, field: any) => {
+	data[field] = +data[field];
 };
 
 onMounted(async () => {

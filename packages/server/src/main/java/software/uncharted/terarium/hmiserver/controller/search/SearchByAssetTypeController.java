@@ -1,15 +1,33 @@
 package software.uncharted.terarium.hmiserver.controller.search;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.redisson.api.RMapCache;
+import org.redisson.api.RedissonClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,27 +36,15 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RMapCache;
-import org.redisson.api.RedissonClient;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.TaskService;
-import software.uncharted.terarium.hmiserver.service.TaskService.TaskType;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskType;
 
 @RequestMapping("/search-by-asset-type")
 @RestController
@@ -58,7 +64,7 @@ public class SearchByAssetTypeController {
 	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
 	static final private String REDIS_EMBEDDING_CACHE_KEY = "knn-vector-cache";
 
-	static final private List<String> EXCLUDE_FIELDS = List.of("embeggings", "text", "topics");
+	static final private List<String> EXCLUDE_FIELDS = List.of("embeddings", "text", "topics");
 
 	@Data
 	static public class GoLLMSearchRequest {
@@ -144,7 +150,8 @@ public class SearchByAssetTypeController {
 					final byte[] outputBytes = resp.getOutput();
 					final JsonNode output = objectMapper.readTree(outputBytes);
 
-					final EmbeddingsResponse embeddingResp = objectMapper.convertValue(output, EmbeddingsResponse.class);
+					final EmbeddingsResponse embeddingResp = objectMapper.convertValue(output,
+							EmbeddingsResponse.class);
 
 					vector = embeddingResp.getResponse();
 
