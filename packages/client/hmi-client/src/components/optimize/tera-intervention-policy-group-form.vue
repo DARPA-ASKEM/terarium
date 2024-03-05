@@ -32,27 +32,34 @@
 				<label for="parameter">Parameter</label>
 				<Dropdown
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.parameters"
+					:options="props.parameterOptions"
 					v-model="config.parameter"
 					placeholder="Select"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 			<div class="label-and-input">
-				<label for="goal">Goal</label>
-				<Dropdown
+				<label for="initial-guess">Initial guess</label>
+				<InputNumber
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.goals"
-					v-model="config.goal"
-					placeholder="Select"
+					inputId="numericInput"
+					mode="decimal"
+					:min-fraction-digits="1"
+					:max-fraction-digits="3"
+					v-model="config.initialGuess"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
+			<div class="label-and-input"></div>
 			<div class="label-and-input">
 				<label for="cost-benefit">Cost/Benefit function</label>
+				<!-- Disabled until pyciemss-service
+					updates:https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L36-L40
+				-->
 				<Dropdown
+					disabled
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.costBenefitFns"
+					:options="costBenefitOptions"
 					v-model="config.costBenefitFn"
 					placeholder="Select"
 					@update:model-value="emit('update-self', config)"
@@ -104,14 +111,16 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import InputSwitch from 'primevue/inputswitch';
-import { InterventionPolicyGroup } from '@/workflow/ops/model-optimize/model-optimize-operation';
+import { InterventionPolicyGroup } from '@/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
-	modelNodeOptions: Record<string, string[]>;
+	parameterOptions: string[];
 	config: InterventionPolicyGroup;
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
+
+const costBenefitOptions = ['L1 Norm', 'L2 Norm'];
 
 const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));
 const isEditing = ref<boolean>(false);
