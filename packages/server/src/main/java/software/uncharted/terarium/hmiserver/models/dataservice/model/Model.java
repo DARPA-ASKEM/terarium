@@ -36,10 +36,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	private String userId;
 
-	private Map<String, Object> model;
+	private Map<String, JsonNode> model;
 
 	@TSOptional
-	private Object properties;
+	private JsonNode properties;
 
 	@TSOptional
 	private ModelSemantics semantics;
@@ -89,6 +89,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@TSIgnore
 	public boolean isRegnet() {
+		if(this.getHeader() == null || this.getHeader().getSchemaName() == null){
+			return false;
+		}
 		return this.getHeader().getSchemaName().toLowerCase().equals("regnet");
 	}
 }
