@@ -60,4 +60,12 @@ public class Card extends SupportAdditionalProperties implements Serializable {
 	@JsonAlias("LICENSE")
 	@TSOptional
 	private String license;
+
+	@JsonAlias("ASSUMPTIONS")
+	@TSOptional
+	private String assumptions;
+
+	@JsonAlias("STRENGTHS")
+	@TSOptional
+	private String strengths;
 }
