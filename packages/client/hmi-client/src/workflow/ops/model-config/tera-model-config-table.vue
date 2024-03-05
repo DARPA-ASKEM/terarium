@@ -138,7 +138,7 @@
 					<Button
 						class="ml-2 pt-0 pb-0 w-5"
 						text
-						@click="changeType(slotProps.data.value, 1)"
+						@click="constantToDistribution(slotProps.data.value, 1)"
 						v-tooltip="'Convert to distribution'"
 					>
 						<span class="white-space-nowrap text-sm">Add ±</span>
@@ -151,7 +151,6 @@
 							suffix="%"
 							:min="0"
 							:max="100"
-							@click.stop=""
 						/>
 					</Button>
 				</span>
@@ -347,6 +346,20 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 		default:
 			break;
 	}
+	emit('update-configuration', clonedConfig);
+};
+
+const constantToDistribution = (param: ModelParameter, idx: number) => {
+	if (!param.value) return;
+	const clonedConfig = structuredClone(props.modelConfiguration);
+	param.distribution = {
+		type: 'Uniform1',
+		parameters: {
+			minimum: param.value - (param.value * addPlusMinus.value) / 100,
+			maximum: param.value + (param.value * addPlusMinus.value) / 100
+		}
+	};
+	replaceParam(clonedConfig, param, idx);
 	emit('update-configuration', clonedConfig);
 };
 
