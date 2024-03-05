@@ -45,6 +45,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetR
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 
 @RequestMapping("/gollm")
 @RestController
@@ -81,7 +82,8 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
-			@RequestParam(name = "document-id", required = true) final UUID documentId) {
+			@RequestParam(name = "document-id", required = true) final UUID documentId,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 
 		try {
 			// Grab the document
@@ -116,7 +118,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -136,7 +138,8 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-id", required = true) final UUID documentId) {
+			@RequestParam(name = "document-id", required = true) final UUID documentId,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 
 		try {
 
@@ -174,7 +177,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -195,7 +198,8 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-ids", required = true) final List<UUID> datasetIds) {
+			@RequestParam(name = "document-ids", required = true) final List<UUID> datasetIds,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 
 		try {
 
@@ -253,7 +257,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -272,7 +276,8 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
 	public ResponseEntity<TaskResponse> creatCompareModelTask(
-			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds) {
+			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 		try {
 			final List<JsonNode> modelCards = new ArrayList<>();
 			for (final UUID modelId : modelIds) {
@@ -297,7 +302,7 @@ public class GoLLMController {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";

@@ -49,6 +49,21 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 @RequiredArgsConstructor
 public class TaskService {
 
+	static public enum TaskMode {
+		SYNC("sync"),
+		ASYNC("async");
+
+		private final String value;
+
+		TaskMode(final String value) {
+			this.value = value;
+		}
+
+		public String toString() {
+			return value;
+		}
+	}
+
 	// I don't people setting the task id themselves since it may be overridden if
 	// the task is already in the cache. So we have this private class to contain
 	// the id. This will prevent siutations where someone creates an id, does
@@ -484,6 +499,17 @@ public class TaskService {
 
 		final int DEFAULT_TIMEOUT_SECONDS = 60;
 		return runTaskSync(req, DEFAULT_TIMEOUT_SECONDS);
+	}
+
+	public TaskResponse runTask(final TaskMode mode, final TaskRequest req)
+			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+		if (mode == TaskMode.SYNC) {
+			return runTaskSync(req);
+		} else if (mode == TaskMode.ASYNC) {
+			return runTaskAsync(req);
+		} else {
+			throw new IllegalArgumentException("Invalid task mode: " + mode);
+		}
 	}
 
 }
