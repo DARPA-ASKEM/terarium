@@ -331,6 +331,20 @@ export class WorkflowRegistry {
 	}
 }
 
+export function cascadeInvalidateDownstream(
+	wf: Workflow,
+	sourceNode: WorkflowNode<any>,
+	nodesCache: Map<string, WorkflowNode<any>>
+) {
+	const outgoingEdges = wf.edges.filter((edge) => edge.source === sourceNode.id);
+	outgoingEdges.forEach((edge) => {
+		const targetNode = nodesCache.get(edge.target);
+		if (!targetNode) return;
+		targetNode.status = OperatorStatus.INVALID;
+		cascadeInvalidateDownstream(wf, targetNode, nodesCache);
+	});
+}
+
 ///
 // Operator
 ///
@@ -369,24 +383,22 @@ export function selectOutput(
 	operator.active = selected.id;
 
 	// If this output is connected to input port(s), update the input port(s)
-	const connectedEdges = wf.edges.filter((edge) => edge.source === operator.id);
-	if (_.isEmpty(connectedEdges)) return;
+	const outgoingEdges = wf.edges.filter((edge) => edge.source === operator.id);
+	if (_.isEmpty(outgoingEdges)) return;
 	selected.status = WorkflowPortStatus.CONNECTED;
 
-	connectedEdges.forEach((edge) => {
-		// Remove outputs and edges coming out of the target node
+	outgoingEdges.forEach((edge) => {
 		const targetNode = wf.nodes.find((node) => node.id === edge.target);
 		if (!targetNode) return;
-		wf.edges.forEach((e) => {
-			if (e.source === targetNode.id) removeEdge(wf, e.id);
-		});
-		targetNode.outputs = [];
 		// Update the input port of the target node
 		const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
 		if (!targetPort) return;
 		targetPort.label = selected.label;
 		targetPort.value = selected.value;
 	});
+
+	const nodesCache = new Map<string, WorkflowNode<any>>(wf.nodes.map((node) => [node.id, node]));
+	cascadeInvalidateDownstream(wf, operator, nodesCache);
 }
 
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
