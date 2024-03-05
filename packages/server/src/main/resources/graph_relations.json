@@ -37,7 +37,8 @@
         ["Model","Equation"],
         ["Equation", "Document"],
         ["Model", "Artifact"],
-        ["ModelConfiguration","Document"]
+        ["ModelConfiguration","Document"],
+        ["ModelConfiguration", "Dataset"]
     ],
     "CONTAINS":[
         ["Project","Document"],
