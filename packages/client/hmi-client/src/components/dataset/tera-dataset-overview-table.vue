@@ -14,9 +14,9 @@
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
 					<div class="flex flex-row align-items-center">
-						<!-- HACK: just hit the service directly for the curie name -->
-						<!-- {{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }} -->
-						{{ getCurieFromGroudingIdentifier(data.concept) }}
+						{{
+							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept))
+						}}
 						<i class="pi pi-chevron-down pl-2 text-xs" />
 						<a
 							target="_blank"
@@ -72,6 +72,7 @@ import { cloneDeep, isEmpty } from 'lodash';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
+	getNameOfCurieCached,
 	parseCurie,
 	searchCuriesEntities
 } from '@/services/concept';
@@ -88,7 +89,7 @@ const conceptSearchTerm = ref({
 });
 const curies = ref<DKG[]>([]);
 
-// const nameOfCurieCache = ref(new Map<string, string>());
+const nameOfCurieCache = ref(new Map<string, string>());
 
 const formattedData = computed(() => {
 	if (!props.dataset?.columns) return [];
