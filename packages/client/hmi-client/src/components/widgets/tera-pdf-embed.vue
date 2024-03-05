@@ -53,7 +53,7 @@ watch(isAdobePdfApiReady, () => {
 					},
 					metaData: { fileName: props.title }
 				},
-				{ embedMode: 'IN_LINE', showPrintPDF: true }
+				{ embedMode: 'IN_LINE', showPrintPDF: true, showDownloadPDF: true }
 			);
 		} else if (props.filePromise) {
 			adobeDCView.value.previewFile(
@@ -63,7 +63,7 @@ watch(isAdobePdfApiReady, () => {
 					},
 					metaData: { fileName: props.title }
 				},
-				{ embedMode: 'IN_LINE', showPrintPDF: true }
+				{ embedMode: 'IN_LINE', showPrintPDF: true, showDownloadPDF: true }
 			);
 		}
 	}
