@@ -8,12 +8,18 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetThatSupportsAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -29,10 +35,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	private String userId;
 
-	private Map<String, Object> model;
+	private Map<String, JsonNode> model;
 
 	@TSOptional
-	private Object properties;
+	private JsonNode properties;
 
 	@TSOptional
 	private ModelSemantics semantics;
@@ -69,4 +75,17 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
         this.semantics = other.semantics;
         this.metadata = other.metadata;
     }
+
+	public List<ModelParameter> getParameters() {
+		ObjectMapper objectMapper = new ObjectMapper();
+		if(this.isRegnet()) {
+			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
+		} else {
+			return this.getSemantics().getOde().getParameters();
+		}
+	}
+
+	public boolean isRegnet() {
+		return this.getHeader().getSchemaName().toLowerCase().equals("regnet");
+	}
 }
