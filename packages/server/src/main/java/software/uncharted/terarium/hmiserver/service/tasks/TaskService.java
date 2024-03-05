@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -8,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.catalina.connector.ClientAbortException;
 import org.redisson.api.RLock;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
@@ -239,7 +241,7 @@ public class TaskService {
 								resp.getStatus() == TaskStatus.FAILED)) {
 					// complete the future
 					log.debug("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
-					future.completeresp;
+					future.complete(resp);
 
 					// remove the future from the map
 					log.debug("Removing future for task id {}", resp.getId());
@@ -256,7 +258,7 @@ public class TaskService {
 			synchronized (taskIdToEmitter) {
 				if (emitter != null) {
 					try {
-						emitter.sendresp;
+						emitter.send(resp);
 					} catch (IllegalStateException | ClientAbortException e) {
 						log.warn("Error sending task response for task {}. User likely disconnected",
 								resp.getId());
@@ -285,7 +287,7 @@ public class TaskService {
 			try {
 				// execute the handler
 				if (responseHandlers.containsKey(resp.getScript())) {
-					responseHandlers.get(resp.getScript()).handleresp;
+					responseHandlers.get(resp.getScript()).handle(resp);
 				}
 			} catch (final Exception e) {
 				log.error("Error occured while executing response handler for task {}",
@@ -309,7 +311,7 @@ public class TaskService {
 
 			// once the handler has executed and the response cache is up to date, we now
 			// will broadcast to all hmi-server instances to dispatch the clientside events
-			broadcastTaskResponseToAllInstancesresp;
+			broadcastTaskResponseToAllInstances(resp);
 
 		} catch (final Exception e) {
 			log.error("Error processing task response message", e);
@@ -318,7 +320,7 @@ public class TaskService {
 
 	private void broadcastTaskResponseToAllInstances(final TaskResponse resp) {
 		try {
-			final String jsonStr = objectMapper.writeValueAsStringresp;
+			final String jsonStr = objectMapper.writeValueAsString(resp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, "", jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error serializing handler error response", e);
@@ -384,7 +386,7 @@ public class TaskService {
 
 					final TaskFuture future = new TaskFuture();
 					future.setId(existingId);
-					future.setLatestResponseresp;
+					future.setLatestResponse(resp);
 					if (resp.getStatus() != TaskStatus.SUCCESS) {
 						// if the task has not completed, create a future to capture that
 						future.setCompleteFuture(
