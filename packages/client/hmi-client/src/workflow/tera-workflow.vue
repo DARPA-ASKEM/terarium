@@ -252,10 +252,11 @@ import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod'
 import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
-import * as ModelOptimizeOp from './ops/model-optimize/mod';
+import * as OptimizeCiemssOp from './ops/optimize-ciemss/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as ModelComparisonOp from './ops/model-comparison/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -276,10 +277,11 @@ registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
-registry.registerOp(ModelOptimizeOp);
+registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
+registry.registerOp(ModelComparisonOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -460,12 +462,16 @@ const contextMenuItems: MenuItem[] = [
 			},
 			{ separator: true },
 			{
-				label: ModelOptimizeOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelOptimizeOp)
+				label: OptimizeCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(OptimizeCiemssOp)
 			},
 			{
 				label: ModelCouplingOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelCouplingOp)
+			},
+			{
+				label: ModelComparisonOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelComparisonOp)
 			}
 		]
 	},

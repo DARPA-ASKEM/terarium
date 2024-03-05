@@ -8,17 +8,14 @@
 			<section class="template-options">
 				<header>Model templates</header>
 				<ul>
-					<li
-						v-for="(modelTemplate, index) in modelTemplatingService.modelTemplateOptions"
-						:key="index"
-					>
+					<li v-for="(model, index) in modelTemplatingService.modelTemplateOptions" :key="index">
 						<tera-model-template
-							:model="modelTemplate"
+							:model="model"
 							:is-editable="false"
 							is-decomposed
 							:style="isDecomposedLoading && { cursor: 'wait' }"
 							:draggable="!isDecomposedLoading"
-							@dragstart="newModelTemplate = modelTemplate"
+							@dragstart="sidebarTemplateToAdd = model"
 						/>
 					</li>
 				</ul>
@@ -71,15 +68,15 @@
 					@dragging="(event) => updatePosition(event, card)"
 				>
 					<tera-model-template
-						:model="currentTemplates.models[index]"
+						:model="currentCanvas.models[index]"
 						is-editable
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						@update-name="
 							(name: string) =>
 								modelTemplatingService.updateDecomposedTemplateNameInKernel(
 									kernelManager,
-									currentTemplates.models[index],
-									flattenedTemplates.models[0],
+									currentCanvas.models[index],
+									flattenedCanvas.models[0],
 									name,
 									outputCode,
 									syncWithMiraModel
@@ -94,7 +91,7 @@
 							() =>
 								modelTemplatingService.removeTemplateInKernel(
 									kernelManager,
-									currentTemplates,
+									currentCanvas,
 									card.id,
 									outputCode,
 									syncWithMiraModel
@@ -142,7 +139,7 @@ import * as d3 from 'd3';
 import type { Position } from '@/types/common';
 import type { Model } from '@/types/Types';
 import type {
-	ModelTemplates,
+	ModelTemplateCanvas,
 	ModelTemplateCard,
 	ModelTemplateJunction
 } from '@/types/model-templating';
@@ -180,27 +177,25 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
-const decomposedTemplates = ref<ModelTemplates>(modelTemplatingService.initializeModelTemplates());
-const flattenedTemplates = ref<ModelTemplates>(modelTemplatingService.initializeModelTemplates());
+const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
+const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
-const currentTemplates = computed(() =>
+const currentCanvas = computed(() =>
 	currentModelFormat.value === EditorFormat.Decomposed
-		? decomposedTemplates.value
-		: flattenedTemplates.value
+		? decomposedCanvas.value
+		: flattenedCanvas.value
 );
 const cards = computed<ModelTemplateCard[]>(
-	() => currentTemplates.value.models.map(({ metadata }) => metadata?.templateCard) ?? []
+	() => currentCanvas.value.models.map(({ metadata }) => metadata?.templateCard) ?? []
 );
-const junctions = computed<ModelTemplateJunction[]>(() => currentTemplates.value.junctions);
+const junctions = computed<ModelTemplateJunction[]>(() => currentCanvas.value.junctions);
 
-const newModelTemplate = ref();
+const sidebarTemplateToAdd = ref<Model | null>(null);
 const newEdge = ref();
 
-const isDecomposedLoading = computed(
-	() => props.model && isEmpty(decomposedTemplates.value.models)
-);
+const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.models));
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
@@ -243,12 +238,12 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 
 		// If a junction isn't found that means we have to create one
 		if (!junctionIdForNewEdge) {
-			modelTemplatingService.addJunction(currentTemplates.value, currentPortPosition);
+			modelTemplatingService.addJunction(currentCanvas.value, currentPortPosition);
 			junctionIdForNewEdge = junctions.value[junctions.value.length - 1].id;
 
 			// Add a default edge as well
 			modelTemplatingService.addEdgeInView(
-				currentTemplates.value,
+				currentCanvas.value,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -276,7 +271,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 		if (currentModelFormat.value === EditorFormat.Decomposed) {
 			modelTemplatingService.addEdgeInKernel(
 				props.kernelManager,
-				currentTemplates.value,
+				currentCanvas.value,
 				junctionIdForNewEdge,
 				target,
 				newEdge.value.target,
@@ -287,7 +282,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			);
 		} else {
 			modelTemplatingService.addEdgeInView(
-				currentTemplates.value,
+				currentCanvas.value,
 				junctionIdForNewEdge,
 				target,
 				currentPortPosition,
@@ -296,8 +291,8 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 			// Once the second edge is drawn, reflect changes in decomposed view - once done, everything in the flattened view will be "merged"
 			modelTemplatingService.reflectFlattenedEditInDecomposedView(
 				props.kernelManager,
-				flattenedTemplates.value,
-				decomposedTemplates.value,
+				flattenedCanvas.value,
+				decomposedCanvas.value,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsForCurve
@@ -334,7 +329,7 @@ function onCanvasClick() {
 function cancelNewEdge() {
 	newEdge.value = undefined;
 	junctionIdForNewEdge = null;
-	modelTemplatingService.junctionCleanUp(currentTemplates.value);
+	modelTemplatingService.junctionCleanUp(currentCanvas.value);
 }
 
 const setMouseOverCanvas = (val: boolean) => {
@@ -346,20 +341,23 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 }
 
 function updateNewCardPosition(event) {
-	newModelTemplate.value.metadata.templateCard.x =
+	if (!sidebarTemplateToAdd.value?.metadata) return;
+	sidebarTemplateToAdd.value.metadata.templateCard.x =
 		(event.offsetX - canvasTransform.x) / canvasTransform.k;
-	newModelTemplate.value.metadata.templateCard.y =
+	sidebarTemplateToAdd.value.metadata.templateCard.y =
 		(event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
 function onDrop(event) {
+	if (!sidebarTemplateToAdd.value?.metadata) return;
+
 	updateNewCardPosition(event);
 
 	if (currentModelFormat.value === EditorFormat.Decomposed) {
 		modelTemplatingService.addDecomposedTemplateInKernel(
 			props.kernelManager,
-			decomposedTemplates.value,
-			newModelTemplate.value,
+			decomposedCanvas.value,
+			sidebarTemplateToAdd.value,
 			outputCode,
 			syncWithMiraModel
 		);
@@ -369,15 +367,15 @@ function onDrop(event) {
 		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
 		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
 		const decomposedTemplateToAdd = modelTemplatingService.prepareDecomposedTemplateAddition(
-			flattenedTemplates.value,
-			newModelTemplate.value
+			flattenedCanvas.value,
+			sidebarTemplateToAdd.value
 		);
 		if (decomposedTemplateToAdd) {
-			modelTemplatingService.addTemplateInView(flattenedTemplates.value, decomposedTemplateToAdd);
+			modelTemplatingService.addTemplateInView(flattenedCanvas.value, decomposedTemplateToAdd);
 		}
 	}
 
-	newModelTemplate.value = null;
+	sidebarTemplateToAdd.value = null;
 }
 
 const updatePosition = (
@@ -435,21 +433,21 @@ function mouseUpdate(event: MouseEvent) {
 	prevY = event.y;
 }
 
-function refreshFlattenedTemplate() {
+function refreshFlattenedCanvas() {
 	if (props.model) {
-		flattenedTemplates.value = modelTemplatingService.initializeModelTemplates();
-		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
+		flattenedCanvas.value = modelTemplatingService.initializeCanvas();
+		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
 	}
 }
 
 function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
-	if (newFormat === EditorFormat.Decomposed) refreshFlattenedTemplate(); // Removes unlinked decomposed templates
+	if (newFormat === EditorFormat.Decomposed) refreshFlattenedCanvas(); // Removes unlinked decomposed templates
 }
 
 watch(
 	() => [props.model],
-	() => refreshFlattenedTemplate() // Triggered after syncWithMiraModel() in parent
+	() => refreshFlattenedCanvas() // Triggered after syncWithMiraModel() in parent
 );
 
 onMounted(() => {
@@ -457,11 +455,11 @@ onMounted(() => {
 
 	if (props.model) {
 		// Create flattened view of model
-		modelTemplatingService.updateFlattenedTemplateInView(props.model, flattenedTemplates.value);
+		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
 		// Create decomposed view of model
 		modelTemplatingService.flattenedToDecomposedInKernel(
 			props.kernelManager,
-			decomposedTemplates.value,
+			decomposedCanvas.value,
 			interpolatePointsForCurve
 		);
 	}

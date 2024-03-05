@@ -1,6 +1,7 @@
 <template>
 	<section :class="{ center: isCentered }">
 		<i class="pi pi-spin pi-spinner" :style="{ fontSize: fontSize + 'rem' }"></i>
+		<p><slot /></p>
 	</section>
 </template>
 
@@ -23,6 +24,7 @@ defineProps({
 	flex: 1;
 	justify-content: center;
 	align-items: center;
+	flex-direction: column;
 }
 
 i {

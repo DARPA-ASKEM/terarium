@@ -761,6 +761,20 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface OptimizeRequestCiemss {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    interventions?: OptimizedIntervention[];
+    stepSize?: number;
+    qoi: string[];
+    riskBound: number;
+    initialGuessInterventions: number[];
+    boundsInterventions: number[][];
+    extra: OptimizeExtra;
+    engine: string;
+    userId: string;
+}
+
 export interface ScimlStatusUpdate {
     loss: number;
     iter: number;
@@ -795,6 +809,19 @@ export interface Intervention {
     name: string;
     timestep: number;
     value: number;
+}
+
+export interface OptimizeExtra {
+    numSamples: number;
+    inferredParameters?: string;
+    maxiter?: number;
+    maxfeval?: number;
+    isMinimized?: boolean;
+}
+
+export interface OptimizedIntervention {
+    name: string;
+    timestep: number;
 }
 
 export interface TimeSpan {
@@ -1005,7 +1032,7 @@ export interface AuthorityInstance {
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
-    summaries: string[];
+    summaries: any[];
 }
 
 export interface KnownEntitiesCounts {
@@ -1047,6 +1074,8 @@ export interface Card {
     complexity?: string;
     usage?: string;
     license?: string;
+    assumptions?: string;
+    strengths?: string;
 }
 
 export interface VariableStatement {
@@ -1413,7 +1442,7 @@ export enum WorkflowOperationTypes {
     Funman = "FUNMAN",
     Code = "CODE",
     ModelConfig = "MODEL_CONFIG",
-    ModelOptimize = "MODEL_OPTIMIZE",
+    OptimizeCiemss = "OPTIMIZE_CIEMSS",
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
     Document = "DOCUMENT",
