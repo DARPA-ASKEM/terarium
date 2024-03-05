@@ -71,7 +71,7 @@
 			</template>
 		</Column>
 
-		<!-- Value: the thing we show depends on the type  -->
+		<!-- Value: the thing we show depends on the type of number -->
 		<Column field="value" header="Value" class="w-3 pr-2">
 			<template #body="slotProps">
 				<!-- Matrix -->

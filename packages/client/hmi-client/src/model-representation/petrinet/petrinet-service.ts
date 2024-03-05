@@ -6,31 +6,6 @@ import { IGraph } from '@graph-scaffolder/types';
 import { AxiosError } from 'axios';
 import _ from 'lodash';
 
-// deprecated section - this is the acset representation, we should do the conversion on model-service
-interface PetriNet {
-	S: State[]; // List of state names
-	T: Transition[]; // List of transition names
-	I: Input[]; // List of inputs
-	O: Output[]; // List of outputs
-}
-interface State {
-	sname: string;
-	uid?: string | number;
-}
-interface Transition {
-	tname: string;
-	uid?: string | number;
-}
-interface Input {
-	it: number;
-	is: number;
-}
-interface Output {
-	ot: number;
-	os: number;
-}
-// end deprecated section
-
 export interface NodeData {
 	type: string;
 	strataType?: string;
@@ -66,89 +41,6 @@ export const mathmlToPetri = async (mathml: string[]) => {
 		}
 	}
 	return null;
-};
-
-// Transform a petrinet into latex
-export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
-	try {
-		const payloadPetri = {
-			S: petri.S.map((s) => ({ sname: s.sname })),
-			T: petri.T.map((t) => ({ tname: t.tname })),
-			I: petri.I,
-			O: petri.O
-		};
-
-		const resp = await API.post('/transforms/acset-to-latex', payloadPetri);
-
-		if (resp && resp.status === 200 && resp.data && typeof resp.data === 'string') {
-			return resp.data;
-		}
-		if (resp && resp.status === 204) return null;
-
-		logger.error('[Model Service] petriToLatex: Server did not provide a correct response', {
-			showToast: false,
-			toastTitle: 'Model Service'
-		});
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('petriToLatex Error:', axiosError.response?.data || axiosError.message, {
-				showToast: false
-			});
-		} else {
-			logger.error(error, { showToast: false });
-		}
-	}
-	return null;
-};
-
-// Used to derive equations
-// AMR => ACSet => ODE => Equation => Latex
-export const convertAMRToACSet = (amr: Model) => {
-	const result: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
-	};
-
-	const petrinetModel = amr.model as PetriNetModel;
-
-	petrinetModel.states.forEach((s) => {
-		result.S.push({ sname: s.id });
-	});
-
-	petrinetModel.transitions.forEach((t) => {
-		result.T.push({ tname: t.id });
-	});
-
-	petrinetModel.transitions.forEach((transition) => {
-		transition.input.forEach((input) => {
-			result.I.push({
-				is: result.S.findIndex((s) => s.sname === input) + 1,
-				it: result.T.findIndex((t) => t.tname === transition.id) + 1
-			});
-		});
-	});
-
-	petrinetModel.transitions.forEach((transition) => {
-		transition.output.forEach((output) => {
-			result.O.push({
-				os: result.S.findIndex((s) => s.sname === output) + 1,
-				ot: result.T.findIndex((t) => t.tname === transition.id) + 1
-			});
-		});
-	});
-
-	// post processing to use expressions rather than ids
-	result.T = result.T.map((transition) => {
-		const foundRate = amr.semantics?.ode?.rates?.find((rate) => rate.target === transition.tname);
-
-		// default to the id if there is a case where there is no expression
-		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
-	});
-
-	return result;
 };
 
 export const convertToIGraph = (amr: Model) => {
