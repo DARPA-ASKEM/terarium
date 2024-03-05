@@ -13,24 +13,28 @@
 		<Column field="concept" header="Concept" sortable style="width: 10%">
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
-					<!-- HACK: just hit the service directly for the curie name -->
-					<!-- {{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }} -->
-					{{ getCurieFromGroudingIdentifier(data.concept) }}
-					<a
-						target="_blank"
-						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept))"
-						@click.stop
-						aria-label="Open Concept"
-					>
-						<i class="pi pi-external-link" />
-					</a>
+					<div class="flex flex-row align-items-center">
+						<!-- HACK: just hit the service directly for the curie name -->
+						<!-- {{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }} -->
+						{{ getCurieFromGroudingIdentifier(data.concept) }}
+						<i class="pi pi-chevron-down pl-2 text-xs" />
+						<a
+							target="_blank"
+							rel="noopener noreferrer"
+							:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept))"
+							@click.stop
+							aria-label="Open Concept"
+						>
+							<i class="pi pi-external-link pl-2 text-xs" v-tooltip.top="'MIRA Epi Metaregistry'" />
+						</a>
+					</div>
 				</template>
 				<template v-else>--</template>
 			</template>
 			<template #editor="{ data, index }">
 				<AutoComplete
 					v-model="conceptSearchTerm.name"
+					placeholder="Search for concepts"
 					:suggestions="curies"
 					@complete="onSearch"
 					@item-select="
