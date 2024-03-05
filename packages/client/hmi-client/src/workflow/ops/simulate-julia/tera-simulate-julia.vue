@@ -85,7 +85,7 @@
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
-				@click="runSimulate"
+				@click="run"
 				:disabled="showSpinner"
 			/>
 			<Button
@@ -128,7 +128,6 @@ import { Poller, PollerState } from '@/api/api';
 
 import {
 	getRunResult,
-	getSimulation,
 	makeForecastJob,
 	querySimulationInProgress,
 	pollAction
@@ -203,15 +202,21 @@ const updateState = () => {
 	emit('update-state', state);
 };
 
-const runSimulate = async () => {
-	const modelConfigurationList = props.node.inputs[0].value;
-	if (!modelConfigurationList?.length) return;
+// Main entry point
+const run = async () => {
+	showSpinner.value = true;
+	const simulationId = await makeForecastRequest();
+	await pollResult(simulationId);
+	await processResult(simulationId);
+	await lazyLoadSimulationData(simulationId);
+	showSpinner.value = false;
+};
 
-	// Since we've disabled multiple configs to a simulation node, we can assume only one config
-	const configId = modelConfigurationList[0];
+const makeForecastRequest = async (): Promise<string> => {
+	const configId = props.node.inputs[0].value?.[0];
+	if (!configId) throw new Error('No model configuration found for simulate');
 
 	const state = props.node.state;
-
 	const payload: SimulationRequest = {
 		projectId: useProjects().activeProject.value?.id as string,
 		modelConfigId: configId,
@@ -223,11 +228,10 @@ const runSimulate = async () => {
 		engine: 'sciml'
 	};
 	const response = await makeForecastJob(payload);
-	getStatus(response.id);
+	return response.id;
 };
 
-const getStatus = async (runId: string) => {
-	showSpinner.value = true;
+const pollResult = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
@@ -235,37 +239,34 @@ const getStatus = async (runId: string) => {
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
+		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		showSpinner.value = false;
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Julia'
 		});
 		throw Error('Failed Runs');
 	}
+	return pollerResults;
+};
 
+const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
 		addChart();
 	}
-
-	const sim = await getSimulation(runId);
 
 	emit('append-output', {
 		type: SimulateJuliaOperation.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
 		value: runId,
 		state: {
-			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
+			currentTimespan: state.currentTimespan,
 			simulationsInProgress: state.simulationsInProgress
 		},
 		isSelected: false
 	});
-
-	showSpinner.value = false;
 };
 
 const lazyLoadSimulationData = async (runId: string) => {
@@ -281,12 +282,11 @@ const lazyLoadSimulationData = async (runId: string) => {
 	if (modelConfiguration) {
 		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
 		csvData.forEach((row) =>
-			parameters.forEach((parameter) => {
+			parameters.forEach((parameter: any) => {
 				row[parameter.id] = parameter.value;
 			})
 		);
 	}
-
 	runResults.value[runId] = csvData as any;
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);
 };
@@ -323,7 +323,7 @@ onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
 	if (runIds.length === 1) {
 		// there should only be one run happening at a time
-		getStatus(runIds[0]);
+		pollResult(runIds[0]);
 	}
 });
 
@@ -332,25 +332,20 @@ onUnmounted(() => {
 });
 
 watch(
-	() => selectedRunId.value,
-	() => {
-		if (selectedRunId.value) {
-			lazyLoadSimulationData(selectedRunId.value);
-		}
-	},
-	{ immediate: true }
-);
-
-watch(
 	() => props.node.active,
-	() => {
-		// Update selected output
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
-		}
+	async () => {
+		if (!props.node.active) return;
+		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state timespan
 		timespan.value = props.node.state.currentTimespan;
+
+		// Resume or fetch result
+		const simulationId = selectedRunId.value;
+		const response = await pollResult(simulationId);
+		if (response?.state !== PollerState.Done) return;
+		await processResult(simulationId);
+		await lazyLoadSimulationData(simulationId);
 	},
 	{ immediate: true }
 );
