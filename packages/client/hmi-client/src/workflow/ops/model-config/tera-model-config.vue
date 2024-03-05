@@ -303,13 +303,7 @@ const outputs = computed(() => {
 	return [];
 });
 
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'close',
-	'update-output-port'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	name: string;
