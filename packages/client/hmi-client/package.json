@@ -41,7 +41,7 @@
 		"@vueup/vue-quill": "1.2.0",
 		"ace-builds": "1.32.7",
 		"axios": "1.6.7",
-		"chart.js": "4.4.1",
+		"chart.js": "4.4.2",
 		"chartjs-plugin-datalabels": "2.2.0",
 		"chroma-js": "2.4.2",
 		"d3": "7.8.5",
