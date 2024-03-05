@@ -217,8 +217,7 @@
 		/>
 	</Teleport>
 
-	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
+	<canvas id="matrix-canvas" />
 </template>
 
 <script setup lang="ts">
@@ -266,7 +265,7 @@ const expandedRows = ref([]);
 const isInitial = (obj: Initial | ModelParameter): obj is Initial => 'target' in obj;
 
 const openMatrixModal = (datum: ModelConfigTableData) => {
-	// Matrix effect easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
+	// Matrix effect Easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
 	matrixEffect();
 
 	const id = datum.id;
@@ -369,7 +368,7 @@ const updateExpression = async (value: Initial) => {
 	emit('update-value', [value]);
 };
 
-/* Matrix effect easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
+/* Matrix effect Easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
 const matrixEffect = () => {
 	if (Math.random() > 0.1) return;
 	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
