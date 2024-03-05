@@ -129,6 +129,12 @@
 								<Column field="id" header="Symbol" />
 								<Column field="name" header="Name" />
 								<Column field="rate_constant" header="Rate Constant" />
+								<Column field="initial" header="Initial Value">
+									<template #body="{ data, field }">
+										<!-- FIXME: temporary hack -->
+										<InputText v-model="data[field]" @blur="tempUpdate(data, field)" />
+									</template>
+								</Column>
 							</DataTable>
 						</AccordionTab>
 						<AccordionTab header="Edges">
@@ -181,7 +187,6 @@
 						label="Run"
 						outlined
 						severity="secondary"
-						size="large"
 						@click="runFromCode"
 					/>
 				</div>
@@ -269,6 +274,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
@@ -479,6 +485,10 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
+
+	// FIXME: dull out regnet/stockflow Feb 29, 2024
+	if (model.value.header.schema_name !== 'petrinet') return null;
+
 	return getStratificationType(model.value);
 });
 
@@ -789,6 +799,11 @@ const extractConfigurations = async () => {
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfirgurationContext.value.modelConfiguration = config;
 	suggestedConfirgurationContext.value.isOpen = true;
+};
+
+// FIXME: temporary hack, need proper config/states to handle all frameworks and fields
+const tempUpdate = (data: any, field: any) => {
+	data[field] = +data[field];
 };
 
 onMounted(async () => {
