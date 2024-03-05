@@ -25,7 +25,7 @@
 				@enriched="fetchAsset"
 			/>
 		</AccordionTab>
-		<AccordionTab header="Column information">
+		<AccordionTab header="Column Information">
 			<tera-dataset-overview-table
 				v-if="dataset"
 				:dataset="dataset"
