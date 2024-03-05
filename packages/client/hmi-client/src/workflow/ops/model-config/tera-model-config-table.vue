@@ -374,6 +374,7 @@ const updateExpression = async (value: Initial) => {
 const matrixEffect = () => {
 	if (Math.random() > 0.1) return;
 	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
+	if (!canvas) return;
 	const ctx = (canvas as HTMLCanvasElement)?.getContext('2d');
 
 	// eslint-disable-next-line no-multi-assign
