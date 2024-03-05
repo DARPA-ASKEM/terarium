@@ -82,8 +82,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		ObjectMapper objectMapper = new ObjectMapper();
 		if(this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
-		} else {
+		} else if (this.getSemantics() != null && this.getSemantics().getOde() != null) {
 			return this.getSemantics().getOde().getParameters();
+		} else {
+			return null;
 		}
 	}
 
