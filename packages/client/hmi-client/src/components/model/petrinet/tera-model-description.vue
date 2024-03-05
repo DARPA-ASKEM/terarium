@@ -29,35 +29,30 @@
 							</p>
 						</div>
 					</template>
-
 					<template v-if="biasAndRiskLimitations">
 						<div class="label-value-pair mt-2">
 							<h6>Bias and Risk Limitations</h6>
 							<p>{{ biasAndRiskLimitations }}</p>
 						</div>
 					</template>
-
 					<template v-if="evaluation">
 						<div class="label-value-pair mt-2">
 							<h6>Evaluation</h6>
 							<p>{{ evaluation }}</p>
 						</div>
 					</template>
-
 					<template v-if="technicalSpecifications">
 						<div class="label-value-pair mt-2">
 							<h6>Technical Specifications</h6>
 							<p>{{ technicalSpecifications }}</p>
 						</div>
 					</template>
-
 					<template v-if="!isEmpty(glossary)">
 						<div class="label-value-pair mt-2">
 							<h6>Glossary</h6>
 							<p>{{ glossary.join(', ') }}</p>
 						</div>
 					</template>
-
 					<template v-if="!isEmpty(moreInformation)">
 						<div class="label-value-pair mt-2">
 							<h6>More Information</h6>
@@ -71,7 +66,6 @@
 							>
 						</div>
 					</template>
-
 					<template v-if="!isEmpty(provenance)">
 						<div class="label-value-pair mt-2">
 							<h6>Provenance</h6>
@@ -94,6 +88,18 @@
 						<div class="label-value-pair mt-2">
 							<h6>Usage</h6>
 							<p v-html="usage" />
+						</div>
+					</template>
+					<template v-if="!isEmpty(strengths)">
+						<div class="label-value-pair mt-2">
+							<h6>Strengths</h6>
+							<p v-html="strengths" />
+						</div>
+					</template>
+					<template v-if="!isEmpty(assumptions)">
+						<div class="label-value-pair mt-2">
+							<h6>Assumptions</h6>
+							<p v-html="assumptions" />
 						</div>
 					</template>
 				</section>
@@ -187,11 +193,12 @@ const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration',
 
 const teraModelDiagramRef = ref();
 
-const card = computed(() => {
+// FIXME: expand Card typing definition?
+const card = computed<any>(() => {
 	// prioritize gollm_card over skema card
-	if (props.model.metadata?.gollmCard) {
-		return props.model.metadata.gollmCard;
-	}
+	// if (props.model.metadata?.gollmCard) {
+	// 	return props.model.metadata.gollmCard;
+	// }
 
 	if (props.model.metadata?.card) {
 		const cardWithUnknowns = props.model.metadata?.card;
@@ -232,6 +239,8 @@ const moreInformation = computed(() => card.value?.MoreInformation?.links ?? [])
 
 const uses = computed(() => card.value?.Uses ?? null);
 const usage = computed(() => card.value?.usage ?? '');
+const strengths = computed(() => card.value?.strengths ?? '');
+const assumptions = computed(() => card.value?.assumptions ?? '');
 const sourceDataset = computed(() => card.value?.dataset ?? '');
 const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');

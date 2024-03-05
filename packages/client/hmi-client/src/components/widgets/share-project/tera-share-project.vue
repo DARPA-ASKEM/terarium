@@ -161,23 +161,62 @@ function selectNewPermissionForUser(permission: string, userId: string) {
 
 async function setPermissions() {
 	visible.value = false;
-	selectedUsers.value.forEach(async ({ id }) => {
+	await selectedUsers.value.forEach(async ({ id }) => {
 		const permission = newSelectedUserPermissions.get(id);
 		if (permission) {
 			const currentPermission = permissions.value?.permissionUsers.find((u) => u.id === id)
 				?.relationship;
 			if (permission === 'remove') {
 				if (currentPermission) {
-					await useProjects().removePermissions(props.project.id, id, currentPermission);
+					if (await useProjects().removePermissions(props.project.id, id, currentPermission)) {
+						removeUser(id);
+					} else {
+						addUser(id);
+					}
 				}
 			} else if (currentPermission) {
-				await useProjects().updatePermissions(props.project.id, id, currentPermission, permission);
-			} else {
-				await useProjects().setPermissions(props.project.id, id, permission);
+				if (
+					await useProjects().updatePermissions(props.project.id, id, currentPermission, permission)
+				) {
+					if (permission === 'reader') {
+						removeUser(id);
+					} else {
+						addUser(id);
+					}
+				}
+			} else if (await useProjects().setPermissions(props.project.id, id, permission)) {
+				if (permission === 'writer') {
+					addUser(id);
+				}
 			}
 		}
 	});
 	newSelectedUserPermissions.clear();
+}
+
+async function removeUser(id) {
+	const user = users.value.find((u) => u.id === id);
+	const name = `${user?.firstName} ${user?.lastName}`;
+	const updatedProject = structuredClone(props.project);
+	if (updatedProject.authors) {
+		const index = updatedProject.authors.indexOf(name);
+		if (index !== undefined && index > -1) {
+			updatedProject.authors.splice(index, 1);
+		}
+		await useProjects().update(updatedProject);
+	}
+}
+
+async function addUser(id) {
+	const user = users.value.find((u) => u.id === id);
+	const name = `${user?.firstName} ${user?.lastName}`;
+	const updatedProject = structuredClone(props.project);
+	if (updatedProject.authors) {
+		updatedProject.authors.push(name);
+	} else {
+		updatedProject.authors = [name];
+	}
+	await useProjects().update(updatedProject);
 }
 
 async function getPermissions() {
