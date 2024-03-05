@@ -193,7 +193,8 @@ const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration',
 
 const teraModelDiagramRef = ref();
 
-const card = computed(() => {
+// FIXME: expand Card typing definition?
+const card = computed<any>(() => {
 	// prioritize gollm_card over skema card
 	// if (props.model.metadata?.gollmCard) {
 	// 	return props.model.metadata.gollmCard;
