@@ -36,10 +36,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	private String userId;
 
-	private Map<String, JsonNode> model;
+	private Map<String, Object> model;
 
 	@TSOptional
-	private JsonNode properties;
+	private Object properties;
 
 	@TSOptional
 	private ModelSemantics semantics;
