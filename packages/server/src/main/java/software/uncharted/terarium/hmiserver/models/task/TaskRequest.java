@@ -8,6 +8,7 @@ import java.util.Base64;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -64,11 +65,13 @@ public class TaskRequest implements Serializable {
 		try {
 			// NOTE: do not include the task id in this hash, we want to determine if the
 			// body of the request is unique
-			final ObjectMapper mapper = new ObjectMapper();
+			final ObjectMapper objectMapper = new ObjectMapper();
+			// make sure the json serialization is deterministic
+			objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
 
 			final String encodedInput = Base64.getEncoder().encodeToString(input);
 			final String encodedAdditionalProperties = Base64.getEncoder()
-					.encodeToString(mapper.writeValueAsBytes(additionalProperties));
+					.encodeToString(objectMapper.writeValueAsBytes(additionalProperties));
 
 			final String strHash = String.format("%s-%s-%s-%s", type, script, encodedInput,
 					encodedAdditionalProperties);

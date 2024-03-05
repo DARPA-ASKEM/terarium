@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -34,9 +35,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
@@ -64,14 +65,13 @@ public class TaskService {
 		}
 	}
 
-	// I don't people setting the task id themselves since it may be overridden if
-	// the task is already in the cache. So we have this private class to contain
-	// the id. This will prevent siutations where someone creates an id, does
-	// something with it, and then sends the request expected the response to match
-	// it.
-	@Accessors(chain = true)
+	// This private subclass is to prevent people from setting the task id
+	// themselves since it may be overridden if the task is already in the cache.
+	// This will prevent siutations where someone creates an id, does something with
+	// it, and then sends the request expected the response to match it.
 	@NoArgsConstructor
 	@Data
+	@EqualsAndHashCode(callSuper = true)
 	static private class TaskRequestWithId extends TaskRequest {
 		private UUID id;
 
@@ -93,16 +93,54 @@ public class TaskService {
 		}
 	}
 
+	// This private subclass exists to prevent anything outside of this service from
+	// mucking with the futures internal state.
+	static private class CompletableTaskFuture extends TaskFuture {
+
+		public CompletableTaskFuture(final UUID id, final TaskResponse resp) {
+			this.id = id;
+			this.latestResponse = resp;
+			this.future = new CompletableFuture<>();
+			if (this.latestResponse.getStatus() == TaskStatus.SUCCESS) {
+				// if the task has already completed successfully, but the future is being
+				// created then complete it. This would occur if another instance of the
+				// hmi-server has already dispatched and processed the task response.
+				future.complete(this.latestResponse);
+			}
+		}
+
+		public synchronized void update(final TaskResponse resp) {
+			if (future.isDone()) {
+				throw new IllegalStateException("TaskFuture is already complete");
+			}
+			latestResponse = resp;
+		}
+
+		public synchronized void complete(final TaskResponse resp) {
+			latestResponse = resp;
+			future.complete(resp);
+		}
+	}
+
 	static final private String RESPONSE_CACHE_KEY = "task-service-response-cache";
 	static final private String TASK_ID_CACHE_KEY = "task-service-task-id-cache";
 	static final private String LOCK_KEY = "task-service-distributed-lock";
-	static final private long CACHE_TTL_SECONDS = 60 * 60 * 24; // 24 hours
-	static final private long CACHE_MAX_IDLE_SECONDS = 60 * 60 * 2; // 2 hours
+
+	// TTL = Time to live, the maximum time a key will be in the cache before it is
+	// evicted, regardless of activity.
+	@Value("${terarium.taskrunner.response-cache-ttl-seconds: 86400}") // 24 hours
+	static private long CACHE_TTL_SECONDS;
+
+	// Max idle = The maximum time a key can be idle in the cache before it is
+	// evicted.
+	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
+	static private long CACHE_MAX_IDLE_SECONDS;
 
 	// Always use a lease time for distributed locks to prevent application wide
 	// deadlocks. If for whatever reason the lock has not been released within a
 	// N seconds, it will automatically free itself.
-	static final private long REDIS_LOCK_LEASE_SECONDS = 60; // 1 minute
+	@Value("${terarium.taskrunner.redis-lock-lease-seconds:30}") // 30 seconds
+	static private long REDIS_LOCK_LEASE_SECONDS;
 
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
@@ -112,12 +150,17 @@ public class TaskService {
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	private final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
 
-	private final Map<UUID, CompletableFuture<TaskResponse>> responseFutures = new ConcurrentHashMap<>();
-
 	private final RedissonClient redissonClient;
+
+	// NOTE: We require a distributed lock to keep the following three caches in
+	// sync across instances. Anytime these caches are written or read from, the
+	// lock must be acquired.
+	// vvvvvvvvvvvvvvvvvvv
+	private RLock rLock;
 	private RMapCache<String, UUID> taskIdCache;
 	private RMapCache<UUID, TaskResponse> responseCache;
-	private RLock rLock;
+	private final Map<UUID, CompletableTaskFuture> futures = new HashMap<>();
+	// ^^^^^^^^^^^^^^^^^^^
 
 	// The queue name that the taskrunner will consume on for requests.
 	@Value("${terarium.taskrunner.request-queue}")
@@ -233,19 +276,22 @@ public class TaskService {
 
 			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
 			try {
-				final CompletableFuture<TaskResponse> future = responseFutures
-						.get(resp.getId());
-				if (future != null &&
-						(resp.getStatus() == TaskStatus.SUCCESS ||
-								resp.getStatus() == TaskStatus.CANCELLED ||
-								resp.getStatus() == TaskStatus.FAILED)) {
-					// complete the future
-					log.debug("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
-					future.complete(resp);
+				final CompletableTaskFuture future = futures.get(resp.getId());
+				if (future != null) {
+					if (resp.getStatus() == TaskStatus.SUCCESS ||
+							resp.getStatus() == TaskStatus.CANCELLED ||
+							resp.getStatus() == TaskStatus.FAILED) {
+						// complete the future
+						log.debug("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
+						future.complete(resp);
 
-					// remove the future from the map
-					log.debug("Removing future for task id {}", resp.getId());
-					responseFutures.remove(resp.getId());
+						// remove the future from the map
+						log.debug("Removing future for task id {}", resp.getId());
+						futures.remove(resp.getId());
+					} else {
+						// update the future with the latest response
+						future.update(resp);
+					}
 				}
 			} catch (final Exception e) {
 				log.error("Error occured while writing to response queue for task {}",
@@ -346,8 +392,7 @@ public class TaskService {
 		}
 	}
 
-	private TaskFuture runTaskAsyncInternal(final TaskRequest r)
-			throws JsonProcessingException {
+	public TaskFuture runTaskAsync(final TaskRequest r) throws JsonProcessingException {
 
 		if (r.getType() == null) {
 			throw new RuntimeException("TaskRequest must have a type set");
@@ -381,27 +426,23 @@ public class TaskService {
 						resp.getStatus() != TaskStatus.FAILED) {
 
 					// if the response is in the cache, return it
-					log.debug("Response for task id: {} with status: {} already exists, returning", existingId,
+					log.debug("Response for task id: {} with status: {} already exists", existingId,
 							resp.getStatus());
 
-					final TaskFuture future = new TaskFuture();
-					future.setId(existingId);
-					future.setLatestResponse(resp);
-					if (resp.getStatus() != TaskStatus.SUCCESS) {
-						// if the task has not completed, create a future to capture that
-						future.setCompleteFuture(
-								responseFutures.computeIfAbsent(existingId, v -> new CompletableFuture<>()));
+					if (!futures.containsKey(existingId)) {
+						// create the future if need be
+						final CompletableTaskFuture future = new CompletableTaskFuture(existingId, resp);
+						futures.put(existingId, future);
+						return future;
 					}
-					return future;
+
+					// future already exists on this instance
+					return futures.get(existingId);
 				}
 				// otherwise dispatch it again
 				log.debug("No cached task response found for task id: {} for SHA: {}, creating new task", existingId,
 						hash);
 			}
-
-			// create the response future
-			final CompletableFuture<TaskResponse> completeFuture = new CompletableFuture<>();
-			responseFutures.put(req.getId(), completeFuture);
 
 			// no cached request, create the response cache entry
 			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
@@ -430,11 +471,9 @@ public class TaskService {
 				final String jsonStr = objectMapper.writeValueAsString(req);
 				rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
-				// set the latest response to queued and return
-				final TaskFuture future = new TaskFuture();
-				future.setId(req.getId());
-				future.setCompleteFuture(completeFuture);
-				future.setLatestResponse(queuedResponse);
+				// create and return the future
+				final CompletableTaskFuture future = new CompletableTaskFuture(req.getId(), queuedResponse);
+				futures.put(req.getId(), future);
 				return future;
 
 			} catch (final Exception e) {
@@ -448,35 +487,16 @@ public class TaskService {
 		}
 	}
 
-	public TaskResponse runTaskAsync(final TaskRequest req)
-			throws JsonProcessingException {
-
-		final TaskFuture future = runTaskAsyncInternal(req);
-		if (future.getLatestResponse() == null) {
-			throw new RuntimeException("Task was not dispatched properly");
-		}
-		return future.getLatestResponse();
-	}
-
 	public TaskResponse runTaskSync(final TaskRequest req, final long timeoutSeconds)
 			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 
 		// send the request
-		final TaskFuture future = runTaskAsyncInternal(req);
-
-		// check the response in case it was cached
-		if (future.getLatestResponse().getStatus() == TaskStatus.SUCCESS) {
-			log.debug("Task was already completed successfully, returning response with id: {}",
-					future.getLatestResponse().getId());
-			return future.getLatestResponse();
-		}
-
-		// if we are here, then the task is pending
+		final TaskFuture future = runTaskAsync(req);
 
 		try {
 			// wait for the response
 			log.debug("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.getCompleteFuture().get(timeoutSeconds, TimeUnit.SECONDS);
+			final TaskResponse resp = future.get(timeoutSeconds, TimeUnit.SECONDS);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
@@ -506,7 +526,8 @@ public class TaskService {
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
-			return runTaskAsync(req);
+			// return the latest received response held in the future
+			return runTaskAsync(req).poll();
 		} else {
 			throw new IllegalArgumentException("Invalid task mode: " + mode);
 		}

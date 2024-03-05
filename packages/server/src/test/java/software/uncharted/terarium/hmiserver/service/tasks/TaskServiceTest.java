@@ -28,9 +28,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
 @Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
@@ -229,6 +231,48 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		Assertions.assertEquals(taskId, resp.getId());
 
 		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCacheSuccess() throws Exception {
+		final int TIMEOUT_SECONDS = 20;
+
+		final byte[] input = "{\"input\":\"This is my input string\"}".getBytes();
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript("/echo.py");
+		req.setInput(input);
+
+		final TaskFuture future1 = taskService.runTaskAsync(req);
+		Assertions.assertEquals(TaskStatus.SUCCESS, future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+
+		// next request should pull the successful response from cache
+		final TaskFuture future2 = taskService.runTaskAsync(req);
+		Assertions.assertEquals(TaskStatus.SUCCESS, future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(future1.getId(), future2.getId());
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItDoesNotCacheFailure() throws Exception {
+		final int TIMEOUT_SECONDS = 20;
+
+		final byte[] input = "{\"input\":\"This is my input string\", \"should_fail\": true}".getBytes();
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript("/echo.py");
+		req.setInput(input);
+
+		final TaskFuture future1 = taskService.runTaskAsync(req);
+		Assertions.assertEquals(TaskStatus.FAILED, future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+
+		// next request should not pull the successful response from cache
+		final TaskFuture future2 = taskService.runTaskAsync(req);
+		Assertions.assertEquals(TaskStatus.FAILED, future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertNotEquals(future1.getId(), future2.getId());
 	}
 
 	// @Test
