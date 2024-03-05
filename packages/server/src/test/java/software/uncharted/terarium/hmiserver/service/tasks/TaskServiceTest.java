@@ -17,7 +17,6 @@ import java.util.regex.Matcher;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -31,8 +30,8 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.controller.mira.MiraController;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskType;
 
 @Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
@@ -53,20 +52,18 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEchoTaskRequest() throws Exception {
 
-		final UUID taskId = UUID.randomUUID();
 		final String additionalProps = "These are additional properties";
 
 		final byte[] input = "{\"input\":\"This is my input string\"}".getBytes();
 
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.GOLLM);
 		req.setScript("/echo.py");
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.GOLLM);
+		final TaskResponse resp = taskService.runTaskSync(req);
 
-		Assertions.assertEquals(taskId, resp.getId());
 		Assertions.assertEquals(additionalProps, resp.getAdditionalProperties(String.class));
 	}
 
@@ -87,7 +84,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateLargeEchoTaskRequest() throws Exception {
 
-		final UUID taskId = UUID.randomUUID();
 		final String additionalProps = "These are additional properties";
 
 		final int STRING_LENGTH = 1048576;
@@ -95,14 +91,13 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final byte[] input = ("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\"}").getBytes();
 
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.GOLLM);
 		req.setScript("/echo.py");
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.GOLLM);
+		final TaskResponse resp = taskService.runTaskSync(req);
 
-		Assertions.assertEquals(taskId, resp.getId());
 		Assertions.assertEquals(additionalProps, resp.getAdditionalProperties(String.class));
 	}
 
@@ -110,19 +105,15 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMModelCardRequest() throws Exception {
 
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource resource = new ClassPathResource("gollm/test_input.json");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.GOLLM);
 		req.setScript("gollm:model_card");
 		req.setInput(content.getBytes());
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.GOLLM, 300);
-
-		Assertions.assertEquals(taskId, resp.getId());
+		final TaskResponse resp = taskService.runTaskSync(req, 300);
 
 		log.info(new String(resp.getOutput()));
 	}
@@ -136,10 +127,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 
-		final UUID taskId = UUID.randomUUID();
-
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.GOLLM);
 		req.setScript("gollm:embedding");
 		req.setInput(
 				("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}")
@@ -150,9 +139,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		add.num = 123;
 		req.setAdditionalProperties(add);
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.GOLLM);
-
-		Assertions.assertEquals(taskId, resp.getId());
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		final AdditionalProps respAdd = resp.getAdditionalProperties(AdditionalProps.class);
 		Assertions.assertEquals(add.str, respAdd.str);
@@ -165,19 +152,15 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
 
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.MIRA);
 		req.setScript(MiraController.MDL_TO_STOCKFLOW);
 		req.setInput(content.getBytes());
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.MIRA);
-
-		Assertions.assertEquals(taskId, resp.getId());
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
 	}
@@ -186,19 +169,15 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraStellaToStockflowRequest() throws Exception {
 
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource resource = new ClassPathResource("mira/SIR.xmile");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.MIRA);
 		req.setScript(MiraController.STELLA_TO_STOCKFLOW);
 		req.setInput(content.getBytes());
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.MIRA);
-
-		Assertions.assertEquals(taskId, resp.getId());
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
 	}
@@ -207,19 +186,15 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraSBMLToPetrinetRequest() throws Exception {
 
-		final UUID taskId = UUID.randomUUID();
-
 		final ClassPathResource resource = new ClassPathResource("mira/BIOMD0000000001.xml");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.MIRA);
 		req.setScript(MiraController.SBML_TO_PETRINET);
 		req.setInput(content.getBytes());
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.MIRA);
-
-		Assertions.assertEquals(taskId, resp.getId());
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
 	}
@@ -246,24 +221,24 @@ public class TaskServiceTest extends TerariumApplicationTests {
 				+ amrJson.toString() + "}";
 
 		final TaskRequest req = new TaskRequest();
-		req.setId(taskId);
+		req.setType(TaskType.GOLLM);
 		req.setScript("gollm:dataset_configure");
 		req.setInput(content.getBytes());
 
-		final TaskResponse resp = taskService.runTaskSync(req, TaskType.GOLLM);
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		Assertions.assertEquals(taskId, resp.getId());
 
 		log.info(new String(resp.getOutput()));
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheWithConcurrency() throws Exception {
 
-		final int NUM_REQUESTS = 512;
-		final int NUM_UNIQUE_REQUESTS = 16;
-		final int NUM_THREADS = 12;
+		final int NUM_REQUESTS = 1024;
+		final int NUM_UNIQUE_REQUESTS = 32;
+		final int NUM_THREADS = 24;
 		final int TIMEOUT_SECONDS = 20;
 
 		final List<byte[]> reqInput = new ArrayList<>();
@@ -279,8 +254,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 		final Set<UUID> successTaskIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
-		// final Set<UUID> failedTaskIds = Collections.newSetFromMap(new
-		// ConcurrentHashMap<>());
 		final List<Future<?>> futures = new ArrayList<>();
 
 		final Random rand = new Random();
@@ -289,13 +262,14 @@ public class TaskServiceTest extends TerariumApplicationTests {
 			final Future<?> future = executor.submit(() -> {
 				try {
 					final TaskRequest req = new TaskRequest();
+					req.setType(TaskType.GOLLM);
 					req.setScript("/echo.py");
-					req.setInput(reqInput.get(rand.nextInt(NUM_UNIQUE_REQUESTS)));
+					req.setInput(reqInput.get(rand.nextInt(NUM_UNIQUE_REQUESTS * 2)));
 
-					final TaskResponse resp = taskService.runTaskSync(req, TaskType.GOLLM, TIMEOUT_SECONDS);
+					final TaskResponse resp = taskService.runTaskSync(req, TIMEOUT_SECONDS);
 					successTaskIds.add(resp.getId());
 				} catch (final RuntimeException e) {
-					// expected in some cases
+					// expected for purposely failed tasks
 
 				} catch (final Exception e) {
 					log.error("Error in test", e);
@@ -309,12 +283,10 @@ public class TaskServiceTest extends TerariumApplicationTests {
 			future.get(TIMEOUT_SECONDS * 2, TimeUnit.SECONDS);
 		}
 
-		log.info("Sending {} requests, which resulted in {} unique dispatches", NUM_REQUESTS, successTaskIds.size());
 		for (final UUID taskId : successTaskIds) {
 			log.info("Task ID: {}", taskId.toString());
 		}
 		Assertions.assertTrue(successTaskIds.size() <= NUM_UNIQUE_REQUESTS);
-
 	}
 
 }

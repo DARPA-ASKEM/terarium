@@ -23,12 +23,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskType;
 
 @RequestMapping("/mira")
 @RestController
@@ -77,6 +77,7 @@ public class MiraController {
 
 		try {
 			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.MIRA);
 			req.setInput(conversionRequest.getModelContent().getBytes());
 
 			if (endsWith(conversionRequest.getModelName(), List.of(".mdl"))) {
@@ -91,8 +92,7 @@ public class MiraController {
 						"Unknown model type");
 			}
 
-			final TaskResponse resp = taskService.runTaskSync(req, TaskType.MIRA,
-					REQUEST_TIMEOUT_SECONDS);
+			final TaskResponse resp = taskService.runTaskSync(req, REQUEST_TIMEOUT_SECONDS);
 
 			if (resp.getStatus() != TaskStatus.SUCCESS) {
 				throw new ResponseStatusException(

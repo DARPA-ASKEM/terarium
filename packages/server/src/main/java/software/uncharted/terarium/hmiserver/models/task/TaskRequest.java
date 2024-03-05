@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,17 +17,33 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Data
 public class TaskRequest implements Serializable {
-	private UUID id;
-	private String script;
-	private byte[] input;
-	private int timeoutMinutes = 30;
+
+	static public enum TaskType {
+		GOLLM("gollm"),
+		MIRA("mira");
+
+		private final String value;
+
+		TaskType(final String value) {
+			this.value = value;
+		}
+
+		public String toString() {
+			return value;
+		}
+	}
+
+	protected TaskType type;
+	protected String script;
+	protected byte[] input;
+	protected int timeoutMinutes = 30;
 
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are
 	// necessary for the response to be processed correctly. This property is used
 	// to put those variables in. They aren't used by the taskrunner or the task
 	// itself, but are passed through to every response.
-	private Object additionalProperties;
+	protected Object additionalProperties;
 
 	public void setInput(final byte[] bytes) throws JsonProcessingException {
 		input = bytes;
@@ -37,14 +52,6 @@ public class TaskRequest implements Serializable {
 	public void setInput(final Object obj) throws JsonProcessingException {
 		final ObjectMapper mapper = new ObjectMapper();
 		input = mapper.writeValueAsBytes(obj);
-	}
-
-	public TaskResponse createResponse(final TaskStatus status) {
-		return new TaskResponse()
-				.setId(id)
-				.setStatus(status)
-				.setScript(script)
-				.setAdditionalProperties(additionalProperties);
 	}
 
 	public <T> T getAdditionalProperties(final Class<T> type) {
@@ -66,7 +73,8 @@ public class TaskRequest implements Serializable {
 			final String encodedAdditionalProperties = Base64.getEncoder()
 					.encodeToString(mapper.writeValueAsBytes(additionalProperties));
 
-			final String strHash = String.format("%s-%s-%s", script, encodedInput, encodedAdditionalProperties);
+			final String strHash = String.format("%s-%s-%s-%s", type, script, encodedInput,
+					encodedAdditionalProperties);
 			final MessageDigest md = MessageDigest.getInstance("SHA-256");
 			return Base64.getEncoder().encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
 		} catch (final Exception e) {

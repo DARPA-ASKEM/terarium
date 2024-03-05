@@ -33,7 +33,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
@@ -46,18 +49,32 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 @RequiredArgsConstructor
 public class TaskService {
 
-	static public enum TaskType {
-		GOLLM("gollm"),
-		MIRA("mira");
+	// I don't people setting the task id themselves since it may be overridden if
+	// the task is already in the cache. So we have this private class to contain
+	// the id. This will prevent siutations where someone creates an id, does
+	// something with it, and then sends the request expected the response to match
+	// it.
+	@Accessors(chain = true)
+	@NoArgsConstructor
+	@Data
+	static private class TaskRequestWithId extends TaskRequest {
+		private UUID id;
 
-		private final String value;
-
-		TaskType(final String value) {
-			this.value = value;
+		TaskRequestWithId(final TaskRequest req) {
+			id = UUID.randomUUID();
+			type = req.getType();
+			script = req.getScript();
+			input = req.getInput();
+			timeoutMinutes = req.getTimeoutMinutes();
+			additionalProperties = req.getAdditionalProperties();
 		}
 
-		public String toString() {
-			return value;
+		public TaskResponse createResponse(final TaskStatus status) {
+			return new TaskResponse()
+					.setId(id)
+					.setStatus(status)
+					.setScript(getScript())
+					.setAdditionalProperties(getAdditionalProperties());
 		}
 	}
 
@@ -86,12 +103,6 @@ public class TaskService {
 	private RMapCache<String, UUID> taskIdCache;
 	private RMapCache<UUID, TaskResponse> responseCache;
 	private RLock rLock;
-
-	// private final ConcurrentHashMap<String, UUID> taskIdCache = new
-	// ConcurrentHashMap<>();
-	// private final ConcurrentHashMap<UUID, TaskResponse> responseCache = new
-	// ConcurrentHashMap<>();
-	// private final ReentrantLock rLock = new ReentrantLock();
 
 	// The queue name that the taskrunner will consume on for requests.
 	@Value("${terarium.taskrunner.request-queue}")
@@ -214,11 +225,11 @@ public class TaskService {
 								resp.getStatus() == TaskStatus.CANCELLED ||
 								resp.getStatus() == TaskStatus.FAILED)) {
 					// complete the future
-					log.info("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
+					log.debug("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
 					future.complete(resp);
 
 					// remove the future from the map
-					log.info("Removing future for task id {}", resp.getId());
+					log.debug("Removing future for task id {}", resp.getId());
 					responseFutures.remove(resp.getId());
 				}
 			} catch (final Exception e) {
@@ -275,7 +286,7 @@ public class TaskService {
 			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
 			try {
 				// add to the response cache
-				log.info("Writing response for task id {} for status {} to cache", resp.getId(),
+				log.debug("Writing response for task id {} for status {} to cache", resp.getId(),
 						resp.getStatus());
 				responseCache.put(resp.getId(), resp, CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
 						TimeUnit.SECONDS);
@@ -320,41 +331,43 @@ public class TaskService {
 		}
 	}
 
-	private TaskFuture runTaskAsyncInternal(final TaskRequest req, final TaskType requestType)
+	private TaskFuture runTaskAsyncInternal(final TaskRequest r)
 			throws JsonProcessingException {
 
-		rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
+		if (r.getType() == null) {
+			throw new RuntimeException("TaskRequest must have a type set");
+		}
+		if (r.getScript().isEmpty()) {
+			throw new RuntimeException("TaskRequest must have a script set");
+		}
 
+		rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
 		try {
+			// generate the task id
+			final TaskRequestWithId req = new TaskRequestWithId(r);
+
 			// create sha256 hash of the request
 			final String hash = req.getSHA256();
 
-			log.info("Computed SHA: {}", hash);
-
-			// generate the task id
-			req.setId(UUID.randomUUID());
-
 			// check if there is an id associated with the hash of the request already
-			log.info("Attempting to put {} under {}", req.getId(), hash);
 			final UUID existingId = taskIdCache.putIfAbsent(hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS,
 					CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
-
-			log.info("Got task id {} for hash", existingId);
 
 			if (existingId != null) {
 				// a task id already exits for the SHA256, this means the request has already
 				// been dispatched.
-				log.info("Task ID: {} already exists for SHA: {}", existingId, hash);
+				log.debug("Task id: {} already exists for SHA: {}", existingId, hash);
 				final TaskResponse resp = responseCache.get(existingId);
 
 				// only return responese if they have not failed or been cancelled
 				if (resp != null &&
-						(resp.getStatus() != TaskStatus.CANCELLING ||
-								resp.getStatus() != TaskStatus.CANCELLED ||
-								resp.getStatus() != TaskStatus.FAILED)) {
+						resp.getStatus() != TaskStatus.CANCELLING &&
+						resp.getStatus() != TaskStatus.CANCELLED &&
+						resp.getStatus() != TaskStatus.FAILED) {
 
 					// if the response is in the cache, return it
-					log.info("Response for task id {} already exists, returning", existingId);
+					log.debug("Response for task id: {} with status: {} already exists, returning", existingId,
+							resp.getStatus());
 
 					final TaskFuture future = new TaskFuture();
 					future.setId(existingId);
@@ -367,14 +380,13 @@ public class TaskService {
 					return future;
 				}
 				// otherwise dispatch it again
-				log.info("No cached task response found for ID: {} for SHA: {}, creating new task", existingId, hash);
+				log.debug("No cached task response found for task id: {} for SHA: {}, creating new task", existingId,
+						hash);
 			}
 
 			// create the response future
 			final CompletableFuture<TaskResponse> completeFuture = new CompletableFuture<>();
 			responseFutures.put(req.getId(), completeFuture);
-
-			log.info("Dispatching task for ID: {} for SHA: {}", req.getId(), hash);
 
 			// no cached request, create the response cache entry
 			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
@@ -382,7 +394,10 @@ public class TaskService {
 					TimeUnit.SECONDS);
 
 			// now send request
-			final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, requestType.toString());
+			final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
+
+			log.debug("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash,
+					req.getType().toString());
 
 			// ensure the request queue exists
 			declareQueue(requestQueue);
@@ -396,7 +411,7 @@ public class TaskService {
 
 			try {
 				// send the request to the task runner
-				log.info("Dispatching request {} on queue: {}", new String(req.getInput()), requestQueue);
+				log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
 				final String jsonStr = objectMapper.writeValueAsString(req);
 				rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
@@ -418,39 +433,34 @@ public class TaskService {
 		}
 	}
 
-	public TaskResponse runTaskAsync(final TaskRequest req, final TaskType requestType)
+	public TaskResponse runTaskAsync(final TaskRequest req)
 			throws JsonProcessingException {
 
-		final TaskFuture future = runTaskAsyncInternal(req, requestType);
+		final TaskFuture future = runTaskAsyncInternal(req);
 		if (future.getLatestResponse() == null) {
 			throw new RuntimeException("Task was not dispatched properly");
 		}
 		return future.getLatestResponse();
 	}
 
-	public TaskResponse runTaskSync(final TaskRequest req, final TaskType requestType,
-			final long timeoutSeconds)
+	public TaskResponse runTaskSync(final TaskRequest req, final long timeoutSeconds)
 			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 
 		// send the request
-		final TaskFuture future = runTaskAsyncInternal(req, requestType);
+		final TaskFuture future = runTaskAsyncInternal(req);
 
 		// check the response in case it was cached
 		if (future.getLatestResponse().getStatus() == TaskStatus.SUCCESS) {
-			log.info("Task was already SUCCESS, returning cached response with id: {}",
+			log.debug("Task was already completed successfully, returning response with id: {}",
 					future.getLatestResponse().getId());
 			return future.getLatestResponse();
-		} else {
-			log.info("Task was already dispatched, cached response for id: {} has status: {}",
-					future.getLatestResponse().getId(),
-					future.getLatestResponse().getStatus());
 		}
 
 		// if we are here, then the task is pending
 
 		try {
 			// wait for the response
-			log.info("Waiting for response for task id: {}", future.getId());
+			log.debug("Waiting for response for task id: {}", future.getId());
 			final TaskResponse resp = future.getCompleteFuture().get(timeoutSeconds, TimeUnit.SECONDS);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
@@ -461,7 +471,7 @@ public class TaskService {
 			if (resp.getStatus() != TaskStatus.SUCCESS) {
 				throw new RuntimeException("Task did not complete successfully");
 			}
-			log.info("Future completed for task: {}", future.getId());
+			log.debug("Future completed for task: {}", future.getId());
 			return resp;
 		} catch (final TimeoutException e) {
 			throw new TimeoutException(
@@ -469,11 +479,11 @@ public class TaskService {
 		}
 	}
 
-	public TaskResponse runTaskSync(final TaskRequest req, final TaskType requestType)
+	public TaskResponse runTaskSync(final TaskRequest req)
 			throws JsonProcessingException, TimeoutException, ExecutionException, InterruptedException {
 
 		final int DEFAULT_TIMEOUT_SECONDS = 60;
-		return runTaskSync(req, requestType, DEFAULT_TIMEOUT_SECONDS);
+		return runTaskSync(req, DEFAULT_TIMEOUT_SECONDS);
 	}
 
 }

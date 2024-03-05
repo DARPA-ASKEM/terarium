@@ -34,6 +34,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -44,7 +45,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetR
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskType;
 
 @RequestMapping("/gollm")
 @RestController
@@ -107,6 +107,7 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.GOLLM);
 			req.setScript(ModelCardResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
@@ -115,7 +116,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req, TaskType.GOLLM));
+			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -163,6 +164,7 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureModelResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
@@ -172,7 +174,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req, TaskType.GOLLM));
+			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -241,6 +243,7 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
@@ -250,7 +253,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req, TaskType.GOLLM));
+			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -289,11 +292,12 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.GOLLM);
 			req.setScript(CompareModelResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTaskAsync(req, TaskType.GOLLM));
+			return ResponseEntity.ok().body(taskService.runTaskAsync(req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
