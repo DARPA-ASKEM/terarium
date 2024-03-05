@@ -345,25 +345,48 @@ export class WorkflowRegistry {
  */
 
 export function selectOutput(
+	wf: Workflow,
 	operator: WorkflowNode<any>,
 	selectedWorkflowOutputId: WorkflowOutput<any>['id']
 ) {
 	operator.outputs.forEach((output) => {
 		output.isSelected = false;
+		output.status = WorkflowPortStatus.NOT_CONNECTED;
 	});
 
 	// Update the Operator state with the selected one
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
-	if (selected) {
-		selected.isSelected = true;
-		operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
-		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
-		operator.active = selected.id;
-	} else {
+	if (!selected) {
 		logger.warn(
 			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
 		);
+		return;
 	}
+
+	selected.isSelected = true;
+	operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
+	operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
+	operator.active = selected.id;
+
+	// If this output is connected to input port(s), update the input port(s)
+	const connectedEdges = wf.edges.filter((edge) => edge.source === operator.id);
+	if (_.isEmpty(connectedEdges)) return;
+	selected.status = WorkflowPortStatus.CONNECTED;
+
+	connectedEdges.forEach((edge) => {
+		// Remove outputs and edges coming out of the target node
+		const targetNode = wf.nodes.find((node) => node.id === edge.target);
+		if (!targetNode) return;
+		wf.edges.forEach((e) => {
+			if (e.source === targetNode.id) removeEdge(wf, e.id);
+		});
+		targetNode.outputs = [];
+		// Update the input port of the target node
+		const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
+		if (!targetPort) return;
+		targetPort.label = selected.label;
+		targetPort.value = selected.value;
+	});
 }
 
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
