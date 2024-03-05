@@ -61,14 +61,14 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	}
 
 	@Override
-	public void onSuccess(TaskResponse resp) {
+	public void onSuccess(final TaskResponse resp) {
 		try {
-			final Properties props = ((TaskResponse) resp)
+			final Properties props = resp
 					.getAdditionalProperties(Properties.class);
 
 			final Model model = modelService.getAsset(props.getModelId())
 					.orElseThrow();
-			final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(),
+			final Response configurations = objectMapper.readValue(resp.getOutput(),
 					Response.class);
 
 			// For each configuration, create a new model configuration with parameters set
@@ -77,7 +77,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 				final Model modelCopy = new Model(model);
 				final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
 				modelParameters.forEach((parameter) -> {
-					JsonNode conditionParameters = condition.get("parameters");
+					final JsonNode conditionParameters = condition.get("parameters");
 					conditionParameters.forEach((conditionParameter) -> {
 						if (parameter.getId().equals(conditionParameter.get("id").asText())) {
 							parameter.setValue(conditionParameter.get("value").doubleValue());
@@ -93,7 +93,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 				configuration.setConfiguration(modelCopy);
 
 				try {
-					for (UUID datasetId : props.datasetIds) {
+					for (final UUID datasetId : props.datasetIds) {
 						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
 						// add provenance
 						provenanceService.createProvenance(new Provenance()
@@ -104,12 +104,12 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 								.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
 					}
 
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					log.error("Failed to set model configuration", e);
 				}
 			});
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Failed to configure model", e);
 			throw new RuntimeException(e);
 		}

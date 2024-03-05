@@ -60,23 +60,23 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 	}
 
 	@Override
-	public void onSuccess(TaskResponse resp) {
+	public void onSuccess(final TaskResponse resp) {
 		try {
 			final String serializedString = objectMapper
-					.writeValueAsString(((TaskResponse) resp).getAdditionalProperties());
+					.writeValueAsString(resp.getAdditionalProperties());
 			final Properties props = objectMapper.readValue(serializedString, Properties.class);
 
 			final Model model = modelService.getAsset(props.getModelId())
 					.orElseThrow();
-			final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(), Response.class);
+			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// For each configuration, create a new model configuration with parameters set
-			for (JsonNode condition : configurations.response.get("conditions")) {
+			for (final JsonNode condition : configurations.response.get("conditions")) {
 				// Map the parameters values to the model
 				final Model modelCopy = new Model(model);
 				final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
 				modelParameters.forEach((parameter) -> {
-					JsonNode conditionParameters = condition.get("parameters");
+					final JsonNode conditionParameters = condition.get("parameters");
 					conditionParameters.forEach((conditionParameter) -> {
 						if (parameter.getId().equals(conditionParameter.get("id").asText())) {
 							parameter.setValue(conditionParameter.get("value").doubleValue());
@@ -100,7 +100,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 						.setRightType(ProvenanceType.DOCUMENT)
 						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Failed to configure model", e);
 			throw new RuntimeException(e);
 		}
