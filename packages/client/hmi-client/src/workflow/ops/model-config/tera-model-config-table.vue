@@ -71,7 +71,7 @@
 			</template>
 		</Column>
 
-		<!-- Value: the thing we show depends on the type  -->
+		<!-- Value: the thing we show depends on the type of number -->
 		<Column field="value" header="Value" class="w-3 pr-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
@@ -225,7 +225,7 @@
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type { ModelConfiguration, ModelParameter, Initial } from '@/types/Types';
+import type { Initial, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
@@ -374,6 +374,7 @@ const updateExpression = async (value: Initial) => {
 const matrixEffect = () => {
 	if (Math.random() > 0.1) return;
 	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
+	if (!canvas) return;
 	const ctx = (canvas as HTMLCanvasElement)?.getContext('2d');
 
 	// eslint-disable-next-line no-multi-assign
