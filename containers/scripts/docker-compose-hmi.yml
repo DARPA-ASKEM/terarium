@@ -27,7 +27,6 @@ services:
       AWS_ACCESS_KEY_ID: "admin"
       AWS_SECRET_ACCESS_KEY: "admin123"
       KNOWLEDGE-MIDDLEWARE_URL: "http://${local_host_name}:3060"
-      MODEL-SERVICE_URL: "http://${local_host_name}:3010"
       SPICEDB_LAUNCHMODE: "PLAINTEXT"
       SPICEDB_SHARED-KEY: "dev"
       SPICEDB_TARGET: "${local_host_name}:50051"
@@ -84,8 +83,6 @@ services:
       redis:
         condition: service_healthy
       knowledge-middleware-api:
-        condition: service_started
-      model-service:
         condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"

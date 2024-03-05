@@ -35,12 +35,15 @@
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
+			<!-- Abstract -->
 			<AccordionTab v-if="!isEmpty(formattedAbstract)">
 				<template #header>
 					<header id="Abstract">Abstract</header>
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
+
+			<!-- Figures -->
 			<AccordionTab v-if="!isEmpty(figures)">
 				<template #header>
 					<header id="Figures">
@@ -49,14 +52,25 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
+						<Image
+							id="img"
+							class="extracted-image col-4"
+							:src="ex.metadata?.url"
+							:alt="''"
+							preview
+						/>
 						<tera-show-more-text
+							v-if="ex.metadata?.content"
+							class="extracted-caption col-7"
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
 						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
 					</li>
 				</ul>
 			</AccordionTab>
+
+			<!-- Tables -->
 			<AccordionTab v-if="!isEmpty(tables)">
 				<template #header>
 					<header id="Tables">
@@ -65,16 +79,25 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
-						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
-								:lines="previewLineLimit"
-							/>
-						</div>
+						<Image
+							id="img"
+							class="extracted-image col-4"
+							:src="ex.metadata?.url"
+							:alt="''"
+							preview
+						/>
+						<tera-show-more-text
+							v-if="ex.metadata?.content"
+							class="extracted-caption col-7"
+							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:lines="previewLineLimit"
+						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
 					</li>
 				</ul>
 			</AccordionTab>
+
+			<!-- Equations -->
 			<AccordionTab v-if="!isEmpty(equations)">
 				<template #header>
 					<header id="Equations">
@@ -83,18 +106,27 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
-						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
-								:lines="previewLineLimit"
-							/>
-						</div>
+						<Image
+							id="img"
+							class="extracted-image col-4"
+							:src="ex.metadata?.url"
+							:alt="''"
+							preview
+						/>
+						<tera-show-more-text
+							v-if="ex.metadata?.content"
+							class="extracted-caption col-7"
+							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:lines="previewLineLimit"
+						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
+
 						<tera-math-editor v-if="ex.metadata.equation" :latex-equation="ex.metadata.equation" />
 					</li>
 				</ul>
 			</AccordionTab>
 		</Accordion>
+
 		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
 		<p
 			class="pl-3"
@@ -282,23 +314,26 @@ onUpdated(() => {
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;
-	max-width: 70rem;
 }
 
 .extracted-item {
-	border: 1px solid var(--surface-border-light);
-	padding: 1rem;
-	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap);
 }
 
 .extracted-item > .extracted-image {
 	display: block;
-	max-width: 30rem;
-	margin-bottom: 0.5rem;
-	width: fit-content;
 	padding: 8px;
-	border: 1px solid var(--gray-300);
-	border-radius: 6px;
+	border: 1px solid var(--gray-200);
+	border-radius: var(--border-radius);
 	object-fit: contain;
+}
+
+.no-extracted-text {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	font-style: italic;
+	padding: var(--gap-small);
 }
 </style>

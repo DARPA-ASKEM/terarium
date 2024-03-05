@@ -2168,13 +2168,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/fetch-event-source@npm:2.0.1":
-  version: 2.0.1
-  resolution: "@microsoft/fetch-event-source@npm:2.0.1"
-  checksum: c147055fafe83801efb9834136ba4b7944406a0bba3517afcea6ceeb56714b5ef78c2e89544bd9c1426ad1d2f964a087e3a719169ae04855836a23fb53269f8d
-  languageName: node
-  linkType: hard
-
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -2650,10 +2643,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/eslint-patch@npm:1.6.1":
-  version: 1.6.1
-  resolution: "@rushstack/eslint-patch@npm:1.6.1"
-  checksum: 4c57775785718c6665bee8daea204bf2fe59c2fec6cabf0d126f01c6c170e11605b7453a089dfd5bf3fb758832b2aa7964d6b9f29007d708a3571e8ff7bcf391
+"@rushstack/eslint-patch@npm:1.7.2":
+  version: 1.7.2
+  resolution: "@rushstack/eslint-patch@npm:1.7.2"
+  checksum: 9a2da86b47bba118ad386417291d3960bc7470f78302be6b38c6b03f28a087e789e875c56a25eb1854779d55cadc167880739b36a540b1824bdb7c71283fd7a1
   languageName: node
   linkType: hard
 
@@ -3736,10 +3729,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ace-builds@npm:1.32.6":
-  version: 1.32.6
-  resolution: "ace-builds@npm:1.32.6"
-  checksum: 7b034277e95de63684626cd0427ca47a2def4bd818297126cbc6dc6f49930fc43100ecdb69fec4f7e286f7c651adc44e63e25166e3f1fb0452eae3762a09c07d
+"ace-builds@npm:1.32.7":
+  version: 1.32.7
+  resolution: "ace-builds@npm:1.32.7"
+  checksum: 9767247cb48079d06e965590ef39ddcec2715638be0f61906d6c3931cbce94596d383f584ebe6074f9dd3c7295cdaffc0ba3409f19c34c1d1291b92e6483bfb2
   languageName: node
   linkType: hard
 
@@ -4658,12 +4651,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chart.js@npm:4.4.1":
-  version: 4.4.1
-  resolution: "chart.js@npm:4.4.1"
+"chart.js@npm:4.4.2":
+  version: 4.4.2
+  resolution: "chart.js@npm:4.4.2"
   dependencies:
     "@kurkle/color": "npm:^0.3.0"
-  checksum: bb58247349ed04b6a38c4c4b45d953d87dab40ecd70dd796da302cbcebf866dfc1ecf7bd32d95ecb44b89dccf9a4cfc6ff84f74ba69b024be9b5bd19b2930fbc
+  checksum: 609444dfc9e847e4c891884309d6083464333e39a7266996fa15f622a44d0c5202c20c86b3bfb1d72b3769096f71c80e131860270c39ce1291cac52b9f45dc6d
   languageName: node
   linkType: hard
 
@@ -7212,6 +7205,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"extended-eventsource@npm:1.4.5":
+  version: 1.4.5
+  resolution: "extended-eventsource@npm:1.4.5"
+  checksum: c264f3c0aa523a92eb472de1573be2233519e2d52438f75c09614cd608e57f27d2967e348b2effd8a567b932f600156fcc79f565a0d660bc5ef7d68a2e4f9c57
+  languageName: node
+  linkType: hard
+
 "external-editor@npm:^3.0.3":
   version: 3.1.0
   resolution: "external-editor@npm:3.1.0"
@@ -8158,11 +8158,10 @@ __metadata:
     "@lumino/commands": "npm:2.1.3"
     "@lumino/coreutils": "npm:2.1.2"
     "@lumino/widgets": "npm:2.1.0"
-    "@microsoft/fetch-event-source": "npm:2.0.1"
     "@pinia/testing": "npm:0.1.3"
     "@playwright/experimental-ct-vue": "npm:1.31.2"
     "@playwright/test": "npm:1.31.2"
-    "@rushstack/eslint-patch": "npm:1.6.1"
+    "@rushstack/eslint-patch": "npm:1.7.2"
     "@types/d3": "npm:7.4.3"
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:18.19.3"
@@ -8174,15 +8173,16 @@ __metadata:
     "@vitest/coverage-c8": "npm:0.24.5"
     "@vue/runtime-dom": "npm:3.3.13"
     "@vueup/vue-quill": "npm:1.2.0"
-    ace-builds: "npm:1.32.6"
+    ace-builds: "npm:1.32.7"
     axios: "npm:1.6.7"
-    chart.js: "npm:4.4.1"
+    chart.js: "npm:4.4.2"
     chartjs-plugin-datalabels: "npm:2.2.0"
     chroma-js: "npm:2.4.2"
     d3: "npm:7.8.5"
     dagre: "npm:0.8.5"
     eslint-import-resolver-typescript: "npm:3.6.1"
     event-source-polyfill: "npm:1.0.31"
+    extended-eventsource: "npm:1.4.5"
     feather-icons: "npm:4.29.1"
     graph-scaffolder: "npm:*"
     katex: "npm:0.16.9"
