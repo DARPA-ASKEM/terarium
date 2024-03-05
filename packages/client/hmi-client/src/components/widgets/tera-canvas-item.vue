@@ -50,17 +50,18 @@ const stopDrag = (/* evt: MouseEvent */) => {
 
 onMounted(() => {
 	if (canvasItem.value) {
-		const dragHandle = canvasItem.value.querySelector('.drag-handle') ?? canvasItem.value;
+		const dragHandle = canvasItem.value.querySelector('.card') ?? canvasItem.value;
 
 		dragHandle.addEventListener('mousedown', startDrag);
 		document.addEventListener('mousemove', drag);
+		document.addEventListener('click', stopDrag);
 		dragHandle.addEventListener('mouseup', stopDrag);
 	}
 });
 
 onBeforeUnmount(() => {
 	if (canvasItem.value) {
-		const dragHandle = canvasItem.value.querySelector('.drag-handle') ?? canvasItem.value;
+		const dragHandle = canvasItem.value.querySelector('.card') ?? canvasItem.value;
 
 		dragHandle.removeEventListener('mousedown', startDrag);
 		document.removeEventListener('mousemove', drag);
