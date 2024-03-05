@@ -104,7 +104,6 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output-port="() => appendOutputPort()"
 							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
@@ -176,12 +175,11 @@
 			v-if="dialogIsOpened && currentActiveNode"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
-			@append-output-port="() => appendOutputPort()"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 			@close="dialogIsOpened = false"
+			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		>
 		</component>
 	</Teleport>
@@ -235,10 +233,11 @@ import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod'
 import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
-import * as ModelOptimizeOp from './ops/model-optimize/mod';
+import * as OptimizeCiemssOp from './ops/optimize-ciemss/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as ModelComparisonOp from './ops/model-comparison/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -259,10 +258,11 @@ registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
-registry.registerOp(ModelOptimizeOp);
+registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
+registry.registerOp(ModelComparisonOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -366,41 +366,6 @@ function appendOutput(
 	workflowDirty = true;
 }
 
-// @deprecated
-// FIXME: Leaving this in here to warn against existing development - remove after hackathon, Feb 2022.
-function appendOutputPort() {
-	/*
-	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
-	*/
-	console.error('This function is no longer supported, use <append-output> intstead');
-	throw new Error('This function is no longer supported, use <append-output> intstead');
-
-	/*
-	if (!node) return;
-
-	const uuid = uuidv4();
-
-	const outputPort: WorkflowOutput<any> = {
-		id: uuid,
-		type: port.type,
-		label: port.label,
-		value: isArray(port.value) ? port.value : [port.value],
-		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED,
-		state: port.state,
-		timestamp: new Date()
-	};
-
-	if ('isSelected' in port) outputPort.isSelected = port.isSelected;
-
-	node.outputs.push(outputPort);
-	node.active = uuid;
-
-	workflowDirty = true;
-	*/
-}
-
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
@@ -473,12 +438,16 @@ const contextMenuItems: MenuItem[] = [
 			},
 			{ separator: true },
 			{
-				label: ModelOptimizeOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelOptimizeOp)
+				label: OptimizeCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(OptimizeCiemssOp)
 			},
 			{
 				label: ModelCouplingOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelCouplingOp)
+			},
+			{
+				label: ModelComparisonOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelComparisonOp)
 			}
 		]
 	},

@@ -1,30 +1,38 @@
 <template>
 	<main>
-		<!-- hiding carousel UI until we get real images to place in it -->
-		<!-- <tera-carousel>
-			<img v-for="(image, index) in images" :src="image" alt="alt" :key="index" />
-		</tera-carousel> -->
-		<tera-operator-placeholder :operation-type="WorkflowOperationTypes.MODEL_FROM_DOCUMENT">
-			Attach equations or open the drilldown to configure
-		</tera-operator-placeholder>
-		<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
+		<tera-operator-model-preview v-if="model" :model="model" />
+		<tera-operator-placeholder
+			v-else
+			:operation-type="WorkflowOperationTypes.MODEL_FROM_DOCUMENT"
+		/>
+		<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 	</main>
 </template>
 
 <script setup lang="ts">
-// import TeraCarousel from '@/components/widgets/tera-carousel.vue';
-// import terarium from '@/assets/svg/terarium-icon.svg';
 import Button from 'primevue/button';
+import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { WorkflowOperationTypes } from '@/types/workflow';
+import { ref, onUpdated, onMounted } from 'vue';
+import { ModelOperationState } from '@/workflow/ops/model/model-operation';
+import { getModel } from '@/services/model';
+import { Model } from '@/types/Types';
+import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
+import operator from '@/services/operator';
+
+const props = defineProps<{
+	node: WorkflowNode<ModelOperationState>;
+}>();
 
 const emit = defineEmits(['open-drilldown']);
 
-// const images = [
-// 	new URL('@/assets/svg/terarium-icon.svg', import.meta.url).href,
-// 	new URL('@/assets/svg/uncharted-logo-official.svg', import.meta.url).href,
-// 	new URL('@/assets/svg/terarium-logo.svg', import.meta.url).href,
-// 	terarium,
-// 	'data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=='
-// ];
+const model = ref(null as Model | null);
+const updateModel = async () => {
+	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
+	if (modelId && modelId !== model?.value?.id) {
+		model.value = await getModel(modelId);
+	}
+};
+onMounted(updateModel);
+onUpdated(updateModel);
 </script>

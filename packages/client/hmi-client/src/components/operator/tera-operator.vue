@@ -180,7 +180,6 @@ main {
 		}
 
 		&:deep(li:hover .port) {
-			/* Not sure what color was intended */
 			background-color: var(--primary-color);
 			background-color: var(--surface-border);
 		}
@@ -233,6 +232,7 @@ main {
 			border: 2px solid var(--surface-border);
 			border-radius: var(--port-base-size);
 			background-color: var(--surface-100);
+			transition: background-color 0.125s ease-in-out;
 		}
 
 		&:deep(.port-connected .port)::after {

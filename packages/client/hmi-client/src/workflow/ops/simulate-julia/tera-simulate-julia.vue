@@ -37,8 +37,7 @@
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
-				@update:selection="onUpdateSelection"
+				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
 			>
@@ -121,14 +120,7 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { ProgressState } from '@/types/Types';
-import type {
-	CsvAsset,
-	Model,
-	ModelConfiguration,
-	SimulationRequest,
-	TimeSpan
-} from '@/types/Types';
+import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -139,9 +131,8 @@ import {
 	getSimulation,
 	makeForecastJob,
 	querySimulationInProgress,
-	simulationPollAction
+	pollAction
 } from '@/services/models/simulation-service';
-import { getModel } from '@/services/model';
 import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
@@ -159,13 +150,7 @@ import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'update-output-port',
-	'close'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 
@@ -185,14 +170,10 @@ const viewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const model = ref<{ [runId: string]: Model | null }>({});
-const modelConfigurations = ref<{ [runId: string]: ModelConfiguration | null }>({});
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const showSpinner = ref(false);
-const completedRunId = ref<string>('');
 const runResults = ref<RunResults>({});
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
@@ -215,18 +196,6 @@ const selectedRunId = computed(
 );
 
 const poller = new Poller();
-
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length === 1) {
-		// there should only be one run happening at a time
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -262,7 +231,7 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction([runId], props.node, progress, emit));
+		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
@@ -277,13 +246,6 @@ const getStatus = async (runId: string) => {
 		});
 		throw Error('Failed Runs');
 	}
-
-	completedRunId.value = runId;
-	showSpinner.value = false;
-};
-
-const watchCompletedRunId = async (runId: string) => {
-	if (!runId) return;
 
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
@@ -302,6 +264,8 @@ const watchCompletedRunId = async (runId: string) => {
 		},
 		isSelected: false
 	});
+
+	showSpinner.value = false;
 };
 
 const lazyLoadSimulationData = async (runId: string) => {
@@ -310,14 +274,11 @@ const lazyLoadSimulationData = async (runId: string) => {
 	// there's only a single input config
 	const modelConfigId = props.node.inputs[0].value?.[0];
 	const modelConfiguration = await getModelConfigurationById(modelConfigId);
-	modelConfigurations.value[runId] = modelConfiguration;
 
 	const resultCsv = await getRunResult(runId, 'result.csv');
 	const csvData = csvParse(resultCsv);
 
 	if (modelConfiguration) {
-		model.value[runId] = await getModel(modelConfiguration.model_id);
-
 		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
 		csvData.forEach((row) =>
 			parameters.forEach((parameter) => {
@@ -330,15 +291,8 @@ const lazyLoadSimulationData = async (runId: string) => {
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);
 };
 
-const onUpdateOutput = (id) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const onUpdateSelection = (id) => {
-	const outputPort = _.cloneDeep(props.node.outputs?.find((port) => port.id === id));
-	if (!outputPort) return;
-	outputPort.isSelected = !outputPort?.isSelected;
-	emit('update-output-port', outputPort);
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
@@ -365,7 +319,17 @@ async function saveDatasetToProject() {
 	}
 }
 
-watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length === 1) {
+		// there should only be one run happening at a time
+		getStatus(runIds[0]);
+	}
+});
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 watch(
 	() => selectedRunId.value,

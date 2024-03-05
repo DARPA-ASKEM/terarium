@@ -65,7 +65,7 @@
 							label="New"
 							text
 							size="small"
-							@click="emit('open-new-asset', AssetType.Model)"
+							@click.stop="emit('open-new-asset', AssetType.Model)"
 						/>
 						<Button
 							class="new-button"
@@ -74,7 +74,7 @@
 							label="New"
 							text
 							size="small"
-							@click="emit('open-new-asset', AssetType.Code)"
+							@click.stop="emit('open-new-asset', AssetType.Code)"
 						/>
 						<Button
 							class="new-button"
@@ -83,7 +83,7 @@
 							label="New"
 							text
 							size="small"
-							@click="emit('open-new-asset', AssetType.Workflow)"
+							@click.stop="emit('open-new-asset', AssetType.Workflow)"
 						/>
 					</div>
 				</template>
@@ -136,6 +136,7 @@
 						"
 					/>
 				</Button>
+				<section v-if="assetItems.size == 0" class="empty-resource">Empty</section>
 			</AccordionTab>
 		</Accordion>
 
@@ -260,6 +261,11 @@ header {
 	}
 }
 
+.empty-resource {
+	margin-left: 2.5rem;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+}
 .clear-icon {
 	position: absolute;
 	right: 48px;

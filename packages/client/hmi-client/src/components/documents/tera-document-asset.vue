@@ -2,8 +2,8 @@
 <template>
 	<tera-asset
 		:feature-config="featureConfig"
-		:name="highlightSearchTerms(doc?.name)"
-		:overline="highlightSearchTerms(doc?.source)"
+		:name="highlightSearchTerms(document?.name)"
+		:overline="highlightSearchTerms(document?.source)"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
@@ -19,30 +19,31 @@
 				option-disabled="disabled"
 			>
 				<template #option="{ option }">
-					<i
-						:class="`${
-							!pdfLink &&
-							option.value !== DocumentView.EXTRACTIONS &&
-							option.value !== DocumentView.NOT_FOUND
-								? 'pi pi-spin pi-spinner'
-								: option.icon
-						} p-button-icon-left`"
-					/>
+					<i :class="`${option.icon} p-button-icon-left`" />
 					<span class="p-button-label">{{ option.value }}</span>
 				</template>
 			</SelectButton>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</template>
 		<Accordion
 			v-if="view === DocumentView.EXTRACTIONS"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
+			<!-- Abstract -->
 			<AccordionTab v-if="!isEmpty(formattedAbstract)">
 				<template #header>
 					<header id="Abstract">Abstract</header>
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
+
+			<!-- Figures -->
 			<AccordionTab v-if="!isEmpty(figures)">
 				<template #header>
 					<header id="Figures">
@@ -51,14 +52,25 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image id="img" class="extracted-image" :src="ex.metadata?.url" :alt="''" preview />
+						<Image
+							id="img"
+							class="extracted-image col-4"
+							:src="ex.metadata?.url"
+							:alt="''"
+							preview
+						/>
 						<tera-show-more-text
+							v-if="ex.metadata?.content"
+							class="extracted-caption col-7"
 							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
 							:lines="previewLineLimit"
 						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
 					</li>
 				</ul>
 			</AccordionTab>
+
+			<!-- Tables -->
 			<AccordionTab v-if="!isEmpty(tables)">
 				<template #header>
 					<header id="Tables">
@@ -67,16 +79,25 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
-						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
-								:lines="previewLineLimit"
-							/>
-						</div>
+						<Image
+							id="img"
+							class="extracted-image col-4"
+							:src="ex.metadata?.url"
+							:alt="''"
+							preview
+						/>
+						<tera-show-more-text
+							v-if="ex.metadata?.content"
+							class="extracted-caption col-7"
+							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:lines="previewLineLimit"
+						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
 					</li>
 				</ul>
 			</AccordionTab>
+
+			<!-- Equations -->
 			<AccordionTab v-if="!isEmpty(equations)">
 				<template #header>
 					<header id="Equations">
@@ -85,23 +106,32 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
-						<div class="extracted-image">
-							<Image id="img" :src="ex.metadata?.url" :alt="''" preview />
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.metadata?.content ?? '')"
-								:lines="previewLineLimit"
-							/>
-						</div>
+						<Image
+							id="img"
+							class="extracted-image col-4"
+							:src="ex.metadata?.url"
+							:alt="''"
+							preview
+						/>
+						<tera-show-more-text
+							v-if="ex.metadata?.content"
+							class="extracted-caption col-7"
+							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:lines="previewLineLimit"
+						/>
+						<div v-else class="no-extracted-text">No extracted text</div>
+
 						<tera-math-editor v-if="ex.metadata.equation" :latex-equation="ex.metadata.equation" />
 					</li>
 				</ul>
 			</AccordionTab>
 		</Accordion>
+
 		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
 		<p
 			class="pl-3"
 			v-if="
-				isEmpty(doc?.assets) &&
+				isEmpty(document?.assets) &&
 				view === DocumentView.EXTRACTIONS &&
 				viewOptions[1]?.value === DocumentView.PDF
 			"
@@ -111,9 +141,9 @@
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
-			:title="doc?.name || ''"
+			:title="document?.name || ''"
 		/>
-		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText" />
+		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText ?? ''" />
 	</tera-asset>
 </template>
 
@@ -127,7 +157,7 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { DocumentAsset } from '@/types/Types';
-import { ExtractionAssetType } from '@/types/Types';
+import { AssetType, ExtractionAssetType } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
@@ -137,6 +167,10 @@ import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import { useProjects } from '@/composables/project';
+import { logger } from '@/utils/logger';
+import Button from 'primevue/button';
+import ContextMenu from 'primevue/contextmenu';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -152,7 +186,7 @@ const props = defineProps<{
 	featureConfig?: FeatureConfig;
 }>();
 
-const doc = ref<DocumentAsset | null>(null);
+const document = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
 const view = ref(DocumentView.EXTRACTIONS);
 
@@ -163,37 +197,68 @@ const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disa
 
 const viewOptions = computed(() => {
 	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
-	if (!isEmpty(doc.value?.fileNames)) {
-		if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
-			options.push(pdfOption);
-		} else {
-			options.push(txtOption);
-		}
+	const filename = document.value?.fileNames?.[0];
+	const isPdf = filename?.endsWith('.pdf');
+
+	if (isPdf) {
+		options.push(pdfOption);
+	} else if (docText.value) {
+		options.push(txtOption);
 	} else {
 		options.push(notFoundOption);
 	}
 	return options;
 });
 
-const docText = ref<string>('');
+const docText = ref<string | null>(null);
 
 const documentLoading = ref(false);
 
-const docLink = computed(() =>
-	doc.value?.fileNames && doc.value.fileNames.length > 0 ? doc.value.fileNames[0] : null
-);
-
 const figures = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
+	() =>
+		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
 );
 const tables = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
+	() =>
+		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
 );
 const equations = computed(
-	() => doc.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) || []
+	() =>
+		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) ||
+		[]
 );
 
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						const response = await useProjects().addAsset(
+							AssetType.Document,
+							props.assetId,
+							project.id
+						);
+						if (response) logger.info(`Added asset to ${project.name}`);
+						else logger.error('Failed to add asset to project');
+					}
+				})) ?? []
+	}
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
+]);
+
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -203,60 +268,44 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-async function openTextDocument() {
-	const filename: string | undefined = doc.value?.fileNames?.at(0);
-	const res: string | null = await getDocumentFileAsText(props.assetId!, filename!);
-	if (!res) return;
-	docText.value = res;
-}
-
+/* TODO: When fetching a document by id, its id and fileNames don't get returned.
+ Once they do see about adjusting the conditionals */
 watch(
 	() => props.assetId,
 	async () => {
 		if (props.assetId) {
+			view.value = DocumentView.EXTRACTIONS;
+			pdfLink.value = null;
 			documentLoading.value = true;
-			const document = await getDocumentAsset(props.assetId);
+			document.value = await getDocumentAsset(props.assetId);
+			const filename = document.value?.fileNames?.[0];
 
-			if (!document) {
-				return;
-			}
-			doc.value = document;
-			if (doc.value?.fileNames?.at(0)?.endsWith('.pdf')) {
-				if (view.value === DocumentView.TXT) {
-					view.value = DocumentView.PDF;
-				}
+			if (filename?.endsWith('.pdf')) {
+				pdfLink.value = await downloadDocumentAsset(props.assetId, filename); // Generate PDF download link on (doi change)
+				view.value = DocumentView.PDF;
 			} else {
-				await openTextDocument();
-				if (view.value === DocumentView.PDF) {
-					view.value = DocumentView.TXT;
-				}
+				docText.value =
+					filename && document.value?.id
+						? document.value?.text ?? (await getDocumentFileAsText(document.value.id, filename))
+						: document.value?.text ?? null;
+				if (docText.value !== null) view.value = DocumentView.TXT;
 			}
+
 			documentLoading.value = false;
 		} else {
-			doc.value = null;
+			document.value = null;
 		}
 	},
-	{
-		immediate: true
-	}
+	{ immediate: true }
 );
 
 const formattedAbstract = computed(() => {
-	if (!doc.value || !doc.value.description) return '';
-	return highlightSearchTerms(doc.value.description);
-});
-
-watch(docLink, async (currentValue, oldValue) => {
-	if (currentValue !== oldValue) {
-		// fetchDocumentArtifacts();
-		// fetchAssociatedResources();
-		pdfLink.value = null;
-		pdfLink.value = await downloadDocumentAsset(props.assetId, docLink.value!); // Generate PDF download link on (doi change)
-	}
+	if (!document.value || !document.value.description) return '';
+	return highlightSearchTerms(document.value.description);
 });
 
 onUpdated(() => {
-	if (doc.value) {
+	if (document.value) {
 		emit('asset-loaded');
 	}
 });
@@ -265,23 +314,26 @@ onUpdated(() => {
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;
-	max-width: 70rem;
 }
 
 .extracted-item {
-	border: 1px solid var(--surface-border-light);
-	padding: 1rem;
-	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap);
 }
 
 .extracted-item > .extracted-image {
 	display: block;
-	max-width: 30rem;
-	margin-bottom: 0.5rem;
-	width: fit-content;
 	padding: 8px;
-	border: 1px solid var(--gray-300);
-	border-radius: 6px;
+	border: 1px solid var(--gray-200);
+	border-radius: var(--border-radius);
 	object-fit: contain;
+}
+
+.no-extracted-text {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	font-style: italic;
+	padding: var(--gap-small);
 }
 </style>
