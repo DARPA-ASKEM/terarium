@@ -164,15 +164,11 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		}
 
 		asset.setUpdatedOn(Timestamp.from(Instant.now()));
-<<<<<<< HEAD
 		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
 
 		// Update the related ProjectAsset
 		projectAssetService.updateByAsset(asset);
 
-=======
-		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
->>>>>>> main
 		return Optional.of(asset);
 	}
 
