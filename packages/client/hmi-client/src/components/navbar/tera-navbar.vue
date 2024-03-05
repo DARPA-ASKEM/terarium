@@ -45,19 +45,21 @@
 				<template #default>
 					<form>
 						<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
-						<InputText
+						<Dropdown
 							id="evaluation-scenario-name"
-							type="text"
-							v-model="evaluationScenarioName"
-							placeholder="What is the scenario name?"
+							v-model="evaluationScenario"
+							:options="evalScenarios.scenarios"
+							optionLabel="name"
+							@change="onScenarioChange"
 						/>
 
 						<label class="text-sm" for="evaluation-scenario-task">Task</label>
-						<InputText
+						<Dropdown
 							id="evaluation-scenario-task"
-							type="text"
+							:options="evaluationScenario.questions"
 							v-model="evaluationScenarioTask"
-							placeholder="What is the scenario question?"
+							optionLabel="task"
+							@change="onTaskChange"
 						/>
 
 						<label class="text-sm" for="evaluation-scenario-description">Description</label>
@@ -65,7 +67,7 @@
 							id="evaluation-scenario-description"
 							rows="5"
 							v-model="evaluationScenarioDescription"
-							placeholder="Describe what you are working on"
+							:readonly="true"
 						/>
 
 						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
@@ -82,7 +84,6 @@
 								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
 								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
 							"
-							:disabled="!isEvaluationScenarioValid"
 							@click="stopEvaluationScenario"
 							>Stop</Button
 						>
@@ -116,7 +117,7 @@
 						<Button
 							v-else
 							size="large"
-							:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
+							:disabled="evaluationScenarioCurrentStatus !== ''"
 							@click="beginEvaluationScenario"
 							>Begin</Button
 						>
@@ -193,7 +194,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, Ref, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
@@ -203,7 +204,6 @@ import { MenuItem } from 'primevue/menuitem';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
-import InputText from 'primevue/inputtext';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
@@ -212,6 +212,9 @@ import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
+import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
+import Dropdown from 'primevue/dropdown';
+import evalScenariosJson from './eval-scenarios.json';
 
 defineProps<{
 	active: boolean;
@@ -238,9 +241,10 @@ const menuLabel = computed(() => {
  * Evaluation scenario code
  */
 const isEvaluationScenarioModalVisible = ref(false);
-const evaluationScenarioName = ref('');
-const evaluationScenarioTask = ref('');
-const evaluationScenarioDescription = ref('');
+const evalScenarios: Ref<EvalScenario> = ref(evalScenariosJson);
+const evaluationScenario: Ref<Scenario> = ref(evalScenarios.value.scenarios[0]);
+const evaluationScenarioTask: Ref<Question> = ref(evaluationScenario.value.questions[0]);
+const evaluationScenarioDescription: Ref<string> = ref(evaluationScenarioTask.value.description);
 const evaluationScenarioNotes = ref('');
 const evaluationScenarioCurrentStatus = ref('');
 const evaluationScenarioRuntimeMillis = ref(0);
@@ -257,12 +261,6 @@ const evaluationScenarioRuntimeString = computed(() => {
 	const sS = s < 10 ? `0${s}` : `${s}`;
 	return `${hS}:${mS}:${sS}`;
 });
-const isEvaluationScenarioValid = computed(
-	() =>
-		evaluationScenarioName.value !== '' &&
-		evaluationScenarioTask.value !== '' &&
-		evaluationScenarioDescription.value !== ''
-);
 
 /**
  * Logs an event to the server to begin an evaluation. Additionally, persists the evaluation
@@ -319,14 +317,23 @@ const resumeEvaluationScenario = async () => {
 	isEvaluationScenarioModalVisible.value = false;
 };
 
+const onScenarioChange = () => {
+	evaluationScenarioTask.value = evaluationScenario.value.questions[0];
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
+};
+
+const onTaskChange = () => {
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
+};
+
 /**
  * Returns the evaluation metadata model for the given action
  * @param action	the action name to log
  */
 
 const getEvaluationScenarioData = (action: string) => ({
-	name: evaluationScenarioName.value,
-	task: evaluationScenarioTask.value,
+	name: evaluationScenario.value.name,
+	task: evaluationScenarioTask.value.task,
 	description: evaluationScenarioDescription.value,
 	notes: evaluationScenarioNotes.value,
 	action
@@ -336,30 +343,39 @@ const getEvaluationScenarioData = (action: string) => ({
  * Saves the model to local storage
  */
 const persistEvaluationScenario = () => {
-	window.localStorage.setItem('evaluationScenarioName', evaluationScenarioName.value);
-	window.localStorage.setItem('evaluationScenarioTask', evaluationScenarioTask.value);
+	window.localStorage.setItem('evaluationScenarioName', evaluationScenario.value.name);
+	window.localStorage.setItem('evaluationScenarioTask', evaluationScenarioTask.value.task);
 	window.localStorage.setItem('evaluationScenarioDescription', evaluationScenarioDescription.value);
 	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
 };
 
 const refreshEvaluationScenario = async () => {
 	evaluationScenarioCurrentStatus.value = (
-		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
+		await API.get(`/evaluation/status?name=${evaluationScenario.value.name}`)
 	).data;
 
 	evaluationScenarioRuntimeMillis.value = (
-		await API.get(`/evaluation/runtime?name=${evaluationScenarioName.value}`)
+		await API.get(`/evaluation/runtime?name=${evaluationScenario.value.name}`)
 	).data;
 };
 
 const loadEvaluationScenario = async () => {
-	evaluationScenarioName.value = window.localStorage.getItem('evaluationScenarioName') || '';
-	evaluationScenarioTask.value = window.localStorage.getItem('evaluationScenarioTask') || '';
-	evaluationScenarioDescription.value =
-		window.localStorage.getItem('evaluationScenarioDescription') || '';
+	const scenarioName: string | null = window.localStorage.getItem('evaluationScenarioName');
+	const scenarioIndex: number = scenarioName
+		? evalScenarios.value.scenarios.findIndex((s) => s.name === scenarioName)
+		: 0;
+	evaluationScenario.value = evalScenarios.value.scenarios[scenarioIndex];
+
+	const taskName: string | null = window.localStorage.getItem('evaluationScenarioTask');
+	const taskIndex: number = taskName
+		? evaluationScenario.value.questions.findIndex((q) => q.task === taskName)
+		: 0;
+	evaluationScenarioTask.value = evaluationScenario.value.questions[taskIndex];
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
+
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
 
-	if (evaluationScenarioName.value !== '') {
+	if (evaluationScenario.value) {
 		await refreshEvaluationScenario();
 	}
 };
@@ -379,9 +395,9 @@ const startEvaluationTimer = () => {
  * Clears the model from local storage in memory
  */
 const clearEvaluationScenario = () => {
-	evaluationScenarioName.value = '';
-	evaluationScenarioTask.value = '';
-	evaluationScenarioDescription.value = '';
+	evaluationScenario.value = evalScenarios.value.scenarios[0];
+	evaluationScenarioTask.value = evaluationScenario.value.questions[0];
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
 	evaluationScenarioNotes.value = '';
 	evaluationScenarioCurrentStatus.value = '';
 	evaluationScenarioRuntimeMillis.value = 0;
