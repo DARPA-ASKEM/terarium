@@ -54,12 +54,9 @@ public class TaskRequest implements Serializable {
 		input = mapper.writeValueAsBytes(obj);
 	}
 
-	public <T> T getAdditionalProperties(final Class<T> type) {
-		if (type.isInstance(additionalProperties)) {
-			return type.cast(additionalProperties);
-		} else {
-			throw new IllegalArgumentException("Value is not of type " + type.getName());
-		}
+	public <T> T getAdditionalProperties(final Class<T> type) throws JsonProcessingException {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.readValue(objectMapper.writeValueAsString(additionalProperties), type);
 	}
 
 	@JsonIgnore

@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -62,19 +63,21 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 	@Override
 	public void onSuccess(final TaskResponse resp) {
 		try {
-			final String serializedString = objectMapper
-					.writeValueAsString(resp.getAdditionalProperties());
-			final Properties props = objectMapper.readValue(serializedString, Properties.class);
-
-			final Model model = modelService.getAsset(props.getModelId())
-					.orElseThrow();
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
-
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				// Map the parameters values to the model
 				final Model modelCopy = new Model(model);
-				final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
+				List<ModelParameter> modelParameters;
+				if (modelCopy.getHeader().getSchemaName().toLowerCase().equals("regnet")) {
+					modelParameters = objectMapper.convertValue(modelCopy.getModel().get("parameters"),
+							new TypeReference<List<ModelParameter>>() {
+							});
+				} else {
+					modelParameters = modelCopy.getSemantics().getOde().getParameters();
+				}
 				modelParameters.forEach((parameter) -> {
 					final JsonNode conditionParameters = condition.get("parameters");
 					conditionParameters.forEach((conditionParameter) -> {

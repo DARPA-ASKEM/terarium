@@ -198,7 +198,7 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-ids", required = true) final List<UUID> datasetIds,
+			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 
 		try {

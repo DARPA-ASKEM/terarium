@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -63,51 +64,50 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	@Override
 	public void onSuccess(final TaskResponse resp) {
 		try {
-			final Properties props = resp
-					.getAdditionalProperties(Properties.class);
-
-			final Model model = modelService.getAsset(props.getModelId())
-					.orElseThrow();
-			final Response configurations = objectMapper.readValue(resp.getOutput(),
-					Response.class);
-
-			// For each configuration, create a new model configuration with parameters set
-			configurations.response.get("conditions").forEach((condition) -> {
-				// Map the parameters values to the model
-				final Model modelCopy = new Model(model);
-				final List<ModelParameter> modelParameters = modelCopy.getSemantics().getOde().getParameters();
-				modelParameters.forEach((parameter) -> {
-					final JsonNode conditionParameters = condition.get("parameters");
-					conditionParameters.forEach((conditionParameter) -> {
-						if (parameter.getId().equals(conditionParameter.get("id").asText())) {
-							parameter.setValue(conditionParameter.get("value").doubleValue());
-						}
-					});
-				});
-
-				// Create the new configuration
-				final ModelConfiguration configuration = new ModelConfiguration();
-				configuration.setModelId(model.getId());
-				configuration.setName(condition.get("name").asText());
-				configuration.setDescription(condition.get("description").asText());
-				configuration.setConfiguration(modelCopy);
-
-				try {
-					for (final UUID datasetId : props.datasetIds) {
-						final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
-						// add provenance
-						provenanceService.createProvenance(new Provenance()
-								.setLeft(newConfig.getId())
-								.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-								.setRight(datasetId)
-								.setRightType(ProvenanceType.DATASET)
-								.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
+			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
+			// Map the parameters values to the model
+			final Model modelCopy = new Model(model);
+			List<ModelParameter> modelParameters;
+			if (modelCopy.getHeader().getSchemaName().toLowerCase().equals("regnet")) {
+				modelParameters = objectMapper.convertValue(modelCopy.getModel().get("parameters"),
+						new TypeReference<List<ModelParameter>>() {
+						});
+			} else {
+				modelParameters = modelCopy.getSemantics().getOde().getParameters();
+			}
+			modelParameters.forEach((parameter) -> {
+				final JsonNode conditionParameters = configurations.getResponse().get("parameters");
+				conditionParameters.forEach((conditionParameter) -> {
+					if (parameter.getId().equals(conditionParameter.get("id").asText())) {
+						parameter.setValue(conditionParameter.get("value").doubleValue());
 					}
-
-				} catch (final IOException e) {
-					log.error("Failed to set model configuration", e);
-				}
+				});
 			});
+
+			// Create the new configuration
+			final ModelConfiguration configuration = new ModelConfiguration();
+			configuration.setModelId(model.getId());
+			configuration.setName("New configuration from dataset");
+			configuration.setDescription("");
+			configuration.setConfiguration(modelCopy);
+
+			try {
+				for (final UUID datasetId : props.datasetIds) {
+					final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+					// add provenance
+					provenanceService.createProvenance(new Provenance()
+							.setLeft(newConfig.getId())
+							.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+							.setRight(datasetId)
+							.setRightType(ProvenanceType.DATASET)
+							.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+				}
+
+			} catch (final IOException e) {
+				log.error("Failed to set model configuration", e);
+			}
 
 		} catch (final Exception e) {
 			log.error("Failed to configure model", e);
