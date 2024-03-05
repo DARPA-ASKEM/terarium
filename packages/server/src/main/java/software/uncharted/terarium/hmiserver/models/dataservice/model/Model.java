@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -77,23 +78,20 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
         this.metadata = other.metadata;
     }
 
+	@JsonIgnore
 	@TSIgnore
 	public List<ModelParameter> getParameters() {
 		ObjectMapper objectMapper = new ObjectMapper();
 		if(this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
-		} else if (this.getSemantics() != null && this.getSemantics().getOde() != null) {
-			return this.getSemantics().getOde().getParameters();
 		} else {
-			return null;
+			return this.getSemantics().getOde().getParameters();
 		}
 	}
 
+	@JsonIgnore
 	@TSIgnore
 	public boolean isRegnet() {
-		if(this.getHeader() == null || this.getHeader().getSchemaName() == null){
-			return false;
-		}
-		return this.getHeader().getSchemaName().toLowerCase().equals("regnet");
+		return this.getHeader().getSchemaName().equalsIgnoreCase("regnet");
 	}
 }
