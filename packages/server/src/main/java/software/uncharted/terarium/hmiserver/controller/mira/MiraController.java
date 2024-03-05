@@ -84,7 +84,7 @@ public class MiraController {
 
 	@PostMapping("/convert-and-create-model")
 	@Secured(Roles.USER)
-	@Operation(summary = "Dispatch a Mira conversion task")
+	@Operation(summary = "Dispatch a MIRA conversion task")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
