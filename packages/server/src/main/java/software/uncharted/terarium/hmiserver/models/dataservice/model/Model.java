@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetThatSupportsAdditionalProperties;
@@ -76,6 +77,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
         this.metadata = other.metadata;
     }
 
+	@TSIgnore
 	public List<ModelParameter> getParameters() {
 		ObjectMapper objectMapper = new ObjectMapper();
 		if(this.isRegnet()) {
@@ -85,6 +87,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		}
 	}
 
+	@TSIgnore
 	public boolean isRegnet() {
 		return this.getHeader().getSchemaName().toLowerCase().equals("regnet");
 	}
