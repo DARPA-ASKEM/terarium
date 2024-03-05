@@ -7,10 +7,25 @@
 		size="small"
 		:class="{ 'hide-header': hideHeader }"
 	>
-		<Column expander style="width: 2%" />
-		<Column field="id" header="ID" style="width: 10%"></Column>
-		<Column field="name" header="Name" style="width: 15%"></Column>
-		<Column field="type" header="Value type" style="width: 15%">
+		<!-- Row expander, ID and Name columns -->
+		<Column expander class="w-3rem" />
+		<Column header="ID">
+			<template #body="slotProps">
+				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+					{{ slotProps.data.id }}
+				</span>
+			</template>
+		</Column>
+		<Column header="Name">
+			<template #body="slotProps">
+				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+					{{ slotProps.data.name }}
+				</span>
+			</template>
+		</Column>
+
+		<!-- Value type: Matrix or Expression, or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
+		<Column field="type" header="Value type" class="w-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -33,7 +48,9 @@
 				/>
 			</template>
 		</Column>
-		<Column field="value" header="Value" style="width: 10%">
+
+		<!-- Value: the thing we show depends on the type of number -->
+		<Column field="value" header="Value" class="w-3 pr-2">
 			<template #body="slotProps">
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
