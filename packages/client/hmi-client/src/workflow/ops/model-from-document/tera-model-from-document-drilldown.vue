@@ -62,16 +62,16 @@
 							@change="onChangeModelFramework"
 						/>
 					</span>
-					<span class="ml-3 mr-auto">
-						<label>Service</label>
-						<Dropdown
-							size="small"
-							v-model="clonedState.modelService"
-							:options="modelServices"
-							@change="emit('update-state', clonedState)"
-							class="ml-2"
-						/>
-					</span>
+					<!--					<span class="ml-3 mr-auto">-->
+					<!--						<label>Service</label>-->
+					<!--						<Dropdown-->
+					<!--							size="small"-->
+					<!--							v-model="clonedState.modelService"-->
+					<!--							:options="modelServices"-->
+					<!--							@change="emit('update-state', clonedState)"-->
+					<!--							class="ml-2"-->
+					<!--						/>-->
+					<!--					</span>-->
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -128,8 +128,8 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { getDocumentAsset, getEquationFromImageUrl } from '@/services/document-assets';
-import { AssetType } from '@/types/Types';
 import type { Card, DocumentAsset, DocumentExtraction, Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { cloneDeep, isEmpty, unionBy } from 'lodash';
 import Image from 'primevue/image';
 import { equationsToAMR } from '@/services/knowledge';
@@ -209,7 +209,7 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>('');
 
 const modelFrameworks = Object.values(ModelFramework);
-const modelServices = Object.values(ModelServiceType);
+// const modelServices = Object.values(ModelServiceType);
 const clonedState = ref<ModelFromDocumentState>({
 	equations: [],
 	text: '',
@@ -393,17 +393,18 @@ function removeEquation(index: number) {
 // generates the model card and fetches the model when finished
 async function generateCard(docId, modelId) {
 	if (!docId || !modelId) return;
-
-	if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
-		return;
-	}
-
-	if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
-		return;
-	}
+	//
+	// if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
+	// 	return;
+	// }
+	//
+	// if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
+	// 	return;
+	// }
 
 	isGeneratingCard.value = true;
-	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	// await generateModelCard(docId, modelId, clonedState.value.modelService);
+	await generateModelCard(docId, modelId, ModelServiceType.TA1);
 	isGeneratingCard.value = false;
 	fetchModel();
 }
