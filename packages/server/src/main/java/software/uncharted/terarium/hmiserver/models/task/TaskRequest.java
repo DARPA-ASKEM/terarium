@@ -1,8 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.task;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,16 +30,16 @@ public class TaskRequest implements Serializable {
 	// itself, but are passed through to every response.
 	private Object additionalProperties;
 
-	public void setInput(byte[] bytes) throws JsonProcessingException {
+	public void setInput(final byte[] bytes) throws JsonProcessingException {
 		input = bytes;
 	}
 
-	public void setInput(Object obj) throws JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
+	public void setInput(final Object obj) throws JsonProcessingException {
+		final ObjectMapper mapper = new ObjectMapper();
 		input = mapper.writeValueAsBytes(obj);
 	}
 
-	public TaskResponse createResponse(TaskStatus status) {
+	public TaskResponse createResponse(final TaskStatus status) {
 		return new TaskResponse()
 				.setId(id)
 				.setStatus(status)
@@ -43,11 +47,30 @@ public class TaskRequest implements Serializable {
 				.setAdditionalProperties(additionalProperties);
 	}
 
-	public <T> T getAdditionalProperties(Class<T> type) {
+	public <T> T getAdditionalProperties(final Class<T> type) {
 		if (type.isInstance(additionalProperties)) {
 			return type.cast(additionalProperties);
 		} else {
 			throw new IllegalArgumentException("Value is not of type " + type.getName());
+		}
+	}
+
+	@JsonIgnore
+	public String getSHA256() {
+		try {
+			// NOTE: do not include the task id in this hash, we want to determine if the
+			// body of the request is unique
+			final ObjectMapper mapper = new ObjectMapper();
+
+			final String encodedInput = Base64.getEncoder().encodeToString(input);
+			final String encodedAdditionalProperties = Base64.getEncoder()
+					.encodeToString(mapper.writeValueAsBytes(additionalProperties));
+
+			final String strHash = String.format("%s-%s-%s", script, encodedInput, encodedAdditionalProperties);
+			final MessageDigest md = MessageDigest.getInstance("SHA-256");
+			return Base64.getEncoder().encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 }

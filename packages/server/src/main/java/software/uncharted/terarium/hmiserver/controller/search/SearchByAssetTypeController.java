@@ -136,10 +136,8 @@ public class SearchByAssetTypeController {
 					req.setInput(embeddingRequest);
 					req.setScript("gollm:embedding");
 
-					final List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.GOLLM,
+					final TaskResponse resp = taskService.runTaskSync(req, TaskType.GOLLM,
 							REQUEST_TIMEOUT_SECONDS);
-
-					final TaskResponse resp = responses.get(responses.size() - 1);
 
 					if (resp.getStatus() != TaskStatus.SUCCESS) {
 						throw new ResponseStatusException(

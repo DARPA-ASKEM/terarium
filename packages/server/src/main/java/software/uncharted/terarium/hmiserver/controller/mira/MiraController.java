@@ -56,8 +56,8 @@ public class MiraController {
 		public Model response;
 	};
 
-	private boolean endsWith(String filename, List<String> suffixes) {
-		for (String suffix : suffixes) {
+	private boolean endsWith(final String filename, final List<String> suffixes) {
+		for (final String suffix : suffixes) {
 			if (filename.endsWith(suffix)) {
 				return true;
 			}
@@ -76,7 +76,7 @@ public class MiraController {
 			@RequestBody final ModelConversionRequest conversionRequest) {
 
 		try {
-			TaskRequest req = new TaskRequest();
+			final TaskRequest req = new TaskRequest();
 			req.setInput(conversionRequest.getModelContent().getBytes());
 
 			if (endsWith(conversionRequest.getModelName(), List.of(".mdl"))) {
@@ -91,10 +91,8 @@ public class MiraController {
 						"Unknown model type");
 			}
 
-			List<TaskResponse> responses = taskService.runTaskBlocking(req, TaskType.MIRA,
+			final TaskResponse resp = taskService.runTaskSync(req, TaskType.MIRA,
 					REQUEST_TIMEOUT_SECONDS);
-
-			TaskResponse resp = responses.get(responses.size() - 1);
 
 			if (resp.getStatus() != TaskStatus.SUCCESS) {
 				throw new ResponseStatusException(
@@ -102,10 +100,10 @@ public class MiraController {
 						"Unable to generate vectors for knn search");
 			}
 
-			byte[] outputBytes = resp.getOutput();
-			JsonNode output = objectMapper.readTree(outputBytes);
+			final byte[] outputBytes = resp.getOutput();
+			final JsonNode output = objectMapper.readTree(outputBytes);
 
-			ModelConversionResponse modelResp = objectMapper.convertValue(output, ModelConversionResponse.class);
+			final ModelConversionResponse modelResp = objectMapper.convertValue(output, ModelConversionResponse.class);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(modelService.createAsset(modelResp.getResponse()));
 
