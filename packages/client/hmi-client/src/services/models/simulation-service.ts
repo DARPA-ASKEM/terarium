@@ -11,6 +11,7 @@ import {
 	EnsembleCalibrationCiemssRequest,
 	EnsembleSimulationCiemssRequest,
 	EventType,
+	OptimizeRequestCiemss,
 	ProgressState,
 	Simulation,
 	SimulationRequest
@@ -190,6 +191,17 @@ export async function makeCalibrateJobJulia(calibrationParams: CalibrationReques
 export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/calibrate', calibrationParams);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
+export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss) {
+	try {
+		const resp = await API.post('simulation-request/ciemss/optimize', optimizeParams);
 		const output = resp.data;
 		return output;
 	} catch (err) {
