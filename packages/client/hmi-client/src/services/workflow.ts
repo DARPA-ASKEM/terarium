@@ -92,7 +92,7 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		status: OperatorStatus.INVALID,
+		status: OperatorStatus.DEFAULT,
 
 		width: nodeSize.width,
 		height: nodeSize.height
@@ -332,16 +332,13 @@ export class WorkflowRegistry {
 }
 
 export function cascadeInvalidateDownstream(
-	wf: Workflow,
 	sourceNode: WorkflowNode<any>,
-	nodesCache: Map<string, WorkflowNode<any>>
+	nodeCache: Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>
 ) {
-	const outgoingEdges = wf.edges.filter((edge) => edge.source === sourceNode.id);
-	outgoingEdges.forEach((edge) => {
-		const targetNode = nodesCache.get(edge.target);
-		if (!targetNode) return;
-		targetNode.status = OperatorStatus.INVALID;
-		cascadeInvalidateDownstream(wf, targetNode, nodesCache);
+	const downstreamNodes = nodeCache.get(sourceNode.id);
+	downstreamNodes?.forEach((node) => {
+		node.status = OperatorStatus.INVALID;
+		cascadeInvalidateDownstream(node, nodeCache); // Recurse
 	});
 }
 
@@ -383,22 +380,38 @@ export function selectOutput(
 	operator.active = selected.id;
 
 	// If this output is connected to input port(s), update the input port(s)
-	const outgoingEdges = wf.edges.filter((edge) => edge.source === operator.id);
-	if (_.isEmpty(outgoingEdges)) return;
+	const hasOutgoingEdges = wf.edges.some((edge) => edge.source === operator.id);
+	if (!hasOutgoingEdges) return;
+
 	selected.status = WorkflowPortStatus.CONNECTED;
 
-	outgoingEdges.forEach((edge) => {
-		const targetNode = wf.nodes.find((node) => node.id === edge.target);
-		if (!targetNode) return;
-		// Update the input port of the target node
-		const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
-		if (!targetPort) return;
-		targetPort.label = selected.label;
-		targetPort.value = selected.value;
+	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
+	nodeCache.set(operator.id, []);
+
+	wf.edges.forEach((edge) => {
+		// Update the input port of the direct target node
+		if (edge.source === operator.id) {
+			const targetNode = wf.nodes.find((node) => node.id === edge.target);
+			if (!targetNode) return;
+			// Update the input port of the target node
+			const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
+			if (!targetPort) return;
+			targetPort.label = selected.label;
+			targetPort.value = selected.value;
+		}
+
+		// Collect node cache
+		if (nodeCache.has(edge.source)) {
+			// Add the node connected to this edge's source
+			nodeCache
+				.get(edge.source)
+				?.push(wf.nodes.find((node) => node.id === edge.target) as WorkflowNode<any>);
+			// Make a new relationship for the nodes attached to this edge's target node
+			if (!nodeCache.has(edge.target)) nodeCache.set(edge.target, []);
+		}
 	});
 
-	const nodesCache = new Map<string, WorkflowNode<any>>(wf.nodes.map((node) => [node.id, node]));
-	cascadeInvalidateDownstream(wf, operator, nodesCache);
+	cascadeInvalidateDownstream(operator, nodeCache);
 }
 
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {

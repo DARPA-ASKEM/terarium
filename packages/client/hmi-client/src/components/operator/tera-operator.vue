@@ -136,7 +136,7 @@ main {
 	min-width: 15rem;
 	transition: box-shadow 80ms ease;
 	&:hover {
-		box-shadow: var(--overlayMenuShadowHover);
+		/* box-shadow: var(--overlayMenuShadowHover); */
 		z-index: 2;
 	}
 
