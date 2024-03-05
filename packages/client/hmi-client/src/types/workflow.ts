@@ -20,7 +20,7 @@ export enum WorkflowOperationTypes {
 	CODE = 'Code',
 	MODEL_COMPARISON = 'ModelComparison',
 	MODEL_CONFIG = 'ModelConfiguration',
-	MODEL_OPTIMIZE = 'ModelOptimize',
+	OPTIMIZE_CIEMSS = 'OptimizeCiemss',
 	MODEL_COUPLING = 'ModelCoupling',
 	MODEL_EDIT = 'ModelEdit',
 	DOCUMENT = 'Document',
