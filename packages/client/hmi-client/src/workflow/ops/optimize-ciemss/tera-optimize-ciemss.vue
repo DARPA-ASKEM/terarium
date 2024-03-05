@@ -225,6 +225,7 @@
 		</template>
 		<template #footer>
 			<Button
+				:disabled="isRunDisabled"
 				outlined
 				:style="{ marginRight: 'auto' }"
 				label="Run"
@@ -371,6 +372,15 @@ const outputs = computed(() => {
 		];
 	}
 	return [];
+});
+
+const isRunDisabled = computed(() => {
+	if (
+		knobs.value.targetVariables.length === 0 ||
+		props.node.state.interventionPolicyGroups.length === 0
+	)
+		return true;
+	return false;
 });
 const selectedOutputId = ref<string>();
 const policyResult = ref<number[]>();
