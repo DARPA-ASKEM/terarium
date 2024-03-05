@@ -73,12 +73,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 					Response.class);
                 // Map the parameters values to the model
                 final Model modelCopy = new Model(model);
-                List<ModelParameter> modelParameters;
-					if(modelCopy.getHeader().getSchemaName().toLowerCase().equals("regnet")) {
-						modelParameters = objectMapper.convertValue(modelCopy.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
-					} else {
-						modelParameters = modelCopy.getSemantics().getOde().getParameters();
-					}
+                List<ModelParameter> modelParameters = modelCopy.getParameters();
                 modelParameters.forEach((parameter) -> {
                     JsonNode conditionParameters = configurations.getResponse().get("parameters");
                     conditionParameters.forEach((conditionParameter) -> {
@@ -87,6 +82,10 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
                         }
                     });
                 });
+
+                if(modelCopy.isRegnet()) {
+                    modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+                }
 
 				// Create the new configuration
 				final ModelConfiguration configuration = new ModelConfiguration();
