@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.controller.mira.MiraController;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -157,7 +156,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
-		req.setScript(MiraController.MDL_TO_STOCKFLOW);
+		req.setScript("mira_task:mdl_to_stockflow");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);
@@ -174,7 +173,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
-		req.setScript(MiraController.STELLA_TO_STOCKFLOW);
+		req.setScript("mira_task:stella_to_stockflow");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);
@@ -191,7 +190,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
-		req.setScript(MiraController.SBML_TO_PETRINET);
+		req.setScript("miar_task:sbml_to_petrinet");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);
