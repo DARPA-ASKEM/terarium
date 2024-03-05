@@ -44,21 +44,27 @@ watch(isAdobePdfApiReady, () => {
 		);
 
 		if (props.pdfLink) {
-			adobeDCView.value.previewFile({
-				content: {
-					location: {
-						url: props.pdfLink
-					}
+			adobeDCView.value.previewFile(
+				{
+					content: {
+						location: {
+							url: props.pdfLink
+						}
+					},
+					metaData: { fileName: props.title }
 				},
-				metaData: { fileName: props.title }
-			});
+				{ embedMode: 'IN_LINE', showPrintPDF: true }
+			);
 		} else if (props.filePromise) {
-			adobeDCView.value.previewFile({
-				content: {
-					promise: props.filePromise
+			adobeDCView.value.previewFile(
+				{
+					content: {
+						promise: props.filePromise
+					},
+					metaData: { fileName: props.title }
 				},
-				metaData: { fileName: props.title }
-			});
+				{ embedMode: 'IN_LINE', showPrintPDF: true }
+			);
 		}
 	}
 });
