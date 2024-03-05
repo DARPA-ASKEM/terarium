@@ -34,7 +34,6 @@ export interface OptimizeCiemssOperationState {
 	simulationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
-	datasetName: string;
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -76,8 +75,7 @@ export const OptimizeCiemssOperation: Operation = {
 			simulationsInProgress: [],
 			simulationRunId: '',
 			modelConfigName: '',
-			modelConfigDesc: '',
-			datasetName: ''
+			modelConfigDesc: ''
 		};
 		return init;
 	}
