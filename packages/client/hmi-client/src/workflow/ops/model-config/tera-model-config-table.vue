@@ -235,7 +235,6 @@ import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common'
 import Dropdown from 'primevue/dropdown';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
-import { cloneDeep } from 'lodash';
 import { getModelType } from '@/services/model';
 
 const typeOptions = [
@@ -286,13 +285,13 @@ const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expa
 
 const updateTimeseries = (id: string, value: string) => {
 	if (!validateTimeSeries(value)) return;
-	const clonedConfig = cloneDeep(props.modelConfiguration);
+	const clonedConfig = structuredClone(props.modelConfiguration);
 	clonedConfig.configuration.metadata.timeseries[id] = value;
 	emit('update-configuration', clonedConfig);
 };
 
 const updateSource = (id: string, value: string) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
+	const clonedConfig = structuredClone(props.modelConfiguration);
 	clonedConfig.configuration.metadata.sources[id] = value;
 	emit('update-configuration', clonedConfig);
 };
@@ -313,7 +312,7 @@ const validateTimeSeries = (values: string) => {
 const changeType = (param: ModelParameter, typeIndex: number) => {
 	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
 	const type = typeOptions[typeIndex];
-	const clonedConfig = cloneDeep(props.modelConfiguration);
+	const clonedConfig = structuredClone(props.modelConfiguration);
 
 	let idx;
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
