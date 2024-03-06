@@ -50,7 +50,7 @@
 					optionLabel="label"
 					optionValue="value"
 					placeholder="Select a parameter type"
-					@update:model-value="(val) => changeType(slotProps.data.value, val)"
+					@update:model-value="(val) => changeType(slotProps.data.value, val.value)"
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
@@ -306,18 +306,18 @@ const validateTimeSeries = (values: string) => {
 	return isValid;
 };
 
-const changeType = (param: ModelParameter, typeIndex: number) => {
+const changeType = (param: ModelParameter, type: ParamType) => {
 	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
-	const type = typeOptions[typeIndex];
 	const clonedConfig = cloneDeep(props.modelConfiguration);
 
-	let idx;
+	let idx: any;
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
 		idx = clonedConfig.configuration.semantics.ode.parameters.findIndex((p) => p.id === param.id);
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
 		idx = clonedConfig.configuration.model.parameters.findIndex((p) => p.id === param.id);
 	}
-	switch (type.value) {
+
+	switch (type) {
 		case ParamType.CONSTANT:
 			delete param.distribution;
 			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
@@ -357,7 +357,7 @@ const constantToDistribution = (param: ModelParameter) => {
 			maximum: param.value + (param.value * addPlusMinus.value) / 100
 		}
 	};
-	changeType(param, 1);
+	changeType(param, ParamType.DISTRIBUTION);
 };
 
 const stratifiedModelType = computed(() =>
