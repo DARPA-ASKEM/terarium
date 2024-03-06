@@ -136,7 +136,7 @@
 					/>
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
 					<Button
-						class="ml-2 pt-0 pb-0 w-5"
+						class="ml-2 py-0 w-5"
 						text
 						@click="constantToDistribution(slotProps.data.value, 1)"
 						v-tooltip="'Convert to distribution'"
@@ -349,9 +349,8 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	emit('update-configuration', clonedConfig);
 };
 
-const constantToDistribution = (param: ModelParameter, idx: number) => {
+const constantToDistribution = (param: ModelParameter) => {
 	if (!param.value) return;
-	const clonedConfig = structuredClone(props.modelConfiguration);
 	param.distribution = {
 		type: 'Uniform1',
 		parameters: {
@@ -359,8 +358,7 @@ const constantToDistribution = (param: ModelParameter, idx: number) => {
 			maximum: param.value + (param.value * addPlusMinus.value) / 100
 		}
 	};
-	replaceParam(clonedConfig, param, idx);
-	emit('update-configuration', clonedConfig);
+	changeType(param, 1);
 };
 
 const stratifiedModelType = computed(() =>
