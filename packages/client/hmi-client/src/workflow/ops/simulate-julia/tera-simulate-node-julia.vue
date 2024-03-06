@@ -97,8 +97,8 @@ watch(
 	async (id) => {
 		if (!id || id === '') return;
 
-		const r = await pollResult(id);
-		if (r.state === PollerState.Done) {
+		const response = await pollResult(id);
+		if (response.state === PollerState.Done) {
 			processResult(id);
 		}
 
