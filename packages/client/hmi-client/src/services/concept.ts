@@ -129,7 +129,8 @@ const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string
 
 function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
 	if (!!identifier && !isEmpty(identifier)) {
-		return Object.entries(identifier)[0][0];
+		const [key, value] = Object.entries(identifier)[0];
+		return `${key}:${value}`;
 	}
 	return '';
 }

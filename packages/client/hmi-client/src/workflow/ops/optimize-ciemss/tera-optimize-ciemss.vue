@@ -129,18 +129,6 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
-				<!-- TODO: saveDatasetToProject is failing for all drilldowns -->
-				<div v-if="false" class="label-and-input">
-					<label>Dataset Name</label>
-					<InputText v-model="knobs.datasetName" />
-
-					<Button
-						:disabled="knobs.datasetName === '' || knobs.simulationRunId === ''"
-						outlined
-						label="Save as a new dataset"
-						@click="saveDatasetToProject"
-					/>
-				</div>
 				<SelectButton
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
@@ -202,6 +190,7 @@
 				label="Save as a new model configuration"
 				@click="saveModelConfiguration"
 			/>
+			<tera-save-dataset-from-simulation :simulation-run-id="knobs.simulationRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -224,6 +213,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
+import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 // Services:
 import {
 	getModelConfigurationById,
@@ -236,9 +226,8 @@ import {
 	getRunResultCiemss,
 	getRunResult
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset'; //
+import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { Poller, PollerState } from '@/api/api';
-import { useProjects } from '@/composables/project';
 // Types:
 import {
 	ModelConfiguration,
@@ -287,7 +276,6 @@ interface BasicKnobs {
 	simulationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
-	datasetName: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -301,8 +289,7 @@ const knobs = ref<BasicKnobs>({
 	isMinimized: props.node.state.isMinimized ?? true,
 	simulationRunId: props.node.state.simulationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
-	datasetName: props.node.state.datasetName ?? ''
+	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
 });
 
 const showSpinner = ref(false);
@@ -550,22 +537,6 @@ const saveModelConfiguration = async () => {
 	});
 };
 
-const saveDatasetToProject = async () => {
-	const { activeProject, refresh } = useProjects();
-	if (activeProject.value?.id) {
-		console.log(activeProject.value.id, knobs.value.simulationRunId, knobs.value.datasetName);
-		if (
-			await saveDataset(
-				activeProject.value.id,
-				knobs.value.simulationRunId,
-				knobs.value.datasetName
-			)
-		) {
-			refresh();
-		}
-	}
-};
-
 onMounted(async () => {
 	initialize();
 });
@@ -584,7 +555,6 @@ watch(
 		state.simulationRunId = knobs.value.simulationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
-		state.datasetName = knobs.value.datasetName;
 		emit('update-state', state);
 	},
 	{ deep: true }
