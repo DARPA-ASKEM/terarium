@@ -28,8 +28,8 @@
 		<Column field="type" header="Value type" class="w-2">
 			<template #body="slotProps">
 				<Button
-					text
 					v-if="slotProps.data.type === ParamType.MATRIX"
+					text
 					icon="pi pi-table"
 					label="Matrix"
 					@click="openMatrixModal(slotProps.data)"
@@ -54,17 +54,14 @@
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
-							<span
-								class="p-dropdown-item-icon mr-2"
-								:class="typeOptions[slotProps.value].icon"
-							></span>
-							<span>{{ typeOptions[slotProps.value].label }}</span>
+							<span class="p-dropdown-item-icon mr-2" :class="typeOptions[slotProps.value].icon" />
+							{{ typeOptions[slotProps.value].label }}
 						</span>
 					</template>
 					<template #option="slotProps">
 						<span class="flex align-items-center">
-							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon"></span>
-							<span>{{ slotProps.option.label }}</span>
+							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon" />
+							{{ slotProps.option.label }}
 						</span>
 					</template>
 				</Dropdown>
@@ -190,6 +187,7 @@
 				<InputSwitch v-model="slotProps.data.visibility" @click.stop />
 			</template>
 		</Column> -->
+
 		<template #expansion="slotProps">
 			<tera-model-config-table
 				hide-header
@@ -234,6 +232,7 @@ import Dropdown from 'primevue/dropdown';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import { getModelType } from '@/services/model';
+import { cloneDeep } from 'lodash';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -310,7 +309,7 @@ const validateTimeSeries = (values: string) => {
 const changeType = (param: ModelParameter, typeIndex: number) => {
 	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
 	const type = typeOptions[typeIndex];
-	const clonedConfig = structuredClone(props.modelConfiguration);
+	const clonedConfig = cloneDeep(props.modelConfiguration);
 
 	let idx;
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
