@@ -396,6 +396,7 @@ export function selectOutput(
 			// Update the input port of the target node
 			const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
 			if (!targetPort) return;
+			edge.sourcePortId = selected.id; // Sync edge source port to selected output
 			targetPort.label = selected.label;
 			targetPort.value = selected.value;
 		}
