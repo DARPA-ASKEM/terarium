@@ -92,15 +92,6 @@
 								placeholder="Select"
 							/>
 						</div>
-						<div class="label-and-input">
-							<label>Over number of days</label>
-							<InputNumber
-								disabled
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numSamples"
-							/>
-						</div>
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
@@ -291,7 +282,6 @@ interface BasicKnobs {
 	numStochasticSamples: number;
 	solverMethod: string;
 	targetVariables: string[];
-	numSamples: number;
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
@@ -307,7 +297,6 @@ const knobs = ref<BasicKnobs>({
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	targetVariables: props.node.state.targetVariables ?? [],
-	numSamples: props.node.state.numSamples ?? 1, // Currently not used, poor name.
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
@@ -466,7 +455,7 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		extra: {
-			num_samples: knobs.value.numSamples,
+			num_samples: knobs.value.numStochasticSamples,
 			method: knobs.value.solverMethod,
 			inferredParameters: policyResult.value
 		},
@@ -591,7 +580,6 @@ watch(
 		state.numStochasticSamples = knobs.value.numStochasticSamples;
 		state.solverMethod = knobs.value.solverMethod;
 		state.targetVariables = knobs.value.targetVariables;
-		state.numSamples = knobs.value.numSamples;
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
 		state.simulationRunId = knobs.value.simulationRunId;

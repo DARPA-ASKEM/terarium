@@ -21,7 +21,6 @@ export interface OptimizeCiemssOperationState {
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
 	targetVariables: string[];
-	numSamples: number;
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
@@ -60,7 +59,6 @@ export const OptimizeCiemssOperation: Operation = {
 			solverMethod: 'euler',
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
-			numSamples: 4,
 			riskTolerance: 95,
 			threshold: 0,
 			isMinimized: true,
