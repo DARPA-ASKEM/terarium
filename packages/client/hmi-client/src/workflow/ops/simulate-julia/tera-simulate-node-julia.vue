@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<tera-simulate-chart
-			v-if="hasData"
+			v-if="runResults[selectedRunId]"
 			:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
 			:chartConfig="{
 				selectedRun: selectedRunId,
@@ -43,7 +43,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 const runResults = ref<RunResults>({});
-const hasData = ref(false);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 
@@ -97,7 +96,6 @@ watch(
 	() => props.node.state.inProgressSimulationId,
 	async (id) => {
 		if (!id || id === '') return;
-		console.log('gotta start polling.....');
 
 		const r = await pollResult(id);
 		if (r.state === PollerState.Done) {
@@ -114,6 +112,8 @@ watch(
 watch(
 	() => props.node.active,
 	async () => {
+		if (!props.node.active) return;
+
 		const active = props.node.active;
 		if (!active) return;
 
@@ -123,7 +123,6 @@ watch(
 		const resultCsv = await getRunResult(selectedRunId.value, 'result.csv');
 		const csvData = csvParse(resultCsv);
 		runResults.value[selectedRunId.value] = csvData as any;
-		hasData.value = true;
 	},
 	{ immediate: true }
 );

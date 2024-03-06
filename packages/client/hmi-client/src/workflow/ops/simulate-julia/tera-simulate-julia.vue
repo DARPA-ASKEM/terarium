@@ -117,7 +117,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
@@ -169,8 +169,8 @@ const showSpinner = ref(false);
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
 
-const runResults = shallowRef<RunResults>({});
-const rawContent = shallowRef<{ [runId: string]: CsvAsset | null }>({});
+const runResults = ref<RunResults>({});
+const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -287,6 +287,8 @@ watch(
 
 		// Update Wizard form fields with current selected output state timespan
 		timespan.value = props.node.state.currentTimespan;
+
+		console.log('hihihi', selectedRunId.value);
 
 		// Resume or fetch result
 		const simulationId = selectedRunId.value;
