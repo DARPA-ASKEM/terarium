@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -65,18 +64,12 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	public void onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
+			final Model model = modelService.getAsset(props.getModelId())
+					.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 			// Map the parameters values to the model
 			final Model modelCopy = new Model(model);
-			List<ModelParameter> modelParameters;
-			if (modelCopy.getHeader().getSchemaName().toLowerCase().equals("regnet")) {
-				modelParameters = objectMapper.convertValue(modelCopy.getModel().get("parameters"),
-						new TypeReference<List<ModelParameter>>() {
-						});
-			} else {
-				modelParameters = modelCopy.getSemantics().getOde().getParameters();
-			}
+			final List<ModelParameter> modelParameters = modelCopy.getParameters();
 			modelParameters.forEach((parameter) -> {
 				final JsonNode conditionParameters = configurations.getResponse().get("parameters");
 				conditionParameters.forEach((conditionParameter) -> {
@@ -85,6 +78,10 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 					}
 				});
 			});
+
+			if (modelCopy.isRegnet()) {
+				modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+			}
 
 			// Create the new configuration
 			final ModelConfiguration configuration = new ModelConfiguration();
