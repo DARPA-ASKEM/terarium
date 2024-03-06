@@ -54,15 +54,6 @@
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">
-				<label for="start-time">Start time</label>
-				<InputNumber
-					class="p-inputtext-sm"
-					inputId="integeronly"
-					v-model="config.startTime"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
 				<label for="lower-bound">Lower bound</label>
 				<InputNumber
 					class="p-inputtext-sm"
@@ -83,6 +74,15 @@
 					:min-fraction-digits="1"
 					:max-fraction-digits="3"
 					v-model="config.upperBound"
+					@update:model-value="emit('update-self', config)"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="start-time">Start time</label>
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="config.startTime"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
