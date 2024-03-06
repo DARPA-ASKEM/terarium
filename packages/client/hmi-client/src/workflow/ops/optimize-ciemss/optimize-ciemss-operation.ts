@@ -4,7 +4,6 @@ export interface InterventionPolicyGroup {
 	borderColour: string;
 	name: string;
 	parameter: string;
-	costBenefitFn: string;
 	startTime: number;
 	lowerBound: number;
 	upperBound: number;
@@ -38,7 +37,6 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	borderColour: '#cee2a4',
 	name: 'Policy bounds',
 	parameter: '',
-	costBenefitFn: '',
 	startTime: 0,
 	lowerBound: 0,
 	upperBound: 0,
