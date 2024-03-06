@@ -13,16 +13,6 @@
 							<label>End time</label>
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
-						<div class="label-and-input">
-							<label>Unit</label>
-							<Dropdown
-								disabled
-								class="p-inputtext-sm"
-								:options="['Days', 'Hours', 'Minutes', 'Seconds']"
-								v-model="knobs.timeUnit"
-								placeholder="Select"
-							/>
-						</div>
 					</div>
 					<div>
 						<Button
@@ -103,20 +93,6 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label>Statistic</label>
-							<!--
-								This is currently not an option in the pyciemss-service.
-								https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L64-L76
-							 -->
-							<Dropdown
-								disabled
-								class="p-inputtext-sm"
-								:options="['Mean', 'Median']"
-								v-model="knobs.statistic"
-								placeholder="Select"
-							/>
-						</div>
-						<div class="label-and-input">
 							<label>Over number of days</label>
 							<InputNumber
 								disabled
@@ -137,16 +113,6 @@
 								/>
 								<Slider v-model="knobs.riskTolerance" :min="0" :max="100" :step="1" />
 							</div>
-						</div>
-						<div class="label-and-input">
-							<label>Above or below?</label>
-							<Dropdown
-								disabled
-								class="p-inputtext-sm"
-								:options="['Above', 'Below']"
-								v-model="knobs.aboveOrBelow"
-								placeholder="Select"
-							/>
 						</div>
 						<div class="label-and-input">
 							<label>Threshold</label>
@@ -322,14 +288,11 @@ enum OutputView {
 interface BasicKnobs {
 	startTime: number;
 	endTime: number;
-	timeUnit: string;
 	numStochasticSamples: number;
 	solverMethod: string;
 	targetVariables: string[];
-	statistic: string;
 	numSamples: number;
 	riskTolerance: number;
-	aboveOrBelow: string;
 	threshold: number;
 	isMinimized: boolean;
 	simulationRunId: string;
@@ -341,14 +304,11 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
-	timeUnit: props.node.state.timeUnit ?? '', // Currently not used.
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	targetVariables: props.node.state.targetVariables ?? [],
-	statistic: props.node.state.statistic ?? '', // Currently not used.
 	numSamples: props.node.state.numSamples ?? 1, // Currently not used, poor name.
 	riskTolerance: props.node.state.riskTolerance ?? 0,
-	aboveOrBelow: props.node.state.aboveOrBelow ?? '', // Currently not used.
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
 	simulationRunId: props.node.state.simulationRunId ?? '',
@@ -628,14 +588,11 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.startTime = knobs.value.startTime;
 		state.endTime = knobs.value.endTime;
-		state.timeUnit = knobs.value.timeUnit;
 		state.numStochasticSamples = knobs.value.numStochasticSamples;
 		state.solverMethod = knobs.value.solverMethod;
 		state.targetVariables = knobs.value.targetVariables;
-		state.statistic = knobs.value.statistic;
 		state.numSamples = knobs.value.numSamples;
 		state.riskTolerance = knobs.value.riskTolerance;
-		state.aboveOrBelow = knobs.value.aboveOrBelow;
 		state.threshold = knobs.value.threshold;
 		state.simulationRunId = knobs.value.simulationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;

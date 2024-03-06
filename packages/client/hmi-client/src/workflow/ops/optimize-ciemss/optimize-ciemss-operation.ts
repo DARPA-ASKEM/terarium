@@ -16,17 +16,14 @@ export interface OptimizeCiemssOperationState {
 	// Settings
 	startTime: number;
 	endTime: number;
-	timeUnit: string;
 	numStochasticSamples: number;
 	solverMethod: string;
 	// Intervention policies
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
 	targetVariables: string[];
-	statistic: string;
 	numSamples: number;
 	riskTolerance: number;
-	aboveOrBelow: string;
 	threshold: number;
 	isMinimized: boolean;
 	chartConfigs: string[][];
@@ -61,15 +58,12 @@ export const OptimizeCiemssOperation: Operation = {
 		const init: OptimizeCiemssOperationState = {
 			startTime: 0,
 			endTime: 90,
-			timeUnit: '',
 			numStochasticSamples: 5,
 			solverMethod: 'euler',
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
-			statistic: 'mean',
 			numSamples: 4,
 			riskTolerance: 95,
-			aboveOrBelow: 'Below',
 			threshold: 0,
 			isMinimized: true,
 			chartConfigs: [],
