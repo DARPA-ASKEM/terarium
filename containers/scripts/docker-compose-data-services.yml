@@ -4,6 +4,7 @@ version: "3.9"
 services:
   beaker:
     container_name: beaker
+    platform: linux/amd64
     image: ghcr.io/darpa-askem/beaker-kernel:latest
     networks:
       - terarium
