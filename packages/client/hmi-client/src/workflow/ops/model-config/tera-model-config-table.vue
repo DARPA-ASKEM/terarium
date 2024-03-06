@@ -254,12 +254,16 @@ const matrixModalContext = ref({
 });
 
 const modelType = computed(() => getModelType(props.modelConfiguration.configuration));
+const stratifiedModelType = computed(() =>
+	getStratificationType(props.modelConfiguration.configuration)
+);
 
 const addPlusMinus = ref(10);
 
 const errorMessage = ref('');
 
 const expandedRows = ref([]);
+
 const isInitial = (obj: Initial | ModelParameter): obj is Initial => 'target' in obj;
 
 const openMatrixModal = (datum: ModelConfigTableData) => {
@@ -359,10 +363,6 @@ const constantToDistribution = (param: ModelParameter) => {
 	};
 	changeType(param, ParamType.DISTRIBUTION);
 };
-
-const stratifiedModelType = computed(() =>
-	getStratificationType(props.modelConfiguration.configuration)
-);
 
 const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
