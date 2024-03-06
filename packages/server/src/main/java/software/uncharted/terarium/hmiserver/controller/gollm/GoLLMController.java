@@ -34,8 +34,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -45,7 +45,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetR
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskType;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 
 @RequestMapping("/gollm")
 @RestController
@@ -82,7 +82,8 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
-			@RequestParam(name = "document-id", required = true) final UUID documentId) {
+			@RequestParam(name = "document-id", required = true) final UUID documentId,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 
 		try {
 			// Grab the document
@@ -108,7 +109,7 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
-			req.setId(java.util.UUID.randomUUID());
+			req.setType(TaskType.GOLLM);
 			req.setScript(ModelCardResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
@@ -117,10 +118,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			taskService.sendTaskRequest(req, TaskType.GOLLM);
-
-			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
-			return ResponseEntity.ok().body(resp);
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -140,7 +138,8 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-id", required = true) final UUID documentId) {
+			@RequestParam(name = "document-id", required = true) final UUID documentId,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 
 		try {
 
@@ -168,7 +167,7 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
-			req.setId(java.util.UUID.randomUUID());
+			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureModelResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
@@ -178,10 +177,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			taskService.sendTaskRequest(req, TaskType.GOLLM);
-
-			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
-			return ResponseEntity.ok().body(resp);
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -202,13 +198,14 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-ids", required = true) final List<UUID> datasetIds) {
+			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 
 		try {
 
 			// Grab the datasets
-			List<String> datasets = new ArrayList<>();
-			for (UUID datasetId : datasetIds) {
+			final List<String> datasets = new ArrayList<>();
+			for (final UUID datasetId : datasetIds) {
 				final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
 				if (dataset.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset not found");
@@ -220,15 +217,15 @@ public class GoLLMController {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset has no filenames");
 				}
 
-				for (String filename : dataset.get().getFileNames()) {
+				for (final String filename : dataset.get().getFileNames()) {
 					try {
-						Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
+						final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
 						if (dataset.isPresent()) {
 							// ensure unescaped newlines are escaped
 							datasets.add(
 									datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
 						}
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to fetch file for dataset");
 					}
 				}
@@ -250,7 +247,7 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
-			req.setId(java.util.UUID.randomUUID());
+			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
@@ -260,10 +257,7 @@ public class GoLLMController {
 			req.setAdditionalProperties(props);
 
 			// send the request
-			taskService.sendTaskRequest(req, TaskType.GOLLM);
-
-			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
-			return ResponseEntity.ok().body(resp);
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
@@ -282,17 +276,18 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
 	public ResponseEntity<TaskResponse> creatCompareModelTask(
-			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds) {
+			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
+			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
 		try {
-			List<JsonNode> modelCards = new ArrayList<>();
-			for (UUID modelId : modelIds) {
+			final List<JsonNode> modelCards = new ArrayList<>();
+			for (final UUID modelId : modelIds) {
 				// Grab the model
 				final Optional<Model> model = modelService.getAsset(modelId);
 				if (model.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 				}
 				if (model.get().getMetadata().getGollmCard() != null) {
-					JsonNode modelCard = model.get().getMetadata().getGollmCard();
+					final JsonNode modelCard = model.get().getMetadata().getGollmCard();
 					modelCards.add(modelCard);
 				}
 			}
@@ -302,15 +297,13 @@ public class GoLLMController {
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
-			req.setId(java.util.UUID.randomUUID());
+			req.setType(TaskType.GOLLM);
 			req.setScript(CompareModelResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
-			taskService.sendTaskRequest(req, TaskType.GOLLM);
+			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-			final TaskResponse resp = req.createResponse(TaskStatus.QUEUED);
-			return ResponseEntity.ok().body(resp);
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			throw new ResponseStatusException(

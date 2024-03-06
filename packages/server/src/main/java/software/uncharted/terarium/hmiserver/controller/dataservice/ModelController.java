@@ -18,6 +18,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
@@ -25,6 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescr
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
@@ -45,6 +47,8 @@ public class ModelController {
 	final ProvenanceSearchService provenanceSearchService;
 
 	final ObjectMapper objectMapper;
+
+	final DatasetService datasetService;
 
 	@GetMapping("/descriptions")
 	@Secured(Roles.USER)
@@ -275,11 +279,11 @@ public class ModelController {
 
 
 				// Find the Document Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam body = new ProvenanceQueryParam();
-				body.setRootId(config.getId());
-				body.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				body.setTypes(List.of(ProvenanceType.DOCUMENT));
-				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(body);
+				final ProvenanceQueryParam documentQueryParams = new ProvenanceQueryParam();
+				documentQueryParams.setRootId(config.getId());
+				documentQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+				documentQueryParams.setTypes(List.of(ProvenanceType.DOCUMENT));
+				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(documentQueryParams);
 
 				List<String> documentSourceNames = new ArrayList<String>();
 				documentIds.forEach(documentId -> {
@@ -295,9 +299,37 @@ public class ModelController {
 						log.error("Unable to get the document " + documentId, e);
 					}
 				});
+
+				// Find the Dataset Assets linked via provenance to the model configuration
+				final ProvenanceQueryParam datasetQueryParams = new ProvenanceQueryParam();
+				datasetQueryParams.setRootId(config.getId());
+				datasetQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+				datasetQueryParams.setTypes(List.of(ProvenanceType.DATASET));
+				final Set<String> datasetIds = provenanceSearchService.modelConfigFromDataset(datasetQueryParams);
+
+				List<String> datasetSourceNames = new ArrayList<String>();
+				datasetIds.forEach(datasetId -> {
+					try {
+						// Fetch the Document extractions
+						final Optional<Dataset> dataset = datasetService
+								.getAsset(UUID.fromString(datasetId));
+						if (dataset.isPresent()) {
+							final String name = dataset.get().getName();
+							documentSourceNames.add(name);
+						}
+					} catch (final Exception e) {
+						log.error("Unable to get the document " + datasetId, e);
+					}
+				});
+
+
+				List<String> sourceNames = new ArrayList<String>();
+				sourceNames.addAll(documentSourceNames);
+				sourceNames.addAll(datasetSourceNames);
+
 				final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
 
-				metadata.set("source", objectMapper.valueToTree(documentSourceNames));
+				metadata.set("source", objectMapper.valueToTree(sourceNames));
 
 				((ObjectNode) configuration).set("metadata", metadata);
 
@@ -305,7 +337,7 @@ public class ModelController {
 			});
 
 			return ResponseEntity.ok(modelConfigurations);
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
 			throw new ResponseStatusException(
