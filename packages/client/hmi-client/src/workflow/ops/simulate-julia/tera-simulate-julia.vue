@@ -88,28 +88,7 @@
 				@click="runSimulate"
 				:disabled="showSpinner"
 			/>
-			<Button
-				outlined
-				title="Saves the current version of the model as a new Terarium asset"
-				@click="showSaveInput = !showSaveInput"
-			>
-				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Save as new dataset</span>
-			</Button>
-			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
-				<i
-					v-if="useProjects().activeProject.value?.id"
-					class="pi pi-check i"
-					:class="{ save: hasValidDatasetName }"
-					@click="saveDatasetToProject"
-				></i>
-			</span>
+			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -125,7 +104,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { Poller, PollerState } from '@/api/api';
-
+import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import {
 	getRunResult,
 	getSimulation,
@@ -133,10 +112,9 @@ import {
 	querySimulationInProgress,
 	pollAction
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
+import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
-import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useProjects } from '@/composables/project';
@@ -170,13 +148,9 @@ const viewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
-
 const showSpinner = ref(false);
 const runResults = ref<RunResults>({});
 
-const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
 const outputs = computed(() => {
@@ -308,16 +282,6 @@ const addChart = () => {
 
 	emit('update-state', state);
 };
-
-async function saveDatasetToProject() {
-	const { activeProject, refresh } = useProjects();
-	if (activeProject.value?.id) {
-		if (await saveDataset(activeProject.value.id, selectedRunId.value, saveAsName.value)) {
-			refresh();
-		}
-		showSaveInput.value = false;
-	}
-}
 
 onMounted(() => {
 	const runIds = querySimulationInProgress(props.node);
