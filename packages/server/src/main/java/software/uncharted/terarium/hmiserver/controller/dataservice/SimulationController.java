@@ -200,11 +200,7 @@ public class SimulationController {
 			//Create the dataset asset:
 			final UUID simId = sim.get().getId();
 			final String simName = sim.get().getName();
-			System.out.println("copySimulationResultToDataset: ");
 			final Dataset dataset = datasetService.createAsset(new Dataset());
-			System.out.println("New dataset created:");
-			System.out.println(dataset);
-			System.out.println(dataset.getId());
 			dataset.setName(simName + " Result Dataset");
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(Map.of("simulationId", simId));

@@ -124,21 +124,11 @@ public class SimulationService {
 		final UUID simId = simulation.getId();
 		if (simulation.getResultFiles() != null) {
 			for (final String resultFile : simulation.getResultFiles()) {
-				System.out.println("Result File");
-				System.out.println(resultFile);
 				final String filename = S3Service.parseFilename(resultFile);
-				System.out.println("Filename:");
-				System.out.println(filename);
 				final String srcPath = getResultsPath(simId, filename);
-				System.out.println("src path");
-				System.out.println(srcPath);
 				final String destPath = getDatasetPath(dataset.getId(), filename);
-				System.out.println("dest path");
-				System.out.println(destPath);
-				System.out.println("B");
 				s3ClientService.getS3Service().copyObject(config.getFileStorageS3BucketName(), srcPath,
 						config.getFileStorageS3BucketName(), destPath);
-				System.out.println("C");
 
 			}
 		}
