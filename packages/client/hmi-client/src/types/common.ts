@@ -1,10 +1,10 @@
 import {
-	XDDFacetsItemResponse,
-	Document,
-	Dataset,
-	Model,
 	AssetType,
-	DocumentAsset
+	Dataset,
+	Document,
+	DocumentAsset,
+	Model,
+	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
@@ -28,6 +28,7 @@ export interface ModelConfigTableData {
 	id: string;
 	name: string;
 	type: ParamType;
+	activeType?: ParamType; // This is used to keep track of the active type used by the user
 	value: any;
 	source: string;
 	visibility: boolean;
