@@ -117,34 +117,27 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { Poller, PollerState } from '@/api/api';
 
-import {
-	getRunResult,
-	makeForecastJob,
-	querySimulationInProgress,
-	pollAction
-} from '@/services/models/simulation-service';
+import { getRunResult, makeForecastJob } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { WorkflowNode } from '@/types/workflow';
 import InputText from 'primevue/inputtext';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { logger } from '@/utils/logger';
-import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
+import { useProjects } from '@/composables/project';
+import type { WorkflowNode } from '@/types/workflow';
+import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
@@ -172,11 +165,12 @@ const viewOptions = ref([
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const showSpinner = ref(false);
-const runResults = ref<RunResults>({});
 
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
-const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
+const runResults = shallowRef<RunResults>({});
+const rawContent = shallowRef<{ [runId: string]: CsvAsset | null }>({});
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -194,8 +188,6 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const poller = new Poller();
-
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.currentTimespan = timespan.value;
@@ -204,12 +196,12 @@ const updateState = () => {
 
 // Main entry point
 const run = async () => {
-	showSpinner.value = true;
+	console.log('making request');
 	const simulationId = await makeForecastRequest();
-	await pollResult(simulationId);
-	await processResult(simulationId);
-	await lazyLoadSimulationData(simulationId);
-	showSpinner.value = false;
+
+	const state = _.cloneDeep(props.node.state);
+	state.inProgressSimulationId = simulationId;
+	emit('update-state', state);
 };
 
 const makeForecastRequest = async (): Promise<string> => {
@@ -229,44 +221,6 @@ const makeForecastRequest = async (): Promise<string> => {
 	};
 	const response = await makeForecastJob(payload);
 	return response.id;
-};
-
-const pollResult = async (runId: string) => {
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
-	const pollerResults = await poller.start();
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		return pollerResults;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		logger.error(`Simulate: ${runId} has failed`, {
-			toastTitle: 'Error - Julia'
-		});
-		throw Error('Failed Runs');
-	}
-	return pollerResults;
-};
-
-const processResult = async (runId: string) => {
-	const state = _.cloneDeep(props.node.state);
-	if (state.chartConfigs.length === 0) {
-		addChart();
-	}
-
-	emit('append-output', {
-		type: SimulateJuliaOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
-		value: runId,
-		state: {
-			currentTimespan: state.currentTimespan,
-			simulationsInProgress: state.simulationsInProgress
-		},
-		isSelected: false
-	});
 };
 
 const lazyLoadSimulationData = async (runId: string) => {
@@ -298,14 +252,12 @@ const onSelection = (id: string) => {
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config.selectedVariable;
-
 	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push([]);
-
 	emit('update-state', state);
 };
 
@@ -319,22 +271,18 @@ async function saveDatasetToProject() {
 	}
 }
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length === 1) {
-		// there should only be one run happening at a time
-		pollResult(runIds[0]);
+watch(
+	() => props.node.state.inProgressSimulationId,
+	(id) => {
+		if (id === '') showSpinner.value = false;
+		else showSpinner.value = true;
 	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
+);
 
 watch(
 	() => props.node.active,
-	async () => {
-		if (!props.node.active) return;
+	async (n, o) => {
+		if (!props.node.active || n === o) return;
 		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state timespan
@@ -342,9 +290,6 @@ watch(
 
 		// Resume or fetch result
 		const simulationId = selectedRunId.value;
-		const response = await pollResult(simulationId);
-		if (response?.state !== PollerState.Done) return;
-		await processResult(simulationId);
 		await lazyLoadSimulationData(simulationId);
 	},
 	{ immediate: true }
