@@ -598,6 +598,7 @@ export interface EvaluationScenarioSummary {
     task: string;
     description: string;
     notes: string;
+    multipleUsers: boolean;
     timestampMillis: number;
 }
 
@@ -1275,8 +1276,6 @@ export enum AssetType {
 
 export enum EvaluationScenarioStatus {
     Started = "STARTED",
-    Paused = "PAUSED",
-    Resumed = "RESUMED",
     Stopped = "STOPPED",
 }
 

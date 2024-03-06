@@ -15,5 +15,6 @@ public class EvaluationScenarioSummary {
 	private String task;
 	private String description;
 	private String notes;
+	private Boolean multipleUsers;
 	private Long timestampMillis;
 }

@@ -95,6 +95,11 @@
 
 						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
+
+						<div class="field-checkbox">
+							<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
+							<label for="multipleUsers">Multiple Users</label>
+						</div>
 					</form>
 				</template>
 				<template #footer>
@@ -102,48 +107,16 @@
 						<Button
 							size="large"
 							class="p-button-danger"
-							v-if="
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
-							"
+							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
 							@click="stopEvaluationScenario"
 							>Stop</Button
 						>
-						<Button
-							size="large"
-							class="p-button-warning"
-							v-if="
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
-							"
-							@click="pauseEvaluationScenario"
-							>Pause</Button
-						>
-						<Button
-							size="large"
-							class="p-button-warning"
-							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
-							@click="resumeEvaluationScenario"
-							>Resume</Button
-						>
-
 						<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
 						<div
 							class="hidden"
-							v-if="
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
-								evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
-							"
+							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
 						/>
-						<Button
-							v-else
-							size="large"
-							:disabled="evaluationScenarioCurrentStatus !== ''"
-							@click="beginEvaluationScenario"
-							>Begin</Button
-						>
+						<Button v-else size="large" @click="beginEvaluationScenario">Begin</Button>
 						<Button
 							size="large"
 							class="p-button-secondary"
@@ -237,6 +210,7 @@ import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
 import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
 import Dropdown from 'primevue/dropdown';
+import Checkbox from 'primevue/checkbox';
 import evalScenariosJson from './eval-scenarios.json';
 
 defineProps<{
@@ -268,8 +242,11 @@ const evalScenarios: Ref<EvalScenario> = ref(evalScenariosJson);
 const evaluationScenario: Ref<Scenario> = ref(evalScenarios.value.scenarios[0]);
 const evaluationScenarioTask: Ref<Question> = ref(evaluationScenario.value.questions[0]);
 const evaluationScenarioDescription: Ref<string> = ref(evaluationScenarioTask.value.description);
+const evaluationScenarioMultipleUsers: Ref<boolean> = ref(false);
 const evaluationScenarioNotes = ref('');
-const evaluationScenarioCurrentStatus = ref('');
+const evaluationScenarioCurrentStatus: Ref<EvaluationScenarioStatus> = ref(
+	EvaluationScenarioStatus.Stopped
+);
 const evaluationScenarioRuntimeMillis = ref(0);
 let intervalId: number;
 
@@ -318,27 +295,6 @@ const stopEvaluationScenario = async () => {
 /**
  * Logs an event to the server to pause an evaluation.
  */
-const pauseEvaluationScenario = async () => {
-	await EventService.create(
-		EventType.EvaluationScenario,
-		useProjects().activeProject.value?.id,
-		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
-	);
-	await refreshEvaluationScenario();
-	window.clearInterval(intervalId);
-	isEvaluationScenarioModalVisible.value = false;
-};
-
-const resumeEvaluationScenario = async () => {
-	await EventService.create(
-		EventType.EvaluationScenario,
-		useProjects().activeProject.value?.id,
-		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
-	);
-	await refreshEvaluationScenario();
-	startEvaluationTimer();
-	isEvaluationScenarioModalVisible.value = false;
-};
 
 const onScenarioChange = () => {
 	evaluationScenarioTask.value = evaluationScenario.value.questions[0];
@@ -359,6 +315,7 @@ const getEvaluationScenarioData = (action: string) => ({
 	task: evaluationScenarioTask.value.task,
 	description: evaluationScenarioDescription.value,
 	notes: evaluationScenarioNotes.value,
+	multipleUsers: evaluationScenarioMultipleUsers.value,
 	action
 });
 
@@ -370,6 +327,10 @@ const persistEvaluationScenario = () => {
 	window.localStorage.setItem('evaluationScenarioTask', evaluationScenarioTask.value.task);
 	window.localStorage.setItem('evaluationScenarioDescription', evaluationScenarioDescription.value);
 	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
+	window.localStorage.setItem(
+		'evaluationScenarioMultipleUsers',
+		evaluationScenarioMultipleUsers.value.toString()
+	);
 };
 
 const refreshEvaluationScenario = async () => {
@@ -398,16 +359,16 @@ const loadEvaluationScenario = async () => {
 
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
 
+	evaluationScenarioMultipleUsers.value =
+		window.localStorage.getItem('evaluationScenarioMultipleUsers') === 'true';
+
 	if (evaluationScenario.value) {
 		await refreshEvaluationScenario();
 	}
 };
 
 const startEvaluationTimer = () => {
-	if (
-		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Started ||
-		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Resumed
-	) {
+	if (evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Started) {
 		intervalId = window.setInterval(() => {
 			evaluationScenarioRuntimeMillis.value += 1000;
 		}, 1000);
@@ -422,8 +383,9 @@ const clearEvaluationScenario = () => {
 	evaluationScenarioTask.value = evaluationScenario.value.questions[0];
 	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
 	evaluationScenarioNotes.value = '';
-	evaluationScenarioCurrentStatus.value = '';
+	evaluationScenarioCurrentStatus.value = EvaluationScenarioStatus.Stopped;
 	evaluationScenarioRuntimeMillis.value = 0;
+	evaluationScenarioMultipleUsers.value = false;
 	persistEvaluationScenario();
 };
 
@@ -452,6 +414,12 @@ const userMenuItems = ref([
 		label: 'Evaluation scenario',
 		command: () => {
 			isEvaluationScenarioModalVisible.value = true;
+		}
+	},
+	{
+		label: 'Evaluation results',
+		command: () => {
+			router.push(RoutePath.EvaluationScenariosPath);
 		}
 	},
 	{
@@ -675,5 +643,10 @@ nav {
 	background-color: var(--surface-highlight);
 	padding: var(--gap-small);
 	border-radius: 3rem;
+}
+.field-checkbox {
+	font-size: var(--font-small);
+	color: var(--text-color-primary);
+	margin-bottom: 0rem;
 }
 </style>
