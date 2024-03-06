@@ -44,9 +44,7 @@ const isSaveDisabled = computed<boolean>(() => {
 });
 const saveDatasetToProject = async () => {
 	const { activeProject, refresh } = useProjects();
-	console.log(activeProject.value?.id);
 	if (activeProject.value?.id) {
-		console.log(props.simulationRunId);
 		if (await saveDataset(activeProject.value.id, props.simulationRunId, saveAsName.value)) {
 			refresh();
 		}
