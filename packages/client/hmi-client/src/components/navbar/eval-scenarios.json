@@ -1,11 +1,11 @@
 {
   "scenarios": [
     {
-      "name": "Scenario 1: Calibrating models and estimating causal effects",
+      "name": "Scenario 1",
       "questions": [
         {
           "task": "Question 1",
-          "description": "Calibrate models to estimate R0 for each country in each of the four time intervals: [0,40), [40,60), [60,100), [100, 200]"
+          "description": "Calibrate models to estimate R0 for each country in each of the four time intervals"
         },
         {
           "task": "Question 2",
@@ -13,16 +13,16 @@
         },
         {
           "task": "Question 3 (Optional)",
-          "description": "In each country, what is the maximum value R0  can be over the last time interval ([100, 200]), to ensure that there are no more than 50 infections at t = 200 days with 90% confidence? Are these different across countries?"
+          "description": "In each country, what is the maximum value R0  can be over the last time interval (100, 200), to ensure that there are no more than 50 infections at t = 200 days with 90% confidence? Are these different across countries?"
         },
         {
           "task": "Question 4 (Optional)",
-          "description": "Can R0 be changed in one of the three preceding intervals ([0,40), [40,60), [60,100)), without changing it in the fourth, to ensure that infections at t = 200 days stay below ¾ of their simulated value at t = 200 with 95% confidence?"
+          "description": "Can R0 be changed in one of the three preceding intervals, without changing it in the fourth, to ensure that infections at t = 200 days stay below ¾ of their simulated value at t = 200 with 95% confidence?"
         }
       ]
     },
     {
-      "name": "Scenario 2: Mediation Analysis",
+      "name": "Scenario 2",
       "questions": [
         {
           "task": "Question 1a",
@@ -47,7 +47,7 @@
       ]
     },
     {
-      "name": "Scenario 3: [Preparation for Decision-making Confidence Metric]: Supporting decisionmakers at various phases of the Covid-19 pandemic",
+      "name": "Scenario 3",
       "questions": [
         {
           "task": "Question 1a",
@@ -132,7 +132,7 @@
       ]
     },
     {
-      "name": "Scenario 4: Microbial Regnets",
+      "name": "Scenario 4",
       "questions": [
         {
           "task": "Question 1",
@@ -183,7 +183,7 @@
       ]
     },
     {
-      "name": "Scenario 6: Regnets for gene expression and regulation",
+      "name": "Scenario 6",
       "questions": [
         {
           "task": "Question 1",
