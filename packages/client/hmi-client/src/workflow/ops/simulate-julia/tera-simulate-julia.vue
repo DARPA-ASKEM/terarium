@@ -169,7 +169,6 @@ const updateState = () => {
 
 // Main entry point
 const run = async () => {
-	console.log('making request');
 	const simulationId = await makeForecastRequest();
 
 	const state = _.cloneDeep(props.node.state);
@@ -244,14 +243,12 @@ watch(
 
 watch(
 	() => props.node.active,
-	async (n, o) => {
-		if (!props.node.active || n === o) return;
+	async (newValue, oldValue) => {
+		if (!props.node.active || newValue === oldValue) return;
 		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state timespan
 		timespan.value = props.node.state.currentTimespan;
-
-		console.log('hihihi', selectedRunId.value);
 
 		// Resume or fetch result
 		const simulationId = selectedRunId.value;
