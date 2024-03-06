@@ -236,7 +236,9 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	SimulationRequest,
-	CsvAsset
+	CsvAsset,
+	OptimizedIntervention,
+	Intervention as SimulationIntervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
@@ -396,11 +398,11 @@ const runOptimize = async () => {
 		return;
 	}
 
-	const listInterventions: any[] = [];
+	const optimizeInterventions: OptimizedIntervention[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		listInterventions.push({ name: ele.parameter, timestep: ele.startTime });
+		optimizeInterventions.push({ name: ele.parameter, timestep: ele.startTime });
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);
 		listBoundsInterventions.push([ele.upperBound]);
@@ -414,7 +416,7 @@ const runOptimize = async () => {
 			start: knobs.value.startTime,
 			end: knobs.value.endTime
 		},
-		interventions: listInterventions,
+		interventions: optimizeInterventions,
 		qoi: knobs.value.targetVariables,
 		riskBound: knobs.value.riskTolerance,
 		initialGuessInterventions: listInitialGuessInterventions,
@@ -432,6 +434,17 @@ const runOptimize = async () => {
 	console.log(optResult.simulationId);
 	await getOptimizeStatus(optResult.simulationId); // This does not wait until job is done: https://github.com/DARPA-ASKEM/terarium/issues/2905
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
+	const simulationIntervetions: SimulationIntervention[] = [];
+
+	for (let i = 0; i < optimizeInterventions.length; i++) {
+		if (policyResult.value?.at(i)) {
+			simulationIntervetions.push({
+				name: optimizeInterventions[i].name,
+				timestep: optimizeInterventions[i].timestep,
+				value: policyResult.value[i]
+			});
+		}
+	}
 
 	const simulationPayload: SimulationRequest = {
 		projectId: '',
@@ -440,10 +453,10 @@ const runOptimize = async () => {
 			start: knobs.value.startTime,
 			end: knobs.value.endTime
 		},
+		interventions: simulationIntervetions,
 		extra: {
 			num_samples: knobs.value.numStochasticSamples,
-			method: knobs.value.solverMethod,
-			inferredParameters: policyResult.value
+			method: knobs.value.solverMethod
 		},
 		engine: 'ciemss'
 	};
@@ -501,7 +514,7 @@ const getOptimizeStatus = async (runId: string) => {
 		console.log(pollerResults.state);
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Simulate (Optimize): ${runId} has failed`, {
+		logger.error(`Optimize Run: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
 		throw Error('Failed Runs');
