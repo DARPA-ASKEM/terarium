@@ -1239,6 +1239,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    OperatorDrilldownTiming = "OPERATOR_DRILLDOWN_TIMING",
     TestType = "TEST_TYPE",
 }
 
