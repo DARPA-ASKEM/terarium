@@ -45,7 +45,7 @@
 					inputId="numericInput"
 					mode="decimal"
 					:min-fraction-digits="1"
-					:max-fraction-digits="3"
+					:max-fraction-digits="10"
 					v-model="config.initialGuess"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -60,7 +60,7 @@
 					inputId="numericInput"
 					mode="decimal"
 					:min-fraction-digits="1"
-					:max-fraction-digits="3"
+					:max-fraction-digits="10"
 					v-model="config.lowerBound"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -72,7 +72,7 @@
 					inputId="numericInput"
 					mode="decimal"
 					:min-fraction-digits="1"
-					:max-fraction-digits="3"
+					:max-fraction-digits="10"
 					v-model="config.upperBound"
 					@update:model-value="emit('update-self', config)"
 				/>
