@@ -8,8 +8,8 @@
 		<span class="pi pi-save p-button-icon p-button-icon-left"></span>
 		<span class="p-button-text">Save as new dataset</span>
 	</Button>
-	<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-		<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
+	<span v-if="showSaveInput" class="show-save-input">
+		<InputText v-model="saveAsName" placeholder="New dataset name" />
 		<i
 			class="pi pi-times i"
 			:class="{ clear: hasValidDatasetName }"
@@ -36,7 +36,7 @@ const props = defineProps<{
 }>();
 
 const saveAsName = ref('');
-const showSaveInput = ref(<boolean>false);
+const showSaveInput = ref<boolean>(false);
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const isSaveDisabled = computed<boolean>(() => {
 	if (props.simulationRunId === '' || !useProjects().activeProject.value?.id) return true;
@@ -54,4 +54,9 @@ const saveDatasetToProject = async () => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.show-save-input {
+	padding-left: 1em;
+	padding-right: 2em;
+}
+</style>
