@@ -10,11 +10,14 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service class for handling simulations.  Note that this does not extend TerariumAssetService, as Simulations
@@ -123,7 +126,7 @@ public class SimulationService {
 			for (final String resultFile : simulation.getResultFiles()) {
 				System.out.println("Result File");
 				System.out.println(resultFile);
-				final String filename = s3ClientService.getS3Service().parseFilename(resultFile);
+				final String filename = S3Service.parseFilename(resultFile);
 				System.out.println("Filename:");
 				System.out.println(filename);
 				final String srcPath = getResultsPath(simId, filename);
