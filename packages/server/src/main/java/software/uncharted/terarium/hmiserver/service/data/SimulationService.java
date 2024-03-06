@@ -117,34 +117,27 @@ public class SimulationService {
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public Dataset copySimulationResultToDataset(final Simulation simulation) {
+	public void copySimulationResultToDataset(final Simulation simulation, final Dataset dataset) {
 		final UUID simId = simulation.getId();
-		final String simName = simulation.getName();
-
-		final Dataset dataset = new Dataset();
-		dataset.setName(simName + " Result Dataset");
-		dataset.setDescription(simulation.getDescription());
-		dataset.setMetadata(Map.of("simulationId", simId));
-		dataset.setFileNames(simulation.getResultFiles());
-		dataset.setDataSourceDate(simulation.getCompletedTime());
-		dataset.setColumns(new ArrayList<>());
-
-		// Attach the user to the dataset
-		if (simulation.getUserId() != null) {
-			dataset.setUserId(simulation.getUserId());
-		}
-
 		if (simulation.getResultFiles() != null) {
 			for (final String resultFile : simulation.getResultFiles()) {
+				System.out.println("Result File");
+				System.out.println(resultFile);
 				final String filename = s3ClientService.getS3Service().parseFilename(resultFile);
+				System.out.println("Filename:");
+				System.out.println(filename);
 				final String srcPath = getResultsPath(simId, filename);
+				System.out.println("src path");
+				System.out.println(srcPath);
 				final String destPath = getDatasetPath(dataset.getId(), filename);
-
+				System.out.println("dest path");
+				System.out.println(destPath);
+				System.out.println("B");
 				s3ClientService.getS3Service().copyObject(config.getFileStorageS3BucketName(), srcPath,
 						config.getFileStorageS3BucketName(), destPath);
+				System.out.println("C");
+
 			}
 		}
-
-		return dataset;
 	}
 }
