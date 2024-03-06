@@ -312,20 +312,12 @@ const validateTimeSeries = (values: string) => {
 
 const changeType = (param: ModelParameter, type: ParamType) => {
 	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-
-	let idx: any;
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		idx = clonedConfig.configuration.semantics.ode.parameters.findIndex((p) => p.id === param.id);
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		idx = clonedConfig.configuration.model.parameters.findIndex((p) => p.id === param.id);
-	}
 
 	switch (type) {
 		case ParamType.CONSTANT:
 			delete param.distribution;
 			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			replaceParam(clonedConfig, param, idx);
+			replaceParameter(param);
 			break;
 		case ParamType.DISTRIBUTION:
 			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
@@ -336,20 +328,19 @@ const changeType = (param: ModelParameter, type: ParamType) => {
 					maximum: 0
 				}
 			};
-			replaceParam(clonedConfig, param, idx);
+			replaceParameter(param);
 			break;
 		case ParamType.TIME_SERIES:
 			delete param.distribution;
 			if (!clonedConfig.configuration.metadata?.timeseries) {
 				clonedConfig.configuration.metadata.timeseries = {};
 			}
-			replaceParam(clonedConfig, param, idx);
 			clonedConfig.configuration.metadata.timeseries[param.id] = '';
+			replaceParameter(param);
 			break;
 		default:
 			break;
 	}
-	emit('update-configuration', clonedConfig);
 };
 
 const constantToDistribution = (param: ModelParameter) => {
@@ -364,12 +355,16 @@ const constantToDistribution = (param: ModelParameter) => {
 	changeType(param, ParamType.DISTRIBUTION);
 };
 
-const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		config.configuration.semantics.ode.parameters[index] = param;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		config.configuration.model.parameters[index] = param;
-	}
+const replaceParameter = (param: any) => {
+	const clonedConfig = cloneDeep(props.modelConfiguration);
+	const isPetrinetOrStockflow =
+		modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW;
+	const parameters = isPetrinetOrStockflow
+		? clonedConfig.configuration.semantics.ode.parameters
+		: clonedConfig.configuration.model.parameters;
+	const index = parameters.findIndex((p) => p.id === param.id);
+	parameters[index] = param;
+	emit('update-configuration', clonedConfig);
 };
 
 const updateExpression = async (value: Initial) => {
