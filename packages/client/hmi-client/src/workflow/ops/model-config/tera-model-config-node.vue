@@ -17,7 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
