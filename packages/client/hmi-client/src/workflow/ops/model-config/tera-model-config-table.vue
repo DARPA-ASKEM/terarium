@@ -282,13 +282,13 @@ const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expa
 
 const updateTimeseries = (id: string, value: string) => {
 	if (!validateTimeSeries(value)) return;
-	const clonedConfig = structuredClone(props.modelConfiguration);
+	const clonedConfig = cloneDeep(props.modelConfiguration);
 	clonedConfig.configuration.metadata.timeseries[id] = value;
 	emit('update-configuration', clonedConfig);
 };
 
 const updateSource = (id: string, value: string) => {
-	const clonedConfig = structuredClone(props.modelConfiguration);
+	const clonedConfig = cloneDeep(props.modelConfiguration);
 	clonedConfig.configuration.metadata.sources[id] = value;
 	emit('update-configuration', clonedConfig);
 };
