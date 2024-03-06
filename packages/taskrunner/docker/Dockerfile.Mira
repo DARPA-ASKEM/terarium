@@ -23,6 +23,9 @@ RUN apt-get update && \
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 
+# Copy the echo script for testing
+COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
+
 # Install Mira
 RUN echo "Cache bust so we can always pull latest Mira" $(date -u)
 RUN wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/refs/heads/main.tar.gz && \
