@@ -1,24 +1,57 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @RequiredArgsConstructor
 @TSModel
+@Slf4j
 public enum AssetType {
-	WORKFLOW("workflow"),
-	MODEL("model"),
-	DATASET("dataset"),
-	SIMULATION("simulation"),
-	DOCUMENT("document"),
-	CODE("code"),
-	MODEL_CONFIGURATION("model-configuration"),
-	ARTIFACT("artifact"),
-	PUBLICATION("publication"),
-	NOTEBOOK_SESSION("notebook-session"),
+	@JsonProperty("workflow")
+	WORKFLOW,
+
+	@JsonProperty("model")
+	MODEL,
+
+	@JsonProperty("dataset")
+	DATASET,
+
+	@JsonProperty("simulation")
+	SIMULATION,
+
+	@JsonProperty("document")
+	DOCUMENT,
+
+	@JsonProperty("code")
+	CODE,
+
+	@JsonProperty("model-configuration")
+	MODEL_CONFIGURATION,
+
+	@JsonProperty("artifact")
+	ARTIFACT,
+
+	@JsonProperty("publication")
+	PUBLICATION,
+
+	@JsonProperty("notebook-session")
+	NOTEBOOK_SESSION,
 	;
 
-	@JsonValue
-	private final String value;
+	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper) throws ResponseStatusException {
+		try {
+			return objectMapper.convertValue(assetTypeName, AssetType.class);
+		} catch (final IllegalArgumentException iae) {
+			log.error("Error creating project assets, invalid AssetType", iae);
+			throw new ResponseStatusException(
+					HttpStatus.BAD_REQUEST,
+					"Failed to create project asset");
+		}
+	}
 }

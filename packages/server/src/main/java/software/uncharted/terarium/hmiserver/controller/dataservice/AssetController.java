@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -44,6 +45,7 @@ public class AssetController {
 	final ProjectAssetService projectAssetService;
 	final ReBACService reBACService;
 	final CurrentUserService currentUserService;
+	final ObjectMapper objectMapper;
 
 	/**
 	 * Check if an asset name is available for a given asset type. If a ProjectId is
@@ -52,7 +54,7 @@ public class AssetController {
 	 * searched. If the asset name is available,
 	 * a 204 No Content response is returned. If the asset name is not available, a
 	 * 409 Conflict response is returned.
-	 * 
+	 *
 	 * @param assetType Asset type to check
 	 * @param assetName Asset name to check
 	 * @param projectId Project ID to limit the search to (optional)
@@ -70,10 +72,10 @@ public class AssetController {
 			@ApiResponse(responseCode = "500", description = "Unable to verify project permissions")
 	})
 	public ResponseEntity<Void> verifyAssetNameAvailability(
-			@PathVariable("asset-type") AssetType assetType,
-			@PathVariable("asset-name") String assetName,
+			@PathVariable("asset-type") final String assetTypeName,
+			@PathVariable("asset-name") final String assetName,
 			@RequestParam(name = "project-id", required = false) UUID projectId) {
-
+		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 		if (projectId == null) {
 
 			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(assetName, assetType);

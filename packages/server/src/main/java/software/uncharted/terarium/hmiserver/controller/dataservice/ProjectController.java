@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -54,6 +56,8 @@ public class ProjectController {
 	final ProjectAssetService projectAssetService;
 
 	final TerariumAssetServices terariumAssetServices;
+
+	final ObjectMapper objectMapper;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -327,10 +331,13 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("asset-type") final AssetType assetType,
+			@PathVariable("asset-type") final String assetTypeName,
 			@PathVariable("asset-id") final UUID assetId) {
 
+		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+
 		try {
+
 			if (new RebacUser(currentUserService.get().getId(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
 				final Optional<Project> project = projectService.getProject(projectId);
 
@@ -374,15 +381,17 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 			@PathVariable("id") final UUID projectId,
-			@PathVariable("asset-type") final AssetType type,
+			@PathVariable("asset-type") final String assetTypeName,
 			@PathVariable("asset-id") final UUID assetId) {
+
+		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		try {
 			if (new RebacUser(currentUserService.get().getId(), reBACService)
 					.canWrite(new RebacProject(projectId, reBACService))) {
-				final boolean deleted = projectAssetService.deleteByAssetId(projectId, type, assetId);
+				final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
 				if (deleted) {
-					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + type, assetId));
+					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + assetTypeName, assetId));
 				}
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
