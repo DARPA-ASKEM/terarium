@@ -11,7 +11,9 @@
             "vector": {
               "type": "dense_vector",
               "element_type": "float",
-              "dims": 1536
+              "dims": 1536,
+              "index": true,
+              "similarity": "dot_product"
             },
             "embeddingId": {
               "type": "keyword"
