@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<tera-simulate-chart
-			v-if="hasData"
+			v-if="runResults[selectedRunId]"
 			:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
 			:chartConfig="{
 				selectedRun: selectedRunId,
@@ -24,31 +24,96 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
-import { getRunResult } from '@/services/models/simulation-service';
+import { getRunResult, pollAction } from '@/services/models/simulation-service';
 import { csvParse } from 'd3';
-import { SimulateJuliaOperationState } from './simulate-julia-operation';
+import { Poller, PollerState } from '@/api/api';
+import { logger } from '@/utils/logger';
+import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
 }>();
 
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 const runResults = ref<RunResults>({});
-const hasData = ref(false);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 
 const selectedRunId = ref<any>(null);
 
+const poller = new Poller();
+const pollResult = async (runId: string) => {
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => pollAction(runId));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		return pollerResults;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Sciml'
+		});
+		throw Error('Failed Runs');
+	}
+	return pollerResults;
+};
+
+const processResult = async (runId: string) => {
+	const state = _.cloneDeep(props.node.state);
+	if (state.chartConfigs.length === 0) {
+		addChart();
+	}
+
+	emit('append-output', {
+		type: SimulateJuliaOperation.outputs[0].type,
+		label: `Output - ${props.node.outputs.length + 1}`,
+		value: runId,
+		state: {
+			currentTimespan: state.currentTimespan
+		},
+		isSelected: false
+	});
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs.push([]);
+	emit('update-state', state);
+};
+
+watch(
+	() => props.node.state.inProgressSimulationId,
+	async (id) => {
+		if (!id || id === '') return;
+
+		const response = await pollResult(id);
+		if (response.state === PollerState.Done) {
+			processResult(id);
+		}
+
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressSimulationId = '';
+		emit('update-state', state);
+	},
+	{ immediate: true }
+);
+
 watch(
 	() => props.node.active,
 	async () => {
+		if (!props.node.active) return;
+
 		const active = props.node.active;
 		if (!active) return;
 
@@ -58,7 +123,6 @@ watch(
 		const resultCsv = await getRunResult(selectedRunId.value, 'result.csv');
 		const csvData = csvParse(resultCsv);
 		runResults.value[selectedRunId.value] = csvData as any;
-		hasData.value = true;
 	},
 	{ immediate: true }
 );

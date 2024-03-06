@@ -85,7 +85,7 @@
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
-				@click="runSimulate"
+				@click="run"
 				:disabled="showSpinner"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
@@ -96,34 +96,26 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { Poller, PollerState } from '@/api/api';
-import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
-import {
-	getRunResult,
-	getSimulation,
-	makeForecastJob,
-	querySimulationInProgress,
-	pollAction
-} from '@/services/models/simulation-service';
+import { getRunResult, makeForecastJob } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { WorkflowNode } from '@/types/workflow';
+
+import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { logger } from '@/utils/logger';
-import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
+import { useProjects } from '@/composables/project';
+import type { WorkflowNode } from '@/types/workflow';
+import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
@@ -149,8 +141,8 @@ const viewOptions = ref([
 ]);
 
 const showSpinner = ref(false);
-const runResults = ref<RunResults>({});
 
+const runResults = ref<RunResults>({});
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
 const outputs = computed(() => {
@@ -169,23 +161,26 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const poller = new Poller();
-
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.currentTimespan = timespan.value;
 	emit('update-state', state);
 };
 
-const runSimulate = async () => {
-	const modelConfigurationList = props.node.inputs[0].value;
-	if (!modelConfigurationList?.length) return;
+// Main entry point
+const run = async () => {
+	const simulationId = await makeForecastRequest();
 
-	// Since we've disabled multiple configs to a simulation node, we can assume only one config
-	const configId = modelConfigurationList[0];
+	const state = _.cloneDeep(props.node.state);
+	state.inProgressSimulationId = simulationId;
+	emit('update-state', state);
+};
+
+const makeForecastRequest = async (): Promise<string> => {
+	const configId = props.node.inputs[0].value?.[0];
+	if (!configId) throw new Error('No model configuration found for simulate');
 
 	const state = props.node.state;
-
 	const payload: SimulationRequest = {
 		projectId: useProjects().activeProject.value?.id as string,
 		modelConfigId: configId,
@@ -197,49 +192,7 @@ const runSimulate = async () => {
 		engine: 'sciml'
 	};
 	const response = await makeForecastJob(payload);
-	getStatus(response.id);
-};
-
-const getStatus = async (runId: string) => {
-	showSpinner.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
-	const pollerResults = await poller.start();
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		logger.error(`Simulate: ${runId} has failed`, {
-			toastTitle: 'Error - Julia'
-		});
-		throw Error('Failed Runs');
-	}
-
-	const state = _.cloneDeep(props.node.state);
-	if (state.chartConfigs.length === 0) {
-		addChart();
-	}
-
-	const sim = await getSimulation(runId);
-
-	emit('append-output', {
-		type: SimulateJuliaOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
-		value: runId,
-		state: {
-			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
-			simulationsInProgress: state.simulationsInProgress
-		},
-		isSelected: false
-	});
-
-	showSpinner.value = false;
+	return response.id;
 };
 
 const lazyLoadSimulationData = async (runId: string) => {
@@ -255,12 +208,11 @@ const lazyLoadSimulationData = async (runId: string) => {
 	if (modelConfiguration) {
 		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
 		csvData.forEach((row) =>
-			parameters.forEach((parameter) => {
+			parameters.forEach((parameter: any) => {
 				row[parameter.id] = parameter.value;
 			})
 		);
 	}
-
 	runResults.value[runId] = csvData as any;
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);
 };
@@ -272,49 +224,35 @@ const onSelection = (id: string) => {
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config.selectedVariable;
-
 	emit('update-state', state);
 };
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push([]);
-
 	emit('update-state', state);
 };
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length === 1) {
-		// there should only be one run happening at a time
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
-
 watch(
-	() => selectedRunId.value,
-	() => {
-		if (selectedRunId.value) {
-			lazyLoadSimulationData(selectedRunId.value);
-		}
-	},
-	{ immediate: true }
+	() => props.node.state.inProgressSimulationId,
+	(id) => {
+		if (id === '') showSpinner.value = false;
+		else showSpinner.value = true;
+	}
 );
 
 watch(
 	() => props.node.active,
-	() => {
-		// Update selected output
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
-		}
+	async (newValue, oldValue) => {
+		if (!props.node.active || newValue === oldValue) return;
+		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state timespan
 		timespan.value = props.node.state.currentTimespan;
+
+		// Resume or fetch result
+		const simulationId = selectedRunId.value;
+		await lazyLoadSimulationData(simulationId);
 	},
 	{ immediate: true }
 );
