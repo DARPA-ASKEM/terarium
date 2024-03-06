@@ -20,13 +20,12 @@
 							>
 							<Button
 								icon="pi pi-cog"
-								label="Extract Configurations"
+								label="Extract configurations from inputs"
 								outlined
-								@click.stop="toggleExtractionMenu"
+								@click.stop="extractConfigurationsFromInputs"
 								style="margin-left: auto"
-								:loading="isFetchingConfigsFromDataset || isFetchingConfigsFromDocument"
+								:loading="isExtracting"
 							/>
-							<Menu ref="extractionMenu" :model="menuItems" popup />
 						</template>
 
 						<DataTable
@@ -38,7 +37,7 @@
 							:rows="5"
 							sort-field="createdOn"
 							:sort-order="-1"
-							:loading="isFetchingConfigsFromDocument || isFetchingConfigsFromDataset"
+							:loading="isExtracting"
 						>
 							<Column field="name" header="Name" style="width: 15%">
 								<template #body="{ data }">
@@ -266,7 +265,7 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { configureModel, configureModelFromDatasets } from '@/services/goLLM';
+import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
@@ -279,8 +278,6 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import Menu from 'primevue/menu';
-import { MenuItem } from 'primevue/menuitem';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -398,43 +395,6 @@ const runFromCode = () => {
 const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);
 const vertices = computed(() => modelConfiguration?.value?.configuration.model?.vertices ?? []);
 
-const extractionMenu = ref();
-const toggleExtractionMenu = (event) => {
-	extractionMenu.value.toggle(event);
-};
-const menuItems = computed<MenuItem[]>(() => {
-	const items: MenuItem[] = [];
-	if (documentId.value) {
-		items.push({
-			label: 'From a document',
-			command: () => {
-				extractConfigurationsFromDocument();
-			}
-		});
-	}
-
-	if (datasetId.value) {
-		items.push({
-			label: 'From a dataset',
-			command: () => {
-				extractConfigurationsFromDataset();
-			}
-		});
-	}
-
-	if (documentId.value && datasetId.value) {
-		items.push({
-			label: 'From both',
-			command: () => {
-				extractConfigurationsFromDataset();
-				extractConfigurationsFromDocument();
-			}
-		});
-	}
-
-	return items;
-});
-
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
@@ -453,6 +413,24 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 
 const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
+};
+
+const extractConfigurationsFromInputs = async () => {
+	if (!model.value?.id) return;
+	isExtracting.value = true;
+
+	const promises: Promise<void>[] = [];
+	if (documentId.value) {
+		promises.push(configureModelFromDocument(documentId.value, model.value.id));
+	}
+	if (datasetId.value) {
+		promises.push(configureModelFromDatasets(model.value.id, [datasetId.value]));
+	}
+
+	await Promise.all(promises);
+	await fetchConfigurations(model.value.id);
+
+	isExtracting.value = false;
 };
 
 const handleModelPreview = (data: any) => {
@@ -485,9 +463,7 @@ const suggestedConfirgurationContext = ref<{
 	tableData: [],
 	modelConfiguration: null
 });
-
-const isFetchingConfigsFromDocument = ref(false);
-const isFetchingConfigsFromDataset = ref(false);
+const isExtracting = ref(false);
 const model = ref<Model | null>(null);
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
@@ -740,9 +716,7 @@ const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
 		// FIXME: since configurations are made on the backend on the fly, we need to wait for the db to update before fetching, here's an artificaial delay
 		setTimeout(async () => {
-			isFetchingConfigsFromDocument.value = true;
 			suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-			isFetchingConfigsFromDocument.value = false;
 		}, 800);
 	}
 };
@@ -830,22 +804,6 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
 	knobs.value.sources = config.configuration.metadata?.sources ?? {};
 	logger.success(`Configuration applied ${config.name}`);
-};
-
-const extractConfigurationsFromDocument = async () => {
-	if (!documentId.value || !model.value?.id) return;
-	isFetchingConfigsFromDocument.value = true;
-	await configureModel(documentId.value, model.value.id);
-	isFetchingConfigsFromDocument.value = false;
-	fetchConfigurations(model.value.id);
-};
-
-const extractConfigurationsFromDataset = async () => {
-	if (!datasetId.value || !model.value?.id) return;
-	isFetchingConfigsFromDataset.value = true;
-	await configureModelFromDatasets(model.value.id, [datasetId.value]);
-	isFetchingConfigsFromDataset.value = false;
-	fetchConfigurations(model.value.id);
 };
 
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
