@@ -47,8 +47,8 @@
 import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
-import { addHover, removeHover, addDrag, removeDrag } from '@/services/operator-bitmask';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { addDrag, addHover, removeDrag, removeHover } from '@/services/operator-bitmask';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
@@ -247,7 +247,6 @@ main {
 			border-radius: 50%;
 			background-color: var(--text-color-subdued);
 		}
-
 
 		&:deep(.port-connected:hover .port) {
 			background-color: var(--text-color-subdued);
