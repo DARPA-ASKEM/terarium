@@ -37,7 +37,6 @@
 									inputId="integeronly"
 									v-model="knobs.numStochasticSamples"
 								/>
-								<Slider v-model="knobs.numStochasticSamples" :min="1" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
