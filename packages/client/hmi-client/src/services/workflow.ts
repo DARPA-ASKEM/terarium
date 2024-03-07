@@ -385,6 +385,9 @@ export function selectOutput(
 
 	selected.status = WorkflowPortStatus.CONNECTED;
 
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
+		wf.nodes.map((node) => [node.id, node])
+	);
 	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
 	nodeCache.set(operator.id, []);
 
@@ -402,14 +405,8 @@ export function selectOutput(
 		}
 
 		// Collect node cache
-		if (nodeCache.has(edge.source)) {
-			// Add the node connected to this edge's source
-			nodeCache
-				.get(edge.source)
-				?.push(wf.nodes.find((node) => node.id === edge.target) as WorkflowNode<any>);
-			// Make a new relationship for the nodes attached to this edge's target node
-			if (!nodeCache.has(edge.target)) nodeCache.set(edge.target, []);
-		}
+		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
+		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
 	});
 
 	cascadeInvalidateDownstream(operator, nodeCache);
