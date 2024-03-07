@@ -231,7 +231,6 @@ export class KernelSessionManager {
 		const iopubMessageHandler = (_session: any, message: any) => {
 			const msgType = message.header.msg_type;
 			const msgId = message.parent_header.msg_id;
-			console.log('iopubMessageHandler', msgType, msgId, message);
 
 			if (this.map.has(msgId)) {
 				this.map.get(msgId)?.emit(msgType, message);

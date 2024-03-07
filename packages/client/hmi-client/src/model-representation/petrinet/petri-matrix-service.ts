@@ -18,9 +18,6 @@ export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) =>
 		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
 	);
 
-	console.log(transitionMatrixData);
-	console.log(transitions);
-
 	const controllerIndexMap = new Map(); // Maps controllers to their input/output combo
 
 	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
