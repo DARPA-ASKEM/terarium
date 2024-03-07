@@ -177,6 +177,9 @@ function runCode() {
 		.register('stream', (data) => {
 			console.log('stream', data);
 		})
+		.register('display_data', (data) => {
+			console.log(data);
+		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
 			console.log('error', data.content);

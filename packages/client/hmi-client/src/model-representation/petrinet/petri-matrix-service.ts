@@ -18,6 +18,9 @@ export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) =>
 		transitionMatrixData.map((t) => amr.model.transitions.filter(({ id }) => t.id === id)).flat()
 	);
 
+	console.log(transitionMatrixData);
+	console.log(transitions);
+
 	const controllerIndexMap = new Map(); // Maps controllers to their input/output combo
 
 	// Get unique inputs and outputs and sort names alphabetically (these are the rows and columns respectively)
@@ -27,6 +30,7 @@ export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) =>
 		const newInputs: string[] = [];
 		const newOutputs: string[] = [];
 		const newControllers: string[] = [];
+
 		for (let j = 0; j < input.length; j++) {
 			if (input[j] !== output[j]) {
 				newInputs.push(input[j]);
@@ -114,6 +118,7 @@ export function createParameterMatrix(
 		amr,
 		transitionMatrixData
 	);
+	console.log(transitions);
 
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {
