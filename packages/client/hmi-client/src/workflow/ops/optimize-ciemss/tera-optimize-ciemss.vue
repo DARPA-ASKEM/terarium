@@ -432,7 +432,7 @@ const runOptimize = async () => {
 	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	console.log(optResult.simulationId);
-	await getOptimizeStatus(optResult.simulationId); // This does not wait until job is done: https://github.com/DARPA-ASKEM/terarium/issues/2905
+	await getOptimizeStatus(optResult.simulationId);
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
 
