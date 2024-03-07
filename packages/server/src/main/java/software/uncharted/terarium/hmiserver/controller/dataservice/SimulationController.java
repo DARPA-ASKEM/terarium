@@ -199,9 +199,8 @@ public class SimulationController {
 
 			//Create the dataset asset:
 			final UUID simId = sim.get().getId();
-			final String simName = sim.get().getName();
 			final Dataset dataset = datasetService.createAsset(new Dataset());
-			dataset.setName(simName + " Result Dataset");
+			dataset.setName(datasetName + " Result Dataset");
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(Map.of("simulationId", simId));
 			dataset.setFileNames(sim.get().getResultFiles());
@@ -215,7 +214,7 @@ public class SimulationController {
 
 			// Duplicate the simulation results to a new dataset
 			simulationService.copySimulationResultToDataset(sim.get(), dataset);
-
+			datasetService.updateAsset(dataset);
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {

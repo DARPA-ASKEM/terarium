@@ -30,6 +30,7 @@ import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	simulationRunId: string;
@@ -46,6 +47,8 @@ const saveDatasetToProject = async () => {
 	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
 		if (await saveDataset(activeProject.value.id, props.simulationRunId, saveAsName.value)) {
+			console.log(props.simulationRunId);
+			logger.success(`Added dataset: ${saveAsName.value}`);
 			refresh();
 		}
 	}
