@@ -70,8 +70,18 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs.push([]);
+	emit('update-state', state);
+};
+
 const processResult = (id: string) => {
 	const state = _.cloneDeep(props.node.state);
+
+	if (state.chartConfigs.length === 0) {
+		addChart();
+	}
 
 	emit('append-output', {
 		type: CalibrationOperationJulia.outputs[0].type,
@@ -91,14 +101,17 @@ watch(
 	async (id) => {
 		if (!id || id === '') return;
 
+		console.log('poll....');
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
-			processResult(id);
-		}
+			setTimeout(() => {
+				processResult(id);
 
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressSimulationId = '';
-		emit('update-state', state);
+				const state = _.cloneDeep(props.node.state);
+				state.inProgressSimulationId = '';
+				emit('update-state', state);
+			}, 4000);
+		}
 	},
 	{ immediate: true }
 );

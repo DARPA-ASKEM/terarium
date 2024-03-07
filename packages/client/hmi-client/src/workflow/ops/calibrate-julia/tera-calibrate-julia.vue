@@ -224,7 +224,6 @@ import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
 import {
 	getRunResultJulia,
 	makeCalibrateJobJulia,
-	querySimulationInProgress,
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
@@ -243,13 +242,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'update-output-port',
-	'close'
-]);
+const emit = defineEmits(['update-state', 'select-output', 'close']);
 const toast = useToastService();
 
 enum CalibrateTabs {
@@ -323,12 +316,12 @@ const filterStateVars = (params) => {
 };
 
 const runCalibrate = async () => {
-	const response = await makeCalibrateRequest();
+	const simulationId = await makeCalibrateRequest();
 
-	// FIXME:
 	const state = _.cloneDeep(props.node.state);
-	state.inProgressSimulationId = response.simulationId;
-	emit('update-state', props.node.state);
+	state.inProgressSimulationId = simulationId;
+	console.log('starting calibrate', state.inProgressSimulationId);
+	emit('update-state', state);
 };
 
 const makeCalibrateRequest = async () => {
@@ -365,10 +358,9 @@ const makeCalibrateRequest = async () => {
 };
 
 const messageHandler = (event: ClientEvent<ScimlStatusUpdate>) => {
-	const runIds: string[] = querySimulationInProgress(props.node);
-	if (runIds.length === 0) return;
-
-	if (runIds.includes(event.data.id)) {
+	// if (runIds.includes(event.data.id)) {
+	console.log(event.data.id, props.node.state.inProgressSimulationId);
+	if (props.node.state.inProgressSimulationId === event.data.id) {
 		const { iter, loss, params, solData, timesteps } = event.data;
 
 		parameterResult.value = filterStateVars(params);
@@ -468,6 +460,7 @@ watch(
 		if (id === '') {
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
 		} else {
+			console.log('subscribe', id);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
 		}
 	}
