@@ -475,14 +475,22 @@ onUnmounted(() => {
 	display: flex;
 	flex: 1;
 	overflow: hidden;
+	position: relative;
+}
+
+:deep(.card) {
+	cursor: pointer;
 }
 
 .view-toggles {
 	padding: 0.5rem;
-
+	pointer-events: none;
 	.pi-spin {
 		color: var(--text-color-subdued);
 	}
+}
+.view-toggles > * {
+	pointer-events: auto;
 }
 
 aside {
