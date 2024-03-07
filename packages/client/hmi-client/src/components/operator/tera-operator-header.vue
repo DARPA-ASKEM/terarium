@@ -80,7 +80,8 @@ header {
 .header-label {
 	font-size: var(--font-caption);
 }
-.warning {
+.warning,
+.invalid {
 	background-color: var(--surface-warning);
 }
 
@@ -94,7 +95,8 @@ header {
 	color: var(--text-color-disabled);
 }
 
-.focus {
+/* FIXME: Should consider making the color darker programmatically instead of doing it by a case by case basis*/
+.default.focus {
 	background-color: var(--surface-highlight-hover);
 }
 
