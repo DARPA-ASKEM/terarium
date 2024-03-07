@@ -10,13 +10,14 @@
 				<Accordion multiple :active-index="[0, 1, 2]">
 					<AccordionTab v-if="!isEmpty(clonedState.equations)">
 						<template #header>
-							<header>Equation Images</header>
+							<header>Equation images</header>
 						</template>
 						<tera-asset-block
 							v-for="(equation, i) in clonedState.equations"
 							:key="i"
 							:is-included="equation.includeInProcess"
 							@update:is-included="onUpdateInclude(equation)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ equation.name }}</h5>
@@ -26,13 +27,14 @@
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.figures)">
 						<template #header>
-							<header>Figure Images</header>
+							<header>Figure images</header>
 						</template>
 						<tera-asset-block
 							v-for="(figure, i) in clonedState.figures"
 							:key="i"
 							:is-included="figure.includeInProcess"
 							@update:is-included="onUpdateInclude(figure)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ figure.name }}</h5>
@@ -42,13 +44,14 @@
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.tables)">
 						<template #header>
-							<header>Table Images</header>
+							<header>Table images</header>
 						</template>
 						<tera-asset-block
 							v-for="(table, i) in clonedState.tables"
 							:key="i"
 							:is-included="table.includeInProcess"
 							@update:is-included="onUpdateInclude(table)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ table.name }}</h5>
