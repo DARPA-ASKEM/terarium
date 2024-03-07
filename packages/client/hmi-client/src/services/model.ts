@@ -1,6 +1,6 @@
 import API from '@/api/api';
 import type { Model, ModelConfiguration } from '@/types/Types';
-import { AssetType, EventType } from '@/types/Types';
+import { Artifact, AssetType, EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
@@ -81,7 +81,7 @@ export async function reconstructAMR(amr: any) {
 }
 
 // function adds model to project, returns modelId if successful otherwise null
-export async function addNewModelToProject(modelName: string): Promise<string | null> {
+export async function addNewPetrinetModelToProject(modelName: string): Promise<string | null> {
 	// 1. Load an empty AMR
 	const amr = newAMR(modelName);
 	(amr as any).id = undefined; // FIXME: id hack
@@ -89,6 +89,14 @@ export async function addNewModelToProject(modelName: string): Promise<string | 
 	const response = await createModel(amr);
 	const modelId = response?.id;
 
+	return modelId ?? null;
+}
+
+export async function processAndAddModelToProject(artifact: Artifact): Promise<string | null> {
+	const response = await API.post(`/mira/convert_and_create_model`, {
+		artifactId: artifact.id
+	});
+	const modelId = response.data.id;
 	return modelId ?? null;
 }
 
