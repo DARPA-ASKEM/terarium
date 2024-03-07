@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger';
-import axios, { AxiosHeaders } from 'axios';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { EventSource } from 'extended-eventsource';
 import { ServerError } from '@/types/ServerError';
 import useAuthStore from '../stores/auth';
@@ -27,18 +27,36 @@ API.interceptors.request.use(
 
 API.interceptors.response.use(
 	(response) => response,
-	(error) => {
-		const responseError: ServerError = error.response.data;
-		if (responseError.status === 401) {
+	(error: AxiosError) => {
+		if (error.status === 401) {
 			// redirect to login
 			const auth = useAuthStore();
 			auth.keycloak?.login({
 				redirectUri: window.location.href
 			});
 		} else {
-			logger.error(responseError.message, {
+			let message = error.message;
+			let title = `${error.response?.statusText} (${error.response?.status})`;
+			if (error.response && error.response.data) {
+				const responseError: ServerError = error.response?.data as ServerError;
+
+				// check to see if the 'message' property is set. If it is, set message to that value.  If not, check the 'trace' property and extract the error from that. It will be the substring between the first set of quotations marks
+				if (responseError.message) {
+					message = responseError.message;
+				} else if (responseError.trace) {
+					// extract the substring between the first set of quotation marks and use that
+					const start = responseError.trace.indexOf('"');
+					const end = responseError.trace.indexOf('"', start + 1);
+					message = responseError.trace.substring(start + 1, end);
+				}
+
+				message = message ?? 'An Error occurred';
+				title = `${responseError.error} (${responseError.status})`;
+			}
+
+			logger.error(message, {
 				showToast: true,
-				toastTitle: `${responseError.error} (${responseError.status})`
+				toastTitle: title
 			});
 		}
 		return null;
