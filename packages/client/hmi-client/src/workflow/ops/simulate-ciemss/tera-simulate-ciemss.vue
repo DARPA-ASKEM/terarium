@@ -112,28 +112,7 @@
 				@click="runSimulate"
 				:disabled="showSpinner"
 			/>
-			<Button
-				outlined
-				title="Saves the current version of the model as a new Terarium asset"
-				@click="showSaveInput = !showSaveInput"
-			>
-				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Save as new dataset</span>
-			</Button>
-			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
-				<i
-					v-if="useProjects().activeProject.value?.id"
-					class="pi pi-check i"
-					:class="{ save: hasValidDatasetName }"
-					@click="saveDatasetToProject"
-				></i>
-			</span>
+			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -145,7 +124,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
 import { ProgressState } from '@/types/Types';
 import type {
 	CsvAsset,
@@ -166,9 +144,8 @@ import {
 } from '@/services/models/simulation-service';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
-import { createCsvAssetFromRunResults, saveDataset } from '@/services/dataset';
+import { createCsvAssetFromRunResults } from '@/services/dataset';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -176,14 +153,13 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import { Poller, PollerState } from '@/api/api';
 // import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
+import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
-
-const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
@@ -217,8 +193,6 @@ const completedRunId = ref<string>('');
 const runResults = ref<{ [runId: string]: RunResults }>({});
 const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
-const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
 const outputs = computed(() => {
@@ -374,16 +348,6 @@ const addChart = () => {
 
 	emit('update-state', state);
 };
-
-async function saveDatasetToProject() {
-	const { activeProject, refresh } = useProjects();
-	if (activeProject.value?.id) {
-		if (await saveDataset(activeProject.value.id, selectedRunId.value, saveAsName.value)) {
-			refresh();
-		}
-		showSaveInput.value = false;
-	}
-}
 
 watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
 
