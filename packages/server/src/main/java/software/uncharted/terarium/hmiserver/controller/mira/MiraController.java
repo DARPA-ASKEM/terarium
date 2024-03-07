@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -31,15 +30,14 @@ import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 
 @RequestMapping("/mira")
 @RestController
@@ -47,20 +45,19 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 @RequiredArgsConstructor
 public class MiraController {
 
-	final private ArtifactService artifactService;
 	final private ObjectMapper objectMapper;
+	final private ArtifactService artifactService;
 	final private TaskService taskService;
-	final private ModelService modelService;
 
 	@Data
 	static public class ModelConversionRequest {
 		public UUID artifactId;
-	};
+	}
 
 	@Data
 	static public class ModelConversionResponse {
 		public Model response;
-	};
+	}
 
 	private boolean endsWith(final String filename, final List<String> suffixes) {
 		for (final String suffix : suffixes) {
@@ -89,9 +86,8 @@ public class MiraController {
 			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
-	public ResponseEntity<TaskResponse> convertAndCreateModel(
-			@RequestBody final ModelConversionRequest conversionRequest,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+	public ResponseEntity<Model> convertAndCreateModel(
+			@RequestBody final ModelConversionRequest conversionRequest) {
 
 		try {
 
@@ -119,6 +115,7 @@ public class MiraController {
 			}
 
 			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.MIRA);
 			req.setInput(fileContents.get().getBytes());
 
 			if (endsWith(filename, List.of(".mdl"))) {
@@ -134,10 +131,13 @@ public class MiraController {
 			}
 
 			// send the request
-			return ResponseEntity.ok().body(taskService.runTask(mode, req));
+			final TaskResponse resp = taskService.runTaskSync(req);
+			final Model model = objectMapper.readValue(resp.getOutput(), Model.class);
+			return ResponseEntity.ok().body(model);
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
+			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);

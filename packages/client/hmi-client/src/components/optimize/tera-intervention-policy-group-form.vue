@@ -45,37 +45,14 @@
 					inputId="numericInput"
 					mode="decimal"
 					:min-fraction-digits="1"
-					:max-fraction-digits="3"
+					:max-fraction-digits="10"
 					v-model="config.initialGuess"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 			<div class="label-and-input"></div>
-			<div class="label-and-input">
-				<label for="cost-benefit">Cost/Benefit function</label>
-				<!-- Disabled until pyciemss-service
-					updates:https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L36-L40
-				-->
-				<Dropdown
-					disabled
-					class="p-inputtext-sm"
-					:options="costBenefitOptions"
-					v-model="config.costBenefitFn"
-					placeholder="Select"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
 		</div>
 		<div class="input-row">
-			<div class="label-and-input">
-				<label for="start-time">Start time</label>
-				<InputNumber
-					class="p-inputtext-sm"
-					inputId="integeronly"
-					v-model="config.startTime"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
 			<div class="label-and-input">
 				<label for="lower-bound">Lower bound</label>
 				<InputNumber
@@ -83,7 +60,7 @@
 					inputId="numericInput"
 					mode="decimal"
 					:min-fraction-digits="1"
-					:max-fraction-digits="3"
+					:max-fraction-digits="10"
 					v-model="config.lowerBound"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -95,8 +72,17 @@
 					inputId="numericInput"
 					mode="decimal"
 					:min-fraction-digits="1"
-					:max-fraction-digits="3"
+					:max-fraction-digits="10"
 					v-model="config.upperBound"
+					@update:model-value="emit('update-self', config)"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="start-time">Start time</label>
+				<InputNumber
+					class="p-inputtext-sm"
+					inputId="integeronly"
+					v-model="config.startTime"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
@@ -119,8 +105,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
-
-const costBenefitOptions = ['L1 Norm', 'L2 Norm'];
 
 const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));
 const isEditing = ref<boolean>(false);
