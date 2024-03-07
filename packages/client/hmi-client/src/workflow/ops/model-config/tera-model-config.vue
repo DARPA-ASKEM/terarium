@@ -19,17 +19,17 @@
 								>({{ suggestedConfirgurationContext.tableData.length }})</span
 							>
 							<Button
-								icon="pi pi-cog"
+								icon="pi pi-upload rotate-90"
 								label="Extract configurations from inputs"
-								outlined
+								class="extract-button"
+								text
 								@click.stop="extractConfigurationsFromInputs"
 								style="margin-left: auto"
-								:loading="isExtracting"
+								:loading="isLoading"
 							/>
 						</template>
 
 						<DataTable
-							v-if="suggestedConfirgurationContext.tableData.length > 0"
 							:value="suggestedConfirgurationContext.tableData"
 							size="small"
 							data-key="id"
@@ -37,7 +37,8 @@
 							:rows="5"
 							sort-field="createdOn"
 							:sort-order="-1"
-							:loading="isExtracting"
+							:loading="isLoading"
+							style="min-height: 200px"
 						>
 							<Column field="name" header="Name" style="width: 15%">
 								<template #body="{ data }">
@@ -76,12 +77,9 @@
 								</div>
 							</template>
 							<template #empty>
-								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
+								<p class="empty-section">No configurations found.</p>
 							</template>
 						</DataTable>
-						<section v-else>
-							<p class="empty-section">No configurations found.</p>
-						</section>
 					</AccordionTab>
 					<AccordionTab header="Context">
 						<p class="text-sm mb-1">Name</p>
@@ -275,7 +273,6 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
@@ -417,20 +414,19 @@ const initializeEditor = (editorInstance: any) => {
 
 const extractConfigurationsFromInputs = async () => {
 	if (!model.value?.id) return;
-	isExtracting.value = true;
-
-	const promises: Promise<void>[] = [];
 	if (documentId.value) {
-		promises.push(configureModelFromDocument(documentId.value, model.value.id));
+		modelFromDocumentHandler.value = await configureModelFromDocument(
+			documentId.value,
+			model.value.id
+		);
 	}
 	if (datasetId.value) {
-		promises.push(configureModelFromDatasets(model.value.id, [datasetId.value]));
+		modelFromDatasetHandler.value = await configureModelFromDatasets(model.value.id, [
+			datasetId.value
+		]);
 	}
 
-	await Promise.all(promises);
-	await fetchConfigurations(model.value.id);
-
-	isExtracting.value = false;
+	fetchConfigurations(model.value.id);
 };
 
 const handleModelPreview = (data: any) => {
@@ -463,7 +459,16 @@ const suggestedConfirgurationContext = ref<{
 	tableData: [],
 	modelConfiguration: null
 });
-const isExtracting = ref(false);
+const isFetching = ref(false);
+const modelFromDocumentHandler = ref(null);
+const modelFromDatasetHandler = ref(null);
+const isLoading = computed(
+	() =>
+		modelFromDocumentHandler.value?.isRunning ||
+		modelFromDatasetHandler.value?.isRunning ||
+		isFetching.value
+);
+
 const model = ref<Model | null>(null);
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
@@ -714,10 +719,9 @@ const onSelection = (id: string) => {
 
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
-		// FIXME: since configurations are made on the backend on the fly, we need to wait for the db to update before fetching, here's an artificaial delay
-		setTimeout(async () => {
-			suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-		}, 800);
+		isFetching.value = true;
+		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		isFetching.value = false;
 	}
 };
 
@@ -910,5 +914,14 @@ onUnmounted(() => {
 
 .use-button {
 	white-space: nowrap;
+}
+
+.extract-button.p-button.p-button-text {
+	color: var(--text-color-primary);
+	border: 1px solid var(--surface-border-alt);
+	&:hover {
+		color: var(--text-color-primary);
+		border: 1px solid var(--surface-border-alt);
+	}
 }
 </style>

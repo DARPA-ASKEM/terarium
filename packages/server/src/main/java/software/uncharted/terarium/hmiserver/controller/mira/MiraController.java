@@ -86,7 +86,7 @@ public class MiraController {
 	})
 	public ResponseEntity<TaskResponse> convertAndCreateModel(
 			@RequestBody final ModelConversionRequest conversionRequest,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
 

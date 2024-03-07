@@ -36,7 +36,7 @@ export async function modelCard(documentId: string): Promise<void> {
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string
-): Promise<void> {
+): Promise<TaskHandler | null> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
@@ -46,7 +46,7 @@ export async function configureModelFromDocument(
 		});
 
 		const taskId = response.data.id;
-		await handleTaskById(taskId, {
+		return await handleTaskById(taskId, {
 			ondata(data, closeConnection) {
 				if (data?.status === TaskStatus.Failed) {
 					throw new FatalError('Configs from document - Task failed');
@@ -60,9 +60,14 @@ export async function configureModelFromDocument(
 	} catch (err) {
 		logger.error(`An issue occured while exctracting a model configuration from document. ${err}`);
 	}
+
+	return null;
 }
 
-export async function configureModelFromDatasets(modelId: string, datasetIds: string[]) {
+export async function configureModelFromDatasets(
+	modelId: string,
+	datasetIds: string[]
+): Promise<TaskHandler | null> {
 	try {
 		// FIXME: Using first dataset for now...
 		const response = await API.post<TaskResponse>('/gollm/configure-from-dataset', null, {
@@ -73,7 +78,7 @@ export async function configureModelFromDatasets(modelId: string, datasetIds: st
 		});
 
 		const taskId = response.data.id;
-		await handleTaskById(taskId, {
+		return await handleTaskById(taskId, {
 			ondata(data, closeConnection) {
 				if (data?.status === TaskStatus.Failed) {
 					throw new FatalError('Configs from datasets - Task failed');
@@ -87,13 +92,19 @@ export async function configureModelFromDatasets(modelId: string, datasetIds: st
 	} catch (err) {
 		logger.error(`An issue occured while exctracting a model configuration from dataset. ${err}`);
 	}
+
+	return null;
 }
 
 /**
  * Handles task for a given task ID.
  * @param {string} id - The task ID.
  */
-export async function handleTaskById(id: string, handlers: TaskEventHandlers) {
+export async function handleTaskById(
+	id: string,
+	handlers: TaskEventHandlers
+): Promise<TaskHandler> {
 	const taskHandler = new TaskHandler(`/gollm/${id}`, handlers);
 	await taskHandler.start();
+	return taskHandler;
 }
