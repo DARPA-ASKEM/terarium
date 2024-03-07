@@ -283,6 +283,7 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import { formatTimestamp } from '@/utils/date';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -855,23 +856,6 @@ watch(
 onUnmounted(() => {
 	kernelManager.shutdown();
 });
-
-// Format dates as a readable string
-function formatTimestamp(timestamp) {
-	const date = new Date(timestamp);
-
-	const formatter = new Intl.DateTimeFormat('en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: '2-digit',
-		hour: '2-digit',
-		minute: '2-digit',
-		second: '2-digit',
-		timeZoneName: 'short'
-	});
-
-	return formatter.format(date);
-}
 </script>
 
 <style scoped>
