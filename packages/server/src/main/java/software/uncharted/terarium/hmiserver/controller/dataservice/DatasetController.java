@@ -275,12 +275,6 @@ public class DatasetController {
 		}
 	}
 
-	@ExceptionHandler
-	@org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.BAD_REQUEST)
-	public void handle(final Exception e) {
-		log.info("Returning HTTP 400 Bad Request", e);
-	}
-
 	@GetMapping("/{id}/download-csv")
 	@Secured(Roles.USER)
 	@Operation(summary = "Download dataset CSV")
