@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,7 +32,6 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
@@ -48,19 +45,17 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 public class MiraController {
 
 	final private ArtifactService artifactService;
-	final private ObjectMapper objectMapper;
 	final private TaskService taskService;
-	final private ModelService modelService;
 
 	@Data
 	static public class ModelConversionRequest {
 		public UUID artifactId;
-	};
+	}
 
 	@Data
 	static public class ModelConversionResponse {
 		public Model response;
-	};
+	}
 
 	private boolean endsWith(final String filename, final List<String> suffixes) {
 		for (final String suffix : suffixes) {
