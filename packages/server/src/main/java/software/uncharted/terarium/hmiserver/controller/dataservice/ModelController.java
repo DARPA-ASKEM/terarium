@@ -279,11 +279,11 @@ public class ModelController {
 
 
 				// Find the Document Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam documentSearchBody = new ProvenanceQueryParam();
-				documentSearchBody.setRootId(config.getId());
-				documentSearchBody.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				documentSearchBody.setTypes(List.of(ProvenanceType.DOCUMENT));
-				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(documentSearchBody);
+				final ProvenanceQueryParam documentQueryParams = new ProvenanceQueryParam();
+				documentQueryParams.setRootId(config.getId());
+				documentQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+				documentQueryParams.setTypes(List.of(ProvenanceType.DOCUMENT));
+				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(documentQueryParams);
 
 				List<String> documentSourceNames = new ArrayList<String>();
 				documentIds.forEach(documentId -> {
@@ -301,11 +301,11 @@ public class ModelController {
 				});
 
 				// Find the Dataset Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam datasetSearchBody = new ProvenanceQueryParam();
-				datasetSearchBody.setRootId(config.getId());
-				datasetSearchBody.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				datasetSearchBody.setTypes(List.of(ProvenanceType.DATASET));
-				final Set<String> datasetIds = provenanceSearchService.modelConfigFromDataset(datasetSearchBody);
+				final ProvenanceQueryParam datasetQueryParams = new ProvenanceQueryParam();
+				datasetQueryParams.setRootId(config.getId());
+				datasetQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+				datasetQueryParams.setTypes(List.of(ProvenanceType.DATASET));
+				final Set<String> datasetIds = provenanceSearchService.modelConfigFromDataset(datasetQueryParams);
 
 				List<String> datasetSourceNames = new ArrayList<String>();
 				datasetIds.forEach(datasetId -> {

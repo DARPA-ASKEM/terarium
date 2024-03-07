@@ -45,22 +45,22 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 	}
 
 	@Override
-	public void onSuccess(TaskResponse resp) {
+	public void onSuccess(final TaskResponse resp) {
 		try {
 			final String serializedString = objectMapper
-					.writeValueAsString(((TaskResponse) resp).getAdditionalProperties());
+					.writeValueAsString(resp.getAdditionalProperties());
 			final Properties props = objectMapper.readValue(serializedString, Properties.class);
 			log.info("Writing model card to database for document {}", props.getDocumentId());
 			final DocumentAsset document = documentAssetService.getAsset(props.getDocumentId())
 					.orElseThrow();
-			final Response card = objectMapper.readValue(((TaskResponse) resp).getOutput(), Response.class);
+			final Response card = objectMapper.readValue(resp.getOutput(), Response.class);
 			if (document.getMetadata() == null) {
 				document.setMetadata(new java.util.HashMap<>());
 			}
 			document.getMetadata().put("gollmCard", card.response);
 
 			documentAssetService.updateAsset(document);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("Failed to write model card to database", e);
 			throw new RuntimeException(e);
 		}
