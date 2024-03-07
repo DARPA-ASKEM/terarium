@@ -148,7 +148,7 @@
 							:run-results="simulationRunResults[knobs.simulationRunId]"
 							:chartConfig="{ selectedRun: knobs.simulationRunId, selectedVariable: cfg }"
 							has-mean-line
-							@configuration-change="configurationChange(idx, $event)"
+							@configuration-change="chartConfigChange(idx, $event)"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
@@ -364,7 +364,7 @@ const addInterventionPolicyGroupForm = () => {
 	emit('update-state', state);
 };
 
-const configurationChange = (index: number, config: ChartConfig) => {
+const chartConfigChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config.selectedVariable;
 
