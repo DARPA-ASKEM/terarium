@@ -1,4 +1,4 @@
-import type { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -43,13 +43,12 @@ export const CalibrationOperationJulia: Operation = {
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
-	// TODO: Figure out mapping
-	// Calls API, returns results.
 	action: async () => null,
 
 	initState: () => {
 		const init: CalibrationOperationStateJulia = {
 			chartConfigs: [],
+			inProgressSimulationId: '',
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			extra: {
 				numChains: 4,

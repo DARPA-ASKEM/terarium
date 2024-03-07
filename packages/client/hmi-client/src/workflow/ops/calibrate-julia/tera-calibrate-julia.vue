@@ -139,8 +139,7 @@
 				</div>
 				<div class="form-section">
 					<h4>Loss function</h4>
-					<div v-if="inProgressSimulationId" ref="lossPlot"></div>
-					<div v-else ref="staticLossPlotRef"></div>
+					<div v-if="inProgressSimulationId || selectedRunId" ref="lossPlot"></div>
 				</div>
 				<div class="form-section">
 					<h4>Variables</h4>
@@ -285,19 +284,15 @@ const outputs = computed(() => {
 	return [];
 });
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedRunId = ref<string>();
 
 const lossPlot = ref<HTMLElement>();
-const staticLossPlotRef = ref<HTMLElement>();
 const lossValues: { [key: string]: number }[] = [];
 
 // refs to keep track of intermediate states and parameters
 const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
 const parameterResult = ref<{ [index: string]: any }>();
 
-const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 const runResultParams = ref<Record<string, Record<string, number>>>({});
 
@@ -481,10 +476,21 @@ watch(
 watch(
 	() => props.node.active,
 	() => {
-		// Update selected output
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
+		const node = props.node;
+		if (!node.active) return;
+
+		selectedOutputId.value = node.active;
+		selectedRunId.value = node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0];
+
+		if (!selectedRunId.value) return;
+		lazyLoadCalibrationData(selectedRunId.value as string);
+
+		const lossVals = node.state.intermediateLoss;
+		if (lossVals && lossPlot) {
+			const width = lossPlot.value?.offsetWidth as number;
+			renderLossGraph(lossPlot.value as HTMLElement, lossVals, { width, height: 150 });
 		}
+
 		// Update Wizard form fields with current selected output state extras
 		extra.value = props.node.state.extra;
 	},
@@ -513,28 +519,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-// Fetch simulation run results whenever output changes
-watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
-
-watch(
-	() => selectedRunId.value,
-	() => {
-		lazyLoadCalibrationData(selectedRunId.value);
-	},
-	{ immediate: true }
-);
-
-// Plot loss values if available on mount or on selectedRun change
-watch([() => selectedRunId.value, () => staticLossPlotRef.value], () => {
-	if (selectedRunId.value) {
-		const lossVals = props.node.state.intermediateLoss;
-		if (lossVals && staticLossPlotRef.value) {
-			const width = staticLossPlotRef.value.offsetWidth;
-			renderLossGraph(staticLossPlotRef.value, lossVals, { width, height: 150 });
-		}
-	}
-});
 </script>
 
 <style scoped>
