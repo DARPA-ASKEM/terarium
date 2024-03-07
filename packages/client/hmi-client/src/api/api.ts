@@ -219,7 +219,7 @@ export class TaskHandler {
 
 	private handlers: TaskEventHandlers;
 
-	private eventSource: EventSource;
+	private eventSource: EventSource | null;
 
 	public isRunning: Ref<boolean>;
 
