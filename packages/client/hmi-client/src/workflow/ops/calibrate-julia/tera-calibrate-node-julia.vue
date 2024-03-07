@@ -26,15 +26,18 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { computed, watch, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import { RunType } from '@/types/SimulateConfig';
-import { getRunResultJulia } from '@/services/models/simulation-service';
+import { getRunResultJulia, pollAction } from '@/services/models/simulation-service';
 import { csvParse } from 'd3';
-import { CalibrationOperationStateJulia } from './calibrate-operation';
+import { Poller, PollerState } from '@/api/api';
+import { logger } from '@/utils/logger';
+import type { WorkflowNode } from '@/types/workflow';
+import { CalibrationOperationStateJulia, CalibrationOperationJulia } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
@@ -42,8 +45,63 @@ const props = defineProps<{
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const simulationId = ref<any>(null);
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 const csvData = ref<any>(null);
+
+const poller = new Poller();
+const pollResult = async (runId: string) => {
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => pollAction(runId));
+
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		return pollerResults;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`SCIML Calibrate: ${runId} has failed`, {
+			toastTitle: 'Error - Julia'
+		});
+		throw Error('Failed Runs');
+	}
+	return pollerResults;
+};
+
+const processResult = (id: string) => {
+	const state = _.cloneDeep(props.node.state);
+
+	emit('append-output', {
+		type: CalibrationOperationJulia.outputs[0].type,
+		label: `Output - ${props.node.outputs.length + 1}`,
+		value: [id],
+		isSelected: false,
+		state: {
+			extra: state.extra,
+			simulationsInProgress: state.simulationsInProgress,
+			intermediateLoss: state.intermediateLoss
+		}
+	});
+};
+
+watch(
+	() => props.node.state.inProgressSimulationId,
+	async (id) => {
+		if (!id || id === '') return;
+
+		const response = await pollResult(id);
+		if (response.state === PollerState.Done) {
+			processResult(id);
+		}
+
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressSimulationId = '';
+		emit('update-state', state);
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.node.active,
@@ -51,7 +109,6 @@ watch(
 		const active = props.node.active;
 		if (!active) return;
 
-		// FIXME: outdated, don't need tos upport multiple runs
 		simulationId.value = props.node.outputs.find((d) => d.id === active)?.value?.[0];
 		if (!simulationId.value) return;
 
