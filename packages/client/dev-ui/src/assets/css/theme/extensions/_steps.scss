@@ -1,0 +1,32 @@
+.p-steps {
+    padding: 1rem 0;
+
+    .p-steps-item {
+        .p-menuitem-link {
+            .p-steps-number {
+                background-color: #9e9d9e;
+                color: #ffffff;
+                font-size: 0.857rem;
+                min-width: 1.714rem;
+                height: 1.714rem;
+                line-height: 1.714rem;
+            }
+        }
+
+        &.p-highlight {
+            .p-steps-number {
+                background-color: $primaryColor;
+                color: $primaryTextColor;
+            }
+
+            .p-steps-title {
+                font-weight: 600;
+                color: $textColor;
+            }
+        }
+
+        &.p-disabled {
+            opacity: 1;
+        }
+    }
+}

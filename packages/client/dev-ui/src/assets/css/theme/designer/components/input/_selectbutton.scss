@@ -1,0 +1,37 @@
+.p-selectbutton {
+    .p-button {
+        background: $toggleButtonBg;
+        border: $toggleButtonBorder;
+        color: $toggleButtonTextColor;
+        transition: $formElementTransition;
+        border-radius: $borderRadius; 
+
+        &:not(.p-disabled):not(.p-highlight):hover {
+            background: $toggleButtonHoverBg;
+            border-color: $toggleButtonHoverBorderColor;
+            color: $toggleButtonTextHoverColor;
+            border-radius: $borderRadius;  
+        }
+
+        &.p-highlight {
+            background: $toggleButtonActiveBg;
+            border-color: $toggleButtonActiveBorderColor;
+            color: $toggleButtonTextActiveColor;
+            border-radius: $borderRadius; 
+
+            &:hover {
+                background: $toggleButtonHoverBg;
+                border-color: $toggleButtonActiveHoverBorderColor;
+                color: $toggleButtonTextActiveHoverColor;
+            }
+        }
+    }
+
+    .p-button, .p-button.p-highlight, .p-button:not(.p-disabled):not(.p-highlight):hover {
+        border-radius: $borderRadius;
+    }
+
+    &.p-invalid > .p-button {
+        @include invalid-input();
+    }
+}
