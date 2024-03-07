@@ -260,27 +260,25 @@ const addChart = () => {
 };
 
 watch(
-	() => selectedRunId.value,
-	() => {
-		if (selectedRunId.value) {
-			lazyLoadSimulationData(selectedRunId.value);
-		}
-	},
-	{ immediate: true }
+	() => props.node.state.inProgressSimulationId,
+	(id) => {
+		if (id === '') showSpinner.value = false;
+		else showSpinner.value = true;
+	}
 );
 
 watch(
 	() => props.node.active,
-	() => {
-		// Update selected output
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
-		}
+	async (newValue, oldValue) => {
+		if (!props.node.active || newValue === oldValue) return;
+		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state
 		timespan.value = props.node.state.currentTimespan;
 		numSamples.value = props.node.state.numSamples;
 		method.value = props.node.state.method;
+
+		lazyLoadSimulationData(selectedRunId.value);
 	},
 	{ immediate: true }
 );

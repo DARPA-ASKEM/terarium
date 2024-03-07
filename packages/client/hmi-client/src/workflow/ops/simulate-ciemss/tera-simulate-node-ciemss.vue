@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<tera-simulate-chart
-			v-if="hasData"
+			v-if="selectedRunId"
 			:run-results="runResults[selectedRunId]"
 			:chartConfig="{
 				selectedRun: selectedRunId,
@@ -9,6 +9,13 @@
 			}"
 			:size="{ width: 180, height: 120 }"
 			has-mean-line
+		/>
+
+		<tera-progress-spinner
+			v-if="inProgressSimulationId"
+			:font-size="2"
+			is-centered
+			style="height: 100%"
 		/>
 
 		<Button
@@ -30,11 +37,13 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
-import { RunResults } from '@/types/SimulateConfig';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+
+import type { WorkflowNode } from '@/types/workflow';
+import type { RunResults } from '@/types/SimulateConfig';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -44,17 +53,14 @@ const props = defineProps<{
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const runResults = ref<{ [runId: string]: RunResults }>({});
 
-const selectedOutputId = ref<string>(props.node.active as string);
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
-
+const selectedRunId = ref<string>();
+const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
-
-const hasData = ref(false);
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
+	selectedRunId.value = undefined;
+
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
@@ -119,13 +125,16 @@ watch(
 );
 
 watch(
-	() => selectedRunId.value,
+	() => props.node.active,
 	async () => {
+		const active = props.node.active;
+		if (!active) return;
+
+		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
+
 		const output = await getRunResultCiemss(selectedRunId.value);
 		runResults.value[selectedRunId.value] = output.runResults;
-
-		hasData.value = true;
 	},
 	{ immediate: true }
 );
