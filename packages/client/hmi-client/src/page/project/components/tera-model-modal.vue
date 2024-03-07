@@ -36,7 +36,12 @@ import InputText from 'primevue/inputtext';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import { AssetType } from '@/types/Types';
-import { addNewModelToProject, getModel, updateModel, validateModelName } from '@/services/model';
+import {
+	addNewPetrinetModelToProject,
+	getModel,
+	updateModel,
+	validateModelName
+} from '@/services/model';
 import { useProjects } from '@/composables/project';
 import { addAsset } from '@/services/project';
 import { logger } from '@/utils/logger';
@@ -56,7 +61,7 @@ const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : '')
 async function createNewModel() {
 	isValidName.value = validateModelName(newModelName.value);
 	if (!isValidName.value) return;
-	const modelId = await addNewModelToProject(newModelName.value.trim());
+	const modelId = await addNewPetrinetModelToProject(newModelName.value.trim());
 	let newAsset;
 	if (modelId) {
 		newAsset = await useProjects().addAsset(AssetType.Model, modelId);

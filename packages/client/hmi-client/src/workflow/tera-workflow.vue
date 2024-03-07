@@ -374,7 +374,7 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
-	workflowService.selectOutput(node, selectedOutputId);
+	workflowService.selectOutput(wf.value, node, selectedOutputId);
 	workflowDirty = true;
 }
 
