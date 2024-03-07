@@ -405,6 +405,7 @@ export function selectOutput(
 		}
 
 		// Collect node cache
+		if (!edge.source || !edge.target) return;
 		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
 		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
 	});
