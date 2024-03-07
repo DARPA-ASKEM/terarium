@@ -34,7 +34,8 @@ public class StellaToStockflowResponseHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Response modelResp = objectMapper.readValue(resp.getOutput(), Response.class);
-			modelService.createAsset(modelResp.getResponse());
+			final Model model = modelService.createAsset(modelResp.getResponse());
+			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);
 			throw new RuntimeException(e);
