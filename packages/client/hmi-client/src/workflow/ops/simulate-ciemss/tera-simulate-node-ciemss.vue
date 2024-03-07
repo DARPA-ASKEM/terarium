@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<tera-simulate-chart
-			v-if="selectedRunId"
+			v-if="selectedRunId && runResults[selectedRunId]"
 			:run-results="runResults[selectedRunId]"
 			:chartConfig="{
 				selectedRun: selectedRunId,
@@ -135,6 +135,7 @@ watch(
 
 		const output = await getRunResultCiemss(selectedRunId.value);
 		runResults.value[selectedRunId.value] = output.runResults;
+		console.log('!!', runResults.value);
 	},
 	{ immediate: true }
 );
