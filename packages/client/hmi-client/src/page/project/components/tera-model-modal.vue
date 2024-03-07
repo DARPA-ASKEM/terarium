@@ -44,7 +44,6 @@ import {
 } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import { addAsset } from '@/services/project';
-import { logger } from '@/utils/logger';
 import { useToastService } from '@/services/toast';
 
 const props = defineProps<{
@@ -95,7 +94,6 @@ async function updateModelName() {
 	await useProjects().refresh();
 
 	if (!response) {
-		logger.error('Could not save asset to project');
 		return;
 	}
 
