@@ -1,4 +1,4 @@
-import API, { TaskHandler, TaskHandlerType, FatalError, TaskEventHandlers } from '@/api/api';
+import API, { TaskHandler, ITaskHandler, FatalError, TaskEventHandlers } from '@/api/api';
 import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { logger } from '@/utils/logger';
@@ -37,7 +37,7 @@ export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
 	handlers: TaskEventHandlers
-): Promise<TaskHandlerType | null> {
+): Promise<ITaskHandler | null> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
@@ -59,7 +59,7 @@ export async function configureModelFromDatasets(
 	modelId: string,
 	datasetIds: string[],
 	handlers: TaskEventHandlers
-): Promise<TaskHandlerType | null> {
+): Promise<ITaskHandler | null> {
 	try {
 		// FIXME: Using first dataset for now...
 		const response = await API.post<TaskResponse>('/gollm/configure-from-dataset', null, {
@@ -85,7 +85,7 @@ export async function configureModelFromDatasets(
 export async function handleTaskById(
 	id: string,
 	handlers: TaskEventHandlers
-): Promise<TaskHandlerType> {
+): Promise<ITaskHandler> {
 	const taskHandler = new TaskHandler(`/gollm/${id}`, handlers);
 	await taskHandler.start();
 	return taskHandler;
