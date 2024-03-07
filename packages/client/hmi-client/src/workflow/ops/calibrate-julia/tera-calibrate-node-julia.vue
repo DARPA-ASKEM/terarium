@@ -104,7 +104,6 @@ const processResult = (id: string) => {
 		isSelected: false,
 		state: {
 			extra: state.extra,
-			simulationsInProgress: state.simulationsInProgress,
 			intermediateLoss: state.intermediateLoss
 		}
 	});

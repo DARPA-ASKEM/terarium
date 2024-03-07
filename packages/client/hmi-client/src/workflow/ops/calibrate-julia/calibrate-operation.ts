@@ -25,7 +25,6 @@ export interface CalibrationOperationStateJulia {
 
 	// state specific to individual calibrate runs
 	extra: CalibrateExtraJulia;
-	simulationsInProgress: string[];
 	intermediateLoss?: Record<string, number>[];
 
 	inProgressSimulationId: string;
@@ -55,8 +54,7 @@ export const CalibrationOperationJulia: Operation = {
 				numIterations: 50,
 				odeMethod: 'default',
 				calibrateMethod: CalibrateMethodOptions.GLOBAL
-			},
-			simulationsInProgress: []
+			}
 		};
 		return init;
 	}
