@@ -1,8 +1,10 @@
 <template>
 	<main>
+		<!-- Top banner -->
 		<div class="scrollable">
-			<header>
-				<section>
+			<header class="grid">
+				<!-- Welcome text -->
+				<section class="lg:col-9 md:col-6">
 					<h3>From data to discovery</h3>
 					<p>
 						Accelerate scientific modeling and simulation using AI. Search available knowledge,
@@ -17,7 +19,18 @@
 						:disabled="true"
 					/>
 				</section>
+
+				<!-- Video container -->
+				<div class="col-3">
+					<video controls ref="introVideo" class="video-container" height="200px">
+						<source src="@/assets/video/Terarium_overview.mp4" type="video/mp4" />
+						<track src="" kind="captions" srclang="en" label="English" />
+						Your browser does not support the video tag.
+					</video>
+				</div>
 			</header>
+
+			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
 				<TabView>
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
@@ -290,6 +303,11 @@ header p {
 
 header > section > button {
 	margin-top: 2rem;
+}
+
+.video-container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 }
 
 .menu {
