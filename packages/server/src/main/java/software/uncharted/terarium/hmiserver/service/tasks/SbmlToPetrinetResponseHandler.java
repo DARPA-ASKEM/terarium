@@ -31,7 +31,7 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 	}
 
 	@Override
-	public void onSuccess(final TaskResponse resp) {
+	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Response modelResp = objectMapper.readValue(resp.getOutput(), Response.class);
 			modelService.createAsset(modelResp.getResponse());
@@ -39,5 +39,6 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 			log.error("Failed to create model", e);
 			throw new RuntimeException(e);
 		}
+		return resp;
 	}
 }

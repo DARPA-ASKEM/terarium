@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,7 +52,9 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 public class TaskService {
 
 	static public enum TaskMode {
+		@JsonAlias("sync")
 		SYNC("sync"),
+		@JsonAlias("async")
 		ASYNC("async");
 
 		private final String value;
@@ -325,7 +328,7 @@ public class TaskService {
 	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(value = "${terarium.taskrunner.response-queue}", autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
-			final TaskResponse resp = decodeMessage(message, TaskResponse.class);
+			TaskResponse resp = decodeMessage(message, TaskResponse.class);
 			if (resp == null) {
 				return;
 			}
@@ -333,7 +336,8 @@ public class TaskService {
 			try {
 				// execute the handler
 				if (responseHandlers.containsKey(resp.getScript())) {
-					responseHandlers.get(resp.getScript()).handle(resp);
+					// handle the response
+					resp = responseHandlers.get(resp.getScript()).handle(resp);
 				}
 			} catch (final Exception e) {
 				log.error("Error occured while executing response handler for task {}",
