@@ -210,6 +210,7 @@ export interface TaskEventHandlers {
 	onclose?: () => void;
 }
 
+export type TaskHandlerType = TaskHandler;
 /**
  * Class representing a Server-Sent Events (SSE) handler.
  */

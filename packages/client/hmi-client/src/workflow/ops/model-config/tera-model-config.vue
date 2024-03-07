@@ -279,7 +279,7 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { TaskStatus } from '@/types/Types';
-import { TaskHandler, FatalError } from '@/api/api';
+import { TaskHandlerType, FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
@@ -435,7 +435,9 @@ const extractConfigurationsFromInputs = async () => {
 					}
 				},
 				onclose() {
-					fetchConfigurations(model.value.id);
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
 				}
 			}
 		);
@@ -450,12 +452,14 @@ const extractConfigurationsFromInputs = async () => {
 						throw new FatalError('Configs from datasets - Task failed');
 					}
 					if (data.status === TaskStatus.Success) {
-						logger.success('Model configured from datasets');
+						logger.success('Model configured from dataset(s)');
 						closeConnection();
 					}
 				},
 				onclose() {
-					fetchConfigurations(model.value.id);
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
 				}
 			}
 		);
@@ -493,8 +497,8 @@ const suggestedConfirgurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const modelFromDocumentHandler = ref<TaskHandler | null>(null);
-const modelFromDatasetHandler = ref<TaskHandler | null>(null);
+const modelFromDocumentHandler = ref<TaskHandlerType | null>(null);
+const modelFromDatasetHandler = ref<TaskHandlerType | null>(null);
 const isLoading = computed(
 	() =>
 		modelFromDocumentHandler.value?.isRunning ||
