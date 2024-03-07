@@ -12,77 +12,82 @@
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]" class="pb-6">
-					<AccordionTab v-if="model">
-						<template #header>
-							Suggested configurations<span class="artifact-amount"
-								>({{ suggestedConfirgurationContext.tableData.length }})</span
-							>
-							<Button
-								icon="pi pi-cog"
-								label="Extract configurations from inputs"
-								outlined
-								@click.stop="extractConfigurationsFromInputs"
-								style="margin-left: auto"
-								:loading="isExtracting"
-							/>
-						</template>
+				<div class="box-container" v-if="model">
+					<Accordion multiple :active-index="[0]">
+						<AccordionTab>
+							<template #header>
+								Suggested configurations<span class="artifact-amount"
+									>({{ suggestedConfirgurationContext.tableData.length }})</span
+								>
+								<Button
+									icon="pi pi-sign-out"
+									label="Extract configurations from inputs"
+									outlined
+									severity="secondary"
+									@click.stop="extractConfigurationsFromInputs"
+									style="margin-left: auto"
+									:loading="isExtracting"
+								/>
+							</template>
 
-						<DataTable
-							v-if="suggestedConfirgurationContext.tableData.length > 0"
-							:value="suggestedConfirgurationContext.tableData"
-							size="small"
-							data-key="id"
-							:paginator="suggestedConfirgurationContext.tableData.length > 5"
-							:rows="5"
-							sort-field="createdOn"
-							:sort-order="-1"
-							:loading="isExtracting"
-						>
-							<Column field="name" header="Name" style="width: 15%">
-								<template #body="{ data }">
-									<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
+							<DataTable
+								v-if="suggestedConfirgurationContext.tableData.length > 0"
+								:value="suggestedConfirgurationContext.tableData"
+								size="small"
+								data-key="id"
+								:paginator="suggestedConfirgurationContext.tableData.length > 5"
+								:rows="5"
+								sort-field="createdOn"
+								:sort-order="-1"
+								:loading="isExtracting"
+							>
+								<Column field="name" header="Name" style="width: 15%">
+									<template #body="{ data }">
+										<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
+									</template>
+								</Column>
+								<Column field="description" header="Description" style="width: 30%"></Column>
+								<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
+									<template #body="{ data }">
+										{{ formatTimestamp(data.createdOn) }}
+									</template>
+								</Column>
+								<Column header="Source" style="width: 30%">
+									<template #body="{ data }">
+										{{ data.configuration.metadata?.source?.join(',') || '--' }}
+									</template>
+								</Column>
+								<Column style="width: 7rem">
+									<template #body="{ data }">
+										<Button
+											class="use-button"
+											label="Apply configuration values"
+											@click="useSuggestedConfig(data)"
+											text
+										/>
+									</template>
+								</Column>
+								<template #loading>
+									<div>
+										<Vue3Lottie
+											:animationData="LoadingWateringCan"
+											:height="200"
+											:width="200"
+										></Vue3Lottie>
+										<p>Fetching suggested configurations.</p>
+									</div>
 								</template>
-							</Column>
-							<Column field="description" header="Description" style="width: 30%"></Column>
-							<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
-								<template #body="{ data }">
-									{{ new Date(data.createdOn).toISOString() }}
+								<template #empty>
+									<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 								</template>
-							</Column>
-							<Column header="Source" style="width: 30%">
-								<template #body="{ data }">
-									{{ data.configuration.metadata?.source?.join(',') || '--' }}
-								</template>
-							</Column>
-							<Column style="width: 7rem">
-								<template #body="{ data }">
-									<Button
-										class="use-button"
-										label="Apply configuration values"
-										@click="useSuggestedConfig(data)"
-										text
-									/>
-								</template>
-							</Column>
-							<template #loading>
-								<div>
-									<Vue3Lottie
-										:animationData="LoadingWateringCan"
-										:height="200"
-										:width="200"
-									></Vue3Lottie>
-									<p>Fetching suggested configurations.</p>
-								</div>
-							</template>
-							<template #empty>
-								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
-							</template>
-						</DataTable>
-						<section v-else>
-							<p class="empty-section">No configurations found.</p>
-						</section>
-					</AccordionTab>
+							</DataTable>
+							<section v-else>
+								<p class="empty-section m-3">No configurations found.</p>
+							</section>
+						</AccordionTab>
+					</Accordion>
+				</div>
+				<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]" class="pb-6">
 					<AccordionTab header="Context">
 						<p class="text-sm mb-1">Name</p>
 						<InputText
@@ -278,6 +283,7 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import { formatTimestamp } from '@/utils/date';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -853,6 +859,45 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* This is for the box around the suggested configurations section */
+.box-container {
+	border: solid 1px var(--surface-border);
+	border-radius: var(--border-radius);
+	background-color: var(--surface-50);
+}
+
+.box-container:deep(.p-accordion .p-accordion-content) {
+	padding: 0;
+	background-color: transparent;
+}
+
+.box-container:deep(.p-datatable .p-datatable-tbody > tr) {
+	background-color: transparent;
+}
+
+.box-container:deep(.p-paginator) {
+	background-color: transparent;
+}
+
+.box-container:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+	background-color: transparent;
+}
+
+.box-container:deep(
+		.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link
+	) {
+	background-color: transparent;
+}
+.box-container:deep(.p-datatable .p-sortable-column.p-highlight) {
+	background-color: transparent;
+}
+.box-container:deep(table > thead > tr > th:nth-child(1)) {
+	padding-left: var(--gap);
+}
+.box-container:deep(.p-button .p-button-label) {
+	text-align: left;
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;

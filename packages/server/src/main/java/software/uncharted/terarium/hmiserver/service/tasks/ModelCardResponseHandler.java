@@ -45,7 +45,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 	}
 
 	@Override
-	public void onSuccess(final TaskResponse resp) {
+	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final String serializedString = objectMapper
 					.writeValueAsString(resp.getAdditionalProperties());
@@ -64,5 +64,6 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 			log.error("Failed to write model card to database", e);
 			throw new RuntimeException(e);
 		}
+		return resp;
 	}
 }
