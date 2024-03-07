@@ -33,14 +33,19 @@ import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
 
 const props = defineProps<{
-	simulationRunId: string;
+	simulationRunId?: string;
 }>();
 
 const saveAsName = ref('');
 const showSaveInput = ref<boolean>(false);
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 const isSaveDisabled = computed<boolean>(() => {
-	if (props.simulationRunId === '' || !useProjects().activeProject.value?.id) return true;
+	if (
+		props.simulationRunId === undefined ||
+		props.simulationRunId === '' ||
+		!useProjects().activeProject.value?.id
+	)
+		return true;
 	return false;
 });
 const saveDatasetToProject = async () => {
