@@ -279,7 +279,7 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { TaskStatus } from '@/types/Types';
-import { ITaskHandler, FatalError } from '@/api/api';
+import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
@@ -497,8 +497,8 @@ const suggestedConfirgurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const modelFromDocumentHandler = ref<ITaskHandler | null>(null);
-const modelFromDatasetHandler = ref<ITaskHandler | null>(null);
+const modelFromDocumentHandler = ref();
+const modelFromDatasetHandler = ref();
 const isLoading = computed(
 	() =>
 		modelFromDocumentHandler.value?.isRunning ||
