@@ -16,6 +16,7 @@
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
 			@bring-to-front="bringToFront"
+			@show-annotation-editor="showAnnotationEditor = true"
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
@@ -27,7 +28,14 @@
 			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
+
 		<section class="content">
+			<tera-operator-annotation
+				:is-editing="showAnnotationEditor"
+				:saved-annotation="node.state.annotation"
+				@show-editor="showAnnotationEditor = true"
+				@confirm-annotation="saveAnnotation"
+			/>
 			<slot name="body" />
 		</section>
 		<tera-operator-outputs
@@ -44,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty, cloneDeep } from 'lodash';
 import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
@@ -55,6 +64,7 @@ import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -67,7 +77,8 @@ const emit = defineEmits([
 	'remove-operator',
 	'remove-edges',
 	'resize',
-	'duplicate-branch'
+	'duplicate-branch',
+	'update-state'
 ]);
 
 enum PortDirection {
@@ -76,9 +87,18 @@ enum PortDirection {
 }
 
 const operator = ref<HTMLElement>();
+const showAnnotationEditor = ref(false);
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
 
 let resizeObserver: ResizeObserver | null = null;
+
+function saveAnnotation(annotation: string) {
+	const state = cloneDeep(props.node.state);
+	if (state.annotation && isEmpty(annotation)) delete state.annotation;
+	else state.annotation = annotation;
+	emit('update-state', state);
+	showAnnotationEditor.value = false;
+}
 
 function bringToFront() {
 	// TODO: bring to front

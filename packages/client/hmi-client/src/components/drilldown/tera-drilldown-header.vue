@@ -22,8 +22,11 @@
 			>
 				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 			</TabView>
-
-			<slot name="action-row" />
+			<div class="options">
+				<!--input component here-->
+				<Button class="add-a-note" label="Add a note" icon="pi pi-pencil" text />
+				<slot name="action-row" />
+			</div>
 		</div>
 	</header>
 </template>
@@ -76,6 +79,10 @@ header > * {
 	color: var(--text-color-primary);
 }
 
+.add-a-note:deep(.p-button-icon) {
+	color: var(--primary-color);
+}
+
 header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 	padding: 0;
 }
@@ -95,6 +102,13 @@ a {
 
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
+}
+
+.options {
+	display: flex;
+	gap: 0.5rem;
+	margin-left: auto;
+	padding-bottom: 0.5rem;
 }
 
 .close-mask {
