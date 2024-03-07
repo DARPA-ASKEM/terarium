@@ -280,7 +280,7 @@ const selectedOutputId = ref<string>();
 const selectedRunId = ref<string>();
 
 const lossPlot = ref<HTMLElement>();
-const lossValues: { [key: string]: number }[] = [];
+let lossValues: { [key: string]: number }[] = [];
 
 // refs to keep track of intermediate states and parameters
 const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
@@ -316,11 +316,12 @@ const filterStateVars = (params) => {
 };
 
 const runCalibrate = async () => {
-	const simulationId = await makeCalibrateRequest();
+	// Reset
+	lossValues = [];
 
+	const simulationId = await makeCalibrateRequest();
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressSimulationId = simulationId;
-	console.log('starting calibrate', state.inProgressSimulationId);
 	emit('update-state', state);
 };
 
@@ -359,7 +360,6 @@ const makeCalibrateRequest = async () => {
 
 const messageHandler = (event: ClientEvent<ScimlStatusUpdate>) => {
 	// if (runIds.includes(event.data.id)) {
-	console.log(event.data.id, props.node.state.inProgressSimulationId);
 	if (props.node.state.inProgressSimulationId === event.data.id) {
 		const { iter, loss, params, solData, timesteps } = event.data;
 
@@ -460,7 +460,6 @@ watch(
 		if (id === '') {
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
 		} else {
-			console.log('subscribe', id);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
 		}
 	}
