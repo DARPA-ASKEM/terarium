@@ -275,6 +275,8 @@ import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import { TaskStatus } from '@/types/Types';
+import { TaskHandler, FatalError } from '@/api/api';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -417,16 +419,43 @@ const extractConfigurationsFromInputs = async () => {
 	if (documentId.value) {
 		modelFromDocumentHandler.value = await configureModelFromDocument(
 			documentId.value,
-			model.value.id
+			model.value.id,
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						throw new FatalError('Configs from document - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from document');
+						closeConnection();
+					}
+				},
+				onclose() {
+					fetchConfigurations(model.value.id);
+				}
+			}
 		);
 	}
 	if (datasetId.value) {
-		modelFromDatasetHandler.value = await configureModelFromDatasets(model.value.id, [
-			datasetId.value
-		]);
+		modelFromDatasetHandler.value = await configureModelFromDatasets(
+			model.value.id,
+			[datasetId.value],
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						throw new FatalError('Configs from datasets - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from datasets');
+						closeConnection();
+					}
+				},
+				onclose() {
+					fetchConfigurations(model.value.id);
+				}
+			}
+		);
 	}
-
-	fetchConfigurations(model.value.id);
 };
 
 const handleModelPreview = (data: any) => {
@@ -460,8 +489,8 @@ const suggestedConfirgurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const modelFromDocumentHandler = ref(null);
-const modelFromDatasetHandler = ref(null);
+const modelFromDocumentHandler = ref<TaskHandler | null>(null);
+const modelFromDatasetHandler = ref<TaskHandler | null>(null);
 const isLoading = computed(
 	() =>
 		modelFromDocumentHandler.value?.isRunning ||
