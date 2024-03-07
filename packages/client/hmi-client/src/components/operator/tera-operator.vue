@@ -12,6 +12,7 @@
 			:name="node.displayName"
 			:status="node.status"
 			:interaction-status="interactionStatus"
+			:has-annotation="!!node.state.annotation"
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
@@ -28,7 +29,6 @@
 			"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
-
 		<section class="content">
 			<tera-operator-annotation
 				:is-editing="showAnnotationEditor"
@@ -171,6 +171,10 @@ main {
 		flex-direction: column;
 		justify-content: space-evenly;
 		gap: 0.5rem;
+
+		&:empty {
+			display: none;
+		}
 	}
 
 	/* Shared styles between tera-operator-inputs and tera-operator-outputs */
@@ -179,10 +183,6 @@ main {
 		list-style: none;
 		font-size: var(--font-caption);
 		color: var(--text-color-subdued);
-
-		&:empty {
-			display: none;
-		}
 
 		/* Can't nest css within the deep selector */
 		&:deep(> li) {

@@ -51,9 +51,6 @@ function deleteAnnotation() {
 section {
 	display: flex;
 	flex-direction: column;
-	&:empty {
-		display: none;
-	}
 }
 
 div {

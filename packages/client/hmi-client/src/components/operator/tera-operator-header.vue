@@ -37,6 +37,10 @@ const props = defineProps({
 	interactionStatus: {
 		type: Number,
 		default: 0
+	},
+	hasAnnotation: {
+		type: Boolean,
+		default: false
 	}
 });
 
@@ -53,7 +57,11 @@ const toggleMenu = (event) => {
 
 const options = ref([
 	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => emit('duplicate-branch') },
-	{ icon: 'pi pi-pencil', label: 'Add a note', command: () => emit('show-annotation-editor') },
+	{
+		icon: 'pi pi-pencil',
+		label: props.hasAnnotation ? 'Edit note' : 'Add a note',
+		command: () => emit('show-annotation-editor')
+	},
 	{
 		icon: 'pi pi-external-link',
 		label: 'Open in new window',
