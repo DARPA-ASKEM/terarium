@@ -280,10 +280,38 @@ public class ProvenanceSearchService {
 		}
 
 		try (final Session session = neo4jService.getSession()) {
-			final UUID modelId = payload.getRootId();
+			final UUID modelConfigurationId = payload.getRootId();
 
 			final String query = String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
-					modelId);
+			modelConfigurationId);
+
+			final Result response = session.run(query);
+			final Set<String> responseData = new HashSet<>();
+			while (response.hasNext()) {
+				responseData.add(response.next().get("d").get("id").asString());
+			}
+			return responseData;
+		}
+	}
+
+	/**
+	 *
+	 * Identifies the dataset from which a model configuration was extracted
+	 *
+	 * @param payload - Search param payload.
+	 * @return
+	 */
+	public Set<String> modelConfigFromDataset(final ProvenanceQueryParam payload) {
+		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
+			throw new IllegalArgumentException(
+					"Dataset used for model-configuration extraction can only be found by providing a model-confirguration");
+		}
+
+		try (final Session session = neo4jService.getSession()) {
+			final UUID modelConfigurationId = payload.getRootId();
+
+			final String query = String.format("MATCH (d:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
+			modelConfigurationId);
 
 			final Result response = session.run(query);
 			final Set<String> responseData = new HashSet<>();

@@ -33,7 +33,10 @@ export async function modelCard(documentId: string): Promise<void> {
 	}
 }
 
-export async function configureModel(documentId: string, modelId: string): Promise<void> {
+export async function configureModelFromDocument(
+	documentId: string,
+	modelId: string
+): Promise<void> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
@@ -46,15 +49,43 @@ export async function configureModel(documentId: string, modelId: string): Promi
 		await handleTaskById(taskId, {
 			ondata(data, closeConnection) {
 				if (data?.status === TaskStatus.Failed) {
-					throw new FatalError('Task failed');
+					throw new FatalError('Configs from document - Task failed');
 				}
 				if (data.status === TaskStatus.Success) {
+					logger.success('Model configured from document');
 					closeConnection();
 				}
 			}
 		});
 	} catch (err) {
-		logger.error(`An issue occured while exctracting a model configuration. ${err}`);
+		logger.error(`An issue occured while exctracting a model configuration from document. ${err}`);
+	}
+}
+
+export async function configureModelFromDatasets(modelId: string, datasetIds: string[]) {
+	try {
+		// FIXME: Using first dataset for now...
+		const response = await API.post<TaskResponse>('/gollm/configure-from-dataset', null, {
+			params: {
+				'model-id': modelId,
+				'dataset-ids': datasetIds.join()
+			}
+		});
+
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					throw new FatalError('Configs from datasets - Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					logger.success('Model configured from datasets');
+					closeConnection();
+				}
+			}
+		});
+	} catch (err) {
+		logger.error(`An issue occured while exctracting a model configuration from dataset. ${err}`);
 	}
 }
 
