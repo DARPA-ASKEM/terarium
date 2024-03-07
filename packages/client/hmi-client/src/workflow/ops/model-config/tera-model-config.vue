@@ -124,7 +124,7 @@
 					</template>
 					<template v-else-if="modelType === AMRSchemaNames.REGNET">
 						<AccordionTab header="Vertices">
-							<DataTable v-if="!_.isEmpty(vertices)" data-key="id" :value="vertices">
+							<DataTable v-if="!isEmpty(vertices)" data-key="id" :value="vertices">
 								<Column field="id" header="Symbol" />
 								<Column field="name" header="Name" />
 								<Column field="rate_constant" header="Rate Constant" />
@@ -137,7 +137,7 @@
 							</DataTable>
 						</AccordionTab>
 						<AccordionTab header="Edges">
-							<DataTable v-if="!_.isEmpty(edges)" data-key="id" :value="edges">
+							<DataTable v-if="!isEmpty(edges)" data-key="id" :value="edges">
 								<Column field="id" header="Symbol" />
 								<Column field="source" header="Source" />
 								<Column field="target" header="Target" />
@@ -242,7 +242,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { computed, ref, watch, onUnmounted, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -291,7 +291,7 @@ const props = defineProps<{
 }>();
 
 const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
+	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
 				label: 'Select outputs to display in operator',
@@ -397,7 +397,7 @@ const vertices = computed(() => modelConfiguration?.value?.configuration.model?.
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 
 	// for now only save the last code executed, may want to save all code executed in the future
@@ -436,7 +436,7 @@ const extractConfigurationsFromInputs = async () => {
 const handleModelPreview = (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
-	Object.assign(model.value, _.cloneDeep(data.content['application/json']));
+	Object.assign(model.value, cloneDeep(data.content['application/json']));
 	const ode = model.value?.semantics?.ode;
 	knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
 	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
@@ -469,7 +469,7 @@ const model = ref<Model | null>(null);
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
 
-	const cloneModel = _.cloneDeep(model.value);
+	const cloneModel = cloneDeep(model.value);
 
 	const modelConfig: ModelConfiguration = {
 		id: '',
@@ -685,7 +685,7 @@ const updateFromConfig = (config: ModelConfiguration) => {
 const createConfiguration = async () => {
 	if (!model.value) return;
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value.name,
@@ -724,7 +724,7 @@ const fetchConfigurations = async (modelId: string) => {
 // Creates a temp config (if doesnt exist in state)
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	if (state.tempConfigId !== '' || !model.value) return;
 	const data = await createModelConfiguration(
 		model.value.id,
@@ -823,7 +823,7 @@ onMounted(async () => {
 watch(
 	() => knobs.value,
 	async () => {
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		state.name = knobs.value.name;
 		state.description = knobs.value.description;
 		state.initials = knobs.value.initials;
