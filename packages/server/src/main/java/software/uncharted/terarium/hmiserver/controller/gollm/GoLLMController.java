@@ -181,6 +181,7 @@ public class GoLLMController {
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
+			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
@@ -260,6 +261,7 @@ public class GoLLMController {
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
+			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
@@ -305,6 +307,7 @@ public class GoLLMController {
 
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
+			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
