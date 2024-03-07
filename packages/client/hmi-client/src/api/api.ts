@@ -210,11 +210,6 @@ export interface TaskEventHandlers {
 	onclose?: () => void;
 }
 
-export interface ITaskHandler {
-	isRunning: Ref<boolean>;
-	closeConnection: () => void;
-	start: () => Promise<void>;
-}
 /**
  * Class representing a Server-Sent Events (SSE) handler.
  */
