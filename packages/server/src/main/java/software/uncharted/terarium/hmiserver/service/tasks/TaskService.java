@@ -26,6 +26,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -189,6 +190,18 @@ public class TaskService {
 	@Value("${terarium.taskrunner.cancellation-exchange}")
 	private String TASK_RUNNER_CANCELLATION_EXCHANGE;
 
+	private final Environment env;
+
+	private boolean isRunningLocalProfile() {
+		final String[] activeProfiles = env.getActiveProfiles();
+		for (final String profile : activeProfiles) {
+			if ("local".equals(profile)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@PostConstruct
 	void init() {
 		// use a distributed cache and lock so that these can be synchronized across
@@ -196,6 +209,14 @@ public class TaskService {
 		responseCache = redissonClient.getMapCache(RESPONSE_CACHE_KEY);
 		taskIdCache = redissonClient.getMapCache(TASK_ID_CACHE_KEY);
 		rLock = redissonClient.getLock(LOCK_KEY);
+
+		if (isRunningLocalProfile()) {
+			// sanity check for local development to clear the caches
+			rLock.lock();
+			responseCache.clear();
+			taskIdCache.clear();
+			rLock.unlock();
+		}
 	}
 
 	private void declareAndBindTransientQueueWithRoutingKey(final String exchangeName, final String queueName,
