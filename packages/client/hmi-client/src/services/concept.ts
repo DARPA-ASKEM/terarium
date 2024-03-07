@@ -6,12 +6,12 @@ import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
 import type {
+	AssetType,
 	Curies,
+	DatasetColumn,
 	DKG,
 	EntitySimilarityResult,
-	AssetType,
-	State,
-	DatasetColumn
+	State
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';

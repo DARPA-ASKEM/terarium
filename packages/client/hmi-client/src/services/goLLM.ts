@@ -1,8 +1,8 @@
 import API, { FatalError, TaskEventHandlers, TaskHandler } from '@/api/api';
 import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
-import { logger } from '@/utils/logger';
 import { CompareModelsResponseType } from '@/types/common';
+import { logger } from '@/utils/logger';
 
 /**
  * Fetches model card data from the server and wait for task to finish.
@@ -34,7 +34,10 @@ export async function modelCard(documentId: string): Promise<void> {
 	}
 }
 
-export async function configureModel(documentId: string, modelId: string): Promise<void> {
+export async function configureModelFromDocument(
+	documentId: string,
+	modelId: string
+): Promise<void> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
@@ -47,15 +50,43 @@ export async function configureModel(documentId: string, modelId: string): Promi
 		await handleTaskById(taskId, {
 			ondata(data, closeConnection) {
 				if (data?.status === TaskStatus.Failed) {
-					throw new FatalError('Task failed');
+					throw new FatalError('Configs from document - Task failed');
 				}
 				if (data.status === TaskStatus.Success) {
+					logger.success('Model configured from document');
 					closeConnection();
 				}
 			}
 		});
 	} catch (err) {
-		logger.error(`An issue occurred while extracting a model configuration. ${err}`);
+		logger.error(`An issue occured while exctracting a model configuration from document. ${err}`);
+	}
+}
+
+export async function configureModelFromDatasets(modelId: string, datasetIds: string[]) {
+	try {
+		// FIXME: Using first dataset for now...
+		const response = await API.post<TaskResponse>('/gollm/configure-from-dataset', null, {
+			params: {
+				'model-id': modelId,
+				'dataset-ids': datasetIds.join()
+			}
+		});
+
+		const taskId = response.data.id;
+		await handleTaskById(taskId, {
+			ondata(data, closeConnection) {
+				if (data?.status === TaskStatus.Failed) {
+					throw new FatalError('Configs from datasets - Task failed');
+				}
+				if (data.status === TaskStatus.Success) {
+					logger.success('Model configured from datasets');
+					closeConnection();
+				}
+			}
+		});
+	} catch (err) {
+		logger.error(`An issue occured while exctracting a model configuration from dataset. ${err}`);
 	}
 }
 

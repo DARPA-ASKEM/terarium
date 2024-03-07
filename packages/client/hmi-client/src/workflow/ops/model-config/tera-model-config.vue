@@ -19,13 +19,12 @@
 								>({{ suggestedConfirgurationContext.tableData.length }})</span
 							>
 							<Button
-								outlined
-								label="Extract configurations from a document"
-								size="small"
 								icon="pi pi-cog"
-								@click.stop="extractConfigurations"
-								:disabled="loadingConfigs || !documentId || !model.id"
+								label="Extract configurations from inputs"
+								outlined
+								@click.stop="extractConfigurationsFromInputs"
 								style="margin-left: auto"
+								:loading="isExtracting"
 							/>
 						</template>
 
@@ -38,7 +37,7 @@
 							:rows="5"
 							sort-field="createdOn"
 							:sort-order="-1"
-							:loading="loadingConfigs"
+							:loading="isExtracting"
 						>
 							<Column field="name" header="Name" style="width: 15%">
 								<template #body="{ data }">
@@ -129,6 +128,12 @@
 								<Column field="id" header="Symbol" />
 								<Column field="name" header="Name" />
 								<Column field="rate_constant" header="Rate Constant" />
+								<Column field="initial" header="Initial Value">
+									<template #body="{ data, field }">
+										<!-- FIXME: temporary hack -->
+										<InputText v-model="data[field]" @blur="tempUpdate(data, field)" />
+									</template>
+								</Column>
 							</DataTable>
 						</AccordionTab>
 						<AccordionTab header="Edges">
@@ -260,7 +265,7 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { configureModel } from '@/services/goLLM';
+import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
@@ -268,6 +273,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
@@ -409,6 +415,24 @@ const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
+const extractConfigurationsFromInputs = async () => {
+	if (!model.value?.id) return;
+	isExtracting.value = true;
+
+	const promises: Promise<void>[] = [];
+	if (documentId.value) {
+		promises.push(configureModelFromDocument(documentId.value, model.value.id));
+	}
+	if (datasetId.value) {
+		promises.push(configureModelFromDatasets(model.value.id, [datasetId.value]));
+	}
+
+	await Promise.all(promises);
+	await fetchConfigurations(model.value.id);
+
+	isExtracting.value = false;
+};
+
 const handleModelPreview = (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
@@ -428,6 +452,7 @@ const selectedConfigId = computed(
 );
 
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
+const datasetId = computed(() => props.node.inputs?.[2]?.value?.[0]);
 
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;
@@ -438,9 +463,8 @@ const suggestedConfirgurationContext = ref<{
 	tableData: [],
 	modelConfiguration: null
 });
-
-const loadingConfigs = ref(false);
-const model = ref<Model | null>();
+const isExtracting = ref(false);
+const model = ref<Model | null>(null);
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
@@ -478,6 +502,10 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
+
+	// FIXME: dull out regnet/stockflow Feb 29, 2024
+	if (model.value.header.schema_name !== 'petrinet') return null;
+
 	return getStratificationType(model.value);
 });
 
@@ -686,9 +714,10 @@ const onSelection = (id: string) => {
 
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
-		loadingConfigs.value = true;
-		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-		loadingConfigs.value = false;
+		// FIXME: since configurations are made on the backend on the fly, we need to wait for the db to update before fetching, here's an artificaial delay
+		setTimeout(async () => {
+			suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		}, 800);
 	}
 };
 
@@ -777,17 +806,14 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const extractConfigurations = async () => {
-	if (!documentId.value || !model.value?.id) return;
-	loadingConfigs.value = true;
-	await configureModel(documentId.value, model.value.id);
-	loadingConfigs.value = false;
-	fetchConfigurations(model.value.id);
-};
-
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfirgurationContext.value.modelConfiguration = config;
 	suggestedConfirgurationContext.value.isOpen = true;
+};
+
+// FIXME: temporary hack, need proper config/states to handle all frameworks and fields
+const tempUpdate = (data: any, field: any) => {
+	data[field] = +data[field];
 };
 
 onMounted(async () => {

@@ -1,42 +1,50 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 public abstract class TaskResponseHandler {
-	private final Map<TaskStatus, Consumer<TaskResponse>> responseHandlers = new ConcurrentHashMap<>();
 
 	public abstract String getName();
 
-	public void onRunning(final Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.RUNNING, callback);
+	public void onQueued(final TaskResponse response) {
 	}
 
-	public void onCancelling(final Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.CANCELLING, callback);
+	public void onRunning(final TaskResponse response) {
 	}
 
-	public void onCancelled(final Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.CANCELLED, callback);
+	public void onCancelling(final TaskResponse response) {
 	}
 
-	public void onSuccess(final Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.SUCCESS, callback);
+	public void onCancelled(final TaskResponse response) {
 	}
 
-	public void onFailure(final Consumer<TaskResponse> callback) {
-		responseHandlers.put(TaskStatus.FAILED, callback);
+	public void onSuccess(final TaskResponse response) {
+	}
+
+	public void onFailure(final TaskResponse response) {
 	}
 
 	public void handle(final TaskResponse response) {
-		if (!responseHandlers.containsKey(response.getStatus())) {
-			return;
+		switch (response.getStatus()) {
+			case QUEUED:
+				onQueued(response);
+				break;
+			case RUNNING:
+				onRunning(response);
+				break;
+			case CANCELLING:
+				onCancelling(response);
+				break;
+			case CANCELLED:
+				onCancelled(response);
+				break;
+			case SUCCESS:
+				onSuccess(response);
+				break;
+			case FAILED:
+				onFailure(response);
+				break;
 		}
-		responseHandlers.get(response.getStatus()).accept(response);
 	}
 
 }

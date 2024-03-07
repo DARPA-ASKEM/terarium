@@ -11,6 +11,7 @@ import {
 	EnsembleCalibrationCiemssRequest,
 	EnsembleSimulationCiemssRequest,
 	EventType,
+	OptimizeRequestCiemss,
 	ProgressState,
 	Simulation,
 	SimulationRequest
@@ -198,6 +199,17 @@ export async function makeCalibrateJobCiemss(calibrationParams: CalibrationReque
 	}
 }
 
+export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss) {
+	try {
+		const resp = await API.post('simulation-request/ciemss/optimize', optimizeParams);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
 export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', params);
@@ -281,12 +293,12 @@ export async function pollAction(id: string) {
 		return { data: null, progress: null, error: `Failed running simulation ${id}` };
 	}
 
-	if ([ProgressState.Queued || ProgressState.Running].includes(simResponse.status)) {
+	if ([ProgressState.Queued, ProgressState.Running].includes(simResponse.status)) {
 		// TODO: untangle progress
 		return { data: null, progress: null, error: null };
 	}
 
-	if ([ProgressState.Error || ProgressState.Failed].includes(simResponse.status)) {
+	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
 		return { data: null, progress: null, error: `Failed running simulation ${id}` };
 	}
 	return { data: simResponse, progress: null, error: null };

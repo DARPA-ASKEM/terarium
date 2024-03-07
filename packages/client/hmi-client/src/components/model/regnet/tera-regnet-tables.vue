@@ -11,6 +11,7 @@
 				<Column field="id" header="Symbol" />
 				<Column field="name" header="Name" />
 				<Column field="rate_constant" header="Rate Constant" />
+				<Column field="initial" header="Initial Value" />
 				<Column field="grounding.identifiers" header="Concept">
 					<template #body="{ data }">
 						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">

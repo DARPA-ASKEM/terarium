@@ -131,7 +131,7 @@ watch(
 							if (!output[cell.row]) {
 								output[cell.row] = [];
 							}
-							output[cell.row][cell.col] = await getMatrixValue(cell.content.id, props.shouldEval);
+							output[cell.row][cell.col] = await getMatrixValue(cell.content.id);
 						}
 					})
 				)
@@ -188,10 +188,10 @@ function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) 
 
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
-async function getMatrixValue(variableName: string, shouldEvaluate: boolean) {
+async function getMatrixValue(variableName: string) {
 	const expressionBase = getMatrixExpression(variableName);
 
-	if (shouldEvaluate) {
+	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
 			expressionBase,
 			parametersValueMap.value

@@ -1,11 +1,7 @@
 import { ToastSummaries } from '@/services/toast';
 import { logger } from '@/utils/logger';
 import axios, { AxiosHeaders } from 'axios';
-import {
-	EventSourceMessage,
-	FetchEventSourceInit,
-	fetchEventSource
-} from '@microsoft/fetch-event-source';
+import { EventSource } from 'extended-eventsource';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
@@ -221,20 +217,16 @@ export class TaskHandler {
 
 	private handlers: TaskEventHandlers;
 
-	private options?: FetchEventSourceInit;
-
 	private controller: AbortController;
 
 	/**
 	 * Create a TaskHandler.
 	 * @param {string} url - The URL to connect to.
 	 * @param {TaskHandlers} handlers - The handlers for the SSE events.
-	 * @param {FetchEventSourceInit} options - The options for the fetchEventSource function.
 	 */
-	constructor(url: string, handlers: TaskEventHandlers, options?: FetchEventSourceInit) {
+	constructor(url: string, handlers: TaskEventHandlers) {
 		this.url = url;
 		this.handlers = handlers;
-		this.options = options;
 		this.controller = new AbortController();
 	}
 
@@ -253,35 +245,31 @@ export class TaskHandler {
 	async start(): Promise<void> {
 		const handlers = this.handlers;
 		const authStore = useAuthStore();
-		const fetchEventSourceOptions: FetchEventSourceInit = {
-			...this.options,
-			headers: {
-				...this.options?.headers,
-				Authorization: `Bearer ${authStore.token}`
-			},
-			onmessage: (message: EventSourceMessage) => {
+
+		try {
+			const eventSource = new EventSource(API.defaults.baseURL + this.url, {
+				headers: {
+					Authorization: `Bearer ${authStore.token}`
+				},
+				retry: 3000
+			});
+			eventSource.onmessage = (message: MessageEvent) => {
 				const data = message?.data;
 				const parsedData = JSON.parse(data);
 				const closeConnection = this.closeConnection.bind(this);
 				this.handlers.ondata(parsedData, closeConnection);
-			},
-			onerror: (error: Error) => {
+			};
+			eventSource.onerror = (error: any) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
 				if (error instanceof FatalError) {
 					// closes the connection on fatal error otherwise it will keep retrying
 					throw error;
 				}
-			},
-			async onopen(response: Response) {
+			};
+			eventSource.onopen = async (response: any) => {
 				logger.info('Connection opened', { showToast: false });
 				if (handlers.onopen) handlers.onopen(response);
-			},
-			signal: this.controller.signal,
-			openWhenHidden: true
-		};
-
-		try {
-			await fetchEventSource(API.defaults.baseURL + this.url, fetchEventSourceOptions);
+			};
 		} catch (error: unknown) {
 			logger.error(error);
 		}
