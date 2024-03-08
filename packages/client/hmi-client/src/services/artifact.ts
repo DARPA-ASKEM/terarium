@@ -33,7 +33,7 @@ async function createNewArtifactFromGithubFile(
 	const urlResponse = await API.put(
 		`/artifacts/${newArtifact.id}/upload-artifact-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
@@ -113,7 +113,7 @@ async function addFileToArtifact(
 				);
 			}
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	return response && response.status < 400;
