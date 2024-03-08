@@ -214,7 +214,7 @@
 
 <script setup lang="ts">
 import type { DKG, Model, ModelConfiguration } from '@/types/Types';
-import { cloneDeep, groupBy, isEmpty } from 'lodash';
+import { cloneDeep, groupBy, isEmpty, round } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref } from 'vue';
