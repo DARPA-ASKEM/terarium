@@ -89,7 +89,7 @@ async function createNewDocumentFromGithubFile(
 	const urlResponse = await API.put(
 		`/document-asset/${newDocument.id}/upload-document-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
@@ -138,7 +138,7 @@ async function addFileToDocumentAsset(
 				);
 			}
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	return response && response.status < 400;
