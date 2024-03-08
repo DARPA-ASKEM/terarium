@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,7 +54,6 @@ public class ModelController {
 	@Operation(summary = "Gets all model descriptions")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model descriptions found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no descriptions found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving descriptions from the data store", content = @Content)
 	})
 	public ResponseEntity<List<ModelDescription>> listModels(
@@ -78,7 +76,7 @@ public class ModelController {
 	@Operation(summary = "Gets a model description by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model description found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class))),
-			@ApiResponse(responseCode = "204", description = "There was no description found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the description from the data store", content = @Content)
 	})
 	ResponseEntity<ModelDescription> getDescription(
@@ -86,7 +84,7 @@ public class ModelController {
 
 		try {
 			final Optional<ModelDescription> model = modelService.getDescription(id);
-			return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get model description";
 			log.error(error, e);
@@ -101,7 +99,6 @@ public class ModelController {
 	@Operation(summary = "Gets a model by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-			@ApiResponse(responseCode = "204", description = "There was no model found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the model from the data store", content = @Content)
 	})
 	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
@@ -163,7 +160,6 @@ public class ModelController {
 	@Operation(summary = "Search models with a query")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Models found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no models found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving models from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Model>> searchModels(
@@ -213,7 +209,6 @@ public class ModelController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Deleted model", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	ResponseEntity<ResponseDeleted> deleteModel(
@@ -258,7 +253,6 @@ public class ModelController {
 	@Operation(summary = "Gets all model configurations for a model")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model configurations found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no configurations found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving configurations from the data store", content = @Content)
 	})
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
@@ -271,7 +265,7 @@ public class ModelController {
 
 			modelConfigurations.forEach(config -> {
 				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
-				
+
 				// check if configuration has a metadata field, if it doesnt make it an empty object
 				if (configuration.get("metadata") == null) {
 					((ObjectNode) configuration).putObject("metadata");
@@ -285,7 +279,7 @@ public class ModelController {
 				documentQueryParams.setTypes(List.of(ProvenanceType.DOCUMENT));
 				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(documentQueryParams);
 
-				List<String> documentSourceNames = new ArrayList<String>();
+				final List<String> documentSourceNames = new ArrayList<>();
 				documentIds.forEach(documentId -> {
 					try {
 						// Fetch the Document extractions
@@ -307,7 +301,7 @@ public class ModelController {
 				datasetQueryParams.setTypes(List.of(ProvenanceType.DATASET));
 				final Set<String> datasetIds = provenanceSearchService.modelConfigFromDataset(datasetQueryParams);
 
-				List<String> datasetSourceNames = new ArrayList<String>();
+				final List<String> datasetSourceNames = new ArrayList<>();
 				datasetIds.forEach(datasetId -> {
 					try {
 						// Fetch the Document extractions
@@ -323,7 +317,7 @@ public class ModelController {
 				});
 
 
-				List<String> sourceNames = new ArrayList<String>();
+				final List<String> sourceNames = new ArrayList<>();
 				sourceNames.addAll(documentSourceNames);
 				sourceNames.addAll(datasetSourceNames);
 
