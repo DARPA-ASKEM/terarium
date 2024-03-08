@@ -96,7 +96,7 @@ async function uploadCodeToProjectFromGithub(
 	const urlResponse = await API.put(
 		`/code-asset/${newCode.id}/upload-code-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
@@ -128,7 +128,7 @@ async function uploadCodeFromGithubRepo(
 	const urlResponse = await API.put(
 		`/code-asset/${newCode.id}/upload-code-from-github-repo?repo-owner-and-name=${repoOwnerAndName}&repo-name=${repoName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
