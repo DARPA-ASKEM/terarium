@@ -53,82 +53,7 @@
 		<Column field="dataType" header="Datatype" sortable style="width: 10%" />
 		<Column field="stats" header="Stats" style="width: 20%">
 			<template #body="{ data }">
-				<section v-if="data.stats" class="">
-					<!-- Top line -->
-					<div class="flex flex-row justify-content-between mb-2">
-						<div class="caption subdued">{{ data.stats.type.toUpperCase() }}</div>
-						<div v-if="data.stats.type === 'numeric'" class="caption subdued">
-							STD: {{ data.stats.std.toFixed(3) }}
-						</div>
-						<div v-if="data.stats.type === 'categorical'" class="caption subdued">
-							{{ data.stats.num_unique_entries }} unique
-						</div>
-						<div class="caption subdued">{{ data.stats.num_null_entries }} nulls</div>
-					</div>
-					<!-- This draws a box-plot with the stats -->
-					<div
-						v-if="data.stats.type === 'numeric'"
-						class="flex flex-row align-items-center tnum mb-1"
-					>
-						<div class="caption mr-1">{{ data.stats.min }}</div>
-						<div
-							class="line"
-							:style="getBoxplotPartialWidth(data.stats.quantile_25, data.stats.max)"
-						/>
-						<div
-							class="box-left"
-							:style="
-								getBoxplotPartialWidth(
-									data.stats.quantile_50 - data.stats.quantile_25,
-									data.stats.max
-								)
-							"
-						/>
-						<div class="caption box-middle">
-							<div class="centered-text below">{{ data.stats.mean.toFixed(2) }}</div>
-						</div>
-						<div
-							class="box-right"
-							:style="
-								getBoxplotPartialWidth(
-									data.stats.quantile_75 - data.stats.quantile_25,
-									data.stats.max
-								)
-							"
-						></div>
-						<div
-							class="line"
-							:style="
-								getBoxplotPartialWidth(data.stats.max - data.stats.quantile_75, data.stats.max)
-							"
-						></div>
-						<div class="caption ml-1">{{ data.stats.max }}</div>
-					</div>
-
-					<!-- This draws a list of the most common entries, sorted by value then by name -->
-					<div v-if="data.stats.type === 'categorical'">
-						<div class="flex flex-row flex-wrap">
-							<span
-								class="white-space-nowrap"
-								v-for="(entry, index) in Object.entries(data.stats.most_common_entries).sort(
-									(a, b) => {
-										if (a[1] < b[1]) return -1;
-										if (a[1] > b[1]) return 1;
-										if (a[0] < b[0]) return -1;
-										if (a[0] > b[0]) return 1;
-										return 0;
-									}
-								)"
-								:key="index"
-							>
-								{{ entry[0] }}<span class="caption subdued ml-1">({{ entry[1] }})</span
-								>{{
-									index !== Object.entries(data.stats.most_common_entries).length - 1 ? ',' : ''
-								}}&nbsp;
-							</span>
-						</div>
-					</div>
-				</section>
+				<tera-boxplot v-if="data.stats" :stats="data.stats" />
 			</template>
 		</Column>
 	</DataTable>
@@ -148,6 +73,7 @@ import {
 	searchCuriesEntities
 } from '@/services/concept';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 
 const props = defineProps<{
 	dataset: Dataset;
@@ -206,12 +132,6 @@ function formatData(data: DatasetColumn[]) {
 		column: col
 	}));
 }
-
-function getBoxplotPartialWidth(n1: number, n2: number) {
-	if (n2 === 0) return `width: 1%;`; // Prevent division by zero (n2 can be 0 if all values are the same)
-	const width = n1 / n2;
-	return `width: ${width * 100}%;`;
-}
 </script>
 
 <style scoped>
@@ -221,65 +141,5 @@ function getBoxplotPartialWidth(n1: number, n2: number) {
 
 .p-datatable:deep(.p-datatable-thead > tr > th) {
 	background-color: var(--surface-50);
-}
-
-.caption {
-	font-size: var(--font-caption);
-}
-.subdued {
-	color: var(--text-color-subdued);
-}
-
-.line {
-	border-top: 2px solid var(--text-color-subdued);
-}
-
-.tnum {
-	font-feature-settings: 'tnum';
-}
-
-.box-left {
-	border-top: 2px solid var(--text-color-subdued);
-	border-bottom: 2px solid var(--text-color-subdued);
-	border-left: 2px solid var(--text-color-subdued);
-	background-color: var(--surface-100);
-	height: 18px;
-}
-.box-middle {
-	border-top: 2px solid var(--text-color-subdued);
-	border-bottom: 2px solid var(--text-color-subdued);
-	background-color: var(--surface-100);
-	width: 2px;
-	height: 18px;
-	text-align: center;
-	position: relative;
-}
-
-.box-middle:before {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 2px;
-	height: 100%;
-	background-color: var(--text-color-subdued);
-	transform: translate(-50%, -50%);
-}
-
-.box-middle .centered-text {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, 65%);
-	white-space: nowrap;
-	color: var(--text-color-subdued);
-}
-
-.box-right {
-	border-top: 2px solid var(--text-color-subdued);
-	border-bottom: 2px solid var(--text-color-subdued);
-	border-right: 2px solid var(--text-color-subdued);
-	background-color: var(--surface-100);
-	height: 18px;
 }
 </style>
