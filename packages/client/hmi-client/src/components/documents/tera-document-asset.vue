@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onUpdated } from 'vue';
+import { computed, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -247,7 +247,6 @@ const optionsMenuItems = ref([
 							project.id
 						);
 						if (response) logger.info(`Added asset to ${project.name}`);
-						else logger.error('Failed to add asset to project');
 					}
 				})) ?? []
 	}

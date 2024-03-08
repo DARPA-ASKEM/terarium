@@ -94,7 +94,6 @@ async function createNewDocumentFromGithubFile(
 	);
 
 	if (!urlResponse || urlResponse.status >= 400) {
-		logger.error(`Failed to upload document from github: ${urlResponse}`);
 		return null;
 	}
 
@@ -166,8 +165,7 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting document file as text');
+	if (!response) {
 		return null;
 	}
 
@@ -183,8 +181,7 @@ async function getEquationFromImageUrl(
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting equation from image url');
+	if (!response) {
 		return null;
 	}
 
@@ -219,8 +216,7 @@ async function createDocumentFromXDD(
 		}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error upload file from doi');
+	if (!response) {
 		return null;
 	}
 

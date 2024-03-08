@@ -206,9 +206,6 @@ async function createDatasetFromSimulationResult(
 		if (response && response.status === 201) {
 			return true;
 		}
-		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
-			toastTitle: 'TDS - Simulation'
-		});
 		return false;
 	} catch (error) {
 		logger.error(

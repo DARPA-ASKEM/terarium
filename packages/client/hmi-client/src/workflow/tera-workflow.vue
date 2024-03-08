@@ -219,6 +219,7 @@ import { logger } from '@/utils/logger';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
+import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from './ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from './ops/stratify-mira/mod';
 import * as DatasetOp from './ops/dataset/mod';
@@ -412,6 +413,30 @@ const removeNode = (event) => {
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
+
+	cloneDataTransformSessions();
+};
+
+// We need to clone data-transform sessions, unlike other operators that are
+// append-only, data-transform updates so we need to create distinct copies.
+const cloneDataTransformSessions = async () => {
+	const sessionIdSet = new Set<string>();
+	for (let i = 0; i < wf.value.nodes.length; i++) {
+		const node = wf.value.nodes[i];
+		if (node.operationType === DatasetTransformerOp.operation.name) {
+			const state = node.state;
+			const sessionId = state.notebookSessionId as string;
+			if (!sessionId) continue;
+			if (!sessionIdSet.has(sessionId)) {
+				sessionIdSet.add(sessionId);
+			} else {
+				// eslint-disable-next-line
+				const session = await cloneNoteBookSession(sessionId);
+				state.notebookSessionId = session.id;
+				sessionIdSet.add(session.id);
+			}
+		}
+	}
 };
 
 const addOperatorToWorkflow: Function =
