@@ -88,7 +88,6 @@ const conceptSearchTerm = ref({
 	name: ''
 });
 const curies = ref<DKG[]>([]);
-
 const nameOfCurieCache = ref(new Map<string, string>());
 
 const formattedData = computed(() => {
