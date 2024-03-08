@@ -46,7 +46,6 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @return {Promise<any>}
  */
 export const equationsToAMR = async (
-	format: string,
 	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
@@ -54,7 +53,7 @@ export const equationsToAMR = async (
 	try {
 		const response: AxiosResponse<ExtractionResponse> = await API.post(
 			`/knowledge/equations-to-model`,
-			{ format, framework, modelId, equations }
+			{ model: framework, modelId, equations }
 		);
 		if (response && response?.status === 200) {
 			const { id, status } = response.data;

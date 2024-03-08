@@ -300,7 +300,7 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	const res = await equationsToAMR('latex', equations, clonedState.value.modelFramework);
+	const res = await equationsToAMR(equations, clonedState.value.modelFramework);
 
 	if (!res) {
 		return;
