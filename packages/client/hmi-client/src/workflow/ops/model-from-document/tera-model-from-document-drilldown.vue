@@ -138,7 +138,6 @@ import Image from 'primevue/image';
 import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { logger } from '@/utils/logger';
 import { generateModelCard, getModel, updateModel } from '@/services/model';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { useProjects } from '@/composables/project';
@@ -304,7 +303,6 @@ async function onRun() {
 	const res = await equationsToAMR('latex', equations, clonedState.value.modelFramework);
 
 	if (!res) {
-		logger.error('Error creating AMR');
 		return;
 	}
 

@@ -45,7 +45,7 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { ref, watch, onUpdated, Ref, PropType } from 'vue';
+import { onUpdated, PropType, Ref, ref, watch } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
@@ -139,7 +139,6 @@ const optionsMenuItems = ref([
 							project.id
 						);
 						if (response) logger.info(`Added asset to ${project.name}`);
-						else logger.error('Failed to add asset to project');
 					}
 				})) ?? []
 	}
@@ -165,9 +164,9 @@ async function updateAndFetchDataset(ds: Dataset) {
 const fetchDataset = async () => {
 	const datasetTemp: Dataset | null = await getDataset(props.assetId);
 
-	// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-	rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 	if (datasetTemp) {
+		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+		rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 		Object.entries(datasetTemp).forEach(([key, value]) => {
 			if (isString(value)) {
 				datasetTemp[key] = highlightSearchTerms(value);

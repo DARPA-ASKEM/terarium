@@ -2,13 +2,11 @@ import API from '@/api/api';
 import type { Code } from '@/types/Types';
 import { ProgrammingLanguage } from '@/types/Types';
 import { Ref } from 'vue';
-import { logger } from '@/utils/logger';
 
 async function getCodeAsset(codeAssetId: string): Promise<Code | null> {
 	const response = await API.get(`/code-asset/${codeAssetId}`);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting code file as text');
+	if (!response) {
 		return null;
 	}
 
@@ -32,8 +30,7 @@ async function updateCodeAsset(
 	}
 	const response = await API.put(`/code-asset/${code.id}`, code);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error updating code asset');
+	if (!response) {
 		return null;
 	}
 
@@ -46,8 +43,7 @@ async function getCodeFileAsText(codeAssetId: string, fileName: string): Promise
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting code file as text');
+	if (!response) {
 		return null;
 	}
 
@@ -104,8 +100,7 @@ async function uploadCodeToProjectFromGithub(
 		}
 	);
 
-	if (!urlResponse || urlResponse.status >= 400) {
-		logger.error(`Failed to upload code from github: ${urlResponse}`);
+	if (!urlResponse) {
 		return null;
 	}
 
@@ -137,8 +132,7 @@ async function uploadCodeFromGithubRepo(
 		}
 	);
 
-	if (!urlResponse || urlResponse.status >= 400) {
-		logger.error(`Failed to upload code from github: ${urlResponse}`);
+	if (!urlResponse) {
 		return null;
 	}
 

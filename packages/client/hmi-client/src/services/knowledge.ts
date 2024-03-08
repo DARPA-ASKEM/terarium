@@ -1,4 +1,4 @@
-import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
+import API, { Poller, PollerResult, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
 import type { Code, Dataset, ExtractionResponse, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
@@ -68,7 +68,6 @@ export const equationsToAMR = async (
 				return response.data.result;
 			}
 		}
-		logger.error(`Equations to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
 	}

@@ -61,8 +61,6 @@ const removeProject = async () => {
 		useProjects().getAll();
 		logger.info(`The project ${name} was removed`, { showToast: true });
 		if (currentRoute.value.name !== RouteName.Home) router.push(RoutePath.Home);
-	} else {
-		logger.error(`Unable to delete the project ${name}`, { showToast: true });
 	}
 };
 </script>
