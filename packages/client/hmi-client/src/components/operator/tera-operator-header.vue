@@ -37,10 +37,6 @@ const props = defineProps({
 	interactionStatus: {
 		type: Number,
 		default: 0
-	},
-	hasAnnotation: {
-		type: Boolean,
-		default: false
 	}
 });
 
@@ -59,7 +55,7 @@ const options = ref([
 	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => emit('duplicate-branch') },
 	{
 		icon: 'pi pi-pencil',
-		label: props.hasAnnotation ? 'Edit note' : 'Add a note',
+		label: 'Add a note',
 		command: () => emit('show-annotation-editor')
 	},
 	{

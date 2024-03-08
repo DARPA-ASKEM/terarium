@@ -12,12 +12,11 @@
 			:name="node.displayName"
 			:status="node.status"
 			:interaction-status="interactionStatus"
-			:has-annotation="!!node.state.annotation"
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
 			@bring-to-front="bringToFront"
-			@show-annotation-editor="showAnnotationEditor = true"
+			@show-annotation-editor="annotationRef.isEditing = true"
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
@@ -31,10 +30,9 @@
 		/>
 		<section class="content">
 			<tera-operator-annotation
-				:is-editing="showAnnotationEditor"
-				:saved-annotation="node.state.annotation"
-				@show-editor="showAnnotationEditor = true"
-				@confirm-annotation="saveAnnotation"
+				ref="annotationRef"
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
 			/>
 			<slot name="body" />
 		</section>
@@ -52,7 +50,6 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
 import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
@@ -87,18 +84,10 @@ enum PortDirection {
 }
 
 const operator = ref<HTMLElement>();
-const showAnnotationEditor = ref(false);
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
+const annotationRef = ref<TeraOperatorAnnotation | null>(null);
 
 let resizeObserver: ResizeObserver | null = null;
-
-function saveAnnotation(annotation: string) {
-	const state = cloneDeep(props.node.state);
-	if (state.annotation && isEmpty(annotation)) delete state.annotation;
-	else state.annotation = annotation;
-	emit('update-state', state);
-	showAnnotationEditor.value = false;
-}
 
 function bringToFront() {
 	// TODO: bring to front
@@ -171,7 +160,6 @@ main {
 		flex-direction: column;
 		justify-content: space-evenly;
 		gap: 0.5rem;
-
 		&:empty {
 			display: none;
 		}

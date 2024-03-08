@@ -14,17 +14,10 @@
 			/>
 		</div>
 		<div class="tabs-row">
-			<TabView
-				v-if="views.length > 1"
-				:active-index="activeIndex"
-				@tab-change="onTabChange"
-				class="mr-auto"
-			>
+			<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
 				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 			</TabView>
-			<div class="options">
-				<!--input component here-->
-				<Button class="add-a-note" label="Add a note" icon="pi pi-pencil" text />
+			<div class="actions">
 				<slot name="action-row" />
 			</div>
 		</div>
@@ -79,8 +72,10 @@ header > * {
 	color: var(--text-color-primary);
 }
 
-.add-a-note:deep(.p-button-icon) {
-	color: var(--primary-color);
+header .tabs-row {
+	justify-content: space-between;
+	align-items: end;
+	gap: var(--gap-small);
 }
 
 header .tabs-row:deep(.p-tabview .p-tabview-panels) {
@@ -104,11 +99,12 @@ a {
 	background-color: var(--surface-section);
 }
 
-.options {
+.actions {
 	display: flex;
+	justify-content: flex-end;
 	gap: 0.5rem;
-	margin-left: auto;
 	padding-bottom: 0.5rem;
+	flex: 1;
 }
 
 .close-mask {

@@ -1,9 +1,9 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<template #header-action-row>
+			<slot name="annotation" />
 			<tera-output-dropdown
 				@click.stop
-				style="margin-left: auto"
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
