@@ -40,7 +40,7 @@ const fetchingDataset = ref(false);
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'update-state']);
 
 onMounted(async () => {
 	fetchingDataset.value = true;

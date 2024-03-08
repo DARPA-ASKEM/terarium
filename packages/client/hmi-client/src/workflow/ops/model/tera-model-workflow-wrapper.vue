@@ -30,7 +30,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'update-state']);
 
 // Send refresh event onto the eventBus
 const refreshModelNode = () => {
