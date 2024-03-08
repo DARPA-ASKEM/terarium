@@ -140,10 +140,11 @@ const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
-async function addModelForComparison(modelId: string) {
+async function addModelForComparison(modelId: Model['id']) {
+	if (!modelId) return;
 	const model = await getModel(modelId);
 	if (model) modelsToCompare.value.push(model);
-	if (modelsToCompare.value.length === 3) buildJupyterContext();
+	// if (modelsToCompare.value.length === 3) buildJupyterContext();
 }
 
 function formatField(field: string) {
@@ -204,41 +205,41 @@ function processCompareModels(modelIds) {
 	});
 }
 
-async function buildJupyterContext() {
-	if (modelsToCompare.value.length < 3) {
-		logger.warn('Cannot build Jupyter context without models');
-		return;
-	}
-
-	console.log({
-		models: modelsToCompare.value.map((model, index) => ({
-			model_id: model.id,
-			name: `model_${index + 1}`
-		}))
-	});
-
-	try {
-		const jupyterContext = {
-			context: 'mira',
-			language: 'python3',
-			context_info: {
-				models: modelsToCompare.value.map((model, index) => ({
-					model_id: model.id,
-					name: `model_${index + 1}`
-				}))
-			}
-		};
-		if (jupyterContext) {
-			if (kernelManager.jupyterSession !== null) {
-				kernelManager.shutdown();
-			}
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-			isKernelReady.value = true;
-		}
-	} catch (error) {
-		logger.error(`Error initializing Jupyter session: ${error}`);
-	}
-}
+// async function buildJupyterContext() {
+// 	if (modelsToCompare.value.length < 3) {
+// 		logger.warn('Cannot build Jupyter context without models');
+// 		return;
+// 	}
+//
+// 	console.log({
+// 		models: modelsToCompare.value.map((model, index) => ({
+// 			model_id: model.id,
+// 			name: `model_${index + 1}`
+// 		}))
+// 	});
+//
+// 	try {
+// 		const jupyterContext = {
+// 			context: 'mira',
+// 			language: 'python3',
+// 			context_info: {
+// 				models: modelsToCompare.value.map((model, index) => ({
+// 					model_id: model.id,
+// 					name: `model_${index + 1}`
+// 				}))
+// 			}
+// 		};
+// 		if (jupyterContext) {
+// 			if (kernelManager.jupyterSession !== null) {
+// 				kernelManager.shutdown();
+// 			}
+// 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+// 			isKernelReady.value = true;
+// 		}
+// 	} catch (error) {
+// 		logger.error(`Error initializing Jupyter session: ${error}`);
+// 	}
+// }
 
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
