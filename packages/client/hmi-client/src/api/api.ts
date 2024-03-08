@@ -2,6 +2,7 @@ import { ToastSummaries } from '@/services/toast';
 import { logger } from '@/utils/logger';
 import axios, { AxiosHeaders } from 'axios';
 import { EventSource } from 'extended-eventsource';
+import { Ref, ref } from 'vue';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
@@ -217,7 +218,9 @@ export class TaskHandler {
 
 	private handlers: TaskEventHandlers;
 
-	private controller: AbortController;
+	private eventSource: EventSource | null;
+
+	public isRunning: Ref<boolean>;
 
 	/**
 	 * Create a TaskHandler.
@@ -227,15 +230,17 @@ export class TaskHandler {
 	constructor(url: string, handlers: TaskEventHandlers) {
 		this.url = url;
 		this.handlers = handlers;
-		this.controller = new AbortController();
+		this.isRunning = ref(false);
+		this.eventSource = null;
 	}
 
 	/**
 	 * Close the SSE connection.
 	 */
 	public closeConnection() {
-		this.controller.abort();
+		if (this.eventSource) this.eventSource.close();
 		if (this.handlers.onclose) this.handlers.onclose();
+		this.isRunning.value = false;
 		logger.info('Connection closed', { showToast: false });
 	}
 
@@ -243,34 +248,36 @@ export class TaskHandler {
 	 * Start the task.
 	 */
 	async start(): Promise<void> {
+		this.isRunning.value = true;
 		const handlers = this.handlers;
 		const authStore = useAuthStore();
 
 		try {
-			const eventSource = new EventSource(API.defaults.baseURL + this.url, {
+			this.eventSource = new EventSource(API.defaults.baseURL + this.url, {
 				headers: {
 					Authorization: `Bearer ${authStore.token}`
 				},
 				retry: 3000
 			});
-			eventSource.onmessage = (message: MessageEvent) => {
+			this.eventSource.onmessage = (message: MessageEvent) => {
 				const data = message?.data;
 				const parsedData = JSON.parse(data);
 				const closeConnection = this.closeConnection.bind(this);
 				this.handlers.ondata(parsedData, closeConnection);
 			};
-			eventSource.onerror = (error: any) => {
+			this.eventSource.onerror = (error: any) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
 				if (error instanceof FatalError) {
 					// closes the connection on fatal error otherwise it will keep retrying
 					throw error;
 				}
 			};
-			eventSource.onopen = async (response: any) => {
+			this.eventSource.onopen = async (response: any) => {
 				logger.info('Connection opened', { showToast: false });
 				if (handlers.onopen) handlers.onopen(response);
 			};
 		} catch (error: unknown) {
+			this.isRunning.value = false;
 			logger.error(error);
 		}
 	}
