@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="SimulateTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -109,7 +115,7 @@
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
-				@click="runSimulate"
+				@click="run"
 				:disabled="showSpinner"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
@@ -120,27 +126,15 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import { ProgressState } from '@/types/Types';
-import type {
-	CsvAsset,
-	Model,
-	ModelConfiguration,
-	SimulationRequest,
-	TimeSpan
-} from '@/types/Types';
+import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { getModel, getModelConfigurations } from '@/services/model';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	getRunResultCiemss,
-	getSimulation,
-	makeForecastJobCiemss as makeForecastJob,
-	querySimulationInProgress,
-	simulationPollAction
+	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -150,11 +144,9 @@ import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { Poller, PollerState } from '@/api/api';
-// import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
-import { logger } from '@/utils/logger';
-import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
-import { SimulateCiemssOperation, SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -185,13 +177,8 @@ const viewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const model = ref<{ [runId: string]: Model | null }>({});
-const modelConfigurations = ref<ModelConfiguration[]>([]);
-
 const showSpinner = ref(false);
-const completedRunId = ref<string>('');
 const runResults = ref<{ [runId: string]: RunResults }>({});
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
@@ -211,20 +198,6 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const poller = new Poller();
-
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length === 1) {
-		// there should only be one run happening at a time
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
-
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.currentTimespan = timespan.value;
@@ -233,13 +206,16 @@ const updateState = () => {
 	emit('update-state', state);
 };
 
-const runSimulate = async () => {
-	const modelConfigurationList = props.node.inputs[0].value;
-	if (!modelConfigurationList?.length) return;
+const run = async () => {
+	const simulationId = await makeForecastRequest();
 
-	// Since we've disabled multiple configs to a simulation node, we can assume only one config
-	const modelConfigId = modelConfigurationList[0];
+	const state = _.cloneDeep(props.node.state);
+	state.inProgressSimulationId = simulationId;
+	emit('update-state', state);
+};
 
+const makeForecastRequest = async () => {
+	const modelConfigId = props.node.inputs[0].value?.[0];
 	const state = props.node.state;
 
 	const payload: SimulationRequest = {
@@ -261,70 +237,11 @@ const runSimulate = async () => {
 	}
 
 	const response = await makeForecastJob(payload);
-	getStatus(response.id);
-};
-
-const getStatus = async (runId: string) => {
-	showSpinner.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction([runId], props.node, progress, emit));
-	const pollerResults = await poller.start();
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		logger.error(`Simulation: ${runId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		throw Error('Failed Runs');
-	}
-
-	completedRunId.value = runId;
-	showSpinner.value = false;
-};
-
-const watchCompletedRunId = async (runId: string) => {
-	if (!runId) return;
-
-	const state = _.cloneDeep(props.node.state);
-	if (state.chartConfigs.length === 0) {
-		addChart();
-	}
-
-	const sim = await getSimulation(runId);
-
-	emit('append-output', {
-		type: SimulateCiemssOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
-		value: runId,
-		state: {
-			currentTimespan: sim?.executionPayload.timespan ?? timespan.value,
-			numSamples: sim?.executionPayload.extra.num_samples ?? numSamples.value,
-			method: sim?.executionPayload.extra.method ?? method.value,
-			simulationsInProgress: state.simulationsInProgress
-		},
-		isSelected: false
-	});
+	return response.id;
 };
 
 const lazyLoadSimulationData = async (runId: string) => {
 	if (runResults.value[runId] && rawContent.value[runId]) return;
-
-	// there's only a single input config
-	const modelConfigId = props.node.inputs[0].value?.[0];
-	const modelConfiguration = await getModelConfigurationById(modelConfigId);
-	if (modelConfiguration) {
-		model.value[runId] = await getModel(modelConfiguration.model_id);
-		if (model.value[runId]) {
-			modelConfigurations.value = await getModelConfigurations(model.value[runId]!.id);
-		}
-	}
 
 	const output = await getRunResultCiemss(runId);
 	runResults.value[runId] = output.runResults;
@@ -349,30 +266,26 @@ const addChart = () => {
 	emit('update-state', state);
 };
 
-watch(() => completedRunId.value, watchCompletedRunId, { immediate: true });
-
 watch(
-	() => selectedRunId.value,
-	() => {
-		if (selectedRunId.value) {
-			lazyLoadSimulationData(selectedRunId.value);
-		}
-	},
-	{ immediate: true }
+	() => props.node.state.inProgressSimulationId,
+	(id) => {
+		if (id === '') showSpinner.value = false;
+		else showSpinner.value = true;
+	}
 );
 
 watch(
 	() => props.node.active,
-	() => {
-		// Update selected output
-		if (props.node.active) {
-			selectedOutputId.value = props.node.active;
-		}
+	async (newValue, oldValue) => {
+		if (!props.node.active || newValue === oldValue) return;
+		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state
 		timespan.value = props.node.state.currentTimespan;
 		numSamples.value = props.node.state.numSamples;
 		method.value = props.node.state.method;
+
+		lazyLoadSimulationData(selectedRunId.value);
 	},
 	{ immediate: true }
 );

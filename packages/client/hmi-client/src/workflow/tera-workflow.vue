@@ -99,6 +99,7 @@
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
+					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 				>
 					<template #body>
 						<component
@@ -180,8 +181,7 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-		>
-		</component>
+		/>
 	</Teleport>
 </template>
 
