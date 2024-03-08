@@ -158,6 +158,7 @@ public class NotebookSessionController {
 	@Operation(summary = "Clone a session")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "NotebookSession cloned.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue cloning the session", content = @Content)
 	})
 	ResponseEntity<NotebookSession> cloneNotebookSession(
 			@PathVariable("id") final UUID id) {
