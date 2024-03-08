@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div class="background">
 			<Suspense>
 				<tera-model-jupyter-panel
@@ -28,6 +34,7 @@ import { cloneDeep } from 'lodash';
 import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{

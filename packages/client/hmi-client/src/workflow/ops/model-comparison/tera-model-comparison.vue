@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
 				<Dropdown
@@ -108,6 +114,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -176,6 +183,9 @@ function runCode() {
 		})
 		.register('stream', (data) => {
 			console.log('stream', data);
+		})
+		.register('display_data', (data) => {
+			console.log(data);
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
