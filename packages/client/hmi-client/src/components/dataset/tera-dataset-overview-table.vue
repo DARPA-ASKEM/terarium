@@ -53,11 +53,7 @@
 		<Column field="dataType" header="Datatype" sortable style="width: 10%" />
 		<Column field="stats" header="Stats" style="width: 20%">
 			<template #body="{ data }">
-				<ul v-if="data.stats">
-					<li v-for="(stat, index) in Object.keys(data.stats)" :key="index">
-						{{ stat }}: {{ data.stats[stat] }}
-					</li>
-				</ul>
+				<tera-boxplot v-if="data.stats" :stats="data.stats" />
 			</template>
 		</Column>
 	</DataTable>
@@ -77,6 +73,7 @@ import {
 	searchCuriesEntities
 } from '@/services/concept';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 
 const props = defineProps<{
 	dataset: Dataset;
