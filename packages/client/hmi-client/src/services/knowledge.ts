@@ -55,18 +55,7 @@ export const equationsToAMR = async (
 			`/knowledge/equations-to-model`,
 			{ model: framework, modelId, equations }
 		);
-		if (response && response?.status === 200) {
-			const { id, status } = response.data;
-			if (status === 'queued') {
-				const result = await fetchExtraction(id);
-				if (result?.state === PollerState.Done && result?.data?.job_result?.status_code === 200) {
-					return result.data;
-				}
-			}
-			if (status === 'finished' && response.data.result.job_result?.status_code === 200) {
-				return response.data.result;
-			}
-		}
+		return response.data;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
 	}

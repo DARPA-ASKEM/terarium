@@ -34,6 +34,7 @@ import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewa
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 import java.io.IOException;
@@ -54,6 +55,8 @@ public class KnowledgeController {
 
 	final ProvenanceService provenanceService;
 
+	final ModelService modelService;
+
 	final CodeService codeService;
 
 	final ExtractionProxy extractionProxy;
@@ -71,13 +74,48 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.getTaskStatus(id).getBody());
 	}
 
+	/**
+	 * Send the equations to the skema unified service to get the AMR
+	 * @param req
+	 * @return
+	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<Model> equationsToModel(@RequestBody JsonNode req) {
-		return ResponseEntity
-				.ok(skemaUnifiedProxy
+	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNode req) {
+		try {
+			final Model responseAMR = skemaUnifiedProxy
 						.consolidatedEquationsToAMR(req)
-						.getBody());
+						.getBody();
+
+			if (responseAMR == null) {
+				throw new ResponseStatusException(
+					HttpStatus.NO_CONTENT,
+					"No AMR returned by Skema Unified Service.");
+			}
+
+			final UUID modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
+			if (modelId != null) {
+				final Optional<Model> model = modelService.getAsset(modelId);
+				if (model.isPresent()) {
+					responseAMR.setId(model.get().getId());
+					modelService.updateAsset(responseAMR);
+					return ResponseEntity.ok(model.get().getId());
+				} else {
+					throw new ResponseStatusException(
+						HttpStatus.BAD_REQUEST,
+						"The model id provided does not exist.");
+				}
+			}
+
+			final Model model = modelService.createAsset(responseAMR);
+			return ResponseEntity.ok(model.getId());
+
+		} catch (final Exception e) {
+			log.error("unable to create model", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error creating model");
+		}
 	}
 
 	@PostMapping("/base64-equations-to-model")
