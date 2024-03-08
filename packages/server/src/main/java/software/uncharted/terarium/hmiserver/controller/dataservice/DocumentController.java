@@ -87,7 +87,6 @@ public class DocumentController {
 	@Operation(summary = "Gets all documents")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Documents found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no documents found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving documents from the data store", content = @Content)
 	})
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
@@ -170,7 +169,7 @@ public class DocumentController {
 	@Operation(summary = "Gets document by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Document found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no document found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no document found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the document from the data store", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> getDocument(
@@ -271,7 +270,6 @@ public class DocumentController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Delete document", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
@@ -575,7 +573,12 @@ public class DocumentController {
 
 			// mathML -> LaTeX
 			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
-			return ResponseEntity.ok(latex);
+
+			// Add spaces before and after "*"
+			String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
+			latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
+
+			return ResponseEntity.ok(latexWithSpaces);
 		} catch (final Exception e) {
 			final String error = "Unable to convert image to equation";
 			log.error(error, e);

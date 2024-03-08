@@ -2,6 +2,22 @@
 version: "3.9"
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - terarium
+    ports:
+      - "6379:6379"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   minio:
     image: quay.io/minio/minio:RELEASE.2023-11-15T20-43-25Z
     container_name: minio
@@ -175,3 +191,7 @@ volumes:
   minio-data:
   terarium-db:
     driver: local
+
+networks:
+  terarium:
+    name: terarium

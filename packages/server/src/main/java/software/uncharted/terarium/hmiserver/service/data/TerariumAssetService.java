@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +16,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 
 /**
  * Base class for services that manage TerariumAssets
@@ -172,4 +170,14 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		return Optional.of(asset);
 	}
 
+	/**
+	 * Clone asset on ES, retrieve and save document with a different id
+	 */
+	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
+		final Optional<T> targetAsset = getAsset(id);
+		if (targetAsset.isEmpty()) {
+			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
+		}
+		return createAsset(targetAsset.get());
+	}
 }

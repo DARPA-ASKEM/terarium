@@ -172,12 +172,6 @@ const projectOptions = computed(() => [
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
-					else {
-						// TODO: 'response' here is just an id, and we've lost the error message by this point. We may want to
-						// eventually pass up the error code and message to this point in the code so that we can show the user
-						// more helpful information than just "failed".
-						logger.error(`Failed adding ${assetName} to ${project.name}`);
-					}
 
 					isAdding.value = false;
 				}

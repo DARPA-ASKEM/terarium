@@ -1,19 +1,18 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Dropdown
-					:editable="true"
-					class="input"
-					v-model="gollmQuestion"
-					type="text"
-					:placeholder="'What would you like to compare?'"
-					@keydown.enter="submitGollmQuestion"
-				/>
-				<Panel v-if="llmAnswer || !isEmpty(llmThoughts)" header="Answer" toggleable>
+				<Panel v-if="llmAnswer" header="Comparison overview" toggleable>
 					<template #togglericon="{ collapsed }">
 						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 					</template>
+					<p>{{ llmAnswer }}</p>
 				</Panel>
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
@@ -93,21 +92,22 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
-import { onMounted, onUnmounted, ref, computed } from 'vue';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import Panel from 'primevue/panel';
-import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
-import { WorkflowNode } from '@/types/workflow';
+import { compareModels } from '@/services/goLLM';
+import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
 import type { Model } from '@/types/Types';
-import { KernelSessionManager } from '@/services/jupyter';
+import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
+import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import Panel from 'primevue/panel';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -123,7 +123,7 @@ enum Tabs {
 
 let editor: VAceEditorInstance['_editor'] | null;
 
-const gollmQuestion = ref('');
+// const gollmQuestion = ref('');
 const beakerQuestion = ref('');
 const llmThoughts = ref<string[]>([]);
 const llmAnswer = ref('');
@@ -147,6 +147,13 @@ const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
+async function addModelForComparison(modelId: Model['id']) {
+	if (!modelId) return;
+	const model = await getModel(modelId);
+	if (model) modelsToCompare.value.push(model);
+	// if (modelsToCompare.value.length === 3) buildJupyterContext();
+}
+
 function formatField(field: string) {
 	const result = field
 		.replace(/([A-Z])/g, ' $1')
@@ -155,9 +162,9 @@ function formatField(field: string) {
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-function submitGollmQuestion() {
-	console.log(gollmQuestion.value);
-}
+// function submitGollmQuestion() {
+// 	console.log(gollmQuestion.value);
+// }
 
 function runCode() {
 	const messageContent = {
@@ -176,6 +183,9 @@ function runCode() {
 		})
 		.register('stream', (data) => {
 			console.log('stream', data);
+		})
+		.register('display_data', (data) => {
+			console.log(data);
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
@@ -199,47 +209,47 @@ function submitBeakerQuestion() {
 		});
 }
 
-async function addModelForComparison(modelId: string) {
-	const model = await getModel(modelId);
-	if (model) modelsToCompare.value.push(model);
-	if (modelsToCompare.value.length === 3) buildJupyterContext();
-}
-
-async function buildJupyterContext() {
-	if (modelsToCompare.value.length < 3) {
-		logger.warn('Cannot build Jupyter context without models');
-		return;
-	}
-
-	console.log({
-		models: modelsToCompare.value.map((model, index) => ({
-			model_id: model.id,
-			name: `model_${index + 1}`
-		}))
+function processCompareModels(modelIds) {
+	compareModels(modelIds).then((response) => {
+		llmAnswer.value = response.response;
 	});
-
-	try {
-		const jupyterContext = {
-			context: 'mira',
-			language: 'python3',
-			context_info: {
-				models: modelsToCompare.value.map((model, index) => ({
-					model_id: model.id,
-					name: `model_${index + 1}`
-				}))
-			}
-		};
-		if (jupyterContext) {
-			if (kernelManager.jupyterSession !== null) {
-				kernelManager.shutdown();
-			}
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-			isKernelReady.value = true;
-		}
-	} catch (error) {
-		logger.error(`Error initializing Jupyter session: ${error}`);
-	}
 }
+
+// async function buildJupyterContext() {
+// 	if (modelsToCompare.value.length < 3) {
+// 		logger.warn('Cannot build Jupyter context without models');
+// 		return;
+// 	}
+//
+// 	console.log({
+// 		models: modelsToCompare.value.map((model, index) => ({
+// 			model_id: model.id,
+// 			name: `model_${index + 1}`
+// 		}))
+// 	});
+//
+// 	try {
+// 		const jupyterContext = {
+// 			context: 'mira',
+// 			language: 'python3',
+// 			context_info: {
+// 				models: modelsToCompare.value.map((model, index) => ({
+// 					model_id: model.id,
+// 					name: `model_${index + 1}`
+// 				}))
+// 			}
+// 		};
+// 		if (jupyterContext) {
+// 			if (kernelManager.jupyterSession !== null) {
+// 				kernelManager.shutdown();
+// 			}
+// 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+// 			isKernelReady.value = true;
+// 		}
+// 	} catch (error) {
+// 		logger.error(`Error initializing Jupyter session: ${error}`);
+// 	}
+// }
 
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
@@ -247,6 +257,11 @@ onMounted(async () => {
 			addModelForComparison(input.value[0]);
 		}
 	});
+
+	const modelIds = props.node.inputs
+		.filter((input) => input.status === 'connected')
+		.map((input) => input.value?.[0]);
+	processCompareModels(modelIds);
 });
 
 onUnmounted(() => {

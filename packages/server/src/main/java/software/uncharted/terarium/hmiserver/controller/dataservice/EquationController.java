@@ -48,7 +48,6 @@ public class EquationController {
 	@Operation(summary = "Gets all equations")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Equations found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no equations found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving equations from the data store", content = @Content)
 	})
 	ResponseEntity<List<Equation>> getEquations(
@@ -104,7 +103,7 @@ public class EquationController {
 	@Operation(summary = "Gets equation by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Equation found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
-			@ApiResponse(responseCode = "204", description = "There was no equation found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no equation found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the equation from the data store", content = @Content)
 	})
 	ResponseEntity<Equation> getEquation(@PathVariable("id") final UUID id) {
@@ -165,7 +164,6 @@ public class EquationController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Deleted equation", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Equation could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("id") final UUID id) {

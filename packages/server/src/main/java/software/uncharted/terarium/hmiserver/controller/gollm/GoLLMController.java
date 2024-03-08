@@ -1,27 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,6 +8,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -40,12 +25,14 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.tasks.CompareModelResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.*;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
 
 @RequestMapping("/gollm")
 @RestController
@@ -61,14 +48,14 @@ public class GoLLMController {
 
 	final private ModelCardResponseHandler modelCardResponseHandler;
 	final private ConfigureModelResponseHandler configureModelResponseHandler;
-	final private CompareModelResponseHandler compareModelResponseHandler;
+	final private CompareModelsResponseHandler compareModelsResponseHandler;
 	final private ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
 
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(modelCardResponseHandler);
 		taskService.addResponseHandler(configureModelResponseHandler);
-		taskService.addResponseHandler(compareModelResponseHandler);
+		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureFromDatasetResponseHandler);
 	}
 
@@ -83,7 +70,7 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
 			// Grab the document
@@ -139,7 +126,7 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
 
@@ -200,10 +187,9 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
-
 			// Grab the datasets
 			final List<String> datasets = new ArrayList<>();
 			for (final UUID datasetId : datasetIds) {
@@ -269,19 +255,19 @@ public class GoLLMController {
 		}
 	}
 
-	@GetMapping("/compare-model")
+	@GetMapping("/compare-models")
 	@Secured(Roles.USER)
-	@Operation(summary = "Dispatch a `GoLLM Compare Model` task")
+	@Operation(summary = "Dispatch a `GoLLM Compare Models` task")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "The provided model arguments are not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
-	public ResponseEntity<TaskResponse> creatCompareModelTask(
+	public ResponseEntity<TaskResponse> createCompareModelsTask(
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 		try {
-			final List<JsonNode> modelCards = new ArrayList<>();
+			final List<String> modelCards = new ArrayList<>();
 			for (final UUID modelId : modelIds) {
 				// Grab the model
 				final Optional<Model> model = modelService.getAsset(modelId);
@@ -289,18 +275,23 @@ public class GoLLMController {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 				}
 				if (model.get().getMetadata().getGollmCard() != null) {
-					final JsonNode modelCard = model.get().getMetadata().getGollmCard();
-					modelCards.add(modelCard);
+					modelCards.add(objectMapper.writeValueAsString(model.get().getMetadata().getGollmCard()));
 				}
 			}
 
-			final CompareModelResponseHandler.Input input = new CompareModelResponseHandler.Input();
+			// if the number of models is less than 2, return an error
+			if (modelCards.size() < 2) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+						"At least two models with model cards are required");
+			}
+
+			final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
 			input.setModelCards(modelCards);
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
-			req.setScript(CompareModelResponseHandler.NAME);
+			req.setScript(CompareModelsResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
