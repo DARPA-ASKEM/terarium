@@ -25,11 +25,8 @@
 			<div
 				class="box-right"
 				:style="getBoxplotPartialWidth(stats.quantile_75 - stats.quantile_25, stats.max)"
-			></div>
-			<div
-				class="line"
-				:style="getBoxplotPartialWidth(stats.max - stats.quantile_75, stats.max)"
-			></div>
+			/>
+			<div class="line" :style="getBoxplotPartialWidth(stats.max - stats.quantile_75, stats.max)" />
 			<div class="caption ml-1">{{ stats.max }}</div>
 		</div>
 
@@ -38,13 +35,7 @@
 			<div class="flex flex-row flex-wrap">
 				<span
 					class="white-space-nowrap"
-					v-for="(entry, index) in Object.entries(stats.most_common_entries).sort((a, b) => {
-						if (a[1] < b[1]) return -1;
-						if (a[1] > b[1]) return 1;
-						if (a[0] < b[0]) return -1;
-						if (a[0] > b[0]) return 1;
-						return 0;
-					})"
+					v-for="(entry, index) in sortedMostCommonEntries"
 					:key="index"
 				>
 					{{ entry[0] }}<span class="caption subdued ml-1">({{ entry[1] }})</span
@@ -56,7 +47,9 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+
+const props = defineProps<{
 	stats: {
 		type: string;
 		min: number;
@@ -71,6 +64,17 @@ defineProps<{
 		most_common_entries: Record<string, number>;
 	};
 }>();
+
+// list of the most common entries, sorted by value then by name
+const sortedMostCommonEntries = computed(() =>
+	Object.entries(props.stats.most_common_entries).sort((a, b) => {
+		if (a[1] < b[1]) return -1;
+		if (a[1] > b[1]) return 1;
+		if (a[0] < b[0]) return -1;
+		if (a[0] > b[0]) return 1;
+		return 0;
+	})
+);
 
 function getBoxplotPartialWidth(n1: number, n2: number) {
 	if (n2 === 0) return `width: 1%;`; // Prevent division by zero (n2 can be 0 if all values are the same)
