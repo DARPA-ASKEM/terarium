@@ -102,8 +102,8 @@ a {
 .actions {
 	display: flex;
 	justify-content: flex-end;
-	gap: 0.5rem;
-	padding-bottom: 0.5rem;
+	gap: var(--gap-small);
+	padding-bottom: var(--gap-small);
 	flex: 1;
 }
 

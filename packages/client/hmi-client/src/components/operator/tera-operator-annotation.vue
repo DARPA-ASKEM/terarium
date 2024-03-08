@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'in-node': inNode }">
+	<section :class="{ 'in-node': inNode, 'is-editing': isEditing }">
 		<template v-if="isEditing">
 			<Textarea
 				v-model="annotation"
@@ -113,7 +113,7 @@ section {
 	/* In drilldown */
 	&:not(.in-node) {
 		background-color: var(--surface-section);
-		padding: var(--gap-small);
+		padding: var(--gap-xsmall) var(--gap-small) var(--gap-xsmall) var(--gap);
 		border-radius: var(--border-radius);
 		gap: var(--gap-small);
 		& > textarea {
@@ -128,6 +128,10 @@ section {
 			& + .p-button {
 				padding: 0 1rem;
 			}
+		}
+
+		&.is-editing {
+			padding: var(--gap-xsmall) var(--gap-small);
 		}
 	}
 }
