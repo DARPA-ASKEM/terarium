@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr && isKernelReady"
@@ -103,6 +109,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{

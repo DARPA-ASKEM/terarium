@@ -21,7 +21,8 @@ const emit = defineEmits([
 	'remove-operator',
 	'bring-to-front',
 	'open-in-new-window',
-	'duplicate-branch'
+	'duplicate-branch',
+	'show-annotation-editor'
 ]);
 
 const props = defineProps({
@@ -52,6 +53,11 @@ const toggleMenu = (event) => {
 
 const options = ref([
 	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => emit('duplicate-branch') },
+	{
+		icon: 'pi pi-pencil',
+		label: 'Add a note',
+		command: () => emit('show-annotation-editor')
+	},
 	{
 		icon: 'pi pi-external-link',
 		label: 'Open in new window',

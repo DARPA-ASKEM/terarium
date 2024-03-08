@@ -1,9 +1,12 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				@click.stop
-				style="margin-left: auto"
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
@@ -281,6 +284,7 @@ import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-sema
 import { TaskStatus } from '@/types/Types';
 import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 

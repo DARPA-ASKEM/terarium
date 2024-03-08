@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="OptimizeTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -243,6 +249,7 @@ import {
 import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
