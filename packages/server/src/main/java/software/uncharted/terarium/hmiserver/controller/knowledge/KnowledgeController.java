@@ -1,9 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPut;
@@ -11,29 +15,13 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -47,6 +35,10 @@ import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -90,7 +82,7 @@ public class KnowledgeController {
 
 	@PostMapping("/base64-equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody JsonNode req) {
+	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody final JsonNode req) {
 		return ResponseEntity
 				.ok(skemaUnifiedProxy
 						.base64EquationsToAMR(req)
@@ -99,7 +91,7 @@ public class KnowledgeController {
 
 	@PostMapping("/base64-equations-to-latex")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> base64EquationsToLatex(@RequestBody JsonNode req) {
+	public ResponseEntity<String> base64EquationsToLatex(@RequestBody final JsonNode req) {
 		return ResponseEntity
 				.ok(skemaUnifiedProxy
 						.base64EquationsToLatex(req)
@@ -139,17 +131,17 @@ public class KnowledgeController {
 	})
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart Code code,
-			@RequestPart("file") MultipartFile input) throws IOException {
+	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart final Code code,
+			@RequestPart("file") final MultipartFile input) throws IOException {
 
 		try (final CloseableHttpClient httpClient = HttpClients.custom()
 				.build()) {
 			// 1. create code asset from code blocks
-			Code createdCode = codeService.createAsset(code);
+			final Code createdCode = codeService.createAsset(code);
 
 			// 2. upload file to code asset
-			byte[] fileAsBytes = input.getBytes();
-			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final byte[] fileAsBytes = input.getBytes();
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 			// we have pre-formatted the files object already so no need to use uploadCode
 			final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(),
@@ -165,7 +157,7 @@ public class KnowledgeController {
 			return ResponseEntity.ok(knowledgeMiddlewareProxy
 					.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false)
 					.getBody());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
