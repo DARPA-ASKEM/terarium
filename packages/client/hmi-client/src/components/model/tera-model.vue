@@ -116,7 +116,6 @@ const optionsMenuItems = computed(() => [
 							project.id
 						);
 						if (response) logger.info(`Added asset to ${project.name}`);
-						else logger.error('Failed to add asset to project');
 					}
 				})) ?? []
 	}

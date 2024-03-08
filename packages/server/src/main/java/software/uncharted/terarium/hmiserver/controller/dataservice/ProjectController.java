@@ -82,7 +82,9 @@ public class ProjectController {
 			projectIds = rebacUser.lookupProjects();
 		} catch (final Exception e) {
 			log.error("Error getting projects which a user can read", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error getting projects which a user can read");
 		}
 		if (projectIds == null || projectIds.isEmpty()) {
 			return ResponseEntity.noContent().build();
@@ -106,7 +108,7 @@ public class ProjectController {
 				project.setPublicProject(rebacProject.isPublic());
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 
-				List<Contributor> contributors = getContributors(rebacProject);
+				final List<Contributor> contributors = getContributors(rebacProject);
 
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
 						assetTypes);
@@ -143,7 +145,7 @@ public class ProjectController {
 		String name;
 		Schema.Relationship permission;
 
-		Contributor(String name, Schema.Relationship permission) {
+		Contributor(final String name, final Schema.Relationship permission) {
 			this.name = name;
 			this.permission = permission;
 		}
@@ -155,25 +157,25 @@ public class ProjectController {
 	 * @param rebacProject the Project to collect RebacPermissionRelationships of.
 	 * @return List of Users and Groups who have edit capability of the rebacProject
 	 */
-	private List<Contributor> getContributors(RebacProject rebacProject) {
-		Map<String, Contributor> contributorMap = new HashMap<>();
+	private List<Contributor> getContributors(final RebacProject rebacProject) {
+		final Map<String, Contributor> contributorMap = new HashMap<>();
 
 		try {
-			List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
-			for (RebacPermissionRelationship permissionRelationship : permissionRelationships) {
-				Schema.Relationship relationship = permissionRelationship.getRelationship();
+			final List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
+			for (final RebacPermissionRelationship permissionRelationship : permissionRelationships) {
+				final Schema.Relationship relationship = permissionRelationship.getRelationship();
 				// Ensure the relationship is capable of editing the project
 				if (relationship.equals(Schema.Relationship.CREATOR)
 						|| relationship.equals(Schema.Relationship.ADMIN)
 						|| relationship.equals(Schema.Relationship.WRITER)) {
 					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-						PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
-						String name = user.getFirstName() + " " + user.getLastName();
+						final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+						final String name = user.getFirstName() + " " + user.getLastName();
 						if (!contributorMap.containsKey(name)) {
 							contributorMap.put(name, new Contributor(name, relationship));
 						}
 					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-						PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
+						final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
 						if (!contributorMap.containsKey(group.getName())) {
 							contributorMap.put(group.getName(), new Contributor(group.getName(), relationship));
 						}
@@ -210,9 +212,9 @@ public class ProjectController {
 			if (rebacUser.canRead(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(id);
 				if (project.isPresent()) {
-					List<String> authors = new ArrayList<>();
-					List<Contributor> contributors = getContributors(rebacProject);
-					for (Contributor contributor : contributors) {
+					final List<String> authors = new ArrayList<>();
+					final List<Contributor> contributors = getContributors(rebacProject);
+					for (final Contributor contributor : contributors) {
 						authors.add(contributor.name);
 					}
 
