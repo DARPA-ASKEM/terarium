@@ -83,7 +83,7 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
 			// Grab the document
@@ -139,7 +139,7 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
 
@@ -200,10 +200,9 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
-
 			// Grab the datasets
 			final List<String> datasets = new ArrayList<>();
 			for (final UUID datasetId : datasetIds) {
@@ -279,7 +278,7 @@ public class GoLLMController {
 	})
 	public ResponseEntity<TaskResponse> creatCompareModelTask(
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "async") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 		try {
 			final List<String> modelCards = new ArrayList<>();
 			for (final UUID modelId : modelIds) {
