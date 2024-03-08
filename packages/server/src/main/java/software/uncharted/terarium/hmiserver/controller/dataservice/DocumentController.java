@@ -573,7 +573,12 @@ public class DocumentController {
 
 			// mathML -> LaTeX
 			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
-			return ResponseEntity.ok(latex);
+
+			// Add spaces before and after "*"
+			String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
+			latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
+
+			return ResponseEntity.ok(latexWithSpaces);
 		} catch (final Exception e) {
 			final String error = "Unable to convert image to equation";
 			log.error(error, e);
