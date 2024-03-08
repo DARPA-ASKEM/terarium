@@ -41,8 +41,8 @@ API.interceptors.response.use(
 			if (error?.response?.data) {
 				const responseError: ServerError = error.response.data as ServerError;
 
-				// check to see if the 'message' property is set. If it is, set message to that value.  
-				// If not, check the 'trace' property and extract the error from that. 
+				// check to see if the 'message' property is set. If it is, set message to that value.
+				// If not, check the 'trace' property and extract the error from that.
 				// It will be the substring between the first set of quotations marks.
 				if (responseError.message) {
 					message = responseError.message;
