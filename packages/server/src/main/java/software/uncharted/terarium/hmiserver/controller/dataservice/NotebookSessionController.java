@@ -153,6 +153,28 @@ public class NotebookSessionController {
 		}
 	}
 
+	@PostMapping("/{id}/clone")
+	@Secured(Roles.USER)
+	@Operation(summary = "Clone a session")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "NotebookSession cloned.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue cloning the session", content = @Content)
+	})
+	ResponseEntity<NotebookSession> cloneNotebookSession(
+			@PathVariable("id") final UUID id) {
+		try {
+			final NotebookSession clone = sessionService.cloneAsset(id);
+			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
+		} catch (final IOException e) {
+			final String error = "Unable to clone notebook session";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+
 	/**
 	 * Deletes and session
 	 *
