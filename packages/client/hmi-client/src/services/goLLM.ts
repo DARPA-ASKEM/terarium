@@ -80,14 +80,18 @@ export async function configureModelFromDatasets(
 }
 
 export async function compareModels(modelIds: string[]): Promise<CompareModelsResponseType> {
-	let compareResult: CompareModelsResponseType = {
-		response: ''
-	};
+	let resolve;
+	let reject;
+
+	const promise = new Promise<CompareModelsResponseType>((res, rej) => {
+		resolve = res;
+		reject = rej;
+	});
 
 	try {
 		const response = await API.get<TaskResponse>('/gollm/compare-models', {
 			params: {
-				models: modelIds.join(',')
+				'model-ids': modelIds.join(',')
 			}
 		});
 
@@ -96,14 +100,16 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 		await handleTaskById(taskId, {
 			ondata(data, closeConnection) {
 				if (data?.status === TaskStatus.Failed) {
-					throw new FatalError('Task failed');
+					closeConnection();
+					logger.warn(`Failed to Compare Models with ids: ${modelIds.join(',')}`);
+					reject({ response: '' });
 				}
 				if (data.status === TaskStatus.Success) {
 					closeConnection();
 
 					// data.output is a base64 encoded json object. We decode it and return the json object.
 					const str = atob(data.output);
-					compareResult = JSON.parse(str);
+					resolve(JSON.parse(str));
 				}
 			}
 		});
@@ -111,7 +117,7 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 		logger.error(`An issue occurred while comparing models. ${err}`);
 	}
 
-	return compareResult;
+	return promise;
 }
 
 /**

@@ -1,26 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,6 +8,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -39,13 +25,14 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.tasks.CompareModelResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.*;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
 
 @RequestMapping("/gollm")
 @RestController
@@ -276,7 +263,7 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "404", description = "The provided model arguments are not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
-	public ResponseEntity<TaskResponse> creatCompareModelTask(
+	public ResponseEntity<TaskResponse> createCompareModelsTask(
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 		try {
@@ -304,7 +291,7 @@ public class GoLLMController {
 			// Create the task
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
-			req.setScript(CompareModelResponseHandler.NAME);
+			req.setScript(CompareModelsResponseHandler.NAME);
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
