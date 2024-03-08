@@ -2,15 +2,7 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Dropdown
-					:editable="true"
-					class="input"
-					v-model="gollmQuestion"
-					type="text"
-					:placeholder="'What would you like to compare?'"
-					@keydown.enter="submitGollmQuestion"
-				/>
-				<Panel v-if="llmAnswer || !isEmpty(llmThoughts)" header="Answer" toggleable>
+				<Panel v-if="llmAnswer" header="Comparison overview" toggleable>
 					<template #togglericon="{ collapsed }">
 						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 					</template>
@@ -103,7 +95,6 @@ import { getModel } from '@/services/model';
 import type { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
@@ -125,7 +116,7 @@ enum Tabs {
 
 let editor: VAceEditorInstance['_editor'] | null;
 
-const gollmQuestion = ref('');
+// const gollmQuestion = ref('');
 const beakerQuestion = ref('');
 const llmThoughts = ref<string[]>([]);
 const llmAnswer = ref('');
@@ -163,9 +154,9 @@ function formatField(field: string) {
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-function submitGollmQuestion() {
-	console.log(gollmQuestion.value);
-}
+// function submitGollmQuestion() {
+// 	console.log(gollmQuestion.value);
+// }
 
 function runCode() {
 	const messageContent = {
