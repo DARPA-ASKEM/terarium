@@ -38,8 +38,8 @@ API.interceptors.response.use(
 		} else {
 			let message = error.message;
 			let title = `${error.response?.statusText} (${error.response?.status})`;
-			if (error.response && error.response.data) {
-				const responseError: ServerError = error.response?.data as ServerError;
+			if (error?.response?.data) {
+				const responseError: ServerError = error.response.data as ServerError;
 
 				// check to see if the 'message' property is set. If it is, set message to that value.  If not, check the 'trace' property and extract the error from that. It will be the substring between the first set of quotations marks
 				if (responseError.message) {
