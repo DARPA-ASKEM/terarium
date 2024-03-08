@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="Tabs.Wizard">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<AccordionTab header="Model Weights">
@@ -178,6 +184,7 @@ import type {
 } from '@/types/Types';
 import { ProgressState } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{

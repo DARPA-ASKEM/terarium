@@ -181,15 +181,7 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-		>
-			<template #annotation>
-				<tera-operator-annotation
-					:state="currentActiveNode.state"
-					in-drilldown
-					@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
-				/>
-			</template>
-		</component>
+		/>
 	</Teleport>
 </template>
 
@@ -198,7 +190,6 @@ import { cloneDeep, isArray, isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import type { Position } from '@/types/common';
 import type {
 	Operation,

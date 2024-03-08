@@ -1,13 +1,16 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				:is-loading="assetLoading"
 				is-selectable
-				class="ml-auto mb-2"
 			/>
 		</template>
 		<div>
@@ -145,6 +148,7 @@ import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import {
 	EquationBlock,
 	EquationFromImageBlock,

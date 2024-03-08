@@ -16,7 +16,7 @@
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
 			@bring-to-front="bringToFront"
-			@show-annotation-editor="annotationRef.isEditing = true"
+			@show-annotation-editor="if (annotationRef) annotationRef.isEditing = true;"
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
@@ -32,6 +32,7 @@
 			<tera-operator-annotation
 				ref="annotationRef"
 				:state="node.state"
+				in-node
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 			<slot name="body" />
@@ -85,7 +86,7 @@ enum PortDirection {
 
 const operator = ref<HTMLElement>();
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
-const annotationRef = ref<TeraOperatorAnnotation | null>(null);
+const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
 
 let resizeObserver: ResizeObserver | null = null;
 

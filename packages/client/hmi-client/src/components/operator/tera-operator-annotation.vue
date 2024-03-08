@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'in-drilldown': inDrilldown }">
+	<section :class="{ 'in-node': inNode }">
 		<template v-if="isEditing">
 			<Textarea
 				v-model="annotation"
@@ -22,10 +22,11 @@
 		</template>
 	</section>
 	<Button
-		v-if="inDrilldown && isEmpty(annotation) && !isEditing"
+		v-if="!inNode && isEmpty(annotation) && !isEditing"
 		class="add-a-note"
 		label="Add a note"
 		icon="pi pi-pencil"
+		size="small"
 		text
 		@click="isEditing = true"
 	/>
@@ -33,17 +34,17 @@
 
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
-import { ref, watch } from 'vue';
+import { ref, watch, PropType } from 'vue';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 
 const props = defineProps({
-	inDrilldown: {
+	inNode: {
 		type: Boolean,
 		default: false
 	},
 	state: {
-		type: Object as PropType<S>,
+		type: Object as PropType<any>,
 		required: true
 	}
 });
@@ -80,61 +81,51 @@ watch(
 <style scoped>
 section {
 	display: flex;
+	flex: 1;
 	&:empty {
 		display: none;
 	}
 
-	& .btn-group {
+	& > .btn-group {
 		display: flex;
 		justify-content: end;
 		& > :last-child:deep(.p-button-icon) {
 			color: var(--primary-color);
 		}
 	}
-	& .annotation {
+
+	& > .annotation {
 		display: flex;
-	}
-	& .add-a-note {
-		margin-left: auto;
-		&:deep(.p-button-icon) {
-			color: var(--primary-color);
-		}
+		justify-content: space-between;
+		width: 100%;
 	}
 
-	&:not(.in-drilldown) {
+	&.in-node {
 		flex-direction: column;
-		& .annotation {
+		& > .annotation {
 			flex-direction: column;
 			& > p + .p-button {
-				margin-left: auto;
+				align-self: end;
 			}
 		}
 	}
 
-	&.in-drilldown {
-		flex: 1;
+	/* In drilldown */
+	&:not(.in-node) {
 		background-color: var(--surface-section);
 		padding: var(--gap-small);
 		border-radius: var(--border-radius);
 		gap: var(--gap-small);
-		& textarea {
+		& > textarea {
 			flex: 1;
 			align-self: center;
 		}
-		& .btn-group {
-			background-color: var(--surface-section);
-			border-radius: var(--border-radius);
+		& > .btn-group {
 			align-self: start;
 		}
-		& .annotation {
-			align-items: start;
-			justify-content: space-between;
-			width: 100%;
-
-			& p {
-				align-self: center;
-			}
-			& > p + .p-button {
+		& p {
+			align-self: center;
+			& + .p-button {
 				padding: 0 1rem;
 			}
 		}

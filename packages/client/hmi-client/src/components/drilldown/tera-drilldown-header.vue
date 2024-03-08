@@ -18,7 +18,7 @@
 				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 			</TabView>
 			<div class="actions">
-				<slot name="action-row" />
+				<slot name="actions" />
 			</div>
 		</div>
 	</header>
@@ -46,7 +46,7 @@ const onTabChange = (event: TabViewChangeEvent) => {
 header {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--gap-small);
 	background-color: var(--surface-highlight);
 	padding-top: 1rem;
 	padding-left: 1.5rem;
