@@ -1,18 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,6 +8,11 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
@@ -31,6 +23,9 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/assets")
 @RestController
@@ -52,7 +47,7 @@ public class AssetController {
 	 * searched. If the asset name is available,
 	 * a 204 No Content response is returned. If the asset name is not available, a
 	 * 409 Conflict response is returned.
-	 * 
+	 *
 	 * @param assetType Asset type to check
 	 * @param assetName Asset name to check
 	 * @param projectId Project ID to limit the search to (optional)
@@ -70,15 +65,15 @@ public class AssetController {
 			@ApiResponse(responseCode = "500", description = "Unable to verify project permissions")
 	})
 	public ResponseEntity<Void> verifyAssetNameAvailability(
-			@PathVariable("asset-type") AssetType assetType,
-			@PathVariable("asset-name") String assetName,
-			@RequestParam(name = "project-id", required = false) UUID projectId) {
+			@PathVariable("asset-type") final AssetType assetType,
+			@PathVariable("asset-name") final String assetName,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 
 		if (projectId == null) {
 
 			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(assetName, assetType);
 			if (asset.isPresent()) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is not available");
+				throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is already in use");
 			} else {
 				return ResponseEntity.noContent().build();
 			}
@@ -105,9 +100,9 @@ public class AssetController {
 					throw new ResponseStatusException(HttpStatus.FORBIDDEN,
 							"User does not have permission to access this project");
 				}
-			} catch (ResponseStatusException e) {
+			} catch (final ResponseStatusException e) {
 				throw e; // Like any responsible fisher, we're going to catch and release!
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
 						"Unable to verify project permissions");
 			}
