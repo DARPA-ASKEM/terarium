@@ -14,12 +14,10 @@
 				<Button icon="pi pi-check" rounded text @click="saveAnnotation" />
 			</div>
 		</template>
-		<template v-else-if="!isEmpty(annotation)">
-			<div class="annotation">
-				<p>{{ annotation }}</p>
-				<Button icon="pi pi-pencil" rounded text @click="isEditing = true" />
-			</div>
-		</template>
+		<div v-else-if="!isEmpty(annotation)" class="annotation">
+			<p>{{ annotation }}</p>
+			<Button icon="pi pi-pencil" rounded text @click="isEditing = true" />
+		</div>
 	</section>
 	<Button
 		v-if="!inNode && isEmpty(annotation) && !isEditing"

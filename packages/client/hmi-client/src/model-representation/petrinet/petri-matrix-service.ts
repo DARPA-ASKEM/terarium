@@ -115,7 +115,6 @@ export function createParameterMatrix(
 		amr,
 		transitionMatrixData
 	);
-	console.log(transitions);
 
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {
