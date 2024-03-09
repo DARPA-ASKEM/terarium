@@ -3,7 +3,12 @@
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
-					<tera-input-switch :class="['tera-input-switch']" labelFalse="TA1" labelRight="TA4" />
+					<tera-input-switch
+						class="mb-2"
+						v-model="isDescriptionTA4"
+						labelFalse="TA1"
+						labelRight="TA4"
+					/>
 					<tera-show-more-text :text="description" :lines="5" />
 					<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
 					<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
@@ -226,12 +231,6 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 
 	& > * {
 		grid-column: 1/3;
-	}
-
-	.tera-input-switch {
-		position: absolute;
-		top: var(--gap-small);
-		right: var(--gap-small);
 	}
 
 	p {
