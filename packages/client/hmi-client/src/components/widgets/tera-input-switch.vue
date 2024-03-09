@@ -61,11 +61,10 @@ div {
 
 		/* Increase the hit box for easier clicking */
 		&::before {
-			border-radius: 50%;
 			content: '';
 			display: block;
-			height: 3rem;
-			width: 3rem;
+			height: 2.5rem;
+			width: calc(100% + 1.5rem);
 			position: absolute;
 			top: 50%;
 			left: 50%;
