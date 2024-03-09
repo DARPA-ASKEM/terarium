@@ -181,7 +181,7 @@ export async function generateModelCard(
 	}
 }
 
-// helper fucntion to get the model type, will always default to petrinet if the model is not found
+// helper function to get the model type, will always default to petrinet if the model is not found
 export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	const schemaName = model?.header?.schema_name?.toLowerCase();
 	if (schemaName === 'regnet') {
@@ -194,10 +194,10 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 }
 
 // Converts a model into latex equation, either one of petrinet, stocknflow, or regnet;
-export async function getModelEquation(model: Model) {
+export async function getModelEquation(model: Model): Promise<string> {
 	const unSupportedFormats = ['decapodes'];
 	if (unSupportedFormats.includes(model.header.schema_name as string)) {
-		console.log(`getModelEquation: ${model.header.schema_name} not suported `);
+		console.warn(`getModelEquation: ${model.header.schema_name} not supported `);
 		return '';
 	}
 
