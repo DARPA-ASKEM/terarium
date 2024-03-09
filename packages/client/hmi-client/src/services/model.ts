@@ -76,7 +76,7 @@ export async function getModelConfigurations(modelId: Model['id']): Promise<Mode
  * @deprecated moving to mira-stratify
  */
 export async function reconstructAMR(amr: any) {
-	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
+	const response = await API.post('/mira/reconstruct-ode-semantics', amr);
 	return response?.data;
 }
 
