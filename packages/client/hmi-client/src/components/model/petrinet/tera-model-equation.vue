@@ -76,8 +76,8 @@ const updateLatexFormula = (equationsList: string[]) => {
 const updateModelFromEquations = async () => {
 	isUpdating.value = true;
 	isEditing.value = false;
-	const updated = await equationsToAMR(equations.value, 'petrinet', props.model.id);
-	if (updated) {
+	const modelId = await equationsToAMR(equations.value, 'petrinet', props.model.id);
+	if (modelId) {
 		emit('model-updated');
 		useToastService().success('Success', `Model Updated from equation`);
 	}
@@ -87,7 +87,6 @@ const updateModelFromEquations = async () => {
 watch(
 	() => props.model,
 	async () => {
-		// const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
 		const latexFormula = await getModelEquation(props.model);
 		if (latexFormula) {
 			updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
