@@ -70,12 +70,13 @@ public class KnowledgeController {
 	@GetMapping("/status/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> getTaskStatus(
-			@PathVariable("id") final String id) {
+		@PathVariable("id") final String id) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.getTaskStatus(id).getBody());
 	}
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
+	 *
 	 * @return UUID Model ID, or null if the model was not created or updated
 	 */
 	@PostMapping("/equations-to-model")
@@ -83,13 +84,11 @@ public class KnowledgeController {
 	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNode req) {
 		try {
 			final Model responseAMR = skemaUnifiedProxy
-						.consolidatedEquationsToAMR(req)
-						.getBody();
+				.consolidatedEquationsToAMR(req)
+				.getBody();
 
 			if (responseAMR == null) {
-				throw new ResponseStatusException(
-					HttpStatus.NO_CONTENT,
-					"No AMR returned by Skema Unified Service.");
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "No AMR returned by Skema Unified Service with the provided Equations.");
 			}
 
 			final UUID modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
@@ -112,8 +111,8 @@ public class KnowledgeController {
 		} catch (final Exception e) {
 			log.error("unable to create model", e);
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Error creating model");
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error creating model");
 		}
 	}
 
@@ -121,18 +120,18 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody final JsonNode req) {
 		return ResponseEntity
-				.ok(skemaUnifiedProxy
-						.base64EquationsToAMR(req)
-						.getBody());
+			.ok(skemaUnifiedProxy
+				.base64EquationsToAMR(req)
+				.getBody());
 	}
 
 	@PostMapping("/base64-equations-to-latex")
 	@Secured(Roles.USER)
 	public ResponseEntity<String> base64EquationsToLatex(@RequestBody final JsonNode req) {
 		return ResponseEntity
-				.ok(skemaUnifiedProxy
-						.base64EquationsToLatex(req)
-						.getBody());
+			.ok(skemaUnifiedProxy
+				.base64EquationsToLatex(req)
+				.getBody());
 	}
 
 	/**
@@ -150,29 +149,29 @@ public class KnowledgeController {
 	@PostMapping("/code-to-amr")
 	@Secured(Roles.USER)
 	ResponseEntity<ExtractionResponse> postCodeToAMR(
-			@RequestParam("code_id") final UUID codeId,
-			@RequestParam(name = "name", required = false) final String name,
-			@RequestParam(name = "description", required = false) final String description,
-			@RequestParam(name = "dynamics_only", required = false) final Boolean dynamicsOnly,
-			@RequestParam(name = "llm_assisted", required = false) final Boolean llmAssisted) {
+		@RequestParam("code_id") final UUID codeId,
+		@RequestParam(name = "name", required = false) final String name,
+		@RequestParam(name = "description", required = false) final String description,
+		@RequestParam(name = "dynamics_only", required = false) final Boolean dynamicsOnly,
+		@RequestParam(name = "llm_assisted", required = false) final Boolean llmAssisted) {
 		return ResponseEntity.ok(
-				knowledgeMiddlewareProxy.postCodeToAMR(codeId.toString(), name, description, dynamicsOnly, llmAssisted)
-						.getBody());
+			knowledgeMiddlewareProxy.postCodeToAMR(codeId.toString(), name, description, dynamicsOnly, llmAssisted)
+				.getBody());
 	}
 
 	// Create a model from code blocks
 	@Operation(summary = "Create a model from code blocks")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Return the extraction job for code to amr", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExtractionResponse.class))),
-			@ApiResponse(responseCode = "500", description = "Error running code blocks to model", content = @Content)
+		@ApiResponse(responseCode = "200", description = "Return the extraction job for code to amr", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExtractionResponse.class))),
+		@ApiResponse(responseCode = "500", description = "Error running code blocks to model", content = @Content)
 	})
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart final Code code,
-			@RequestPart("file") final MultipartFile input) throws IOException {
+																															@RequestPart("file") final MultipartFile input) throws IOException {
 
 		try (final CloseableHttpClient httpClient = HttpClients.custom()
-				.build()) {
+			.build()) {
 			// 1. create code asset from code blocks
 			final Code createdCode = codeService.createAsset(code);
 
@@ -182,7 +181,7 @@ public class KnowledgeController {
 
 			// we have pre-formatted the files object already so no need to use uploadCode
 			final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(),
-					input.getOriginalFilename());
+				input.getOriginalFilename());
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(fileEntity);
 			final HttpResponse response = httpClient.execute(put);
@@ -192,13 +191,13 @@ public class KnowledgeController {
 			}
 			// 3. create model from code asset
 			return ResponseEntity.ok(knowledgeMiddlewareProxy
-					.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false)
-					.getBody());
+				.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false)
+				.getBody());
 		} catch (final Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Error creating running code to model");
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Error creating running code to model");
 		}
 	}
 
@@ -217,13 +216,13 @@ public class KnowledgeController {
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postPDFExtractions(
-			@RequestParam("document_id") final UUID documentId,
-			@RequestParam(name = "annotate_skema", defaultValue = "true") final Boolean annotateSkema,
-			@RequestParam(name = "annotate_mit", defaultValue = "true") final Boolean annotateMIT,
-			@RequestParam(name = "name", required = false) final String name,
-			@RequestParam(name = "description", required = false) final String description) {
+		@RequestParam("document_id") final UUID documentId,
+		@RequestParam(name = "annotate_skema", defaultValue = "true") final Boolean annotateSkema,
+		@RequestParam(name = "annotate_mit", defaultValue = "true") final Boolean annotateMIT,
+		@RequestParam(name = "name", required = false) final String name,
+		@RequestParam(name = "description", required = false) final String description) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy
-				.postPDFExtractions(documentId.toString(), annotateSkema, annotateMIT, name, description).getBody());
+			.postPDFExtractions(documentId.toString(), annotateSkema, annotateMIT, name, description).getBody());
 	}
 
 	/**
@@ -244,8 +243,8 @@ public class KnowledgeController {
 			final String error = "Unable to create provenance";
 			log.error(error, e);
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				error);
 		}
 	}
 
@@ -259,12 +258,12 @@ public class KnowledgeController {
 	@PostMapping("/profile-model/{model_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileModel(
-			@PathVariable("model_id") final UUID modelId,
-			@RequestParam("document_id") final UUID documentId) {
+		@PathVariable("model_id") final UUID modelId,
+		@RequestParam("document_id") final UUID documentId) {
 
 		try {
 			final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
-					ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
+				ProvenanceType.MODEL, documentId, ProvenanceType.DOCUMENT);
 			provenanceService.createProvenance(provenancePayload);
 		} catch (final Exception e) {
 			final String error = "Unable to create provenance for profile-model";
@@ -272,7 +271,7 @@ public class KnowledgeController {
 		}
 
 		return ResponseEntity
-				.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
+			.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
 	}
 
 	/**
@@ -285,14 +284,14 @@ public class KnowledgeController {
 	@PostMapping("/profile-dataset/{dataset_id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postProfileDataset(
-			@PathVariable("dataset_id") final UUID datasetId,
-			@RequestParam(name = "document_id", required = false) final Optional<UUID> documentId) {
+		@PathVariable("dataset_id") final UUID datasetId,
+		@RequestParam(name = "document_id", required = false) final Optional<UUID> documentId) {
 
 		// Provenance call if a document id is provided
 		if (documentId.isPresent()) {
 			try {
 				final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
-						ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
+					ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
 				provenanceService.createProvenance(provenancePayload);
 			} catch (final Exception e) {
 				final String error = "Unable to create provenance for profile-dataset";
@@ -302,7 +301,7 @@ public class KnowledgeController {
 
 		final String docIdString = documentId.map(UUID::toString).orElse(null);
 		return ResponseEntity.ok(
-				knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), docIdString).getBody());
+			knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), docIdString).getBody());
 	}
 
 	/**
@@ -315,8 +314,8 @@ public class KnowledgeController {
 	@PostMapping("/link-amr")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> postLinkAmr(
-			@RequestParam("document_id") final String documentId,
-			@RequestParam("model_id") final String modelId) {
+		@RequestParam("document_id") final String documentId,
+		@RequestParam("model_id") final String modelId) {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.postLinkAmr(documentId, modelId).getBody());
 	}
 
