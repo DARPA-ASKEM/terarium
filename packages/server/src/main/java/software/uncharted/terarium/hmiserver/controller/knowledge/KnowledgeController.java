@@ -76,8 +76,7 @@ public class KnowledgeController {
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
-	 * @param req
-	 * @return
+	 * @return UUID Model ID, or null if the model was not created or updated
 	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
