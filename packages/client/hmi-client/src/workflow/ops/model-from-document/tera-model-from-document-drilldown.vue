@@ -300,14 +300,7 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	const res = await equationsToAMR(equations, clonedState.value.modelFramework);
-
-	if (!res) {
-		return;
-	}
-
-	const modelId = res.job_result?.tds_model_id;
-
+	const modelId = await equationsToAMR(equations, clonedState.value.modelFramework);
 	if (!modelId) return;
 
 	generateCard(document.value?.id, modelId);

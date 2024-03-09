@@ -1,6 +1,6 @@
 import API, { Poller, PollerResult, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import type { Code, Dataset, ExtractionResponse, Model } from '@/types/Types';
+import type { Code, Dataset, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { modelCard } from './goLLM';
 
@@ -49,12 +49,13 @@ export const equationsToAMR = async (
 	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
-): Promise<any> => {
+): Promise<string | null> => {
 	try {
-		const response: AxiosResponse<ExtractionResponse> = await API.post(
-			`/knowledge/equations-to-model`,
-			{ model: framework, modelId, equations }
-		);
+		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, {
+			model: framework,
+			modelId,
+			equations
+		});
 		return response.data;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
