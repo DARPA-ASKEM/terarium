@@ -1,8 +1,8 @@
 <template>
 	<div>
-		<label>{{ labelFalse }}</label>
+		<label @click.stop="switchModel = false">{{ labelFalse }}</label>
 		<InputSwitch v-model="switchModel" />
-		<label>{{ labelRight }}</label>
+		<label @click.stop="switchModel = true">{{ labelRight }}</label>
 	</div>
 </template>
 
@@ -52,6 +52,25 @@ div {
 	}
 	&:deep(.p-inputswitch .p-inputswitch-slider::before) {
 		background: var(--text-color-subdued);
+		box-shadow: none !important;
+	}
+
+	label {
+		cursor: pointer;
+		position: relative;
+
+		/* Increase the hit box for easier clicking */
+		&::before {
+			border-radius: 50%;
+			content: '';
+			display: block;
+			height: 3rem;
+			width: 3rem;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
 	}
 }
 </style>
