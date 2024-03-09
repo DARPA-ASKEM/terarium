@@ -3,9 +3,7 @@
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
-					<aside>
-						<label>TA1</label><InputSwitch v-model="descriptionTA4" /><label>TA4</label>
-					</aside>
+					<tera-input-switch :class="['tera-input-switch']" labelFalse="TA1" labelRight="TA4" />
 					<tera-show-more-text :text="description" :lines="5" />
 					<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
 					<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
@@ -102,7 +100,6 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import InputSwitch from 'primevue/inputswitch';
 import { FeatureConfig, ResultType } from '@/types/common';
 import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
@@ -114,6 +111,7 @@ import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.v
 import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraInputSwitch from '@/components/widgets/tera-input-switch.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
@@ -126,12 +124,12 @@ const props = defineProps<{
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
 
 const teraModelDiagramRef = ref();
-const descriptionTA4 = ref(true);
+const isDescriptionTA4 = ref(true);
 
 // FIXME: expand Card typing definition?
 const card = computed<any>(() => {
 	// Display the GoLLM card if the description is set to TA4 (true).
-	if (descriptionTA4.value) {
+	if (isDescriptionTA4.value) {
 		return props.model.metadata?.gollmCard;
 	}
 
@@ -230,22 +228,10 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 		grid-column: 1/3;
 	}
 
-	aside {
-		display: flex;
-		align-items: center;
-		gap: var(--gap-small);
+	.tera-input-switch {
 		position: absolute;
-		top: var(--gap);
-		right: var(--gap);
-		color: var(--text-color-subdued);
-
-		/* Override PrimeVue styles for slider to always stay neutral gray */
-		&:deep(.p-inputswitch .p-inputswitch-slider) {
-			background: var(--text-color-disabled);
-		}
-		&:deep(.p-inputswitch .p-inputswitch-slider::before) {
-			background: var(--text-color-subdued);
-		}
+		top: var(--gap-small);
+		right: var(--gap-small);
 	}
 
 	p {
