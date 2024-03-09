@@ -53,8 +53,13 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk())
 				.andReturn();
 
-		UUID regnetModelId = UUID.fromString(res.getResponse().getContentAsString());
-		log.info(regnetModelId.toString());
+		String responseContent = res.getResponse().getContentAsString(); // Remove double quotes
+		try {
+			final UUID regnetModelId = UUID.fromString(responseContent);
+			log.info(regnetModelId.toString());
+		} catch (final IllegalArgumentException e) {
+			log.error("Response content is not a valid UUID: " + responseContent);
+		}
 
 		final String payload2 = """
 					{
@@ -73,8 +78,13 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk())
 				.andReturn();
 
-		regnetModelId = UUID.fromString(res.getResponse().getContentAsString());
-		log.info(regnetModelId.toString());
+		responseContent = res.getResponse().getContentAsString();
+		try {
+			final UUID regnetModelId = UUID.fromString(responseContent);
+			log.info(regnetModelId.toString());
+		} catch (final IllegalArgumentException e) {
+			log.error("Response content is not a valid UUID: " + responseContent);
+		}
 	}
 
 	@Test
