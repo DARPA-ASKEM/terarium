@@ -168,7 +168,6 @@ import AccordionTab from 'primevue/accordiontab';
 import { FeatureConfig, ResultType } from '@/types/common';
 import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import * as textUtil from '@/utils/text';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
@@ -184,7 +183,6 @@ import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 const props = defineProps<{
 	model: Model;
 	modelConfigurations?: ModelConfiguration[];
-	highlight?: string;
 	featureConfig?: FeatureConfig;
 	isGeneratingCard?: boolean;
 }>();
@@ -214,13 +212,12 @@ const card = computed<any>(() => {
 	}
 	return null;
 });
-const description = computed(() =>
-	highlightSearchTerms(
+const description = computed(
+	() =>
 		card.value?.ModelDetails?.model_description ??
-			card.value?.description ??
-			props.model?.header?.description ??
-			''
-	)
+		card.value?.description ??
+		props.model?.header?.description ??
+		''
 );
 
 const biasAndRiskLimitations = computed(
@@ -246,10 +243,8 @@ const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');
 const authors = computed(() => {
 	const authorsArray = props.model?.metadata?.annotations?.authors ?? [];
-
 	if (card.value?.ModelCardAuthors) authorsArray.unshift(card.value?.ModelCardAuthors);
 	else if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
-
 	return authorsArray.join(', ');
 });
 
@@ -262,14 +257,6 @@ const documents = computed<{ name: string; id: string }[]>(
 				id: projectAsset.assetId
 			})) ?? []
 );
-
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const relatedTerariumModels = computed(
