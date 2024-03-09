@@ -230,6 +230,24 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 		grid-column: 1/3;
 	}
 
+	aside {
+		display: flex;
+		align-items: center;
+		gap: var(--gap-small);
+		position: absolute;
+		top: var(--gap);
+		right: var(--gap);
+		color: var(--text-color-subdued);
+
+		/* Override PrimeVue styles for slider to always stay neutral gray */
+		&:deep(.p-inputswitch .p-inputswitch-slider) {
+			background: var(--text-color-disabled);
+		}
+		&:deep(.p-inputswitch .p-inputswitch-slider::before) {
+			background: var(--text-color-subdued);
+		}
+	}
+
 	p {
 		display: grid;
 		grid-template-columns: subgrid;
