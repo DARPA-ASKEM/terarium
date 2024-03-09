@@ -22,6 +22,7 @@ export async function modelCard(documentId: string): Promise<void> {
 		await handleTaskById(taskId, {
 			ondata(data, closeConnection) {
 				if (data?.status === TaskStatus.Failed) {
+					closeConnection();
 					throw new FatalError('Task failed');
 				}
 				if (data.status === TaskStatus.Success) {
