@@ -57,7 +57,7 @@ async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<Conce
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
 	const response = await API.get(`/mira/currie/${curies.toString()}`);
 	if (response?.status === 200 && response?.data) return response.data;
-	if (response?.status === 404) console.warn('No DKG entities found for curies:', curies);
+	if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
 	return null;
 }
 
