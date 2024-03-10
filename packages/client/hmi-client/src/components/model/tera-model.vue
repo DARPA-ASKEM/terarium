@@ -128,7 +128,7 @@ async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().refresh();
+		await useProjects().refresh();
 	}, 800);
 }
 
