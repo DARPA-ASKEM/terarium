@@ -21,7 +21,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public class KnoweldgeControllerTests extends TerariumApplicationTests {
+public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -54,12 +54,12 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		String responseContent = res.getResponse().getContentAsString(); // Remove double quotes
-		try {
-			final UUID regnetModelId = UUID.fromString(responseContent);
-			log.info(regnetModelId.toString());
-		} catch (final IllegalArgumentException e) {
-			log.error("Response content is not a valid UUID: " + responseContent);
-		}
+//		try {
+		UUID regnetModelId = UUID.fromString(responseContent);
+		log.info(regnetModelId.toString());
+//		} catch (final IllegalArgumentException e) {
+//			log.error("Response content is not a valid UUID: " + responseContent);
+//		}
 
 		final String payload2 = """
 					{
@@ -79,12 +79,12 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		responseContent = res.getResponse().getContentAsString();
-		try {
-			final UUID regnetModelId = UUID.fromString(responseContent);
-			log.info(regnetModelId.toString());
-		} catch (final IllegalArgumentException e) {
-			log.error("Response content is not a valid UUID: " + responseContent);
-		}
+//		try {
+		regnetModelId = UUID.fromString(responseContent);
+		log.info(regnetModelId.toString());
+//		} catch (final IllegalArgumentException e) {
+//			log.error("Response content is not a valid UUID: " + responseContent);
+//		}
 	}
 
 	@Test
@@ -115,12 +115,12 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		String responseContent = res.getResponse().getContentAsString(); // Remove double quotes
-		try {
-			final UUID petrinetModelId = UUID.fromString(responseContent);
-			log.info(petrinetModelId.toString());
-		} catch (final IllegalArgumentException e) {
-			log.error("Response content is not a valid UUID: " + responseContent);
-		}
+//		try {
+		UUID petrinetModelId = UUID.fromString(responseContent);
+		log.info(petrinetModelId.toString());
+//		} catch (final IllegalArgumentException e) {
+//			log.error("Response content is not a valid UUID: " + responseContent);
+//		}
 
 		final String payload2 = """
 					{
@@ -140,12 +140,12 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		responseContent = res.getResponse().getContentAsString(); // Remove double quotes
-		try {
-			final UUID petrinetModelId = UUID.fromString(responseContent);
-			log.info(petrinetModelId.toString());
-		} catch (final IllegalArgumentException e) {
-			log.error("Response content is not a valid UUID: " + responseContent);
-		}
+//		try {
+		petrinetModelId = UUID.fromString(responseContent);
+		log.info(petrinetModelId.toString());
+//		} catch (final IllegalArgumentException e) {
+//			log.error("Response content is not a valid UUID: " + responseContent);
+//		}
 	}
 
 	// @Test
@@ -209,7 +209,7 @@ public class KnoweldgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final String latex = res.getResponse().getContentAsString();
-		log.info(latex.toString());
+		log.info(latex);
 	}
 
 }
