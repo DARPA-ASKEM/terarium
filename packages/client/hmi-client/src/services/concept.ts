@@ -56,7 +56,7 @@ async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<Conce
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
 	try {
-		const response = await API.get(`/mira/${curies.toString()}`);
+		const response = await API.get(`/mira/currie/${curies.toString()}`);
 		if (response?.status !== 200) return null;
 		return response?.data ?? null;
 	} catch (error) {
@@ -111,7 +111,7 @@ async function getEntitySimilarity(
 	targets: string[]
 ): Promise<Array<EntitySimilarityResult> | null> {
 	try {
-		const response = await API.post('/mira/entity_similarity', { sources, targets } as Curies);
+		const response = await API.post('/mira/entity-similarity', { sources, targets } as Curies);
 		if (response?.status !== 200) return null;
 		return response?.data ?? null;
 	} catch (error) {

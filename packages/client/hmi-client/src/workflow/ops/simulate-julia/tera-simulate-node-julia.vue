@@ -112,8 +112,6 @@ watch(
 watch(
 	() => props.node.active,
 	async () => {
-		if (!props.node.active) return;
-
 		const active = props.node.active;
 		if (!active) return;
 

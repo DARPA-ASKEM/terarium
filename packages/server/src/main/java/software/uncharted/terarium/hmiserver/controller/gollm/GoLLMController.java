@@ -150,6 +150,8 @@ public class GoLLMController {
 
 			final ConfigureModelResponseHandler.Input input = new ConfigureModelResponseHandler.Input();
 			input.setResearchPaper(document.get().getText());
+			// stripping the metadata from the model before its sent since it can cause gollm to fail with massive inputs
+			model.get().setMetadata(null);
 			input.setAmr(model.get());
 
 			// Create the task
@@ -230,6 +232,8 @@ public class GoLLMController {
 
 			final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
 			input.setDatasets(datasets);
+			// stripping the metadata from the model before its sent since it can cause gollm to fail with massive inputs
+			model.get().setMetadata(null);
 			input.setAmr(model.get());
 
 			// Create the task
