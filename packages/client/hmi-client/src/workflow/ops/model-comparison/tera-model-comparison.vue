@@ -8,11 +8,17 @@
 		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Panel v-if="llmAnswer" header="Comparison overview" toggleable>
+				<Panel header="Comparison overview" toggleable class="comparison-overview">
 					<template #togglericon="{ collapsed }">
 						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
 					</template>
-					<p>{{ llmAnswer }}</p>
+					<p v-if="llmAnswer">{{ llmAnswer }}</p>
+					<template v-else>
+						<Vue3Lottie :animationData="LoadingWateringCan" :height="75" :width="75" class="mx-3" />
+						<p class="max-w-10rem">
+							Analyzing models metadata to generate a detailed comparison analysis...
+						</p>
+					</template>
 				</Panel>
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
@@ -108,6 +114,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import { Vue3Lottie } from 'vue3-lottie';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -312,5 +320,38 @@ table {
 .toolbar-right-side {
 	display: flex;
 	justify-content: right;
+}
+
+.comparison-overview {
+	border: 1px solid var(--primary-color-light);
+	border-radius: var(--border-radius-medium);
+	margin: 0 var(--gap-small);
+
+	& :deep(.p-panel-header) {
+		background-color: var(--surface-highlight);
+		border-radius: var(--border-radius-medium);
+		padding: var(--gap-xsmall) var(--gap-small) var(--gap-xsmall) var(--gap);
+	}
+
+	/* Make the panel header bottom radius flat when the content is open */
+
+	& :deep(.p-panel-header:has(+ .p-toggleable-content:not([style*='none']))) {
+		border-radius: var(--border-radius-medium) var(--border-radius-medium) 0 0;
+	}
+
+	& :deep(.p-panel-title) {
+		color: var(--primary-color);
+		font-weight: var(--font-weight-semibold);
+		font-size: var(--font-body-medium);
+	}
+
+	& :deep(.p-panel-content) {
+		background-color: var(--surface-secondary);
+		border-radius: var(--border-radius-medium);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: var(--gap);
+	}
 }
 </style>
