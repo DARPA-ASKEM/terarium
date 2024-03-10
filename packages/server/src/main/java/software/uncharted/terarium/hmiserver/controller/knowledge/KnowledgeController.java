@@ -95,11 +95,11 @@ public class KnowledgeController {
 		} catch (final Exception e) {
 			throw new ResponseStatusException(
 				HttpStatus.UNPROCESSABLE_ENTITY,
-				"Skema Unified Service did not return any AMR based on the provided Equations. This can be due to the equations being invalid or not being able to be parsed into the requested framework."
+				"Skema Unified Service did not return any AMR based on the provided Equations. This could be due to invalid equations or the inability to parse them into the requested framework."
 			);
 		}
 
-		final String serviceSuccessMessage = "An AMR was returned by Skema Unified Service with the provided Equations.";
+		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations.";
 
 		// If no model id is provided, create a new model
 		final UUID modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
@@ -111,7 +111,7 @@ public class KnowledgeController {
 				log.error("Unable to create a model", e);
 				throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					serviceSuccessMessage + "But we are unable to create a model, please try again.");
+					serviceSuccessMessage + "However, we encountered an issue creating the model. Please try again.");
 			}
 		}
 
@@ -131,7 +131,7 @@ public class KnowledgeController {
 			log.error("Unable to update the model id {}.", modelId, e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				serviceSuccessMessage + "But we were unable to update the model, please try again.");
+				serviceSuccessMessage + "However, we encountered an issue updating the model. Please try again.");
 		}
 	}
 
