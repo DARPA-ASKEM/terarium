@@ -201,7 +201,9 @@ export async function getModelEquation(model: Model): Promise<string> {
 		return '';
 	}
 
+	// TODO - replace the get with the POST when the backend is ready, see PR https://github.com/DARPA-ASKEM/sciml-service/pull/167
 	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
+	// const response = await API.post(`/transforms/model-to-latex/`, model);
 	const latex = response.data.latex;
 	if (!latex) return '';
 
