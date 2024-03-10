@@ -83,6 +83,7 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNode req) {
 		try {
+			// TODO - How can I caught errors from the skema service? like a 422?
 			final Model responseAMR = skemaUnifiedProxy
 				.consolidatedEquationsToAMR(req)
 				.getBody();
