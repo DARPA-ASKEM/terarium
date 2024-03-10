@@ -201,10 +201,10 @@ export async function getModelEquation(model: Model) {
 		return '';
 	}
 
-	const id = model.id;
-	const response = await API.get(`/transforms/model-to-latex/${id}`);
+	// TODO - replace the get with the POST when the backend is ready, see PR https://github.com/DARPA-ASKEM/sciml-service/pull/167
+	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
+	// const response = await API.post(`/transforms/model-to-latex/`, model);
 	const latex = response.data.latex;
 	if (!latex) return '';
-
 	return latex;
 }
