@@ -316,7 +316,8 @@ const toggleOptionsMenu = (event) => {
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
-	workflowService.updateWorkflow(workflowClone);
+	await workflowService.updateWorkflow(workflowClone);
+	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
@@ -778,6 +779,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 let prevX = 0;
 let prevY = 0;
+
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
 		const pointIndex = newEdge.value?.direction === WorkflowDirection.FROM_OUTPUT ? 1 : 0;
@@ -877,6 +879,7 @@ function cleanUpLayout() {
 	// TODO: clean up layout of nodes
 	console.log('clean up layout');
 }
+
 function resetZoom() {
 	// TODO: reset zoom level and position
 	console.log('clean up layout');
