@@ -82,38 +82,56 @@ public class KnowledgeController {
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
 	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNode req) {
+		final Model responseAMR;
+
+		// Get an AMR from Skema Unified Service
 		try {
 			// TODO - How can I caught errors from the skema service? like a 422?
-			final Model responseAMR = skemaUnifiedProxy
+			responseAMR = skemaUnifiedProxy
 				.consolidatedEquationsToAMR(req)
 				.getBody();
 
-			if (responseAMR == null) {
-				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "No AMR returned by Skema Unified Service with the provided Equations.");
-			}
-
-			final UUID modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
-			if (modelId != null) {
-				final Optional<Model> model = modelService.getAsset(modelId);
-				if (model.isPresent()) {
-					responseAMR.setId(model.get().getId());
-					modelService.updateAsset(responseAMR);
-					return ResponseEntity.ok(model.get().getId());
-				} else {
-					throw new ResponseStatusException(
-						HttpStatus.BAD_REQUEST,
-						"The model id provided does not exist.");
-				}
-			}
-
-			final Model model = modelService.createAsset(responseAMR);
-			return ResponseEntity.ok(model.getId());
-
+			if (responseAMR == null) throw new Exception();
 		} catch (final Exception e) {
-			log.error("unable to create model", e);
+			throw new ResponseStatusException(
+				HttpStatus.UNPROCESSABLE_ENTITY,
+				"Skema Unified Service did not return any AMR based on the provided Equations. This can be due to the equations being invalid or not being able to be parsed into the requested framework."
+			);
+		}
+
+		final String serviceSuccessMessage = "An AMR was returned by Skema Unified Service with the provided Equations.";
+
+		// If no model id is provided, create a new model
+		final UUID modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
+		if (modelId == null) {
+			try {
+				final Model model = modelService.createAsset(responseAMR);
+				return ResponseEntity.ok(model.getId());
+			} catch (final IOException e) {
+				log.error("Unable to create a model", e);
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					serviceSuccessMessage + "But we are unable to create a model, please try again.");
+			}
+		}
+
+		// If a model id is provided, update the model
+		try {
+			final Optional<Model> model = modelService.getAsset(modelId);
+			if (model.isEmpty()) {
+				final String errorMessage = String.format("The model id %s does not exist.", modelId);
+				log.error(errorMessage);
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
+			}
+			responseAMR.setId(model.get().getId());
+			modelService.updateAsset(responseAMR);
+			return ResponseEntity.ok(model.get().getId());
+
+		} catch (final IOException e) {
+			log.error("Unable to update the model id {}.", modelId, e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Error creating model");
+				serviceSuccessMessage + "But we were unable to update the model, please try again.");
 		}
 	}
 
