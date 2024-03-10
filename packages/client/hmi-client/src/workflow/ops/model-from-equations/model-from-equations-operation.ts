@@ -26,7 +26,7 @@ export interface ModelFromEquationsState {
 }
 
 export const ModelFromEquationsOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_FROM_DOCUMENT,
+	name: WorkflowOperationTypes.MODEL_FROM_EQUATIONS,
 	description: 'Create model from equations',
 	displayName: 'Create model from equations',
 	isRunnable: true,
