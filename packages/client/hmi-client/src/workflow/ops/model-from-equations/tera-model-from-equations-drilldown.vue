@@ -13,7 +13,6 @@
 				is-selectable
 			/>
 		</template>
-
 		<tera-drilldown-section :is-loading="assetLoading">
 			<header class="header-group">
 				<p>These equations will be used to create your model.</p>
@@ -62,19 +61,11 @@
 						class="w-full md:w-14rem ml-2"
 						v-model="clonedState.modelFramework"
 						:options="modelFrameworks"
+						option-label="label"
+						option-value="value"
 						@change="onChangeModelFramework"
 					/>
 				</span>
-				<!--					<span class="ml-3 mr-auto">-->
-				<!--						<label>Service</label>-->
-				<!--						<Dropdown-->
-				<!--							size="small"-->
-				<!--							v-model="clonedState.modelService"-->
-				<!--							:options="modelServices"-->
-				<!--							@change="emit('update-state', clonedState)"-->
-				<!--							class="ml-2"-->
-				<!--						/>-->
-				<!--					</span>-->
 			</template>
 		</tera-drilldown-section>
 		<template #preview>
@@ -147,6 +138,7 @@ import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import * as textUtils from '@/utils/text';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
@@ -166,8 +158,11 @@ const props = defineProps<{
 }>();
 
 enum ModelFramework {
-	Petrinet = 'petrinet',
-	Regnet = 'regnet'
+	PetriNet = 'petrinet',
+	RegNet = 'regnet',
+	Decapode = 'decapode',
+	GeneralizedAMR = 'gamr',
+	MathExpressionTree = 'met'
 }
 
 const outputs = computed(() => {
@@ -210,12 +205,14 @@ const outputs = computed(() => {
 
 const selectedOutputId = ref<string>('');
 
-const modelFrameworks = Object.values(ModelFramework);
-// const modelServices = Object.values(ModelServiceType);
+const modelFrameworks = Object.entries(ModelFramework).map(([key, value]) => ({
+	label: textUtils.pascalCaseToCapitalSentence(key),
+	value
+}));
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
 	text: '',
-	modelFramework: ModelFramework.Petrinet,
+	modelFramework: ModelFramework.PetriNet,
 	modelId: null,
 	modelService: ModelServiceType.TA1
 });
