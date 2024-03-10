@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { removeModifiers } from './mira-util';
+import { extractConceptNames, removeModifiers } from './mira-util';
 import type { MiraModel, MiraTemplateParams } from './mira-common';
 
 /**
@@ -90,6 +90,30 @@ export const createParameterMatrix = (
 	const childrenParams = paramMap.get(param);
 	if (!childrenParams) throw new Error(`Cannot map ${param}`);
 
+	// Create map
+	//   param => [ [subject, outcome, controller], [subject, outcome, controller] ... ]
+	const paramLocationMap = new Map<string, any>();
+	const templateParams = Object.values(miraTempateParams);
+	templateParams.forEach((templateParam) => {
+		const params = templateParam.params;
+		params.forEach((paramName) => {
+			if (!paramLocationMap.has(paramName)) paramLocationMap.set(paramName, []);
+
+			paramLocationMap.get(paramName)?.push({
+				subject: templateParam.subject,
+				outcome: templateParam.outcome,
+				controllers: templateParam.controllers
+			});
+		});
+	});
+
+	// Create map
+	//   param => value
+	const paramValueMap = new Map<string, any>();
+	Object.values(miraModel.parameters).forEach((paramObj) => {
+		paramValueMap.set(paramObj.name, paramObj.value);
+	});
+
 	// Find templates with expressions that contains one or more of the params
 	const templates = miraModel.templates.filter((t) => {
 		const miraTemplateParam = miraTempateParams[t.name];
@@ -99,16 +123,52 @@ export const createParameterMatrix = (
 	});
 
 	// 1. subject x outcome
+	const rowNames = extractConceptNames(templates, 'subject');
+	const colNames = extractConceptNames(templates, 'outcome');
 
-	// Find the dimensions
-	console.log(
-		'subject',
-		templates.map((t) => t.subject.name)
-	);
-	console.log(
-		'outcome',
-		templates.map((t) => t.outcome.name)
-	);
+	console.log(rowNames);
+	console.log(colNames);
 
-	return templates;
+	// 2. build empty matrix
+	const matrix: any[] = [];
+	for (let rowIdx = 0; rowIdx < rowNames.length; rowIdx++) {
+		const row: any[] = [];
+		for (let colIdx = 0; colIdx < colNames.length; colIdx++) {
+			row.push({
+				value: null,
+				id: null
+				// row: rowIdx,
+				// col: colIdx,
+				// rowCriteria: rowNames[rowIdx],
+				// colCriteria: colNames[colIdx],
+				// content: {
+				// 	value: null,
+				//  id: null
+				// }
+			});
+		}
+		matrix.push(row);
+	}
+
+	// 3. fill the matrix
+	for (let i = 0; i < childrenParams.length; i++) {
+		const paramName = childrenParams[i];
+		const paramValue = paramValueMap.get(paramName);
+
+		const paramLocations = paramLocationMap.get(paramName);
+		if (!paramLocationMap) continue;
+
+		paramLocations.forEach((location) => {
+			const rowIdx = rowNames.indexOf(location.subject);
+			const colIdx = colNames.indexOf(location.outcome);
+
+			matrix[rowIdx][colIdx].value = paramValue;
+			matrix[rowIdx][colIdx].id = paramName;
+		});
+	}
+
+	console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+	console.log(matrix);
+
+	return matrix;
 };
