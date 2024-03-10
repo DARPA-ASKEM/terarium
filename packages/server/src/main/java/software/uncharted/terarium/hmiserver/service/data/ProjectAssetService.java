@@ -25,12 +25,13 @@ public class ProjectAssetService {
 
 	/**
 	 * Find all active assets for a project.  Active assets are defined as those that are not deleted and not temporary.
+	 *
 	 * @param projectId The project ID
-	 * @param types The types of assets to find
+	 * @param types     The types of assets to find
 	 * @return The list of active assets for the project
 	 */
 	public List<ProjectAsset> findActiveAssetsForProject(@NotNull final UUID projectId,
-			final Collection<@NotNull AssetType> types) {
+																											 final Collection<@NotNull AssetType> types) {
 		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(projectId, types);
 	}
 
@@ -46,7 +47,7 @@ public class ProjectAssetService {
 	}
 
 	public Optional<ProjectAsset> createProjectAsset(final Project project, final AssetType assetType, final TerariumAsset asset)
-			throws IOException {
+		throws IOException {
 
 		final ProjectAsset projectAsset = new ProjectAsset();
 		projectAsset.setProject(project);
@@ -71,24 +72,27 @@ public class ProjectAssetService {
 	}
 
 	public void updateByAsset(final TerariumAsset asset) {
-		final Optional<ProjectAsset> projectAsset = projectAssetRepository.findByAssetId(asset.getId());
-		if (projectAsset.isPresent()) {
-			projectAsset.get().setAssetName(asset.getName());
-			updateProjectAsset(projectAsset.get());
+		final List<ProjectAsset> projectAssets = projectAssetRepository.findByAssetId(asset.getId()).orElse(Collections.emptyList());
+		if (!projectAssets.isEmpty()) {
+			projectAssets.forEach(projectAsset -> {
+				projectAsset.setAssetName(asset.getName());
+				updateProjectAsset(projectAsset);
+			});
 		} else {
-			log.info("Could not update the project asset name for asset with id: " + asset.getId() + " because it does not exist.");
+			log.warn("Could not update the project asset name for asset with id: {} because it does not exist.", asset.getId());
 		}
 	}
 
+
 	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType) {
 		return Optional
-				.ofNullable(projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
+			.ofNullable(projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
 	}
 
 	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(final UUID projectId, final String assetName,
-			final AssetType assetType) {
+																																				 final AssetType assetType) {
 		return Optional.ofNullable(projectAssetRepository
-				.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType));
+			.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType));
 	}
 
 	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(final UUID id, final UUID assetId) {

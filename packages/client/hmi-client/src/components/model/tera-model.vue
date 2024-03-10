@@ -126,6 +126,7 @@ const optionsMenuItems = computed(() => [
 
 async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
+	await useProjects().refresh();
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
 	}, 800);
@@ -136,7 +137,6 @@ async function updateModelName() {
 		const modelClone = cloneDeep(model.value);
 		modelClone.header.name = newName.value;
 		await updateModelContent(modelClone);
-		await useProjects().refresh();
 	}
 	isRenaming.value = false;
 }
