@@ -63,6 +63,7 @@
 						:options="modelFrameworks"
 						option-label="label"
 						option-value="value"
+						option-disabled="disabled"
 						@change="onChangeModelFramework"
 					/>
 				</span>
@@ -207,7 +208,12 @@ const selectedOutputId = ref<string>('');
 
 const modelFrameworks = Object.entries(ModelFramework).map(([key, value]) => ({
 	label: textUtils.pascalCaseToCapitalSentence(key),
-	value
+	value,
+	disabled: [
+		ModelFramework.Decapode,
+		ModelFramework.GeneralizedAMR,
+		ModelFramework.MathExpressionTree
+	].includes(value)
 }));
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
