@@ -25,7 +25,7 @@ export interface ModelFromDocumentState {
 	modelService: ModelServiceType;
 }
 
-export const ModelFromDocumentOperation: Operation = {
+export const ModelFromEquationsOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_FROM_DOCUMENT,
 	description: 'Create model from equations',
 	displayName: 'Create model from equations',
