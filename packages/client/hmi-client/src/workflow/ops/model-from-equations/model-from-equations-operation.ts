@@ -17,7 +17,7 @@ export function instanceOfEquationFromImageBlock(
 	return 'fileName' in object;
 }
 
-export interface ModelFromDocumentState {
+export interface ModelFromEquationsState {
 	equations: AssetBlock<EquationBlock | EquationFromImageBlock>[];
 	text: string;
 	modelFramework: string;
@@ -35,7 +35,7 @@ export const ModelFromEquationsOperation: Operation = {
 	action: () => {},
 
 	initState: () => {
-		const init: ModelFromDocumentState = {
+		const init: ModelFromEquationsState = {
 			equations: [],
 			text: '',
 			modelFramework: 'petrinet',
