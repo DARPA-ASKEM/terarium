@@ -153,7 +153,7 @@ import {
 	EquationFromImageBlock,
 	instanceOfEquationFromImageBlock,
 	ModelFromDocumentState
-} from './model-from-document-operation';
+} from './model-from-equations-operation';
 
 const emit = defineEmits([
 	'close',
