@@ -13,71 +13,70 @@
 				is-selectable
 			/>
 		</template>
-		<div>
-			<tera-drilldown-section :is-loading="assetLoading">
-				<header class="header-group">
-					<p>These equations will be used to create your model.</p>
-					<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
-				</header>
-				<ul class="blocks-container">
-					<li v-for="(equation, i) in clonedState.equations" :key="i">
-						<tera-asset-block
-							:is-included="equation.includeInProcess"
-							@update:is-included="onUpdateInclude(equation)"
-							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
-							@delete="removeEquation(i)"
-						>
-							<template #header>
-								<h5>{{ equation.name }}</h5>
+
+		<tera-drilldown-section :is-loading="assetLoading">
+			<header class="header-group">
+				<p>These equations will be used to create your model.</p>
+				<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
+			</header>
+			<ul class="blocks-container">
+				<li v-for="(equation, i) in clonedState.equations" :key="i">
+					<tera-asset-block
+						:is-included="equation.includeInProcess"
+						@update:is-included="onUpdateInclude(equation)"
+						:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+						@delete="removeEquation(i)"
+					>
+						<template #header>
+							<h5>{{ equation.name }}</h5>
+						</template>
+						<div class="block-container">
+							<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+								<label>Extracted Image:</label>
+								<Image
+									id="img"
+									:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+									:alt="''"
+									preview
+								/>
 							</template>
-							<div class="block-container">
-								<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
-									<label>Extracted Image:</label>
-									<Image
-										id="img"
-										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
-										:alt="''"
-										preview
-									/>
-								</template>
-								<tera-math-editor
-									v-if="equation.asset.text"
-									:latex-equation="equation.asset.text"
-									:is-editable="false"
-								/>
-								<div v-else class="mt-2" />
-								<InputText
-									v-model="equation.asset.text"
-									placeholder="Add an expression with LaTeX"
-									@update:model-value="emit('update-state', clonedState)"
-								/>
-							</div>
-						</tera-asset-block>
-					</li>
-				</ul>
-				<template #footer>
-					<span>
-						<label>Model framework</label>
-						<Dropdown
-							class="w-full md:w-14rem ml-2"
-							v-model="clonedState.modelFramework"
-							:options="modelFrameworks"
-							@change="onChangeModelFramework"
-						/>
-					</span>
-					<!--					<span class="ml-3 mr-auto">-->
-					<!--						<label>Service</label>-->
-					<!--						<Dropdown-->
-					<!--							size="small"-->
-					<!--							v-model="clonedState.modelService"-->
-					<!--							:options="modelServices"-->
-					<!--							@change="emit('update-state', clonedState)"-->
-					<!--							class="ml-2"-->
-					<!--						/>-->
-					<!--					</span>-->
-				</template>
-			</tera-drilldown-section>
-		</div>
+							<tera-math-editor
+								v-if="equation.asset.text"
+								:latex-equation="equation.asset.text"
+								:is-editable="false"
+							/>
+							<div v-else class="mt-2" />
+							<InputText
+								v-model="equation.asset.text"
+								placeholder="Add an expression with LaTeX"
+								@update:model-value="emit('update-state', clonedState)"
+							/>
+						</div>
+					</tera-asset-block>
+				</li>
+			</ul>
+			<template #footer>
+				<span>
+					<label>Model framework</label>
+					<Dropdown
+						class="w-full md:w-14rem ml-2"
+						v-model="clonedState.modelFramework"
+						:options="modelFrameworks"
+						@change="onChangeModelFramework"
+					/>
+				</span>
+				<!--					<span class="ml-3 mr-auto">-->
+				<!--						<label>Service</label>-->
+				<!--						<Dropdown-->
+				<!--							size="small"-->
+				<!--							v-model="clonedState.modelService"-->
+				<!--							:options="modelServices"-->
+				<!--							@change="emit('update-state', clonedState)"-->
+				<!--							class="ml-2"-->
+				<!--						/>-->
+				<!--					</span>-->
+			</template>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
