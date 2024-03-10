@@ -1,5 +1,9 @@
 import _ from 'lodash';
-import { extractConceptNames, removeModifiers } from './mira-util';
+import {
+	extractSubjectControllerMatrix,
+	extractSubjectOutcomeMatrix,
+	removeModifiers
+} from './mira-util';
 import type { MiraModel, MiraTemplateParams } from './mira-common';
 
 /**
@@ -122,53 +126,26 @@ export const createParameterMatrix = (
 		return intersection.length > 0;
 	});
 
-	// 1. subject x outcome
-	const rowNames = extractConceptNames(templates, 'subject');
-	const colNames = extractConceptNames(templates, 'outcome');
+	const subjectOutcome = extractSubjectOutcomeMatrix(
+		templates,
+		childrenParams,
+		paramValueMap,
+		paramLocationMap
+	);
+	const subjectController = extractSubjectControllerMatrix(
+		templates,
+		childrenParams,
+		paramValueMap,
+		paramLocationMap
+	);
 
-	console.log(rowNames);
-	console.log(colNames);
+	console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!1');
+	console.log(subjectController.rowNames);
+	console.log(subjectController.colNames);
+	console.log(subjectController.matrix);
 
-	// 2. build empty matrix
-	const matrix: any[] = [];
-	for (let rowIdx = 0; rowIdx < rowNames.length; rowIdx++) {
-		const row: any[] = [];
-		for (let colIdx = 0; colIdx < colNames.length; colIdx++) {
-			row.push({
-				value: null,
-				id: null
-				// row: rowIdx,
-				// col: colIdx,
-				// rowCriteria: rowNames[rowIdx],
-				// colCriteria: colNames[colIdx],
-				// content: {
-				// 	value: null,
-				//  id: null
-				// }
-			});
-		}
-		matrix.push(row);
-	}
-
-	// 3. fill the matrix
-	for (let i = 0; i < childrenParams.length; i++) {
-		const paramName = childrenParams[i];
-		const paramValue = paramValueMap.get(paramName);
-
-		const paramLocations = paramLocationMap.get(paramName);
-		if (!paramLocationMap) continue;
-
-		paramLocations.forEach((location) => {
-			const rowIdx = rowNames.indexOf(location.subject);
-			const colIdx = colNames.indexOf(location.outcome);
-
-			matrix[rowIdx][colIdx].value = paramValue;
-			matrix[rowIdx][colIdx].id = paramName;
-		});
-	}
-
-	console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-	console.log(matrix);
-
-	return matrix;
+	return {
+		subjectOutcome,
+		subjectController
+	};
 };
