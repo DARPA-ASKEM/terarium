@@ -1,4 +1,3 @@
-3
 <template>
 	<!-- Sets the Toast notification groups and their respective levels-->
 	<Toast position="top-center" group="error" />
