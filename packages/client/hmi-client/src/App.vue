@@ -1,9 +1,10 @@
+3
 <template>
 	<!-- Sets the Toast notification groups and their respective levels-->
-	<Toast position="top-right" group="error" />
-	<Toast position="top-right" group="warn" />
-	<Toast position="top-right" group="info" />
-	<Toast position="top-right" group="success" />
+	<Toast position="top-center" group="error" />
+	<Toast position="top-center" group="warn" />
+	<Toast position="top-center" group="info" />
+	<Toast position="top-center" group="success" />
 	<header>
 		<tera-navbar :active="displayNavBar" />
 	</header>
@@ -22,7 +23,7 @@
 import { computed, onMounted, watch } from 'vue';
 import Toast from 'primevue/toast';
 
-import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
+import { ToastSeverity, ToastSummaries, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
 import TeraNavbar from '@/components/navbar/tera-navbar.vue';
