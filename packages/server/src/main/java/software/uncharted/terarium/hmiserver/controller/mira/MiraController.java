@@ -89,17 +89,17 @@ public class MiraController {
 			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 	})
-	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final String modelStr) {
+	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
 		try {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.MIRA);
-			req.setInput(modelStr.getBytes());
+			req.setInput(objectMapper.writeValueAsString(model).getBytes());
 			req.setScript(AMRToMMTResponseHandler.NAME);
 
 			// send the request
 			final TaskResponse resp = taskService.runTaskSync(req);
-			final JsonNode model = objectMapper.readValue(resp.getOutput(), JsonNode.class);
-			return ResponseEntity.ok().body(model);
+			final JsonNode mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(mmtInfo);
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
