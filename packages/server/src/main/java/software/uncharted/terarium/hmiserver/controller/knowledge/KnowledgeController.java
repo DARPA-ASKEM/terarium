@@ -82,7 +82,7 @@ public class KnowledgeController {
 
 	final ExtractionProxy extractionProxy;
 
-	@Value("${mit-openai-api-key}")
+	@Value("${mit-openai-api-key:}")
 	final String MIT_OPENAI_API_KEY;
 
 	/**
