@@ -53,8 +53,8 @@
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
-					optionValue="value"
 					@update:model-value="(val) => changeType(slotProps.data, val.value)"
+					optionValue="paramType"
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
