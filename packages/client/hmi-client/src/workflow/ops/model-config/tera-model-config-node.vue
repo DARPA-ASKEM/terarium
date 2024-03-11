@@ -1,18 +1,9 @@
 <template>
 	<section>
-		<template v-if="node.inputs[0].value">
-			<ul>
-				<li v-for="config of modelConfigs" :key="config.id">
-					{{ config.name }}
-				</li>
-			</ul>
-			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
-		</template>
-		<template v-else>
-			<tera-operator-placeholder :operation-type="node.operationType">
-				Attach a model
-			</tera-operator-placeholder>
-		</template>
+		<tera-operator-placeholder :operation-type="node.operationType">
+			Attach a model
+		</tera-operator-placeholder>
+		<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
 
