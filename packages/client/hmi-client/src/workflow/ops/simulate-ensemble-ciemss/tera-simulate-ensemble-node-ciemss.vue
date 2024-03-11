@@ -101,10 +101,18 @@ const getStatus = async (simulationId: string) => {
 
 const updateOutputPorts = async (runId) => {
 	const portLabel = props.node.inputs[0].label;
+	const state = _.cloneDeep(props.node.state);
+
 	emit('append-output', {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
-		value: { runId }
+		value: { runId },
+		state: {
+			mapping: state.mapping,
+			timeSpan: state.timeSpan,
+			numSamples: state.numSamples
+		},
+		isSelected: false
 	});
 };
 
