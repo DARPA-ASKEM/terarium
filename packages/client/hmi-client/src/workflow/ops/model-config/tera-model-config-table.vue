@@ -80,8 +80,9 @@
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
 					class="cursor-pointer secondary-text"
-					>Click to open</span
 				>
+					Click to open
+				</span>
 
 				<!-- Expression -->
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
