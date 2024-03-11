@@ -34,6 +34,13 @@
 							</span>
 							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
 						</div>
+						<div class="toggles" v-if="assetType === AssetType.Dataset">
+							<span>
+								<label class="mr-2">Source</label>
+								<Dropdown v-model="chosenDatasetSource" :options="datasetSourceOptions" />
+							</span>
+							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
+						</div>
 					</nav>
 					<tera-searchbar
 						ref="searchBarRef"
@@ -74,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, Ref, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dropdown from 'primevue/dropdown';
@@ -170,6 +177,9 @@ const topicOptions = ref([
 
 const sourceOptions = ref(['xDD', 'Terarium']);
 const chosenSource = ref('xDD');
+
+const datasetSourceOptions: Ref<string[]> = ref(['ESGF', 'Terarium']);
+const chosenDatasetSource: Ref<string> = ref('Terarium');
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
