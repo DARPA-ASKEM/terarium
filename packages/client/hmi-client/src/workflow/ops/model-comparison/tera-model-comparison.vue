@@ -86,10 +86,15 @@
 				/>
 			</tera-drilldown-section>
 			<tera-drilldown-preview>
+				<tera-progress-spinner
+					v-if="isLoadingStructuralComparisons && isEmpty(structuralComparisons)"
+					is-centered
+					:font-size="3"
+				/>
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
 						<label>Comparison {{ index + 1 }}</label>
-						<img :src="image" alt="Structural comparison" />
+						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
 			</tera-drilldown-preview>
@@ -98,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -115,6 +121,8 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import Image from 'primevue/image';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -129,12 +137,14 @@ enum Tabs {
 }
 
 let editor: VAceEditorInstance['_editor'] | null;
-
+const kernelManager = new KernelSessionManager();
+const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref('');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
+
 const modelCardsToCompare = computed(() =>
 	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
 );
@@ -145,8 +155,6 @@ const fields = computed(
 		] as string[]
 );
 const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
-
-const kernelManager = new KernelSessionManager();
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -185,14 +193,17 @@ function runCode() {
 		stop_on_error: false,
 		code: editor?.getValue() as string
 	};
+	isLoadingStructuralComparisons.value = true;
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
 		.register('display_data', (data) => {
 			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
+			isLoadingStructuralComparisons.value = false;
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
+			isLoadingStructuralComparisons.value = false;
 		});
 }
 
@@ -292,6 +303,23 @@ table {
 	background-position: 12px;
 	background-repeat: no-repeat;
 	text-indent: 30px;
+}
+
+ul {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+
+	& > li {
+		display: flex;
+		flex-direction: column;
+		gap: var(--gap-xsmall);
+
+		& > span {
+			width: fit-content;
+			margin-right: calc(var(--gap-xxlarge) * 3);
+		}
+	}
 }
 
 /* TODO: Improve this pattern later same in (tera-model-input) */

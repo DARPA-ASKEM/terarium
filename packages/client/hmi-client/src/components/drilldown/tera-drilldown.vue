@@ -43,7 +43,6 @@ const props = defineProps<{
 	title: string;
 	tooltip?: string;
 	popover?: boolean;
-	removeDefaultPadding?: boolean;
 }>();
 
 const emit = defineEmits(['on-close-clicked']);
