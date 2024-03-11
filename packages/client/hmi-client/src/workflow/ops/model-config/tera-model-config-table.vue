@@ -54,7 +54,7 @@
 					:options="typeOptions"
 					optionLabel="label"
 					optionValue="value"
-					@update:model-value="(val) => changeType(slotProps.data.value, val.value)"
+					@update:model-value="(val) => changeType(slotProps.data, val.value)"
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
@@ -139,7 +139,7 @@
 					<Button
 						class="ml-2 py-0 w-5"
 						text
-						@click="constantToDistribution(slotProps.data.value, 1)"
+						@click="constantToDistribution(slotProps.data)"
 						v-tooltip.top="'Convert to distribution'"
 					>
 						<span class="white-space-nowrap text-sm">Add ±</span>
@@ -225,7 +225,13 @@
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type { Initial, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type {
+	Initial,
+	ModelConfiguration,
+	ModelDistribution,
+	ModelMetadata,
+	ModelParameter
+} from '@/types/Types';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
@@ -314,60 +320,112 @@ const validateTimeSeries = (values: string) => {
 	return isValid;
 };
 
-const changeType = (param: ModelParameter, type: ParamType) => {
-	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
+/**
+ * Change the type of the parameter
+ * @param data The parameter to change
+ * @param newType The new type
+ */
+const changeType = (data: ModelConfigTableData, newType: ParamType) => {
+	// Save the current values into the values map
+	if (!data.values) data.values = new Map();
+	data.values.set(data.type, data.value);
 
-	switch (type) {
-		case ParamType.CONSTANT:
-			delete param.distribution;
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			replaceParameter(param);
-			break;
-		case ParamType.DISTRIBUTION:
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			param.distribution = {
-				type: 'Uniform1',
-				parameters: {
-					minimum: 0,
-					maximum: 0
-				}
-			};
-			replaceParameter(param);
-			break;
-		case ParamType.TIME_SERIES:
-			delete param.distribution;
-			if (!clonedConfig.configuration.metadata?.timeseries) {
-				clonedConfig.configuration.metadata.timeseries = {};
+	// Set the new ParamType
+	data.type = newType;
+
+	// Define default values for different ParamTypes
+	let defaultValue: any;
+	if (newType === ParamType.DISTRIBUTION) {
+		defaultValue = {
+			type: 'Uniform1',
+			parameters: {
+				minimum: 0,
+				maximum: 0
 			}
-			clonedConfig.configuration.metadata.timeseries[param.id] = '';
-			replaceParameter(param);
-			break;
-		default:
-			break;
+		} as ModelDistribution;
+	} else if (newType === ParamType.TIME_SERIES) {
+		defaultValue = { [data.id]: '' } as ModelMetadata['timeseries'];
+	} else {
+		// ParamType.CONSTANT
+		defaultValue = 0 as number;
 	}
+
+	// Set the value based on the new ParamType
+	if (data.values.has(newType)) {
+		data.value = data.values.get(newType) ?? defaultValue;
+	} else {
+		data.value = defaultValue;
+	}
+
+	// Update the configuration
+	replaceParameter(data);
 };
 
-const constantToDistribution = (param: ModelParameter) => {
-	if (!param.value) return;
-	param.distribution = {
+function constantToDistribution(data: ModelConfigTableData) {
+	const constant = data.value as number;
+
+	// Save the current value into the values map
+	if (!data.values) data.values = new Map();
+	data.values.set(ParamType.CONSTANT, constant);
+
+	// Create the distribution
+	const newDistribution: ModelDistribution = {
 		type: 'Uniform1',
 		parameters: {
-			minimum: param.value - (param.value * addPlusMinus.value) / 100,
-			maximum: param.value + (param.value * addPlusMinus.value) / 100
+			minimum: constant - (constant * addPlusMinus.value) / 100,
+			maximum: constant + (constant * addPlusMinus.value) / 100
 		}
 	};
-	changeType(param, ParamType.DISTRIBUTION);
-};
 
-const replaceParameter = (param: any) => {
+	// Save the distribution as value and into the values map
+	data.type = ParamType.DISTRIBUTION;
+	data.value = newDistribution;
+	data.values.set(ParamType.DISTRIBUTION, newDistribution);
+
+	// Update the configuration
+	replaceParameter(data);
+}
+
+/**
+ * Replace the parameter in the model configuration with the new data
+ * @param data The new data
+ */
+const replaceParameter = (data: ModelConfigTableData) => {
+	// Clone the model configuration
 	const clonedConfig = cloneDeep(props.modelConfiguration);
+
+	// Fetch the parameter to be updated
 	const isPetrinetOrStockflow =
 		modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW;
 	const parameters = isPetrinetOrStockflow
 		? clonedConfig.configuration.semantics.ode.parameters
 		: clonedConfig.configuration.model.parameters;
-	const index = parameters.findIndex((p) => p.id === param.id);
-	parameters[index] = param;
+	const parameter = parameters.find((p) => p.id === data.id);
+
+	// Make sure we have a parameter to update
+	if (!parameter) {
+		console.warn(`Parameter ${data.id} not found in the configuration`);
+		return;
+	}
+
+	// Delete the old parameter values from the configuration
+	delete parameter?.value; // Constant
+	delete parameter?.distribution; // Distribution
+	delete clonedConfig.configuration.metadata?.timeseries?.[parameter.id]; // Timeseries
+
+	// Update the parameter with the new value
+	if (data.type === ParamType.CONSTANT) {
+		parameter.value = data.value as number;
+	} else if (data.type === ParamType.DISTRIBUTION) {
+		parameter.distribution = data.value as ModelDistribution;
+	} else if (data.type === ParamType.TIME_SERIES) {
+		if (!clonedConfig.configuration?.metadata?.timeseries) {
+			clonedConfig.configuration.metadata.timeseries = {};
+		}
+		clonedConfig.configuration.metadata.timeseries[parameter.id] =
+			data.value as ModelMetadata['timeseries'];
+	}
+
 	emit('update-configuration', clonedConfig);
 };
 
