@@ -25,8 +25,9 @@
 		</Column>
 
 		<!-- Value type: Matrix or Expression, or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
-		<Column field="type" header="Value type" class="w-2">
+		<Column field="type" header="Type" class="w-2">
 			<template #body="slotProps">
+				<!-- Matrix -->
 				<Button
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					text
@@ -35,6 +36,8 @@
 					@click="openMatrixModal(slotProps.data)"
 					class="p-0"
 				/>
+
+				<!-- Expression -->
 				<span
 					v-else-if="slotProps.data.type === ParamType.EXPRESSION"
 					class="flex align-items-center"
@@ -42,6 +45,8 @@
 					<span class="custom-icon-expression mr-2" />
 					Expression
 				</span>
+
+				<!-- Constant, Distribution, and Time Varying -->
 				<Dropdown
 					v-else
 					class="value-type-dropdown w-9"
@@ -49,7 +54,6 @@
 					:options="typeOptions"
 					optionLabel="label"
 					optionValue="value"
-					placeholder="Select a parameter type"
 					@update:model-value="(val) => changeType(slotProps.data.value, val.value)"
 				>
 					<template #value="slotProps">
@@ -136,7 +140,7 @@
 						class="ml-2 py-0 w-5"
 						text
 						@click="constantToDistribution(slotProps.data.value, 1)"
-						v-tooltip="'Convert to distribution'"
+						v-tooltip.top="'Convert to distribution'"
 					>
 						<span class="white-space-nowrap text-sm">Add ±</span>
 						<InputNumber
@@ -368,8 +372,7 @@ const replaceParameter = (param: any) => {
 };
 
 const updateExpression = async (value: Initial) => {
-	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
-	value.expression_mathml = mathml;
+	value.expression_mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
 	emit('update-value', [value]);
 };
 
@@ -492,6 +495,7 @@ const matrixEffect = () => {
 .min-value {
 	position: relative;
 }
+
 .min-value::before {
 	content: 'Min';
 	position: relative;
@@ -501,6 +505,7 @@ const matrixEffect = () => {
 	font-size: var(--font-caption);
 	width: 0;
 }
+
 .max-value::before {
 	content: 'Max';
 	position: relative;
@@ -519,6 +524,7 @@ const matrixEffect = () => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .custom-icon-expression {
 	background-image: url('@assets/svg/icons/expression.svg');
 	background-size: contain;
@@ -527,6 +533,7 @@ const matrixEffect = () => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .invalid-message {
 	color: var(--text-color-danger);
 }

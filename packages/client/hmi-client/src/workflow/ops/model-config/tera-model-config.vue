@@ -929,12 +929,15 @@ onUnmounted(() => {
 	) {
 	background-color: transparent;
 }
+
 .box-container:deep(.p-datatable .p-sortable-column.p-highlight) {
 	background-color: transparent;
 }
+
 .box-container:deep(table > thead > tr > th:nth-child(1)) {
 	padding-left: var(--gap);
 }
+
 .box-container:deep(.p-button .p-button-label) {
 	text-align: left;
 }
@@ -950,12 +953,15 @@ onUnmounted(() => {
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
 }
+
 .empty-section {
 	color: var(--text-color-subdued);
 }
+
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
 	padding: 0;
 }
+
 .context-item {
 	width: 100%;
 }
@@ -972,6 +978,7 @@ onUnmounted(() => {
 	backdrop-filter: blur(8px);
 	border-top: 1px solid var(--surface-border);
 }
+
 :deep(.p-button:disabled.p-button-outlined) {
 	background-color: var(--surface-0) !important;
 }

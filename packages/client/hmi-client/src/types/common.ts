@@ -28,8 +28,8 @@ export interface ModelConfigTableData {
 	id: string;
 	name: string;
 	type: ParamType;
-	activeType?: ParamType; // This is used to keep track of the active type used by the user
 	value: any;
+	values?: Map<ParamType, any>; // values entered by the users for other types
 	source: string;
 	visibility: boolean;
 	tableFormattedMatrix?: ModelConfigTableData[];
