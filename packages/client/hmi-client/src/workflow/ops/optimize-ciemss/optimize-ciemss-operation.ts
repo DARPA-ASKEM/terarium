@@ -27,6 +27,7 @@ export interface OptimizeCiemssOperationState {
 	chartConfigs: string[][];
 	simulationsInProgress: string[];
 	simulationRunId: string;
+	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
 }
@@ -64,6 +65,7 @@ export const OptimizeCiemssOperation: Operation = {
 			chartConfigs: [],
 			simulationsInProgress: [],
 			simulationRunId: '',
+			optimzationRunId: '',
 			modelConfigName: '',
 			modelConfigDesc: ''
 		};
