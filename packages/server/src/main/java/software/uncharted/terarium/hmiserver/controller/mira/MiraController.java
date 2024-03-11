@@ -81,6 +81,35 @@ public class MiraController {
 		taskService.addResponseHandler(sbmlToPetrinetResponseHandler);
 	}
 
+	@PostMapping("/amr-to-mmt")
+	@Secured(Roles.USER)
+	@Operation(summary = "convert AMR to MIRA model template")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
+	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final String modelStr) {
+		try {
+			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.MIRA);
+			req.setInput(modelStr.getBytes());
+			req.setScript(MdlToStockflowResponseHandler.NAME);
+
+			// send the request
+			final TaskResponse resp = taskService.runTaskSync(req);
+			final JsonNode model = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(model);
+		} catch (final Exception e) {
+			final String error = "Unable to dispatch task request";
+			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+
+
 	@PostMapping("/convert-and-create-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a MIRA conversion task")
