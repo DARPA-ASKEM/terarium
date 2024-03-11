@@ -578,7 +578,6 @@ const setOutputValues = async () => {
 		knobs.value.optimzationRunId,
 		'optimize_results.json'
 	);
-	console.log(optimzationResult);
 	optimizationResult.value = optimzationResult;
 };
 
