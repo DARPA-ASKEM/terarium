@@ -15,6 +15,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -33,6 +34,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -96,13 +98,76 @@ public class KnowledgeController {
 		return ResponseEntity.ok(knowledgeMiddlewareProxy.getTaskStatus(id).getBody());
 	}
 
+	/**
+	 * Send the equations to the skema unified service to get the AMR
+	 *
+	 * @return UUID Model ID, or null if the model was not created or updated
+	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<Model> equationsToModel(@RequestBody final JsonNode req) {
-		return ResponseEntity
-				.ok(skemaUnifiedProxy
-						.consolidatedEquationsToAMR(req)
-						.getBody());
+	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNode req) {
+		final Model responseAMR;
+
+		// Get an AMR from Skema Unified Service
+		try {
+			responseAMR = skemaUnifiedProxy
+					.consolidatedEquationsToAMR(req)
+					.getBody();
+
+			if (responseAMR == null) {
+				throw new ResponseStatusException(
+						HttpStatus.UNPROCESSABLE_ENTITY,
+						"Skema Unified Service did not return any AMR based on the provided Equations. This could be due to invalid equations or the inability to parse them into the requested framework.");
+			}
+		} catch (final FeignException e) {
+			throw new ResponseStatusException(
+					HttpStatus.valueOf(e.status()),
+					"Skema Unified Service did not return any AMR based on the provided Equations. " + e.getMessage());
+		}
+
+		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations. ";
+
+		// If no model id is provided, create a new model
+		UUID modelId = null;
+		try {
+			modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
+		} catch (final IllegalArgumentException e) {
+			throw new ResponseStatusException(
+					HttpStatus.BAD_REQUEST,
+					serviceSuccessMessage + "The provided modelId is not a valid UUID.");
+		}
+
+		if (modelId == null) {
+			try {
+				final Model model = modelService.createAsset(responseAMR);
+				return ResponseEntity.ok(model.getId());
+			} catch (final IOException e) {
+				log.error("Unable to create a model", e);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						serviceSuccessMessage
+								+ "However, we encountered an issue creating the model. Please try again.");
+			}
+		}
+
+		// If a model id is provided, update the model
+		try {
+			final Optional<Model> model = modelService.getAsset(modelId);
+			if (model.isEmpty()) {
+				final String errorMessage = String.format("The model id %s does not exist.", modelId);
+				log.error(errorMessage);
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
+			}
+			responseAMR.setId(model.get().getId());
+			modelService.updateAsset(responseAMR);
+			return ResponseEntity.ok(model.get().getId());
+
+		} catch (final IOException e) {
+			log.error("Unable to update the model id {}.", modelId, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					serviceSuccessMessage + "However, we encountered an issue updating the model. Please try again.");
+		}
 	}
 
 	@PostMapping("/base64-equations-to-model")

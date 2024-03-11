@@ -1,9 +1,12 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				@click.stop
-				style="margin-left: auto"
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
@@ -244,7 +247,7 @@
 
 <script setup lang="ts">
 import { cloneDeep, isEmpty } from 'lodash';
-import { computed, ref, watch, onUnmounted, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -253,7 +256,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
-import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
@@ -278,9 +282,9 @@ import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import { TaskStatus } from '@/types/Types';
 import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -427,6 +431,7 @@ const extractConfigurationsFromInputs = async () => {
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
 						throw new FatalError('Configs from document - Task failed');
 					}
 					if (data.status === TaskStatus.Success) {
@@ -449,6 +454,7 @@ const extractConfigurationsFromInputs = async () => {
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
 						throw new FatalError('Configs from datasets - Task failed');
 					}
 					if (data.status === TaskStatus.Success) {

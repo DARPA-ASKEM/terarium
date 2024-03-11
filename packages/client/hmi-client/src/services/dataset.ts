@@ -127,7 +127,7 @@ async function createNewDatasetFromGithubFile(
 	const urlResponse = await API.put(
 		`/datasets/${newDataset.id}/upload-csv-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 

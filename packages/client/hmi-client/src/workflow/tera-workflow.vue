@@ -99,6 +99,7 @@
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
+					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 				>
 					<template #body>
 						<component
@@ -180,8 +181,7 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-		>
-		</component>
+		/>
 	</Teleport>
 </template>
 
@@ -239,7 +239,7 @@ import * as CodeAssetOp from './ops/code-asset/mod';
 import * as OptimizeCiemssOp from './ops/optimize-ciemss/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
-import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
