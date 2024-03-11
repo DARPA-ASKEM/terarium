@@ -544,12 +544,27 @@ const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
 	const state = _.cloneDeep(props.node.state);
-	// TODO: This should be taking some values from our output result but its TBD
+
+	const tempModel = modelConfiguration.value.configuration as Model;
+	tempModel.metadata = tempModel.metadata || {};
+	tempModel.metadata.interventions = tempModel.metadata.interventions || [];
+
+	props.node.state.interventionPolicyGroups.forEach((ele) => {
+		// get value from results.
+		const value = optimizationResult.value.x as string;
+		tempModel.metadata.interventions.push({
+			name: ele.name,
+			startTime: ele.startTime.toString(),
+			target: ele.parameter,
+			type: 'static_parameter_intervention',
+			value
+		});
+	});
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
 		knobs.value.modelConfigName,
 		knobs.value.modelConfigDesc,
-		modelConfiguration.value.configuration as Model
+		tempModel
 	);
 
 	if (!data) {
