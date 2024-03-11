@@ -8,16 +8,15 @@
 <script setup lang="ts">
 import { WorkflowOperationTypes } from '@/types/workflow';
 import plants from '@/assets/svg/plants.svg';
-import calibrateDeterministic from '@assets/svg/operator-images/calibrate-deterministic.svg';
+import calibrateJulia from '@assets/svg/operator-images/calibrate-deterministic.svg';
 import editModel from '@assets/svg/operator-images/edit-model.svg';
-import calibrateEnsembleProbabilistic from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
+import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
 import model from '@assets/svg/operator-images/model.svg';
-// import calibrateSimulateDeterministic from '@assets/svg/operator-images/calibrate-simulate-deterministic.svg'
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
-import calibrateSimulateProbabilistic from '@assets/svg/operator-images/calibrate-simulate-probabilistic.svg';
-import simulateDeterministic from '@assets/svg/operator-images/simulate-deterministic.svg';
+import calibrateSimulateCiemss from '@assets/svg/operator-images/calibrate-simulate-probabilistic.svg';
+import simulateJulia from '@assets/svg/operator-images/simulate-deterministic.svg';
 import code from '@assets/svg/operator-images/code.svg';
-import simulateEnsembleProbabilistic from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
+import simulateEnsembleCiemss from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
 import configureModel from '@assets/svg/operator-images/configure-model.svg';
 import simulateProbabilistic from '@assets/svg/operator-images/simulate-probabilistic.svg';
 import coupleModels from '@assets/svg/operator-images/couple-models.svg';
@@ -27,7 +26,6 @@ import transformDataset from '@assets/svg/operator-images/transform-dataset.svg'
 import createModelFromEquation from '@assets/svg/operator-images/create-model-from-equation.svg';
 import transformModel from '@assets/svg/operator-images/transform-model.svg';
 import dataset from '@assets/svg/operator-images/dataset.svg';
-// import validateModelConfiguration from '@assets/svg/operator-images/validate-model-configuration.svg'
 import document from '@assets/svg/operator-images/document.svg';
 
 const props = defineProps<{
@@ -35,9 +33,9 @@ const props = defineProps<{
 }>();
 
 const operatorGraphics = {
-	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS]: calibrateEnsembleProbabilistic,
-	[WorkflowOperationTypes.CALIBRATION_CIEMSS]: calibrateSimulateProbabilistic,
-	[WorkflowOperationTypes.CALIBRATION_JULIA]: calibrateDeterministic,
+	[WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS]: calibrateEnsembleCiemss,
+	[WorkflowOperationTypes.CALIBRATION_CIEMSS]: calibrateSimulateCiemss,
+	[WorkflowOperationTypes.CALIBRATION_JULIA]: calibrateJulia,
 	[WorkflowOperationTypes.CODE]: code,
 	[WorkflowOperationTypes.DATASET]: dataset,
 	[WorkflowOperationTypes.DATASET_TRANSFORMER]: transformDataset,
@@ -51,8 +49,8 @@ const operatorGraphics = {
 	[WorkflowOperationTypes.OPTIMIZE_CIEMSS]: optimizeModel,
 	[WorkflowOperationTypes.MODEL_TRANSFORMER]: transformModel,
 	[WorkflowOperationTypes.SIMULATE_CIEMSS]: simulateProbabilistic,
-	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS]: simulateEnsembleProbabilistic,
-	[WorkflowOperationTypes.SIMULATE_JULIA]: simulateDeterministic,
+	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS]: simulateEnsembleCiemss,
+	[WorkflowOperationTypes.SIMULATE_JULIA]: simulateJulia,
 	[WorkflowOperationTypes.STRATIFY_MIRA]: stratifyModel
 };
 
