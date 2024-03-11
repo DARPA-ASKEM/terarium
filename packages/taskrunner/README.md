@@ -25,7 +25,7 @@ the `taskrunner` to the `hmi-server`. Use existing tasks as a tempalte for how t
 # Adding tasks to the `MIRA Taskrunner` from [MIRA](https://github.com/DARPA-ASKEM/terarium/packages/mira):
 
 - The `TaskRunnerInterface` class provides everything necessary for getting input into the task and output back through
-the `taskrunner` to the `hmi-server`. Use existing tasks as a tempalte for how this is done.
+the `taskrunner` to the `hmi-server`. Use existing tasks as a template for how this is done.
 - Add the `task_name.py` to the `tasks` directory in [MIRA](https://github.com/DARPA-ASKEM/terarium/packages/mira/tasks)
 - Publish a new `mira-taskrunner` docker image.
 
