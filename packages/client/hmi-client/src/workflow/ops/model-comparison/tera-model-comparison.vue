@@ -87,6 +87,13 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
+			<tera-drilldown-preview>
+				<ul>
+					<li v-for="(image, index) in structuralComparisons" :key="index">
+						<img :src="image" alt="Structural comparison" />
+					</li>
+				</ul>
+			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
 </template>
@@ -94,6 +101,7 @@
 <script setup lang="ts">
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -125,6 +133,7 @@ let editor: VAceEditorInstance['_editor'] | null;
 
 // const gollmQuestion = ref('');
 const beakerQuestion = ref('');
+const structuralComparisons = ref<string[]>([]);
 const llmThoughts = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref('');
@@ -151,7 +160,12 @@ async function addModelForComparison(modelId: Model['id']) {
 	if (!modelId) return;
 	const model = await getModel(modelId);
 	if (model) modelsToCompare.value.push(model);
-	// if (modelsToCompare.value.length === 3) buildJupyterContext();
+	if (
+		modelsToCompare.value.length === props.node.inputs.length &&
+		modelsToCompare.value.length > 1
+	) {
+		buildJupyterContext();
+	}
 }
 
 function formatField(field: string) {
@@ -186,10 +200,10 @@ function runCode() {
 		})
 		.register('display_data', (data) => {
 			console.log(data);
+			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
 		});
 }
 
@@ -215,41 +229,33 @@ function processCompareModels(modelIds) {
 	});
 }
 
-// async function buildJupyterContext() {
-// 	if (modelsToCompare.value.length < 3) {
-// 		logger.warn('Cannot build Jupyter context without models');
-// 		return;
-// 	}
-//
-// 	console.log({
-// 		models: modelsToCompare.value.map((model, index) => ({
-// 			model_id: model.id,
-// 			name: `model_${index + 1}`
-// 		}))
-// 	});
-//
-// 	try {
-// 		const jupyterContext = {
-// 			context: 'mira',
-// 			language: 'python3',
-// 			context_info: {
-// 				models: modelsToCompare.value.map((model, index) => ({
-// 					model_id: model.id,
-// 					name: `model_${index + 1}`
-// 				}))
-// 			}
-// 		};
-// 		if (jupyterContext) {
-// 			if (kernelManager.jupyterSession !== null) {
-// 				kernelManager.shutdown();
-// 			}
-// 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-// 			isKernelReady.value = true;
-// 		}
-// 	} catch (error) {
-// 		logger.error(`Error initializing Jupyter session: ${error}`);
-// 	}
-// }
+async function buildJupyterContext() {
+	if (modelsToCompare.value.length < 2) {
+		logger.warn('Cannot build Jupyter context without models');
+		return;
+	}
+	try {
+		const jupyterContext = {
+			context: 'mira',
+			language: 'python3',
+			context_info: {
+				models: modelsToCompare.value.map((model, index) => ({
+					model_id: model.id,
+					name: `model_${index + 1}`
+				}))
+			}
+		};
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+			isKernelReady.value = true;
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
+}
 
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
