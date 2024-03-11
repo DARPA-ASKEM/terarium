@@ -146,13 +146,13 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
-				<template v-if="simulationRunResults[knobs.simulationRunId]">
+				<template v-if="simulationRunResults[knobs.forecastRunId]">
 					<div v-if="outputViewSelection === OutputView.Charts">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
-							:run-results="simulationRunResults[knobs.simulationRunId]"
-							:chartConfig="{ selectedRun: knobs.simulationRunId, selectedVariable: cfg }"
+							:run-results="simulationRunResults[knobs.forecastRunId]"
+							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="configurationChange(idx, $event)"
 						/>
@@ -165,9 +165,9 @@
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
-							v-if="simulationRawContent[knobs.simulationRunId]"
+							v-if="simulationRawContent[knobs.forecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.simulationRunId]"
+							:raw-content="simulationRawContent[knobs.forecastRunId]"
 						/>
 					</div>
 				</template>
@@ -201,7 +201,7 @@
 				label="Save as a new model configuration"
 				@click="saveModelConfiguration"
 			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="knobs.simulationRunId" />
+			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -287,7 +287,7 @@ interface BasicKnobs {
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
-	simulationRunId: string;
+	forecastRunId: string;
 	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
@@ -302,7 +302,7 @@ const knobs = ref<BasicKnobs>({
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
-	simulationRunId: props.node.state.simulationRunId ?? '',
+	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimzationRunId: props.node.state.optimzationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
 	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
@@ -509,7 +509,7 @@ const getStatus = async (runId: string) => {
 		addChart();
 	}
 
-	knobs.value.simulationRunId = runId;
+	knobs.value.forecastRunId = runId;
 	showSpinner.value = false;
 };
 
@@ -568,10 +568,10 @@ const saveModelConfiguration = async () => {
 };
 
 const setOutputValues = async () => {
-	const output = await getRunResultCiemss(knobs.value.simulationRunId);
-	simulationRunResults.value[knobs.value.simulationRunId] = output.runResults;
-	simulationRawContent.value[knobs.value.simulationRunId] = createCsvAssetFromRunResults(
-		simulationRunResults.value[knobs.value.simulationRunId]
+	const output = await getRunResultCiemss(knobs.value.forecastRunId);
+	simulationRunResults.value[knobs.value.forecastRunId] = output.runResults;
+	simulationRawContent.value[knobs.value.forecastRunId] = createCsvAssetFromRunResults(
+		simulationRunResults.value[knobs.value.forecastRunId]
 	);
 
 	const optimzationResult = await getRunResult(
@@ -597,7 +597,7 @@ watch(
 		state.targetVariables = knobs.value.targetVariables;
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
-		state.simulationRunId = knobs.value.simulationRunId;
+		state.forecastRunId = knobs.value.forecastRunId;
 		state.optimzationRunId = knobs.value.optimzationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
@@ -623,9 +623,9 @@ watch(
 );
 
 watch(
-	() => knobs.value.simulationRunId,
+	() => knobs.value.forecastRunId,
 	async () => {
-		if (knobs.value.simulationRunId !== '') {
+		if (knobs.value.forecastRunId !== '') {
 			setOutputValues();
 		}
 	},
