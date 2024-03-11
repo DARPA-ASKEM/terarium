@@ -11,4 +11,19 @@ function highlightText(text: string, searchTerms: string): string {
 	return text.replace(search, (match) => emphasis(match));
 }
 
-export { highlightText as highlight };
+/**
+ * Convert a pascal case string to a capital sentence, avoids acronyms.
+ * Most useful for converting enum of model framework to human-readable string:
+ *  - "GeneralizedAMR" -> "Generalized AMR"
+ *  - "MathExpressionTree" -> "Math Expression Tree"
+ * @param pascalCaseString
+ */
+function pascalCaseToCapitalSentence(pascalCaseString) {
+	// Split the string by capital letters, but avoid acronyms
+	const words = pascalCaseString.match(/([A-Z]+[a-z]*)/g);
+
+	// Capitalize the first letter of each word and join them with spaces
+	return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+export { highlightText as highlight, pascalCaseToCapitalSentence };
