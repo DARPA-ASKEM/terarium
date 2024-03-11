@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
@@ -22,6 +24,7 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ConceptService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +37,7 @@ import java.util.UUID;
 public class ConceptController {
 
 	final ConceptService conceptService;
+	final ObjectMapper objectMapper;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -196,10 +200,22 @@ public class ConceptController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
 	})
 	public ResponseEntity<ConceptFacetSearchResponse> searchConceptsUsingFacets(
-			@RequestParam(value = "types", required = false) final List<TaggableType> types,
+			@RequestParam(value = "types", required = false) final List<String> assetTypeNames,
 			@RequestParam(value = "curies", required = false) final List<String> curies) {
 		try {
-			return ResponseEntity.ok(conceptService.searchConceptsUsingFacets(types, curies));
+			List<TaggableType> types = new ArrayList<>();
+			for (String name : assetTypeNames) {
+				AssetType assetType = AssetType.getAssetType(name, objectMapper);
+				TaggableType type = TaggableType.getTaggableTypeFromAssetType(assetType);
+				if (type != null) {
+					types.add(type);
+				}
+			}
+			if (types.size() > 0) {
+				return ResponseEntity.ok(conceptService.searchConceptsUsingFacets(types, curies));
+			} else {
+				return ResponseEntity.badRequest().build();
+			}
 		} catch (final RuntimeException e) {
 			final String error = "Unable to search concepts using facets";
 			log.error(error, e);
