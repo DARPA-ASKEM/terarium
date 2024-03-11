@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import {
-	extractSubjectControllerMatrix,
+	extractSubjectControllersMatrix,
 	extractSubjectOutcomeMatrix,
 	removeModifiers
 } from './mira-util';
-import type { MiraModel, MiraTemplateParams } from './mira-common';
+import type { MiraModel, MiraTemplateParams, TemplateSummary } from './mira-common';
 
 /**
  * Collection of MMT related functions
@@ -22,6 +22,11 @@ export const getContextKeys = (miraModel: MiraModel) => {
 		}
 		if (t.controller && t.controller.context) {
 			Object.keys(t.controller.context).forEach((key) => modifierKeys.add(key));
+		}
+		if (t.controllers && t.controllers.length > 0) {
+			t.controllers.forEach((miraConcept) => {
+				Object.keys(miraConcept.context).forEach((key) => modifierKeys.add(key));
+			});
 		}
 	});
 	return [...modifierKeys];
@@ -115,24 +120,33 @@ export const collapseInitials = (miraModel: MiraModel) => {
 };
 
 export const collapseTemplates = (miraModel: MiraModel) => {
-	const allTemplates: any = [];
-	const uniqueTemplates: any = [];
+	const allTemplates: TemplateSummary[] = [];
+	const uniqueTemplates: TemplateSummary[] = [];
 
 	// 1. Roll back to "original name" by trimming off modifiers
 	miraModel.templates.forEach((t) => {
-		const scrubbedTemplate = {
+		const scrubbedTemplate: TemplateSummary = {
 			subject: '',
 			outcome: '',
-			controller: ''
+			controllers: []
 		};
+
 		if (t.subject) {
 			scrubbedTemplate.subject = removeModifiers(t.subject.name, t.subject.context);
 		}
 		if (t.outcome) {
 			scrubbedTemplate.outcome = removeModifiers(t.outcome.name, t.outcome.context);
 		}
+
+		// note controller and controllers are mutually exclusive
 		if (t.controller) {
-			scrubbedTemplate.controller = removeModifiers(t.controller.name, t.controller.context);
+			scrubbedTemplate.controllers.push(removeModifiers(t.controller.name, t.controller.context));
+		}
+		if (t.controllers && t.controllers.length > 0) {
+			t.controllers.forEach((miraConcept) => {
+				scrubbedTemplate.controllers.push(removeModifiers(miraConcept.name, miraConcept.context));
+			});
+			t.controllers.sort();
 		}
 		allTemplates.push(scrubbedTemplate);
 	});
@@ -140,7 +154,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	// 2. Remove duplicated templates
 	const check = new Set<string>();
 	allTemplates.forEach((t) => {
-		const key = `${t.subject}:${t.outcome}:${t.controller}`;
+		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 		if (check.has(key)) return;
 
 		uniqueTemplates.push(t);
@@ -148,12 +162,6 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	});
 	return uniqueTemplates;
 };
-
-interface ParamLocation {
-	subject: string;
-	outcome: string;
-	controllers: string[];
-}
 
 /**
  * Assumes one-to-one with cells
@@ -169,8 +177,8 @@ export const createParameterMatrix = (
 	if (!childrenParams) throw new Error(`Cannot map ${param}`);
 
 	// Create map for mapping params to row/col of matrix
-	//   param => [ [subject, outcome, controller], [subject, outcome, controller] ... ]
-	const paramLocationMap = new Map<string, ParamLocation[]>();
+	//   param => [ [subject, outcome, controllers], [subject, outcome, controllers] ... ]
+	const paramLocationMap = new Map<string, TemplateSummary[]>();
 	const templateParams = Object.values(miraTemplateParams);
 	templateParams.forEach((templateParam) => {
 		const params = templateParam.params;
@@ -205,7 +213,7 @@ export const createParameterMatrix = (
 		paramValueMap,
 		paramLocationMap
 	);
-	const subjectController = extractSubjectControllerMatrix(
+	const subjectControllers = extractSubjectControllersMatrix(
 		templates,
 		childrenParams,
 		paramValueMap,
@@ -215,11 +223,13 @@ export const createParameterMatrix = (
 	// FIXME: check if we need to add outcomeController matrix
 	return {
 		subjectOutcome,
-		subjectController
+		subjectControllers
 	};
 };
 
-export const converToIGraph = (templates: any[]) => {
+const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+
+export const converToIGraph = (templates: TemplateSummary[]) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -230,7 +240,7 @@ export const converToIGraph = (templates: any[]) => {
 
 	const subjects = new Set<string>(templates.map((d) => d.subject));
 	const outcomes = new Set<string>(templates.map((d) => d.outcome));
-	const controllers = new Set<string>(templates.map((d) => d.controller));
+	const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
 	const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
 
 	// States
@@ -250,9 +260,8 @@ export const converToIGraph = (templates: any[]) => {
 
 	// Transitions
 	templates.forEach((t) => {
-		const key = `${t.subject}:${t.outcome}:${t.controller}`;
 		graph.nodes.push({
-			id: key,
+			id: genKey(t),
 			label: '',
 			x: 0,
 			y: 0,
@@ -266,7 +275,7 @@ export const converToIGraph = (templates: any[]) => {
 	// Edges
 	// FIXME: controller edges
 	templates.forEach((t) => {
-		const key = `${t.subject}:${t.outcome}:${t.controller}`;
+		const key = genKey(t);
 		graph.edges.push({
 			source: t.subject,
 			target: key,

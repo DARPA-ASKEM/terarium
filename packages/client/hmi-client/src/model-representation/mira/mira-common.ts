@@ -24,6 +24,7 @@ export interface MiraTemplate {
 	display_name: string | null;
 	type: string;
 	controller?: MiraConcept;
+	controllers?: MiraConcept[];
 	subject: MiraConcept;
 	outcome: MiraConcept;
 	provenance: any[];
@@ -48,5 +49,12 @@ export interface MiraTemplateParams {
 	};
 }
 
+// Terarium MIRA types
 export type MiraMatrixEntry = { id: any; value: any };
 export type MiraMatrix = MiraMatrixEntry[][];
+
+export interface TemplateSummary {
+	subject: string;
+	outcome: string;
+	controllers: string[];
+}

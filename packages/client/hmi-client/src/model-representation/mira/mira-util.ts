@@ -1,4 +1,4 @@
-import { MiraTemplate, MiraMatrix } from './mira-common';
+import { MiraTemplate, MiraMatrix, TemplateSummary } from './mira-common';
 
 export const removeModifiers = (v: string, context: { [key: string]: string }) => {
 	let result = v;
@@ -10,7 +10,25 @@ export const removeModifiers = (v: string, context: { [key: string]: string }) =
 };
 
 export const extractConceptNames = (templates: MiraTemplate[], key: string) => {
-	const names = templates.map((t) => (t[key] ? t[key].name : ''));
+	let names: string[] = [];
+	if (key === 'subject') {
+		names = templates.map((t) => (t.subject ? t.subject.name : ''));
+	}
+	if (key === 'outcome') {
+		names = templates.map((t) => (t.outcome ? t.outcome.name : ''));
+	}
+	if (key === 'controllers') {
+		templates.forEach((template) => {
+			if (template.controller) {
+				names.push(template.controller.name);
+			}
+			if (template.controllers && template.controllers.length > 0) {
+				const list = template.controllers.map((d) => d.name).sort();
+				names.push(list.join('-'));
+			}
+		});
+	}
+
 	const uniqueNames = [...new Set(names)];
 	uniqueNames.sort();
 	return uniqueNames;
@@ -59,14 +77,14 @@ export const extractSubjectOutcomeMatrix = (
 	return { rowNames, colNames, matrix };
 };
 
-export const extractSubjectControllerMatrix = (
+export const extractSubjectControllersMatrix = (
 	templates: MiraTemplate[],
 	paramNames: string[],
 	paramValueMap: Map<string, any>,
-	paramLocationMap: Map<string, any>
+	paramLocationMap: Map<string, TemplateSummary[]>
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
-	const colNames = extractConceptNames(templates, 'controller');
+	const colNames = extractConceptNames(templates, 'controllers');
 	const matrix = emptyMatrix(rowNames, colNames);
 
 	for (let i = 0; i < paramNames.length; i++) {
@@ -74,10 +92,11 @@ export const extractSubjectControllerMatrix = (
 		const paramValue = paramValueMap.get(paramName);
 		const paramLocations = paramLocationMap.get(paramName);
 		if (!paramLocationMap) continue;
+		if (!paramLocations) continue;
 
 		paramLocations.forEach((location) => {
 			const rowIdx = rowNames.indexOf(location.subject);
-			const colIdx = colNames.indexOf(location.controllers[0]); // FIXME: may need to process array of controllers
+			const colIdx = colNames.indexOf(location.controllers.join('-'));
 
 			matrix[rowIdx][colIdx].value = paramValue;
 			matrix[rowIdx][colIdx].id = paramName;
