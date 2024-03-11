@@ -45,24 +45,11 @@ def main():
 
         result = {
             "template_params": template_params,
-            "mmt": mmt.json()
+            "mmt": json.loads(mmt.json())
         }
         taskrunner.write_output_with_timeout({"response": result})
 
-
-        # filename = get_filename(taskrunner.id)
-
-        # create_temp_file(filename, mdl)
-
-        # taskrunner.log("Converting MDL to template model...")
-        # model_tm = template_model_from_mdl_file(filename)
-
-        # taskrunner.log("Converting template model to stockflow...")
-        # stockflow_json = template_model_to_stockflow_json(model_tm)
-
-        # taskrunner.write_output_with_timeout({"response": stockflow_json})
         print("AMR to MMT conversion succeeded")
-
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")
         sys.stderr.flush()

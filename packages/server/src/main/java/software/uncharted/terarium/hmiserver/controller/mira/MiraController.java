@@ -32,6 +32,7 @@ import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 
 import java.util.List;
@@ -93,7 +94,7 @@ public class MiraController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.MIRA);
 			req.setInput(modelStr.getBytes());
-			req.setScript(MdlToStockflowResponseHandler.NAME);
+			req.setScript(AMRToMMTResponseHandler.NAME);
 
 			// send the request
 			final TaskResponse resp = taskService.runTaskSync(req);
