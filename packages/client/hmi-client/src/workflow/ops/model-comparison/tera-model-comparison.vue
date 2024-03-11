@@ -57,7 +57,9 @@
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="Tabs.Notebook">
-			<tera-drilldown-section>
+			<!--TODO: The notebook input and buttons works well here, but it the html/css
+				organization should be refactored here (same for tera-model-edit)-->
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
 					<Button
 						icon="pi pi-play"
@@ -68,14 +70,10 @@
 						@click="runCode"
 					/>
 				</div>
-				<Dropdown
-					:editable="true"
-					:disabled="!isKernelReady"
-					class="input"
-					v-model="beakerQuestion"
-					type="text"
-					:placeholder="!isKernelReady ? 'Please wait...' : 'What would you like to compare?'"
-					@keydown.enter="submitBeakerQuestion"
+				<tera-notebook-jupyter-input
+					:kernelManager="kernelManager"
+					:defaultOptions="['Compare the three models and visualize and display them.']"
+					@llm-output="appendCode"
 				/>
 				<v-ace-editor
 					v-model:value="code"
@@ -90,6 +88,7 @@
 			<tera-drilldown-preview>
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
+						<label>Comparison {{ index + 1 }}</label>
 						<img :src="image" alt="Structural comparison" />
 					</li>
 				</ul>
@@ -110,12 +109,12 @@ import type { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
 import Panel from 'primevue/panel';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -131,10 +130,7 @@ enum Tabs {
 
 let editor: VAceEditorInstance['_editor'] | null;
 
-// const gollmQuestion = ref('');
-const beakerQuestion = ref('');
 const structuralComparisons = ref<string[]>([]);
-const llmThoughts = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref('');
 const isKernelReady = ref(false);
@@ -161,7 +157,7 @@ async function addModelForComparison(modelId: Model['id']) {
 	const model = await getModel(modelId);
 	if (model) modelsToCompare.value.push(model);
 	if (
-		modelsToCompare.value.length === props.node.inputs.length &&
+		modelsToCompare.value.length === props.node.inputs.length - 1 &&
 		modelsToCompare.value.length > 1
 	) {
 		buildJupyterContext();
@@ -192,14 +188,7 @@ function runCode() {
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
-		.register('execute_input', (data) => {
-			console.log(data);
-		})
-		.register('stream', (data) => {
-			console.log('stream', data);
-		})
 		.register('display_data', (data) => {
-			console.log(data);
 			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
 		})
 		.register('error', (data) => {
@@ -207,20 +196,10 @@ function runCode() {
 		});
 }
 
-function submitBeakerQuestion() {
-	console.log(beakerQuestion.value);
-	kernelManager
-		.sendMessage('llm_request', {
-			request: beakerQuestion.value
-		})
-		.register('llm_thought', (d) => {
-			console.log(d.content);
-			llmThoughts.value.push(d.content.thought);
-		})
-		.register('code_cell', (d) => {
-			console.log(d);
-			code.value = d.content.code;
-		});
+function appendCode(data: any) {
+	const newCode = data.content.code;
+	if (newCode) code.value = newCode;
+	else logger.error('No code to append');
 }
 
 function processCompareModels(modelIds) {
@@ -315,8 +294,18 @@ table {
 	text-indent: 30px;
 }
 
+/* TODO: Improve this pattern later same in (tera-model-input) */
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
 	display: flex;
-	justify-content: right;
+	align-items: center;
 }
 </style>
