@@ -177,3 +177,7 @@ export enum ModelServiceType {
 	TA1 = 'SKEMA-MIT',
 	TA4 = 'GoLLM'
 }
+
+export interface CompareModelsResponseType {
+	response: string;
+}

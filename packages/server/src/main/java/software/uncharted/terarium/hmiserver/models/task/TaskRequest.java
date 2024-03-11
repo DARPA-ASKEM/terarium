@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +21,9 @@ import lombok.experimental.Accessors;
 public class TaskRequest implements Serializable {
 
 	static public enum TaskType {
+		@JsonAlias("gollm")
 		GOLLM("gollm"),
+		@JsonAlias("mira")
 		MIRA("mira");
 
 		private final String value;

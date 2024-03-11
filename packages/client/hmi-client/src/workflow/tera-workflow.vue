@@ -99,6 +99,7 @@
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
+					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 				>
 					<template #body>
 						<component
@@ -178,10 +179,9 @@
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="dialogIsOpened = false"
+			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-		>
-		</component>
+		/>
 	</Teleport>
 </template>
 
@@ -196,10 +196,10 @@ import type {
 	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	WorkflowPort
 } from '@/types/workflow';
-import { WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -209,7 +209,7 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType } from '@/types/Types';
+import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -217,6 +217,9 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 
 import { logger } from '@/utils/logger';
 import { MenuItem } from 'primevue/menuitem';
+import * as EventService from '@/services/event';
+import { useProjects } from '@/composables/project';
+import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from './ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from './ops/stratify-mira/mod';
 import * as DatasetOp from './ops/dataset/mod';
@@ -276,6 +279,7 @@ let isMouseOverPort: boolean = false;
 let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
+let startTime: number = 0;
 
 const isWorkflowLoading = ref(false);
 
@@ -374,7 +378,7 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
-	workflowService.selectOutput(node, selectedOutputId);
+	workflowService.selectOutput(wf.value, node, selectedOutputId);
 	workflowDirty = true;
 }
 
@@ -386,7 +390,21 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 
 const openDrilldown = (node: WorkflowNode<any>) => {
 	currentActiveNode.value = node;
+	startTime = Date.now();
 	dialogIsOpened.value = true;
+};
+
+const closeDrilldown = async () => {
+	dialogIsOpened.value = false;
+	const timeSpent: number = Date.now() - startTime;
+	await EventService.create(
+		EventType.OperatorDrilldownTiming,
+		useProjects().activeProject.value?.id,
+		JSON.stringify({
+			node: currentActiveNode.value?.displayName,
+			timeSpent
+		})
+	);
 };
 
 const removeNode = (event) => {
@@ -395,6 +413,30 @@ const removeNode = (event) => {
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
+
+	cloneDataTransformSessions();
+};
+
+// We need to clone data-transform sessions, unlike other operators that are
+// append-only, data-transform updates so we need to create distinct copies.
+const cloneDataTransformSessions = async () => {
+	const sessionIdSet = new Set<string>();
+	for (let i = 0; i < wf.value.nodes.length; i++) {
+		const node = wf.value.nodes[i];
+		if (node.operationType === DatasetTransformerOp.operation.name) {
+			const state = node.state;
+			const sessionId = state.notebookSessionId as string;
+			if (!sessionId) continue;
+			if (!sessionIdSet.has(sessionId)) {
+				sessionIdSet.add(sessionId);
+			} else {
+				// eslint-disable-next-line
+				const session = await cloneNoteBookSession(sessionId);
+				state.notebookSessionId = session.id;
+				sessionIdSet.add(session.id);
+			}
+		}
+	}
 };
 
 const addOperatorToWorkflow: Function =

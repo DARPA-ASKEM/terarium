@@ -599,6 +599,7 @@ export interface EvaluationScenarioSummary {
     task: string;
     description: string;
     notes: string;
+    multipleUsers: boolean;
     timestampMillis: number;
 }
 
@@ -1238,6 +1239,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    OperatorDrilldownTiming = "OPERATOR_DRILLDOWN_TIMING",
     TestType = "TEST_TYPE",
 }
 
@@ -1276,8 +1278,6 @@ export enum AssetType {
 
 export enum EvaluationScenarioStatus {
     Started = "STARTED",
-    Paused = "PAUSED",
-    Resumed = "RESUMED",
     Stopped = "STOPPED",
 }
 

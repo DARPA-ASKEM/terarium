@@ -62,7 +62,7 @@ public class ArtifactController {
 		try {
 			return ResponseEntity.ok(artifactService.getAssets(page, pageSize));
 		} catch (final Exception e) {
-			final String error = "Unable to get artifacts";
+			final String error = "An error occurred while retrieving artifacts";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -82,7 +82,7 @@ public class ArtifactController {
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact));
 		} catch (final Exception e) {
-			final String error = "Unable to create artifact";
+			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -96,15 +96,15 @@ public class ArtifactController {
 	@Operation(summary = "Gets an artifact by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Artifact retrieved.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
-			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
 	})
 	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId) {
 		try {
 			final Optional<Artifact> artifact = artifactService.getAsset(artifactId);
-			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
-			final String error = "Unable to get artifact";
+			final String error = "An error occurred while retrieving artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -117,7 +117,6 @@ public class ArtifactController {
 	@Operation(summary = "Updates an artifact")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Artifact updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
-			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the artifact", content = @Content)
 	})
@@ -130,7 +129,7 @@ public class ArtifactController {
 			final Optional<Artifact> updated = artifactService.updateAsset(artifact);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
-			final String error = "Unable to update artifact";
+			final String error = "An error occurred while updating artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -352,7 +351,9 @@ public class ArtifactController {
 
 		} catch (final Exception e) {
 			log.error("Unable to PUT artifact data", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to PUT artifact data");
 		}
 	}
 

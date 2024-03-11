@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="OptimizeTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -12,16 +18,6 @@
 						<div class="label-and-input">
 							<label>End time</label>
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
-						</div>
-						<div class="label-and-input">
-							<label>Unit</label>
-							<Dropdown
-								disabled
-								class="p-inputtext-sm"
-								:options="['Days', 'Hours', 'Minutes', 'Seconds']"
-								v-model="knobs.timeUnit"
-								placeholder="Select"
-							/>
 						</div>
 					</div>
 					<div>
@@ -47,7 +43,6 @@
 									inputId="integeronly"
 									v-model="knobs.numStochasticSamples"
 								/>
-								<Slider v-model="knobs.numStochasticSamples" :min="1" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -102,29 +97,6 @@
 								placeholder="Select"
 							/>
 						</div>
-						<div class="label-and-input">
-							<label>Statistic</label>
-							<!--
-								This is currently not an option in the pyciemss-service.
-								https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L64-L76
-							 -->
-							<Dropdown
-								disabled
-								class="p-inputtext-sm"
-								:options="['Mean', 'Median']"
-								v-model="knobs.statistic"
-								placeholder="Select"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Over number of days</label>
-							<InputNumber
-								disabled
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numSamples"
-							/>
-						</div>
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
@@ -137,16 +109,6 @@
 								/>
 								<Slider v-model="knobs.riskTolerance" :min="0" :max="100" :step="1" />
 							</div>
-						</div>
-						<div class="label-and-input">
-							<label>Above or below?</label>
-							<Dropdown
-								disabled
-								class="p-inputtext-sm"
-								:options="['Above', 'Below']"
-								v-model="knobs.aboveOrBelow"
-								placeholder="Select"
-							/>
 						</div>
 						<div class="label-and-input">
 							<label>Threshold</label>
@@ -213,6 +175,7 @@
 		</template>
 		<template #footer>
 			<Button
+				:disabled="isRunDisabled"
 				outlined
 				:style="{ marginRight: 'auto' }"
 				label="Run"
@@ -279,11 +242,14 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	SimulationRequest,
-	CsvAsset
+	CsvAsset,
+	OptimizedIntervention,
+	Intervention as SimulationIntervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -310,14 +276,10 @@ enum OutputView {
 interface BasicKnobs {
 	startTime: number;
 	endTime: number;
-	timeUnit: string;
 	numStochasticSamples: number;
 	solverMethod: string;
 	targetVariables: string[];
-	statistic: string;
-	numSamples: number;
 	riskTolerance: number;
-	aboveOrBelow: string;
 	threshold: number;
 	isMinimized: boolean;
 	simulationRunId: string;
@@ -328,14 +290,10 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
-	timeUnit: props.node.state.timeUnit ?? '', // Currently not used.
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	targetVariables: props.node.state.targetVariables ?? [],
-	statistic: props.node.state.statistic ?? '', // Currently not used.
-	numSamples: props.node.state.numSamples ?? 1, // Currently not used, poor name.
 	riskTolerance: props.node.state.riskTolerance ?? 0,
-	aboveOrBelow: props.node.state.aboveOrBelow ?? '', // Currently not used.
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
 	simulationRunId: props.node.state.simulationRunId ?? '',
@@ -358,6 +316,15 @@ const outputs = computed(() => {
 		];
 	}
 	return [];
+});
+
+const isRunDisabled = computed(() => {
+	if (
+		knobs.value.targetVariables.length === 0 ||
+		props.node.state.interventionPolicyGroups.length === 0
+	)
+		return true;
+	return false;
 });
 const selectedOutputId = ref<string>();
 const policyResult = ref<number[]>();
@@ -438,11 +405,11 @@ const runOptimize = async () => {
 		return;
 	}
 
-	const listInterventions: any[] = [];
+	const optimizeInterventions: OptimizedIntervention[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		listInterventions.push({ name: ele.parameter, timestep: ele.startTime });
+		optimizeInterventions.push({ name: ele.parameter, timestep: ele.startTime });
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);
 		listBoundsInterventions.push([ele.upperBound]);
@@ -456,7 +423,7 @@ const runOptimize = async () => {
 			start: knobs.value.startTime,
 			end: knobs.value.endTime
 		},
-		interventions: listInterventions,
+		interventions: optimizeInterventions,
 		qoi: knobs.value.targetVariables,
 		riskBound: knobs.value.riskTolerance,
 		initialGuessInterventions: listInitialGuessInterventions,
@@ -472,8 +439,19 @@ const runOptimize = async () => {
 	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	console.log(optResult.simulationId);
-	await getOptimizeStatus(optResult.simulationId); // This does not wait until job is done: https://github.com/DARPA-ASKEM/terarium/issues/2905
+	await getOptimizeStatus(optResult.simulationId);
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
+	const simulationIntervetions: SimulationIntervention[] = [];
+
+	for (let i = 0; i < optimizeInterventions.length; i++) {
+		if (policyResult.value?.at(i)) {
+			simulationIntervetions.push({
+				name: optimizeInterventions[i].name,
+				timestep: optimizeInterventions[i].timestep,
+				value: policyResult.value[i]
+			});
+		}
+	}
 
 	const simulationPayload: SimulationRequest = {
 		projectId: '',
@@ -482,10 +460,10 @@ const runOptimize = async () => {
 			start: knobs.value.startTime,
 			end: knobs.value.endTime
 		},
+		interventions: simulationIntervetions,
 		extra: {
-			num_samples: knobs.value.numSamples,
-			method: knobs.value.solverMethod,
-			inferredParameters: policyResult.value
+			num_samples: knobs.value.numStochasticSamples,
+			method: knobs.value.solverMethod
 		},
 		engine: 'ciemss'
 	};
@@ -543,7 +521,7 @@ const getOptimizeStatus = async (runId: string) => {
 		console.log(pollerResults.state);
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Simulate (Optimize): ${runId} has failed`, {
+		logger.error(`Optimize Run: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
 		throw Error('Failed Runs');
@@ -589,14 +567,10 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.startTime = knobs.value.startTime;
 		state.endTime = knobs.value.endTime;
-		state.timeUnit = knobs.value.timeUnit;
 		state.numStochasticSamples = knobs.value.numStochasticSamples;
 		state.solverMethod = knobs.value.solverMethod;
 		state.targetVariables = knobs.value.targetVariables;
-		state.statistic = knobs.value.statistic;
-		state.numSamples = knobs.value.numSamples;
 		state.riskTolerance = knobs.value.riskTolerance;
-		state.aboveOrBelow = knobs.value.aboveOrBelow;
 		state.threshold = knobs.value.threshold;
 		state.simulationRunId = knobs.value.simulationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
