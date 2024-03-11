@@ -55,14 +55,10 @@ async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<Conce
  * Get DKG entities, either single ones or multiple at a time
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
-	try {
-		const response = await API.get(`/mira/currie/${curies.toString()}`);
-		if (response?.status !== 200) return null;
-		return response?.data ?? null;
-	} catch (error) {
-		logger.error(error, { showToast: false });
-		return null;
-	}
+	const response = await API.get(`/mira/currie/${curies.toString()}`);
+	if (response?.status === 200 && response?.data) return response.data;
+	if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
+	return null;
 }
 
 async function searchCuriesEntities(query: string): Promise<Array<DKG>> {

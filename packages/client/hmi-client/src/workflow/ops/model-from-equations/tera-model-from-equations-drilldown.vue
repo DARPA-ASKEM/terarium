@@ -215,6 +215,7 @@ const modelFrameworks = Object.entries(ModelFramework).map(([key, value]) => ({
 		ModelFramework.MathExpressionTree
 	].includes(value)
 }));
+
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
 	text: '',
@@ -302,14 +303,7 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	const res = await equationsToAMR('latex', equations, clonedState.value.modelFramework);
-
-	if (!res) {
-		return;
-	}
-
-	const modelId = res.job_result?.tds_model_id;
-
+	const modelId = await equationsToAMR(equations, clonedState.value.modelFramework);
 	if (!modelId) return;
 
 	generateCard(document.value?.id, modelId);
@@ -367,6 +361,7 @@ function onAddModel(modelName: string) {
 	if (!modelName || !selectedOutputId.value) return;
 	updateNodeLabel(selectedOutputId.value, modelName);
 }
+
 function onCloseModelModal() {
 	isNewModelModalVisible.value = false;
 }
@@ -468,6 +463,7 @@ watch(
 
 .blocks-container {
 	overflow-y: auto;
+
 	> li:not(:last-child) {
 		margin-bottom: var(--gap-small);
 	}
