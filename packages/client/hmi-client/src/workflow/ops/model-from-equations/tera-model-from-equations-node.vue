@@ -3,7 +3,7 @@
 		<tera-operator-model-preview v-if="model" :model="model" />
 		<tera-operator-placeholder
 			v-else
-			:operation-type="WorkflowOperationTypes.MODEL_FROM_DOCUMENT"
+			:operation-type="WorkflowOperationTypes.MODEL_FROM_EQUATIONS"
 		/>
 		<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 	</main>
@@ -13,7 +13,7 @@
 import Button from 'primevue/button';
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { ref, onUpdated, onMounted } from 'vue';
+import { onMounted, onUpdated, ref } from 'vue';
 import { ModelOperationState } from '@/workflow/ops/model/model-operation';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
