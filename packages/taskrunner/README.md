@@ -22,6 +22,42 @@ the `taskrunner` to the `hmi-server`. Use existing tasks as a tempalte for how t
 - Merge the changes into the `main` branch of [GoLLM](https://github.com/DARPA-ASKEM/GoLLM/tree/main/tasks)
 - Publish a new `gollm-taskrunner` docker image.
 
+# Adding tasks to the `MIRA Taskrunner` from [MIRA](https://github.com/DARPA-ASKEM/terarium/packages/mira):
+
+- The `TaskRunnerInterface` class provides everything necessary for getting input into the task and output back through
+the `taskrunner` to the `hmi-server`. Use existing tasks as a tempalte for how this is done.
+- Add the `task_name.py` to the `tasks` directory in [MIRA](https://github.com/DARPA-ASKEM/terarium/packages/mira/tasks)
+- Publish a new `mira-taskrunner` docker image.
+
+# Local Development:
+
+In the `docker-compose-taskrunner.yml` volume mount your local task code:
+
+GoLLM task volume mounting:
+```
+volumes:
+  - ../GoLLM:/GoLLM
+```
+
+Mira task volume mounting:
+```
+volumes:
+  - ./packages/mira:/mira_task
+```
+
+Then exec into the container:
+
+```
+docker exec -it {IMAGE_TAG} /bin/bash
+```
+
+On code changes, re-install the tasks:
+
+```
+pip install -e
+```
+
+
 # Building docker image:
 
 From `terarium` root:
