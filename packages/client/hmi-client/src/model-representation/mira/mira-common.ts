@@ -27,3 +27,6 @@ export interface MiraTemplateParams {
 		controllers: string[];
 	};
 }
+
+export type MiraMatrixEntry = { id: any; value: any };
+export type MiraMatrix = MiraMatrixEntry[][];

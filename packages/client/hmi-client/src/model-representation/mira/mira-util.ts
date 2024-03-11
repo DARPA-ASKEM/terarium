@@ -1,4 +1,4 @@
-import { MiraTemplate } from './mira-common';
+import { MiraTemplate, MiraMatrix } from './mira-common';
 
 export const removeModifiers = (v: string, context: { [key: string]: string }) => {
 	let result = v;
@@ -16,8 +16,9 @@ export const extractConceptNames = (templates: MiraTemplate[], key: string) => {
 	return uniqueNames;
 };
 
+// Empty matrix placeholder
 const emptyMatrix = (rowNames: string[], colNames: string[]) => {
-	const matrix: any[] = [];
+	const matrix: MiraMatrix = [];
 	for (let rowIdx = 0; rowIdx < rowNames.length; rowIdx++) {
 		const row: any[] = [];
 		for (let colIdx = 0; colIdx < colNames.length; colIdx++) {
@@ -76,7 +77,7 @@ export const extractSubjectControllerMatrix = (
 
 		paramLocations.forEach((location) => {
 			const rowIdx = rowNames.indexOf(location.subject);
-			const colIdx = colNames.indexOf(location.controllers[0]); // FIXME: may need to process array
+			const colIdx = colNames.indexOf(location.controllers[0]); // FIXME: may need to process array of controllers
 
 			matrix[rowIdx][colIdx].value = paramValue;
 			matrix[rowIdx][colIdx].id = paramName;
