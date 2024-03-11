@@ -4,6 +4,9 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -26,5 +29,16 @@ public interface SkemaUnifiedProxy {
 
 	@PostMapping("/workflows/images/base64/equations-to-latex")
 	ResponseEntity<String> base64EquationsToLatex(@RequestBody JsonNode request);
+
+	@PostMapping(value = "/metal/link_amr", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> linkAMRFile(
+			@RequestPart(value = "amr_file") MultipartFile amrFile,
+			@RequestPart(value = "text_extractions_file") MultipartFile extractionsFile);
+
+	@PostMapping("/text-reading/integrated-text-extractions")
+	ResponseEntity<JsonNode> integratedTextExtractions(
+			@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
+			@RequestParam(value = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
+			@RequestBody JsonNode body);
 
 }

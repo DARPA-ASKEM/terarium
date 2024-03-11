@@ -1,6 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,6 +14,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -27,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
@@ -43,10 +49,15 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
+import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.utils.JsonUtil;
+import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -59,12 +70,18 @@ public class KnowledgeController {
 	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
 	final SkemaUnifiedProxy skemaUnifiedProxy;
+	final MitProxy mitProxy;
 
+	final DocumentAssetService documentService;
+	final ModelService modelService;
 	final ProvenanceService provenanceService;
 
 	final CodeService codeService;
 
 	final ExtractionProxy extractionProxy;
+
+	@Value("${openai.api.key}")
+	final String OPENAI_API_KEY;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -81,7 +98,7 @@ public class KnowledgeController {
 
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<Model> equationsToModel(@RequestBody JsonNode req) {
+	public ResponseEntity<Model> equationsToModel(@RequestBody final JsonNode req) {
 		return ResponseEntity
 				.ok(skemaUnifiedProxy
 						.consolidatedEquationsToAMR(req)
@@ -90,7 +107,7 @@ public class KnowledgeController {
 
 	@PostMapping("/base64-equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody JsonNode req) {
+	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody final JsonNode req) {
 		return ResponseEntity
 				.ok(skemaUnifiedProxy
 						.base64EquationsToAMR(req)
@@ -99,7 +116,7 @@ public class KnowledgeController {
 
 	@PostMapping("/base64-equations-to-latex")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> base64EquationsToLatex(@RequestBody JsonNode req) {
+	public ResponseEntity<String> base64EquationsToLatex(@RequestBody final JsonNode req) {
 		return ResponseEntity
 				.ok(skemaUnifiedProxy
 						.base64EquationsToLatex(req)
@@ -139,17 +156,17 @@ public class KnowledgeController {
 	})
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart Code code,
-			@RequestPart("file") MultipartFile input) throws IOException {
+	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart final Code code,
+			@RequestPart("file") final MultipartFile input) throws IOException {
 
 		try (final CloseableHttpClient httpClient = HttpClients.custom()
 				.build()) {
 			// 1. create code asset from code blocks
-			Code createdCode = codeService.createAsset(code);
+			final Code createdCode = codeService.createAsset(code);
 
 			// 2. upload file to code asset
-			byte[] fileAsBytes = input.getBytes();
-			HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final byte[] fileAsBytes = input.getBytes();
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 			// we have pre-formatted the files object already so no need to use uploadCode
 			final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(),
@@ -165,36 +182,12 @@ public class KnowledgeController {
 			return ResponseEntity.ok(knowledgeMiddlewareProxy
 					.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false)
 					.getBody());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					"Error creating running code to model");
 		}
-	}
-
-	/**
-	 * Post a PDF to the extraction service
-	 *
-	 * @param annotateSkema (Boolean): Whether to annotate the PDF with Skema
-	 * @param annotateMIT   (Boolean): Whether to annotate the PDF with AMR
-	 * @param name          (String): The name of the PDF
-	 * @param description   (String): The description of the PDF
-	 *                      <p>
-	 *                      Args:
-	 *                      pdf (Object): The PDF file to upload
-	 * @return response status of queueing this operation
-	 */
-	@PostMapping("/pdf-extractions")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> postPDFExtractions(
-			@RequestParam("document_id") final UUID documentId,
-			@RequestParam(name = "annotate_skema", defaultValue = "true") final Boolean annotateSkema,
-			@RequestParam(name = "annotate_mit", defaultValue = "true") final Boolean annotateMIT,
-			@RequestParam(name = "name", required = false) final String name,
-			@RequestParam(name = "description", required = false) final String description) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy
-				.postPDFExtractions(documentId.toString(), annotateSkema, annotateMIT, name, description).getBody());
 	}
 
 	/**
@@ -276,19 +269,183 @@ public class KnowledgeController {
 				knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), docIdString).getBody());
 	}
 
-	/**
-	 * Profile a model
-	 *
-	 * @param modelId    (String): The ID of the model to profile
-	 * @param documentId (String): The text of the document to profile
-	 * @return the profiled model
-	 */
 	@PostMapping("/link-amr")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> postLinkAmr(
-			@RequestParam("document_id") final String documentId,
-			@RequestParam("model_id") final String modelId) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.postLinkAmr(documentId, modelId).getBody());
+	public ResponseEntity<Model> postLinkAmr(
+			@RequestParam("document_id") final UUID documentId,
+			@RequestParam("model_id") final UUID modelId) {
+
+		try {
+
+			final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+
+			final Model model = modelService.getAsset(modelId).orElseThrow();
+
+			final String modelString = mapper.writeValueAsString(model);
+			final String extractionsString = mapper
+					.writeValueAsString(document.getMetadata() != null ? document.getMetadata() : new HashMap<>());
+
+			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json", "application/json");
+			final StringMultipartFile extractionFile = new StringMultipartFile(extractionsString, "extractions.json",
+					"application/json");
+
+			final ResponseEntity<JsonNode> res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
+			if (!res.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to link AMR file: " + res.getBody().asText());
+			}
+
+			final JsonNode modelJson = mapper.valueToTree(model);
+
+			// ovewrite all updated fields
+			JsonUtil.recursiveSetAll((ObjectNode) modelJson, (ObjectNode) res.getBody());
+
+			// update the model
+			modelService.updateAsset(model);
+
+			// create provenance
+			final Provenance provenance = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
+					ProvenanceType.MODEL,
+					documentId, ProvenanceType.DOCUMENT);
+			provenanceService.createProvenance(provenance);
+
+			return ResponseEntity.ok(model);
+
+		} catch (final IOException e) {
+			final String error = "Unable to get required assets";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@PostMapping("/variable-extractions-skema")
+	ResponseEntity<DocumentAsset> postPDFExtractions(
+			@RequestParam("document_id") final UUID documentId,
+			@RequestParam(name = "annotate_skema", defaultValue = "true") final Boolean annotateSkema,
+			@RequestParam(name = "annotate_mit", defaultValue = "true") final Boolean annotateMIT,
+			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
+		try {
+
+			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+
+			if (document.getText() == null || document.getText().isEmpty()) {
+				throw new RuntimeException(
+						"No text found in paper document, please ensure to submit to /pdf-extraction endpoint.");
+			}
+
+			final List<JsonNode> collections = new ArrayList<>();
+			JsonNode skemaCollection = null;
+			JsonNode mitCollection = null;
+
+			// Send document to SKEMA
+			try {
+
+				final ObjectNode body = mapper.createObjectNode();
+				body.put("text", document.getText());
+
+				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
+						annotateSkema, body);
+
+				if (resp.getStatusCode().is2xxSuccessful()) {
+					for (final JsonNode output : resp.getBody().get("outputs")) {
+						if (!output.has("errors") || output.get("errors").size() == 0) {
+							skemaCollection = output.get("data");
+							break;
+						}
+					}
+
+					if (skemaCollection != null) {
+						collections.add(skemaCollection);
+					}
+				} else {
+					log.error("Unable to extract variables from document: " + document.getId());
+				}
+
+			} catch (final Exception e) {
+				log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
+			}
+
+			// Send document to MIT
+			try {
+				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
+						"application/text");
+
+				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(OPENAI_API_KEY, file);
+
+				if (resp.getStatusCode().is2xxSuccessful()) {
+
+					mitCollection = resp.getBody();
+					collections.add(mitCollection);
+				} else {
+					log.error("Unable to extract variables from document: " + document.getId());
+				}
+
+			} catch (final Exception e) {
+				log.error("SKEMA variable extraction for document {} failed", documentId, e);
+			}
+
+			if (skemaCollection == null && mitCollection == null) {
+				throw new RuntimeException("Unable to extract variables from document: " + document.getId());
+			}
+
+			final List<JsonNode> attributes = new ArrayList<>();
+
+			if (skemaCollection == null || mitCollection == null) {
+				log.info("Falling back on single variable extraction since one system failed");
+				for (final JsonNode collection : collections) {
+					for (final JsonNode attribute : collection.get("attributes")) {
+						attributes.add(attribute);
+					}
+				}
+			} else {
+				// Merge both with some de de-duplications
+
+				final StringMultipartFile arizonaFile = new StringMultipartFile(
+						mapper.writeValueAsString(skemaCollection),
+						"text.json",
+						"application/json");
+
+				final StringMultipartFile mitFile = new StringMultipartFile(
+						mapper.writeValueAsString(mitCollection),
+						"text.json",
+						"application/json");
+
+				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(OPENAI_API_KEY, domain, mitFile, arizonaFile);
+
+				if (resp.getStatusCode().is2xxSuccessful()) {
+					for (final JsonNode attribute : resp.getBody().get("attributes")) {
+						attributes.add(attribute);
+					}
+				} else {
+					// fallback to collection
+					log.info("MIT merge failed: {}", resp.getBody().asText());
+					for (final JsonNode collection : collections) {
+						for (final JsonNode attribute : collection.get("attributes")) {
+							attributes.add(attribute);
+						}
+					}
+				}
+			}
+
+			// add the attributes to the metadata
+			if (document.getMetadata() == null) {
+				document.setMetadata(new HashMap<>());
+			}
+			document.getMetadata().put("attributes", attributes);
+
+			// update the document
+			document = documentService.updateAsset(document).orElseThrow();
+
+			return ResponseEntity.ok(document);
+
+		} catch (final IOException e) {
+			final String error = "Unable to get required assets";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 }
