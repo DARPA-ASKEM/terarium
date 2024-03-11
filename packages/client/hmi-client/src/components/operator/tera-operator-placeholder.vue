@@ -35,7 +35,7 @@ const operatorGraphics = {
 	[WorkflowOperationTypes.SIMULATE_CIEMSS]: plantsSmallToBig,
 	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS]: plantsSmallToBig,
 	[WorkflowOperationTypes.SIMULATE_JULIA]: plantsSmallToBig,
-	[WorkflowOperationTypes.MODEL_FROM_DOCUMENT]: equationsToModel
+	[WorkflowOperationTypes.MODEL_FROM_EQUATIONS]: equationsToModel
 };
 
 const placeholderGraphic = operatorGraphics[props.operationType] ?? plants;
