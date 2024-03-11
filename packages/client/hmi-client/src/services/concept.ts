@@ -35,7 +35,7 @@ interface EntityMap {
  */
 async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<ConceptFacets | null> {
 	try {
-		let url = `/concepts/facets&types=${type}`;
+		let url = `/concepts/facets?types=${type}`;
 		if (curies) {
 			curies.forEach((curie) => {
 				url += `&curies=${curie}`;
