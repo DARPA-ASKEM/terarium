@@ -192,7 +192,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
-		req.setScript("miar_task:sbml_to_petrinet");
+		req.setScript("mira_task:sbml_to_petrinet");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);
