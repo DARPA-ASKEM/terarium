@@ -135,7 +135,6 @@ watch(
 
 		const output = await getRunResultCiemss(selectedRunId.value);
 		runResults.value[selectedRunId.value] = output.runResults;
-		console.log('!!', runResults.value);
 	},
 	{ immediate: true }
 );
