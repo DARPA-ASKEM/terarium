@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.knowledge;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -86,23 +87,36 @@ public class KnowledgeController {
 
 		// Get an AMR from Skema Unified Service
 		try {
-			// TODO - How can I caught errors from the skema service? like a 422?
 			responseAMR = skemaUnifiedProxy
 				.consolidatedEquationsToAMR(req)
 				.getBody();
 
-			if (responseAMR == null) throw new Exception();
-		} catch (final Exception e) {
+			if (responseAMR == null) {
+				throw new ResponseStatusException(
+					HttpStatus.UNPROCESSABLE_ENTITY,
+					"Skema Unified Service did not return any AMR based on the provided Equations. This could be due to invalid equations or the inability to parse them into the requested framework."
+				);
+			}
+		} catch (final FeignException e) {
 			throw new ResponseStatusException(
-				HttpStatus.UNPROCESSABLE_ENTITY,
-				"Skema Unified Service did not return any AMR based on the provided Equations. This could be due to invalid equations or the inability to parse them into the requested framework."
+				HttpStatus.valueOf(e.status()),
+				"Skema Unified Service did not return any AMR based on the provided Equations. " + e.getMessage()
 			);
 		}
 
-		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations.";
+		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations. ";
 
 		// If no model id is provided, create a new model
-		final UUID modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
+		UUID modelId = null;
+		try {
+			modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
+		} catch (final IllegalArgumentException e) {
+			throw new ResponseStatusException(
+				HttpStatus.BAD_REQUEST,
+				serviceSuccessMessage + "The provided modelId is not a valid UUID."
+			);
+		}
+
 		if (modelId == null) {
 			try {
 				final Model model = modelService.createAsset(responseAMR);
