@@ -152,8 +152,8 @@ import {
 	EquationBlock,
 	EquationFromImageBlock,
 	instanceOfEquationFromImageBlock,
-	ModelFromDocumentState
-} from './model-from-document-operation';
+	ModelFromEquationsState
+} from './model-from-equations-operation';
 
 const emit = defineEmits([
 	'close',
@@ -163,7 +163,7 @@ const emit = defineEmits([
 	'update-output-port'
 ]);
 const props = defineProps<{
-	node: WorkflowNode<ModelFromDocumentState>;
+	node: WorkflowNode<ModelFromEquationsState>;
 }>();
 
 enum ModelFramework {
@@ -176,8 +176,8 @@ const outputs = computed(() => {
 		.getActiveProjectAssets(AssetType.Model)
 		.map((model) => model.id);
 
-	const savedOutputs: WorkflowOutput<ModelFromDocumentState>[] = [];
-	const unsavedOutputs: WorkflowOutput<ModelFromDocumentState>[] = [];
+	const savedOutputs: WorkflowOutput<ModelFromEquationsState>[] = [];
+	const unsavedOutputs: WorkflowOutput<ModelFromEquationsState>[] = [];
 
 	props.node.outputs.forEach((output) => {
 		const modelId = output.state?.modelId;
@@ -191,7 +191,7 @@ const outputs = computed(() => {
 		unsavedOutputs.push(output);
 	});
 
-	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromDocumentState>[] }[] = [];
+	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromEquationsState>[] }[] = [];
 
 	if (!isEmpty(unsavedOutputs)) {
 		groupedOutputs.push({
@@ -213,7 +213,7 @@ const selectedOutputId = ref<string>('');
 
 const modelFrameworks = Object.values(ModelFramework);
 // const modelServices = Object.values(ModelServiceType);
-const clonedState = ref<ModelFromDocumentState>({
+const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
 	text: '',
 	modelFramework: ModelFramework.Petrinet,
@@ -300,14 +300,7 @@ async function onRun() {
 		.filter((e) => e.includeInProcess && !e.asset.extractionError)
 		.map((e) => e.asset.text);
 
-	const res = await equationsToAMR('latex', equations, clonedState.value.modelFramework);
-
-	if (!res) {
-		return;
-	}
-
-	const modelId = res.job_result?.tds_model_id;
-
+	const modelId = await equationsToAMR(equations, clonedState.value.modelFramework);
 	if (!modelId) return;
 
 	generateCard(document.value?.id, modelId);
