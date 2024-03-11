@@ -31,60 +31,52 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	public void equationsToModelRegNet() throws Exception {
 
 		final String payload1 = """
-					{
-						"equations": [
-							"\\\\frac{dS}{dt} = -\\\\alpha S I -\\\\beta S D -\\\\gamma S A -\\\\delta S R",
-							"\\\\frac{dI}{dt} = \\\\alpha S I +\\\\beta S D +\\\\gamma S A +\\\\delta S R - \\\\epsilon I -\\\\zeta I -\\\\lambda I",
-							"\\\\frac{dD}{dt} = -\\\\eta D + \\\\epsilon I - \\\\rho D",
-							"\\\\frac{dA}{dt} = -\\\\kappa A -\\\\theta A -\\\\mu A +\\\\zeta I",
-							"\\\\frac{dT}{dt} = -\\\\tau T +\\\\mu A +\\\\nu R -\\\\sigma T",
-							"\\\\frac{dH}{dt} = \\\\kappa A + \\\\xi R +\\\\sigma T +\\\\rho D + \\\\lambda I",
-							"\\\\frac{dE}{dt} = \\\\tau T",
-							"\\\\frac{dR}{dt} = \\\\eta D + \\\\theta A -\\\\nu R -\\\\xi R"
-						],
-						"model": "regnet"
-					}
-				""";
+				{
+					"equations": [
+						"\\\\frac{dS}{dt} = -\\\\alpha S I -\\\\beta S D -\\\\gamma S A -\\\\delta S R",
+						"\\\\frac{dI}{dt} = \\\\alpha S I +\\\\beta S D +\\\\gamma S A +\\\\delta S R - \\\\epsilon I -\\\\zeta I -\\\\lambda I",
+						"\\\\frac{dD}{dt} = -\\\\eta D + \\\\epsilon I - \\\\rho D",
+						"\\\\frac{dA}{dt} = -\\\\kappa A -\\\\theta A -\\\\mu A +\\\\zeta I",
+						"\\\\frac{dT}{dt} = -\\\\tau T +\\\\mu A +\\\\nu R -\\\\sigma T",
+						"\\\\frac{dH}{dt} = \\\\kappa A + \\\\xi R +\\\\sigma T +\\\\rho D + \\\\lambda I",
+						"\\\\frac{dE}{dt} = \\\\tau T",
+						"\\\\frac{dR}{dt} = \\\\eta D + \\\\theta A -\\\\nu R -\\\\xi R"
+					],
+					"model": "regnet"
+				}
+			""";
 
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(payload1)
 				.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+			.andExpect(status().isOk())
+			.andReturn();
 
-		String responseContent = res.getResponse().getContentAsString(); // Remove double quotes
-//		try {
+		String responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
 		UUID regnetModelId = UUID.fromString(responseContent);
 		log.info(regnetModelId.toString());
-//		} catch (final IllegalArgumentException e) {
-//			log.error("Response content is not a valid UUID: " + responseContent);
-//		}
 
 		final String payload2 = """
-					{
-						"equations": [
-						  "\\\\frac{d S}{d t} = -\\\\beta S I",
-							"\\\\frac{d I}{d t} = \\\\beta S I - \\\\gamma I",
-							"\\\\frac{d R}{d t} = \\\\gamma I"],
-						"model": "regnet"
-					}
-				""";
+				{
+					"equations": [
+					  "\\\\frac{d S}{d t} = -\\\\beta S I",
+						"\\\\frac{d I}{d t} = \\\\beta S I - \\\\gamma I",
+						"\\\\frac{d R}{d t} = \\\\gamma I"],
+					"model": "regnet"
+				}
+			""";
 
 		res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(payload2)
 				.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+			.andExpect(status().isOk())
+			.andReturn();
 
-		responseContent = res.getResponse().getContentAsString();
-//		try {
+		responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
 		regnetModelId = UUID.fromString(responseContent);
 		log.info(regnetModelId.toString());
-//		} catch (final IllegalArgumentException e) {
-//			log.error("Response content is not a valid UUID: " + responseContent);
-//		}
 	}
 
 	@Test
@@ -92,60 +84,52 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	public void equationsToModelPetrinet() throws Exception {
 
 		final String payload1 = """
-					{
-						"equations": [
-							"\\\\frac{dS}{dt} = -\\\\alpha S I -\\\\beta S D -\\\\gamma S A -\\\\delta S R",
-							"\\\\frac{dI}{dt} = \\\\alpha S I +\\\\beta S D +\\\\gamma S A +\\\\delta S R - \\\\epsilon I -\\\\zeta I -\\\\lambda I",
-							"\\\\frac{dD}{dt} = -\\\\eta D + \\\\epsilon I - \\\\rho D",
-							"\\\\frac{dA}{dt} = -\\\\kappa A -\\\\theta A -\\\\mu A +\\\\zeta I",
-							"\\\\frac{dT}{dt} = -\\\\tau T +\\\\mu A +\\\\nu R -\\\\sigma T",
-							"\\\\frac{dH}{dt} = \\\\kappa A + \\\\xi R +\\\\sigma T +\\\\rho D + \\\\lambda I",
-							"\\\\frac{dE}{dt} = \\\\tau T",
-							"\\\\frac{dR}{dt} = \\\\eta D + \\\\theta A -\\\\nu R -\\\\xi R"
-						],
-						"model": "petrinet"
-					}
-				""";
+				{
+					"equations": [
+						"\\\\frac{dS}{dt} = -\\\\alpha S I -\\\\beta S D -\\\\gamma S A -\\\\delta S R",
+						"\\\\frac{dI}{dt} = \\\\alpha S I +\\\\beta S D +\\\\gamma S A +\\\\delta S R - \\\\epsilon I -\\\\zeta I -\\\\lambda I",
+						"\\\\frac{dD}{dt} = -\\\\eta D + \\\\epsilon I - \\\\rho D",
+						"\\\\frac{dA}{dt} = -\\\\kappa A -\\\\theta A -\\\\mu A +\\\\zeta I",
+						"\\\\frac{dT}{dt} = -\\\\tau T +\\\\mu A +\\\\nu R -\\\\sigma T",
+						"\\\\frac{dH}{dt} = \\\\kappa A + \\\\xi R +\\\\sigma T +\\\\rho D + \\\\lambda I",
+						"\\\\frac{dE}{dt} = \\\\tau T",
+						"\\\\frac{dR}{dt} = \\\\eta D + \\\\theta A -\\\\nu R -\\\\xi R"
+					],
+					"model": "petrinet"
+				}
+			""";
 
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(payload1)
 				.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+			.andExpect(status().isOk())
+			.andReturn();
 
-		String responseContent = res.getResponse().getContentAsString(); // Remove double quotes
-//		try {
+		String responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
 		UUID petrinetModelId = UUID.fromString(responseContent);
 		log.info(petrinetModelId.toString());
-//		} catch (final IllegalArgumentException e) {
-//			log.error("Response content is not a valid UUID: " + responseContent);
-//		}
 
 		final String payload2 = """
-					{
-						"equations": [
-						  	"\\\\frac{d S}{d t} = -\\\\beta S I",
-							"\\\\frac{d I}{d t} = \\\\beta S I - \\\\gamma I",
-							"\\\\frac{d R}{d t} = \\\\gamma I"],
-						"model": "regnet"
-					}
-				""";
+				{
+					"equations": [
+					  	"\\\\frac{d S}{d t} = -\\\\beta S I",
+						"\\\\frac{d I}{d t} = \\\\beta S I - \\\\gamma I",
+						"\\\\frac{d R}{d t} = \\\\gamma I"],
+					"model": "regnet"
+				}
+			""";
 
 		res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(payload2)
 				.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+			.andExpect(status().isOk())
+			.andReturn();
 
-		responseContent = res.getResponse().getContentAsString(); // Remove double quotes
-//		try {
+		responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
 		petrinetModelId = UUID.fromString(responseContent);
 		log.info(petrinetModelId.toString());
-//		} catch (final IllegalArgumentException e) {
-//			log.error("Response content is not a valid UUID: " + responseContent);
-//		}
 	}
 
 	// @Test
@@ -165,16 +149,16 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final String encodedString3 = Base64.getEncoder().encodeToString(content3);
 
 		final String payload = "{\"images\": [" +
-				"\"" + encodedString1 + "\"," +
-				"\"" + encodedString2 + "\"," +
-				"\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
+			"\"" + encodedString1 + "\"," +
+			"\"" + encodedString2 + "\"," +
+			"\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/base64-equations-to-model")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(payload)
 				.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+			.andExpect(status().isOk())
+			.andReturn();
 
 		final Model amr = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
 		log.info(amr.toString());
@@ -197,16 +181,16 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final String encodedString3 = Base64.getEncoder().encodeToString(content3);
 
 		final String payload = "{\"images\": [" +
-				"\"" + encodedString1 + "\"," +
-				"\"" + encodedString2 + "\"," +
-				"\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
+			"\"" + encodedString1 + "\"," +
+			"\"" + encodedString2 + "\"," +
+			"\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/base64-equations-to-latex")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(payload)
 				.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
+			.andExpect(status().isOk())
+			.andReturn();
 
 		final String latex = res.getResponse().getContentAsString();
 		log.info(latex);
