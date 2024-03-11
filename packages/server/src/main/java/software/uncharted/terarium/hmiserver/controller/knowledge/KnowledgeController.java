@@ -82,8 +82,8 @@ public class KnowledgeController {
 
 	final ExtractionProxy extractionProxy;
 
-	@Value("${openai.api.key}")
-	final String OPENAI_API_KEY;
+	@Value("${mit-openai-api-key}")
+	final String MIT_OPENAI_API_KEY;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -436,7 +436,7 @@ public class KnowledgeController {
 				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
 						"application/text");
 
-				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(OPENAI_API_KEY, file);
+				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, file);
 
 				if (resp.getStatusCode().is2xxSuccessful()) {
 
@@ -476,7 +476,8 @@ public class KnowledgeController {
 						"text.json",
 						"application/json");
 
-				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(OPENAI_API_KEY, domain, mitFile, arizonaFile);
+				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
+						arizonaFile);
 
 				if (resp.getStatusCode().is2xxSuccessful()) {
 					for (final JsonNode attribute : resp.getBody().get("attributes")) {
