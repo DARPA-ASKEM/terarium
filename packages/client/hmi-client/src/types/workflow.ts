@@ -24,7 +24,7 @@ export enum WorkflowOperationTypes {
 	MODEL_COUPLING = 'ModelCoupling',
 	MODEL_EDIT = 'ModelEdit',
 	DOCUMENT = 'Document',
-	MODEL_FROM_DOCUMENT = 'ModelFromDocument'
+	MODEL_FROM_EQUATIONS = 'ModelFromEquations'
 }
 
 export enum OperatorStatus {
