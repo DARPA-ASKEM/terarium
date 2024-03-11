@@ -169,7 +169,7 @@ public class ReBACService {
 			for (UUID projectId : projectIds) {
 				SchemaObject project = new SchemaObject(Schema.Type.PROJECT, projectId.toString());
 				try {
-					createRelationship(project, askemAdminGroup, Schema.Relationship.WRITER);
+					createRelationship(askemAdminGroup, project, Schema.Relationship.WRITER);
 				} catch (RelationshipAlreadyExistsException ignore) {
 				}
 			}
