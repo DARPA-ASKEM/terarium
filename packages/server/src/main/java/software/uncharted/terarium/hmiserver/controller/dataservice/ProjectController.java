@@ -277,8 +277,12 @@ public class ProjectController {
 		project = projectService.createProject(project);
 
 		try {
-			new RebacUser(currentUserService.get().getId(), reBACService)
-					.createCreatorRelationship(new RebacProject(project.getId(), reBACService));
+			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+
+			rebacUser.createCreatorRelationship(rebacProject);
+			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(

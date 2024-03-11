@@ -190,4 +190,21 @@ public class ReBACFunctions {
 		}
 		return results;
 	}
+	public List<UUID> lookupResources(final Schema.Type resourceType, final Consistency consistency) throws Exception {
+		final List<UUID> results = new ArrayList<>();
+
+		final PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
+				.setConsistency(consistency)
+				.setRelationshipFilter(RelationshipFilter.parseFrom("project".getBytes()))
+				.build();
+
+		final Iterator<ReadRelationshipsResponse> iter = permissionsService.readRelationships(request);
+		while (iter.hasNext()) {
+			final ReadRelationshipsResponse response = iter.next();
+
+			final UUID uuid = UUID.fromString(response.getRelationship().getResource().getObjectId());
+		    results.add(uuid);
+		}
+		return results;
+	}
 }
