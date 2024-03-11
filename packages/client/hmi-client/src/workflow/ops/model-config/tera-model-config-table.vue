@@ -244,10 +244,16 @@ import InputText from 'primevue/inputtext';
 import { getModelType } from '@/services/model';
 import { cloneDeep } from 'lodash';
 
-const typeOptions = [
-	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
-	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
+interface Option {
+	label: string;
+	paramType: ParamType;
+	icon: string;
+}
+
+const typeOptions: Option[] = [
+	{ label: 'Constant', paramType: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
+	{ label: 'Distribution', paramType: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
+	{ label: 'Time varying', paramType: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -323,19 +329,19 @@ const validateTimeSeries = (values: string) => {
 /**
  * Change the type of the parameter
  * @param data The parameter to change
- * @param newType The new type
+ * @param newParamType The new ParamType
  */
-const changeType = (data: ModelConfigTableData, newType: ParamType) => {
-	// Save the current values into the values map
+const changeType = (data: ModelConfigTableData, newParamType: ParamType) => {
+	console.debug('Changing type', data, newParamType);
+	// Keep the previous value for the previous ParamType
 	if (!data.values) data.values = new Map();
 	data.values.set(data.type, data.value);
 
-	// Set the new ParamType
-	data.type = newType;
+	data.type = newParamType;
 
 	// Define default values for different ParamTypes
 	let defaultValue: any;
-	if (newType === ParamType.DISTRIBUTION) {
+	if (newParamType === ParamType.DISTRIBUTION) {
 		defaultValue = {
 			type: 'Uniform1',
 			parameters: {
@@ -343,16 +349,16 @@ const changeType = (data: ModelConfigTableData, newType: ParamType) => {
 				maximum: 0
 			}
 		} as ModelDistribution;
-	} else if (newType === ParamType.TIME_SERIES) {
+	} else if (newParamType === ParamType.TIME_SERIES) {
 		defaultValue = { [data.id]: '' } as ModelMetadata['timeseries'];
 	} else {
 		// ParamType.CONSTANT
-		defaultValue = 0 as number;
+		defaultValue = 0;
 	}
 
 	// Set the value based on the new ParamType
-	if (data.values.has(newType)) {
-		data.value = data.values.get(newType) ?? defaultValue;
+	if (data.values.has(newParamType)) {
+		data.value = data.values.get(newParamType) ?? defaultValue;
 	} else {
 		data.value = defaultValue;
 	}
@@ -415,7 +421,7 @@ const replaceParameter = (data: ModelConfigTableData) => {
 
 	// Update the parameter with the new value
 	if (data.type === ParamType.CONSTANT) {
-		parameter.value = data.value as number;
+		parameter.value = data.value;
 	} else if (data.type === ParamType.DISTRIBUTION) {
 		parameter.distribution = data.value as ModelDistribution;
 	} else if (data.type === ParamType.TIME_SERIES) {
