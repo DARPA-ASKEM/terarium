@@ -1,39 +1,47 @@
 <template>
-	<section v-if="selectedRunId">
-		<template v-if="node.inputs[0].value">
-			<tera-simulate-chart
-				v-for="(cfg, index) of node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="cfg"
-				has-mean-line
-				@configuration-change="chartConfigurationChange(index, $event)"
-				:size="{ width: 190, height: 120 }"
-			/>
-			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
-		</template>
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
-			Connect a model configuration
-		</tera-operator-placeholder>
+	<section v-if="!inProgressSimulationId && runResults[selectedRunId]">
+		<tera-simulate-chart
+			v-for="(cfg, index) of node.state.chartConfigs"
+			:key="index"
+			:run-results="runResults[selectedRunId]"
+			:chartConfig="cfg"
+			has-mean-line
+			@configuration-change="chartConfigurationChange(index, $event)"
+			:size="{ width: 190, height: 120 }"
+		/>
 	</section>
-	<section v-else>
-		<tera-progress-bar :value="progress.value" :status="progress.status" />
-	</section>
+
+	<Button
+		v-if="node.inputs[0].value"
+		label="Edit"
+		@click="emit('open-drilldown')"
+		severity="secondary"
+		outlined
+	/>
+	<tera-operator-placeholder v-else :operation-type="node.operationType">
+		Connect a model configuration
+	</tera-operator-placeholder>
+
+	<tera-progress-spinner
+		v-if="inProgressSimulationId"
+		:font-size="2"
+		is-centered
+		style="height: 100%"
+	/>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
-import { ProgressState } from '@/types/Types';
 import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
@@ -44,8 +52,9 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
-const runResults = ref<RunResults>({});
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
+// const runResults = ref<RunResults>({});
+const runResults = ref<{ [runId: string]: RunResults }>({});
+const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const selectedRunId = ref<any>(null);
 
 const poller = new Poller();
@@ -105,6 +114,9 @@ watch(
 		if (response?.state === PollerState.Done) {
 			processResult(id);
 		}
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressSimulationId = '';
+		emit('update-state', state);
 	},
 	{ immediate: true }
 );
@@ -119,7 +131,7 @@ watch(
 		if (!selectedRunId.value) return;
 
 		const output = await getRunResultCiemss(selectedRunId.value, 'result.csv');
-		runResults.value = output.runResults;
+		runResults.value[selectedRunId.value] = output.runResults;
 	},
 	{ immediate: true }
 );
