@@ -9,8 +9,24 @@ import type { MiraModel, MiraTemplateParams } from './mira-common';
 
 /**
  * Collection of MMT related functions
- *
  * */
+export const getContextKeys = (miraModel: MiraModel) => {
+	const modifierKeys = new Set<string>();
+
+	miraModel.templates.forEach((t) => {
+		if (t.subject && t.subject.context) {
+			Object.keys(t.subject.context).forEach((key) => modifierKeys.add(key));
+		}
+		if (t.outcome && t.outcome.context) {
+			Object.keys(t.outcome.context).forEach((key) => modifierKeys.add(key));
+		}
+		if (t.controller && t.controller.context) {
+			Object.keys(t.controller.context).forEach((key) => modifierKeys.add(key));
+		}
+	});
+	return [...modifierKeys];
+};
+
 export const collapseParameters = (
 	miraModel: MiraModel,
 	miraTemplateParams: MiraTemplateParams
