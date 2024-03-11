@@ -72,7 +72,7 @@
 				</div>
 				<tera-notebook-jupyter-input
 					:kernelManager="kernelManager"
-					:defaultOptions="['Compare the three models and visualize and display them.']"
+					:defaultOptions="sampleAgentQuestions"
 					@llm-output="appendCode"
 				/>
 				<v-ace-editor
@@ -138,6 +138,11 @@ enum Tabs {
 
 let editor: VAceEditorInstance['_editor'] | null;
 const kernelManager = new KernelSessionManager();
+const sampleAgentQuestions = [
+	'Compare the three models and visualize and display them.',
+	'Compare the two models and visualize and display them.'
+];
+
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');

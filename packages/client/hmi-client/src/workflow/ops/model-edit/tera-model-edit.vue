@@ -377,7 +377,8 @@ onUnmounted(() => {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
-	/** TODO: Temporary solution, should be using the default overlay-container padding in tera-drilldown */
+	/** TODO: Temporary solution, should be using the default overlay-container padding
+	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
 	margin-left: 1.5rem;
 }
 
