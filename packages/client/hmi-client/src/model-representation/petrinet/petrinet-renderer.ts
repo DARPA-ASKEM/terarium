@@ -91,13 +91,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		const species = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
 
-		const strataTypes: string[] = [];
-		selection.each((d) => {
-			const strataType = d.data.strataType;
-			if (strataType && !strataTypes.includes(strataType)) {
-				strataTypes.push(strataType as string);
-			}
-		});
 		// transitions
 		transitions
 			.append('rect')
@@ -144,6 +137,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
+				if (!this.graph.amr) return '';
 				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
 				if (rate) {
 					return rate.expression;

@@ -23,7 +23,7 @@ import coupleModels from '@assets/svg/operator-images/couple-models.svg';
 import stratifyModel from '@assets/svg/operator-images/stratify-model.svg';
 import createModelFromCode from '@assets/svg/operator-images/create-model-from-code.svg';
 import transformDataset from '@assets/svg/operator-images/transform-dataset.svg';
-import createModelFromEquation from '@assets/svg/operator-images/create-model-from-equation.svg';
+import createModelFromEquations from '@assets/svg/operator-images/create-model-from-equation.svg';
 import transformModel from '@assets/svg/operator-images/transform-model.svg';
 import dataset from '@assets/svg/operator-images/dataset.svg';
 import document from '@assets/svg/operator-images/document.svg';
@@ -45,7 +45,7 @@ const operatorGraphics = {
 	[WorkflowOperationTypes.MODEL_COUPLING]: coupleModels,
 	[WorkflowOperationTypes.MODEL_EDIT]: editModel,
 	[WorkflowOperationTypes.MODEL_FROM_CODE]: createModelFromCode,
-	[WorkflowOperationTypes.MODEL_FROM_DOCUMENT]: createModelFromEquation,
+	[WorkflowOperationTypes.MODEL_FROM_EQUATIONS]: createModelFromEquations,
 	[WorkflowOperationTypes.OPTIMIZE_CIEMSS]: optimizeModel,
 	[WorkflowOperationTypes.MODEL_TRANSFORMER]: transformModel,
 	[WorkflowOperationTypes.SIMULATE_CIEMSS]: simulateProbabilistic,

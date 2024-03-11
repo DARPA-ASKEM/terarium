@@ -163,4 +163,16 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
 		return Optional.of(asset);
 	}
+
+	/**
+	 * Clone asset on ES, retrieve and save document with a different id
+	 */
+	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
+		final Optional<T> targetAsset = getAsset(id);
+		if (targetAsset.isEmpty()) {
+			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
+		}
+		return createAsset(targetAsset.get());
+	}
+
 }

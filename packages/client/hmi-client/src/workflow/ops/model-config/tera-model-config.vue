@@ -1,9 +1,12 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				@click.stop
-				style="margin-left: auto"
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
@@ -26,12 +29,11 @@
 									severity="secondary"
 									@click.stop="extractConfigurationsFromInputs"
 									style="margin-left: auto"
-									:loading="isExtracting"
+									:loading="isLoading"
 								/>
 							</template>
 
 							<DataTable
-								v-if="suggestedConfirgurationContext.tableData.length > 0"
 								:value="suggestedConfirgurationContext.tableData"
 								size="small"
 								data-key="id"
@@ -39,7 +41,7 @@
 								:rows="5"
 								sort-field="createdOn"
 								:sort-order="-1"
-								:loading="isExtracting"
+								:loading="isLoading"
 							>
 								<Column field="name" header="Name" style="width: 15%">
 									<template #body="{ data }">
@@ -78,12 +80,9 @@
 									</div>
 								</template>
 								<template #empty>
-									<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
+									<p class="empty-section m-3">No configurations found.</p>
 								</template>
 							</DataTable>
-							<section v-else>
-								<p class="empty-section m-3">No configurations found.</p>
-							</section>
 						</AccordionTab>
 					</Accordion>
 				</div>
@@ -248,7 +247,7 @@
 
 <script setup lang="ts">
 import { cloneDeep, isEmpty } from 'lodash';
-import { computed, ref, watch, onUnmounted, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -257,7 +256,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
-import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
@@ -280,10 +280,11 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -423,20 +424,52 @@ const initializeEditor = (editorInstance: any) => {
 
 const extractConfigurationsFromInputs = async () => {
 	if (!model.value?.id) return;
-	isExtracting.value = true;
-
-	const promises: Promise<void>[] = [];
 	if (documentId.value) {
-		promises.push(configureModelFromDocument(documentId.value, model.value.id));
+		modelFromDocumentHandler.value = await configureModelFromDocument(
+			documentId.value,
+			model.value.id,
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
+						throw new FatalError('Configs from document - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from document');
+						closeConnection();
+					}
+				},
+				onclose() {
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
+				}
+			}
+		);
 	}
 	if (datasetId.value) {
-		promises.push(configureModelFromDatasets(model.value.id, [datasetId.value]));
+		modelFromDatasetHandler.value = await configureModelFromDatasets(
+			model.value.id,
+			[datasetId.value],
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
+						throw new FatalError('Configs from datasets - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from dataset(s)');
+						closeConnection();
+					}
+				},
+				onclose() {
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
+				}
+			}
+		);
 	}
-
-	await Promise.all(promises);
-	await fetchConfigurations(model.value.id);
-
-	isExtracting.value = false;
 };
 
 const handleModelPreview = (data: any) => {
@@ -469,7 +502,16 @@ const suggestedConfirgurationContext = ref<{
 	tableData: [],
 	modelConfiguration: null
 });
-const isExtracting = ref(false);
+const isFetching = ref(false);
+const modelFromDocumentHandler = ref();
+const modelFromDatasetHandler = ref();
+const isLoading = computed(
+	() =>
+		modelFromDocumentHandler.value?.isRunning ||
+		modelFromDatasetHandler.value?.isRunning ||
+		isFetching.value
+);
+
 const model = ref<Model | null>(null);
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
@@ -720,10 +762,9 @@ const onSelection = (id: string) => {
 
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
-		// FIXME: since configurations are made on the backend on the fly, we need to wait for the db to update before fetching, here's an artificaial delay
-		setTimeout(async () => {
-			suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-		}, 800);
+		isFetching.value = true;
+		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		isFetching.value = false;
 	}
 };
 

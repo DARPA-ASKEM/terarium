@@ -16,6 +16,7 @@
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
 			@bring-to-front="bringToFront"
+			@show-annotation-editor="if (annotationRef) annotationRef.isEditing = true;"
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
@@ -28,6 +29,12 @@
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
+			<tera-operator-annotation
+				ref="annotationRef"
+				:state="node.state"
+				in-node
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<slot name="body" />
 		</section>
 		<tera-operator-outputs
@@ -55,6 +62,7 @@ import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -67,7 +75,8 @@ const emit = defineEmits([
 	'remove-operator',
 	'remove-edges',
 	'resize',
-	'duplicate-branch'
+	'duplicate-branch',
+	'update-state'
 ]);
 
 enum PortDirection {
@@ -77,6 +86,7 @@ enum PortDirection {
 
 const operator = ref<HTMLElement>();
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
+const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -154,6 +164,9 @@ main {
 		flex-direction: column;
 		justify-content: space-evenly;
 		gap: 0.5rem;
+		&:empty {
+			display: none;
+		}
 	}
 
 	/* Shared styles between tera-operator-inputs and tera-operator-outputs */
@@ -162,10 +175,6 @@ main {
 		list-style: none;
 		font-size: var(--font-caption);
 		color: var(--text-color-subdued);
-
-		&:empty {
-			display: none;
-		}
 
 		/* Can't nest css within the deep selector */
 		&:deep(> li) {

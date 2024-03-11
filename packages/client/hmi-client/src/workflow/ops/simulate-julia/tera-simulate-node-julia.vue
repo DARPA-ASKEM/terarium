@@ -78,7 +78,7 @@ const processResult = async (runId: string) => {
 	emit('append-output', {
 		type: SimulateJuliaOperation.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
-		value: runId,
+		value: [runId],
 		state: {
 			currentTimespan: state.currentTimespan
 		},
@@ -112,8 +112,6 @@ watch(
 watch(
 	() => props.node.active,
 	async () => {
-		if (!props.node.active) return;
-
 		const active = props.node.active;
 		if (!active) return;
 
