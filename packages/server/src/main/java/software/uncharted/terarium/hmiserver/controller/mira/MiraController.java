@@ -179,7 +179,7 @@ public class MiraController {
 			return ResponseEntity.internalServerError().build();
 		} catch (final FeignException.NotFound e) { // Handle 404 errors
 			log.info("Could not find resource in the DKG", e);
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.noContent().build();
 		} catch (final Exception e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();

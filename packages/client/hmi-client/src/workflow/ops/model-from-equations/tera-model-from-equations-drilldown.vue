@@ -13,71 +13,62 @@
 				is-selectable
 			/>
 		</template>
-		<div>
-			<tera-drilldown-section :is-loading="assetLoading">
-				<header class="header-group">
-					<p>These equations will be used to create your model.</p>
-					<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
-				</header>
-				<ul class="blocks-container">
-					<li v-for="(equation, i) in clonedState.equations" :key="i">
-						<tera-asset-block
-							:is-included="equation.includeInProcess"
-							@update:is-included="onUpdateInclude(equation)"
-							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
-							@delete="removeEquation(i)"
-						>
-							<template #header>
-								<h5>{{ equation.name }}</h5>
+		<tera-drilldown-section :is-loading="assetLoading">
+			<header class="header-group">
+				<p>These equations will be used to create your model.</p>
+				<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
+			</header>
+			<ul class="blocks-container">
+				<li v-for="(equation, i) in clonedState.equations" :key="i">
+					<tera-asset-block
+						:is-included="equation.includeInProcess"
+						@update:is-included="onUpdateInclude(equation)"
+						:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+						@delete="removeEquation(i)"
+					>
+						<template #header>
+							<h5>{{ equation.name }}</h5>
+						</template>
+						<div class="block-container">
+							<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+								<label>Extracted Image:</label>
+								<Image
+									id="img"
+									:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+									:alt="''"
+									preview
+								/>
 							</template>
-							<div class="block-container">
-								<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
-									<label>Extracted Image:</label>
-									<Image
-										id="img"
-										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
-										:alt="''"
-										preview
-									/>
-								</template>
-								<tera-math-editor
-									v-if="equation.asset.text"
-									:latex-equation="equation.asset.text"
-									:is-editable="false"
-								/>
-								<div v-else class="mt-2" />
-								<InputText
-									v-model="equation.asset.text"
-									placeholder="Add an expression with LaTeX"
-									@update:model-value="emit('update-state', clonedState)"
-								/>
-							</div>
-						</tera-asset-block>
-					</li>
-				</ul>
-				<template #footer>
-					<span>
-						<label>Model framework</label>
-						<Dropdown
-							class="w-full md:w-14rem ml-2"
-							v-model="clonedState.modelFramework"
-							:options="modelFrameworks"
-							@change="onChangeModelFramework"
-						/>
-					</span>
-					<!--					<span class="ml-3 mr-auto">-->
-					<!--						<label>Service</label>-->
-					<!--						<Dropdown-->
-					<!--							size="small"-->
-					<!--							v-model="clonedState.modelService"-->
-					<!--							:options="modelServices"-->
-					<!--							@change="emit('update-state', clonedState)"-->
-					<!--							class="ml-2"-->
-					<!--						/>-->
-					<!--					</span>-->
-				</template>
-			</tera-drilldown-section>
-		</div>
+							<tera-math-editor
+								v-if="equation.asset.text"
+								:latex-equation="equation.asset.text"
+								:is-editable="false"
+							/>
+							<div v-else class="mt-2" />
+							<InputText
+								v-model="equation.asset.text"
+								placeholder="Add an expression with LaTeX"
+								@update:model-value="emit('update-state', clonedState)"
+							/>
+						</div>
+					</tera-asset-block>
+				</li>
+			</ul>
+			<template #footer>
+				<span>
+					<label>Model framework</label>
+					<Dropdown
+						class="w-full md:w-14rem ml-2"
+						v-model="clonedState.modelFramework"
+						:options="modelFrameworks"
+						option-label="label"
+						option-value="value"
+						option-disabled="disabled"
+						@change="onChangeModelFramework"
+					/>
+				</span>
+			</template>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
@@ -148,12 +139,13 @@ import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import * as textUtils from '@/utils/text';
 import {
 	EquationBlock,
 	EquationFromImageBlock,
 	instanceOfEquationFromImageBlock,
-	ModelFromDocumentState
-} from './model-from-document-operation';
+	ModelFromEquationsState
+} from './model-from-equations-operation';
 
 const emit = defineEmits([
 	'close',
@@ -163,12 +155,15 @@ const emit = defineEmits([
 	'update-output-port'
 ]);
 const props = defineProps<{
-	node: WorkflowNode<ModelFromDocumentState>;
+	node: WorkflowNode<ModelFromEquationsState>;
 }>();
 
 enum ModelFramework {
-	Petrinet = 'petrinet',
-	Regnet = 'regnet'
+	PetriNet = 'petrinet',
+	RegNet = 'regnet',
+	Decapode = 'decapode',
+	GeneralizedAMR = 'gamr',
+	MathExpressionTree = 'met'
 }
 
 const outputs = computed(() => {
@@ -176,8 +171,8 @@ const outputs = computed(() => {
 		.getActiveProjectAssets(AssetType.Model)
 		.map((model) => model.id);
 
-	const savedOutputs: WorkflowOutput<ModelFromDocumentState>[] = [];
-	const unsavedOutputs: WorkflowOutput<ModelFromDocumentState>[] = [];
+	const savedOutputs: WorkflowOutput<ModelFromEquationsState>[] = [];
+	const unsavedOutputs: WorkflowOutput<ModelFromEquationsState>[] = [];
 
 	props.node.outputs.forEach((output) => {
 		const modelId = output.state?.modelId;
@@ -191,7 +186,7 @@ const outputs = computed(() => {
 		unsavedOutputs.push(output);
 	});
 
-	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromDocumentState>[] }[] = [];
+	const groupedOutputs: { label: string; items: WorkflowOutput<ModelFromEquationsState>[] }[] = [];
 
 	if (!isEmpty(unsavedOutputs)) {
 		groupedOutputs.push({
@@ -211,12 +206,20 @@ const outputs = computed(() => {
 
 const selectedOutputId = ref<string>('');
 
-const modelFrameworks = Object.values(ModelFramework);
-// const modelServices = Object.values(ModelServiceType);
-const clonedState = ref<ModelFromDocumentState>({
+const modelFrameworks = Object.entries(ModelFramework).map(([key, value]) => ({
+	label: textUtils.pascalCaseToCapitalSentence(key),
+	value,
+	disabled: [
+		ModelFramework.Decapode,
+		ModelFramework.GeneralizedAMR,
+		ModelFramework.MathExpressionTree
+	].includes(value)
+}));
+
+const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
 	text: '',
-	modelFramework: ModelFramework.Petrinet,
+	modelFramework: ModelFramework.PetriNet,
 	modelId: null,
 	modelService: ModelServiceType.TA1
 });
@@ -358,6 +361,7 @@ function onAddModel(modelName: string) {
 	if (!modelName || !selectedOutputId.value) return;
 	updateNodeLabel(selectedOutputId.value, modelName);
 }
+
 function onCloseModelModal() {
 	isNewModelModalVisible.value = false;
 }
@@ -459,6 +463,7 @@ watch(
 
 .blocks-container {
 	overflow-y: auto;
+
 	> li:not(:last-child) {
 		margin-bottom: var(--gap-small);
 	}

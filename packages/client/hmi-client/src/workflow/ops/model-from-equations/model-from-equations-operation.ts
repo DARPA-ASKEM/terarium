@@ -17,7 +17,7 @@ export function instanceOfEquationFromImageBlock(
 	return 'fileName' in object;
 }
 
-export interface ModelFromDocumentState {
+export interface ModelFromEquationsState {
 	equations: AssetBlock<EquationBlock | EquationFromImageBlock>[];
 	text: string;
 	modelFramework: string;
@@ -25,8 +25,8 @@ export interface ModelFromDocumentState {
 	modelService: ModelServiceType;
 }
 
-export const ModelFromDocumentOperation: Operation = {
-	name: WorkflowOperationTypes.MODEL_FROM_DOCUMENT,
+export const ModelFromEquationsOperation: Operation = {
+	name: WorkflowOperationTypes.MODEL_FROM_EQUATIONS,
 	description: 'Create model from equations',
 	displayName: 'Create model from equations',
 	isRunnable: true,
@@ -35,7 +35,7 @@ export const ModelFromDocumentOperation: Operation = {
 	action: () => {},
 
 	initState: () => {
-		const init: ModelFromDocumentState = {
+		const init: ModelFromEquationsState = {
 			equations: [],
 			text: '',
 			modelFramework: 'petrinet',
