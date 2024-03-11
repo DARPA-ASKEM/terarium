@@ -317,12 +317,8 @@ describe('mira MMT', () => {
 	});
 
 	it('matrix test 123', () => {
-		const { subjectOutcome, subjectController } = createParameterMatrix(
-			mmt,
-			miraTemplateParams,
-			'k_1'
-		);
-		console.log(subjectOutcome, subjectController);
-		expect(1).to.eq(1);
+		const { subjectOutcome } = createParameterMatrix(mmt, miraTemplateParams, 'kappa');
+		expect(subjectOutcome.matrix.length).to.eq(3);
+		expect(subjectOutcome.matrix[0].length).to.eq(3);
 	});
 });

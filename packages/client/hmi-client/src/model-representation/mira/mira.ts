@@ -27,6 +27,14 @@ export const getContextKeys = (miraModel: MiraModel) => {
 	return [...modifierKeys];
 };
 
+/**
+ * Collapse parameters into a lookup map:
+ *
+ * { var1 => [var1_a, var1_b ...] }
+ *
+ * Note this is mostly heuristically based, so there may be some edge cases where this will not work,
+ * expecially if the model is changed manually after a stratification operation, e.g. rename a stratified variable
+ * */
 export const collapseParameters = (
 	miraModel: MiraModel,
 	miraTemplateParams: MiraTemplateParams
@@ -40,7 +48,6 @@ export const collapseParameters = (
 		const tokens = key.split('_') as string[];
 		const rootName = _.first(tokens) as string;
 
-		// Heuristics to deal with underscores that already exist in parameer names
 		// Ignore non-numerics
 		if (tokens.length > 1) {
 			let numerical = true;
@@ -65,6 +72,12 @@ export const collapseParameters = (
 	const mapKeys = [...map.keys()];
 	const templateParams = Object.values(miraTemplateParams);
 
+	/**
+	 * Assume that a stratified parameters do not intermingle. E.g.
+	 * if we stratify age into [a1, a2, a3, ... a8], an expression
+	 * will only have 1 of the new age-strata-variable. If it is not the
+	 * case we will re-classify them.
+	 * */
 	for (let i = 0; i < mapKeys.length; i++) {
 		const mapKey = mapKeys[i];
 		const childrenParams = map.get(mapKey);
@@ -80,7 +93,6 @@ export const collapseParameters = (
 			});
 		}
 	}
-
 	return map;
 };
 
@@ -137,6 +149,12 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	return uniqueTemplates;
 };
 
+interface ParamLocation {
+	subject: string;
+	outcome: string;
+	controllers: string[];
+}
+
 /**
  * Assumes one-to-one with cells
  *
@@ -152,7 +170,7 @@ export const createParameterMatrix = (
 
 	// Create map for mapping params to row/col of matrix
 	//   param => [ [subject, outcome, controller], [subject, outcome, controller] ... ]
-	const paramLocationMap = new Map<string, any>();
+	const paramLocationMap = new Map<string, ParamLocation[]>();
 	const templateParams = Object.values(miraTemplateParams);
 	templateParams.forEach((templateParam) => {
 		const params = templateParam.params;
@@ -246,6 +264,7 @@ export const converToIGraph = (templates: any[]) => {
 	});
 
 	// Edges
+	// FIXME: controller edges
 	templates.forEach((t) => {
 		const key = `${t.subject}:${t.outcome}:${t.controller}`;
 		graph.edges.push({
@@ -260,6 +279,5 @@ export const converToIGraph = (templates: any[]) => {
 		});
 	});
 
-	// FIXME: controller edges
 	return graph;
 };

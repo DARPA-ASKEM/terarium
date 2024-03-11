@@ -1,17 +1,37 @@
+export interface MiraConcept {
+	name: string;
+	display_name: string | null;
+	description: string | null;
+	identifiers: any;
+	context: any;
+	units: any;
+}
+
+export interface MiraParameter {
+	name: string;
+	display_name: string | null;
+	description: string | null;
+	identifiers: any;
+	context: any;
+	units: any;
+	value: any;
+	distribution: any;
+}
+
 export interface MiraTemplate {
 	rate_law: string;
 	name: string;
 	display_name: string | null;
 	type: string;
-	controller?: any;
-	subject: any;
-	outcome: any;
+	controller?: MiraConcept;
+	subject: MiraConcept;
+	outcome: MiraConcept;
 	provenance: any[];
 }
 
 export interface MiraModel {
 	templates: MiraTemplate[];
-	parameters: { [key: string]: any };
+	parameters: { [key: string]: MiraParameter };
 	initials: { [key: string]: any };
 	observables: { [key: string]: any };
 	annotations: any;
