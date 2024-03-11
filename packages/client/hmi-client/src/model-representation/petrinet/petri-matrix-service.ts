@@ -27,6 +27,7 @@ export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) =>
 		const newInputs: string[] = [];
 		const newOutputs: string[] = [];
 		const newControllers: string[] = [];
+
 		for (let j = 0; j < input.length; j++) {
 			if (input[j] !== output[j]) {
 				newInputs.push(input[j]);

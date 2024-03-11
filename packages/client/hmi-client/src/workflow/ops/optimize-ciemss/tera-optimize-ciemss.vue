@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="OptimizeTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -165,6 +171,11 @@
 						/>
 					</div>
 				</template>
+				<template v-if="optimizationResult">
+					<div>
+						{{ optimizationResult }}
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -243,6 +254,7 @@ import {
 import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -276,6 +288,7 @@ interface BasicKnobs {
 	threshold: number;
 	isMinimized: boolean;
 	simulationRunId: string;
+	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
 }
@@ -290,6 +303,7 @@ const knobs = ref<BasicKnobs>({
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
 	simulationRunId: props.node.state.simulationRunId ?? '',
+	optimzationRunId: props.node.state.optimzationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
 	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
 });
@@ -329,6 +343,7 @@ const outputViewOptions = ref([
 ]);
 const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateOptions = ref<State[]>([]);
@@ -519,6 +534,8 @@ const getOptimizeStatus = async (runId: string) => {
 		});
 		throw Error('Failed Runs');
 	}
+
+	knobs.value.optimzationRunId = runId;
 	showSpinner.value = false;
 };
 
@@ -550,6 +567,21 @@ const saveModelConfiguration = async () => {
 	});
 };
 
+const setOutputValues = async () => {
+	const output = await getRunResultCiemss(knobs.value.simulationRunId);
+	simulationRunResults.value[knobs.value.simulationRunId] = output.runResults;
+	simulationRawContent.value[knobs.value.simulationRunId] = createCsvAssetFromRunResults(
+		simulationRunResults.value[knobs.value.simulationRunId]
+	);
+
+	const optimzationResult = await getRunResult(
+		knobs.value.optimzationRunId,
+		'optimize_results.json'
+	);
+	console.log(optimzationResult);
+	optimizationResult.value = optimzationResult;
+};
+
 onMounted(async () => {
 	initialize();
 });
@@ -566,6 +598,7 @@ watch(
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
 		state.simulationRunId = knobs.value.simulationRunId;
+		state.optimzationRunId = knobs.value.optimzationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		emit('update-state', state);
@@ -593,11 +626,7 @@ watch(
 	() => knobs.value.simulationRunId,
 	async () => {
 		if (knobs.value.simulationRunId !== '') {
-			const output = await getRunResultCiemss(knobs.value.simulationRunId);
-			simulationRunResults.value[knobs.value.simulationRunId] = output.runResults;
-			simulationRawContent.value[knobs.value.simulationRunId] = createCsvAssetFromRunResults(
-				simulationRunResults.value[knobs.value.simulationRunId]
-			);
+			setOutputValues();
 		}
 	},
 	{ immediate: true }

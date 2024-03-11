@@ -61,7 +61,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	}
 
 	@Override
-	public void onSuccess(final TaskResponse resp) {
+	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService.getAsset(props.getModelId())
@@ -104,6 +104,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 			} catch (final IOException e) {
 				log.error("Failed to set model configuration", e);
+				throw new RuntimeException(e);
 			}
 
 		} catch (final Exception e) {
@@ -111,5 +112,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			throw new RuntimeException(e);
 		}
 		log.info("Model configured successfully");
+
+		return resp;
 	}
 }

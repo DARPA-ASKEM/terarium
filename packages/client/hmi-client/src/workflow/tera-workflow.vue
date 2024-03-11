@@ -99,6 +99,7 @@
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
+					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 				>
 					<template #body>
 						<component
@@ -180,8 +181,7 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-		>
-		</component>
+		/>
 	</Teleport>
 </template>
 
@@ -219,6 +219,7 @@ import { logger } from '@/utils/logger';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
+import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from './ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from './ops/stratify-mira/mod';
 import * as DatasetOp from './ops/dataset/mod';
@@ -238,7 +239,7 @@ import * as CodeAssetOp from './ops/code-asset/mod';
 import * as OptimizeCiemssOp from './ops/optimize-ciemss/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
-import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
@@ -412,6 +413,30 @@ const removeNode = (event) => {
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
+
+	cloneDataTransformSessions();
+};
+
+// We need to clone data-transform sessions, unlike other operators that are
+// append-only, data-transform updates so we need to create distinct copies.
+const cloneDataTransformSessions = async () => {
+	const sessionIdSet = new Set<string>();
+	for (let i = 0; i < wf.value.nodes.length; i++) {
+		const node = wf.value.nodes[i];
+		if (node.operationType === DatasetTransformerOp.operation.name) {
+			const state = node.state;
+			const sessionId = state.notebookSessionId as string;
+			if (!sessionId) continue;
+			if (!sessionIdSet.has(sessionId)) {
+				sessionIdSet.add(sessionId);
+			} else {
+				// eslint-disable-next-line
+				const session = await cloneNoteBookSession(sessionId);
+				state.notebookSessionId = session.id;
+				sessionIdSet.add(session.id);
+			}
+		}
+	}
 };
 
 const addOperatorToWorkflow: Function =
