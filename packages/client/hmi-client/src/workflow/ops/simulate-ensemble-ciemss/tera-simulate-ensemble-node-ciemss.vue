@@ -55,7 +55,7 @@ const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 // const runResults = ref<RunResults>({});
 const runResults = ref<{ [runId: string]: RunResults }>({});
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
-const selectedRunId = ref<any>(null);
+const selectedRunId = ref<string>('');
 
 const poller = new Poller();
 
