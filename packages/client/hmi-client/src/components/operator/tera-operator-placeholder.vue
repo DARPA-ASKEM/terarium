@@ -48,7 +48,7 @@ const operatorGraphics = {
 	[WorkflowOperationTypes.MODEL_EDIT]: editModel,
 	[WorkflowOperationTypes.MODEL_FROM_CODE]: createModelFromCode,
 	[WorkflowOperationTypes.MODEL_FROM_DOCUMENT]: createModelFromEquation,
-	[WorkflowOperationTypes.MODEL_OPTIMIZE]: optimizeModel,
+	[WorkflowOperationTypes.OPTIMIZE_CIEMSS]: optimizeModel,
 	[WorkflowOperationTypes.MODEL_TRANSFORMER]: transformModel,
 	[WorkflowOperationTypes.SIMULATE_CIEMSS]: simulateProbabilistic,
 	[WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS]: simulateEnsembleProbabilistic,
