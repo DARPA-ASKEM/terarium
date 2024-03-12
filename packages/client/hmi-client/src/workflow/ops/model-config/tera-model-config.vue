@@ -197,6 +197,7 @@
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
 						:defaultOptions="sampleAgentQuestions"
+						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
@@ -360,6 +361,7 @@ const sampleAgentQuestions = [
 	'What are the current parameters values?',
 	'update the parameters {gamma: 0.13}'
 ];
+const contextLanguage = ref<string>('python3');
 
 const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);

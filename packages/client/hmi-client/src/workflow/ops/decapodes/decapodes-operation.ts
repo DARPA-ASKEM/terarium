@@ -1,8 +1,11 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
+export interface CodeHistory {
+	code: string;
+	timestamp: number;
+}
 export interface DecapodesOperationState {
-	modelId: string | null;
-	modelConfigurationIds: string[];
+	codeHistory: CodeHistory[];
 }
 
 export const DecapodesOperation: Operation = {
@@ -16,8 +19,7 @@ export const DecapodesOperation: Operation = {
 
 	initState: () => {
 		const init: DecapodesOperationState = {
-			modelId: null,
-			modelConfigurationIds: []
+			codeHistory: []
 		};
 		return init;
 	}
