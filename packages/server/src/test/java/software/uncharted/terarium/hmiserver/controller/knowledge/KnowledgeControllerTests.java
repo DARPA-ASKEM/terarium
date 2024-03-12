@@ -272,12 +272,13 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk())
 				.andReturn();
 
-		final Model model =
+		// final Model model =
 
-		final DocumentAsset document = objectMapper.readValue(res.getResponse().getContentAsString(),
-				DocumentAsset.class);
+		// final DocumentAsset document =
+		// objectMapper.readValue(res.getResponse().getContentAsString(),
+		// DocumentAsset.class);
 
-		log.info(document.getMetadata().toString());
+		// log.info(document.getMetadata().toString());
 	}
 
 }

@@ -1,11 +1,16 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -27,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -44,6 +50,8 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
@@ -490,20 +498,170 @@ public class KnowledgeController {
 		}
 	}
 
+	public HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
+		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		final byte[] buffer = new byte[1024];
+		int len;
+		while ((len = zipInputStream.read(buffer)) > 0) {
+			byteArrayOutputStream.write(buffer, 0, len);
+		}
+
+		return new ByteArrayEntity(byteArrayOutputStream.toByteArray());
+	}
+
 	@PostMapping("/pdf-to-cosmos")
 	@Secured(Roles.USER)
 	public ResponseEntity<DocumentAsset> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId) {
 
 		try {
-
 			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
 
 			if (document.getFileNames().isEmpty()) {
 				throw new RuntimeException("No files found on document");
 			}
 
-			// TODO: cosmos stuff
+			final String filename = document.getFileNames().get(0);
+
+			final String documentContents = documentService.fetchFileAsString(documentId, filename).orElseThrow();
+
+			final StringMultipartFile documentFile = new StringMultipartFile(documentContents, filename,
+					"application/pdf");
+
+			final boolean compressImages = false;
+			final boolean forceRun = false;
+			final ResponseEntity<JsonNode> extractionResp = cosmosProxy.processPdfExtraction(compressImages, !forceRun,
+					documentFile);
+
+			final JsonNode body = extractionResp.getBody();
+			final String statusEndpoint = body.get("status_endpoint").asText();
+			final String resultEndpoint = body.get("result_endpoint").asText();
+			final String textEndpoint = resultEndpoint + "/text";
+			final String equationsEndpoint = resultEndpoint + "/extractions/equations";
+			final String figuresEndpoint = resultEndpoint + "/extractions/figures";
+			final String tablesEndpoint = resultEndpoint + "/extractions/tables";
+
+			final int POLLING_INTERVAL_SECONDS = 5;
+			final int MAX_EXECUTION_TIME_SECONDS = 600;
+			final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
+
+			boolean jobDone = false;
+			final RestTemplate restTemplate = new RestTemplate();
+			for (int i = 0; i < MAX_ITERATIONS; i++) {
+				final ResponseEntity<JsonNode> statusResp = restTemplate.getForEntity(statusEndpoint, JsonNode.class);
+				if (!statusResp.getStatusCode().is2xxSuccessful()) {
+					throw new RuntimeException("Unable to poll status endpoint");
+				}
+
+				final JsonNode statusData = statusResp.getBody();
+				if (statusData.has("error")) {
+					throw new RuntimeException("Extraction job failed: " + statusData.has("error"));
+				}
+
+				log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
+				jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
+				if (jobDone) {
+					break;
+				}
+				Thread.sleep(POLLING_INTERVAL_SECONDS * 1000);
+			}
+
+			if (!jobDone) {
+				throw new RuntimeException("Extraction job did not complete within the expected time");
+			}
+
+			final ResponseEntity<byte[]> zipFileResp = restTemplate.getForEntity(resultEndpoint, byte[].class);
+			if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to fetch the extraction result");
+			}
+
+			final String zipFileName = documentId + "_cosmos.zip";
+			documentService.uploadFile(documentId, zipFileName, new ByteArrayEntity(zipFileResp.getBody()));
+
+			document.getFileNames().add(zipFileName);
+
+			// Open the zipfile and extract the contents
+
+			final Map<String, HttpEntity> fileMap = new HashMap<>();
+			try {
+				final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
+				final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
+
+				ZipEntry entry = zipInputStream.getNextEntry();
+				while (entry != null) {
+
+					fileMap.put(entry.getName(), zipEntryToHttpEntity(zipInputStream));
+
+					entry = zipInputStream.getNextEntry();
+				}
+
+				zipInputStream.closeEntry();
+				zipInputStream.close();
+			} catch (final IOException e) {
+				throw new RuntimeException("Unable to extract the contents of the zip file", e);
+			}
+
+			final ResponseEntity<JsonNode> textResp = restTemplate.getForEntity(textEndpoint, JsonNode.class);
+			if (!textResp.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to fetch the text extractions");
+			}
+
+			final Map<String, ResponseEntity<JsonNode>> responses = new HashMap<>();
+			responses.put("equation", restTemplate.getForEntity(equationsEndpoint, JsonNode.class));
+			responses.put("figure", restTemplate.getForEntity(figuresEndpoint, JsonNode.class));
+			responses.put("table", restTemplate.getForEntity(tablesEndpoint, JsonNode.class));
+
+			// clear existing assets
+			document.setAssets(new ArrayList<>());
+
+			for (final Map.Entry<String, ResponseEntity<JsonNode>> entry : responses.entrySet()) {
+				final String assetType = entry.getKey();
+				final ResponseEntity<JsonNode> response = entry.getValue();
+				log.info(" {} response status: {}", assetType, response.getStatusCodeValue());
+				if (!response.getStatusCode().is2xxSuccessful()) {
+					log.warn("Unable to fetch the {} extractions", assetType);
+					continue;
+				}
+
+				for (final JsonNode record : response.getBody()) {
+
+					String fileName = "";
+					if (record.has("img_pth")) {
+
+						final String path = record.get("img_pth").asText();
+						fileName = path.substring(path.lastIndexOf("/") + 1);
+
+						if (fileMap.containsKey(fileName)) {
+							log.warn("Unable to find file {} in zipfile", fileName);
+						}
+
+						final HttpEntity file = fileMap.get(fileName);
+
+						documentService.uploadFile(documentId, fileName, file);
+
+					} else {
+						log.warn("No img_pth found in record: {}", record);
+					}
+
+					final DocumentExtraction extraction = new DocumentExtraction();
+					extraction.setFileName(fileName);
+					extraction.setAssetType(ExtractionAssetType.fromString(assetType));
+					extraction.setMetadata(mapper.convertValue(record, Map.class));
+
+					document.getAssets().add(extraction);
+				}
+			}
+
+			String responseText = "";
+			for (final JsonNode record : textResp.getBody()) {
+				if (record.has("content")) {
+					responseText += record.get("content").asText() + "\n";
+				} else {
+					log.warn("No content found in record: {}", record);
+				}
+			}
+
+			document.setText(responseText);
 
 			// update the document
 			document = documentService.updateAsset(document).orElseThrow();
