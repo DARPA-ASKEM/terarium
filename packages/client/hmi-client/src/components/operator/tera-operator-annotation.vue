@@ -2,6 +2,7 @@
 	<section :class="{ 'in-node': inNode, 'is-editing': isEditing }">
 		<template v-if="isEditing">
 			<Textarea
+				v-focus
 				v-model="annotation"
 				placeholder="Add a note..."
 				autoResize
