@@ -240,8 +240,10 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 
 	const subjects = new Set<string>(templates.map((d) => d.subject));
 	const outcomes = new Set<string>(templates.map((d) => d.outcome));
-	const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
-	const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
+	const nodeNames = [...new Set([...subjects, ...outcomes])];
+
+	// const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
+	// const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
 
 	// States
 	nodeNames.forEach((nodeName) => {
@@ -276,16 +278,45 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 	// FIXME: controller edges
 	templates.forEach((t) => {
 		const key = genKey(t);
-		graph.edges.push({
-			source: t.subject,
-			target: key,
-			points: []
-		});
-		graph.edges.push({
-			source: key,
-			target: t.outcome,
-			points: []
-		});
+
+		// FIXME: production and degradation
+
+		if (t.subject !== '') {
+			graph.edges.push({
+				source: t.subject,
+				target: key,
+				points: [],
+				data: {}
+			});
+
+			// console.log(t.controllers);
+			t.controllers.forEach((controllerName) => {
+				graph.edges.push({
+					source: controllerName,
+					target: key,
+					points: [],
+					data: { isController: true }
+				});
+			});
+		}
+		if (t.outcome !== '') {
+			graph.edges.push({
+				source: key,
+				target: t.outcome,
+				points: [],
+				data: {}
+			});
+
+			// console.log(t.controllers);
+			t.controllers.forEach((controllerName) => {
+				graph.edges.push({
+					source: key,
+					target: controllerName,
+					points: [],
+					data: { isController: true }
+				});
+			});
+		}
 	});
 
 	return graph;

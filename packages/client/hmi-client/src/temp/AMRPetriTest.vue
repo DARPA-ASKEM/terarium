@@ -52,17 +52,20 @@ onMounted(async () => {
 	watch(
 		() => jsonStr.value,
 		async () => {
-			const collapsedTemplates = collapseTemplates(mmtExample);
-			// console.log(collapsedTemplates);
-			// console.log(getContextKeys(mmtExample));
+			const jsonData = JSON.parse(jsonStr.value);
+			const collapsedTemplates = collapseTemplates(jsonData);
+			console.log('collapsed template', collapsedTemplates);
 
-			const dims = getContextKeys(mmtExample);
+			const dims = getContextKeys(jsonData);
+			console.log('dimensions', dims);
+
 			const graphData = converToIGraph(collapsedTemplates);
+			console.log('graphData', graphData);
 
 			// Testing
 			const processedSet = new Set<string>();
 			const conceptData: any = [];
-			mmtExample.templates.forEach((t) => {
+			jsonData.templates.forEach((t) => {
 				['subject', 'outcome', 'controller'].forEach((conceptKey) => {
 					if (!t[conceptKey]) return;
 					const conceptName = t[conceptKey].name;
@@ -79,7 +82,7 @@ onMounted(async () => {
 
 			dims.unshift('base');
 			const nestedMap = extractNestedStratas(conceptData, dims);
-			console.log(nestedMap);
+			// console.log(nestedMap);
 
 			renderer = new NestedPetrinetRenderer({
 				el: graphElement.value as HTMLDivElement,
