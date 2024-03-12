@@ -135,6 +135,9 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
+				<div v-if="optimizationResult">
+					{{ optimizationResult }}
+				</div>
 				<SelectButton
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
@@ -162,6 +165,12 @@
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
+						<!-- <tera-optimize-chart
+						  :forecast-run-id="knobs.forecastRunId"
+							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: knobs.targetVariables }"
+							:risk-tolerance="knobs.riskTolerance"
+							:target-variables="knobs.targetVariables"
+						/> -->
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
@@ -169,11 +178,6 @@
 							:rows="10"
 							:raw-content="simulationRawContent[knobs.forecastRunId]"
 						/>
-					</div>
-				</template>
-				<template v-if="optimizationResult">
-					<div>
-						{{ optimizationResult }}
 					</div>
 				</template>
 			</tera-drilldown-preview>
@@ -218,6 +222,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
+// import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -413,15 +418,23 @@ const runOptimize = async () => {
 		return;
 	}
 
-	const optimizeInterventions: OptimizedIntervention[] = [];
+	const paramNames: string[] = [];
+	const startTimes: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		optimizeInterventions.push({ name: ele.parameter, timestep: ele.startTime });
+		paramNames.push(ele.parameter);
+		startTimes.push(ele.startTime);
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);
 		listBoundsInterventions.push([ele.upperBound]);
 	});
+
+	const optimizeInterventions: OptimizedIntervention = {
+		selection: 'param_value',
+		paramNames,
+		startTimes
+	};
 
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',

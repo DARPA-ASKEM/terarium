@@ -22,7 +22,7 @@ public class OptimizeRequestCiemss implements Serializable {
 	private String modelConfigId;
 	private TimeSpan timespan;
 	@TSOptional
-	private List<OptimizedIntervention> interventions;
+	private OptimizedIntervention interventions;
 	@JsonAlias("step_size")
 	@TSOptional
 	private Double stepSize;
