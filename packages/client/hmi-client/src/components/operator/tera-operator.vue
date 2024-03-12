@@ -54,8 +54,8 @@
 import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
-import { addHover, removeHover, addDrag, removeDrag } from '@/services/operator-bitmask';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { addDrag, addHover, removeDrag, removeHover } from '@/services/operator-bitmask';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
@@ -145,6 +145,7 @@ main {
 	box-shadow: var(--overlayMenuShadow);
 	min-width: 15rem;
 	transition: box-shadow 80ms ease;
+
 	&:hover {
 		box-shadow: var(--overlayMenuShadowHover);
 		z-index: 2;
@@ -154,9 +155,11 @@ main {
 		padding: 0.5rem;
 	}
 
-	& > ul,
-	& > .content,
-	& > .content:deep(> *)  /* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
+	&>ul,
+	&>.content,
+	&>.content:deep(> *)
+
+	/* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
 		display: flex;
 		flex-direction: column;
 		justify-content: space-evenly;
@@ -180,14 +183,16 @@ main {
 			gap: 0.25rem;
 			cursor: pointer;
 		}
+
 		&:deep(> li:hover) {
 			background-color: var(--surface-highlight);
 		}
+
 		&:deep(li:hover .port) {
-			/* Not sure what color was intended */
 			background-color: var(--primary-color);
 			background-color: var(--surface-border);
 		}
+
 		&:deep(> li > section) {
 			display: flex;
 			align-items: center;
@@ -238,16 +243,18 @@ main {
 			background-color: var(--surface-100);
 			transition: background-color 0.125s ease-in-out;
 		}
-		&:deep(.port-connected .port)::before {
-			content: ''; /* Essential for generating the pseudo-element */
+
+		&:deep(.port-connected .port)::after {
+			content: '';
 			position: absolute;
-			width: calc(var(--port-base-size) * 1.25);
-			height: calc(var(--port-base-size) * 1.25);
-			background-color: var(--text-color-subdued);
-			border-radius: 50%; /* Make it a circle */
+			/* This is crucial for positioning inside the parent */
 			top: 50%;
 			left: 50%;
-			transform: translate(-50%, -50%); /* Center the circle */
+			transform: translate(-50%, -50%);
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background-color: var(--text-color-subdued);
 		}
 
 		&:deep(.port-connected:hover .port) {
