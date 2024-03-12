@@ -244,8 +244,9 @@ public class ProjectController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canAdministrate(new RebacProject(id, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+			if (rebacUser.canAdministrate(rebacProject)) {
 				final boolean deleted = projectService.delete(id);
 				if (deleted)
 					return ResponseEntity.ok(new ResponseDeleted("project", id));
@@ -277,8 +278,12 @@ public class ProjectController {
 		project = projectService.createProject(project);
 
 		try {
-			new RebacUser(currentUserService.get().getId(), reBACService)
-					.createCreatorRelationship(new RebacProject(project.getId(), reBACService));
+			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+
+			rebacUser.createCreatorRelationship(rebacProject);
+			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(
@@ -307,8 +312,9 @@ public class ProjectController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final Project project) {
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canWrite(new RebacProject(id, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+			if (rebacUser.canWrite(rebacProject)) {
 				project.setId(id);
 				final Optional<Project> updatedProject = projectService.updateProject(project);
 				return updatedProject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -338,8 +344,9 @@ public class ProjectController {
 			@PathVariable("id") final UUID projectId,
 			@RequestParam("types") final List<AssetType> types) {
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canRead(new RebacProject(projectId, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacUser.canRead(rebacProject)) {
 
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
 
@@ -451,7 +458,9 @@ public class ProjectController {
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacUser.canWrite(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(projectId);
 
 				if (project.isPresent()) {
@@ -491,8 +500,9 @@ public class ProjectController {
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canWrite(new RebacProject(projectId, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacUser.canWrite(rebacProject)) {
 				final boolean deleted = projectAssetService.deleteByAssetId(projectId, type, assetId);
 				if (deleted) {
 					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + type, assetId));
@@ -521,8 +531,9 @@ public class ProjectController {
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(
 			@PathVariable("id") final UUID id) {
 		try {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (new RebacUser(currentUserService.get().getId(), reBACService).canRead(rebacProject)) {
+			if (rebacUser.canRead(rebacProject)) {
 				final PermissionRelationships permissions = new PermissionRelationships();
 				for (final RebacPermissionRelationship permissionRelationship : rebacProject
 						.getPermissionRelationships()) {

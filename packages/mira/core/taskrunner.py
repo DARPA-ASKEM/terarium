@@ -12,25 +12,26 @@ from typing import Callable
 READ_CHUNK_SIZE = 1024*1024
 
 
-class SelfDestructThread(threading.Thread):
-    def __init__(self, self_destruct_timeout_seconds: int):
-        super().__init__()
-        self.stop_requested = False
+class SelfDestructThread:
+    def __init__(self, self_destruct_timeout_seconds):
         self.self_destruct_timeout_seconds = self_destruct_timeout_seconds
+        self.stop_destruct_event = threading.Event()
+        self.thread = threading.Thread(target=self._kill_after_timeout)
 
-    def run(self):
-        interval_seconds = 5
-        start_time = time.time()
-        while not self.stop_requested:
-            time.sleep(interval_seconds)
-            if (time.time() - start_time) > self.self_destruct_timeout_seconds:
-                # if for whatever reason this process is still around, do our best to self destruct
-                os.kill(
-                    os.getpid(), signal.SIGKILL
-                )  # Send the SIGTERM signal to the current process
+    def start(self):
+        self.thread.start()
 
     def stop(self):
-        self.stop_requested = True
+        self.stop_destruct_event.set()
+        self.thread.join()
+
+    def _kill_after_timeout(self):
+        self.stop_destruct_event.wait(self.self_destruct_timeout_seconds)
+        if not self.stop_destruct_event.is_set():
+            # if for whatever reason this process is still around, do our best to self destruct
+            os.kill(
+                os.getpid(), signal.SIGKILL
+            )  # Send the SIGTERM signal to the current process
 
 
 class TaskRunnerInterface:
