@@ -37,7 +37,10 @@ RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads
 
 WORKDIR /GoLLM
 
+# Install GoLLM deps
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install the tasks for GoLLM
 RUN pip install -e .
 
 WORKDIR /
