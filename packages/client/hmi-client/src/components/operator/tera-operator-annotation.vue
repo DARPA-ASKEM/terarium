@@ -9,6 +9,7 @@
 				rows="1"
 				@click.stop
 				@keydown.enter.prevent="saveAnnotation"
+				@keydown.esc.prevent="saveAnnotation"
 			/>
 			<div class="btn-group">
 				<Button icon="pi pi-trash" rounded text @click="deleteAnnotation" />
@@ -16,8 +17,7 @@
 			</div>
 		</template>
 		<div v-else-if="!isEmpty(annotation)" class="annotation">
-			<p>{{ annotation }}</p>
-			<Button icon="pi pi-pencil" rounded text @click="isEditing = true" />
+			<p @click="isEditing = true">{{ annotation }}</p>
 		</div>
 	</section>
 	<Button
@@ -97,6 +97,12 @@ section {
 		display: flex;
 		justify-content: space-between;
 		width: 100%;
+		font-size: var(--font-caption);
+		color: var(--text-color-subdued);
+	}
+
+	& > .p-inputtext {
+		font-size: var(--font-caption);
 	}
 
 	&.in-node {
@@ -111,8 +117,7 @@ section {
 
 	/* In drilldown */
 	&:not(.in-node) {
-		background-color: var(--surface-section);
-		padding: var(--gap-xsmall) var(--gap-small) var(--gap-xsmall) var(--gap);
+		padding: var(--gap-xsmall) var(--gap-small) var(--gap-small) var(--gap);
 		border-radius: var(--border-radius);
 		gap: var(--gap-small);
 		& > textarea {
