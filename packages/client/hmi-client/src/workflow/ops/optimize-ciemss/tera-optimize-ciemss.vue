@@ -464,6 +464,7 @@ const runOptimize = async () => {
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
 
+	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
 	for (let i = 0; i < optimizeInterventions.paramNames.length; i++) {
 		if (policyResult.value?.at(i) && optimizeInterventions.startTimes?.[i]) {
 			simulationIntervetions.push({
