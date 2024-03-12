@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -73,7 +74,7 @@ public class Dataset extends TerariumAsset {
 	 * (Optional) Unformatted metadata about the dataset
 	 **/
 	@TSOptional
-	private Object metadata;
+	private JsonNode metadata;
 
 	/**
 	 * (Optional) Source of dataset

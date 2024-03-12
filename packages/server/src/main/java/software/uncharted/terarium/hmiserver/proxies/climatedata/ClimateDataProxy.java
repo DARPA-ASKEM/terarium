@@ -3,9 +3,11 @@ package software.uncharted.terarium.hmiserver.proxies.climatedata;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "climatedata-api", url = "${climate-data-service.url}", path="/api/queries")
+@FeignClient(name = "climatedata-api", url = "${climate-data-service.url}")
 public interface ClimateDataProxy {
 
 	@GetMapping("/status/{uuid}")

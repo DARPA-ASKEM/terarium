@@ -15,9 +15,19 @@ import { cloneDeep } from 'lodash';
  * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
  */
 async function getAll(): Promise<Dataset[] | null> {
-	const response = await API.get('/datasets').catch((error) => {
-		logger.error(`Error: ${error}`);
-	});
+	return getAllClimate();
+	// const response = await API.get('/datasets').catch((error) => {
+	// 	logger.error(`Error: ${error}`);
+	// });
+	// return response?.data ?? null;
+}
+
+async function getAllClimate(): Promise<Dataset[] | null> {
+	const response = await API.get(`/climatedata/queries/search-esgf?query=historical`).catch(
+		(error) => {
+			logger.error(`Error: ${error}`);
+		}
+	);
 	return response?.data ?? null;
 }
 

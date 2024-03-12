@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -202,7 +204,8 @@ public class SimulationController {
 			final Dataset dataset = datasetService.createAsset(new Dataset());
 			dataset.setName(datasetName + " Result Dataset");
 			dataset.setDescription(sim.get().getDescription());
-			dataset.setMetadata(Map.of("simulationId", simId));
+			final ObjectMapper mapper = new ObjectMapper();
+			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
 			dataset.setFileNames(sim.get().getResultFiles());
 			dataset.setDataSourceDate(sim.get().getCompletedTime());
 			dataset.setColumns(new ArrayList<>());
