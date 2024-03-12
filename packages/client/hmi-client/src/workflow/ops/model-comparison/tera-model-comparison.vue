@@ -8,12 +8,19 @@
 		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Panel v-if="llmAnswer" header="Comparison overview" toggleable>
-					<template #togglericon="{ collapsed }">
-						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
-					</template>
-					<p>{{ llmAnswer }}</p>
-				</Panel>
+				<!-- LLM generated overview -->
+				<section class="comparison-overview">
+					<Accordion :activeIndex="0">
+						<AccordionTab header="Overview">
+							<p v-if="llmAnswer">{{ llmAnswer }}</p>
+							<p v-else class="subdued">
+								Analyzing models metadata to generate a detailed comparison analysis...
+							</p>
+						</AccordionTab>
+					</Accordion>
+				</section>
+
+				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
@@ -28,7 +35,12 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram :model="model" :is-editable="false" is-preview />
+									<tera-model-diagram
+										:model="model"
+										:is-editable="false"
+										is-preview
+										class="diagram"
+									/>
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -103,6 +115,8 @@
 </template>
 
 <script setup lang="ts">
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import { isEmpty } from 'lodash';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -115,7 +129,6 @@ import type { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import Panel from 'primevue/panel';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -340,5 +353,20 @@ ul {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
+}
+
+.comparison-overview {
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius-medium);
+	padding: var(--gap-small);
+}
+
+.subdued {
+	color: var(--text-color-secondary);
+}
+
+.diagram {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 }
 </style>
