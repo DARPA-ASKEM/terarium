@@ -8,18 +8,21 @@
 		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Panel header="Comparison overview" toggleable class="comparison-overview">
-					<template #togglericon="{ collapsed }">
-						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
-					</template>
-					<p v-if="llmAnswer">{{ llmAnswer }}</p>
-					<template v-else>
-						<Vue3Lottie :animationData="LoadingWateringCan" :height="75" :width="75" class="mx-3" />
-						<p class="max-w-10rem">
-							Analyzing models metadata to generate a detailed comparison analysis...
-						</p>
-					</template>
-				</Panel>
+				<!-- LLM generated overview -->
+				<section class="comparison-overview">
+					<Accordion :activeIndex="0">
+						<AccordionTab header="Overview">
+							<p v-if="llmAnswer">{{ llmAnswer }}</p>
+							<template v-else>
+								<p class="subdued">
+									Analyzing models metadata to generate a detailed comparison analysis...
+								</p>
+							</template>
+						</AccordionTab>
+					</Accordion>
+				</section>
+
+				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
@@ -34,7 +37,12 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram :model="model" :is-editable="false" is-preview />
+									<tera-model-diagram
+										:model="model"
+										:is-editable="false"
+										is-preview
+										class="diagram"
+									/>
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -98,6 +106,8 @@
 </template>
 
 <script setup lang="ts">
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
@@ -109,13 +119,10 @@ import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import Panel from 'primevue/panel';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import { Vue3Lottie } from 'vue3-lottie';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -323,35 +330,17 @@ table {
 }
 
 .comparison-overview {
-	border: 1px solid var(--primary-color-light);
+	border: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
-	margin: 0 var(--gap-small);
+	padding: var(--gap-small);
+}
 
-	& :deep(.p-panel-header) {
-		background-color: var(--surface-highlight);
-		border-radius: var(--border-radius-medium);
-		padding: var(--gap-xsmall) var(--gap-small) var(--gap-xsmall) var(--gap);
-	}
+.subdued {
+	color: var(--text-color-secondary);
+}
 
-	/* Make the panel header bottom radius flat when the content is open */
-
-	& :deep(.p-panel-header:has(+ .p-toggleable-content:not([style*='none']))) {
-		border-radius: var(--border-radius-medium) var(--border-radius-medium) 0 0;
-	}
-
-	& :deep(.p-panel-title) {
-		color: var(--primary-color);
-		font-weight: var(--font-weight-semibold);
-		font-size: var(--font-body-medium);
-	}
-
-	& :deep(.p-panel-content) {
-		background-color: var(--surface-secondary);
-		border-radius: var(--border-radius-medium);
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		padding: var(--gap);
-	}
+.diagram {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 }
 </style>
