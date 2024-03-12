@@ -49,10 +49,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
+import software.uncharted.terarium.hmiserver.proxies.cosmos.CosmosProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -73,6 +75,7 @@ public class KnowledgeController {
 
 	final SkemaUnifiedProxy skemaUnifiedProxy;
 	final MitProxy mitProxy;
+	final CosmosProxy cosmosProxy;
 
 	final DocumentAssetService documentService;
 	final ModelService modelService;
@@ -83,7 +86,7 @@ public class KnowledgeController {
 	final ExtractionProxy extractionProxy;
 
 	@Value("${mit-openai-api-key:}")
-	final String MIT_OPENAI_API_KEY;
+	String MIT_OPENAI_API_KEY;
 
 	/**
 	 * Retrieve the status of an extraction job
@@ -256,29 +259,6 @@ public class KnowledgeController {
 	}
 
 	/**
-	 * Post a PDF to the extraction service to get text
-	 *
-	 * @param documentId (String): The ID of the document to extract text from
-	 * @return response status of queueing this operation
-	 */
-	@PostMapping("/pdf-to-cosmos")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> postPDFToCosmos(@RequestParam("document_id") final UUID documentId) {
-
-		try {
-			final JsonNode node = knowledgeMiddlewareProxy.postPDFToCosmos(documentId.toString()).getBody();
-
-			return ResponseEntity.ok(node);
-		} catch (final Exception e) {
-			final String error = "Unable to create provenance";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
-		}
-	}
-
-	/**
 	 * Profile a model
 	 *
 	 * @param modelId    (String): The ID of the model to profile
@@ -337,11 +317,10 @@ public class KnowledgeController {
 	@PostMapping("/link-amr")
 	@Secured(Roles.USER)
 	public ResponseEntity<Model> postLinkAmr(
-			@RequestParam("document_id") final UUID documentId,
-			@RequestParam("model_id") final UUID modelId) {
+			@RequestParam("document-id") final UUID documentId,
+			@RequestParam("model-id") final UUID modelId) {
 
 		try {
-
 			final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
 
 			final Model model = modelService.getAsset(modelId).orElseThrow();
@@ -384,11 +363,11 @@ public class KnowledgeController {
 		}
 	}
 
-	@PostMapping("/variable-extractions-skema")
-	ResponseEntity<DocumentAsset> postPDFExtractions(
-			@RequestParam("document_id") final UUID documentId,
-			@RequestParam(name = "annotate_skema", defaultValue = "true") final Boolean annotateSkema,
-			@RequestParam(name = "annotate_mit", defaultValue = "true") final Boolean annotateMIT,
+	@PostMapping("/variable-extractions")
+	ResponseEntity<DocumentAsset> postPdfExtractions(
+			@RequestParam("document-id") final UUID documentId,
+			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
+			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
 		try {
 
@@ -396,7 +375,7 @@ public class KnowledgeController {
 
 			if (document.getText() == null || document.getText().isEmpty()) {
 				throw new RuntimeException(
-						"No text found in paper document, please ensure to submit to /pdf-extraction endpoint.");
+						"No text found in paper document, please ensure to submit to /variable-extractions endpoint.");
 			}
 
 			final List<JsonNode> collections = new ArrayList<>();
@@ -405,9 +384,7 @@ public class KnowledgeController {
 
 			// Send document to SKEMA
 			try {
-
-				final ObjectNode body = mapper.createObjectNode();
-				body.put("text", document.getText());
+				final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText());
 
 				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
 						annotateSkema, body);
@@ -436,10 +413,9 @@ public class KnowledgeController {
 				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
 						"application/text");
 
-				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, file);
+				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
 
-				if (resp.getStatusCode().is2xxSuccessful()) {
-
+				if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
 					mitCollection = resp.getBody();
 					collections.add(mitCollection);
 				} else {
@@ -507,6 +483,35 @@ public class KnowledgeController {
 
 		} catch (final IOException e) {
 			final String error = "Unable to get required assets";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
+	@PostMapping("/pdf-to-cosmos")
+	@Secured(Roles.USER)
+	public ResponseEntity<DocumentAsset> postPDFToCosmos(
+			@RequestParam("document-id") final UUID documentId) {
+
+		try {
+
+			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+
+			if (document.getFileNames().isEmpty()) {
+				throw new RuntimeException("No files found on document");
+			}
+
+			// TODO: cosmos stuff
+
+			// update the document
+			document = documentService.updateAsset(document).orElseThrow();
+
+			return ResponseEntity.ok(document);
+
+		} catch (final Exception e) {
+			final String error = "Unable to extract pdf";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,

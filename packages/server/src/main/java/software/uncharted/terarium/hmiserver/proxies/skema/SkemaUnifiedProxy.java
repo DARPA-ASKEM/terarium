@@ -1,5 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import lombok.Data;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 @FeignClient(name = "skema-unified", url = "${skema-unified.url}")
@@ -35,10 +39,20 @@ public interface SkemaUnifiedProxy {
 			@RequestPart(value = "amr_file") MultipartFile amrFile,
 			@RequestPart(value = "text_extractions_file") MultipartFile extractionsFile);
 
+	@Data
+	public static class IntegratedTextExtractionsBody {
+
+		public IntegratedTextExtractionsBody(final String text) {
+			this.texts = Arrays.asList(text);
+		}
+
+		final List<String> texts;
+	}
+
 	@PostMapping("/text-reading/integrated-text-extractions")
 	ResponseEntity<JsonNode> integratedTextExtractions(
 			@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
 			@RequestParam(value = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
-			@RequestBody JsonNode body);
+			@RequestBody IntegratedTextExtractionsBody body);
 
 }

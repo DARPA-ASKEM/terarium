@@ -12,15 +12,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 @FeignClient(name = "mit", url = "${mit-proxy.url}")
 public interface MitProxy {
 
-	@PostMapping("/integration/get_mapping")
+	@PostMapping(value = "/integration/get_mapping", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> getMapping(
 			@RequestParam("gpt_key") final String gptKey,
 			@RequestParam("kg_domain") final String kgDomain,
 			@RequestPart(value = "mit_file") MultipartFile mitFile,
 			@RequestPart(value = "arizona_file") MultipartFile arizonaFile);
 
-	@PostMapping("/annotation/upload_file_extract")
+	@PostMapping(value = "/annotation/upload_file_extract", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> uploadFileExtract(
 			@RequestParam("gpt_key") final String gptKey,
+			@RequestParam("kg_domain") final String kgDomain,
 			@RequestPart(value = "file") MultipartFile file);
 }
