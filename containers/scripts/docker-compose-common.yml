@@ -124,7 +124,7 @@ services:
 
   spicedb:
     container_name: spicedb
-    image: authzed/spicedb:v1.29.2
+    image: authzed/spicedb:v1.29.5
     networks:
       - terarium
     ports:
@@ -148,7 +148,7 @@ services:
 
   migrate-spicedb:
     container_name: migrate-spicedb
-    image: authzed/spicedb:v1.29.2
+    image: authzed/spicedb:v1.29.5
     networks:
       - terarium
     command: [ "migrate", "head" ]
