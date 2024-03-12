@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr && isKernelReady"
@@ -10,7 +16,7 @@
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
-			<tera-drilldown-section id="notebook-section">
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
 					<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
 					<Button
@@ -103,6 +109,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -352,7 +359,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* The wizard of this operator is atypical and needs the outside margins to be removed */
+/* The wizard of this operator is atypical and needs the outside margins to be removed
+	TODO: This case should be handled in the tera-drilldown component or something as it messes with the padding in the notebook tab */
 .overlay-container:deep(main) {
 	padding: 0 0 0 0;
 }
@@ -366,9 +374,12 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-#notebook-section:deep(main) {
+.notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+	/** TODO: Temporary solution, should be using the default overlay-container padding
+	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
+	margin-left: 1.5rem;
 }
 
 .toolbar-right-side {
