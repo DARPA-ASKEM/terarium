@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.MetadataIntervention;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -45,7 +46,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private Map<String, Object> timeseries;
 
 	/* Link user input string `source` to a parameter/variables of a model. */
-	@TSOptional 
+	@TSOptional
 	private Map<String, Object> sources;
 
 	@TSOptional
@@ -61,4 +62,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	@JsonProperty("templateCard")
 	private Object templateCard;
+
+	@TSOptional
+	private List<MetadataIntervention> interventions;
 }

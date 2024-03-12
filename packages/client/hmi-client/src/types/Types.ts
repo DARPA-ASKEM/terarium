@@ -933,6 +933,7 @@ export interface ModelMetadata {
     sources?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
+    interventions?: MetadataIntervention[];
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
@@ -1078,6 +1079,14 @@ export interface Card {
     license?: string;
     assumptions?: string;
     strengths?: string;
+}
+
+export interface MetadataIntervention {
+    name: string;
+    type: string;
+    target: string;
+    value: string;
+    startTime: string;
 }
 
 export interface VariableStatement {
