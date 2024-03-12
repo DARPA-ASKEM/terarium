@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 @Component
 @RequiredArgsConstructor
@@ -18,7 +17,6 @@ public class AMRToMMTResponseHandler extends TaskResponseHandler {
 	final static public String NAME = "mira_task:amr_to_mmt";
 
 	final private ObjectMapper objectMapper;
-	final private ModelService modelService;
 
 	@Override
 	public String getName() {
@@ -35,8 +33,6 @@ public class AMRToMMTResponseHandler extends TaskResponseHandler {
 		try {
 			final Response modelResp = objectMapper.readValue(resp.getOutput(), Response.class);
 			resp.setOutput(modelResp.getResponse().getBytes());
-			// final Model model = modelService.createAsset(modelResp.getResponse());
-			// resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);
 			throw new RuntimeException(e);
