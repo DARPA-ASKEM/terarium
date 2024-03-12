@@ -69,7 +69,9 @@
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="Tabs.Notebook">
-			<tera-drilldown-section>
+			<!--TODO: The notebook input and buttons works well here, but it the html/css
+				organization should be refactored here (same for tera-model-edit)-->
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
 					<Button
 						icon="pi pi-play"
@@ -80,14 +82,10 @@
 						@click="runCode"
 					/>
 				</div>
-				<Dropdown
-					:editable="true"
-					:disabled="!isKernelReady"
-					class="input"
-					v-model="beakerQuestion"
-					type="text"
-					:placeholder="!isKernelReady ? 'Please wait...' : 'What would you like to compare?'"
-					@keydown.enter="submitBeakerQuestion"
+				<tera-notebook-jupyter-input
+					:kernelManager="kernelManager"
+					:defaultOptions="sampleAgentQuestions"
+					@llm-output="appendCode"
 				/>
 				<v-ace-editor
 					v-model:value="code"
@@ -99,6 +97,19 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
+			<tera-drilldown-preview>
+				<tera-progress-spinner
+					v-if="isLoadingStructuralComparisons && isEmpty(structuralComparisons)"
+					is-centered
+					:font-size="3"
+				/>
+				<ul>
+					<li v-for="(image, index) in structuralComparisons" :key="index">
+						<label>Comparison {{ index + 1 }}</label>
+						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
+					</li>
+				</ul>
+			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
 </template>
@@ -106,8 +117,10 @@
 <script setup lang="ts">
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import { isEmpty } from 'lodash';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -121,6 +134,9 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import Image from 'primevue/image';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -135,14 +151,19 @@ enum Tabs {
 }
 
 let editor: VAceEditorInstance['_editor'] | null;
+const kernelManager = new KernelSessionManager();
+const sampleAgentQuestions = [
+	'Compare the three models and visualize and display them.',
+	'Compare the two models and visualize and display them.'
+];
 
-// const gollmQuestion = ref('');
-const beakerQuestion = ref('');
-const llmThoughts = ref<string[]>([]);
+const isLoadingStructuralComparisons = ref(false);
+const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref('');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
+
 const modelCardsToCompare = computed(() =>
 	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
 );
@@ -154,8 +175,6 @@ const fields = computed(
 );
 const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
-const kernelManager = new KernelSessionManager();
-
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
@@ -164,7 +183,12 @@ async function addModelForComparison(modelId: Model['id']) {
 	if (!modelId) return;
 	const model = await getModel(modelId);
 	if (model) modelsToCompare.value.push(model);
-	// if (modelsToCompare.value.length === 3) buildJupyterContext();
+	if (
+		modelsToCompare.value.length === props.node.inputs.length - 1 &&
+		modelsToCompare.value.length > 1
+	) {
+		buildJupyterContext();
+	}
 }
 
 function formatField(field: string) {
@@ -188,38 +212,24 @@ function runCode() {
 		stop_on_error: false,
 		code: editor?.getValue() as string
 	};
+	isLoadingStructuralComparisons.value = true;
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
-		.register('execute_input', (data) => {
-			console.log(data);
-		})
-		.register('stream', (data) => {
-			console.log('stream', data);
-		})
 		.register('display_data', (data) => {
-			console.log(data);
+			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
+			isLoadingStructuralComparisons.value = false;
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
+			isLoadingStructuralComparisons.value = false;
 		});
 }
 
-function submitBeakerQuestion() {
-	console.log(beakerQuestion.value);
-	kernelManager
-		.sendMessage('llm_request', {
-			request: beakerQuestion.value
-		})
-		.register('llm_thought', (d) => {
-			console.log(d.content);
-			llmThoughts.value.push(d.content.thought);
-		})
-		.register('code_cell', (d) => {
-			console.log(d);
-			code.value = d.content.code;
-		});
+function appendCode(data: any) {
+	const newCode = data.content.code;
+	if (newCode) code.value = newCode;
+	else logger.error('No code to append');
 }
 
 function processCompareModels(modelIds) {
@@ -228,41 +238,33 @@ function processCompareModels(modelIds) {
 	});
 }
 
-// async function buildJupyterContext() {
-// 	if (modelsToCompare.value.length < 3) {
-// 		logger.warn('Cannot build Jupyter context without models');
-// 		return;
-// 	}
-//
-// 	console.log({
-// 		models: modelsToCompare.value.map((model, index) => ({
-// 			model_id: model.id,
-// 			name: `model_${index + 1}`
-// 		}))
-// 	});
-//
-// 	try {
-// 		const jupyterContext = {
-// 			context: 'mira',
-// 			language: 'python3',
-// 			context_info: {
-// 				models: modelsToCompare.value.map((model, index) => ({
-// 					model_id: model.id,
-// 					name: `model_${index + 1}`
-// 				}))
-// 			}
-// 		};
-// 		if (jupyterContext) {
-// 			if (kernelManager.jupyterSession !== null) {
-// 				kernelManager.shutdown();
-// 			}
-// 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-// 			isKernelReady.value = true;
-// 		}
-// 	} catch (error) {
-// 		logger.error(`Error initializing Jupyter session: ${error}`);
-// 	}
-// }
+async function buildJupyterContext() {
+	if (modelsToCompare.value.length < 2) {
+		logger.warn('Cannot build Jupyter context without models');
+		return;
+	}
+	try {
+		const jupyterContext = {
+			context: 'mira',
+			language: 'python3',
+			context_info: {
+				models: modelsToCompare.value.map((model, index) => ({
+					model_id: model.id,
+					name: `model_${index + 1}`
+				}))
+			}
+		};
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+			isKernelReady.value = true;
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
+}
 
 onMounted(async () => {
 	props.node.inputs.forEach((input) => {
@@ -322,9 +324,36 @@ table {
 	text-indent: 30px;
 }
 
-.toolbar-right-side {
+ul {
 	display: flex;
-	justify-content: right;
+	flex-direction: column;
+	gap: var(--gap);
+
+	& > li {
+		display: flex;
+		flex-direction: column;
+		gap: var(--gap-xsmall);
+
+		& > span {
+			width: fit-content;
+			margin-right: calc(var(--gap-xxlarge) * 3);
+		}
+	}
+}
+
+/* TODO: Improve this pattern later same in (tera-model-input) */
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
 }
 
 .comparison-overview {
