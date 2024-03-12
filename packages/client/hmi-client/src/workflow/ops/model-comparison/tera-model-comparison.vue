@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -144,9 +144,9 @@ const sampleAgentQuestions = [
 ];
 
 const isLoadingStructuralComparisons = ref(false);
-const structuralComparisons = ref<string[]>([]);
+const structuralComparisons = ref(props.node.state.structuralComparisons);
 const llmAnswer = ref('');
-const code = ref('');
+const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 
@@ -189,6 +189,29 @@ function formatField(field: string) {
 // 	console.log(gollmQuestion.value);
 // }
 
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
+const saveCodeToState = (hasCodeRun: boolean) => {
+	const state = cloneDeep(props.node.state);
+	state.hasCodeRun = hasCodeRun;
+
+	// for now only save the last code executed, may want to save all code executed in the future
+	const notebookHistoryLength = props.node.state.notebookHistory.length;
+	const timestamp = Date.now();
+	if (notebookHistoryLength > 0) {
+		state.notebookHistory[0] = { code: code.value, timestamp };
+	} else {
+		state.notebookHistory.push({ code: code.value, timestamp });
+	}
+	return state;
+};
+
+function saveState() {
+	const state = saveCodeToState(code.value, true);
+	state.structuralComparisons = structuralComparisons.value;
+	console.log(state);
+	emit('update-state', state);
+}
+
 function runCode() {
 	const messageContent = {
 		silent: false,
@@ -205,6 +228,7 @@ function runCode() {
 		.register('display_data', (data) => {
 			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
 			isLoadingStructuralComparisons.value = false;
+			saveState();
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
@@ -253,6 +277,7 @@ async function buildJupyterContext() {
 }
 
 onMounted(async () => {
+	console.log(props.node.state);
 	props.node.inputs.forEach((input) => {
 		if (input.value) {
 			addModelForComparison(input.value[0]);

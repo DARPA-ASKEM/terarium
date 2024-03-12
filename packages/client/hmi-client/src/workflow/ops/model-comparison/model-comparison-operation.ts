@@ -1,6 +1,15 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
-export interface ModelComparisonOperationState {}
+export interface NotebookHistory {
+	code: string;
+	timestamp: number;
+}
+
+export interface ModelComparisonOperationState {
+	notebookHistory: NotebookHistory[];
+	hasCodeRun: boolean;
+	structuralComparisons: string[];
+}
 
 export const ModelComparisonOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_COMPARISON,
@@ -14,7 +23,11 @@ export const ModelComparisonOperation: Operation = {
 	isRunnable: true,
 	action: () => {},
 	initState: () => {
-		const init: ModelComparisonOperationState = {};
+		const init: ModelComparisonOperationState = {
+			notebookHistory: [],
+			hasCodeBeenRun: false,
+			structuralComparisons: []
+		};
 		return init;
 	}
 };
