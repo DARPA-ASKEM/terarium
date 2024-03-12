@@ -2,11 +2,30 @@
 	<Card v-if="project">
 		<template #content>
 			<header>
-				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span
-				><span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
-				<span title="Datasets"
-					><dataset-icon fill="var(--text-color-secondary)" /> {{ stats?.datasets }}</span
-				><span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
+				<div
+					class="flex align-items-center gap-1"
+					v-tooltip.top="`${stats?.contributors} contributors`"
+				>
+					<i class="pi pi-user" /> {{ stats?.contributors }}
+				</div>
+				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.papers} papers`">
+					<i class="pi pi-file" /> {{ stats?.papers }}
+				</div>
+				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.datasets} datasets`">
+					<dataset-icon fill="var(--text-color-secondary)" /> {{ stats?.datasets }}
+				</div>
+				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.models} models`">
+					<i class="pi pi-share-alt" /> {{ stats?.models }}
+				</div>
+				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.workflows} workflows`">
+					<vue-feather
+						class="p-button-icon-left"
+						type="git-merge"
+						size="1.25rem"
+						stroke="var(--text-color-secondary)"
+					/>
+					{{ stats?.workflows }}
+				</div>
 			</header>
 			<div class="img">
 				<img :src="image" alt="Artistic representation of the Project statistics" />
@@ -88,9 +107,10 @@ const stats = computed(() =>
 		? null
 		: {
 				contributors: parseInt(props.project?.metadata?.['contributor-count'] ?? '1', 10),
-				papers: parseInt(props.project?.metadata?.['publications-count'] ?? '0', 10),
+				papers: parseInt(props.project?.metadata?.['document-count'] ?? '0', 10),
 				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
-				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10)
+				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10),
+				workflows: parseInt(props.project?.metadata?.['workflows-count'] ?? '0', 10)
 			}
 );
 
