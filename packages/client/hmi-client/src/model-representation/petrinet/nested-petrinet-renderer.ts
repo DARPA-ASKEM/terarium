@@ -211,6 +211,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
+				if (!this.graph.amr) return '';
 				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
 				if (rate) {
 					return rate.expression;

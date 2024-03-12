@@ -21,20 +21,85 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import _ from 'lodash';
 import BasicRenderer from 'graph-scaffolder/src/core/basic-renderer';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import * as amrExample from '@/examples/sir.json';
-import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
+// import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
+import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
+// import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
+// import * as amrExample from '@/examples/sir.json';
+// import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+
+import { onMounted, ref, watch } from 'vue';
+import * as mmtExample from '@/examples/mmt.json';
+import {
+	collapseTemplates,
+	converToIGraph,
+	getContextKeys
+} from '@/model-representation/mira/mira';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
 const strataType = ref<string | null>(null);
 const isCollapse = ref(true);
 
+let renderer: BasicRenderer<any, any>;
+
 onMounted(async () => {
+	jsonStr.value = JSON.stringify(mmtExample, null, 2);
+
+	watch(
+		() => jsonStr.value,
+		async () => {
+			const jsonData = JSON.parse(jsonStr.value);
+			const collapsedTemplates = collapseTemplates(jsonData);
+			console.log('collapsed template', collapsedTemplates);
+
+			const dims = getContextKeys(jsonData);
+			console.log('dimensions', dims);
+
+			const graphData = converToIGraph(collapsedTemplates);
+			console.log('graphData', graphData);
+
+			// Testing
+			const processedSet = new Set<string>();
+			const conceptData: any = [];
+			jsonData.templates.forEach((t) => {
+				['subject', 'outcome', 'controller'].forEach((conceptKey) => {
+					if (!t[conceptKey]) return;
+					const conceptName = t[conceptKey].name;
+					if (processedSet.has(conceptName)) return;
+					conceptData.push({
+						// FIXME: use reverse-lookup to get root concept
+						base: _.first(conceptName.split('_')),
+						...t[conceptKey].context
+					});
+
+					processedSet.add(conceptName);
+				});
+			});
+
+			dims.unshift('base');
+			const nestedMap = extractNestedStratas(conceptData, dims);
+			// console.log(nestedMap);
+
+			renderer = new NestedPetrinetRenderer({
+				el: graphElement.value as HTMLDivElement,
+				useAStarRouting: false,
+				useStableZoomPan: true,
+				runLayout: runDagreLayout,
+				dims: dims,
+				nestedMap: nestedMap
+			});
+			await renderer.setData(graphData);
+			renderer.isGraphDirty = true;
+			renderer.render();
+		},
+		{ immediate: true }
+	);
+
+	/*
 	jsonStr.value = JSON.stringify(amrExample, null, 2);
 
 	watch(
@@ -65,5 +130,6 @@ onMounted(async () => {
 		},
 		{ immediate: true }
 	);
+	*/
 });
 </script>
