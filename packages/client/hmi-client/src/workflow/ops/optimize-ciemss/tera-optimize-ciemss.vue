@@ -546,11 +546,13 @@ const saveModelConfiguration = async () => {
 	const state = _.cloneDeep(props.node.state);
 
 	const tempModel = modelConfiguration.value.configuration as Model;
-	tempModel.metadata = tempModel.metadata || {};
-	tempModel.metadata.interventions = tempModel.metadata.interventions || [];
-
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
 		// get value from results.
+		// NOTE: Results is currently failing with multiple policy bounds.
+		// This will need updating when that is fixed.
+		tempModel.metadata = tempModel.metadata || {};
+		tempModel.metadata.interventions = tempModel.metadata.interventions || [];
+
 		const value = optimizationResult.value.x as string;
 		tempModel.metadata.interventions.push({
 			name: ele.name,
