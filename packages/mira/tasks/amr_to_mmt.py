@@ -27,10 +27,10 @@ def main():
             subject = None
             outcome = None
 
-            if "subject" in tm:
+            if hasattr(tm, 'subject'):
                 subject = tm.subject.name
 
-            if "outcome" in tm:
+            if hasattr(tm, "outcome"):
                 outcome = tm.outcome.name
 
             controllers = [x.name for x in tm.get_controllers()]
