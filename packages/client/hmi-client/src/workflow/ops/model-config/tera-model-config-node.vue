@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!node.inputs[0].value" :operation-type="node.operationType">
 			Attach a model
 		</tera-operator-placeholder>
 		<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
