@@ -129,7 +129,6 @@ import type { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
