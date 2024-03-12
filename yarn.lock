@@ -7205,10 +7205,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"extended-eventsource@npm:1.4.5":
-  version: 1.4.5
-  resolution: "extended-eventsource@npm:1.4.5"
-  checksum: c264f3c0aa523a92eb472de1573be2233519e2d52438f75c09614cd608e57f27d2967e348b2effd8a567b932f600156fcc79f565a0d660bc5ef7d68a2e4f9c57
+"extended-eventsource@npm:1.4.6":
+  version: 1.4.6
+  resolution: "extended-eventsource@npm:1.4.6"
+  checksum: ceec25589f6575bb49193c820d68a6f766e54f483dfe1d4e231b84a29397f317784c44a787ce7ec6013fd3883c84ca600b8afadffe3c5ca549b178ad5899235e
   languageName: node
   linkType: hard
 
@@ -8182,7 +8182,7 @@ __metadata:
     dagre: "npm:0.8.5"
     eslint-import-resolver-typescript: "npm:3.6.1"
     event-source-polyfill: "npm:1.0.31"
-    extended-eventsource: "npm:1.4.5"
+    extended-eventsource: "npm:1.4.6"
     feather-icons: "npm:4.29.1"
     graph-scaffolder: "npm:*"
     katex: "npm:0.16.9"
