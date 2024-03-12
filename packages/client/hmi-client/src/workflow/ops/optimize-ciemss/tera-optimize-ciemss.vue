@@ -464,11 +464,11 @@ const runOptimize = async () => {
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
 
-	for (let i = 0; i < optimizeInterventions.length; i++) {
-		if (policyResult.value?.at(i)) {
+	for (let i = 0; i < optimizeInterventions.paramNames.length; i++) {
+		if (policyResult.value?.at(i) && optimizeInterventions.startTimes?.[i]) {
 			simulationIntervetions.push({
-				name: optimizeInterventions[i].name,
-				timestep: optimizeInterventions[i].timestep,
+				name: optimizeInterventions.paramNames[i],
+				timestep: optimizeInterventions.startTimes[i],
 				value: policyResult.value[i]
 			});
 		}
