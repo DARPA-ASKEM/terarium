@@ -116,17 +116,18 @@ const descriptionLines = computed(() => {
 	return 7;
 });
 
-const stats = computed(() =>
-	!props.project
-		? null
-		: {
-				contributors: parseInt(props.project?.metadata?.['contributor-count'] ?? '1', 10),
-				papers: parseInt(props.project?.metadata?.['document-count'] ?? '0', 10),
-				datasets: parseInt(props.project?.metadata?.['datasets-count'] ?? '0', 10),
-				models: parseInt(props.project?.metadata?.['models-count'] ?? '0', 10),
-				workflows: parseInt(props.project?.metadata?.['workflows-count'] ?? '0', 10)
-			}
-);
+const stats = computed(() => {
+	const metadata = props.project?.metadata;
+	if (!props.project || !metadata) return null;
+
+	return {
+		contributors: parseInt(metadata['contributor-count'] ?? '1', 10),
+		papers: parseInt(metadata['document-count'] ?? '0', 10),
+		datasets: parseInt(metadata['datasets-count'] ?? '0', 10),
+		models: parseInt(metadata['models-count'] ?? '0', 10),
+		workflows: parseInt(metadata['workflows-count'] ?? '0', 10)
+	};
+});
 
 const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
 </script>
