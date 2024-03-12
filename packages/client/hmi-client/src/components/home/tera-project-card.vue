@@ -4,20 +4,34 @@
 			<header>
 				<div
 					class="flex align-items-center gap-1"
-					v-tooltip.top="`${stats?.contributors} contributors`"
+					v-tooltip.top="
+						`${stats?.contributors} contributor${stats?.contributors === 1 ? '' : 's'}`
+					"
 				>
 					<i class="pi pi-user" /> {{ stats?.contributors }}
 				</div>
-				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.papers} papers`">
+				<div
+					class="flex align-items-center gap-1"
+					v-tooltip.top="`${stats?.papers} paper${stats?.papers === 1 ? '' : 's'}`"
+				>
 					<i class="pi pi-file" /> {{ stats?.papers }}
 				</div>
-				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.datasets} datasets`">
+				<div
+					class="flex align-items-center gap-1"
+					v-tooltip.top="`${stats?.datasets} dataset${stats?.datasets === 1 ? '' : 's'}`"
+				>
 					<dataset-icon fill="var(--text-color-secondary)" /> {{ stats?.datasets }}
 				</div>
-				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.models} models`">
+				<div
+					class="flex align-items-center gap-1"
+					v-tooltip.top="`${stats?.models} model${stats?.models === 1 ? '' : 's'}`"
+				>
 					<i class="pi pi-share-alt" /> {{ stats?.models }}
 				</div>
-				<div class="flex align-items-center gap-1" v-tooltip.top="`${stats?.workflows} workflows`">
+				<div
+					class="flex align-items-center gap-1"
+					v-tooltip.top="`${stats?.workflows} workflow${stats?.workflows === 1 ? '' : 's'}`"
+				>
 					<vue-feather
 						class="p-button-icon-left"
 						type="git-merge"
