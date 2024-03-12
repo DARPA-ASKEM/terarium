@@ -13,11 +13,9 @@
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
 							<p v-if="llmAnswer">{{ llmAnswer }}</p>
-							<template v-else>
-								<p class="subdued">
-									Analyzing models metadata to generate a detailed comparison analysis...
-								</p>
-							</template>
+							<p v-else class="subdued">
+								Analyzing models metadata to generate a detailed comparison analysis...
+							</p>
 						</AccordionTab>
 					</Accordion>
 				</section>
