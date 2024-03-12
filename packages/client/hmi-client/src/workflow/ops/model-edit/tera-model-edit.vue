@@ -317,6 +317,7 @@ const initializeAceEditor = (editorInstance: any) => {
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
+	console.log(state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 
 	// for now only save the last code executed, may want to save all code executed in the future

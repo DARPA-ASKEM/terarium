@@ -144,7 +144,7 @@ const sampleAgentQuestions = [
 ];
 
 const isLoadingStructuralComparisons = ref(false);
-const structuralComparisons = ref(props.node.state.structuralComparisons);
+const structuralComparisons = ref(props.node.state.structuralComparisons ?? []);
 const llmAnswer = ref('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const isKernelReady = ref(false);
@@ -193,9 +193,9 @@ function formatField(field: string) {
 const saveCodeToState = (hasCodeRun: boolean) => {
 	const state = cloneDeep(props.node.state);
 	state.hasCodeRun = hasCodeRun;
-
+	console.log(state);
 	// for now only save the last code executed, may want to save all code executed in the future
-	const notebookHistoryLength = props.node.state.notebookHistory.length;
+	const notebookHistoryLength = props.node.state.notebookHistory?.length ?? 0;
 	const timestamp = Date.now();
 	if (notebookHistoryLength > 0) {
 		state.notebookHistory[0] = { code: code.value, timestamp };
@@ -206,9 +206,8 @@ const saveCodeToState = (hasCodeRun: boolean) => {
 };
 
 function saveState() {
-	const state = saveCodeToState(code.value, true);
+	const state = saveCodeToState(true);
 	state.structuralComparisons = structuralComparisons.value;
-	console.log(state);
 	emit('update-state', state);
 }
 
@@ -221,6 +220,7 @@ function runCode() {
 		stop_on_error: false,
 		code: editor?.getValue() as string
 	};
+	console.log(messageContent, structuralComparisons.value);
 	isLoadingStructuralComparisons.value = true;
 
 	kernelManager
@@ -277,7 +277,6 @@ async function buildJupyterContext() {
 }
 
 onMounted(async () => {
-	console.log(props.node.state);
 	props.node.inputs.forEach((input) => {
 		if (input.value) {
 			addModelForComparison(input.value[0]);
