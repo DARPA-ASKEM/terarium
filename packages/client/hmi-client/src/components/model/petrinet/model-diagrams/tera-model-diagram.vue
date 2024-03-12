@@ -95,6 +95,7 @@ import {
 	NodeType
 } from '@/model-representation/petrinet/petrinet-renderer';
 import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
@@ -103,7 +104,8 @@ import SelectButton from 'primevue/selectbutton';
 import { AMRSchemaNames } from '@/types/common';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getModelType } from '@/services/model';
+import { MiraModel } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
@@ -114,7 +116,7 @@ const props = defineProps<{
 	isPreview?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-configuration']);
+const emit = defineEmits(['update-configuration']);
 
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
@@ -128,6 +130,7 @@ const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const templatePreview = ref('');
 const isGeneratingModelPreview = ref(false);
+const mmt = ref<MiraModel>(emptyMiraModel());
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -140,33 +143,23 @@ const stratifiedViewOptions = ref([
 	{ value: StratifiedView.Collapsed }
 ]);
 
-// Is this going to consistently have an option to switch from diagram to equation if not the toggle should be somewherlse
-// enum
-
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-async function renderGraph(updatedModel: Model | null = null) {
-	const modelToRender = updatedModel ?? props.model;
-
+async function renderGraph() {
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = getGraphData(modelToRender, isCollapsed.value);
+	const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
 	// Render graph
 	if (renderer) {
 		renderer.isGraphDirty = true;
 		await renderer.setData(graphData);
 		await renderer.render();
-
-		if (updatedModel) {
-			emit('update-model', renderer.graph.amr);
-		}
 	}
 }
-defineExpose({ renderGraph });
 
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
@@ -221,12 +214,15 @@ const updateLayout = () => {
 };
 const handleResize = () => updateLayout();
 
-onMounted(() => {
+onMounted(async () => {
 	window.addEventListener('resize', handleResize);
 	handleResize();
 	if (modelType.value === AMRSchemaNames.REGNET || modelType.value === AMRSchemaNames.STOCKFLOW) {
 		generateTemplatePreview();
 	}
+
+	mmt.value = (await getMMT(props.model)).mmt;
+	console.log('!!!!!!!', mmt.value);
 });
 
 onUnmounted(() => {

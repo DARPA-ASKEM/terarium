@@ -7,6 +7,18 @@ import {
 } from './mira-util';
 import type { MiraModel, MiraTemplateParams, TemplateSummary } from './mira-common';
 
+export const emptyMiraModel = () => {
+	const newModel: MiraModel = {
+		templates: [],
+		parameters: {},
+		initials: {},
+		observables: {},
+		annotations: {},
+		time: {}
+	};
+	return newModel;
+};
+
 /**
  * Collection of MMT related functions
  * */
@@ -30,6 +42,11 @@ export const getContextKeys = (miraModel: MiraModel) => {
 		}
 	});
 	return [...modifierKeys];
+};
+
+export const isStratifiedModel = (miraModel: MiraModel) => {
+	const keys = getContextKeys(miraModel);
+	return keys.length > 0;
 };
 
 /**
