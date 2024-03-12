@@ -14,13 +14,13 @@ export const getContextKeys = (miraModel: MiraModel) => {
 	const modifierKeys = new Set<string>();
 
 	miraModel.templates.forEach((t) => {
-		if (t.subject && t.subject.context) {
+		if (t.subject?.context) {
 			Object.keys(t.subject.context).forEach((key) => modifierKeys.add(key));
 		}
-		if (t.outcome && t.outcome.context) {
+		if (t.outcome?.context) {
 			Object.keys(t.outcome.context).forEach((key) => modifierKeys.add(key));
 		}
-		if (t.controller && t.controller.context) {
+		if (t.controller?.context) {
 			Object.keys(t.controller.context).forEach((key) => modifierKeys.add(key));
 		}
 		if (t.controllers && t.controllers.length > 0) {
