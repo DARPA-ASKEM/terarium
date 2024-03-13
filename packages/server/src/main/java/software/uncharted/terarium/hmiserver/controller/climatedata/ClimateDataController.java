@@ -66,23 +66,23 @@ public class ClimateDataController {
 		return ResponseEntity.accepted().build();
 	}
 
-	@GetMapping("/subset-esgf/{datasetId}")
+	@GetMapping("/subset-esgf/{esgfId}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> subsetEsgf(@PathVariable final String datasetId,
+	public ResponseEntity<JsonNode> subsetEsgf(@PathVariable final String esgfId,
 																						 @RequestParam(value = "parent-dataset-id", required = false) final UUID parentDatasetId,
 																						 @RequestParam(value = "timestamps", required = false) final String timestamps,
 																						 @RequestParam(value = "envelope") final String envelope,
 																						 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
-		final JsonNode jsonNode = ClimateDataService.getSubsetJob(datasetId, envelope, timestamps, thinFactor);
+		final JsonNode jsonNode = ClimateDataService.getSubsetJob(esgfId, envelope, timestamps, thinFactor);
 		if (jsonNode != null) {
 			return ResponseEntity.ok().body(jsonNode);
 		}
 
-		final ResponseEntity<JsonNode> response = climateDataProxy.subsetEsgf(datasetId.toString(), parentDatasetId.toString(), timestamps, envelope, thinFactor);
+		final ResponseEntity<JsonNode> response = climateDataProxy.subsetEsgf(esgfId, parentDatasetId.toString(), timestamps, envelope, thinFactor);
 
 		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
-		climateDataService.addSubsetJob(datasetId, envelope, timestamps, thinFactor, climateDataResponse.getId());
+		climateDataService.addSubsetJob(esgfId, envelope, timestamps, thinFactor, climateDataResponse.getId());
 
 		return ResponseEntity.accepted().build();
 	}
