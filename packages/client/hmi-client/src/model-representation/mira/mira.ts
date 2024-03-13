@@ -158,6 +158,38 @@ export const collapseInitials = (miraModel: MiraModel) => {
 	return map;
 };
 
+export const rawTemplatesSummary = (miraModel: MiraModel) => {
+	const allTemplates: TemplateSummary[] = [];
+	miraModel.templates.forEach((t) => {
+		const summary: TemplateSummary = {
+			name: t.name,
+			subject: '',
+			outcome: '',
+			controllers: []
+		};
+
+		if (t.subject) {
+			summary.subject = t.subject.name;
+		}
+		if (t.outcome) {
+			summary.outcome = t.outcome.name;
+		}
+
+		// note controller and controllers are mutually exclusive
+		if (t.controller) {
+			summary.controllers.push(t.controller.name);
+		}
+		if (t.controllers && t.controllers.length > 0) {
+			t.controllers.forEach((miraConcept) => {
+				summary.controllers.push(miraConcept.name);
+			});
+			t.controllers.sort();
+		}
+		allTemplates.push(summary);
+	});
+	return allTemplates;
+};
+
 export const collapseTemplates = (miraModel: MiraModel) => {
 	const allTemplates: TemplateSummary[] = [];
 	const uniqueTemplates: TemplateSummary[] = [];

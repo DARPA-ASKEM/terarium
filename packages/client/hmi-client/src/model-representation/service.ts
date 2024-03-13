@@ -9,17 +9,18 @@ import { extractTemplateMatrix } from './mira/mira-util';
 
 export const getModelRenderer = (
 	miraModel: MiraModel,
-	graphElement: HTMLDivElement
+	graphElement: HTMLDivElement,
+	useNestedRenderer: boolean
 ): PetrinetRenderer | NestedPetrinetRenderer => {
 	// Debug start
 	console.group('mmt info');
 	console.log('# templates: ', miraModel.templates.length);
 	console.log('# parameters: ', Object.keys(miraModel.parameters).length);
-	if (isStratifiedModel(miraModel)) {
-		console.log('stratified model detected');
-		console.groupEnd();
-		// Debug end
+	console.log('stratified model: ', isStratifiedModel(miraModel));
+	console.groupEnd();
+	// Debug end
 
+	if (useNestedRenderer) {
 		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
 		const conceptData: any = [];

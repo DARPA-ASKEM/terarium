@@ -90,7 +90,8 @@ import {
 	isStratifiedModel,
 	emptyMiraModel,
 	converToIGraph,
-	collapseTemplates
+	collapseTemplates,
+	rawTemplatesSummary
 } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
@@ -132,12 +133,27 @@ const resetZoom = async () => {
 };
 
 async function renderGraph() {
-	// Convert petri net into a graph with raw input data
-	// const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 	const { templatesSummary } = collapseTemplates(mmt.value);
-	const graphData = converToIGraph(templatesSummary);
+	const rawTemplates = rawTemplatesSummary(mmt.value);
+
+	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
+		graphLegendLabels.value = renderer.dims;
+		graphLegendColors.value = renderer.depthColorList;
+	}
+
+	renderer.on('node-click', (_eventName, _event, selection) => {
+		const { id, type } = selection.datum();
+		if (type === NodeType.Transition) {
+			selectedTransitionId.value = id;
+			openValueConfig.value = true;
+		}
+	});
 
 	// Render graph
+	const graphData =
+		isCollapsed.value === true ? converToIGraph(templatesSummary) : converToIGraph(rawTemplates);
+
 	if (renderer) {
 		renderer.isGraphDirty = true;
 		await renderer.setData(graphData);
@@ -161,6 +177,9 @@ watch(
 
 		// FIXME: inefficient, do not constant call API in watch
 		mmt.value = (await getMMT(props.model)).mmt;
+
+		await renderGraph();
+		/*
 		const { templatesSummary } = collapseTemplates(mmt.value);
 		const graphData = converToIGraph(templatesSummary);
 
@@ -183,6 +202,7 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
+		*/
 	},
 	{ deep: true }
 );
