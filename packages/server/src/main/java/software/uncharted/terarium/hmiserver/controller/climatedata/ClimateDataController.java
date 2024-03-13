@@ -46,22 +46,22 @@ public class ClimateDataController {
 		return ResponseEntity.ok(datasets);
 	}
 
-	@GetMapping("/preview-esgf/{datasetId}")
+	@GetMapping("/preview-esgf/{esgfId}")
 	@Secured(Roles.USER)
-	public ResponseEntity<String> previewEsgf(@PathVariable final String datasetId,
+	public ResponseEntity<String> previewEsgf(@PathVariable final String esgfId,
 											  @RequestParam(value = "variable-id") final String variableId,
 											  @RequestParam(value = "timestamps", required = false) final String timestamps,
 											  @RequestParam(value = "time-index", required = false) final String timeIndex
 	) {
-		final String png = climateDataService.getPreviewJob(datasetId, variableId, timestamps, timeIndex);
+		final String png = climateDataService.getPreviewJob(esgfId, variableId, timestamps, timeIndex);
 		if (png != null) {
 			return ResponseEntity.ok().body(png);
 		}
 
-		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(datasetId, variableId, timestamps, timeIndex);
+		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(esgfId, variableId, timestamps, timeIndex);
 
 		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
-		climateDataService.addPreviewJob(datasetId, variableId, timestamps, timeIndex, climateDataResponse.getId());
+		climateDataService.addPreviewJob(esgfId, variableId, timestamps, timeIndex, climateDataResponse.getId());
 
 		return ResponseEntity.accepted().build();
 	}

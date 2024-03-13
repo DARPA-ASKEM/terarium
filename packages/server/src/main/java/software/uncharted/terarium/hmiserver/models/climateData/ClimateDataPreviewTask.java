@@ -19,8 +19,8 @@ public class ClimateDataPreviewTask {
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private UUID id;
 
-    private String climateDataId;
-    private String datasetId;
+    private String statusId;
+    private String esgfId;
     private String variableId;
     private String timestamps;
     private String timeIndex;

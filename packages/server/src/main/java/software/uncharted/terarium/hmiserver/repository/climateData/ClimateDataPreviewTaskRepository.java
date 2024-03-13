@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface ClimateDataPreviewTaskRepository extends PSCrudRepository<ClimateDataPreviewTask, UUID> {
-    ClimateDataPreviewTask findByDatasetIdAndVariableIdAndTimestampsAndTimeIndex(@NotNull String datasetId, @NotNull String variableId, String timestamps, String timeIndex);
+    ClimateDataPreviewTask findByEsfgIdAndVariableIdAndTimestampsAndTimeIndex(@NotNull String esfgId, @NotNull String variableId, String timestamps, String timeIndex);
 }

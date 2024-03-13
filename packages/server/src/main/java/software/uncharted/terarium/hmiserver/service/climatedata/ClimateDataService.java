@@ -28,7 +28,7 @@ public class ClimateDataService {
         final List<ClimateDataPreviewTask> previewTasks = climateDataPreviewTaskRepository.findAll();
 
         for (final ClimateDataPreviewTask previewTask : previewTasks) {
-            final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getClimateDataId());
+            final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getStatusId());
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (climateDataResponse.getResult().getJobResult() != null) {
                 // TODO: store result
@@ -41,25 +41,25 @@ public class ClimateDataService {
         }
     }
 
-    public void addPreviewJob(final String datasetId, final String variableId, final String timestamps, final String timeIndex, final String id) {
+    public void addPreviewJob(final String esgfId, final String variableId, final String timestamps, final String timeIndex, final String statusId) {
         final ClimateDataPreviewTask task = new ClimateDataPreviewTask();
-        task.setClimateDataId(id);
-        task.setDatasetId(datasetId);
+        task.setStatusId(statusId);
+        task.setEsgfId(esgfId);
         task.setVariableId(variableId);
         task.setTimestamps(timestamps);
         task.setTimeIndex(timeIndex);
         climateDataPreviewTaskRepository.save(task);
     }
 
-    public String getPreviewJob(final String datasetId, final String variableId, final String timestamps, final String timeIndex) {
-        final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByDatasetIdAndVariableIdAndTimestampsAndTimeIndex(datasetId, variableId, timestamps, timeIndex);
+    public String getPreviewJob(final String esgfId, final String variableId, final String timestamps, final String timeIndex) {
+        final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByEsfgIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
         return null;
     }
 
-    public void addSubsetJob(final String datasetId, final String envelope, final String timestamps, final String thinFactor, final String id) {
+    public void addSubsetJob(final String esgfId, final String envelope, final String timestamps, final String thinFactor, final String statusId) {
     }
 
-    public static JsonNode getSubsetJob(final String datasetId, final String envelope, final String timestamps, final String thinFactor) {
+    public static JsonNode getSubsetJob(final String esgfId, final String envelope, final String timestamps, final String thinFactor) {
         return null;
     }
 }
