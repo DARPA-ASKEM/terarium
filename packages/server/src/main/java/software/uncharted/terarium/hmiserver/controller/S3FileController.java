@@ -65,9 +65,9 @@ public class S3FileController {
 	}
 
 	/**
-	 * Get a pre signed URL for downloading a file from S3
+	 * Get a pre signed URL for downloading a video from S3
 	 *
-	 * @param filename The name of the file to download
+	 * @param filename The name of the video to download
 	 * @return The pre signed URL
 	 */
 	@GetMapping("/video-presigned-url")
