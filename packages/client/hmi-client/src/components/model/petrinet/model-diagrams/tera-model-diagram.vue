@@ -109,9 +109,6 @@ const emit = defineEmits(['update-configuration']);
 
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
-const splitterContainer = ref<HTMLElement | null>(null);
-const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
-const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
@@ -192,27 +189,11 @@ watch(
 	{ deep: true }
 );
 
-const updateLayout = () => {
-	if (splitterContainer.value) {
-		layout.value =
-			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
-			window.innerWidth < 800
-				? 'vertical'
-				: 'horizontal';
-	}
-};
-const handleResize = () => updateLayout();
-
 onMounted(async () => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-
 	mmt.value = (await getMMT(props.model)).mmt;
 });
 
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
+onUnmounted(() => {});
 </script>
 
 <style scoped>
