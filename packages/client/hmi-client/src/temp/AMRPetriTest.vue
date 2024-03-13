@@ -23,9 +23,10 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { getModelRenderer } from '@/model-representation/service';
+import { getMMT } from '@/services/model';
 
 import { onMounted, ref, watch } from 'vue';
-import * as mmtExample from '@/examples/mmt.json';
+import * as mmtExample from '@/examples/mira-petri.json';
 import { collapseTemplates, convertToIGraph } from '@/model-representation/mira/mira';
 
 const graphElement = ref<HTMLDivElement | null>(null);
@@ -40,8 +41,9 @@ onMounted(async () => {
 		() => jsonStr.value,
 		async () => {
 			const jsonData = JSON.parse(jsonStr.value);
-			const renderer = getModelRenderer(jsonData, graphElement.value as HTMLDivElement, true);
-			const { templatesSummary } = collapseTemplates(jsonData);
+			const mmt = (await getMMT(jsonData)).mmt;
+			const renderer = getModelRenderer(mmt, graphElement.value as HTMLDivElement, false);
+			const { templatesSummary } = collapseTemplates(mmt);
 			const graphData = convertToIGraph(templatesSummary);
 
 			await renderer.setData(graphData);

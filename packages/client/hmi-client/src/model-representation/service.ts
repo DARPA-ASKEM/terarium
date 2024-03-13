@@ -12,15 +12,16 @@ export const getModelRenderer = (
 	graphElement: HTMLDivElement,
 	useNestedRenderer: boolean
 ): PetrinetRenderer | NestedPetrinetRenderer => {
+	const isStratified = isStratifiedModel(miraModel);
 	// Debug start
 	console.group('mmt info');
 	console.log('# templates: ', miraModel.templates.length);
 	console.log('# parameters: ', Object.keys(miraModel.parameters).length);
-	console.log('stratified model: ', isStratifiedModel(miraModel));
+	console.log('stratified model: ', isStratified);
 	console.groupEnd();
 	// Debug end
 
-	if (useNestedRenderer) {
+	if (useNestedRenderer && isStratified) {
 		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
 		const conceptData: any = [];
