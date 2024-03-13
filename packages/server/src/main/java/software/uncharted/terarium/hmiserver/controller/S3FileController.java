@@ -1,30 +1,17 @@
 package software.uncharted.terarium.hmiserver.controller;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload2.core.ProgressListener;
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -40,11 +27,18 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+
 @RestController
 @RequestMapping("/file")
 @Slf4j
 @RequiredArgsConstructor
 public class S3FileController {
+	private final S3Service s3Service;
 	private final S3ClientService s3ClientService;
 	private final ClientEventService clientEventService;
 	private final CurrentUserService currentUserService;
@@ -65,6 +59,15 @@ public class S3FileController {
 		}
 	}
 
+
+	@GetMapping("/presigned-url")
+	public ResponseEntity<String> getPresignedURL(
+		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+		@RequestParam("key") final String key) {
+		final Optional<String> url = s3Service.getS3PreSignedGetUrl(bucket, key, 60);
+		return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
 	/**
 	 * Get the default bucket name
 	 *
@@ -83,14 +86,14 @@ public class S3FileController {
 	 */
 	@GetMapping("/buckets")
 	public ResponseEntity<List<String>> getBuckets(
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id) {
+		@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id) {
 		final S3Service s3Service = s3ClientService.getS3Service(s3Id);
 		return ResponseEntity.ok(s3Service.listBuckets());
 	}
 
 	/**
 	 * Gets the signature for download an a file from S3.
-	 *
+	 * <p>
 	 * We use this to verify that the user has permission to download the file. If
 	 * permission checks need
 	 * to be added, they should be done in this method and it should return a 403
@@ -100,14 +103,14 @@ public class S3FileController {
 	 * @param key    The key to download
 	 * @param s3Id   The ID of the S3 client to use
 	 * @return The signature of this download that is used as the signature query
-	 *         parameter when
-	 *         downloading the file
+	 * parameter when
+	 * downloading the file
 	 */
 	@GetMapping("/sign")
 	public ResponseEntity<String> getDownloadSignature(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
-			@RequestParam("key") String key,
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id) {
+		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+		@RequestParam("key") final String key,
+		@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id) {
 		return ResponseEntity.ok(S3Service.getSignature(bucket, key, s3Id, config.getPresignedUrlEncryptionKey()));
 	}
 
@@ -118,20 +121,20 @@ public class S3FileController {
 	 * @param key    The key of the file to get
 	 * @param s3Id   The ID of the S3 client to use
 	 * @return A {@link StreamingResponseBody} that streams the file back to the
-	 *         client as it is read from S3
+	 * client as it is read from S3
 	 */
 	@GetMapping
 	public ResponseEntity<StreamingResponseBody> getFile(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
-			@RequestParam("key") String key,
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id,
-			@RequestParam(value = "signature", required = false) String signature) {
+		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+		@RequestParam("key") final String key,
+		@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id,
+		@RequestParam(value = "signature", required = false) final String signature) {
 		if (signature == null || signature.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Signature is required");
 		}
 
 		if (!S3Service.validateSignature(bucket, key, s3Id, signature, config.getPresignedUrlEncryptionKey(),
-				config.getPresignedUrlExpirationSeconds())) {
+			config.getPresignedUrlExpirationSeconds())) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid signature");
 		}
 
@@ -145,15 +148,15 @@ public class S3FileController {
 		final ResponseInputStream<GetObjectResponse> responseStream = s3Service.getObject(bucket, key);
 		final StreamingResponseBody body = outputStream -> {
 			int numberOfBytesToWrite;
-			byte[] data = new byte[config.getMultipartFileBufferSize()];
+			final byte[] data = new byte[config.getMultipartFileBufferSize()];
 			while ((numberOfBytesToWrite = responseStream.read(data, 0, data.length)) != -1) {
 				outputStream.write(data, 0, numberOfBytesToWrite);
 			}
 		};
 		return ResponseEntity.ok()
-				.header("Content-Disposition", "attachment; filename=\"" + key + "\"")
-				.header("Content-Length", String.valueOf(s3Object.getSizeInBytes()))
-				.body(body);
+			.header("Content-Disposition", "attachment; filename=\"" + key + "\"")
+			.header("Content-Length", String.valueOf(s3Object.getSizeInBytes()))
+			.body(body);
 	}
 
 	/**
@@ -166,9 +169,9 @@ public class S3FileController {
 	 */
 	@DeleteMapping
 	public ResponseEntity<Void> deleteFile(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
-			@RequestParam("key") String key,
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id) {
+		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+		@RequestParam("key") final String key,
+		@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id) {
 		final S3Service s3Service = s3ClientService.getS3Service(s3Id);
 		if (!s3Service.bucketExists(bucket)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bucket does not exist");
@@ -190,14 +193,14 @@ public class S3FileController {
 	 * @param s3Id   The ID of the S3 client to use
 	 * @param bytes  The bytes of the file to put
 	 * @return A {@link ResponseEntity} containing a {@link PutObjectResponse} on
-	 *         success
+	 * success
 	 */
 	@PutMapping(consumes = "application/octet-stream")
 	public ResponseEntity<Void> putFile(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
-			@RequestParam("key") String key,
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id,
-			@RequestBody byte[] bytes) {
+		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+		@RequestParam("key") final String key,
+		@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id,
+		@RequestBody final byte[] bytes) {
 		final S3Service s3Service = s3ClientService.getS3Service(s3Id);
 		if (!s3Service.bucketExists(bucket)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bucket does not exist");
@@ -213,15 +216,15 @@ public class S3FileController {
 	 * @param prefix The prefix to filter files by
 	 * @param s3Id   The ID of the S3 client to use
 	 * @return A {@link ResponseEntity} containing a {@link S3ObjectListing} on
-	 *         success
+	 * success
 	 * @throws IOException If there is an error listing the files
 	 */
 	@GetMapping("/list")
 	public ResponseEntity<S3ObjectListing> listFiles(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
-			@RequestParam(value = "prefix", required = false, defaultValue = "") String prefix,
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id)
-			throws IOException {
+		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+		@RequestParam(value = "prefix", required = false, defaultValue = "") final String prefix,
+		@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id)
+		throws IOException {
 		final S3Service s3Service = s3ClientService.getS3Service(s3Id);
 		return ResponseEntity.ok(s3Service.listObjects(bucket, prefix));
 	}
@@ -237,10 +240,10 @@ public class S3FileController {
 	 */
 	@PutMapping("/upload")
 	public ResponseEntity<String> createMultipartUpload(
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
-			@RequestParam("key") String key,
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id)
-			throws IOException {
+		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+		@RequestParam("key") final String key,
+		@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id)
+		throws IOException {
 		final S3Service s3Service = s3ClientService.getS3Service(s3Id);
 		final CreateMultipartUploadResponse response = s3Service.createMultipartUpload(bucket, key);
 		log.info("Created multipart upload with ID {}", response.uploadId());
@@ -259,12 +262,12 @@ public class S3FileController {
 	 * @throws IOException If there is an error uploading the file
 	 */
 	@PutMapping(value = "upload/{uploadId}", consumes = "multipart/form-data")
-	public ResponseEntity<Void> putMultipartFile(HttpServletRequest request,
-			@PathVariable("uploadId") String uploadId,
-			@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") String bucket,
-			@RequestParam(value = "prefix", required = false, defaultValue = "") String prefix,
-			@RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") String s3Id)
-			throws IOException {
+	public ResponseEntity<Void> putMultipartFile(final HttpServletRequest request,
+																							 @PathVariable("uploadId") final String uploadId,
+																							 @RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+																							 @RequestParam(value = "prefix", required = false, defaultValue = "") final String prefix,
+																							 @RequestParam(value = "id", required = false, defaultValue = "${terarium.file-storage-s3-client-name:default}") final String s3Id)
+		throws IOException {
 		final S3Service service = s3ClientService.getS3Service(s3Id);
 		if (!service.bucketExists(bucket)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bucket does not exist");
@@ -276,22 +279,22 @@ public class S3FileController {
 
 		// Create a progress listener
 		final AtomicInteger lastPercentReport = new AtomicInteger(0);
-		ProgressListener progressListener = (bytesRead, contentLength, items) -> {
+		final ProgressListener progressListener = (bytesRead, contentLength, items) -> {
 			final int percent = (int) (bytesRead * 100.f / contentLength);
 			if (percent > lastPercentReport.get()) {
 				lastPercentReport.set(percent);
 				final ClientEvent<UploadProgress> event = ClientEvent.<UploadProgress>builder()
-						.type(ClientEventType.FILE_UPLOAD_PROGRESS)
-						.data(new UploadProgress().setUploadId(uploadId).setPercentComplete(percent))
-						.build();
+					.type(ClientEventType.FILE_UPLOAD_PROGRESS)
+					.data(new UploadProgress().setUploadId(uploadId).setPercentComplete(percent))
+					.build();
 				clientEventService.sendToUser(event, currentUserService.get().getId());
 			}
 		};
 
-		JakartaServletFileUpload upload = new JakartaServletFileUpload();
+		final JakartaServletFileUpload upload = new JakartaServletFileUpload();
 		upload.setProgressListener(progressListener);
 		upload.getItemIterator(request).forEachRemaining(item -> {
-			InputStream stream = item.getInputStream();
+			final InputStream stream = item.getInputStream();
 			final String name = item.getName();
 			final S3Service s3Service = s3ClientService.getS3Service(s3Id);
 			s3Service.putObject(uploadId, bucket, prefix + name, stream);
