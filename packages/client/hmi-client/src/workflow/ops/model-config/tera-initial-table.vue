@@ -13,14 +13,14 @@
 		<Column expander class="w-3rem" />
 		<Column header="Symbol">
 			<template #body="slotProps">
-				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+				<span class="truncate-text">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
 		</Column>
 		<Column header="Name">
 			<template #body="slotProps">
-				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+				<span class="truncate-text">
 					{{ slotProps.data.name }}
 				</span>
 			</template>
@@ -28,9 +28,10 @@
 
 		<Column header="Description">
 			<template #body="slotProps">
-				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+				<span v-if="slotProps.data.value.description" class="truncate-text">
 					{{ slotProps.data.value.description }}</span
 				>
+				<template v-else>--</template>
 			</template>
 		</Column>
 
