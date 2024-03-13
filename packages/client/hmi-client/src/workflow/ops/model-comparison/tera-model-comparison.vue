@@ -109,6 +109,25 @@
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
+
+				<!-- Legend -->
+				<div class="legend flex align-items-center gap-7">
+					<span class="flex gap-5">
+						<span class="flex align-items-center gap-2">
+							<span class="legend-circle subdued">Name</span>
+							<span>State variable nodes</span>
+						</span>
+						<span class="flex align-items-center gap-2">
+							<span class="legend-square subdued">Name</span>
+							<span>Transition nodes</span>
+						</span>
+					</span>
+					<span class="flex gap-6">
+						<span class="legend-line orange">Model 1</span>
+						<span class="legend-line blue">Model 2</span>
+						<span class="legend-line red">Common to both models</span>
+					</span>
+				</div>
 			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
@@ -368,5 +387,46 @@ ul {
 .diagram {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
+}
+
+.legend {
+	font-size: var(--font-caption);
+}
+
+.legend-circle {
+	padding: var(--gap-small) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	border-radius: 50%;
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-square {
+	padding: var(--gap-xsmall) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-line {
+	position: relative;
+	white-space:;
+}
+
+.legend-line::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 24px;
+	height: 2px;
+	background-color: red;
+	transform: translate(-30px, -50%);
+}
+.legend-line.orange::before {
+	background-color: orange;
+}
+.legend-line.blue::before {
+	background-color: blue;
 }
 </style>
