@@ -7,8 +7,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.ResponseEntity;
@@ -124,6 +126,37 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
 			final HttpResponse response = httpclient.execute(get);
 			return Optional.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
+		}
+	}
+
+	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build()) {
+
+			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
+			if (url.isEmpty()) {
+				return Optional.empty();
+			}
+			final PresignedURL presignedURL = url.get();
+			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
+			final HttpResponse response = httpclient.execute(get);
+			return Optional.of(IOUtils.toByteArray(response.getEntity().getContent()));
+		}
+	}
+
+	public void uploadFile(final UUID uuid, final String filename, final HttpEntity fileEntity) throws IOException {
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build()) {
+
+			final PresignedURL presignedURL = getUploadUrl(uuid, filename);
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse response = httpclient.execute(put);
+			if (response.getStatusLine().getStatusCode() >= 300) {
+				throw new IOException("Failed to upload file to S3: " + response.getStatusLine().getReasonPhrase());
+			}
 		}
 	}
 

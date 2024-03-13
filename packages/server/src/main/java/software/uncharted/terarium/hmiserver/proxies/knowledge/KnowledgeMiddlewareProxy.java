@@ -25,36 +25,6 @@ public interface KnowledgeMiddlewareProxy {
 			@PathVariable("id") String id);
 
 	/**
-	 * Post a PDF
-	 *
-	 * @param annotateSkema (Boolean): Whether to annotate the PDF with Skema
-	 * @param annotateMIT   (Boolean): Whether to annotate the PDF with AMR
-	 * @param name          (String): The name of the PDF
-	 * @param description   (String): The description of the PDF
-	 *                      <p>
-	 *                      Args:
-	 *                      pdf (Object): The PDF file to upload
-	 * @return extractions of the pdf
-	 */
-	@PostMapping("/variable_extractions")
-	ResponseEntity<JsonNode> postPDFExtractions(
-			@RequestParam("document_id") String documentId,
-			@RequestParam(name = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
-			@RequestParam(name = "annotate_mit", defaultValue = "true") Boolean annotateMIT,
-			@RequestParam(name = "name", required = false) String name,
-			@RequestParam(name = "description", required = false) String description);
-
-	/**
-	 * Post a PDF to get text
-	 *
-	 * @param documentId (String): The ID of the document to extract text from
-	 * @return
-	 */
-	@PostMapping("/pdf_extraction")
-	ResponseEntity<JsonNode> postPDFToCosmos(
-			@RequestParam("document_id") String documentId);
-
-	/**
 	 * Profile a model
 	 *
 	 * @return the profiled model
@@ -98,8 +68,4 @@ public interface KnowledgeMiddlewareProxy {
 			@RequestParam(name = "dynamics_only", required = false) Boolean dynamicsOnly,
 			@RequestParam(name = "llm_assisted", required = false) Boolean llmAssisted);
 
-	@PostMapping("link_amr")
-	ResponseEntity<JsonNode> postLinkAmr(
-			@RequestParam("document_id") String documentId,
-			@RequestParam("model_id") String modelId);
 }
