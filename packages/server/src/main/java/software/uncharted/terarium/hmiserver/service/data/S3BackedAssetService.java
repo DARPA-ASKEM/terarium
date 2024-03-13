@@ -44,10 +44,8 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	 * @param s3ClientService The S3 client service
 	 * @param assetClass      The class of the asset this service manages
 	 */
-	public S3BackedAssetService(final ElasticsearchConfiguration elasticConfig, final Config config,
-			final ElasticsearchService elasticService, final S3ClientService s3ClientService,
-			final Class<T> assetClass) {
-		super(elasticConfig, config, elasticService, assetClass);
+	public S3BackedAssetService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService, final S3ClientService s3ClientService, final Class<T> assetClass) {
+		super(elasticConfig, config, elasticService, projectAssetService, assetClass);
 		this.s3ClientService = s3ClientService;
 	}
 
