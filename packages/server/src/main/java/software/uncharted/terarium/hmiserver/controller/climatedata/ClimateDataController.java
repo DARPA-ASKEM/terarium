@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
-import software.uncharted.terarium.hmiserver.service.climatedata.ClimateDataService;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.climatedata.ClimateDataService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,14 +53,14 @@ public class ClimateDataController {
 											  @RequestParam(value = "timestamps", required = false) final String timestamps,
 											  @RequestParam(value = "time-index", required = false) final String timeIndex
 	) {
-		String png = climateDataService.getPreviewJob(datasetId, variableId, timestamps, timeIndex);
+		final String png = climateDataService.getPreviewJob(datasetId, variableId, timestamps, timeIndex);
 		if (png != null) {
 			return ResponseEntity.ok().body(png);
 		}
 
 		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(datasetId, variableId, timestamps, timeIndex);
 
-		ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
+		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
 		climateDataService.addPreviewJob(datasetId, variableId, timestamps, timeIndex, climateDataResponse.getId());
 
 		return ResponseEntity.accepted().build();
@@ -74,14 +74,14 @@ public class ClimateDataController {
 																						 @RequestParam(value = "envelope") final String envelope,
 																						 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
-		JsonNode jsonNode = climateDataService.getSubsetJob(datasetId, envelope, timestamps, thinFactor);
+		final JsonNode jsonNode = ClimateDataService.getSubsetJob(datasetId, envelope, timestamps, thinFactor);
 		if (jsonNode != null) {
 			return ResponseEntity.ok().body(jsonNode);
 		}
 
 		final ResponseEntity<JsonNode> response = climateDataProxy.subsetEsgf(datasetId.toString(), parentDatasetId.toString(), timestamps, envelope, thinFactor);
 
-		ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
+		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
 		climateDataService.addSubsetJob(datasetId, envelope, timestamps, thinFactor, climateDataResponse.getId());
 
 		return ResponseEntity.accepted().build();

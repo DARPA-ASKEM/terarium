@@ -14,23 +14,28 @@ import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataP
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class ClimateDataService {
 
-    private final ObjectMapper objectMapper;
-    private final ClimateDataProxy climateDataProxy;
-    private final ClimateDataPreviewTaskRepository climateDataPreviewTaskRepository;
+		final ObjectMapper objectMapper;
+		final ClimateDataProxy climateDataProxy;
+		final ClimateDataPreviewTaskRepository climateDataPreviewTaskRepository;
 
     @Scheduled(fixedRate = 1000 * 60 * 2L) // every 2 minutes
     public void checkJobStatusTask() {
-        List<ClimateDataPreviewTask> previewTasks = climateDataPreviewTaskRepository.findAll();
+        final List<ClimateDataPreviewTask> previewTasks = climateDataPreviewTaskRepository.findAll();
 
-        for (ClimateDataPreviewTask previewTask : previewTasks) {
+        for (final ClimateDataPreviewTask previewTask : previewTasks) {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getClimateDataId());
+<<<<<<< HEAD
             ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (climateDataResponse.getResult().getJobResult() != null) {
+=======
+            final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
+            if (climateDataResponse.getResult().getJob_result() != null) {
+>>>>>>> 13647eca73b1b5a685362a1cb03a896014ec086c
                 // TODO: store result
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
@@ -41,8 +46,8 @@ public class ClimateDataService {
         }
     }
 
-    public void addPreviewJob(String datasetId, String variableId, String timestamps, String timeIndex, String id) {
-        ClimateDataPreviewTask task = new ClimateDataPreviewTask();
+    public void addPreviewJob(final String datasetId, final String variableId, final String timestamps, final String timeIndex, final String id) {
+        final ClimateDataPreviewTask task = new ClimateDataPreviewTask();
         task.setClimateDataId(id);
         task.setDatasetId(datasetId);
         task.setVariableId(variableId);
@@ -51,15 +56,15 @@ public class ClimateDataService {
         climateDataPreviewTaskRepository.save(task);
     }
 
-    public String getPreviewJob(String datasetId, String variableId, String timestamps, String timeIndex) {
-        ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByDatasetIdAndVariableIdAndTimestampsAndTimeIndex(datasetId, variableId, timestamps, timeIndex);
+    public String getPreviewJob(final String datasetId, final String variableId, final String timestamps, final String timeIndex) {
+        final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByDatasetIdAndVariableIdAndTimestampsAndTimeIndex(datasetId, variableId, timestamps, timeIndex);
         return null;
     }
 
-    public void addSubsetJob(String datasetId, String envelope, String timestamps, String thinFactor, String id) {
+    public void addSubsetJob(final String datasetId, final String envelope, final String timestamps, final String thinFactor, final String id) {
     }
 
-    public JsonNode getSubsetJob(String datasetId, String envelope, String timestamps, String thinFactor) {
+    public static JsonNode getSubsetJob(final String datasetId, final String envelope, final String timestamps, final String thinFactor) {
         return null;
     }
 }
