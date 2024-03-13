@@ -10,7 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import java.util.UUID;
 
 @Data
-public class ClimateDataTask {
+public class ClimateDataPreviewTask {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @TSOptional
@@ -18,4 +18,8 @@ public class ClimateDataTask {
     private UUID id;
 
     private String climateDataId;
+    private String datasetId;
+    private String variableId;
+    private String timestamps;
+    private String timeIndex;
 }
