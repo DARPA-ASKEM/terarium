@@ -111,7 +111,10 @@
 				</ul>
 
 				<!-- Legend -->
-				<div class="legend flex align-items-center gap-7">
+				<div
+					v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)"
+					class="legend flex align-items-center gap-7"
+				>
 					<span class="flex gap-5">
 						<span class="flex align-items-center gap-2">
 							<span class="legend-circle subdued">Name</span>
