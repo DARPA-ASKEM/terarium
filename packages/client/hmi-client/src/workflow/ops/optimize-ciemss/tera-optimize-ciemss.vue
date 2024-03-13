@@ -471,10 +471,10 @@ const runOptimize = async () => {
 
 	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
 	for (let i = 0; i < optimizeInterventions.paramNames.length; i++) {
-		if (policyResult.value?.at(i) && optimizeInterventions.startTimes?.[i]) {
+		if (policyResult.value?.at(i) && optimizeInterventions.startTime?.[i]) {
 			simulationIntervetions.push({
 				name: optimizeInterventions.paramNames[i],
-				timestep: optimizeInterventions.startTimes[i],
+				timestep: optimizeInterventions.startTime[i],
 				value: policyResult.value[i]
 			});
 		}
