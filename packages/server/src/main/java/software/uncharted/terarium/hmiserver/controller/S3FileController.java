@@ -67,19 +67,19 @@ public class S3FileController {
 	/**
 	 * Get a pre signed URL for downloading a file from S3
 	 *
-	 * @param bucket   The name of the bucket to download from
 	 * @param filename The name of the file to download
 	 * @return The pre signed URL
 	 */
-	@GetMapping("/presigned-url")
-	public ResponseEntity<PresignedURL> getPresignedURL(
-		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
+	@GetMapping("/video-presigned-url")
+	public ResponseEntity<PresignedURL> getVideoPresignedURL(
 		@RequestParam("filename") final String filename) {
 
-		final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
-			config.getVideoStorageS3BucketName(),
-			filename,
-			EXPIRATION);
+		final Optional<String> url = s3ClientService
+			.getS3Service()
+			.getS3PreSignedGetUrl(
+				config.getVideoStorageS3BucketName(),
+				filename,
+				EXPIRATION);
 
 		if (url.isEmpty()) {
 			return ResponseEntity.notFound().build();
