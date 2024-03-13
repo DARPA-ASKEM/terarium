@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.s3.S3Object;
 import software.uncharted.terarium.hmiserver.models.s3.S3ObjectListing;
 import software.uncharted.terarium.hmiserver.models.s3.UploadProgress;
@@ -38,7 +39,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @RequiredArgsConstructor
 public class S3FileController {
-	private final S3Service s3Service;
+	/**
+	 * The expiration time for the pre-signed URLs in minutes
+	 */
+	private final static long EXPIRATION = 60;
+
 	private final S3ClientService s3ClientService;
 	private final ClientEventService clientEventService;
 	private final CurrentUserService currentUserService;
@@ -59,13 +64,31 @@ public class S3FileController {
 		}
 	}
 
-
+	/**
+	 * Get a pre signed URL for downloading a file from S3
+	 *
+	 * @param bucket   The name of the bucket to download from
+	 * @param filename The name of the file to download
+	 * @return The pre signed URL
+	 */
 	@GetMapping("/presigned-url")
-	public ResponseEntity<String> getPresignedURL(
+	public ResponseEntity<PresignedURL> getPresignedURL(
 		@RequestParam(value = "bucket", required = false, defaultValue = "${terarium.file-storage-s3-bucket-name:terarium-file-storage}") final String bucket,
-		@RequestParam("key") final String key) {
-		final Optional<String> url = s3Service.getS3PreSignedGetUrl(bucket, key, 60);
-		return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		@RequestParam("filename") final String filename) {
+
+		final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
+			config.getVideoStorageS3BucketName(),
+			filename,
+			EXPIRATION);
+
+		if (url.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+
+		final PresignedURL presigned = new PresignedURL();
+		presigned.setUrl(url.get());
+		presigned.setMethod("GET");
+		return ResponseEntity.ok().build();
 	}
 
 	/**

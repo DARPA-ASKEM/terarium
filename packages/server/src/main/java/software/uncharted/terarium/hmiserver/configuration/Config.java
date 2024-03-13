@@ -1,16 +1,16 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium")
@@ -88,6 +88,7 @@ public class Config {
 	 * S3 Storage related config
 	 */
 	String fileStorageS3BucketName;
+	String videoStorageS3BucketName;
 	String fileStorageS3ClientName;
 	String datasetPath;
 	String resultsPath;
