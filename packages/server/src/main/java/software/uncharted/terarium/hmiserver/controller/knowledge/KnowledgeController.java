@@ -535,12 +535,7 @@ public class KnowledgeController {
 					documentFile);
 
 			final JsonNode body = extractionResp.getBody();
-			final String statusEndpoint = body.get("status_endpoint").asText();
-			final String resultEndpoint = body.get("result_endpoint").asText();
-			final String textEndpoint = resultEndpoint + "/text";
-			final String equationsEndpoint = resultEndpoint + "/extractions/equations";
-			final String figuresEndpoint = resultEndpoint + "/extractions/figures";
-			final String tablesEndpoint = resultEndpoint + "/extractions/tables";
+			final UUID jobId = UUID.fromString(body.get("job_id").asText());
 
 			final int POLLING_INTERVAL_SECONDS = 5;
 			final int MAX_EXECUTION_TIME_SECONDS = 600;
@@ -549,13 +544,14 @@ public class KnowledgeController {
 			boolean jobDone = false;
 			final RestTemplate restTemplate = new RestTemplate();
 			for (int i = 0; i < MAX_ITERATIONS; i++) {
-				final ResponseEntity<JsonNode> statusResp = restTemplate.getForEntity(statusEndpoint, JsonNode.class);
+
+				final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
 				if (!statusResp.getStatusCode().is2xxSuccessful()) {
 					throw new RuntimeException("Unable to poll status endpoint");
 				}
 
 				final JsonNode statusData = statusResp.getBody();
-				if (statusData.has("error")) {
+				if (!statusData.get("error").isNull()) {
 					throw new RuntimeException("Extraction job failed: " + statusData.has("error"));
 				}
 
@@ -571,7 +567,7 @@ public class KnowledgeController {
 				throw new RuntimeException("Extraction job did not complete within the expected time");
 			}
 
-			final ResponseEntity<byte[]> zipFileResp = restTemplate.getForEntity(resultEndpoint, byte[].class);
+			final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
 			if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
 				throw new RuntimeException("Unable to fetch the extraction result");
 			}
@@ -602,25 +598,20 @@ public class KnowledgeController {
 				throw new RuntimeException("Unable to extract the contents of the zip file", e);
 			}
 
-			final ResponseEntity<JsonNode> textResp = restTemplate.getForEntity(textEndpoint, JsonNode.class);
+			final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
 			if (!textResp.getStatusCode().is2xxSuccessful()) {
 				throw new RuntimeException("Unable to fetch the text extractions");
 			}
 
-			final Map<String, ResponseEntity<JsonNode>> responses = new HashMap<>();
-			responses.put("equation", restTemplate.getForEntity(equationsEndpoint, JsonNode.class));
-			responses.put("figure", restTemplate.getForEntity(figuresEndpoint, JsonNode.class));
-			responses.put("table", restTemplate.getForEntity(tablesEndpoint, JsonNode.class));
-
 			// clear existing assets
 			document.setAssets(new ArrayList<>());
 
-			for (final Map.Entry<String, ResponseEntity<JsonNode>> entry : responses.entrySet()) {
-				final String assetType = entry.getKey();
-				final ResponseEntity<JsonNode> response = entry.getValue();
-				log.info(" {} response status: {}", assetType, response.getStatusCodeValue());
+			for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
+				final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
+						extractionType.toStringPlural());
+				log.info(" {} response status: {}", extractionType, response.getStatusCode());
 				if (!response.getStatusCode().is2xxSuccessful()) {
-					log.warn("Unable to fetch the {} extractions", assetType);
+					log.warn("Unable to fetch the {} extractions", extractionType);
 					continue;
 				}
 
@@ -646,7 +637,7 @@ public class KnowledgeController {
 
 					final DocumentExtraction extraction = new DocumentExtraction();
 					extraction.setFileName(fileName);
-					extraction.setAssetType(ExtractionAssetType.fromString(assetType));
+					extraction.setAssetType(extractionType);
 					extraction.setMetadata(mapper.convertValue(record, Map.class));
 
 					document.getAssets().add(extraction);
