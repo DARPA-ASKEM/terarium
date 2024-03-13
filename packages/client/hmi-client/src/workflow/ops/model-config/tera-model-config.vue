@@ -315,6 +315,7 @@ interface BasicKnobs {
 	parameters: ModelParameter[];
 	timeseries: { [index: string]: any };
 	sources: { [index: string]: any };
+	units: { [index: string]: any };
 	tempConfigId: string;
 }
 
@@ -325,6 +326,7 @@ const knobs = ref<BasicKnobs>({
 	parameters: [],
 	timeseries: {},
 	sources: {},
+	units: {},
 	tempConfigId: ''
 });
 
@@ -480,6 +482,8 @@ const handleModelPreview = (data: any) => {
 		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 	knobs.value.sources =
 		model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
+	knobs.value.units =
+		model.value?.metadata?.units !== undefined ? model.value?.metadata?.units : {};
 };
 
 const selectedOutputId = ref<string>(props.node.active ?? '');
@@ -533,12 +537,14 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 			cloneModel.semantics.ode.parameters = knobs.value.parameters;
 			cloneModel.metadata.timeseries = knobs.value.timeseries;
 			cloneModel.metadata.sources = knobs.value.sources;
+			cloneModel.metadata.units = knobs.value.units;
 		}
 		modelConfig.configuration = cloneModel;
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
 		cloneModel.model.parameters = knobs.value.parameters;
 		cloneModel.metadata.timeseries = knobs.value.timeseries;
 		cloneModel.metadata.sources = knobs.value.sources;
+		cloneModel.metadata.units = knobs.value.units;
 		modelConfig.configuration = cloneModel;
 	}
 
@@ -613,6 +619,7 @@ const updateFromConfig = (config: ModelConfiguration) => {
 	}
 	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
 	knobs.value.sources = config.configuration?.metadata?.sources ?? {};
+	knobs.value.units = config.configuration?.metadata?.units ?? {};
 };
 
 const createConfiguration = async () => {
@@ -699,6 +706,8 @@ const initialize = async () => {
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.sources =
 			model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
+		knobs.value.units =
+			model.value?.metadata?.units !== undefined ? model.value?.metadata?.units : {};
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
@@ -707,6 +716,7 @@ const initialize = async () => {
 		knobs.value.parameters = state.parameters;
 		knobs.value.timeseries = state.timeseries;
 		knobs.value.sources = state.sources;
+		knobs.value.units = state.units;
 	}
 
 	// Create a new session and context based on model
@@ -735,6 +745,7 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 	}
 	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
 	knobs.value.sources = config.configuration.metadata?.sources ?? {};
+	knobs.value.units = config.configuration.metadata?.units ?? {};
 	logger.success(`Configuration applied ${config.name}`);
 };
 
@@ -762,6 +773,7 @@ watch(
 		state.parameters = knobs.value.parameters;
 		state.timeseries = knobs.value.timeseries;
 		state.sources = knobs.value.sources;
+		state.units = knobs.value.units;
 		state.tempConfigId = knobs.value.tempConfigId;
 		emit('update-state', state);
 	},

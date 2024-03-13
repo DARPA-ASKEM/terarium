@@ -1,6 +1,6 @@
 <template>
 	<Datatable
-		:value="tableFormattedInitials"
+		:value="data ?? tableFormattedInitials"
 		v-model:expanded-rows="expandedRows"
 		dataKey="id"
 		:row-class="rowClass"
@@ -26,7 +26,7 @@
 			</template>
 		</Column>
 
-		<Column header="Description">
+		<Column header="Description" class="w-2">
 			<template #body="slotProps">
 				<span v-if="slotProps.data.value.description" class="truncate-text">
 					{{ slotProps.data.value.description }}</span
@@ -35,7 +35,7 @@
 			</template>
 		</Column>
 
-		<Column header="Concept">
+		<Column header="Concept" class="w-1">
 			Column field="grounding.identifiers" header="Concept">
 			<template #body="{ data }">
 				<template
@@ -61,6 +61,20 @@
 				<template v-else>--</template>
 			</template>
 		</Column>
+
+		<Column header="Unit" class="w-1">
+			<template #body="slotProps">
+				<InputText
+					v-if="slotProps.data.type !== ParamType.MATRIX"
+					size="small"
+					class="w-full"
+					v-model.lazy="slotProps.data.unit"
+					@update:model-value="(val) => updateUnit(slotProps.data.value.target, val)"
+				/>
+				<template v-else>--</template>
+			</template>
+		</Column>
+
 		<!-- Value type: Matrix or Expression -->
 		<Column field="type" header="Value Type" class="w-2">
 			<template #body="slotProps">
@@ -112,7 +126,7 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
-					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
+					@update:model-value="(val) => updateSource(data.value.target, val)"
 				/>
 			</template>
 		</Column>
@@ -174,6 +188,7 @@ import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-pe
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	data?: ModelConfigTableData[];
 	hideHeader?: boolean;
 }>();
 
@@ -195,7 +210,7 @@ const expandedRows = ref([]);
 const initials = computed<Map<string, string[]>>(() => {
 	const model = props.modelConfiguration.configuration;
 	if (stratifiedModelType.value) {
-		return getUnstratifiedInitials(model.value);
+		return getUnstratifiedInitials(model);
 	}
 	const result = new Map<string, string[]>();
 	model.semantics?.ode.initials?.forEach((initial) => {
@@ -215,10 +230,14 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 				);
 				const sourceValue =
 					props.modelConfiguration.configuration.metadata.sources[initial!.target];
+
+				const unitValue =
+					props.modelConfiguration.configuration.metadata?.units?.[initial!.target] ?? '';
 				return {
 					id: v,
 					name: v,
 					type: ParamType.EXPRESSION,
+					unit: unitValue,
 					value: initial,
 					source: sourceValue,
 					visibility: false
@@ -240,11 +259,13 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 				(i) => i.target === vals[0]
 			);
 			const sourceValue = props.modelConfiguration.configuration.metadata.sources[initial!.target];
-
+			const unitValue =
+				props.modelConfiguration.configuration.metadata?.units?.[initial!.target] ?? '';
 			formattedInitials.push({
 				id: init,
 				name: init,
 				type: ParamType.EXPRESSION,
+				unit: unitValue,
 				value: initial,
 				source: sourceValue,
 				visibility: false
@@ -269,8 +290,20 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
+const updateUnit = (id: string, value: string) => {
+	const clonedConfig = cloneDeep(props.modelConfiguration);
+	if (!clonedConfig.configuration.metadata.units) {
+		clonedConfig.configuration.metadata.units = {};
+	}
+	clonedConfig.configuration.metadata.units[id] = value;
+	emit('update-configuration', clonedConfig);
+};
+
 const updateSource = (id: string, value: string) => {
 	const clonedConfig = cloneDeep(props.modelConfiguration);
+	if (!clonedConfig.configuration.metadata.sources) {
+		clonedConfig.configuration.metadata.sources = {};
+	}
 	clonedConfig.configuration.metadata.sources[id] = value;
 	emit('update-configuration', clonedConfig);
 };

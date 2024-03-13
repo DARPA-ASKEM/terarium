@@ -931,6 +931,7 @@ export interface ModelMetadata {
     attributes?: any[];
     timeseries?: { [index: string]: any };
     sources?: { [index: string]: any };
+    units?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
     processed_at?: number;

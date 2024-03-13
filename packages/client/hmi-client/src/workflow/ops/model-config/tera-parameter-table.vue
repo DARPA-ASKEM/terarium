@@ -1,6 +1,6 @@
 <template>
 	<Datatable
-		:value="tableFormattedParams"
+		:value="data ?? tableFormattedParams"
 		v-model:expanded-rows="expandedRows"
 		dataKey="id"
 		:row-class="rowClass"
@@ -26,7 +26,7 @@
 			</template>
 		</Column>
 
-		<Column header="Description">
+		<Column header="Description" class="w-2">
 			<template #body="slotProps">
 				<span v-if="slotProps.data.value.description" class="truncate-text">
 					{{ slotProps.data.value.description }}</span
@@ -35,7 +35,7 @@
 			</template>
 		</Column>
 
-		<Column header="Concept">
+		<Column header="Concept" class="w-1">
 			Column field="grounding.identifiers" header="Concept">
 			<template #body="{ data }">
 				<template
@@ -62,14 +62,16 @@
 			</template>
 		</Column>
 
-		<Column header="Unit">
+		<Column header="Unit" class="w-1">
 			<template #body="slotProps">
 				<InputText
+					v-if="slotProps.data.type !== ParamType.MATRIX"
 					size="small"
 					class="w-full"
-					:model-value="slotProps.data.unit"
+					v-model.lazy="slotProps.data.unit"
 					@update:model-value="updateUnit(slotProps.data.value, $event)"
 				/>
+				<template v-else>--</template>
 			</template>
 		</Column>
 
@@ -228,7 +230,7 @@
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model-configuration="modelConfiguration"
 				:data="slotProps.data.tableFormattedMatrix"
-				@update-value="(val: ModelParameter) => emit('update-value', [val])"
+				@update-value="(val: ModelParameter) => emit('update-value', val)"
 				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
 			/>
 		</template>
@@ -281,6 +283,7 @@ const typeOptions = [
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
 	hideHeader?: boolean;
 }>();
 
@@ -334,8 +337,8 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				);
 				const paramType = getParamType(param);
 				const timeseriesValue =
-					props.modelConfiguration.configuration.metatdata?.timeseries[param!.id];
-				const sourceValue = props.modelConfiguration.configuration.metatdata?.sources[param!.id];
+					props.modelConfiguration.configuration.metadata?.timeseries[param!.id];
+				const sourceValue = props.modelConfiguration.configuration.metadata?.sources[param!.id];
 				return {
 					id: v,
 					name: v,
