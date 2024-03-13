@@ -358,11 +358,6 @@ function appendOutput(
 		timestamp: new Date()
 	};
 
-	// Revert
-	node.outputs.forEach((o) => {
-		o.isSelected = false;
-	});
-
 	// Append and set active
 	node.outputs.push(outputPort);
 	node.active = uuid;
