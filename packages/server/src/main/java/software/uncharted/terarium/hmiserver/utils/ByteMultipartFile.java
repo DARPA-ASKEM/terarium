@@ -38,7 +38,7 @@ public class ByteMultipartFile implements MultipartFile {
 
 	@Override
 	public boolean isEmpty() {
-		return content.length == 0;
+		return content == null || content.length == 0;
 	}
 
 	@Override
