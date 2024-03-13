@@ -17,14 +17,19 @@
 		<template #foreground>
 			<div class="toolbar glass">
 				<div class="button-group w-full">
-					<InputText
-						v-if="isRenamingWorkflow"
-						class="p-inputtext w-full mr-8"
-						v-model.lazy="newWorkflowName"
-						placeholder="Workflow name"
-						@keyup.enter="updateWorkflowName"
-						@keyup.esc="updateWorkflowName"
-					/>
+					<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
+						<InputText
+							class="p-inputtext w-full"
+							v-model.lazy="newWorkflowName"
+							placeholder="Workflow name"
+							@keyup.enter="updateWorkflowName"
+							@keyup.esc="updateWorkflowName"
+							v-focus
+						/>
+						<div class="flex flex-nowrap ml-1 mr-3">
+							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
+						</div>
+					</div>
 					<h4 v-else>{{ wf.name }}</h4>
 					<Button
 						v-if="!isRenamingWorkflow"
@@ -901,5 +906,11 @@ function resetZoom() {
 	align-items: center;
 	flex-direction: row;
 	gap: var(--gap-small);
+}
+
+.rename-workflow {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
 }
 </style>
