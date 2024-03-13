@@ -126,9 +126,9 @@ const optionsMenuItems = computed(() => [
 
 async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
+	await useProjects().refresh();
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().refresh();
 	}, 800);
 }
 

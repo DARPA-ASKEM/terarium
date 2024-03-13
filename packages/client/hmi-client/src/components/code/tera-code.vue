@@ -361,7 +361,7 @@ async function saveCode(codeAssetToSave: Code | null = codeAssetCopy.value) {
 		highlightDynamics();
 	} else {
 		newCodeName.value = codeName.value;
-		saveNewCode();
+		await saveNewCode();
 	}
 }
 
@@ -397,6 +397,7 @@ async function refreshCodeAsset(codeId: string) {
 		codeAssetCopy.value = cloneDeep(codeAsset.value);
 	}
 }
+
 // This was causing issues when trying to commit
 // probably because I removed the Open File button
 //
@@ -586,10 +587,12 @@ header > section {
 main {
 	height: 100%;
 }
+
 .code-asset-content {
 	display: flex;
 	height: 100%;
 }
+
 .p-dropdown {
 	height: 2.75rem;
 }
@@ -643,6 +646,7 @@ main {
 	gap: 0;
 	max-width: 100%;
 }
+
 .code-blocks-container {
 	padding: var(--gap);
 	max-width: 300px;
@@ -653,6 +657,7 @@ main {
 	border-left: solid 1px var(--surface-border);
 	overflow-y: auto;
 }
+
 .code-blocks-buttons-container {
 	display: flex;
 	flex-direction: row;
