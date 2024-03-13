@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -542,7 +541,6 @@ public class KnowledgeController {
 			final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
 
 			boolean jobDone = false;
-			final RestTemplate restTemplate = new RestTemplate();
 			for (int i = 0; i < MAX_ITERATIONS; i++) {
 
 				final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);

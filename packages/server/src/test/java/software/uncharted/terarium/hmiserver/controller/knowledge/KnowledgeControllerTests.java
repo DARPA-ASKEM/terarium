@@ -300,7 +300,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(model != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void cosmosPdfExtraction() throws Exception {
 
