@@ -141,8 +141,4 @@ section {
 		}
 	}
 }
-
-.add-a-note:deep(.p-button-label) {
-	text-align: left;
-}
 </style>
