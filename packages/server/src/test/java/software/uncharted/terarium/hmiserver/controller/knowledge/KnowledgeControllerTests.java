@@ -6,8 +6,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -281,4 +285,32 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		// log.info(document.getMetadata().toString());
 	}
 
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void cosmosPdfExtraction() throws Exception {
+
+		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
+
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-pdf-name")
+				.setDescription("my description")
+				.setFileNames(List.of("paper.pdf"));
+
+		documentAsset = documentAssetService.createAsset(documentAsset);
+
+		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
+
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-to-cosmos")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.with(csrf()))
+				.andExpect(status().isOk());
+
+		documentAsset = documentAssetService.getAsset(documentAsset.getId()).orElseThrow();
+
+		log.info(documentAsset.getMetadata().toString());
+	}
 }

@@ -131,6 +131,22 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		}
 	}
 
+	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build()) {
+
+			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
+			if (url.isEmpty()) {
+				return Optional.empty();
+			}
+			final PresignedURL presignedURL = url.get();
+			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
+			final HttpResponse response = httpclient.execute(get);
+			return Optional.of(IOUtils.toByteArray(response.getEntity().getContent()));
+		}
+	}
+
 	public void uploadFile(final UUID uuid, final String filename, final HttpEntity fileEntity) throws IOException {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()

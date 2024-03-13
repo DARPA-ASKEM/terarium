@@ -57,7 +57,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
-import software.uncharted.terarium.hmiserver.proxies.cosmos.CosmosProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
@@ -68,6 +67,7 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 
@@ -83,15 +83,13 @@ public class KnowledgeController {
 
 	final SkemaUnifiedProxy skemaUnifiedProxy;
 	final MitProxy mitProxy;
-	final CosmosProxy cosmosProxy;
+	final ExtractionProxy extractionProxy;
 
 	final DocumentAssetService documentService;
 	final ModelService modelService;
 	final ProvenanceService provenanceService;
 
 	final CodeService codeService;
-
-	final ExtractionProxy extractionProxy;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
@@ -337,8 +335,10 @@ public class KnowledgeController {
 			final String extractionsString = mapper
 					.writeValueAsString(document.getMetadata() != null ? document.getMetadata() : new HashMap<>());
 
-			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json", "application/json");
-			final StringMultipartFile extractionFile = new StringMultipartFile(extractionsString, "extractions.json",
+			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json",
+					"application/json");
+			final StringMultipartFile extractionFile = new StringMultipartFile(
+					extractionsString, "extractions.json",
 					"application/json");
 
 			final ResponseEntity<JsonNode> res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
@@ -523,14 +523,15 @@ public class KnowledgeController {
 
 			final String filename = document.getFileNames().get(0);
 
-			final String documentContents = documentService.fetchFileAsString(documentId, filename).orElseThrow();
+			final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).orElseThrow();
 
-			final StringMultipartFile documentFile = new StringMultipartFile(documentContents, filename,
+			final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, filename,
 					"application/pdf");
 
 			final boolean compressImages = false;
 			final boolean forceRun = false;
-			final ResponseEntity<JsonNode> extractionResp = cosmosProxy.processPdfExtraction(compressImages, !forceRun,
+			final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
+					!forceRun,
 					documentFile);
 
 			final JsonNode body = extractionResp.getBody();
