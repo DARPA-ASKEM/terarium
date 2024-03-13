@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main v-if="modelType === AMRSchemaNames.PETRINET">
 		<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 			<section class="graph-element">
 				<Toolbar>
@@ -69,10 +69,18 @@
 			/>
 		</Teleport>
 	</main>
+
+	<!--REGNET and STOCKFLOW models use beaker to generate an image-->
+	<main v-else-if="modelType === AMRSchemaNames.REGNET || modelType === AMRSchemaNames.STOCKFLOW">
+		<div v-if="!isGeneratingModelPreview">
+			<img :src="templatePreview" alt="" :style="{ 'max-height': isPreview ? '180px' : '400px' }" />
+		</div>
+		<tera-progress-spinner v-else is-centered> Generating model preview... </tera-progress-spinner>
+	</main>
 </template>
 
 <script setup lang="ts">
-import { watch, ref, onMounted, onUnmounted } from 'vue';
+import { watch, ref, onMounted, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import {
@@ -92,8 +100,12 @@ import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import SelectButton from 'primevue/selectbutton';
-import TeraModelTypeLegend from './tera-model-type-legend.vue';
+import { AMRSchemaNames } from '@/types/common';
+import { KernelSessionManager } from '@/services/jupyter';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { getModelType } from '@/services/model';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
+import TeraModelTypeLegend from './tera-model-type-legend.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -113,6 +125,9 @@ const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
+const modelType = computed(() => getModelType(props.model));
+const templatePreview = ref('');
+const isGeneratingModelPreview = ref(false);
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -164,27 +179,33 @@ async function toggleCollapsedView() {
 watch(
 	[() => props.model, graphElement],
 	async () => {
-		if (graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
+		if (modelType.value === AMRSchemaNames.PETRINET) {
+			if (graphElement.value === null) return;
+			const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
-		// Create renderer
-		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
-		if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
-			graphLegendLabels.value = renderer.dims;
-			graphLegendColors.value = renderer.depthColorList;
+			// Create renderer
+			renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
+			if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
+				graphLegendLabels.value = renderer.dims;
+				graphLegendColors.value = renderer.depthColorList;
+			}
+
+			renderer.on('node-click', (_eventName, _event, selection) => {
+				const { id, type } = selection.datum();
+				if (type === NodeType.Transition) {
+					selectedTransitionId.value = id;
+					openValueConfig.value = true;
+				}
+			});
+
+			// Render graph
+			await renderer?.setData(graphData);
+			await renderer?.render();
 		}
 
-		renderer.on('node-click', (_eventName, _event, selection) => {
-			const { id, type } = selection.datum();
-			if (type === NodeType.Transition) {
-				selectedTransitionId.value = id;
-				openValueConfig.value = true;
-			}
-		});
-
-		// Render graph
-		await renderer?.setData(graphData);
-		await renderer?.render();
+		if (modelType.value === AMRSchemaNames.REGNET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+			generateTemplatePreview();
+		}
 	},
 	{ deep: true }
 );
@@ -203,11 +224,42 @@ const handleResize = () => updateLayout();
 onMounted(() => {
 	window.addEventListener('resize', handleResize);
 	handleResize();
+	if (modelType.value === AMRSchemaNames.REGNET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		generateTemplatePreview();
+	}
 });
 
 onUnmounted(() => {
 	window.removeEventListener('resize', handleResize);
 });
+
+// Create a preview image based on MMT
+const generateTemplatePreview = async () => {
+	if (!props.model) return;
+	try {
+		const kernelManager = new KernelSessionManager();
+		isGeneratingModelPreview.value = true;
+		await kernelManager.init('beaker_kernel', 'Beaker Kernel', {
+			context: 'mira_model',
+			language: 'python3',
+			context_info: {
+				id: props.model.id
+			}
+		});
+
+		kernelManager
+			.sendMessage('reset_request', {})
+			.register('reset_response', () => null) // noop
+			.register('model_preview', (data) => {
+				templatePreview.value = `data:image/png;base64, ${data?.content?.['image/png']}`;
+				kernelManager.shutdown();
+				isGeneratingModelPreview.value = false;
+			});
+	} catch (err) {
+		console.error(err);
+		isGeneratingModelPreview.value = false;
+	}
+};
 </script>
 
 <style scoped>

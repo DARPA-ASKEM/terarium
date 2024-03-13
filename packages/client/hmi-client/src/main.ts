@@ -66,7 +66,12 @@ app
 	.use(ConfirmationService)
 	.use(PrimeVue, { ripple: true })
 	.use(VueKatex)
-	.directive('tooltip', Tooltip);
+	.directive('tooltip', Tooltip)
+	.directive('focus', {
+		mounted(el) {
+			el.focus();
+		}
+	});
 
 // Configure Google Analytics
 const GTAG = await API.get('/configuration/ga');

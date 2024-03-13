@@ -5,6 +5,7 @@
 		<Column field="task" header="Task" sortable></Column>
 		<Column field="description" header="Description" sortable></Column>
 		<Column field="notes" header="Notes" sortable></Column>
+		<Column field="multipleUsers" header="Multiple Users" sortable></Column>
 		<Column field="timestampMillis" header="Timestamp" sortable>
 			<template #body="slotProps">
 				{{ humanizeDate(slotProps.data.timestampMillis) }}

@@ -121,7 +121,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String,
-		default: 'XDD'
+		default: 'xDD'
 	}
 });
 
@@ -153,7 +153,7 @@ const projectOptions = computed(() => [
 							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
-					} else if (isDocument(selectedAsset.value) && props.source === 'XDD') {
+					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
 						const document = selectedAsset.value as Document;
 						const xddDoc: AddDocumentAssetFromXDDResponse | null = await createDocumentFromXDD(
 							document,
@@ -172,12 +172,6 @@ const projectOptions = computed(() => [
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
-					else {
-						// TODO: 'response' here is just an id, and we've lost the error message by this point. We may want to
-						// eventually pass up the error code and message to this point in the code so that we can show the user
-						// more helpful information than just "failed".
-						logger.error(`Failed adding ${assetName} to ${project.name}`);
-					}
 
 					isAdding.value = false;
 				}
@@ -227,7 +221,7 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resourceType === ResourceType.XDD) {
-			if (props.source === 'XDD') {
+			if (props.source === 'xDD') {
 				const documentSearchResults = searchResults.results as Document[];
 				return [...documentSearchResults];
 			}

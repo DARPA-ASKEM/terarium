@@ -4,32 +4,7 @@ import { Model, ModelConfiguration, PetriNetModel, PetriNetTransition } from '@/
 import { logger } from '@/utils/logger';
 import { IGraph } from '@graph-scaffolder/types';
 import { AxiosError } from 'axios';
-import _, { isEmpty, some } from 'lodash';
-
-// deprecated section - this is the acset representation, we should do the conversion on model-service
-interface PetriNet {
-	S: State[]; // List of state names
-	T: Transition[]; // List of transition names
-	I: Input[]; // List of inputs
-	O: Output[]; // List of outputs
-}
-interface State {
-	sname: string;
-	uid?: string | number;
-}
-interface Transition {
-	tname: string;
-	uid?: string | number;
-}
-interface Input {
-	it: number;
-	is: number;
-}
-interface Output {
-	ot: number;
-	os: number;
-}
-// end deprecated section
+import _ from 'lodash';
 
 export interface NodeData {
 	type: string;
@@ -66,89 +41,6 @@ export const mathmlToPetri = async (mathml: string[]) => {
 		}
 	}
 	return null;
-};
-
-// Transform a petrinet into latex
-export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
-	try {
-		const payloadPetri = {
-			S: petri.S.map((s) => ({ sname: s.sname })),
-			T: petri.T.map((t) => ({ tname: t.tname })),
-			I: petri.I,
-			O: petri.O
-		};
-
-		const resp = await API.post('/transforms/acset-to-latex', payloadPetri);
-
-		if (resp && resp.status === 200 && resp.data && typeof resp.data === 'string') {
-			return resp.data;
-		}
-		if (resp && resp.status === 204) return null;
-
-		logger.error('[Model Service] petriToLatex: Server did not provide a correct response', {
-			showToast: false,
-			toastTitle: 'Model Service'
-		});
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('petriToLatex Error:', axiosError.response?.data || axiosError.message, {
-				showToast: false
-			});
-		} else {
-			logger.error(error, { showToast: false });
-		}
-	}
-	return null;
-};
-
-// Used to derive equations
-// AMR => ACSet => ODE => Equation => Latex
-export const convertAMRToACSet = (amr: Model) => {
-	const result: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
-	};
-
-	const petrinetModel = amr.model as PetriNetModel;
-
-	petrinetModel.states.forEach((s) => {
-		result.S.push({ sname: s.id });
-	});
-
-	petrinetModel.transitions.forEach((t) => {
-		result.T.push({ tname: t.id });
-	});
-
-	petrinetModel.transitions.forEach((transition) => {
-		transition.input.forEach((input) => {
-			result.I.push({
-				is: result.S.findIndex((s) => s.sname === input) + 1,
-				it: result.T.findIndex((t) => t.tname === transition.id) + 1
-			});
-		});
-	});
-
-	petrinetModel.transitions.forEach((transition) => {
-		transition.output.forEach((output) => {
-			result.O.push({
-				os: result.S.findIndex((s) => s.sname === output) + 1,
-				ot: result.T.findIndex((t) => t.tname === transition.id) + 1
-			});
-		});
-	});
-
-	// post processing to use expressions rather than ids
-	result.T = result.T.map((transition) => {
-		const foundRate = amr.semantics?.ode?.rates?.find((rate) => rate.target === transition.tname);
-
-		// default to the id if there is a case where there is no expression
-		return { tname: foundRate ? `(${foundRate!.expression})` : transition.tname };
-	});
-
-	return result;
 };
 
 export const convertToIGraph = (amr: Model) => {
@@ -413,27 +305,60 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 	console.log(amr, amrOld);
 };
 
-/// /////////////////////////////////////////////////////////////////////////////
-// Stratification
-/// /////////////////////////////////////////////////////////////////////////////
+/**
+ * Stratification
+ * */
+
+// Heuristic to get the straitified modifier mappings, we assume that
+// - if there is a single unique value for modifier-key then it is not user initiated stratification
+// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
+export const getModifierMap = (amr: Model) => {
+	const modifierMap: Map<string, Set<string>> = new Map();
+	(amr.model as PetriNetModel).states.forEach((s) => {
+		if (s.grounding && s.grounding.modifiers) {
+			const modifiers = s.grounding.modifiers;
+			const keys: string[] = Object.keys(modifiers);
+			keys.forEach((key) => {
+				if (!modifierMap.has(key)) {
+					modifierMap.set(key, new Set());
+				}
+				const modifier = modifiers[key];
+				if (!modifier.startsWith('ncit:')) {
+					modifierMap.get(key)?.add(modifiers[key]);
+				}
+			});
+		}
+	});
+	return modifierMap;
+};
 
 // Check if AMR is a stratified AMR
 export const getStratificationType = (amr: Model) => {
 	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
 
-	const hasModifiers = some(
-		(amr.model as PetriNetModel).states,
-		(s) =>
-			s.grounding &&
-			s.grounding.modifiers &&
-			!isEmpty(Object.keys(s.grounding.modifiers)) &&
-			// Temp hack to reject SBML type models with actual groundings, may not work
-			// all the time, MIRA will move strata info to metadata section - Oct 2023
-			s.id.includes('_')
-	);
-	if (hasModifiers) return StratifiedModel.Mira;
-
+	const modifierMap = getModifierMap(amr);
+	// eslint-disable-next-line
+	for (const ele of modifierMap) {
+		if (ele[1].size > 1) {
+			return StratifiedModel.Mira;
+		}
+	}
 	return null;
+
+	// if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
+	//
+	// const hasModifiers = some(
+	// 	(amr.model as PetriNetModel).states,
+	// 	(s) =>
+	// 		s.grounding &&
+	// 		s.grounding.modifiers &&
+	// 		!isEmpty(Object.keys(s.grounding.modifiers)) &&
+	// 		// Temp hack to reject SBML type models with actual groundings, may not work
+	// 		// all the time, MIRA will move strata info to metadata section - Oct 2023
+	// 		s.id.includes('_')
+	// );
+	// if (hasModifiers) return StratifiedModel.Mira;
+	// return null;
 };
 
 export function newAMR(modelName: string) {

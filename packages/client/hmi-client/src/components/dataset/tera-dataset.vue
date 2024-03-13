@@ -25,7 +25,7 @@
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="toggleOptionsMenu"
 				/>
-				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
 		</template>
 
@@ -45,18 +45,19 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { ref, watch, onUpdated, Ref, PropType } from 'vue';
+import { onUpdated, PropType, Ref, ref, watch } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
-import type { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
+import { AssetType, type CsvAsset, type Dataset, type DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
 import { useProjects } from '@/composables/project';
 import InputText from 'primevue/inputtext';
-import Menu from 'primevue/menu';
+import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
+import { logger } from '@/utils/logger';
 import TeraDatasetDescription from './tera-dataset-description.vue';
 import { enrichDataset } from './utils';
 
@@ -120,6 +121,26 @@ const optionsMenuItems = ref([
 			isRenamingDataset.value = true;
 			newDatasetName.value = dataset.value?.name ?? '';
 		}
+	},
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						const response = await useProjects().addAsset(
+							AssetType.Dataset,
+							props.assetId,
+							project.id
+						);
+						if (response) logger.info(`Added asset to ${project.name}`);
+					}
+				})) ?? []
 	}
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
@@ -143,9 +164,9 @@ async function updateAndFetchDataset(ds: Dataset) {
 const fetchDataset = async () => {
 	const datasetTemp: Dataset | null = await getDataset(props.assetId);
 
-	// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-	rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 	if (datasetTemp) {
+		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+		rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 		Object.entries(datasetTemp).forEach(([key, value]) => {
 			if (isString(value)) {
 				datasetTemp[key] = highlightSearchTerms(value);

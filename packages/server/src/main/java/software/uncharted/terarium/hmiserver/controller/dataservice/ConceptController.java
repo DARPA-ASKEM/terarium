@@ -1,23 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,6 +8,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
@@ -34,6 +21,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.concept.Ontology
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ConceptService;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/concepts")
 @RestController
@@ -56,9 +47,10 @@ public class ConceptController {
 			@RequestParam("curie") final String curie) {
 		try {
 			return ResponseEntity.ok(conceptService.searchConcept(curie));
-		} catch (RuntimeException e) {
+		} catch (final RuntimeException e) {
 			log.error("Unable to get search concept", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to get search concept");
 		}
 	}
 
@@ -74,7 +66,7 @@ public class ConceptController {
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(conceptService.createConcept(concept));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to create concept";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -87,17 +79,16 @@ public class ConceptController {
 	@Operation(summary = "Search concept definitions by term")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Concepts found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no concepts found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
 	})
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> searchConceptDefinitions(
-			@RequestParam("term") String term,
-			@RequestParam(name = "limit", defaultValue = "100") Integer limit,
-			@RequestParam(name = "offset", defaultValue = "100") Integer offset) {
+			@RequestParam("term") final String term,
+			@RequestParam(name = "limit", defaultValue = "100") final Integer limit,
+			@RequestParam(name = "offset", defaultValue = "100") final Integer offset) {
 		try {
 			return ResponseEntity.ok(conceptService.searchConceptDefinitions(term, limit, offset));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to search concept definitions";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -111,14 +102,13 @@ public class ConceptController {
 	@Operation(summary = "Gets concept by curie string")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Concept found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class))),
-			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
 	})
 	public ResponseEntity<DKG> getConceptDefinition(
 			@PathVariable("curie") final String curie) {
 		try {
 			return ResponseEntity.ok(conceptService.getConceptDefinition(curie));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get concept definition";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -132,19 +122,16 @@ public class ConceptController {
 	@Operation(summary = "Gets concept by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Concept found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class))),
-			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no concept found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
 	})
 	public ResponseEntity<OntologyConcept> getConcept(
 			@PathVariable("id") final UUID id) {
 
 		try {
-			Optional<OntologyConcept> concept = conceptService.getConcept(id);
-			if (concept.isPresent()) {
-				return ResponseEntity.ok(concept.get());
-			}
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
+			final Optional<OntologyConcept> concept = conceptService.getConcept(id);
+            return concept.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (final Exception e) {
 			final String error = "Unable to get concept";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -168,7 +155,7 @@ public class ConceptController {
 		try {
 			conceptService.deleteConcept(id);
 			return ResponseEntity.ok(new ResponseDeleted("Concept", id));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to delete concept";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -182,19 +169,17 @@ public class ConceptController {
 	@Operation(summary = "Update a concept")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Concept updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OntologyConcept.class))),
+			@ApiResponse(responseCode = "404", description = "Concept could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the concept", content = @Content)
 	})
 	public ResponseEntity<OntologyConcept> updateConcept(
 			@PathVariable("id") final UUID id,
-			@RequestBody OntologyConcept concept) {
+			@RequestBody final OntologyConcept concept) {
 		try {
 			concept.setId(id);
 			final Optional<OntologyConcept> updated = conceptService.updateConcept(concept);
-			if (updated.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.ok(updated.get());
-		} catch (RuntimeException e) {
+            return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final RuntimeException e) {
 			final String error = "Unable to update concept";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -208,7 +193,6 @@ public class ConceptController {
 	@Operation(summary = "Faceted search for concepts")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Concepts found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Concept.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no concepts found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving concepts from the data store", content = @Content)
 	})
 	public ResponseEntity<ConceptFacetSearchResponse> searchConceptsUsingFacets(
@@ -216,7 +200,7 @@ public class ConceptController {
 			@RequestParam(value = "curies", required = false) final List<String> curies) {
 		try {
 			return ResponseEntity.ok(conceptService.searchConceptsUsingFacets(types, curies));
-		} catch (RuntimeException e) {
+		} catch (final RuntimeException e) {
 			final String error = "Unable to search concepts using facets";
 			log.error(error, e);
 			throw new ResponseStatusException(

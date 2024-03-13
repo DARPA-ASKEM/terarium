@@ -8,7 +8,7 @@
 				@change="if ($event.value) view = $event.value;"
 				:options="viewOptions"
 			/>
-			<div class="container" v-if="model && model.header.schema_name === 'petrinet'">
+			<div class="container" v-if="model">
 				<tera-model-diagram
 					v-if="view === ModelNodeView.Diagram"
 					:model="model"
@@ -20,9 +20,6 @@
 					:model="model"
 					:is-editable="false"
 				/>
-			</div>
-			<div class="container" v-if="model && model.header.schema_name !== 'petrinet'">
-				<img :src="templatePreview" alt="" style="max-height: 180px" />
 			</div>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
@@ -54,7 +51,6 @@ import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
-import { KernelSessionManager } from '@/services/jupyter';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
@@ -72,7 +68,6 @@ enum ModelNodeView {
 const model = ref<Model | null>();
 const view = ref(ModelNodeView.Diagram);
 const viewOptions = ref([ModelNodeView.Diagram, ModelNodeView.Equation]);
-const templatePreview = ref('');
 
 async function getModelById(modelId: string) {
 	model.value = await getModel(modelId);
@@ -93,37 +88,10 @@ async function onModelChange(chosenProjectModel: ProjectAsset) {
 	await getModelById(chosenProjectModel.assetId);
 }
 
-// Create a preview image based on MMT
-const generateTemplatePreview = async () => {
-	if (!model.value) return;
-	try {
-		const kernelManager = new KernelSessionManager();
-		await kernelManager.init('beaker_kernel', 'Beaker Kernel', {
-			context: 'mira_model',
-			language: 'python3',
-			context_info: {
-				id: model.value.id
-			}
-		});
-
-		kernelManager
-			.sendMessage('reset_request', {})
-			.register('reset_response', () => null) // noop
-			.register('model_preview', (data) => {
-				templatePreview.value = `data:image/png;base64, ${data?.content?.['image/png']}`;
-				kernelManager.shutdown();
-			});
-	} catch (err) {
-		console.error(err);
-	}
-};
-
 onMounted(async () => {
 	const state = props.node.state;
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
-
-		await generateTemplatePreview();
 
 		if (props.node.outputs.length === 0 && model.value) {
 			emit('append-output', {

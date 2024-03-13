@@ -54,20 +54,6 @@
 				<div>
 					{{ selectedBoxId === '' ? bound.ub.toFixed(4) : selectedBox[parameter][1].toFixed(4) }}
 				</div>
-				<!--
-				<InputNumber
-					mode="decimal"
-					:min-fraction-digits="1"
-					class="p-inputtext-sm"
-					v-model="bound.lb"
-				/>
-				<InputNumber
-					mode="decimal"
-					:min-fraction-digits="1"
-					class="p-inputtext-sm"
-					v-model="bound.ub"
-				/>
-				-->
 				<tera-funman-boundary-chart
 					:processed-data="processedData as FunmanProcessedData"
 					:param1="selectedParam"
@@ -76,12 +62,6 @@
 					:selectedBoxId="selectedBoxId"
 					@click="selectedParam2 = parameter"
 				/>
-				<!--
-				&nbsp;
-				<div v-if="selectedBox[parameter]">
-					{{ selectedBox[parameter][0].toFixed(4) }}:{{ selectedBox[parameter][1].toFixed(4) }}
-				</div>
-				-->
 			</div>
 		</div>
 	</div>
@@ -149,7 +129,8 @@ const initalizeParameters = async () => {
 		.map((ele: any) => parameterOptions.value.push(ele.id));
 	selectedParam.value = parameterOptions.value[0];
 	timestepOptions.value = funmanResult.request.structure_parameters[0].schedules[0].timepoints;
-	timestep.value = timestepOptions.value[1];
+	// timestep.value = timestepOptions.value[1];
+	timestep.value = timestepOptions.value[timestepOptions.value.length - 1];
 
 	modelStates.value = [];
 	funmanResult.model.petrinet.model.states.forEach((element) => {

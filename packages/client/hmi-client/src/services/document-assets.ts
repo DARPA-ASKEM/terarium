@@ -89,12 +89,11 @@ async function createNewDocumentFromGithubFile(
 	const urlResponse = await API.put(
 		`/document-asset/${newDocument.id}/upload-document-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
 	if (!urlResponse || urlResponse.status >= 400) {
-		logger.error(`Failed to upload document from github: ${urlResponse}`);
 		return null;
 	}
 
@@ -139,7 +138,7 @@ async function addFileToDocumentAsset(
 				);
 			}
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	return response && response.status < 400;
@@ -166,8 +165,7 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting document file as text');
+	if (!response) {
 		return null;
 	}
 
@@ -183,8 +181,7 @@ async function getEquationFromImageUrl(
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting equation from image url');
+	if (!response) {
 		return null;
 	}
 
@@ -219,8 +216,7 @@ async function createDocumentFromXDD(
 		}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error upload file from doi');
+	if (!response) {
 		return null;
 	}
 

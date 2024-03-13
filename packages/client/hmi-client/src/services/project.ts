@@ -178,33 +178,41 @@ async function getPermissions(projectId: Project['id']): Promise<PermissionRelat
 	}
 }
 
-async function setPermissions(projectId: Project['id'], userId: string, relationship: string) {
+async function setPermissions(
+	projectId: Project['id'],
+	userId: string,
+	relationship: string
+): Promise<boolean> {
 	try {
-		const { status, data } = await API.post(
+		const { status } = await API.post(
 			`projects/${projectId}/permissions/user/${userId}/${relationship}`
 		);
 		if (status !== 200) {
-			return null;
+			return false;
 		}
-		return data ?? null;
+		return true;
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return false;
 	}
 }
 
-async function removePermissions(projectId: Project['id'], userId: string, relationship: string) {
+async function removePermissions(
+	projectId: Project['id'],
+	userId: string,
+	relationship: string
+): Promise<boolean> {
 	try {
-		const { status, data } = await API.delete(
+		const { status } = await API.delete(
 			`projects/${projectId}/permissions/user/${userId}/${relationship}`
 		);
 		if (status !== 200) {
-			return null;
+			return false;
 		}
-		return data ?? null;
+		return true;
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return false;
 	}
 }
 
@@ -213,18 +221,18 @@ async function updatePermissions(
 	userId: string,
 	oldRelationship: string,
 	to: string
-): Promise<PermissionRelationships | null> {
+): Promise<boolean> {
 	try {
-		const { status, data } = await API.put(
+		const { status } = await API.put(
 			`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`
 		);
 		if (status !== 200) {
-			return null;
+			return false;
 		}
-		return data ?? null;
+		return true;
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return false;
 	}
 }
 

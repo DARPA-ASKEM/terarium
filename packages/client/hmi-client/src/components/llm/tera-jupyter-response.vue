@@ -75,7 +75,10 @@
 								/>
 							</div>
 							<tera-dataset-datatable
-								v-if="m.header.msg_type === 'dataset'"
+								v-if="
+									m.header.msg_type === 'dataset' &&
+									m.content[selectedPreviewDataset || 'df']?.headers
+								"
 								class="tera-dataset-datatable"
 								paginatorPosition="bottom"
 								:rows="10"

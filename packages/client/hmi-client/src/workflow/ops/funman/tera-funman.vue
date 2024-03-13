@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="FunmanTabs.Wizard">
 			<tera-drilldown-section>
 				<main>
@@ -45,10 +51,6 @@
 					</h4>
 					<div v-if="showAdditionalOptions">
 						<div class="button-column">
-							<label>Compartmental constraints</label>
-							<InputSwitch v-model="knobs.useCompartmentalConstraint" />
-						</div>
-						<div class="button-column">
 							<label>Tolerance</label>
 							<InputNumber
 								mode="decimal"
@@ -78,9 +80,11 @@
 						<h4>Add sanity checks</h4>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
+
+					<tera-compartment-constraint :variables="modelNodeOptions" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index"
+						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
 						:model-node-options="modelNodeOptions"
@@ -140,14 +144,16 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
-import InputSwitch from 'primevue/inputswitch';
 
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import TeraCompartmentConstraint from '@/components/funman/tera-compartment-constraint.vue';
+
 import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -197,24 +203,50 @@ const knobs = ref<BasicKnobs>({
 	useCompartmentalConstraint: false
 });
 
+const mass = ref('0');
+
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
+const MAX = 99999999999;
 const requestConstraints = computed(
 	() =>
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
+			if (ele.constraintType === 'monotonicityConstraint') {
+				const constraint = {
+					soft: true,
+					name: ele.name,
+					timepoints: null,
+					additive_bounds: {
+						lb: -MAX,
+						ub: 0.0,
+						closed_upper_bound: false,
+						original_width: MAX
+					},
+					variables: ele.variables,
+					weights: [1.0],
+					derivative: true
+				};
+
+				if (ele.derivativeType === 'increasing') {
+					constraint.weights = [-1.0];
+				}
+				return constraint;
+			}
+
 			if (ele.timepoints) {
 				ele.timepoints.closed_upper_bound = true;
 			}
 			if (ele.variables.length === 1) {
 				// State Variable Constraint
-				return {
+				const singleVarConstraint = {
 					name: ele.name,
 					variable: ele.variables[0],
 					interval: ele.interval,
 					timepoints: ele.timepoints
 				};
+				return singleVarConstraint;
 			}
 
 			return {
@@ -291,7 +323,6 @@ const runMakeQuery = async () => {
 				}
 			],
 			config: {
-				// use_compartmental_constraints: true,
 				use_compartmental_constraints: knobs.value.useCompartmentalConstraint,
 				normalization_constant: 1,
 				tolerance: knobs.value.tolerance
@@ -302,21 +333,8 @@ const runMakeQuery = async () => {
 	// Calculate the normalization mass of the model = Sum(initials)
 	const semantics = model.value.semantics;
 	if (knobs.value.useCompartmentalConstraint && semantics) {
-		const modelInitials = semantics.ode.initials;
-		const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
-
-		const parametersMap = {};
-		semantics.ode.parameters?.forEach((d) => {
-			parametersMap[d.id] = d.value;
-		});
-
-		const mass = await pythonInstance.evaluateExpression(
-			modelMassExpression as string,
-			parametersMap
-		);
-
 		if (request.request.config) {
-			request.request.config.normalization_constant = parseFloat(mass);
+			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
 	const response = await makeQueries(request);
@@ -360,10 +378,6 @@ const addOutputPorts = async (runId: string) => {
 		value: runId,
 		state: _.cloneDeep(props.node.state)
 	});
-	if (props.node.outputs.length === 1) {
-		const portId = props.node.outputs[0].id;
-		emit('select-output', portId);
-	}
 };
 
 const addConstraintForm = () => {
@@ -372,7 +386,9 @@ const addConstraintForm = () => {
 		borderColour: '#00c387',
 		name: '',
 		timepoints: { lb: 0, ub: 100 },
-		variables: []
+		variables: [],
+		constraintType: '',
+		derivativeType: ''
 	};
 	state.constraintGroups.push(newGroup);
 	emit('update-state', state);
@@ -416,13 +432,36 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
-	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
+	const renameReserved = (v: string) => {
+		const reserved = ['lambda'];
+		if (reserved.includes(v)) return `${v}_`;
+		return v;
+	};
+
+	// Calculate mass
+	const semantics = model.value.semantics;
+	const modelInitials = semantics?.ode.initials;
+	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
+
+	const parametersMap = {};
+	semantics?.ode.parameters?.forEach((d) => {
+		parametersMap[renameReserved(d.id)] = d.value;
+	});
+
+	const massValue = await pythonInstance.evaluateExpression(
+		modelMassExpression as string,
+		parametersMap
+	);
+	mass.value = massValue;
+
+	// const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
 
-	model.value.semantics?.ode.parameters?.forEach((param) => {
-		if (initialVars?.includes(param.id)) return;
-		modelColumnNameOptions.push(param.id);
-	});
+	// FIXME
+	// model.value.semantics?.ode.parameters?.forEach((param) => {
+	// 	if (initialVars?.includes(param.id)) return;
+	// 	modelColumnNameOptions.push(param.id);
+	// });
 
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {

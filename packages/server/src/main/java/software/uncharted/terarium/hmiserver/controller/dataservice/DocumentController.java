@@ -87,7 +87,6 @@ public class DocumentController {
 	@Operation(summary = "Gets all documents")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Documents found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no documents found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving documents from the data store", content = @Content)
 	})
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
@@ -170,7 +169,7 @@ public class DocumentController {
 	@Operation(summary = "Gets document by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Document found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no document found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no document found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the document from the data store", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> getDocument(
@@ -271,7 +270,6 @@ public class DocumentController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Delete document", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
@@ -440,21 +438,21 @@ public class DocumentController {
 
 			// Upload the document to TDS in order to get a new ID to pair our files we want
 			// to upload with.
-			final DocumentAsset newDocumentAsset = documentAssetService.createAsset(documentAsset);
-			response.setDocumentAssetId(newDocumentAsset.getId());
+			final UUID newDocumentAssetId = documentAssetService.createAsset(documentAsset).getId();
+			response.setDocumentAssetId(newDocumentAssetId);
 
 			// Upload the PDF from unpaywall
-			final String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAsset.getId());
+			final String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
 			if (extractionJobId == null)
 				response.setPdfUploadError(true);
 			else
 				response.setExtractionJobId(extractionJobId);
 
 			// Now upload additional extraction files
-			uploadXDDExtractions(newDocumentAsset.getId(), extractionResponse.getSuccess().getData());
+			uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
 
 			// add asset to project
-			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, newDocumentAsset);
+			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, newDocumentAssetId);
 
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -575,7 +573,12 @@ public class DocumentController {
 
 			// mathML -> LaTeX
 			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
-			return ResponseEntity.ok(latex);
+
+			// Add spaces before and after "*"
+			String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
+			latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
+
+			return ResponseEntity.ok(latexWithSpaces);
 		} catch (final Exception e) {
 			final String error = "Unable to convert image to equation";
 			log.error(error, e);

@@ -161,6 +161,18 @@ public class ReBACService {
 		} else {
 			PUBLIC_GROUP_ID = getGroupId(PUBLIC_GROUP_NAME);
 			ASKEM_ADMIN_GROUP_ID = getGroupId(ASKEM_ADMIN_GROUP_NAME);
+
+			// Ensure ASKEM_ADMIN_GROUP can write to all Projects
+			SchemaObject askemAdminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
+			ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+			List<UUID> projectIds = rebac.lookupResources(Schema.Type.PROJECT, getCurrentConsistency());
+			for (UUID projectId : projectIds) {
+				SchemaObject project = new SchemaObject(Schema.Type.PROJECT, projectId.toString());
+				try {
+					createRelationship(askemAdminGroup, project, Schema.Relationship.WRITER);
+				} catch (RelationshipAlreadyExistsException ignore) {
+				}
+			}
 		}
 	}
 

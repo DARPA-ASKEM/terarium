@@ -16,23 +16,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
+import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.TerariumAssetService;
-import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
+import software.uncharted.terarium.hmiserver.service.data.*;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.*;
 
+import java.io.IOException;
 import java.util.*;
 
 @RequestMapping("/projects")
@@ -51,7 +56,12 @@ public class ProjectController {
 
 	final ProjectAssetService projectAssetService;
 
-	final TerariumAssetServices terariumAssetServices;
+	// TODO: These are all to be removed once we get rid of getAssets
+	final DatasetService datasetService;
+	final ModelService modelService;
+	final DocumentAssetService documentService;
+	final WorkflowService workflowService;
+	final CodeService codeService;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -72,7 +82,9 @@ public class ProjectController {
 			projectIds = rebacUser.lookupProjects();
 		} catch (final Exception e) {
 			log.error("Error getting projects which a user can read", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Error getting projects which a user can read");
 		}
 		if (projectIds == null || projectIds.isEmpty()) {
 			return ResponseEntity.noContent().build();
@@ -96,6 +108,8 @@ public class ProjectController {
 				project.setPublicProject(rebacProject.isPublic());
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 
+				final List<Contributor> contributors = getContributors(rebacProject);
+
 				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
 						assetTypes);
 
@@ -106,6 +120,7 @@ public class ProjectController {
 					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
 				}
 
+				metadata.put("contributor-count", Integer.toString(contributors.size()));
 				metadata.put("datasets-count", counts.getOrDefault(AssetType.DATASET, 0).toString());
 				metadata.put("document-count", counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
 				metadata.put("models-count", counts.getOrDefault(AssetType.MODEL, 0).toString());
@@ -120,6 +135,58 @@ public class ProjectController {
 		});
 
 		return ResponseEntity.ok(projects);
+	}
+
+	/**
+	 * A Contributor is a User or Group that is capable of editing a Project.
+	 *
+	 */
+	private class Contributor {
+		String name;
+		Schema.Relationship permission;
+
+		Contributor(final String name, final Schema.Relationship permission) {
+			this.name = name;
+			this.permission = permission;
+		}
+	}
+
+	/**
+	 * Capture the subset of RebacPermissionRelationships for a given Project.
+	 *
+	 * @param rebacProject the Project to collect RebacPermissionRelationships of.
+	 * @return List of Users and Groups who have edit capability of the rebacProject
+	 */
+	private List<Contributor> getContributors(final RebacProject rebacProject) {
+		final Map<String, Contributor> contributorMap = new HashMap<>();
+
+		try {
+			final List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
+			for (final RebacPermissionRelationship permissionRelationship : permissionRelationships) {
+				final Schema.Relationship relationship = permissionRelationship.getRelationship();
+				// Ensure the relationship is capable of editing the project
+				if (relationship.equals(Schema.Relationship.CREATOR)
+						|| relationship.equals(Schema.Relationship.ADMIN)
+						|| relationship.equals(Schema.Relationship.WRITER)) {
+					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+						final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+						final String name = user.getFirstName() + " " + user.getLastName();
+						if (!contributorMap.containsKey(name)) {
+							contributorMap.put(name, new Contributor(name, relationship));
+						}
+					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+						final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
+						if (!contributorMap.containsKey(group.getName())) {
+							contributorMap.put(group.getName(), new Contributor(group.getName(), relationship));
+						}
+					}
+				}
+			}
+		} catch (final Exception e) {
+			log.error("Failed to get project's contributors");
+		}
+
+		return new ArrayList<>(contributorMap.values());
 	}
 
 	/**
@@ -145,8 +212,15 @@ public class ProjectController {
 			if (rebacUser.canRead(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(id);
 				if (project.isPresent()) {
+					final List<String> authors = new ArrayList<>();
+					final List<Contributor> contributors = getContributors(rebacProject);
+					for (final Contributor contributor : contributors) {
+						authors.add(contributor.name);
+					}
+
 					project.get().setPublicProject(rebacProject.isPublic());
 					project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
+					project.get().setAuthors(authors);
 					return ResponseEntity.ok(project.get());
 				}
 			}
@@ -170,8 +244,9 @@ public class ProjectController {
 			@PathVariable("id") final UUID id) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canAdministrate(new RebacProject(id, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+			if (rebacUser.canAdministrate(rebacProject)) {
 				final boolean deleted = projectService.delete(id);
 				if (deleted)
 					return ResponseEntity.ok(new ResponseDeleted("project", id));
@@ -203,8 +278,12 @@ public class ProjectController {
 		project = projectService.createProject(project);
 
 		try {
-			new RebacUser(currentUserService.get().getId(), reBACService)
-					.createCreatorRelationship(new RebacProject(project.getId(), reBACService));
+			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+
+			rebacUser.createCreatorRelationship(rebacProject);
+			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(
@@ -233,8 +312,9 @@ public class ProjectController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final Project project) {
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canWrite(new RebacProject(id, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+			if (rebacUser.canWrite(rebacProject)) {
 				project.setId(id);
 				final Optional<Project> updatedProject = projectService.updateProject(project);
 				return updatedProject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -252,6 +332,117 @@ public class ProjectController {
 	// Project Assets
 	// --------------------------------------------------------------------------
 
+	@Operation(summary = "DEPRECATED Gets the assets belonging to a specific project, by asset type")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Assets found", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Assets.class))),
+			@ApiResponse(responseCode = "204", description = "Currently unimplemented. This is all you'll get for now!", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class)))),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content) })
+	@GetMapping("/{id}/assets")
+	@Secured(Roles.USER)
+	@Deprecated(forRemoval = true)
+	public ResponseEntity<Assets> getAssets(
+			@PathVariable("id") final UUID projectId,
+			@RequestParam("types") final List<AssetType> types) {
+		try {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacUser.canRead(rebacProject)) {
+
+				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(projectId, types);
+
+				// sort our list of assets by type, caring only about the UUID of the
+				// projectAsset
+				final Map<AssetType, List<UUID>> assetTypeListMap = assets.stream()
+						.collect(
+								HashMap::new,
+								(map, asset) -> {
+									if (!map.containsKey(asset.getAssetType())) {
+										map.put(asset.getAssetType(), new ArrayList<>());
+									}
+									map.get(asset.getAssetType()).add(asset.getAssetId());
+								},
+								HashMap::putAll);
+
+				final Assets assetsResponse = new Assets();
+				for (final AssetType type : assetTypeListMap.keySet()) {
+					switch (type) {
+						case DATASET:
+							final List<Dataset> datasets = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
+								try {
+									final Optional<Dataset> dataset = datasetService.getAsset(id);
+									dataset.ifPresent(datasets::add);
+								} catch (final IOException e) {
+									log.error("Error getting dataset", e);
+								}
+							}
+							assetsResponse.setDataset(datasets);
+							break;
+						case MODEL:
+							final List<Model> models = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
+								try {
+									final Optional<Model> model = modelService.getAsset(id);
+									model.ifPresent(models::add);
+								} catch (final IOException e) {
+									log.error("Error getting model", e);
+								}
+							}
+							assetsResponse.setModel(models);
+							break;
+						case DOCUMENT:
+							final List<DocumentAsset> documents = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
+								try {
+									final Optional<DocumentAsset> document = documentService.getAsset(id);
+									document.ifPresent(documents::add);
+								} catch (final IOException e) {
+									log.error("Error getting document", e);
+								}
+							}
+							assetsResponse.setDocument(documents);
+							break;
+						case WORKFLOW:
+							final List<Workflow> workflows = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
+								try {
+									final Optional<Workflow> workflow = workflowService.getAsset(id);
+									workflow.ifPresent(workflows::add);
+								} catch (final IOException e) {
+									log.error("Error getting workflow", e);
+								}
+							}
+							assetsResponse.setWorkflow(workflows);
+							break;
+						case CODE:
+							final List<Code> code = new ArrayList<>();
+							for (final UUID id : assetTypeListMap.get(type)) {
+								try {
+									final Optional<Code> codeAsset = codeService.getAsset(id);
+									codeAsset.ifPresent(code::add);
+								} catch (final IOException e) {
+									log.error("Error getting code", e);
+								}
+							}
+							assetsResponse.setCode(code);
+							break;
+						default:
+							break;
+					}
+				}
+
+				return ResponseEntity.ok(assetsResponse);
+			}
+			return ResponseEntity.notFound().build();
+		} catch (final Exception e) {
+			log.error("Error getting project assets", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Failed to get project assets");
+		}
+
+	}
+
 	@Operation(summary = "Creates an asset inside of a given project")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
@@ -267,11 +458,12 @@ public class ProjectController {
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService).canWrite(new RebacProject(projectId, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacUser.canWrite(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(projectId);
 
 				if (project.isPresent()) {
-
 
 					//double check that this asset is not already a part of this project, and if it does exist throw an error to the front end
 					final Optional<ProjectAsset> existingAsset = projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
@@ -279,15 +471,9 @@ public class ProjectController {
 						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset already exists in this project");
 					}
 
-					final TerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices.getServiceByType(assetType);
-					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
-					if (asset.isPresent()) {
-						final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(project.get(), assetType, asset.get());
-						return projectAsset.map(pa -> ResponseEntity.status(HttpStatus.CREATED).body(pa)).orElseGet(() -> ResponseEntity.notFound().build());
-					} else {
-						return ResponseEntity.notFound().build();
-					}
-
+					final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(), assetType, assetId);
+					// underlying asset does not exist
+					return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset)).orElseGet(() -> ResponseEntity.notFound().build());
 				}
 
 			}
@@ -314,8 +500,9 @@ public class ProjectController {
 			@PathVariable("asset-id") final UUID assetId) {
 
 		try {
-			if (new RebacUser(currentUserService.get().getId(), reBACService)
-					.canWrite(new RebacProject(projectId, reBACService))) {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacUser.canWrite(rebacProject)) {
 				final boolean deleted = projectAssetService.deleteByAssetId(projectId, type, assetId);
 				if (deleted) {
 					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + type, assetId));
@@ -344,8 +531,9 @@ public class ProjectController {
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(
 			@PathVariable("id") final UUID id) {
 		try {
+			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (new RebacUser(currentUserService.get().getId(), reBACService).canRead(rebacProject)) {
+			if (rebacUser.canRead(rebacProject)) {
 				final PermissionRelationships permissions = new PermissionRelationships();
 				for (final RebacPermissionRelationship permissionRelationship : rebacProject
 						.getPermissionRelationships()) {

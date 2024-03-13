@@ -9,8 +9,8 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 @Service
 public class NotebookSessionService extends TerariumAssetService<NotebookSession>{
 
-	public NotebookSessionService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService) {
-		super(elasticConfig, config, elasticService, projectAssetService, NotebookSession.class);
+	public NotebookSessionService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService) {
+		super(elasticConfig, config, elasticService, NotebookSession.class);
 	}
 
 

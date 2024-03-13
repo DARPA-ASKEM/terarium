@@ -1,6 +1,7 @@
 <template>
-	<tera-operator-placeholder :operation-type="node.operationType" />
-
+	<tera-operator-placeholder :operation-type="node.operationType">
+		Attach two or more models
+	</tera-operator-placeholder>
 	<Button
 		v-if="node.inputs[0].value"
 		@click="emit('open-drilldown')"

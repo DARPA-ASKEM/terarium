@@ -17,9 +17,10 @@ public enum EventType {
 	RUN_SIMULATION(true),
 	RUN_CALIBRATE(true),
 	GITHUB_IMPORT(true),
+	OPERATOR_DRILLDOWN_TIMING(true),
 	TEST_TYPE(true);
 
-	EventType(boolean persistent) {
+	EventType(final boolean persistent) {
 		this.persistent = persistent;
 	}
 

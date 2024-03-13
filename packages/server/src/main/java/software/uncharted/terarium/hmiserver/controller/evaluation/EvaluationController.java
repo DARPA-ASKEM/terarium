@@ -76,6 +76,7 @@ public class EvaluationController {
 						.setTask(value.at("/task").asText())
 						.setDescription(value.at("/description").asText())
 						.setNotes(value.at("/notes").asText())
+						.setMultipleUsers(value.at("/multipleUsers").asBoolean())
 						.setTimestampMillis(timestampMillis)
 						.setUserId(userId));
 				}
@@ -283,7 +284,7 @@ public class EvaluationController {
 
 			try {
 				final JsonNode currentValue = mapper.readValue(currentEvent.getValue(), JsonNode.class);
-				if (currentValue.at("/action").asText().equals(EvaluationScenarioStatus.STARTED.toString()) || currentValue.at("/action").asText().equals(EvaluationScenarioStatus.RESUMED.toString())) {
+				if (currentValue.at("/action").asText().equals(EvaluationScenarioStatus.STARTED.toString()) ) {
 					ranges.add(new Range().setStart(currentEvent.getTimestampMillis()).setEnd(nextEvent.getTimestampMillis()));
 				}
 			} catch (final JsonProcessingException e) {

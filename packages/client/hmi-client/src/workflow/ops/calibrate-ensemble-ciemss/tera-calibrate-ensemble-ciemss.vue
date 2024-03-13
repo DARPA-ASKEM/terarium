@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section>
 			<section class="tera-ensemble">
 				<SelectButton
@@ -39,20 +45,7 @@
 						<span class="pi pi-save p-button-icon p-button-icon-left"></span>
 						<span class="p-button-text">Save as</span>
 					</Button>
-					<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-						<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-						<i
-							class="pi pi-times i"
-							:class="{ clear: hasValidDatasetName }"
-							@click="saveAsName = ''"
-						></i>
-						<i
-							v-if="useProjects().activeProject.value?.id"
-							class="pi pi-check i"
-							:class="{ save: hasValidDatasetName }"
-							@click="saveDatasetToProject"
-						></i>
-					</span>
+					<tera-save-dataset-from-simulation :simulation-run-id="completedRunId" />
 				</div>
 
 				<div v-else-if="view === CalibrateView.Input && node" class="simulate-container">
@@ -218,10 +211,10 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { saveDataset } from '@/services/dataset';
-import { useProjects } from '@/composables/project';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -249,8 +242,6 @@ const BARPERCENTAGE = 0.6;
 const MINBARLENGTH = 1;
 
 const showSaveInput = ref(<boolean>false);
-const saveAsName = ref(<string | null>'');
-const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
 
 const view = ref(CalibrateView.Input);
 const viewOptions = ref([
@@ -391,16 +382,6 @@ const watchCompletedRunList = async () => {
 	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
 	runResults.value = output.runResults;
 };
-
-async function saveDatasetToProject() {
-	const { activeProject, refresh } = useProjects();
-	if (activeProject.value?.id) {
-		if (await saveDataset(activeProject.value.id, completedRunId.value, saveAsName.value)) {
-			refresh();
-		}
-		showSaveInput.value = false;
-	}
-}
 
 watch(
 	() => datasetId.value,

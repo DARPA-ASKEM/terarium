@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div>
 			<tera-drilldown-section :is-loading="isFetchingPDF">
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
@@ -10,13 +16,14 @@
 				<Accordion multiple :active-index="[0, 1, 2]">
 					<AccordionTab v-if="!isEmpty(clonedState.equations)">
 						<template #header>
-							<header>Equation Images</header>
+							<header>Equation images</header>
 						</template>
 						<tera-asset-block
 							v-for="(equation, i) in clonedState.equations"
 							:key="i"
 							:is-included="equation.includeInProcess"
 							@update:is-included="onUpdateInclude(equation)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ equation.name }}</h5>
@@ -26,13 +33,14 @@
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.figures)">
 						<template #header>
-							<header>Figure Images</header>
+							<header>Figure images</header>
 						</template>
 						<tera-asset-block
 							v-for="(figure, i) in clonedState.figures"
 							:key="i"
 							:is-included="figure.includeInProcess"
 							@update:is-included="onUpdateInclude(figure)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ figure.name }}</h5>
@@ -42,13 +50,14 @@
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.tables)">
 						<template #header>
-							<header>Table Images</header>
+							<header>Table images</header>
 						</template>
 						<tera-asset-block
 							v-for="(table, i) in clonedState.tables"
 							:key="i"
 							:is-included="table.includeInProcess"
 							@update:is-included="onUpdateInclude(table)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ table.name }}</h5>
@@ -90,6 +99,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['close', 'update-state', 'update-output-port']);

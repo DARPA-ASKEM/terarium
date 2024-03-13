@@ -36,3 +36,17 @@ export function isDateToday(timestamp): boolean {
 		someDate.getFullYear() === today.getFullYear()
 	);
 }
+
+export function formatTimestamp(timestamp) {
+	const date = new Date(timestamp);
+
+	const formatter = new Intl.DateTimeFormat('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+
+	return formatter.format(date);
+}

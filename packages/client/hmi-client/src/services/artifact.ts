@@ -1,7 +1,6 @@
 import type { Artifact } from '@/types/Types';
 import API from '@/api/api';
 import { Ref } from 'vue';
-import { logger } from '@/utils/logger';
 
 /**
  * This is a helper function to take an arbitrary file from a github repo and create a new artifact from it
@@ -34,12 +33,11 @@ async function createNewArtifactFromGithubFile(
 	const urlResponse = await API.put(
 		`/artifacts/${newArtifact.id}/upload-artifact-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
-	if (!urlResponse || urlResponse.status >= 400) {
-		logger.error(`Failed to upload artifact from github: ${urlResponse}`);
+	if (!urlResponse) {
 		return null;
 	}
 
@@ -115,7 +113,7 @@ async function addFileToArtifact(
 				);
 			}
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	return response && response.status < 400;
@@ -127,8 +125,7 @@ async function getArtifactFileAsText(artifactId: string, fileName: string): Prom
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting artifact file as text');
+	if (!response) {
 		return null;
 	}
 
@@ -143,8 +140,7 @@ async function getArtifactArrayBuffer(
 		responseType: 'arraybuffer'
 	});
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting file download url');
+	if (!response) {
 		return null;
 	}
 

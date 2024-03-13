@@ -36,3 +36,8 @@ export const deleteNotebookSession = async (notebook_id: string) => {
 	const response = await API.delete(`/sessions/${notebook_id}`);
 	return response?.data ?? null;
 };
+
+export const cloneNoteBookSession = async (notebookId: string) => {
+	const response = await API.post(`/sessions/${notebookId}/clone`);
+	return response?.data ?? null;
+};

@@ -16,10 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 public class ReBACFunctions {
@@ -189,5 +186,26 @@ public class ReBACFunctions {
 			}
 		}
 		return results;
+	}
+	public List<UUID> lookupResources(final Schema.Type resourceType, final Consistency consistency) throws Exception {
+		final Set<UUID> results = new HashSet<>();
+
+		PermissionService.RelationshipFilter filter = PermissionService.RelationshipFilter.newBuilder()
+				.setResourceType("project")
+				.build();
+
+		final PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
+				.setConsistency(consistency)
+				.setRelationshipFilter(filter)
+				.build();
+
+		final Iterator<ReadRelationshipsResponse> iter = permissionsService.readRelationships(request);
+		while (iter.hasNext()) {
+			final ReadRelationshipsResponse response = iter.next();
+
+			final UUID uuid = UUID.fromString(response.getRelationship().getResource().getObjectId());
+		    results.add(uuid);
+		}
+		return new ArrayList<>(results);
 	}
 }

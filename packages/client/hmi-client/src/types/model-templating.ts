@@ -11,7 +11,7 @@ export enum DecomposedModelTemplateTypes {
 	Observable = 'Observable'
 }
 
-export interface ModelTemplates {
+export interface ModelTemplateCanvas {
 	id: string;
 	transform: {
 		x: number;

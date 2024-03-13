@@ -1,5 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.math.Quantiles;
@@ -50,7 +54,6 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RequestMapping("/datasets")
 @RestController
@@ -65,20 +68,68 @@ public class DatasetController {
 
 	final JsDelivrProxy githubProxy;
 
+	private final List<String> SEARCH_FIELDS = List.of("name", "description");
+
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all datasets")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Datasets found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no datasets found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving datasets from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Dataset>> getDatasets(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page,
+			@RequestParam(name = "terms", defaultValue = "", required = false) final String terms) {
 		try {
-			return ResponseEntity.ok(datasetService.getAssets(page, pageSize));
-		} catch (final IOException e) {
+
+			List<String> ts = new ArrayList<>();
+			if (terms != null && !terms.isEmpty()) {
+				ts = Arrays.asList(terms.split("[,\\s]"));
+			}
+
+			Query query = null;
+
+			if (!ts.isEmpty()) {
+
+				final List<FieldValue> values = new ArrayList<>();
+				for (final String term : ts) {
+					values.add(FieldValue.of(term));
+				}
+
+				final TermsQueryField termsQueryField = new TermsQueryField.Builder()
+						.value(values)
+						.build();
+
+				final List<TermsQuery> shouldQueries = new ArrayList<>();
+
+				for (final String field : SEARCH_FIELDS) {
+
+					final TermsQuery termsQuery = new TermsQuery.Builder()
+							.field(field)
+							.terms(termsQueryField)
+							.build();
+
+					shouldQueries.add(termsQuery);
+				}
+
+				query = new Query.Builder()
+						.bool(b -> {
+							shouldQueries.forEach(sq -> b.should(s -> s.terms(sq)));
+							return b;
+						})
+						.build();
+			}
+
+			if (query == null) {
+				return ResponseEntity.ok(datasetService.getAssets(page, pageSize));
+			} else {
+				return ResponseEntity.ok(datasetService.getAssets(page, pageSize, query));
+			}
+
+		} catch (
+
+		final IOException e) {
 			final String error = "Unable to get datasets";
 			log.error(error, e);
 			throw new ResponseStatusException(
@@ -86,7 +137,6 @@ public class DatasetController {
 					error);
 		}
 	}
-
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
@@ -112,13 +162,20 @@ public class DatasetController {
 	@Operation(summary = "Gets dataset by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dataset found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no dataset found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no dataset found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
 		try {
-			final Optional<Dataset> dataset = datasetService.getAsset(id);
-			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			Optional<Dataset> dataset = datasetService.getAsset(id);
+			try {
+				dataset = extractColumnsAsNeededAndSave(dataset);
+			} catch (final IOException e) {
+				final String error = "Unable to extract columns from dataset";
+				log.error(error, e);
+				// This doesn't actually warrant a 500 since its just column metadata, so we'll let it pass.
+			}
+			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
@@ -128,13 +185,51 @@ public class DatasetController {
 		}
 	}
 
+	/**
+	 * Extracts columns from the dataset if they are not already set and saves the dataset.
+	 * @param dataset dataset to extract columns from
+	 * @return the dataset with columns extracted and saved
+	 * @throws IOException if there is an issue saving the dataset after extracting columns
+	 */
+	private Optional<Dataset> extractColumnsAsNeededAndSave(final Optional<Dataset> dataset) throws IOException {
+		if(dataset.isEmpty()){
+			//that's weird. let someone else handle this.
+			return dataset;
+		}
+
+		if(dataset.get().getColumns() != null && !dataset.get().getColumns().isEmpty()){
+			//columns are set. No need to extract
+			return dataset;
+		}
+		if(dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()){
+			//no file names to extract columns from
+			return dataset;
+		}
+
+		for(final String filename : dataset.get().getFileNames()) {
+				try {
+					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId());
+					if(csv == null || csv.isEmpty()){
+						continue;
+					}
+					updateHeaders(dataset.get(), csv.get(0));
+				} catch (final IOException e) {
+						final String error = "Unable to get dataset CSV for file " + filename;
+						log.error(error, e);
+						continue;
+				}
+		}
+
+		return datasetService.updateAsset(dataset.get());
+	}
+
+
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a dataset")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Delete dataset", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Dataset could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteDataset(
@@ -177,12 +272,6 @@ public class DatasetController {
 		}
 	}
 
-	@ExceptionHandler
-	@org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.BAD_REQUEST)
-	public void handle(final Exception e) {
-		log.info("Returning HTTP 400 Bad Request", e);
-	}
-
 	@GetMapping("/{id}/download-csv")
 	@Secured(Roles.USER)
 	@Operation(summary = "Download dataset CSV")
@@ -197,31 +286,16 @@ public class DatasetController {
 																										// limit
 	) {
 
-		String rawCSV = "";
-		try (final CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build()) {
-
-			final Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
-			if (url.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-
-		} catch (final Exception e) {
-			final String error = "Unable to get dataset CSV";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
-		}
-
 		final List<List<String>> csv;
 		try {
-			csv = csvToRecords(rawCSV);
+			csv = getCSVFile(filename, datasetId);
+			if(csv == null){
+				final String error = "Unable to get CSV";
+				log.error(error);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						error);
+			}
 		} catch (final IOException e) {
 			final String error = "Unable to parse CSV";
 			log.error(error, e);
@@ -246,6 +320,26 @@ public class DatasetController {
 				csv.size());
 
 		return ResponseEntity.ok(csvAsset);
+	}
+
+	private List<List<String>> getCSVFile(final String filename, final UUID datasetId) throws IOException {
+		String rawCSV = "";
+		final CloseableHttpClient httpclient = HttpClients.custom()
+			.disableRedirectHandling()
+			.build();
+
+		final Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
+		if (url.isEmpty()) {
+			return null;
+		}
+		final PresignedURL presignedURL = url.get();
+		final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
+		final HttpResponse response = httpclient.execute(get);
+		rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+
+		final List<List<String>> csv;
+		csv = csvToRecords(rawCSV);
+		return csv;
 	}
 
 	@GetMapping("/{id}/download-file")
@@ -309,7 +403,7 @@ public class DatasetController {
 		// download CSV from github
 		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 
-		if(csvString == null) {
+		if (csvString == null) {
 			final String error = "Unable to download csv from github";
 			log.error(error);
 			throw new ResponseStatusException(
@@ -382,7 +476,7 @@ public class DatasetController {
 			if (res.getStatusCode() == HttpStatus.OK) {
 				// add the filename to existing file names
 				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
-				if(updatedDataset.isEmpty()) {
+				if (updatedDataset.isEmpty()) {
 					final String error = "Failed to get dataset after upload";
 					log.error(error);
 					throw new ResponseStatusException(
@@ -463,24 +557,13 @@ public class DatasetController {
 			if (status == HttpStatus.OK.value()) {
 				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
 
-				final List<DatasetColumn> columns = new ArrayList<>(headers.length);
-				for (final String header : headers) {
-					columns.add(new DatasetColumn().setName(header).setAnnotations(new ArrayList<>()));
-				}
 				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
 				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
 				}
-				// add the columns to existing columns
-				if (updatedDataset.get().getColumns() == null) {
-					updatedDataset.get()
-							.setColumns(columns);
-				} else {
-					updatedDataset.get()
-							.setColumns(Stream.concat(updatedDataset.get().getColumns().stream(), columns.stream())
-									.collect(Collectors.toList()));
-				}
+
+				updateHeaders(updatedDataset.get(), Arrays.asList(headers));
 
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
@@ -496,7 +579,19 @@ public class DatasetController {
 
 		} catch (final Exception e) {
 			log.error("Unable to PUT csv data", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to PUT csv data");
+		}
+	}
+
+	private static void updateHeaders(final Dataset dataset, final List<String> headers){
+		if(dataset.getColumns() == null){
+			dataset.setColumns(new ArrayList<>());
+		}
+		for(final String header : headers){
+			final DatasetColumn column = new DatasetColumn().setName(header).setAnnotations(new ArrayList<>());
+			dataset.getColumns().add(column);
 		}
 	}
 
@@ -568,39 +663,41 @@ public class DatasetController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a preview of the data asset")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Dataset preview.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
-		@ApiResponse(responseCode = "404", description = "Dataset could not be found to create a preview for", content = @Content),
-		@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
-		@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Dataset preview.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
+			@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
 	})
 	public ResponseEntity<JsonNode> getPreview(
-		@PathVariable("id") final UUID id,
-		@RequestParam("filename") final String filename) {
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
 
 		try {
 			if (filename.endsWith(".nc")) {
 				return climateDataProxy.previewEsgf(id.toString(), null, null, null);
 			} else {
 				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
-				// TODO: This attempts to check the file, but fails to open the file, might need to write a NetcdfFiles Stream reader
-				try (NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
-					ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
-					for (Attribute attribute : globalAttributes) {
-						String name = attribute.getName();
-						Array values = attribute.getValues();
-						//				log.info("[{},{}]", name, values);
+				// TODO: This attempts to check the file, but fails to open the file, might need
+				// to write a NetcdfFiles Stream reader
+				try (final NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
+					final ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
+					for (final Attribute attribute : globalAttributes) {
+						final String name = attribute.getName();
+						final Array values = attribute.getValues();
+						// log.info("[{},{}]", name, values);
 					}
 					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
-				} catch (IOException ioe) {
-					return ResponseEntity.status(415).build();
+				} catch (final IOException ioe) {
+					throw new ResponseStatusException(
+							org.springframework.http.HttpStatus.valueOf(415),
+							"Unable to open file");
 				}
 			}
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 }

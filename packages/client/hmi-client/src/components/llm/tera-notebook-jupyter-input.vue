@@ -87,7 +87,6 @@ const submitQuestion = () => {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	padding-left: var(--gap);
 }
 
 .notebook-toolbar {
@@ -95,7 +94,6 @@ const submitQuestion = () => {
 	flex-direction: row;
 	gap: var(--gap-3);
 	justify-content: space-between;
-	margin-left: 1.5rem;
 	padding-top: var(--gap);
 }
 

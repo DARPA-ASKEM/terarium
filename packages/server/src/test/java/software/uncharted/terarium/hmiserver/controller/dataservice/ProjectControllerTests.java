@@ -114,16 +114,16 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.content(objectMapper.writeValueAsString(projectAsset)))
 				.andExpect(status().isCreated());
 
-		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId() + "/assets")
 				.param("types", AssetType.DOCUMENT.name())
 				.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
-		final DocumentAsset results = objectMapper.readValue(res.getResponse().getContentAsString(),
-			DocumentAsset.class);
+		final Assets results = objectMapper.readValue(res.getResponse().getContentAsString(),
+				Assets.class);
 
-		Assertions.assertNotNull(results);
+		Assertions.assertEquals(1, results.getDocument().size());
 	}
 
 	@Test
@@ -138,7 +138,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.setDescription("my description"));
 
 		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
-				documentAsset);
+				documentAsset.getId());
 
 		mockMvc.perform(
 				MockMvcRequestBuilders
@@ -149,7 +149,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final MvcResult res = mockMvc
 				.perform(MockMvcRequestBuilders
-						.get("/document-asset/" + documentAsset.getId())
+						.get("/projects/" + project.getId() + "/assets")
 						.param("types", AssetType.DOCUMENT.name())
 						.with(csrf()))
 				.andExpect(status().isOk())

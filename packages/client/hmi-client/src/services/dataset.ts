@@ -127,7 +127,7 @@ async function createNewDatasetFromGithubFile(
 	const urlResponse = await API.put(
 		`/datasets/${newDataset.id}/upload-csv-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
@@ -206,9 +206,6 @@ async function createDatasetFromSimulationResult(
 		if (response && response.status === 201) {
 			return true;
 		}
-		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
-			toastTitle: 'TDS - Simulation'
-		});
 		return false;
 	} catch (error) {
 		logger.error(

@@ -37,17 +37,11 @@ public class TaskRunnerService {
 	private final RabbitAdmin rabbitAdmin;
 	private final Config config;
 
-	@Value("${terarium.taskrunner.script-directory:}")
-	private String SCRIPT_DIRECTORY = "";
-
-	@Value("${terarium.taskrunner.request-queue}")
+	@Value("${terarium.taskrunner.request-queue}-${terarium.taskrunner.request-type}")
 	public String TASK_RUNNER_REQUEST_QUEUE;
 
 	@Value("${terarium.taskrunner.response-exchange}")
 	public String TASK_RUNNER_RESPONSE_EXCHANGE;
-
-	@Value("${terarium.taskrunner.response-queue}")
-	public String TASK_RUNNER_RESPONSE_QUEUE;
 
 	@Value("${terarium.taskrunner.cancellation-exchange}")
 	public String TASK_RUNNER_CANCELLATION_EXCHANGE;
@@ -72,6 +66,7 @@ public class TaskRunnerService {
 	}
 
 	public void declareQueues() {
+		log.info("Declaring request queue: {}", TASK_RUNNER_REQUEST_QUEUE);
 		declareQueue(TASK_RUNNER_REQUEST_QUEUE);
 	}
 
@@ -85,7 +80,7 @@ public class TaskRunnerService {
 	}
 
 	@RabbitListener(queues = {
-			"${terarium.taskrunner.request-queue}" }, concurrency = "${terarium.taskrunner.request-concurrency}")
+			"${terarium.taskrunner.request-queue}-${terarium.taskrunner.request-type}" }, concurrency = "${terarium.taskrunner.request-concurrency}")
 	void onTaskRequest(final Message message, final Channel channel) throws IOException, InterruptedException {
 		TaskRequest req = decodeMessage(message, TaskRequest.class);
 		if (req == null) {
@@ -96,7 +91,8 @@ public class TaskRunnerService {
 		dispatchSingleInputSingleOutputTask(req);
 	}
 
-	private void dispatchSingleInputSingleOutputTask(TaskRequest req) throws IOException, InterruptedException {
+	private void dispatchSingleInputSingleOutputTask(TaskRequest req)
+			throws IOException, InterruptedException {
 
 		Task task;
 		SimpleMessageListenerContainer cancellationConsumer;
@@ -161,10 +157,10 @@ public class TaskRunnerService {
 
 		} catch (Exception e) {
 			if (task.getStatus() == TaskStatus.FAILED) {
-				log.error("Task failed");
+				log.error("Task {} failed", task.getId(), e);
 			} else if (task.getStatus() != TaskStatus.CANCELLED) {
 				// only log exception if it failed
-				log.error("Unexpected failure for task {}: {}", task.getId(), e);
+				log.error("Unexpected failure for task {}", task.getId(), e);
 			}
 
 			TaskResponse failedResp = req.createResponse(

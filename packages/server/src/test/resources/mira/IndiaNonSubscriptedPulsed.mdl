@@ -1,0 +1,2095 @@
+{UTF-8}
+Open Duration=
+	10
+	~	Day [0,60,1]
+	~		|
+
+End Lockdown Time=
+	400
+	~	Day [0,1000,20]
+	~		|
+
+Lockdown Period=
+	PULSE TRAIN(Lock down start day,Lock down duration,Open Duration+Lock down duration,\
+		End Lockdown Time)
+	~	Dmnl
+	~		|
+
+"Fr symptomatic tested & isolated"=
+	Low Fr Iso Sym + High Contact Tracing and Isolation*(High Fr Iso Sym-Low Fr Iso Sym)
+	~	Dmnl
+	~		|
+
+High Contact Tracing and Isolation=
+	IF THEN ELSE(Time < April 14, 0 , Policy High Contact Tracing and Isolation)
+	~	
+	~		|
+
+Contact Tracing Policy=
+	Low Contact Tracing Policy + High Contact Tracing and Isolation*(High Contact Tracing Policy\
+		-Low Contact Tracing Policy
+	)
+	~	Dmnl
+	~	1 if contact tracing of Covid positive patients are done; 0 otherwise.  \
+		Fractional values indicate the successfulness of the contact tracing.
+	|
+
+Net Fr requiring ICU=
+	MIN(0.4,Fr multiplier ICU*Fr requiring ICU)
+	~	Dmnl
+	~		|
+
+Infection Rate new arrivals= WITH LOOKUP (
+	Time,
+		(
+		[(0,0)-(500,100)],(0,0),(1,2),(2,1),(3,0),(4,2),(5,1),(6,2),(7,3),(8,6),(9,2),(10,7\
+		),(11,10),(12,4),(13,10),(14,5),(15,
+		11),(16,14),(17,14),(18,26),(19,34),(20,35),(21,45),(22,55),(23,38),(24,34),(25,24)\
+		,(26,40),(27,16),(28,20),(29,12),(30,
+		23),(31,14),(32,8),(33,14),(34,12),(35,5),(36,9),(37,6),(38,0),(39,0),(40,0),(1000,\
+		0)
+		))
+	~	Persons/Day
+	~		|
+
+Contacts per day=
+	IF THEN ELSE( Lockdown Period=1 ,Contact under lockdown per day, 
+	Net Contacts Sum)
+	~	1/Day
+	~		|
+
+Hygiene Mask Impact=
+	IF THEN ELSE(Time < April 14, 
+	Regular Hygiene Level,
+	High Hygiene Level
+	)
+	~	Dmnl
+	~		|
+
+Avg contact=
+	Normal Contacts per day
+	~	1/Day
+	~		|
+
+Net Fr fatality=
+	MIN(0.4,Fr multiplier fatality*Fr fatality)
+	~	Dmnl
+	~		|
+
+Interaction Intensity=
+	Hygiene Mask Impact*Physical Distance Impact *IF THEN ELSE(Time<April 14,lack of Awareness multiplier\
+		, lack of Awareness multiplier
+	)
+	~	Dmnl
+	~		|
+
+Contact under lockdown per day=
+	Normal Contacts per day*Lockdown effect on contacts
+	~	1/Day
+	~		|
+
+Contacts Iso Asym per day=
+	Net Contacts Home*Isolation effect on Asym contacts
+	~	1/Day
+	~		|
+
+Normal Contacts per day=
+	(Base Contact Home+Base Contact School+Base Contact Work+Base Contacts Other)*Effect of density on contacts
+	~	1/Day
+	~		|
+
+April 14=
+	50
+	~	Day
+	~		|
+
+Policy High Contact Tracing and Isolation=
+	0
+	~	Dmnl [0,1,1]
+	~		|
+
+Contacts Q Asym per day=
+	Quarantine effect on Asym contacts*Net Contacts Home
+	~	1/Day
+	~		|
+
+Contacts Q Sym per day=
+	Net Contacts Home*Quarantine effect on Sym contacts
+	~	1/Day
+	~		|
+
+Contacts Iso Sym per day=
+	Net Contacts Home*Isolation effect on Sym contacts
+	~	1/Day
+	~		|
+
+Net Contacts Other=
+	Base Contacts Other*Policy Multiplier Other*Effect of density on contacts
+	~	1/Day
+	~		|
+
+Net Contacts School=
+	Base Contact School*Policy Multiplier School*Effect of density on contacts
+	~	1/Day
+	~		|
+
+Base Contacts Other=
+	6
+	~	1/Day
+	~		|
+
+Physical Distance Impact =
+	IF THEN ELSE(Density ratio<=1, 1, LOG(Density ratio, 50)+1)
+	~	Dmnl
+	~		|
+
+Density of state=
+	Total Population/Area of States
+	~	Persons/squareKM
+	~		|
+
+Density ratio=
+	(Density of state/Reference Population Density)*0 + 1
+	~	Dmnl
+	~	Area and Density has to be properly defined
+	|
+
+Effect of density on contacts=
+	IF THEN ELSE(Density ratio<=1, 1, LOG(Density ratio, 50)+1)*Contacts Calibration Multiplier
+	~	Dmnl
+	~		|
+
+Policy Multiplier Home=
+	1
+	~	1/Day [0,1.5,0.1]
+	~		|
+
+Base Contact Home=
+	8
+	~	
+	~		|
+
+Base Contact School=
+	5
+	~	1/Day
+	~		|
+
+Base Contact Work=
+	7
+	~	
+	~		|
+
+Net Contacts Sum=
+	Net Contacts Home+Net Contacts Other+Net Contacts School+Net Contacts Work
+	~	1/Day
+	~		|
+
+Net Contacts Work=
+	Base Contact Work*Policy Multiplier Work*Effect of density on contacts
+	~	1/Day
+	~		|
+
+Policy Multiplier School=
+	1
+	~	Dmnl [0,1,0.1]
+	~		|
+
+Policy Multiplier Work=
+	1
+	~	Dmnl [0,1,0.1]
+	~		|
+
+Reference Population Density=
+	1
+	~	Persons/squareKM
+	~		|
+
+Policy Multiplier Other=
+	1
+	~	Dmnl [0,1,0.1]
+	~		|
+
+Net Contacts Home=
+	Base Contact Home*Policy Multiplier Home*Effect of density on contacts
+	~	1/Day
+	~		|
+
+Sum Infections from Symptomatics mild=
+	Contacts with Sypmtomatics mild
+	~	1/Day
+	~		~	:SUPPLEMENTARY 
+	|
+
+Fraction Can't Work =
+	1-(Sum Susc Asymp Recov Can Work /Total Population)
+	~	Dmnl
+	~		|
+
+Total Population in AgeGroup=
+	Total Population
+	~	Persons
+	~		|
+
+Contacts total per Susceptible=
+	(Contacts with Asymptomatics+Contacts with Asym in Q+Contacts with Asym in Isolation\
+		+Contacts with Sypmtomatics mild + Contacts with Sym in Q + Contacts with Sym in Isolation\
+		)
+	~	1/Day
+	~		|
+
+Recovered Isolated Symptomatic Mild= INTEG (
+	Recoveries Iso Sym,
+		0)
+	~	
+	~		|
+
+lack of Awareness multiplier=
+	LoAstartlevel+RAMP((LoAendlevel-LoAstartlevel)/(LoAendtime-LoAstarttime), LoAstarttime\
+		, LoAendtime)
+	~	Dmnl
+	~		|
+
+LoAendtime=
+	50
+	~	
+	~		|
+
+LoAstarttime=
+	15
+	~	
+	~		|
+
+Regular Hygiene Level=
+	1
+	~	
+	~		|
+
+High Fr Iso Sym=
+	0.8
+	~	
+	~		|
+
+High Contact Tracing Policy=
+	0.8
+	~	 [0,1,0.1]
+	~		|
+
+Low Contact Tracing Policy=
+	0.1
+	~	
+	~		|
+
+High Hygiene Level=
+	0.8
+	~	 [0,1,0.05]
+	~		|
+
+Low Fr Iso Sym=
+	0.25
+	~	
+	~		|
+
+LoAstartlevel=
+	1.2
+	~	
+	~		|
+
+LoAendlevel=
+	1
+	~	
+	~		|
+
+Default Ro =
+	Avg contact*Default Infectivity*Typical Duration when infection is spread
+	~	
+	~		~	:SUPPLEMENTARY 
+	|
+
+Fr becoming serious=
+	0.15
+	~	Dmnl
+	~	0.02,0.02,0.02,0.02,0.17,0.17,0.17,0.17,0.17,0.28,0.28,0.27,0.27,0.4,0.4,0.\
+		47
+	|
+
+Infectivity =
+	Default Infectivity*Interaction Intensity
+	~	Dmnl
+	~		|
+
+Fr fatality=
+	0.23
+	~	Dmnl
+	~		|
+
+Default Infectivity=
+	0.015
+	~	 [0,0.03,0.005]
+	~		|
+
+default delay disease diagnosis=
+	5
+	~	Day [0,20]
+	~		|
+
+testing impact on delay=
+	1
+	~	 [0,1,0.05]
+	~		|
+
+delay disease diagnosis=
+	default delay disease diagnosis*testing impact on delay
+	~	Day
+	~		|
+
+delay Asymp Noninfective to Infective=
+	3
+	~	Day
+	~		|
+
+Contacts Calibration Multiplier=
+	1.1
+	~	Dmnl [0,3,0.1]
+	~		|
+
+Area of States=
+	1
+	~	squareKM
+	~		|
+
+Base Infectivity=
+	Default Ro Base Infectivity Estimation/(Avg contact*Typical Duration when infection is spread\
+		)
+	~	Dmnl
+	~		~	:SUPPLEMENTARY 
+	|
+
+PPE availability =
+	0.8
+	~	Dmnl [0,1,0.1]
+	~		|
+
+Fraction Healthcare Can't Work =
+	Fraction Can't Work +(1-Fraction Can't Work )*(1-PPE availability )
+	~	Dmnl
+	~		|
+
+Sum Susc Asymp Recov Can Work =
+	Sum Asymtomatics +Sum Recovered +Sum Susceptibles
+	~	Persons
+	~		|
+
+Fr Q Asym via awareness=
+	0
+	~	Dmnl [0,1,0.05]
+	~		|
+
+Fr Q Asym via tracing=
+	"Fr symptomatic tested & isolated"*Contact Tracing Policy
+	~	Dmnl
+	~		|
+
+fraction Q Asym=
+	Fr Q Asym via awareness+Fr Q Asym via tracing
+	~	Dmnl [0,1]
+	~		|
+
+delay for death=
+	5
+	~	Day
+	~		|
+
+delay Asymp Infective to Symp=
+	2
+	~	Day
+	~		|
+
+delay Iso Asym=
+	1
+	~	Day
+	~		|
+
+delay Iso Sym=
+	2.5
+	~	Day [0,5,0.5]
+	~		|
+
+delay Q Asym=
+	1
+	~	Day
+	~		|
+
+delay Q Sym=
+	2.5
+	~	Day
+	~		|
+
+delay Recovery Asym=
+	11
+	~	Day
+	~		|
+
+delay Recovery Sym extreme=
+	14
+	~	Day
+	~		|
+
+delay Recovery Sym mild=
+	14
+	~	Day
+	~		|
+
+delay Recovery Sym serious=
+	14
+	~	Day
+	~		|
+
+delay Worsening=
+	5
+	~	Day
+	~		|
+
+Fr developing symptoms=
+	0.7
+	~	Dmnl
+	~		|
+
+fraction Iso Asym=
+	0
+	~	Dmnl [0,1]
+	~		|
+
+"Fr Iso+Q Asym"=
+	fraction Iso Asym+fraction Q Asym
+	~	Dmnl [0,1]
+	~		|
+
+"Fr Iso+Q Sym"=
+	"Fr symptomatic tested & isolated"+fraction Q Sym
+	~	Dmnl
+	~		|
+
+Fr multiplier fatality=
+	2
+	~	Dmnl
+	~		|
+
+Fr multiplier ICU=
+	2
+	~	Dmnl
+	~		|
+
+fraction Q Sym=
+	0
+	~	Dmnl [0,1]
+	~		|
+
+Fr requiring ICU=
+	0.22
+	~	Dmnl
+	~		|
+
+Healthcare Capacity Multiplier=
+	200
+	~	Dmnl [0,500,10]
+	~		|
+
+Infectivity reduction for asym=
+	0.5
+	~	Dmnl [0,1,0.1]
+	~		|
+
+Isolation effect on Asym contacts=
+	0.5
+	~	Dmnl
+	~		|
+
+Isolation effect on Sym contacts=
+	0.5
+	~	Dmnl
+	~		|
+
+Lock down duration=
+	14
+	~	Day [0,60,1]
+	~	Indicates number of days of lockdown. Keep as 0 for no lockdown
+	|
+
+Lock down start day=
+	30
+	~	Day [0,30,5]
+	~		|
+
+Lockdown effect on contacts=
+	0.3
+	~	Dmnl [0,8]
+	~		|
+
+net delay Dprogress Iso Sym=
+	MAX(delay disease diagnosis-delay Iso Sym,1)
+	~	Day [0,100]
+	~		|
+
+net delay Dprogress Q Sym=
+	MAX(delay disease diagnosis-delay Q Sym,1)
+	~	Day [0,100]
+	~		|
+
+net delay incubation Iso ASym=
+	MAX(delay Asymp Infective to Symp-delay Iso Asym,1)
+	~	Day [0,100]
+	~		|
+
+net delay incubation Q Asym=
+	MAX(delay Asymp Infective to Symp-delay Q Asym,1)
+	~	Day [0,100]
+	~		|
+
+net delay recovery Iso Asym=
+	MAX(delay Recovery Asym-delay Iso Asym,1)
+	~	Day [0,100]
+	~		|
+
+net delay recovery Iso Sym=
+	MAX(delay Recovery Sym mild-delay Iso Sym,1)
+	~	Day [0,100]
+	~		|
+
+net delay recovery Q Asym=
+	MAX(delay Recovery Asym-delay Q Asym,1)
+	~	Day [0,100]
+	~		|
+
+net delay recovery Q Sym=
+	MAX(delay Recovery Sym mild-delay Q Sym,1)
+	~	Day [0,100]
+	~		|
+
+Normal Hospital Beds per person=
+	(0.9/1000)
+	~	Units/ Persons
+	~		|
+
+Normal ICU capacity per person=
+	(2.3/100000)
+	~	Units/Persons
+	~		|
+
+Patients per unit=
+	1
+	~	Persons/Units
+	~		|
+
+Quarantine effect on Asym contacts=
+	1
+	~	Dmnl
+	~		|
+
+Quarantine effect on Sym contacts=
+	0.75
+	~	Dmnl
+	~		|
+
+Default Ro Base Infectivity Estimation=
+	4.6
+	~	Dmnl [0,8,0.2]
+	~		|
+
+Sum Infections from Asymtomatics=
+	Contacts with Asymptomatics
+	~	1/Day
+	~		~	:SUPPLEMENTARY 
+	|
+
+Total Population=
+	1.3392e+09
+	~	Persons
+	~	1.3392e+09
+	|
+
+Typical Duration when infection is spread=
+	7
+	~	Day [5,30,1]
+	~		|
+
+********************************************************
+	.Control
+********************************************************~
+		Simulation Control Parameters
+	|
+
+Typical worsening rate=
+	(Fr requiring ICU)*DELAY3I(Hospital Admissions,delay Worsening,0*Hospital Admissions\
+		)
+	~	Persons/Day
+	~		|
+
+Recoveries seriousH=
+	(1-Fr requiring ICU)*DELAY3I(Hospital Admissions,delay Recovery Sym serious,0*Hospital Admissions\
+		)
+	~	Persons/Day
+	~		|
+
+Recoveries ICU overflow=
+	DELAY3I(INTO Inf Sym ICU Overflow,delay Recovery Sym extreme,0*INTO Inf Sym ICU Overflow\
+		)*(1-Net Fr fatality)
+	~	Persons/Day
+	~		|
+
+Deaths overflow=
+	DELAY3I(INTO Inf Sym ICU Overflow,delay for death,0*INTO Inf Sym ICU Overflow)*Net Fr fatality
+	~	Persons/Day
+	~		|
+
+Incubation Rate Quarantines=
+	(Fr developing symptoms)*DELAY3I(Quarantining Rate Asym,net delay incubation Q Asym,\
+		0*Quarantining Rate Asym)
+	~	Persons/Day
+	~		|
+
+Infected Sym Extreme ICU= INTEG (
+	ICU Admissions-Deaths-Recoveries ICU,
+		0)
+	~	Persons
+	~		|
+
+Recoveries Q Asym =
+	(1-Fr developing symptoms)* DELAY3I(Quarantining Rate Asym, net delay recovery Q Asym\
+		, 0*Quarantining Rate Asym)
+	~	Persons/Day
+	~		|
+
+Recoveries QSym=
+	(1-Fr becoming serious)*DELAY3I(INTO Q Sym,net delay recovery Q Sym
+	,0*INTO Q Sym)
+	~	Persons/Day
+	~		|
+
+Contacts with Sym in Q=
+	(Contacts Q Sym per day*Quarantined Symtomatics mild/Total Population in AgeGroup)
+	~	1/Day
+	~		|
+
+Isolated Symtomatics mild= INTEG (
+	Incubation Rate Iso+Isolation rate Sym-Iso Disease progress rate-Recoveries Iso Sym,
+		0)
+	~	Persons
+	~		|
+
+Disease Progression=
+	(1-"Fr Iso+Q Sym")*(MIN(0.9,Fr becoming serious))*DELAY3I( Symptom Setting, delay disease diagnosis
+	, 0*Symptom Setting)
+	~	Persons/Day [0,?]
+	~		|
+
+Dead= INTEG (
+	Deaths+Deaths overflow,
+		0)
+	~	Persons
+	~		|
+
+Deaths=
+	Fr fatality*
+	DELAY3I(ICU Admissions, delay for death, 
+	0*ICU Admissions)
+	~	Persons/Day
+	~		|
+
+Sum Deaths reported daily=
+	Deaths+Deaths overflow
+	~	Persons/Day
+	~		~	:SUPPLEMENTARY 
+	|
+
+Recoveries Iso Sym=
+	(1-MIN(0.9,Fr becoming serious))*DELAY3I(INTO Iso Sym,
+	net delay recovery Iso Sym,0*INTO Iso Sym)
+	~	
+	~		|
+
+Recoveries Iso Asym =
+	(1-Fr developing symptoms)* DELAY3I(Isolation Rate Asym, net delay recovery Iso Asym\
+		, 0*Isolation Rate Asym)
+	~	Persons/Day
+	~		|
+
+Symptom Setting=
+	(1-"Fr Iso+Q Asym")*(Fr developing symptoms)*DELAY3I(Infection Rate SUM,delay Asymp Infective to Symp
+	,0*Infection Rate SUM)
+	~	Persons/Day
+	~		|
+
+Isolated Asymptomatics= INTEG (
+	Isolation Rate Asym-Recoveries Iso Asym -Incubation Rate Iso,
+		0)
+	~	Persons
+	~		|
+
+Iso Disease progress rate=
+	Fr becoming serious*
+	DELAY3I( INTO Iso Sym , net delay Dprogress Iso Sym
+	,0*INTO Iso Sym)
+	~	Persons/Day [0,?]
+	~		|
+
+Incubation Rate Iso=
+	(Fr developing symptoms)*DELAY3I(Isolation Rate Asym,net delay incubation Iso ASym, \
+		0*Isolation Rate Asym)
+	~	Persons/Day
+	~		|
+
+INTO Iso Sym=
+	Incubation Rate Iso+Isolation rate Sym
+	~	Persons/Day
+	~		|
+
+Q Disease Progress rate=
+	MIN(0.9,(Fr becoming serious))*DELAY3I( INTO Q Sym , net delay Dprogress Q Sym
+	,0*INTO Q Sym)
+	~	Persons/Day [0,?]
+	~		|
+
+Recoveries ICU=
+	(1-MIN(0.9,Fr fatality))
+	*DELAY3I(ICU Admissions,delay Recovery Sym extreme,0*ICU Admissions
+	)
+	~	Persons/Day
+	~		|
+
+Recoveries Infected Sym mild=
+	(1-"Fr Iso+Q Sym")*(1-MIN(0.9,Fr becoming serious))*DELAY3I(Symptom Setting
+	 ,delay Recovery Sym mild
+	,0*Symptom Setting)
+	~	Persons/Day
+	~		|
+
+Recoveries Asym =
+	(1-"Fr Iso+Q Asym")*(1-Fr developing symptoms)* DELAY3I(Infection Rate SUM, delay Recovery Asym\
+		,0*Infection Rate SUM)
+	~	Persons/Day
+	~		|
+
+Contacts with Sypmtomatics mild=
+	Contacts per day*Infectious Symptomatics Mild/Total Population in AgeGroup
+	~	1/Day
+	~		|
+
+Contacts with Asym in Q=
+	(Contacts Q Asym per day*Quarantined Asymptomatics/Total Population in AgeGroup)*(1-\
+		Infectivity reduction for asym)
+	~	1/Day
+	~		|
+
+Contacts with Asymptomatics=
+	(Contacts per day*
+	Infectious Asymptomatics/Total Population in AgeGroup)
+	*(1-Infectivity reduction for asym)
+	~	1/Day
+	~		|
+
+Contacts with Asym in Isolation=
+	(Contacts Iso Asym per day*Isolated Asymptomatics/Total Population in AgeGroup)*(1-Infectivity reduction for asym\
+		)
+	~	1/Day
+	~		|
+
+Contacts with Sym in Isolation=
+	(Contacts Iso Sym per day*Isolated Symtomatics mild/Total Population in AgeGroup)
+	~	1/Day
+	~		|
+
+Cumulative Cases Reported= INTEG (
+	New Cases Reported,
+		0)
+	~	Persons
+	~		|
+
+Exposed= INTEG (
+	Exposure-Infectivity Setting,
+		0)
+	~	Persons
+	~		|
+
+Exposure=
+	Contacts total per Susceptible*Susceptibles*Infectivity
+	~	Persons/Day
+	~		|
+
+Hospital Admissions=
+	MIN(Incoming Demand on Hospital/TIME STEP,Managable hospital inflow )
+	~	Persons/Day
+	~		|
+
+Hospital Bed Capacity =
+	Normal Hospital Beds per person*Total Population*Healthcare Capacity Multiplier*Patients per unit\
+		*(1-Fraction Healthcare Can't Work )
+	~	Persons
+	~		|
+
+Hospital Overflow =
+	MAX(0,Incoming Demand on Hospital/TIME STEP-Managable hospital inflow )
+	~	Persons/Day
+	~		|
+
+ICU Admissions=
+	MIN(Typical worsening rate,managable ICU inflow )
+	~	Persons/Day
+	~		|
+
+ICU Capacity =
+	Normal ICU capacity per person*Total Population*Healthcare Capacity Multiplier*Patients per unit\
+		*(1-Fraction Healthcare Can't Work )
+	~	Persons
+	~		|
+
+ICU Overflow =
+	MAX(0,Typical worsening rate-managable ICU inflow )
+	~	Persons/Day
+	~		|
+
+Incoming Demand on Hospital= INTEG (
+	Disease Progression+Iso Disease progress rate+Q Disease Progress rate-Hospital Admissions
+	 -Hospital Overflow ,
+		0)
+	~	Persons
+	~		|
+
+Infected Sym Hospital Overflow= INTEG (
+	Hospital Overflow -Recoveries seriousH overflow -Worsening Rate Overflow,
+		0)
+	~	Persons
+	~		|
+
+Infected Sym ICU Overflow= INTEG (
+	ICU Overflow +Worsening Rate Overflow-Deaths overflow-Recoveries ICU overflow,
+		0)
+	~	Persons
+	~		|
+
+Infected Sym Serious Hospital= INTEG (
+	Hospital Admissions-ICU Admissions-ICU Overflow -Recoveries seriousH,
+		0)
+	~	Persons
+	~		|
+
+Infection Rate SUM=
+	Infectivity Setting+Infection Rate new arrivals
+	~	Persons/Day
+	~		|
+
+Infectious Asymptomatics= INTEG (
+	Infection Rate new arrivals +Infectivity Setting-Isolation Rate Asym-Quarantining Rate Asym\
+		-Recoveries Asym -Symptom Setting,
+		0)
+	~	Persons
+	~		|
+
+Infectious Symptomatics Mild= INTEG (
+	Symptom Setting-Disease Progression-Isolation rate Sym-Quarantine Rate Sym
+	 -Recoveries Infected Sym mild,
+		0)
+	~	Persons
+	~		|
+
+Infectivity Setting=
+	DELAY3I(Exposure, delay Asymp Noninfective to Infective, 0*Exposure)
+	~	Persons/Day
+	~		|
+
+Sum Recovered =
+	Recovered from Hospital+Recovered Asymtomatics+
+	Recovered mild
+	+Recovered Isolated Symptomatic Mild
+	~	Persons
+	~		|
+
+INTO Inf Sym ICU Overflow=
+	ICU Overflow +Worsening Rate Overflow
+	~	Persons/Day
+	~		|
+
+INTO Q Sym=
+	Incubation Rate Quarantines+Quarantine Rate Sym
+	~	Persons/Day
+	~		|
+
+INTO Sym Serious =
+	Disease Progression+Iso Disease progress rate+Q Disease Progress rate
+	~	Persons/Day [0,?]
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Recoveries reported daily=
+	Recoveries ICU+Recoveries ICU overflow+Recoveries Iso Asym+Recoveries Iso Sym
+	+Recoveries seriousH+Recoveries seriousH overflow
+	~	Persons/Day
+	~		~	:SUPPLEMENTARY 
+	|
+
+Isolation Rate Asym=
+	DELAY3I( Infection Rate SUM , delay Iso Asym, 0*Infection Rate SUM )*fraction Iso Asym
+	~	Persons/Day [0,?]
+	~		|
+
+Isolation rate Sym=
+	"Fr symptomatic tested & isolated"*DELAY3I(Symptom Setting,delay Iso Sym,0*Symptom Setting\
+		)
+	~	Persons/Day [0,?]
+	~		|
+
+Managable hospital inflow=
+	MAX(0,
+	XIDZ(Incoming Demand on Hospital,Incoming Demand on Hospital,1)*
+	((Hospital Bed Capacity-Infected Sym Serious Hospital)/TIME STEP)
+	)
+	~	Persons/Day
+	~		|
+
+managable ICU inflow=
+	MAX(0,
+	XIDZ(Typical worsening rate, Typical worsening rate,1)*
+	((ICU Capacity-Infected Sym Extreme ICU)/TIME STEP)
+	)
+	~	Persons/Day
+	~		|
+
+New Cases Reported=
+	Disease Progression+Q Disease Progress rate+Isolation Rate Asym+Isolation rate Sym
+	~	Persons/Day
+	~		|
+
+Quarantine Rate Sym=
+	fraction Q Sym*DELAY3I(Symptom Setting,delay Q Sym, 0*Symptom Setting)
+	~	Persons/Day
+	~		|
+
+Quarantined Asymptomatics= INTEG (
+	Quarantining Rate Asym-Recoveries Q Asym -Incubation Rate Quarantines,
+		0)
+	~	Persons
+	~		|
+
+Quarantined Symtomatics mild= INTEG (
+	Incubation Rate Quarantines+Quarantine Rate Sym-Q Disease Progress rate-Recoveries QSym\
+		,
+		0)
+	~	Persons
+	~		|
+
+Quarantining Rate Asym=
+	DELAY3I(Infection Rate SUM , delay Q Asym, 0*Infection Rate SUM )*fraction Q Asym
+	~	Persons/Day
+	~		|
+
+Sum Isolation Sym mild=
+	Isolated Symtomatics mild
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Recovered from Hospital= INTEG (
+	Recoveries ICU overflow+Recoveries ICU+Recoveries seriousH overflow +Recoveries seriousH\
+		,
+		0)
+	~	Persons
+	~		|
+
+Recovered mild= INTEG (
+	Recoveries Infected Sym mild+Recoveries QSym,
+		0)
+	~	Persons
+	~		|
+
+Sum Quarantine Sym mild=
+	Quarantined Symtomatics mild
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Recovered via Hosp=
+	Recovered from Hospital
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Susceptibles=
+	Susceptibles
+	~	Persons
+	~		|
+
+Sum Symtomatics=
+	Infectious Symptomatics Mild
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Asymtomatics=
+	Infectious Asymptomatics
+	~	Persons
+	~		|
+
+Sum Cumulative Cases Reported=
+	Cumulative Cases Reported
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Deaths=
+	Dead
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Isolation Asym=
+	Isolated Asymptomatics
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum In Hospital=
+	Infected Sym Serious Hospital
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum in Hospital Overflow=
+	Infected Sym Hospital Overflow
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum in ICU=
+	Infected Sym Extreme ICU
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum in ICU Overflow=
+	Infected Sym ICU Overflow
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum of Infection Rate=
+	Exposure
+	~	Persons/Day
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum New Cases Reported=
+	New Cases Reported
+	~	Persons/Day
+	~		~	:SUPPLEMENTARY 
+	|
+
+Susceptibles= INTEG (
+	-Exposure,
+		Total Population in AgeGroup)
+	~	Persons
+	~		|
+
+Sum Quarantine Asym=
+	Quarantined Asymptomatics
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Recovered after symptoms=
+	Recovered from Hospital+Recovered Isolated Symptomatic Mild
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Recovered Asym=
+	Recovered Asymtomatics
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+Sum Recovered Mild=
+	Recovered mild
+	~	Persons
+	~		~	:SUPPLEMENTARY 
+	|
+
+SumNoninfectives=
+	Exposed
+	~	
+	~		~	:SUPPLEMENTARY 
+	|
+
+FINAL TIME  = 500
+	~	Day
+	~	The final time for the simulation.
+	|
+
+INITIAL TIME  = 0
+	~	Day
+	~	The initial time for the simulation.
+	|
+
+Recovered Asymtomatics= INTEG (
+	Recoveries Iso Asym +Recoveries Q Asym +Recoveries Asym,
+		0)
+	~	Persons
+	~		|
+
+Recoveries seriousH overflow =
+	DELAY3I(Hospital Overflow ,delay Recovery Sym serious,0*Hospital Overflow )
+	*(1-Net Fr requiring ICU)
+	~	Persons/Day
+	~		|
+
+SAVEPER  = 1
+	~	Day [0,?]
+	~	The frequency with which output is stored.
+	|
+
+TIME STEP  = 0.0625
+	~	Day [0,?]
+	~	The time step for the simulation.
+	|
+
+Worsening Rate Overflow=
+	DELAY3I(Hospital Overflow ,delay Worsening,0*Hospital Overflow)*Net Fr requiring ICU
+	~	Persons/Day
+	~		|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View: Model
+$192-192-192,0,Times New Roman|36||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,5,2
+10,1,Susceptibles,429,1063,167,69,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,Infectious Asymptomatics,2336,1060,315,77,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Infectious Symptomatics Mild,3669,1053,231,77,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,Infected Sym Serious Hospital,5011,1083,161,66,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,5,Recovered from Hospital,6778,1120,139,69,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,6,8,3,4,0,0,22,0,0,0,-1--1--1,,1|(3270,1069)|
+1,7,8,2,100,0,0,22,0,0,0,-1--1--1,,1|(2850,1069)|
+11,8,4490,3075,1069,27,29,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,9,Symptom Setting,3075,1118,72,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,10,11,3,100,0,0,22,0,0,0,-1--1--1,,1|(3984,1090)|
+11,11,3764,4096,1090,27,29,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,12,Disease Progression,4096,1160,88,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,13,delay Asymp Infective to Symp,3242,853,131,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,14,13,9,1,0,0,0,0,64,0,-1--1--1,,1|(3235,943)|
+10,15,delay disease diagnosis,4063,1269,98,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,16,15,12,1,0,0,0,0,64,0,-1--1--1,,1|(4105,1206)|
+10,17,Total Population,639,727,80,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,18,Cumulative Cases Reported,6270,435,167,69,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,19,48,5618,418,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,20,26,18,4,0,0,22,0,0,0,-1--1--1,,1|(6028,418)|
+1,21,26,19,100,0,0,22,0,0,0,-1--1--1,,1|(5763,418)|
+12,22,48,2310,616,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,23,24,22,100,0,0,22,0,0,0,-1--1--1,,1|(2310,766)|
+11,24,48,2225,766,35,23,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,25,Infection Rate new arrivals,2130,766,104,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+11,26,684,5926,418,27,29,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,27,New Cases Reported,5926,475,85,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,28,Total Population in AgeGroup,498,862,141,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,29,17,28,1,0,0,0,0,128,0,-1--1--1,,1|(591,793)|
+1,30,28,1,1,0,0,0,0,128,1,-1--1--1,,1|(447,934)|
+10,31,Infected Sym Extreme ICU,5978,1087,157,68,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,32,Dead,6518,1398,141,49,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,33,35,31,4,0,0,22,0,0,0,-1--1--1,,1|(5729,1093)|
+1,34,35,4,100,0,0,22,0,0,0,-1--1--1,,1|(5385,1093)|
+11,35,3786,5618,1093,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,36,ICU Admissions,5618,1150,88,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,37,39,5,4,0,0,22,0,0,0,-1--1--1,,1|(6529,1075)|
+1,38,39,31,100,0,0,22,0,0,0,-1--1--1,,1|(6257,1075)|
+11,39,3500,6400,1075,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,40,Recoveries ICU,6400,1145,119,20,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,41,42,2,100,0,0,22,0,0,0,-1--1--1,,1|(2648,1170)|
+11,42,3544,2648,1219,27,17,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,43,Recoveries Asym,2757,1219,83,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,44,45,3,100,0,0,22,0,0,0,-1--1--1,,1|(3702,890)|
+11,45,3984,3702,781,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,46,Recoveries Infected Sym mild,3702,823,137,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,47,49,5,4,0,0,22,0,0,0,-1--1--1,,3|(6356,827)|(6356,847)|(6778,847)|
+1,48,49,4,100,0,0,22,0,0,0,-1--1--1,,1|(5014,934)|
+11,49,3962,5014,827,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,50,Recoveries seriousH,5014,886,166,36,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,51,53,32,4,0,0,22,0,0,0,-1--1--1,,1|(6178,1401)|
+1,52,53,31,100,0,0,22,0,0,0,-1--1--1,,1|(5959,1267)|
+11,53,3346,5959,1401,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,54,Deaths,5959,1462,56,39,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,55,Fr developing symptoms,2921,936,103,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,56,Fr becoming serious,4156,850,95,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,57,Fr requiring ICU,5599,928,89,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,58,Fr fatality,6286,1301,73,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,59,55,43,1,0,0,0,0,128,0,-1--1--1,,1|(2844,1072)|
+1,60,55,9,1,0,0,0,0,128,0,-1--1--1,,1|(3030,988)|
+1,61,56,12,1,0,0,0,0,128,0,-1--1--1,,1|(4170,980)|
+1,62,56,46,1,0,0,0,0,128,0,-1--1--1,,1|(3956,839)|
+1,63,58,40,1,0,0,0,0,128,0,-1--1--1,,1|(6415,1200)|
+1,64,58,54,1,0,0,0,0,128,0,-1--1--1,,1|(6051,1334)|
+10,65,delay Recovery Asym,2772,1322,115,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,66,delay Recovery Sym mild,3604,643,115,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,67,delay Recovery Sym serious,4825,679,115,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,68,delay Recovery Sym extreme,6240,912,115,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,69,delay Worsening,5341,1000,81,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,70,68,40,1,0,0,0,0,128,0,-1--1--1,,1|(6323,1034)|
+10,71,delay for death,6344,1494,110,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,72,71,54,1,0,0,0,0,128,0,-1--1--1,,1|(6208,1434)|
+1,73,65,43,1,0,0,0,0,128,0,-1--1--1,,1|(2762,1305)|
+1,74,66,46,1,0,0,0,0,128,0,-1--1--1,,1|(3710,673)|
+1,75,67,50,1,0,0,0,0,128,0,-1--1--1,,1|(4851,778)|
+1,76,24,2,4,0,0,22,0,0,0,-1--1--1,,1|(2225,886)|
+10,77,Quarantined Asymptomatics,2552,1670,131,57,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,78,Quarantined Symtomatics mild,3796,1705,161,59,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,79,81,77,4,0,0,22,0,0,0,-1--1--1,,1|(2495,1498)|
+1,80,81,2,100,0,0,22,0,0,0,-1--1--1,,1|(2495,1243)|
+11,81,3632,2495,1366,27,17,33,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,82,Quarantining Rate Asym,2495,1318,98,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,83,fraction Q Asym,2346,1191,75,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,84,delay Q Asym,2382,1466,107,20,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,85,83,82,0,0,0,0,0,128,0,-1--1--1,,1|(2416,1250)|
+1,86,84,82,1,0,0,0,0,128,0,-1--1--1,,1|(2378,1388)|
+10,87,Isolated Asymptomatics,2167,2069,141,64,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,88,90,87,4,0,0,22,0,0,0,-1--1--1,,1|(2121,1793)|
+1,89,90,2,100,0,0,22,0,0,0,-1--1--1,,1|(2121,1343)|
+11,90,3918,2121,1565,27,17,33,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,91,Isolation Rate Asym,2121,1506,102,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,92,fraction Iso Asym,1882,1628,84,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,93,delay Iso Asym,2019,1730,116,20,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,94,92,91,1,0,0,0,0,128,0,-1--1--1,,1|(1941,1535)|
+1,95,93,91,1,0,0,0,0,128,0,-1--1--1,,1|(2025,1634)|
+10,96,Recovered Asymtomatics,2711,1450,125,53,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,97,42,96,4,0,0,22,0,0,0,-1--1--1,,1|(2648,1317)|
+1,98,100,96,4,0,0,22,0,0,0,-1--1--1,,1|(2822,1572)|
+1,99,100,77,100,0,0,22,0,0,0,-1--1--1,,1|(2743,1665)|
+11,100,4512,2822,1665,20,23,34,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,101,Recoveries Q Asym,2822,1607,101,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,102,Fr developing symptoms,3168,1984,114,41,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,103,105,78,4,0,0,22,0,0,0,-1--1--1,,1|(3328,1718)|
+1,104,105,77,100,0,0,22,0,0,0,-1--1--1,,1|(2833,1718)|
+11,105,2796,3002,1718,20,23,34,131,0,0,1,0,0,0,0,0,0,0,0,0
+10,106,Incubation Rate Quarantines,3002,1775,117,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,107,82,101,1,0,0,0,0,128,0,-1--1--1,,1|(2526,1469)|
+1,108,82,106,1,0,0,0,2,192,0,-1--1--1,|24||0-0-0,1|(2672,1677)|
+10,109,Isolated Symtomatics mild,3534,2101,161,64,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,110,112,109,4,0,0,22,0,0,0,-1--1--1,,1|(3095,2117)|
+1,111,112,87,100,0,0,22,0,0,0,-1--1--1,,1|(2542,2117)|
+11,112,3654,2796,2117,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,113,Incubation Rate Iso,2796,2181,79,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,114,102,113,1,0,0,0,0,128,0,-1--1--1,,1|(2976,2067)|
+1,115,117,96,4,0,0,22,0,0,0,-1--1--1,,1|(2711,1814)|
+1,116,117,87,100,0,0,22,0,0,0,-1--1--1,,1|(2568,2069)|
+11,117,3676,2568,1814,27,17,33,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,118,Recoveries Iso Asym,2568,1871,110,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,119,91,113,1,0,0,0,0,128,0,-1--1--1,,1|(2454,1838)|
+1,120,91,118,1,0,0,0,0,128,0,-1--1--1,,1|(2190,1691)|
+1,121,123,109,4,0,0,22,0,0,0,-1--1--1,,1|(3466,1797)|
+1,122,123,3,100,0,0,22,0,0,0,-1--1--1,,1|(3466,1327)|
+11,123,3852,3466,1541,27,17,33,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,124,Isolation rate Sym,3466,1482,96,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,125,127,78,4,0,0,22,0,0,0,-1--1--1,,1|(3864,1541)|
+1,126,127,3,100,0,0,22,0,0,0,-1--1--1,,1|(3864,1267)|
+11,127,3698,3864,1420,27,17,33,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,128,Quarantine Rate Sym,3864,1362,121,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,129,net delay recovery Iso Asym,2313,2668,135,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,130,net delay incubation Iso ASym,2680,2660,156,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,131,delay Iso Asym,2492,2770,80,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,132,delay Q Asym,2471,2331,71,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,133,delay Asymp Infective to Symp,2719,2527,142,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,134,delay Recovery Asym,2193,2558,125,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,135,131,129,0,0,0,0,0,128,0,-1--1--1,,1|(2417,2726)|
+1,136,134,129,0,0,0,0,0,128,0,-1--1--1,,1|(2244,2604)|
+1,137,131,130,0,0,0,0,0,128,0,-1--1--1,,1|(2573,2722)|
+1,138,133,130,0,0,0,0,0,128,0,-1--1--1,,1|(2702,2586)|
+10,139,net delay recovery Q Asym,2255,2446,135,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,140,net delay incubation Q Asym,2680,2425,144,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,141,133,140,0,0,0,0,0,128,0,-1--1--1,,1|(2703,2482)|
+1,142,132,140,0,0,0,0,0,128,0,-1--1--1,,1|(2560,2370)|
+1,143,132,139,0,0,0,0,0,128,0,-1--1--1,,1|(2378,2381)|
+1,144,134,139,0,0,0,0,0,128,0,-1--1--1,,1|(2219,2512)|
+1,145,102,118,1,0,0,0,0,128,0,-1--1--1,,1|(2903,1908)|
+10,146,net delay incubation Iso ASym,2424,2204,161,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,147,net delay recovery Iso Asym,2849,1988,150,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,148,net delay incubation Q Asym,3058,1880,157,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,149,net delay recovery Q Asym,3009,1501,142,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,150,146,113,1,0,0,0,0,128,0,-1--1--1,,1|(2547,2161)|
+1,151,147,118,1,0,0,0,0,128,0,-1--1--1,,1|(2787,1928)|
+1,152,148,106,1,0,0,0,0,128,0,-1--1--1,,1|(3003,1808)|
+1,153,149,101,1,0,0,0,0,128,0,-1--1--1,,1|(2946,1581)|
+10,154,"Fr Iso+Q Asym",1897,1413,117,20,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,155,92,154,1,0,0,0,0,128,0,-1--1--1,,1|(1902,1502)|
+1,156,83,154,1,0,0,0,0,128,0,-1--1--1,,1|(2111,1308)|
+10,157,"Fr Iso+Q Asym",3069,1230,80,41,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,158,157,9,0,0,0,0,0,128,0,-1--1--1,,1|(3072,1181)|
+1,159,157,43,0,0,0,0,0,128,0,-1--1--1,,1|(2922,1226)|
+10,160,Symptom Setting,3606,1308,83,41,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,161,160,128,1,0,0,0,0,128,0,-1--1--1,,1|(3696,1285)|
+1,162,160,124,1,0,0,0,0,128,0,-1--1--1,,1|(3540,1390)|
+10,163,fraction Q Sym,3651,1226,114,20,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,164,"Fr Iso+Q Sym",3331,1237,107,20,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,165,"Fr symptomatic tested & isolated",3339,1377,125,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,166,delay Iso Sym,3280,1646,105,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,167,163,164,1,0,0,0,0,128,0,-1--1--1,,1|(3481,1198)|
+1,168,163,128,1,0,0,0,0,128,0,-1--1--1,,1|(3736,1237)|
+1,169,165,164,1,0,0,0,0,128,0,-1--1--1,,1|(3330,1305)|
+1,170,165,124,1,0,0,0,0,128,0,-1--1--1,,1|(3409,1369)|
+1,171,166,124,1,0,0,0,0,128,0,-1--1--1,,1|(3380,1583)|
+10,172,delay Q Sym,3729,1511,97,20,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,173,172,128,1,0,0,0,0,128,0,-1--1--1,,1|(3705,1417)|
+10,174,"Fr Iso+Q Sym",4006,953,80,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,175,176,78,100,0,0,22,0,0,0,-1--1--1,,1|(4141,1718)|
+11,176,2862,4346,1718,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,177,Q Disease Progress rate,4346,1771,98,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,178,179,109,100,0,0,22,0,0,0,-1--1--1,,1|(4059,2092)|
+11,179,3940,4444,2092,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,180,Iso Disease progress rate,4444,2144,97,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,181,Fr becoming serious,3975,1862,105,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,182,183,78,100,0,0,22,0,0,0,-1--1--1,,1|(3796,1988)|
+11,183,2202,4183,1988,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,184,Recoveries QSym,4183,2041,83,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,185,Incubation Rate Quarantines,1483,2733,126,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,186,Quarantine Rate Sym,1461,2630,103,36,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,187,Incubation Rate Iso,5032,2606,91,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,188,Isolation rate Sym,4881,2477,167,23,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,189,INTO Q Sym,1825,2639,102,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,190,INTO Iso Sym,4686,2556,110,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,191,186,189,0,0,0,0,0,128,0,-1--1--1,,1|(1637,2633)|
+1,192,185,189,0,0,0,0,0,128,0,-1--1--1,,1|(1672,2681)|
+1,193,188,190,0,0,0,0,0,128,0,-1--1--1,,1|(4786,2515)|
+1,194,187,190,0,0,0,0,0,128,0,-1--1--1,,1|(4875,2583)|
+1,195,174,12,1,0,0,0,0,128,0,-1--1--1,,1|(4046,1004)|
+1,196,174,46,1,0,0,0,0,128,0,-1--1--1,,1|(3912,883)|
+10,197,delay Q Sym,3442,2338,69,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,198,delay disease diagnosis,3654,2560,109,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,199,delay Recovery Sym mild,3129,2560,125,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,200,delay Iso Sym,3531,2787,104,55,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,201,net delay recovery Q Sym,3235,2446,121,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,202,net delay Dprogress Q Sym,3589,2447,134,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,203,net delay recovery Iso Sym,3256,2689,135,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,204,net delay Dprogress Iso Sym,3724,2666,143,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,205,197,202,0,0,0,0,0,128,0,-1--1--1,,1|(3509,2388)|
+1,206,197,201,0,0,0,0,0,128,0,-1--1--1,,1|(3349,2386)|
+1,207,199,201,0,0,0,0,0,128,0,-1--1--1,,1|(3178,2508)|
+1,208,199,203,0,0,0,0,0,128,0,-1--1--1,,1|(3188,2619)|
+1,209,200,203,0,0,0,0,0,128,0,-1--1--1,,1|(3405,2742)|
+1,210,200,204,0,0,0,0,0,128,0,-1--1--1,,1|(3632,2723)|
+1,211,198,204,0,0,0,0,0,128,0,-1--1--1,,1|(3684,2607)|
+1,212,198,202,0,0,0,0,0,128,0,-1--1--1,,1|(3625,2509)|
+10,213,net delay Dprogress Iso Sym,3925,2245,153,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,214,net delay Dprogress Q Sym,4145,1583,141,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,215,net delay recovery Iso Sym,4676,2335,141,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,216,net delay recovery Q Sym,3823,2020,131,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,217,INTO Q Sym,4218,1865,131,23,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,218,INTO Iso Sym,4965,2041,141,23,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,219,181,177,1,0,0,0,0,128,0,-1--1--1,,1|(4021,1829)|
+1,220,181,184,1,0,0,0,0,128,0,-1--1--1,,1|(4039,1942)|
+1,221,214,177,0,0,0,0,0,128,0,-1--1--1,,1|(4235,1668)|
+1,222,217,177,0,0,0,0,0,128,0,-1--1--1,,1|(4263,1831)|
+1,223,217,184,0,0,0,0,0,128,0,-1--1--1,,1|(4203,1937)|
+1,224,216,184,1,0,0,0,0,128,0,-1--1--1,,1|(4020,2031)|
+1,225,9,46,1,0,0,0,0,128,0,-1--1--1,,1|(3374,978)|
+1,226,218,180,0,0,0,0,0,128,0,-1--1--1,,1|(4701,2092)|
+1,227,213,180,1,0,0,0,0,128,0,-1--1--1,,1|(4285,2134)|
+1,228,36,40,1,0,0,0,0,128,0,-1--1--1,,1|(6037,988)|
+1,229,36,54,1,0,0,0,0,128,0,-1--1--1,,1|(5873,1314)|
+1,230,57,50,1,0,0,0,0,128,0,-1--1--1,,1|(5352,911)|
+10,231,Isolation rate Sym,6023,641,167,23,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,232,Isolation Rate Asym,6157,571,114,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,233,231,27,0,0,0,0,0,128,0,-1--1--1,,1|(5983,574)|
+1,234,232,27,0,0,0,0,0,128,0,-1--1--1,,1|(6050,528)|
+10,235,Infection Rate SUM,2006,2391,104,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,236,Infection Rate new arrivals,1884,2506,118,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,237,236,235,0,0,0,0,0,128,0,-1--1--1,,1|(1936,2457)|
+10,238,Infection Rate SUM,2255,1279,156,55,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,239,238,82,1,0,0,0,0,128,0,-1--1--1,,1|(2303,1312)|
+1,240,238,91,1,0,0,0,0,128,0,-1--1--1,,1|(2189,1394)|
+10,241,Infected Sym Hospital Overflow,5297,1662,161,64,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,242,Infected Sym ICU Overflow,5879,1655,146,59,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,243,Managable hospital inflow,5318,2597,110,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,244,TIME STEP,5114,1253,59,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,245,247,242,4,0,0,22,0,0,0,-1--1--1,,1|(5676,1681)|
+1,246,247,241,100,0,0,22,0,0,0,-1--1--1,,1|(5518,1681)|
+11,247,134,5599,1681,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,248,Worsening Rate Overflow,5599,1745,120,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,249,251,5,4,0,0,22,0,0,0,-1--1--1,,3|(5227,1907)|(6772,1907)|(6772,1548)|
+1,250,251,241,100,0,0,22,0,0,0,-1--1--1,,1|(5227,1788)|
+11,251,4402,5227,1874,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,252,Recoveries seriousH overflow,5227,1937,137,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,253,255,32,4,0,0,22,0,0,0,-1--1--1,,1|(6521,1561)|
+1,254,255,242,100,0,0,22,0,0,0,-1--1--1,,1|(6263,1698)|
+11,255,4380,6521,1698,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,256,Deaths overflow,6521,1762,67,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,257,71,256,1,0,0,0,0,128,0,-1--1--1,,1|(6491,1659)|
+10,258,delay Worsening,5495,1832,93,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,259,delay Recovery Sym serious,5611,1949,125,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,260,258,248,1,0,0,0,0,128,0,-1--1--1,,1|(5574,1773)|
+1,261,259,252,0,0,0,0,0,128,0,-1--1--1,,1|(5431,1943)|
+10,262,Fr requiring ICU,6694,2798,100,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,263,Fr multiplier ICU,6371,2814,94,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,264,Net Fr requiring ICU,6671,2610,121,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,265,263,264,0,0,0,0,0,128,0,-1--1--1,,1|(6514,2715)|
+1,266,262,264,0,0,0,0,0,128,0,-1--1--1,,1|(6683,2710)|
+10,267,managable ICU inflow,5892,2585,117,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,268,Incoming Demand on Hospital,4390,1072,80,59,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,269,11,268,4,0,0,22,0,0,0,-1--1--1,,1|(4216,1090)|
+1,270,176,268,4,0,0,22,0,0,0,-1--1--1,,1|(4346,1413)|
+1,271,179,268,4,0,0,22,0,0,0,-1--1--1,,1|(4444,1600)|
+1,272,274,4,4,0,0,22,0,0,0,-1--1--1,,1|(4790,1091)|
+1,273,274,268,100,0,0,22,0,0,0,-1--1--1,,1|(4580,1091)|
+11,274,4204,4711,1091,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,275,Hospital Admissions,4711,1147,88,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,276,278,241,4,0,0,22,0,0,0,-1--1--1,,1|(5297,1353)|
+1,277,278,268,100,0,0,22,0,0,0,-1--1--1,,1|(4390,1353)|
+11,278,3324,5059,1353,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,279,Hospital Overflow,5059,1417,71,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,280,279,248,1,0,0,0,0,128,0,-1--1--1,,1|(5212,1690)|
+1,281,279,252,1,0,0,0,0,128,0,-1--1--1,,1|(4888,1658)|
+10,282,Typical worsening rate,5377,1179,110,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,283,275,282,1,0,0,0,0,128,0,-1--1--1,,1|(5026,1163)|
+1,284,57,282,1,0,0,0,0,64,0,-1--1--1,,1|(5492,1049)|
+1,285,69,282,1,0,0,0,0,64,0,-1--1--1,,1|(5407,1098)|
+1,286,282,36,1,0,0,0,0,128,0,-1--1--1,,1|(5460,1150)|
+10,287,Net Fr requiring ICU,5752,1850,116,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,288,287,248,0,0,0,0,0,128,0,-1--1--1,,1|(5681,1801)|
+1,289,287,252,1,0,0,0,0,128,0,-1--1--1,,1|(5506,1890)|
+10,290,Fr multiplier fatality,6439,2492,94,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,291,Net Fr fatality,6550,2285,104,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,292,290,291,0,0,0,0,0,128,0,-1--1--1,,1|(6496,2384)|
+10,293,Fr fatality,6753,2438,94,20,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,294,293,291,0,0,0,0,0,128,0,-1--1--1,,1|(6657,2365)|
+1,295,297,5,4,0,0,22,0,0,0,-1--1--1,,3|(6710,1814)|(6710,1823)|(6710,1506)|
+1,296,297,242,100,0,0,22,0,0,0,-1--1--1,,1|(5879,1814)|
+11,297,970,6325,1814,20,23,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,298,Recoveries ICU overflow,6325,1856,119,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,299,Net Fr fatality,6577,1915,62,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,300,delay Recovery Sym extreme,6005,1937,125,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,301,299,256,0,0,0,0,0,128,0,-1--1--1,,1|(6551,1845)|
+1,302,300,298,1,0,0,0,0,128,0,-1--1--1,,1|(6199,1925)|
+1,303,299,298,1,0,0,0,0,128,0,-1--1--1,,1|(6418,1919)|
+10,304,Infection Rate SUM,2747,867,156,55,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,305,304,43,1,0,0,0,0,128,0,-1--1--1,,1|(2711,986)|
+1,306,304,9,1,0,0,0,0,128,0,-1--1--1,,1|(2982,897)|
+1,307,274,50,1,0,0,0,0,128,0,-1--1--1,,1|(4897,1022)|
+10,308,Hospital Bed Capacity,384,2060,98,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,309,Hospital Bed Capacity,5323,2771,110,36,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,310,309,243,0,0,0,0,0,128,0,-1--1--1,,1|(5320,2693)|
+10,311,ICU Capacity,816,2064,102,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,312,ICU Capacity,5900,2797,125,23,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,313,312,267,0,0,0,0,0,128,0,-1--1--1,,1|(5896,2706)|
+1,314,268,275,1,0,0,0,0,128,0,-1--1--1,,1|(4539,1107)|
+1,315,268,279,1,0,0,0,0,128,0,-1--1--1,,1|(4647,1327)|
+1,316,318,242,4,0,0,22,0,0,0,-1--1--1,,3|(5863,1505)|(5863,1501)|(5863,1548)|
+1,317,318,4,100,0,0,22,0,0,0,-1--1--1,,3|(5230,1118)|(5244,1118)|(5208,1118)|
+11,318,4314,5230,1505,15,17,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,319,ICU Overflow,5230,1530,108,20,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,320,INTO Inf Sym ICU Overflow,5048,2783,109,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,321,282,319,1,0,0,0,0,128,0,-1--1--1,,1|(5366,1408)|
+10,322,INTO Sym Serious,5632,539,83,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,323,Disease Progression,5298,624,98,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,324,Q Disease Progress rate,5515,673,110,36,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,325,Iso Disease progress rate,5335,484,110,36,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,326,325,322,0,0,0,0,0,128,0,-1--1--1,,1|(5490,513)|
+1,327,323,322,0,0,0,0,0,128,0,-1--1--1,,1|(5465,583)|
+1,328,324,322,0,0,0,0,0,128,0,-1--1--1,,1|(5566,614)|
+10,329,Healthcare Capacity Multiplier,576,1809,144,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,330,329,308,1,0,0,0,0,128,0,-1--1--1,,1|(435,1907)|
+1,331,329,311,1,0,0,0,0,128,0,-1--1--1,,1|(738,1905)|
+10,332,Recovered mild,6965,1277,126,63,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,333,45,332,4,0,0,22,0,0,0,-1--1--1,,3|(6955,781)|(6955,803)|(6955,1009)|
+1,334,183,332,4,0,0,22,0,0,0,-1--1--1,,3|(6918,1988)|(6918,1995)|(6918,1667)|
+10,335,Normal Hospital Beds per person,192,1904,124,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,336,Normal ICU capacity per person,861,1833,144,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,337,335,308,0,0,0,0,0,128,0,-1--1--1,,1|(283,1977)|
+1,338,336,311,0,0,0,0,0,128,0,-1--1--1,,1|(839,1952)|
+10,339,Patients per unit,601,1970,88,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,340,339,308,0,0,0,0,0,128,0,-1--1--1,,1|(504,2009)|
+1,341,339,311,0,0,0,0,0,128,0,-1--1--1,,1|(724,2023)|
+1,342,244,275,0,0,0,0,0,128,0,-1--1--1,,1|(4933,1207)|
+1,343,244,279,1,0,0,0,0,128,0,-1--1--1,,1|(5119,1354)|
+10,344,Incoming Demand on Hospital,5198,2414,148,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+10,345,Infected Sym Serious Hospital,5497,2450,134,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+10,346,TIME STEP,5551,2684,59,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+1,347,344,243,0,0,0,0,0,128,0,-1--1--1,,1|(5251,2495)|
+1,348,345,243,0,0,0,0,0,128,0,-1--1--1,,1|(5412,2519)|
+1,349,346,243,0,0,0,0,0,128,0,-1--1--1,,1|(5466,2652)|
+10,350,Managable hospital inflow,4697,1282,120,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+1,351,350,275,0,0,0,0,0,128,0,-1--1--1,,1|(4702,1222)|
+1,352,350,279,0,0,0,0,0,128,0,-1--1--1,,1|(4890,1355)|
+10,353,Infected Sym Extreme ICU,6131,2438,111,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+10,354,Typical worsening rate,5792,2420,121,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+1,355,346,267,0,0,0,0,0,128,0,-1--1--1,,1|(5685,2644)|
+1,356,353,267,0,0,0,0,0,128,0,-1--1--1,,1|(6017,2507)|
+1,357,354,267,0,0,0,0,0,128,0,-1--1--1,,1|(5835,2492)|
+10,358,managable ICU inflow,5605,1331,128,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+1,359,358,36,1,0,0,0,0,128,0,-1--1--1,,1|(5648,1240)|
+1,360,358,319,1,0,0,0,0,128,0,-1--1--1,,1|(5511,1442)|
+10,361,Worsening Rate Overflow,4718,2706,131,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+10,362,ICU Overflow,4795,2826,82,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+10,363,INTO Inf Sym ICU Overflow,6205,1637,121,33,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|20||128-128-128,0,0,0,0,0,0
+1,364,363,298,1,0,0,0,0,128,0,-1--1--1,,1|(6199,1754)|
+1,365,363,256,1,0,0,0,0,128,0,-1--1--1,,1|(6367,1682)|
+1,366,361,320,0,0,0,0,0,128,0,-1--1--1,,1|(4887,2744)|
+1,367,362,320,0,0,0,0,0,128,0,-1--1--1,,1|(4901,2808)|
+10,368,Contacts with Asymptomatics,285,1285,127,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,369,Contacts with Sypmtomatics mild,1003,1304,155,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,370,Contacts with Asym in Isolation,402,1574,141,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,371,Contacts with Asym in Q,349,1417,113,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,372,Contacts with Sym in Isolation,831,1554,152,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,373,Contacts with Sym in Q,871,1435,113,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,374,Contacts total per Susceptible,662,1280,131,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,375,368,374,0,0,0,0,0,128,0,-1--1--1,,1|(465,1284)|
+1,376,371,374,0,0,0,0,0,128,0,-1--1--1,,1|(500,1352)|
+1,377,370,374,0,0,0,0,0,128,0,-1--1--1,,1|(528,1433)|
+1,378,372,374,1,0,0,0,0,128,0,-1--1--1,,1|(668,1321)|
+1,379,373,374,0,0,0,0,0,128,0,-1--1--1,,1|(773,1362)|
+1,380,369,374,0,0,0,0,0,128,0,-1--1--1,,1|(828,1293)|
+10,381,Total Population,524,2150,90,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,382,381,308,0,0,0,0,0,128,0,-1--1--1,,1|(461,2108)|
+1,383,381,311,0,0,0,0,0,128,0,-1--1--1,,1|(675,2105)|
+10,384,Fr becoming serious,4213,2295,105,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,385,384,180,1,0,0,0,0,128,0,-1--1--1,,1|(4253,2231)|
+10,386,Fr developing symptoms,3134,1598,114,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,387,386,101,1,0,0,0,0,128,0,-1--1--1,,1|(2952,1645)|
+1,388,386,106,1,0,0,0,0,128,0,-1--1--1,,1|(3120,1682)|
+10,389,"Fr symptomatic tested & isolated",4243,2413,135,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,390,Contact Tracing Policy,4024,2581,119,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,391,Fr Q Asym via tracing,4303,2555,111,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,392,389,391,0,0,0,0,0,128,0,-1--1--1,,1|(4269,2477)|
+1,393,390,391,0,0,0,0,0,128,0,-1--1--1,,1|(4160,2568)|
+10,394,Fr Q Asym via awareness,1908,1207,111,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,395,394,83,0,0,0,0,0,128,0,-1--1--1,,1|(2139,1199)|
+10,396,Fr Q Asym via tracing,1866,1302,122,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,397,396,83,0,0,0,0,0,128,0,-1--1--1,,1|(2123,1244)|
+10,398,Fraction Can't Work,210,2430,103,31,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,399,Fraction Healthcare Can't Work,510,2285,146,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,400,398,399,0,0,0,0,0,128,0,-1--1--1,,1|(344,2365)|
+10,401,PPE availability,637,2462,81,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,402,401,399,0,0,0,0,0,128,0,-1--1--1,,1|(579,2379)|
+1,403,399,311,1,0,0,0,0,128,0,-1--1--1,,1|(749,2220)|
+1,404,399,308,1,0,0,0,0,128,0,-1--1--1,,1|(363,2230)|
+10,405,Infectivity,930,865,103,51,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+10,406,Exposed,1353,1052,182,75,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,407,409,406,4,0,0,22,0,0,0,-1--1--1,,1|(1034,1078)|
+1,408,409,1,100,0,0,22,0,0,0,-1--1--1,,1|(742,1078)|
+11,409,4116,892,1078,5,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,410,Exposure,892,1123,110,41,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,411,405,410,1,0,0,0,0,128,0,-1--1--1,,1|(852,981)|
+1,412,374,410,1,0,0,0,0,128,0,-1--1--1,,1|(799,1195)|
+1,413,1,410,1,0,0,0,0,64,0,-1--1--1,,1|(720,1131)|
+1,414,416,2,4,0,0,22,0,0,0,-1--1--1,,1|(1907,1055)|
+1,415,416,406,100,0,0,22,0,0,0,-1--1--1,,1|(1659,1055)|
+11,416,4138,1788,1055,5,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,417,Infectivity Setting,1788,1102,75,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,418,delay Asymp Noninfective to Infective,1878,868,114,62,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,419,418,417,0,0,0,0,0,128,0,-1--1--1,,1|(1833,989)|
+10,420,Infectivity Setting,1781,2266,86,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+1,421,420,235,0,0,0,0,0,128,0,-1--1--1,,1|(1888,2325)|
+1,422,410,417,1,0,0,0,0,128,0,-1--1--1,,1|(1319,1225)|
+10,423,testing impact on delay,4234,1374,121,49,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,424,423,15,0,0,0,0,0,128,0,-1--1--1,,1|(4148,1321)|
+10,425,default delay disease diagnosis,4081,1463,128,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,426,425,15,0,0,0,0,0,128,0,-1--1--1,,1|(4072,1373)|
+1,427,9,12,1,0,0,0,0,128,0,-1--1--1,,1|(3570,1139)|
+1,428,324,27,1,0,0,0,0,128,0,-1--1--1,,1|(5708,580)|
+1,429,323,27,1,0,0,0,0,128,0,-1--1--1,,1|(5611,551)|
+10,430,Low Contact Tracing Policy,4031,2695,108,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,431,High Contact Tracing Policy,4261,2722,108,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,432,430,390,0,0,0,0,0,128,0,-1--1--1,,1|(4028,2644)|
+1,433,431,390,0,0,0,0,0,128,0,-1--1--1,,1|(4148,2655)|
+10,434,Low Fr Iso Sym,3057,1414,122,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,435,High Fr Iso Sym,3252,1498,86,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,436,435,165,0,0,0,0,0,128,0,-1--1--1,,1|(3290,1444)|
+1,437,434,165,0,0,0,0,0,128,0,-1--1--1,,1|(3190,1397)|
+10,438,Recovered Isolated Symptomatic Mild,5473,2243,230,71,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,439,441,438,4,0,0,22,0,0,0,-1--1--1,,3|(4906,2350)|(5423,2350)|(5423,2332)|
+1,440,441,109,100,0,0,22,0,0,0,-1--1--1,,1|(4298,2150)|
+11,441,1982,4906,2150,5,6,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,442,Recoveries Iso Sym,4906,2198,110,41,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,443,384,442,0,0,0,0,0,128,0,-1--1--1,,1|(4550,2247)|
+1,444,215,442,0,0,0,0,0,128,0,-1--1--1,,1|(4777,2274)|
+1,445,218,442,0,0,0,0,0,128,0,-1--1--1,,1|(4941,2103)|
+10,446,Time,1993,634,89,29,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|36||128-128-128,0,0,0,0,0,0
+1,447,446,25,0,0,0,0,0,128,0,-1--1--1,,1|(2051,690)|
+10,448,Policy High Contact Tracing and Isolation,4024,2663,167,41,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|36||128-128-128,0,0,0,0,0,0
+10,449,High Contact Tracing and Isolation,3895,2414,167,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|36||128-128-128,0,0,0,0,0,0
+1,450,449,390,0,0,0,0,0,128,0,-1--1--1,,1|(3954,2491)|
+10,451,Policy High Contact Tracing and Isolation,3339,1459,167,41,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|36||128-128-128,0,0,0,0,0,0
+10,452,High Contact Tracing and Isolation,3022,1320,167,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|36||128-128-128,0,0,0,0,0,0
+1,453,452,165,0,0,0,0,0,128,0,-1--1--1,,1|(3195,1352)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View: Sums across age group
+$192-192-192,0,Times New Roman|36||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,5,2
+10,1,Sum New Cases Reported,1889,1953,125,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,Sum Cumulative Cases Reported,1928,2147,129,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Sum Susceptibles,4156,509,96,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,Cumulative Cases Reported,770,2205,377,105,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,5,Recovered from Hospital,3928,3063,405,92,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,6,Susceptibles,2732,536,255,105,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,7,New Cases Reported,706,1729,268,64,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,8,Sum Recovered,5107,2387,82,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,9,5,8,0,0,0,0,0,128,0,-1--1--1,,1|(4555,2702)|
+1,10,6,3,0,0,0,0,0,128,0,-1--1--1,,1|(3516,521)|
+1,11,4,2,0,0,0,0,0,128,0,-1--1--1,,1|(1466,2170)|
+1,12,7,1,0,0,0,0,0,128,0,-1--1--1,,1|(1362,1852)|
+10,13,Sum Infections from Asymtomatics,1822,687,157,41,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,14,Sum Infections from Symptomatics mild,1769,915,157,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,15,Sum of Infection Rate,1844,1377,109,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,16,Dead,2732,3373,129,48,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,17,Sum Deaths,1919,2985,93,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,18,16,17,0,0,0,0,0,128,0,-1--1--1,,1|(2302,3168)|
+10,19,Recovered Asymtomatics,3863,2536,305,105,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,20,19,8,0,0,0,0,0,128,0,-1--1--1,,1|(4589,2448)|
+12,21,0,6082,595,1097,127,8,135,0,18,-1,0,0,0,-1--1--1,0-0-0,|16|B|128-0-0,-1,-1,0,0,0,0
+The SUM variables below, gives the total across all age groups
+10,22,Recovered mild,3590,2764,263,79,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,23,22,8,0,0,0,0,0,128,0,-1--1--1,,1|(4432,2554)|
+10,24,Sum Recovered after symptoms,1888,2844,121,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,25,Sum Recovered via Hosp,5015,3343,121,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,26,5,25,0,0,0,0,0,128,0,-1--1--1,,1|(4582,3231)|
+1,27,5,24,0,0,0,0,0,128,0,-1--1--1,,1|(2772,2938)|
+10,28,Sum Recovered Asym,2696,2504,121,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,29,Sum Recovered Mild,2740,2721,121,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,30,22,29,0,0,0,0,0,128,0,-1--1--1,,1|(3100,2739)|
+1,31,19,28,0,0,0,0,0,128,0,-1--1--1,,1|(3194,2517)|
+10,32,Contacts with Asymptomatics,830,712,220,155,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,33,Contacts with Sypmtomatics mild,734,925,255,129,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,34,32,13,0,0,0,0,0,128,0,-1--1--1,,1|(1350,698)|
+1,35,33,14,0,0,0,0,0,128,0,-1--1--1,,1|(1293,919)|
+10,36,Sum Asymtomatics,4366,707,110,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,37,Sum Symtomatics,4376,929,100,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,38,Sum In Hospital,4262,1100,66,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,39,Infectious Asymptomatics,2807,721,276,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,40,Infectious Symptomatics Mild,2819,956,335,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,41,Infected Sym Serious Hospital,2801,1143,284,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,42,41,38,0,0,0,0,0,128,0,-1--1--1,,1|(3633,1118)|
+1,43,40,37,0,0,0,0,0,128,0,-1--1--1,,1|(3708,940)|
+1,44,39,36,0,0,0,0,0,128,0,-1--1--1,,1|(3662,713)|
+10,45,Quarantined Asymptomatics,2807,1367,276,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|18||128-128-128,0,0,0,0,0,0
+10,46,Isolated Asymptomatics,2770,1583,272,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|18||128-128-128,0,0,0,0,0,0
+10,47,Isolated Symtomatics mild,2810,2185,313,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|18||128-128-128,0,0,0,0,0,0
+10,48,Quarantined Symtomatics mild,2782,1873,315,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|18||128-128-128,0,0,0,0,0,0
+10,49,Sum Quarantine Asym,4367,1352,124,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,50,Sum Isolation Asym,4216,1560,107,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,51,Sum Isolation Sym mild,4073,2237,107,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,52,Sum Quarantine Sym mild,4178,1873,124,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,53,45,49,0,0,0,0,0,128,0,-1--1--1,,1|(3656,1359)|
+1,54,46,50,0,0,0,0,0,128,0,-1--1--1,,1|(3568,1570)|
+1,55,47,51,0,0,0,0,0,128,0,-1--1--1,,1|(3537,2214)|
+1,56,48,52,0,0,0,0,0,128,0,-1--1--1,,1|(3568,1873)|
+10,57,Infected Sym Extreme ICU,835,3025,236,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|18||128-128-128,0,0,0,0,0,0
+10,58,Infected Sym Hospital Overflow,554,3308,321,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|18||128-128-128,0,0,0,0,0,0
+10,59,Infected Sym ICU Overflow,754,3613,315,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|18||128-128-128,0,0,0,0,0,0
+10,60,Sum in ICU,1451,3087,93,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,61,Sum in Hospital Overflow,1514,3272,124,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,62,Sum in ICU Overflow,1565,3496,93,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,63,57,60,0,0,0,0,0,128,0,-1--1--1,,1|(1207,3061)|
+1,64,58,61,0,0,0,0,0,128,0,-1--1--1,,1|(1125,3286)|
+1,65,59,62,0,0,0,0,0,128,0,-1--1--1,,1|(1263,3539)|
+10,66,Susceptibles,8945,899,127,92,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,67,Sum Susc Asymp Recov Can Work,5635,792,134,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,68,Fraction Can't Work,6743,1356,108,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,69,67,68,0,0,0,0,0,128,0,-1--1--1,,1|(6182,1070)|
+10,70,Total Population,6194,1935,197,87,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,71,70,68,0,0,0,0,0,128,0,-1--1--1,,1|(6485,1627)|
+1,72,3,67,0,0,0,0,0,128,0,-1--1--1,,1|(4869,645)|
+1,73,36,67,0,0,0,0,0,128,0,-1--1--1,,1|(4981,748)|
+1,74,8,67,0,0,0,0,0,128,0,-1--1--1,,1|(5368,1596)|
+10,75,Exposure,818,1351,123,64,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,76,75,15,0,0,0,0,0,128,0,-1--1--1,,1|(1331,1363)|
+10,77,Exposed,2738,823,145,49,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,78,SumNoninfectives,3950,801,142,20,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,79,77,78,0,0,0,0,0,128,0,-1--1--1,,1|(3338,812)|
+10,80,Recoveries ICU,805,2344,64,28,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,81,Recoveries ICU overflow,797,2393,89,28,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,82,Recoveries Iso Asym,761,2510,82,28,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,83,Recoveries seriousH,751,2673,64,28,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,84,Recoveries seriousH overflow,743,2743,102,28,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,85,Sum Recoveries reported daily,1846,2423,124,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,86,80,85,0,0,0,0,0,128,0,-1--1--1,,1|(1288,2379)|
+1,87,82,85,0,0,0,0,0,128,0,-1--1--1,,1|(1275,2468)|
+1,88,83,85,0,0,0,0,0,128,0,-1--1--1,,1|(1261,2556)|
+1,89,84,85,0,0,0,0,0,128,0,-1--1--1,,1|(1273,2588)|
+10,90,Sum Deaths reported daily,1844,2636,107,41,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,91,Deaths,1280,2593,49,15,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,92,Deaths overflow,1321,2683,54,28,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,93,91,90,0,0,0,0,0,128,0,-1--1--1,,1|(1526,2610)|
+1,94,92,90,0,0,0,0,0,128,0,-1--1--1,,1|(1549,2662)|
+1,95,81,85,0,0,0,0,0,128,0,-1--1--1,,1|(1297,2406)|
+10,96,Recoveries Iso Sym,758,2596,120,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|36||128-128-128,0,0,0,0,0,0
+1,97,96,85,0,0,0,0,0,128,0,-1--1--1,,1|(1293,2510)|
+10,98,Recovered Isolated Symptomatic Mild,3550,2868,153,41,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|36||128-128-128,0,0,0,0,0,0
+1,99,98,24,0,0,0,0,0,128,0,-1--1--1,,1|(2709,2855)|
+1,100,98,8,0,0,0,0,0,128,0,-1--1--1,,1|(4346,2621)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View Contacts per day
+$192-192-192,0,Times New Roman|30||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,75,2
+10,1,Contacts per day,1610,465,143,49,8,131,0,16,0,0,0,0,-1--1--1,0-0-0,|12|B|0-0-0,0,0,0,0,0,0
+10,2,Avg contact,2150,-25,75,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Default Ro Base Infectivity Estimation,2613,-165,134,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,Typical Duration when infection is spread,2662,224,107,52,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,5,Quarantine effect on Asym contacts,553,1023,127,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,6,Contacts Q Asym per day,890,939,151,44,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|12|B|0-0-0,0,0,0,0,0,0
+10,7,Normal Contacts per day,1989,816,107,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,8,5,6,0,0,0,0,0,128,0,-1--1--1,,1|(702,985)|
+10,9,Quarantine effect on Sym contacts,712,1253,127,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,10,Isolation effect on Asym contacts,841,1393,111,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,11,Isolation effect on Sym contacts,825,1740,111,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,12,Contacts Q Sym per day,739,1131,143,44,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|12|B|0-0-0,0,0,0,0,0,0
+10,13,Contacts Iso Asym per day,517,1344,129,57,8,131,0,16,0,0,0,0,-1--1--1,0-0-0,|12|B|0-0-0,0,0,0,0,0,0
+10,14,Contacts Iso Sym per day,518,1530,151,44,8,3,0,16,0,0,0,0,-1--1--1,0-0-0,|12|B|0-0-0,0,0,0,0,0,0
+1,15,9,12,0,0,0,0,0,128,0,-1--1--1,,1|(722,1203)|
+1,16,10,13,0,0,0,0,0,128,0,-1--1--1,,1|(694,1371)|
+1,17,11,14,0,0,0,0,0,128,0,-1--1--1,,1|(683,1643)|
+10,18,Lockdown effect on contacts,826,708,104,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,19,Lock down start day,479,576,70,35,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,20,Lock down duration,497,389,70,35,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,21,Lockdown Period,991,561,66,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,22,19,21,0,0,0,0,0,64,0,-1--1--1,,1|(730,568)|
+1,23,20,21,0,0,0,0,0,64,0,-1--1--1,,1|(739,473)|
+10,24,Contact under lockdown per day,1094,759,110,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,25,18,24,0,0,0,0,0,128,0,-1--1--1,,1|(950,731)|
+10,26,Infectivity,3551,236,30,53,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,27,Interaction Intensity,3515,425,68,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,28,27,26,0,0,0,0,0,128,0,-1--1--1,,1|(3529,346)|
+10,29,Physical Distance Impact,3354,641,111,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,30,Hygiene Mask Impact,3931,680,91,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,31,29,27,0,0,0,0,0,128,0,-1--1--1,,1|(3429,538)|
+1,32,30,27,0,0,0,0,0,128,0,-1--1--1,,1|(3728,556)|
+10,33,Base Infectivity,3054,48,63,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,34,3,33,0,0,0,0,0,128,0,-1--1--1,,1|(2831,-60)|
+1,35,4,33,1,0,0,0,0,128,0,-1--1--1,,1|(2815,104)|
+1,36,2,33,1,0,0,0,0,128,0,-1--1--1,,1|(2601,10)|
+10,37,Area of States,3389,945,88,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,38,Total Population,3431,1278,135,21,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,39,Reference Population Density,2854,922,119,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,40,Density of state,3083,1040,65,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,41,37,40,0,0,0,0,0,128,0,-1--1--1,,1|(3248,988)|
+1,42,38,40,0,0,0,0,0,128,0,-1--1--1,,1|(3273,1169)|
+10,43,Density ratio,2810,758,80,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,44,43,29,1,0,0,0,0,128,0,-1--1--1,,1|(3082,624)|
+10,45,Effect of density on contacts,2289,1013,101,35,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,46,43,45,1,0,0,0,0,128,0,-1--1--1,,1|(2605,800)|
+10,47,Net Contacts Home,1246,1699,81,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,48,Net Contacts Work,1333,1560,81,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,49,Net Contacts School,1368,1419,81,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,50,Net Contacts Other,1545,1301,81,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,51,Net Contacts Sum,1118,1075,81,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,52,49,51,0,0,0,0,0,128,0,-1--1--1,,1|(1247,1252)|
+1,53,48,51,0,0,0,0,0,128,0,-1--1--1,,1|(1228,1323)|
+1,54,50,51,0,0,0,0,0,128,0,-1--1--1,,1|(1337,1191)|
+1,55,47,51,0,0,0,0,0,128,0,-1--1--1,,1|(1183,1393)|
+10,56,Contacts Calibration Multiplier,2588,1000,129,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,57,56,45,0,0,0,0,0,128,0,-1--1--1,,1|(2431,1006)|
+10,58,Default Infectivity,3525,-61,63,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,59,58,26,0,0,0,0,0,128,0,-1--1--1,,1|(3536,71)|
+1,60,21,1,0,0,0,0,0,128,0,-1--1--1,,1|(1255,520)|
+10,61,Default Ro,2471,491,69,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,62,58,61,0,0,0,0,0,128,0,-1--1--1,,1|(2988,219)|
+1,63,2,61,0,0,0,0,0,128,0,-1--1--1,,1|(2306,227)|
+1,64,4,61,1,0,0,0,0,128,0,-1--1--1,,1|(2474,477)|
+1,65,24,1,0,0,0,0,0,128,0,-1--1--1,,1|(1333,622)|
+10,66,lack of Awareness multiplier,3482,717,115,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,67,66,27,1,0,0,0,0,128,0,-1--1--1,,1|(3517,633)|
+10,68,LoAstartlevel,3512,845,85,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,69,LoAendlevel,3655,771,80,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,70,68,66,0,0,0,0,0,128,0,-1--1--1,,1|(3501,796)|
+1,71,69,66,0,0,0,0,0,128,0,-1--1--1,,1|(3604,754)|
+10,72,Time,3628,630,31,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,73,72,30,0,0,0,0,0,128,0,-1--1--1,,1|(3742,648)|
+10,74,High Hygiene Level,3919,777,87,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,75,74,30,0,0,0,0,0,128,0,-1--1--1,,1|(3923,735)|
+10,76,Regular Hygiene Level,3987,549,105,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,77,76,30,0,0,0,0,0,128,0,-1--1--1,,1|(3961,608)|
+10,78,LoAstarttime,3227,768,83,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,79,LoAendtime,3343,816,78,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,80,78,66,0,0,0,0,0,128,0,-1--1--1,,1|(3331,747)|
+1,81,79,66,0,0,0,0,0,128,0,-1--1--1,,1|(3393,779)|
+10,82,Base Contacts Other,2177,1155,89,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,83,Policy Multiplier Other,2397,1223,106,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,84,Base Contact School,2145,1293,83,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,85,Policy Multiplier School,2397,1328,106,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,86,Base Contact Work,2095,1406,83,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,87,Policy Multiplier Work,2402,1455,106,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,88,Base Contact Home,2045,1557,83,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,89,Policy Multiplier Home,2378,1578,106,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,90,82,50,0,0,0,0,0,128,0,-1--1--1,,1|(1863,1226)|
+1,91,83,50,0,0,0,0,0,128,0,-1--1--1,,1|(1965,1261)|
+1,92,84,49,0,0,0,0,0,128,0,-1--1--1,,1|(1762,1354)|
+1,93,85,49,0,0,0,0,0,128,0,-1--1--1,,1|(1876,1373)|
+1,94,86,48,0,0,0,0,0,128,0,-1--1--1,,1|(1719,1481)|
+1,95,87,48,0,0,0,0,0,128,0,-1--1--1,,1|(1861,1507)|
+1,96,88,47,0,0,0,0,0,128,0,-1--1--1,,1|(1651,1626)|
+1,97,89,47,0,0,0,0,0,128,0,-1--1--1,,1|(1806,1638)|
+1,98,39,43,0,0,0,0,0,128,0,-1--1--1,,1|(2831,837)|
+1,99,40,43,0,0,0,0,0,128,0,-1--1--1,,1|(2942,895)|
+10,100,Effect of density on contacts,1679,1693,110,35,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+1,101,100,47,0,0,0,0,0,128,0,-1--1--1,,1|(1454,1695)|
+1,102,100,48,0,0,0,0,0,128,0,-1--1--1,,1|(1507,1627)|
+1,103,100,49,0,0,0,0,0,128,0,-1--1--1,,1|(1528,1560)|
+1,104,100,50,0,0,0,0,0,128,0,-1--1--1,,1|(1614,1503)|
+1,105,47,13,0,0,0,0,0,128,0,-1--1--1,,1|(910,1535)|
+1,106,47,14,0,0,0,0,0,128,0,-1--1--1,,1|(923,1624)|
+1,107,47,12,1,0,0,0,0,128,0,-1--1--1,,1|(1001,1424)|
+1,108,47,6,1,0,0,0,0,128,0,-1--1--1,,1|(890,1039)|
+10,109,High Contact Tracing and Isolation,3157,1505,133,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,110,April 14,2903,1398,53,17,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,111,Time,3188,1380,81,17,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,112,Policy High Contact Tracing and Isolation,2745,1516,133,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,113,112,109,0,0,0,0,0,128,0,-1--1--1,,1|(2944,1510)|
+1,114,110,109,0,0,0,0,0,128,0,-1--1--1,,1|(3001,1439)|
+1,115,111,109,0,0,0,0,0,128,0,-1--1--1,,1|(3176,1426)|
+1,116,72,27,0,0,0,0,0,128,0,-1--1--1,,1|(3581,545)|
+10,117,April 14,3779,441,71,17,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+1,118,117,30,0,0,0,0,0,128,0,-1--1--1,,1|(3844,545)|
+1,119,117,27,0,0,0,0,0,128,0,-1--1--1,,1|(3652,433)|
+1,120,82,7,0,0,0,0,0,128,0,-1--1--1,,1|(2086,991)|
+1,121,84,7,0,0,0,0,0,128,0,-1--1--1,,1|(2069,1061)|
+1,122,86,7,0,0,0,0,0,128,0,-1--1--1,,1|(2043,1117)|
+1,123,88,7,0,0,0,0,0,128,0,-1--1--1,,1|(2017,1193)|
+1,124,7,2,0,0,0,0,0,128,0,-1--1--1,,1|(2069,393)|
+1,125,51,1,0,0,0,0,0,128,0,-1--1--1,,1|(1353,782)|
+1,126,100,7,0,0,0,0,0,128,0,-1--1--1,,1|(1831,1261)|
+1,127,7,24,0,0,0,0,0,128,0,-1--1--1,,1|(1549,788)|
+10,128,End Lockdown Time,616,182,68,34,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,129,128,21,0,0,0,0,0,64,0,-1--1--1,,1|(797,366)|
+10,130,Open Duration,858,165,57,34,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,131,130,21,0,0,0,0,0,64,0,-1--1--1,,1|(921,355)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View Infections
+$192-192-192,0,Times New Roman|30||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,5,2
+10,1,Infectivity reduction for asym,192,873,116,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,Contacts with Asymptomatics,853,358,98,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,3,1,2,1,0,0,0,0,64,0,-1--1--1,,1|(341,678)|
+10,4,Contacts per day,827,162,155,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,5,Total Population in AgeGroup,177,526,144,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,6,5,2,1,0,0,0,0,128,0,-1--1--1,,1|(427,413)|
+1,7,4,2,1,0,0,0,0,128,0,-1--1--1,,1|(844,248)|
+10,8,Infectious Asymptomatics,1260,377,140,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,9,8,2,0,0,0,0,0,128,0,-1--1--1,,1|(1040,367)|
+10,10,Contacts with Sypmtomatics mild,2189,342,121,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,11,14,10,1,0,0,0,0,128,0,-1--1--1,,1|(2173,236)|
+10,12,Total Population in AgeGroup,1707,740,144,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,13,12,10,1,0,0,0,0,128,0,-1--1--1,,1|(1893,478)|
+10,14,Contacts per day,2161,148,155,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,15,Infectious Symptomatics Mild,2865,433,171,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,16,15,10,0,0,0,0,0,128,0,-1--1--1,,1|(2507,384)|
+10,17,Infected Sym Serious Hospital,3056,834,144,44,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,18,Contacts with Asym in Q,833,721,87,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,19,Contacts with Asym in Isolation,840,1154,111,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,20,5,18,1,0,0,0,0,128,0,-1--1--1,,1|(561,710)|
+1,21,5,19,1,0,0,0,0,128,0,-1--1--1,,1|(341,812)|
+1,22,1,18,1,0,0,0,0,128,0,-1--1--1,,1|(509,877)|
+1,23,1,19,1,0,0,0,0,128,0,-1--1--1,,1|(528,1144)|
+10,24,Quarantined Asymptomatics,1259,782,140,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,25,Isolated Asymptomatics,1309,1165,140,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,26,24,18,0,0,0,0,0,128,0,-1--1--1,,1|(1025,749)|
+1,27,25,19,0,0,0,0,0,128,0,-1--1--1,,1|(1064,1159)|
+10,28,Contacts Q Asym per day,827,513,155,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,29,Contacts Iso Asym per day,883,958,127,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,30,29,19,0,0,0,0,0,128,0,-1--1--1,,1|(862,1055)|
+1,31,28,18,0,0,0,0,0,128,0,-1--1--1,,1|(830,617)|
+10,32,Contacts with Sym in Q,2103,756,87,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,33,Contacts with Sym in Isolation,2125,1222,119,35,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,34,Quarantined Symtomatics mild,2581,740,161,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,35,Isolated Symtomatics mild,2529,1016,159,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,36,34,32,0,0,0,0,0,128,0,-1--1--1,,1|(2309,749)|
+1,37,35,33,0,0,0,0,0,128,0,-1--1--1,,1|(2321,1121)|
+1,38,12,32,1,0,0,0,0,128,0,-1--1--1,,1|(1928,749)|
+1,39,12,33,1,0,0,0,0,128,0,-1--1--1,,1|(1932,1153)|
+10,40,Contacts Q Sym per day,2096,569,144,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,41,Contacts Iso Sym per day,2097,994,155,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,42,40,32,0,0,0,0,0,128,0,-1--1--1,,1|(2099,662)|
+1,43,41,33,0,0,0,0,0,128,0,-1--1--1,,1|(2111,1107)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View Charts
+$192-192-192,0,Times New Roman|30||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,5,2
+12,1,3825755848,1025,630,475,475,3,44,0,0,1,0,0,0,0,0,0,0,0,0
+CumCases
+12,2,3825755856,2498,699,677,468,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+NewCasesReported
+12,3,3825756320,1013,1614,475,475,3,44,0,0,1,0,0,0,0,0,0,0,0,0
+Asymptomtics
+12,4,3825756328,2093,1629,475,475,3,44,0,0,1,0,0,0,0,0,0,0,0,0
+Symptomatics
+12,5,3825756336,3113,1618,475,475,3,44,0,0,1,0,0,0,0,0,0,0,0,0
+Recovered
+12,6,3825756392,4115,1644,475,475,3,44,0,0,1,0,0,0,0,0,0,0,0,0
+Deaths
+10,7,Lock down start day,3761,225,113,48,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,8,Lock down duration,4058,216,113,48,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,9,TIME STEP,3530,2125,119,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,10,PPE availability,4301,564,112,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,11,Healthcare Capacity Multiplier,4310,747,156,44,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,12,Sum New Cases Reported,2939,2142,155,48,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,13,Hygiene Mask Impact,4319,945,140,48,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,14,Contacts Calibration Multiplier,3378,370,177,48,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,15,Lockdown effect on contacts,4406,205,124,37,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,16,delay Iso Sym,3339,261,72,37,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,17,Default Infectivity,3326,111,80,37,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,18,Default Ro,3285,981,95,19,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,19,lack of Awareness multiplier,4202,334,200,19,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,20,LoAstartlevel,3632,1068,112,19,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,21,LoAendlevel,3960,1053,108,19,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,22,High Hygiene Level,237,970,102,36,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,23,New Cases Reported,166,1470,62,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|24||128-128-128,0,0,0,0,0,0
+10,24,Policy Multiplier Home,3672,445,114,35,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+10,25,Policy Multiplier School,3648,589,115,35,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+10,26,Policy Multiplier Work,3726,715,112,35,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+10,27,Policy Multiplier Other,3630,853,112,35,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+10,28,Policy High Contact Tracing and Isolation,3348,754,142,35,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+10,29,High Contact Tracing Policy,3285,538,100,35,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|30||128-128-128,0,0,0,0,0,0
+///---\\\
+:GRAPH CumCases
+:TITLE CumCases
+:X-MIN 0
+:SCALE
+:VAR Sum Cumulative Cases Reported
+
+:GRAPH NewCasesAndIR
+:TITLE NewCasesReported and Infection Rate
+:X-MIN 0
+:SCALE
+:VAR Sum New Cases Reported
+:VAR Sum of Infection Rate
+
+:GRAPH Recovered
+:TITLE Recovered (identified)
+:SCALE
+:VAR Sum Recovered after symptoms
+
+:GRAPH Total_Deaths
+:TITLE Total_Deaths
+:SCALE
+:VAR Sum Deaths
+
+:GRAPH RecoveredDeadStacked
+:TITLE Recovered (Stacked)
+:Y-DIV 10
+:STACK 0
+:LABEL-INTERVALS
+:SCALE
+:VAR Sum Recovered Asym
+:Y-MIN 0
+:VAR Sum Recovered Mild
+:Y-MIN 0
+:VAR Sum Recovered via Hosp
+:Y-MIN 0
+
+:GRAPH Asymptomtics
+:TITLE Asymptomatics
+:SCALE
+:VAR Sum Asymtomatics
+:VAR Sum Quarantine Asym
+:VAR Sum Isolation Asym
+
+:GRAPH Symptomatics
+:TITLE Symptomatics
+:SCALE
+:VAR Sum Symtomatics
+:VAR Sum Quarantine Sym mild
+:VAR Sum Isolation Sym mild
+
+:GRAPH At_Hospital
+:TITLE At Hospital
+:STACK 0
+:SCALE
+:VAR Sum In Hospital
+:VAR Sum in Hospital Overflow
+
+:GRAPH At_ICU
+:TITLE At ICU
+:STACK 0
+:SCALE
+:VAR Sum in ICU
+:VAR Sum in ICU Overflow
+
+:GRAPH InfectionRateStates
+:TITLE Infection Rate (Urban vs. Rural)
+:SCALE
+:VAR Sum of Infection Rate[Urban]
+:VAR Sum of Infection Rate[Rural]
+
+:GRAPH CumulativeReported
+:TITLE CumulativeReported
+:SCALE
+:VAR Sum Cumulative Cases Reported
+
+:GRAPH NewCasesReported
+:TITLE NewCasesReported
+:SCALE
+:VAR Sum New Cases Reported
+
+:GRAPH Deaths
+:TITLE Deaths
+:SCALE
+:VAR Sum Deaths
+:L<%^E!@
+1:IndiaRun-Pulse.vdfx
+1:IndiaRun.vdfx
+9:IndiaRun-Pulse
+22:$,Dollar,Dollars,$s
+22:Day,Days
+22:Hour,Hours
+22:Month,Months
+22:Person,People,Persons
+22:Unit,Units
+22:Week,Weeks
+22:Year,Years
+23:0
+15:0,0,0,0,0,0
+19:75,2
+27:0,
+34:0,
+42:1
+72:0
+73:0
+4:Time
+5:Lockdown Period
+35:Date
+36:DD-N
+37:2020
+38:2
+39:24
+40:4
+41:0
+76:1
+77:1
+78:0
+79:1
+80:1
+81:0
+24:0
+25:500
+26:500
+57:1
+54:0
+55:0
+82:0
+59:0
+56:0
+58:0
+71:0
+44:65001
+46:0
+45:5
+49:1
+50:0
+51:
+52:
+53:
+43:policybase1
+47:policybase1
+48:
+60:IndiaRunTime4.tab
+61:65001
+62:1
+63:0
+64:0
+65:0
+66:1
+67:0
+68:0
+69:0
+70:1
+75:
+43:policybase1

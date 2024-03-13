@@ -56,15 +56,17 @@
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(doc?.knownEntities?.summaries)">
+			<AccordionTab v-if="!isEmpty(sectionSummaries)">
 				<template #header>
-					<header id="Section-Summaries">Section Summaries</header>
+					<header id="Section-Summaries">Section summaries</header>
 				</template>
 				<ul>
-					<li v-for="(section, index) of doc.knownEntities.summaries" :key="index">
-						<h6>{{ index }}</h6>
-						<p v-html="highlightSearchTerms(section[index])" />
-					</li>
+					<template v-for="section in sectionSummaries">
+						<li v-for="(entries, index) in Object.entries(section)" :key="index">
+							<h6>{{ entries[0] }}</h6>
+							<p v-html="highlightSearchTerms(entries[1] as string)" />
+						</li>
+					</template>
 				</ul>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(figures)">
@@ -336,6 +338,9 @@ const otherUrls = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions?.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
+);
+const sectionSummaries = computed(
+	() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []
 );
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 const otherExtractions = computed(() => {

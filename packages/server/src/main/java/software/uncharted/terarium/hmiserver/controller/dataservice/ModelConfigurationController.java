@@ -37,7 +37,6 @@ public class ModelConfigurationController {
 	@Operation(summary = "Gets all model configurations")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model configuration found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no configuration found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving configuration from the data store", content = @Content)
 	})
 	public ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
@@ -81,7 +80,7 @@ public class ModelConfigurationController {
 	@Operation(summary = "Gets a model configuration by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model configuration found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class))),
-			@ApiResponse(responseCode = "204", description = "There was no configuration found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no configuration found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the configuration from the data store", content = @Content)
 	})
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
@@ -90,7 +89,7 @@ public class ModelConfigurationController {
 		try {
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService
 					.getAsset(id);
-			return modelConfiguration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return modelConfiguration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get model configuration";
 			log.error(error, e);
@@ -132,7 +131,6 @@ public class ModelConfigurationController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Deleted configuration", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Model configuration could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(

@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="CalibrateTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -196,6 +202,7 @@ import { Poller, PollerState } from '@/api/api';
 import { getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import { useToastService } from '@/services/toast';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{

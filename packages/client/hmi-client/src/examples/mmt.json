@@ -1,0 +1,2498 @@
+{
+  "templates": [
+    {
+      "rate_law": "I_middle_aged_diagnosed*S_middle_aged*kappa_0_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t1",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_undiagnosed*S_middle_aged*kappa_0_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t2",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_diagnosed*S_middle_aged*kappa_1_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t3",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_undiagnosed*S_middle_aged*kappa_1_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t4",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_diagnosed*S_middle_aged*kappa_2_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t5",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_undiagnosed*S_middle_aged*kappa_2_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t6",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_diagnosed*S_old*kappa_3_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t7",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_undiagnosed*S_old*kappa_3_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t8",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_diagnosed*S_old*kappa_4_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t9",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_undiagnosed*S_old*kappa_4_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t10",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_diagnosed*S_old*kappa_5_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t11",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_undiagnosed*S_old*kappa_5_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t12",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_diagnosed*S_young*kappa_6_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t13",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_undiagnosed*S_young*kappa_6_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t14",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_diagnosed*S_young*kappa_7_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t15",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_undiagnosed*S_young*kappa_7_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t16",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_diagnosed*S_young*kappa_8_0*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t17",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_undiagnosed*S_young*kappa_8_1*(beta_nc + (beta_c - beta_nc)/(1 + exp(-k_2*(-t + t_1))) + (-beta_c + beta_s)/(1 + exp(-k_1*(-t + t_0))))/N",
+      "name": "t18",
+      "display_name": null,
+      "type": "ControlledConversion",
+      "controller": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "subject": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "E_middle_aged*delta",
+      "name": "t19",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "E_middle_aged*delta",
+      "name": "t20",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "E_old*delta",
+      "name": "t21",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "E_old*delta",
+      "name": "t22",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "E_young*delta",
+      "name": "t23",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "E_young*delta",
+      "name": "t24",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_diagnosed*gamma*(1 - alpha)",
+      "name": "t25",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "R_middle_aged",
+        "display_name": "R_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_undiagnosed*gamma*(1 - alpha)",
+      "name": "t26",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "R_middle_aged",
+        "display_name": "R_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_diagnosed*gamma*(1 - alpha)",
+      "name": "t27",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "R_old",
+        "display_name": "R_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_undiagnosed*gamma*(1 - alpha)",
+      "name": "t28",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "R_old",
+        "display_name": "R_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_diagnosed*gamma*(1 - alpha)",
+      "name": "t29",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "R_young",
+        "display_name": "R_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_undiagnosed*gamma*(1 - alpha)",
+      "name": "t30",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "R_young",
+        "display_name": "R_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_diagnosed*alpha*rho",
+      "name": "t31",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "D_middle_aged",
+        "display_name": "D_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_undiagnosed*alpha*rho",
+      "name": "t32",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "D_middle_aged",
+        "display_name": "D_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_diagnosed*alpha*rho",
+      "name": "t33",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "D_old",
+        "display_name": "D_old",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_undiagnosed*alpha*rho",
+      "name": "t34",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "D_old",
+        "display_name": "D_old",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_diagnosed*alpha*rho",
+      "name": "t35",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "D_young",
+        "display_name": "D_young",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_undiagnosed*alpha*rho",
+      "name": "t36",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "D_young",
+        "display_name": "D_young",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "R_middle_aged*epsilon",
+      "name": "t37",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "R_middle_aged",
+        "display_name": "R_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "R_old*epsilon",
+      "name": "t38",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "R_old",
+        "display_name": "R_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "R_young*epsilon",
+      "name": "t39",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "R_young",
+        "display_name": "R_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_middle_aged_undiagnosed*p_undiagnosed_diagnosed",
+      "name": "t40",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_old_undiagnosed*p_undiagnosed_diagnosed",
+      "name": "t41",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    },
+    {
+      "rate_law": "I_young_undiagnosed*p_undiagnosed_diagnosed",
+      "name": "t42",
+      "display_name": null,
+      "type": "NaturalConversion",
+      "subject": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "outcome": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "provenance": []
+    }
+  ],
+  "parameters": {
+    "N": {
+      "name": "N",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1"
+      },
+      "value": 1,
+      "distribution": null
+    },
+    "beta_c": {
+      "name": "beta_c",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.4,
+      "distribution": null
+    },
+    "beta_nc": {
+      "name": "beta_nc",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.5,
+      "distribution": null
+    },
+    "beta_s": {
+      "name": "beta_s",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 1,
+      "distribution": null
+    },
+    "k_1": {
+      "name": "k_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1"
+      },
+      "value": 5,
+      "distribution": null
+    },
+    "k_2": {
+      "name": "k_2",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1"
+      },
+      "value": 1,
+      "distribution": null
+    },
+    "kappa_0_0": {
+      "name": "kappa_0_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "t_0": {
+      "name": "t_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "day"
+      },
+      "value": 89,
+      "distribution": null
+    },
+    "t_1": {
+      "name": "t_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "day"
+      },
+      "value": 154,
+      "distribution": null
+    },
+    "kappa_0_1": {
+      "name": "kappa_0_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_1_0": {
+      "name": "kappa_1_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_1_1": {
+      "name": "kappa_1_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_2_0": {
+      "name": "kappa_2_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_2_1": {
+      "name": "kappa_2_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_3_0": {
+      "name": "kappa_3_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_3_1": {
+      "name": "kappa_3_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_4_0": {
+      "name": "kappa_4_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_4_1": {
+      "name": "kappa_4_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_5_0": {
+      "name": "kappa_5_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_5_1": {
+      "name": "kappa_5_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_6_0": {
+      "name": "kappa_6_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_6_1": {
+      "name": "kappa_6_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_7_0": {
+      "name": "kappa_7_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_7_1": {
+      "name": "kappa_7_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_8_0": {
+      "name": "kappa_8_0",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "kappa_8_1": {
+      "name": "kappa_8_1",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.45454545454545453,
+      "distribution": null
+    },
+    "delta": {
+      "name": "delta",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.2,
+      "distribution": null
+    },
+    "alpha": {
+      "name": "alpha",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1"
+      },
+      "value": 6.4e-05,
+      "distribution": null
+    },
+    "gamma": {
+      "name": "gamma",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.09090909090909091,
+      "distribution": null
+    },
+    "rho": {
+      "name": "rho",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.1111111111111111,
+      "distribution": null
+    },
+    "epsilon": {
+      "name": "epsilon",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": {
+        "expression": "1/day"
+      },
+      "value": 0.011111111111111112,
+      "distribution": null
+    },
+    "p_undiagnosed_diagnosed": {
+      "name": "p_undiagnosed_diagnosed",
+      "display_name": null,
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": null,
+      "value": 0.1,
+      "distribution": null
+    }
+  },
+  "initials": {
+    "S_middle_aged": {
+      "concept": {
+        "name": "S_middle_aged",
+        "display_name": "S_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.3333332738095238"
+    },
+    "I_middle_aged_diagnosed": {
+      "concept": {
+        "name": "I_middle_aged_diagnosed",
+        "display_name": "I_middle_aged_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "E_middle_aged": {
+      "concept": {
+        "name": "E_middle_aged",
+        "display_name": "E_middle_aged",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "5.952380952380953e-8"
+    },
+    "I_middle_aged_undiagnosed": {
+      "concept": {
+        "name": "I_middle_aged_undiagnosed",
+        "display_name": "I_middle_aged_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "middle_aged",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "I_old_diagnosed": {
+      "concept": {
+        "name": "I_old_diagnosed",
+        "display_name": "I_old_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "I_old_undiagnosed": {
+      "concept": {
+        "name": "I_old_undiagnosed",
+        "display_name": "I_old_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "old",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "I_young_diagnosed": {
+      "concept": {
+        "name": "I_young_diagnosed",
+        "display_name": "I_young_diagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "diagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "I_young_undiagnosed": {
+      "concept": {
+        "name": "I_young_undiagnosed",
+        "display_name": "I_young_undiagnosed",
+        "description": null,
+        "identifiers": {
+          "ido": "0000511"
+        },
+        "context": {
+          "age": "young",
+          "diagnosis": "undiagnosed"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "S_old": {
+      "concept": {
+        "name": "S_old",
+        "display_name": "S_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.3333332738095238"
+    },
+    "E_old": {
+      "concept": {
+        "name": "E_old",
+        "display_name": "E_old",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "5.952380952380953e-8"
+    },
+    "S_young": {
+      "concept": {
+        "name": "S_young",
+        "display_name": "S_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000514"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.3333332738095238"
+    },
+    "E_young": {
+      "concept": {
+        "name": "E_young",
+        "display_name": "E_young",
+        "description": null,
+        "identifiers": {
+          "apollosv": "0000154"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "5.952380952380953e-8"
+    },
+    "R_middle_aged": {
+      "concept": {
+        "name": "R_middle_aged",
+        "display_name": "R_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "R_old": {
+      "concept": {
+        "name": "R_old",
+        "display_name": "R_old",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "R_young": {
+      "concept": {
+        "name": "R_young",
+        "display_name": "R_young",
+        "description": null,
+        "identifiers": {
+          "ido": "0000592"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "D_middle_aged": {
+      "concept": {
+        "name": "D_middle_aged",
+        "display_name": "D_middle_aged",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "middle_aged"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "D_old": {
+      "concept": {
+        "name": "D_old",
+        "display_name": "D_old",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "old"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    },
+    "D_young": {
+      "concept": {
+        "name": "D_young",
+        "display_name": "D_young",
+        "description": null,
+        "identifiers": {
+          "ncit": "C28554"
+        },
+        "context": {
+          "age": "young"
+        },
+        "units": {
+          "expression": "1"
+        }
+      },
+      "expression": "0.0"
+    }
+  },
+  "observables": {
+    "infected": {
+      "name": "infected",
+      "display_name": "infected",
+      "description": null,
+      "identifiers": {},
+      "context": {},
+      "units": null,
+      "expression": "I_middle_aged_diagnosed + I_middle_aged_undiagnosed + I_old_diagnosed + I_old_undiagnosed + I_young_diagnosed + I_young_undiagnosed"
+    }
+  },
+  "annotations": {
+    "name": "Scenario 1 age/diagnosis stratified",
+    "description": "Scenario 1 age/diagnosis stratified",
+    "license": null,
+    "authors": [],
+    "references": [],
+    "time_scale": null,
+    "time_start": null,
+    "time_end": null,
+    "locations": [],
+    "pathogens": [],
+    "diseases": [],
+    "hosts": [],
+    "model_types": []
+  },
+  "time": {
+    "name": "t",
+    "units": {
+      "expression": "day"
+    }
+  }
+}

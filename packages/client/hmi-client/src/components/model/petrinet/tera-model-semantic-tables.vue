@@ -1,6 +1,7 @@
 <template>
+	<!-- FIXME: Looks like petrinet and stockflow somewhat share some table values, just using the petrinet tables to show stockflow for now... -->
 	<tera-petrinet-tables
-		v-if="modelType === AMRSchemaNames.PETRINET"
+		v-if="modelType === AMRSchemaNames.PETRINET || modelType === AMRSchemaNames.STOCKFLOW"
 		:model="model"
 		:modelConfigurations="modelConfigurations"
 		:readonly="readonly"
@@ -22,6 +23,7 @@ import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 
 import { AMRSchemaNames } from '@/types/common';
+import { getModelType } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;
@@ -31,7 +33,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
-const modelType = computed(() => props.model?.header?.schema_name ?? AMRSchemaNames.PETRINET);
+const modelType = computed(() => getModelType(props.model));
 </script>
 
 <style scoped>

@@ -25,6 +25,10 @@ public class RebacGroup extends RebacObject {
 		return reBACService.canAdministrate(getSchemaObject(), rebacObject.getSchemaObject());
 	}
 
+	public void createWriterRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
+		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
+	}
+
 	public void createCreatorRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}

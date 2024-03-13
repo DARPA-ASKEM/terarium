@@ -27,4 +27,9 @@ public interface SimulationServiceProxy {
 	ResponseEntity<JsonNode> getRunResult(
 		@PathVariable("runId") String runId
 	);
+
+	@GetMapping("/model-equation/{modelId}")
+	ResponseEntity<JsonNode> getModelEquation(
+		@PathVariable("modelId") String modelId
+	);
 }

@@ -55,7 +55,7 @@
 							<template v-if="type === AssetType.Publication">External Publications</template>
 							<template v-else-if="type === AssetType.Document">Documents</template>
 							<template v-else>{{ capitalize(type) }}</template>
-							<aside v-if="assetItems.size > 0">({{ assetItems.size }})</aside>
+							<aside>({{ assetItems.size }})</aside>
 						</div>
 						<!-- New asset buttons for some types -->
 						<Button
@@ -136,6 +136,7 @@
 						"
 					/>
 				</Button>
+				<section v-if="assetItems.size == 0" class="empty-resource">Empty</section>
 			</AccordionTab>
 		</Accordion>
 
@@ -260,6 +261,11 @@ header {
 	}
 }
 
+.empty-resource {
+	margin-left: 2.5rem;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+}
 .clear-icon {
 	position: absolute;
 	right: 48px;

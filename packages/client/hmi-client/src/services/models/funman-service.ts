@@ -161,13 +161,21 @@ export const getBoxes = (
 	processedData: FunmanProcessedData,
 	param1: string,
 	param2: string,
-	timestep: number,
+	_timestep: number,
 	boxType: string
 ) => {
 	const result: FunmanBoundingBox[] = [];
+
+	const temp = processedData.boxes
+		.filter((d: any) => d.label === boxType)
+		.map((box: any) => ({ id: box.id, timestep: box.timestep.lb }));
+	if (temp.length === 0) return [];
+
+	const step = temp.sort((a, b) => b.timestep - a.timestep)[0].timestep;
+
 	processedData.boxes
 		.filter((d: any) => d.label === boxType)
-		.filter((d: any) => d.timestep.ub === timestep)
+		.filter((d: any) => d.timestep.ub === step)
 		.forEach((d: any) => {
 			result.push({
 				id: d.id,
@@ -177,6 +185,8 @@ export const getBoxes = (
 				y2: d[param2][1]
 			});
 		});
+
+	// console.log('!!!', result);
 	return result;
 };
 
@@ -191,7 +201,7 @@ export const renderFumanTrajectories = (
 	const height = options.height;
 	const topMargin = 10;
 	const rightMargin = 30;
-	const leftMargin = 30;
+	const leftMargin = 35;
 	const bottomMargin = 30;
 	const { trajs, states } = processedData;
 
@@ -372,6 +382,11 @@ export const renderFunmanBoundaryChart = (
 	const trueBoxes = getBoxes(processedData, param1, param2, timestep, 'true');
 	const falseBoxes = getBoxes(processedData, param1, param2, timestep, 'false');
 	const { minX, maxX, minY, maxY } = getBoxesDomain([...trueBoxes, ...falseBoxes]);
+
+	// console.log('true', param1, param2, trueBoxes);
+	// console.log('false', param1, param2, falseBoxes);
+	// console.log(processedData);
+	// console.log('');
 
 	d3.select(element).selectAll('*').remove();
 	const svg = d3.select(element).append('svg').attr('width', width).attr('height', height);

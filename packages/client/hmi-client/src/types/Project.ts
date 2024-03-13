@@ -17,11 +17,11 @@ export const listOfVisibleAssetTypes: AssetType[] = Object.values(AssetType).fil
  * @param type
  */
 export const isProjectAssetTypes = (type: AssetType | string): boolean =>
-	Object.values(AssetType).includes(type as AssetType);
+	Object.values(AssetType).includes(type.toUpperCase() as AssetType);
 
 /**
  * Check if the asset type is a project visible asset type
  * @param type
  */
 export const isVisibleProjectAssetTypes = (type: AssetType | string): boolean =>
-	listOfVisibleAssetTypes.includes(type as AssetType);
+	listOfVisibleAssetTypes.includes(type.toUpperCase() as AssetType);

@@ -1,5 +1,6 @@
 .p-toast {
     opacity: $toastOpacity;
+    width: 40rem;
 
     .p-toast-message {
         margin: $toastMargin;
@@ -28,7 +29,7 @@
 
             .p-toast-detail {
                 margin: $toastDetailMargin;
-                color: var(--text-color-secondary);
+                color: var(--text-color);
             }
         }
 

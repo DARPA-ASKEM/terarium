@@ -174,6 +174,14 @@ public class SimulationRequestController implements SnakeCaseController {
 				.ok(simulationCiemssServiceProxy.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
 	}
 
+	@PostMapping("ciemss/optimize")
+	@Secured(Roles.USER)
+	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
+			@RequestBody final OptimizeRequestCiemss request) {
+		return ResponseEntity
+				.ok(simulationCiemssServiceProxy.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
+	}
+
 	@PostMapping("ciemss/ensemble-simulate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(

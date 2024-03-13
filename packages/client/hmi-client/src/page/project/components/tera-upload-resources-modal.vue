@@ -85,7 +85,7 @@ import Button from 'primevue/button';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import { useProjects } from '@/composables/project';
-import type { DocumentAsset, Dataset } from '@/types/Types';
+import type { Dataset, DocumentAsset } from '@/types/Types';
 import { AssetType, ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
@@ -98,8 +98,8 @@ import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.v
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
-import { addNewModelToProject, validateAMRFile, createModel } from '@/services/model';
-import { RelationshipType, createProvenance } from '@/services/provenance';
+import { createModel, processAndAddModelToProject, validateAMRFile } from '@/services/model';
+import { createProvenance, RelationshipType } from '@/services/provenance';
 import { modelCard } from '@/services/goLLM';
 
 defineProps<{
@@ -204,7 +204,7 @@ async function processModel(file: File) {
 	// Upload file as an artifact, create an empty model, and link them
 	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
 	if (!artifact) return { id: '', assetType: '' };
-	const newModelId = await addNewModelToProject(file.name.replace(/\.[^/.]+$/, ''));
+	const newModelId = await processAndAddModelToProject(artifact);
 	await createProvenance({
 		relation_type: RelationshipType.EXTRACTED_FROM,
 		left: newModelId ?? '',

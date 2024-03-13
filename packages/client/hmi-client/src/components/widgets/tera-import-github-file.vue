@@ -200,6 +200,7 @@ import { AssetType, FileCategory } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
+import '@/ace-config';
 import Checkbox from 'primevue/checkbox';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';

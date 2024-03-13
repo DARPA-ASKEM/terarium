@@ -1,11 +1,21 @@
 <template>
 	<main>
-		{{ selectedRunId }}
 		<tera-simulate-chart
-			v-if="hasData"
+			v-if="selectedRunId && runResults[selectedRunId]"
 			:run-results="runResults[selectedRunId]"
-			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: ['S_state'] }"
+			:chartConfig="{
+				selectedRun: selectedRunId,
+				selectedVariable: props.node.state.chartConfigs[0]
+			}"
+			:size="{ width: 180, height: 120 }"
 			has-mean-line
+		/>
+
+		<tera-progress-spinner
+			v-if="inProgressSimulationId"
+			:font-size="2"
+			is-centered
+			style="height: 100%"
 		/>
 
 		<Button
@@ -22,37 +32,109 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
-import { RunResults } from '@/types/SimulateConfig';
-import { getRunResultCiemss } from '@/services/models/simulation-service';
-import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
+import { Poller, PollerState } from '@/api/api';
+import { logger } from '@/utils/logger';
+
+import type { WorkflowNode } from '@/types/workflow';
+import type { RunResults } from '@/types/SimulateConfig';
+import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const runResults = ref<{ [runId: string]: RunResults }>({});
 
-const selectedOutputId = ref<string>(props.node.active as string);
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
-
+const selectedRunId = ref<string>();
+const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 
-const hasData = ref(false);
+const poller = new Poller();
+const pollResult = async (runId: string) => {
+	selectedRunId.value = undefined;
+
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => pollAction(runId));
+	const pollerResults = await poller.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		return pollerResults;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`Simulation: ${runId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+		throw Error('Failed Runs');
+	}
+	return pollerResults;
+};
+
+const addChart = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.chartConfigs.push([]);
+
+	emit('update-state', state);
+};
+
+const processResult = (runId: string) => {
+	const state = _.cloneDeep(props.node.state);
+	if (state.chartConfigs.length === 0) {
+		addChart();
+	}
+
+	emit('append-output', {
+		type: SimulateCiemssOperation.outputs[0].type,
+		label: `Output - ${props.node.outputs.length + 1}`,
+		value: runId,
+		state: {
+			currentTimespan: state.currentTimespan,
+			numSamples: state.numSamples,
+			method: state.method,
+			inProgressSimulationId: state.inProgressSimulationId
+		},
+		isSelected: false
+	});
+};
 
 watch(
-	() => selectedRunId.value,
+	() => props.node.state.inProgressSimulationId,
+	async (id) => {
+		if (!id || id === '') return;
+
+		const response = await pollResult(id);
+		if (response.state === PollerState.Done) {
+			processResult(id);
+		}
+
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressSimulationId = '';
+		emit('update-state', state);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
 	async () => {
+		const active = props.node.active;
+		if (!active) return;
+
+		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
+		if (!selectedRunId.value) return;
+
 		const output = await getRunResultCiemss(selectedRunId.value);
 		runResults.value[selectedRunId.value] = output.runResults;
-		hasData.value = true;
 	},
 	{ immediate: true }
 );

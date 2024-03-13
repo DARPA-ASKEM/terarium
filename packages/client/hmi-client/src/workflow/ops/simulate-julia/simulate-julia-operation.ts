@@ -7,7 +7,9 @@ export interface SimulateJuliaOperationState {
 
 	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
-	simulationsInProgress: string[];
+
+	// In progress
+	inProgressSimulationId: string;
 }
 
 export const SimulateJuliaOperation: Operation = {
@@ -22,7 +24,7 @@ export const SimulateJuliaOperation: Operation = {
 		const init: SimulateJuliaOperationState = {
 			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 },
-			simulationsInProgress: []
+			inProgressSimulationId: ''
 		};
 		return init;
 	},

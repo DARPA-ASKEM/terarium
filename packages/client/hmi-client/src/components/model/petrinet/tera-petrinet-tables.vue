@@ -225,10 +225,10 @@ import {
 } from '@/model-representation/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
 import {
-	searchCuriesEntities,
-	getNameOfCurieCached,
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
+	getNameOfCurieCached,
+	searchCuriesEntities,
 	parseCurie
 } from '@/services/concept';
 import DataTable from 'primevue/datatable';
@@ -253,13 +253,13 @@ interface ModelTableTypes {
 
 const isRowEditable = ref<string | null>();
 const transientTableValue = ref<ModelTableTypes | null>(null);
-const nameOfCurieCache = ref(new Map<string, string>());
 
-const curies = ref<DKG[]>([]);
 const conceptSearchTerm = ref({
 	curie: '',
 	name: ''
 });
+const curies = ref<DKG[]>([]);
+const nameOfCurieCache = ref(new Map<string, string>());
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);

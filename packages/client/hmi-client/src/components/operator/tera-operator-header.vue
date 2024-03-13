@@ -21,7 +21,8 @@ const emit = defineEmits([
 	'remove-operator',
 	'bring-to-front',
 	'open-in-new-window',
-	'duplicate-branch'
+	'duplicate-branch',
+	'show-annotation-editor'
 ]);
 
 const props = defineProps({
@@ -53,6 +54,11 @@ const toggleMenu = (event) => {
 const options = ref([
 	{ icon: 'pi pi-clone', label: 'Duplicate', command: () => emit('duplicate-branch') },
 	{
+		icon: 'pi pi-pencil',
+		label: 'Add a note',
+		command: () => emit('show-annotation-editor')
+	},
+	{
 		icon: 'pi pi-external-link',
 		label: 'Open in new window',
 		command: () => emit('open-in-new-window')
@@ -80,7 +86,8 @@ header {
 .header-label {
 	font-size: var(--font-caption);
 }
-.warning {
+.warning,
+.invalid {
 	background-color: var(--surface-warning);
 }
 
@@ -94,7 +101,8 @@ header {
 	color: var(--text-color-disabled);
 }
 
-.focus {
+/* FIXME: Should consider making the color darker programmatically instead of doing it by a case by case basis*/
+.default.focus {
 	background-color: var(--surface-highlight-hover);
 }
 

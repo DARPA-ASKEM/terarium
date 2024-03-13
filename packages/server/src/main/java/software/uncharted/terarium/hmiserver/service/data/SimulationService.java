@@ -10,11 +10,14 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service class for handling simulations.  Note that this does not extend TerariumAssetService, as Simulations
@@ -117,34 +120,17 @@ public class SimulationService {
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public Dataset copySimulationResultToDataset(final Simulation simulation) {
+	public void copySimulationResultToDataset(final Simulation simulation, final Dataset dataset) {
 		final UUID simId = simulation.getId();
-		final String simName = simulation.getName();
-
-		final Dataset dataset = new Dataset();
-		dataset.setName(simName + " Result Dataset");
-		dataset.setDescription(simulation.getDescription());
-		dataset.setMetadata(Map.of("simulationId", simId));
-		dataset.setFileNames(simulation.getResultFiles());
-		dataset.setDataSourceDate(simulation.getCompletedTime());
-		dataset.setColumns(new ArrayList<>());
-
-		// Attach the user to the dataset
-		if (simulation.getUserId() != null) {
-			dataset.setUserId(simulation.getUserId());
-		}
-
 		if (simulation.getResultFiles() != null) {
 			for (final String resultFile : simulation.getResultFiles()) {
-				final String filename = s3ClientService.getS3Service().parseFilename(resultFile);
+				final String filename = S3Service.parseFilename(resultFile);
 				final String srcPath = getResultsPath(simId, filename);
 				final String destPath = getDatasetPath(dataset.getId(), filename);
-
 				s3ClientService.getS3Service().copyObject(config.getFileStorageS3BucketName(), srcPath,
 						config.getFileStorageS3BucketName(), destPath);
+
 			}
 		}
-
-		return dataset;
 	}
 }

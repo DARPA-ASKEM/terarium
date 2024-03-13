@@ -42,6 +42,11 @@ public class Project extends TerariumAsset implements Serializable {
 	private String userName;
 
 	@TSOptional
+	@Transient
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private List<String> authors;
+
+	@TSOptional
 	@Schema(defaultValue = "My Project Description")
 	private String description;
 

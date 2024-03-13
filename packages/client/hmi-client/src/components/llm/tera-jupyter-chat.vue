@@ -96,7 +96,7 @@ onMounted(async () => {
 });
 
 const queryString = ref('');
-const defaultPreview = ref('df');
+const defaultPreview = ref('d1');
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {

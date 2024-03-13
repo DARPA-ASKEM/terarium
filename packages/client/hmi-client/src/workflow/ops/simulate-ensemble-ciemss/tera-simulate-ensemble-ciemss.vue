@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="Tabs.Wizard">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<AccordionTab header="Model Weights">
@@ -157,18 +163,15 @@ import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-import { Poller, PollerState } from '@/api/api';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 
 import {
 	getRunResultCiemss,
-	makeEnsembleCiemssSimulation,
-	simulationPollAction
+	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { logger } from '@/utils/logger';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type {
@@ -176,14 +179,14 @@ import type {
 	EnsembleModelConfigs,
 	EnsembleSimulationCiemssRequest
 } from '@/types/Types';
-import { ProgressState } from '@/types/Types';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
+const emit = defineEmits(['select-output', 'update-state', 'close']);
 
 const dataLabelPlugin = [ChartDataLabels];
 
@@ -201,7 +204,6 @@ const CATEGORYPERCENTAGE = 0.9;
 const BARPERCENTAGE = 0.6;
 const MINBARLENGTH = 1;
 
-const poller = new Poller();
 const showSpinner = ref(false);
 
 const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
@@ -215,13 +217,9 @@ const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
 
-// const showSaveInput = ref(<boolean>false);
-// const saveAsName = ref(<string | null>'');
-
 const customWeights = ref<boolean>(false);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 
 // Preview selection
 const outputs = computed(() => {
@@ -269,7 +267,6 @@ const addMapping = () => {
 
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
-
 	emit('update-state', state);
 };
 
@@ -340,49 +337,9 @@ const runEnsemble = async () => {
 	};
 	const response = await makeEnsembleCiemssSimulation(params);
 
-	// Start polling
-	if (response?.simulationId) {
-		getStatus(response.simulationId);
-	}
-};
-
-const getStatus = async (simulationId: string) => {
-	showSpinner.value = true;
-	if (!simulationId) return;
-
-	const runIds = [simulationId];
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
-	const pollerResults = await poller.start();
-
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		logger.error(`Simulate Ensemble: ${simulationId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		throw Error('Failed Runs');
-	}
-	showSpinner.value = false;
-	updateOutputPorts(simulationId);
-};
-
-const updateOutputPorts = (simulationId: string) => {
-	const portLabel = props.node.inputs[0].label;
-	const state = props.node.state;
-	emit('append-output', {
-		type: 'simulationId',
-		label: `${portLabel} Result`,
-		value: [simulationId],
-		state: {
-			mapping: _.cloneDeep(state.mapping),
-			timeSpan: _.cloneDeep(state.timeSpan),
-			numSamples: state.numSamples
-		},
-		isSelected: false
-	});
+	const state = _.cloneDeep(props.node.state);
+	state.inProgressSimulationId = response.simulationId;
+	emit('update-state', state);
 };
 
 onMounted(async () => {
@@ -423,9 +380,16 @@ onMounted(async () => {
 	if (state.chartConfigs.length === 0) {
 		state.chartConfigs.push({ selectedVariable: [], selectedRun: '' });
 	}
-
 	emit('update-state', state);
 });
+
+watch(
+	() => props.node.state.inProgressSimulationId,
+	(id) => {
+		if (id === '') showSpinner.value = false;
+		else showSpinner.value = true;
+	}
+);
 
 watch(
 	() => props.node.active,
@@ -455,7 +419,6 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.timeSpan = timeSpan.value;
 		state.numSamples = numSamples.value;
-
 		emit('update-state', state);
 	},
 	{ immediate: true }

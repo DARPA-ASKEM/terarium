@@ -22,6 +22,11 @@ public interface SimulationCiemssServiceProxy {
 		@RequestBody JsonNode request
 	);
 
+	@PostMapping("/optimize")
+	ResponseEntity<JobResponse> makeOptimizeJob(
+		@RequestBody JsonNode request
+	);
+
 	@PostMapping("/ensemble-simulate")
 	ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 		@RequestBody JsonNode request

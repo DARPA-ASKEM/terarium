@@ -8,8 +8,8 @@
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
 				>{{ props.title }}
-				<template #action-row>
-					<slot name="header-action-row" />
+				<template #actions>
+					<slot name="header-actions" />
 				</template>
 			</tera-drilldown-header>
 			<tera-columnar-panel>
@@ -81,7 +81,7 @@ const handleTabChange = (event: TabViewChangeEvent) => {
 	background-color: rgba(0, 0, 0, 0.32);
 }
 
-/* There is a performance issue with these large modals. 
+/* There is a performance issue with these large modals.
 When scrolling it takes time to render the content, paticularly heavy content such as the LLM integrations. This will show
 us the main application behind the modal temporarily as content loads when scrolling which is a bit of an eye sore.
 An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather

@@ -1,0 +1,223 @@
+{
+  "scenarios": [
+    {
+      "name": "Scenario 1",
+      "questions": [
+        {
+          "task": "Question 1",
+          "description": "Calibrate models to estimate R0 for each country in each of the four time intervals"
+        },
+        {
+          "task": "Question 2",
+          "description": "Estimate the causal effects of masking alone, the combined effect of masking and social distancing, and the effect of social distancing alone on infections. Include uncertainty in the estimated effects."
+        },
+        {
+          "task": "Question 3 (Optional)",
+          "description": "In each country, what is the maximum value R0  can be over the last time interval (100, 200), to ensure that there are no more than 50 infections at t = 200 days with 90% confidence? Are these different across countries?"
+        },
+        {
+          "task": "Question 4 (Optional)",
+          "description": "Can R0 be changed in one of the three preceding intervals, without changing it in the fourth, to ensure that infections at t = 200 days stay below ¾ of their simulated value at t = 200 with 95% confidence?"
+        }
+      ]
+    },
+    {
+      "name": "Scenario 2",
+      "questions": [
+        {
+          "task": "Question 1a",
+          "description": "Estimate: The (direct) effect of vaccination on the likelihood of becoming infected with Covid"
+        },
+        {
+          "task": "Question 1b",
+          "description": "Estimate: The (indirect) effect of vaccination on the likelihood of becoming infected with Covid"
+        },
+        {
+          "task": "Question 1c",
+          "description": "Estimate: The effect of masking as a mediator on the likelihood of becoming infected with Covid"
+        },
+        {
+          "task": "Question 1d",
+          "description": "Estimate: The causal effects of vaccination on the likelihood of becoming hospitalized, if infected with Covid"
+        },
+        {
+          "task": "Question 2",
+          "description": "The proportion of people who can be vaccinated can change every day. How does this impact the estimated effects above (2.1.x)?"
+        }
+      ]
+    },
+    {
+      "name": "Scenario 3",
+      "questions": [
+        {
+          "task": "Question 1a",
+          "description": "Search and Select Model: Search for and select an appropriate model for this time period and location (United States country level). The model should be able to support decisionmaker questions about masking and social distancing policies, and their impacts on cases, hospitalizations, and deaths"
+        },
+        {
+          "task": "Question 1b",
+          "description": "Please provide information about the literature corpus or git repositories you searched over to find this model."
+        },
+        {
+          "task": "Question 1c",
+          "description": "What are the assumptions, limitations, and strengths of the chosen model?"
+        },
+        {
+          "task": "Question 1d",
+          "description": "Model Comparison: What are the key differences between the chosen model and one other candidate model from the literature or other sources?"
+        },
+        {
+          "task": "Question 1e",
+          "description": "Model Comparison: Consider MechBayes, a well-performing model (according to WIS score for forecasted deaths, for November 2020) submitted to the CDC ForecastHub for this time period. See MechBayes code repository and model specification. What are the key differences between the model chosen in 1a, and MechBayes?"
+        },
+        {
+          "task": "Question 1f",
+          "description": "Given the differences between your chosen model and the ForecastHub model, how well do you expect your model will perform in comparison, for a near-term forecasting task?"
+        },
+        {
+          "task": "Question 1g",
+          "description": "Find Parameters: Find relevant parameter values for the chosen model (relevant to this time period and for the United States at a national level), and fill in the following information about sources and quality"
+        },
+        {
+          "task": "Question 1h",
+          "description": "Model Extraction: Extract the chosen model from the source material. Time the entire process to extract the model and curate the results until you are confident the model represented in the workbench is correct. \n"
+        },
+        {
+          "task": "Question 1i",
+          "description": "Single Model Forecast: Now use the extracted model in the workbench to do a 4-week forecast of cases, hospitalizations, and deaths, from the starting date of November 1st, 2020. "
+        },
+        {
+          "task": "Question 1j",
+          "description": "Ensemble Forecast: Can you improve upon your single-model forecast in 1i, by creating an ensemble model forecast with the chosen model from 1a, MechBayes, and one other model from the literature that you compared against in 1d? "
+        },
+        {
+          "task": "Question 2a",
+          "description": "What is the impact of each policy by itself, on the trajectories for Covid-19 cases, hospitalizations, and deaths, over the next 8 weeks?"
+        },
+        {
+          "task": "Question 2b",
+          "description": "Now assume that you have the flexibility to choose the start dates for these policies. Considering each policy by itself, when is the latest each could be implemented, in order to ensure that hospitalizations never exceed a national threshold of 60k during November and December of 2020?"
+        },
+        {
+          "task": "Question 2c",
+          "description": "Now considering a combination of policies, when is the latest each could be implemented in order to ensure that hospitalizations never exceed a national threshold of 60k during November and December of 2020?"
+        },
+        {
+          "task": "Question 2d",
+          "description": "If there was uncertainty in the results, what is the source, and is the growth of uncertainty over time as expected?"
+        },
+        {
+          "task": "Question 3a",
+          "description": "Model Update: Now update the selected model from Q1 to include vaccinations and be able to support interventions around vaccinations"
+        },
+        {
+          "task": "Question 3b",
+          "description": "Model Comparison: Please explain how the model was updated and how it compares to the original starting model from Q1-2"
+        },
+        {
+          "task": "Question 3c",
+          "description": "Find Parameters: Considering the updated model with additional variables, and new time period, what is the updated parameter table that you will be using?"
+        },
+        {
+          "task": "Question 3d",
+          "description": "Model Checks: Implement common sense checks on the model structure and parameter space to ensure the updated model and parameterization makes physical sense. Explain the checks that were implemented"
+        },
+        {
+          "task": "Question 3e",
+          "description": "Single Model Forecast: Now use the updated model to do a 4-week forecast of cases, hospitalizations, and deaths, from the new date, July 15th, 2021. How do the results compare with forecasts from MechBayes for the same 4-week time period?"
+        },
+        {
+          "task": "Question 4",
+          "description": "Still considering the same timepoint as Q3, the decisionmaker you’re supporting is exploring targeted vaccination policies to boost vaccination rates for specific subpopulations. To support these questions, you decide to further extend the model by considering several demographic subgroups, as well as vaccination dosage"
+        }
+      ]
+    },
+    {
+      "name": "Scenario 4",
+      "questions": [
+        {
+          "task": "Question 1",
+          "description": "Consider a simple system of 4 microbial species with a variety of competitive and mutualistic interactions amongst each other. Given a set of initial microbial populations, a set of inferred growth rates for each species, and an interaction matrix representing the negative (competitive or inhibitory) or positive (mutualistic or beneficial) effects that the presence of one species has on another in the microbial ecosystem… construct a model of the system utilizing the generalized Lotka-Volterra equation."
+        },
+        {
+          "task": "Question 2",
+          "description": "Simulate the interactions between each species for a 30-day period, with time steps of 1 day. Plot the population size of each species over the 30-day time period"
+        },
+        {
+          "task": "Question 3",
+          "description": "Update the model to reflect a six species model, using the parameter and initial conditions"
+        }
+      ]
+    },
+    {
+      "name": "Scenario 5",
+      "questions": [
+        {
+          "task": "Question 1",
+          "description": "Ingest the file “IndiaNonSubscriptedPulsed.mdl”, which contains a system dynamics model that was used to assess the effectiveness of testing, isolation, and quarantine on the potential trajectory of COVID-19 in early 2020"
+        },
+        {
+          "task": "Question 2",
+          "description": "Inspect the flow diagram to ensure that it is consistent with the model as implemented in its original environment (the modeling platform Vensim). The key stocks, and flows between them, should match the diagram in Figure 2"
+        },
+        {
+          "task": "Question 3",
+          "description": "Simulate the model using the base configurations in the .mdl file. The simulation output for the base case should indicate a peak around day 250, at 5 million cases/day."
+        },
+        {
+          "task": "Question 4",
+          "description": "Demonstrate that you can adjust rates in the simulation configuration, such as “default delay disease diagnosis” and “testing impact on delay”, which affect the flow into hospital demand."
+        },
+        {
+          "task": "Question 5",
+          "description": "In their original documentation, the developers of this model expressed an interest in introducing uncertainty into model components related to testing. The accuracy of tests in the base configuration of the model is assumed to be absolute. Demonstrate that you can introduce uncertainty into (1) the accuracy of test results and (2) the amount of time it takes to receive a test result. Show that you can set multiple model configurations to fully explore the uncertainty range in the relevant parameters, and show how simulating across this range affects the peak day and peak caseload."
+        },
+        {
+          "task": "Question 6",
+          "description": "Demonstrate that you can modify the model structure by adding an additional testing modality, rapid antigen tests. The base configuration assumes only one type of testing with one set of rates, and adding antigen-based testing will allow a modeler to explore the proportion of fast, but less reliable, antigen-based tests, compared with slower but more reliable nucleic acid amplification tests. Include the uncertainty added in step 5 above for both test types."
+        },
+        {
+          "task": "Question 7",
+          "description": "Consider extending the model to account for other structural features not included in the original model, such as vaccination and the potential for reinfection. Incorporate uncertainty in the new features using evidence drawn from literature review in the workbench"
+        }
+
+      ]
+    },
+    {
+      "name": "Scenario 6",
+      "questions": [
+        {
+          "task": "Question 1",
+          "description": "Using the relevant values in Table 1 (not all will be applicable), simulate the Chen Model for a time period of 10 hours, and plot the trajectories of all mRNA and protein types. Comment on the nature of the trajectories and biological realism of the outcomes. Do the trajectories make sense given the model?"
+        },
+        {
+          "task": "Question 2a",
+          "description": "Simulate the full Hunt Model. How do the outcomes compare with Q1?"
+        },
+        {
+          "task": "Question 2b",
+          "description": "Now consider a Special Case 1, where we assume bi, ≫ p2 and di ≫ pi  (i.e., the stabilization of mRNA, and feedback from proteins to translation, are negligible). What does the set of differential equations reduce to? Repeat the simulation for this Case 1 Hunt Model. How do the outcomes compare with Q2a (the Full Hunt Model)? Do the results make sense given the assumptions made?"
+        },
+        {
+          "task": "Question 2c",
+          "description": "Consider Special Case 2, where we assume ai, di ≫ pi (i.e., assume the feedback from proteins to transcription and translation, is negligible). What does the set of differential equations reduce to? Simulate this Case 2 Hunt Model. How do the outcomes compare with Q2a,b? Do the results make sense given the assumptions made?"
+        },
+        {
+          "task": "Question 2d",
+          "description": "Consider Special Case 3, where we assume ai, ≫pi and bi≫p2 (i.e., assume the feedback from proteins to transcription and stabilization of mRNA, are negligible). What does the set of differential equations reduce to? Simulate this Case 3 Hunt Model. How do the outcomes compare with Q2a-c? Do the results make sense given the assumptions made?"
+        },
+        {
+          "task": "Question 2e",
+          "description": "Consider Special Case 4, where we assume di, ≫pi  (i.e., assume the feedback from proteins to translation is negligible). What does the set of differential equations reduce to? Simulate this Case 4 Hunt Model, and if needed, extend the simulation length to ensure you can determine whether the system reaches an equilibrium state or not. How do the outcomes compare with Q2a-d? Do the results make sense given the assumptions made?"
+        },
+        {
+          "task": "Question 3",
+          "description": "For Questions 1-2, some of the simulation outcomes should include exponential growth trajectories. For those cases, explore changes in Table 1 parameters that will result in changing the outputs from exponential growth trajectories to more bounded behavior. What is the biological interpretation of these parameter changes? (Note that there are multiple sets of parameters that will fulfill this criteria, and there is no single correct answer)."
+        },
+        {
+          "task": "Question 4",
+          "description": "(Optional Challenge). For one or more of the systems considered in Q1-2, do a formal stability analysis (i.e., determine equilibrium points, their stability, and their biological interpretation)."
+        }
+      ]
+    }
+  ]
+}
