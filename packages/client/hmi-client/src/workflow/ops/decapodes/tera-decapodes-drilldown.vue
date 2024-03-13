@@ -72,12 +72,14 @@ const emit = defineEmits(['close', 'update-state']);
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
 
-const modelId = computed(() => props.node?.inputs?.[0]?.value?.[0]);
+const modelId = computed(() => props.node.inputs[0]?.value?.[0]);
 const notebookResponse = ref();
 const sampleAgentQuestions = ['Convert the model to equations please'];
-const contextLanguage = ref<string>('julia-1.10');
+const contextLanguage = 'julia-1.10';
 const isRunningCode = ref<boolean>(false);
 const selectedOutputId = ref<string>(props.node.active ?? '');
+const defaultCodeText =
+	'# This environment allows you to work with a decapode model that was passed in.';
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
 		return [
@@ -93,9 +95,7 @@ const outputs = computed(() => {
 const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
-const codeText = ref(
-	'# This environment contains the variable "model_config" to be read and updated'
-);
+const codeText = ref();
 
 const buildJupyterContext = () => ({
 	context: 'decapodes',
@@ -165,7 +165,7 @@ const inputChangeHandler = async () => {
 
 	if (getModelType(model) !== AMRSchemaNames.DECAPODES) return;
 
-	codeText.value = props.node.state.codeHistory?.[0]?.code ?? '';
+	codeText.value = props.node.state.codeHistory?.[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
