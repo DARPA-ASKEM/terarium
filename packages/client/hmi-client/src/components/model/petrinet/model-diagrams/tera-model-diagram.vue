@@ -134,8 +134,8 @@ const resetZoom = async () => {
 async function renderGraph() {
 	// Convert petri net into a graph with raw input data
 	// const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
-	const templates = collapseTemplates(mmt.value);
-	const graphData = converToIGraph(templates);
+	const { templatesSummary } = collapseTemplates(mmt.value);
+	const graphData = converToIGraph(templatesSummary);
 
 	// Render graph
 	if (renderer) {
@@ -161,8 +161,8 @@ watch(
 
 		// FIXME: inefficient, do not constant call API in watch
 		mmt.value = (await getMMT(props.model)).mmt;
-		const templates = collapseTemplates(mmt.value);
-		const graphData = converToIGraph(templates);
+		const { templatesSummary } = collapseTemplates(mmt.value);
+		const graphData = converToIGraph(templatesSummary);
 
 		// Create renderer
 		renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement);

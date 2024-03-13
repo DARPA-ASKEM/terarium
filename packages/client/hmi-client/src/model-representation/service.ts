@@ -3,15 +3,20 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { isStratifiedModel, getContextKeys } from './mira/mira';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
+import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
+import { extractTemplateMatrix } from './mira/mira-util';
 
 export const getModelRenderer = (
 	miraModel: MiraModel,
 	graphElement: HTMLDivElement
 ): PetrinetRenderer | NestedPetrinetRenderer => {
+	console.group('mmt info');
+	console.log('templates: ', miraModel.templates.length);
+	console.log('parameters: ', Object.keys(miraModel.parameters).length);
 	if (isStratifiedModel(miraModel)) {
 		console.log('stratified model detected');
+		console.groupEnd();
 
 		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
@@ -30,9 +35,21 @@ export const getModelRenderer = (
 				processedSet.add(conceptName);
 			});
 		});
-
 		const dims = getContextKeys(miraModel);
 		dims.unshift('base');
+
+		const { matrixMap } = collapseTemplates(miraModel);
+		const transitionMatrixMap = {};
+		matrixMap.forEach((value, key) => {
+			// console.log('>>>>>>', key, value);
+			// console.group(key);
+			// console.log(value.length);
+			// console.log(value.map(d => d.controller?.name));
+			// console.log(value.map(d => d.subject?.name));
+			// console.log(extractTemplateMatrix(value));
+			// console.groupEnd();
+			transitionMatrixMap[key] = extractTemplateMatrix(value).matrix;
+		});
 
 		const nestedMap = extractNestedStratas(conceptData, dims);
 		return new NestedPetrinetRenderer({
@@ -41,7 +58,8 @@ export const getModelRenderer = (
 			useStableZoomPan: true,
 			runLayout: runDagreLayout,
 			dims,
-			nestedMap
+			nestedMap,
+			transitionMatrices: transitionMatrixMap
 		});
 	}
 

@@ -20,7 +20,14 @@ def main():
         mmt = model_from_json(amr)
 
         template_params = {}
+
+        cnt = 0
         for tm in mmt.templates:
+            # Sanitize
+            cnt = cnt + 1
+            if tm.name == None or tm.name == "":
+                tm.name = "generated-" + str(cnt)
+
             params = tm.get_parameter_names()
             params = list(params)
 

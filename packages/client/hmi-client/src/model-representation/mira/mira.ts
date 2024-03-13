@@ -3,7 +3,6 @@ import { IGraph } from '@graph-scaffolder/types';
 import {
 	extractSubjectControllersMatrix,
 	extractSubjectOutcomeMatrix,
-	extractTemplateMatrix,
 	removeModifiers
 } from './mira-util';
 import type { MiraModel, MiraTemplate, MiraTemplateParams, TemplateSummary } from './mira-common';
@@ -26,32 +25,44 @@ export const emptyMiraModel = () => {
 export const getContextKeys = (miraModel: MiraModel) => {
 	const modifierKeys = new Set<string>();
 
+	// Heuristics to avoid picking up wrong stuff
+	// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
+	// const modifiers = rawModifiers.filter((v) => {
+	// 	if (v.startsWith('ncit:')) return false;
+	// 	return true;
+	// });
+	const addWithGuard = (k: string, v: string) => {
+		if (v.startsWith('ncit:')) return;
+		modifierKeys.add(k);
+	};
+
 	miraModel.templates.forEach((t) => {
 		if (t.subject?.context) {
-			Object.keys(t.subject.context).forEach((key) => modifierKeys.add(key));
+			Object.entries(t.subject.context).forEach(([k, v]) => {
+				addWithGuard(k, v as string);
+			});
 		}
 		if (t.outcome?.context) {
-			Object.keys(t.outcome.context).forEach((key) => modifierKeys.add(key));
+			Object.entries(t.outcome.context).forEach(([k, v]) => {
+				addWithGuard(k, v as string);
+			});
 		}
 		if (t.controller?.context) {
-			Object.keys(t.controller.context).forEach((key) => modifierKeys.add(key));
+			Object.entries(t.controller.context).forEach(([k, v]) => {
+				addWithGuard(k, v as string);
+			});
 		}
 		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((miraConcept) => {
-				Object.keys(miraConcept.context).forEach((key) => modifierKeys.add(key));
+				// Object.keys(miraConcept.context).forEach((key) => modifierKeys.add(key));
+				Object.entries(miraConcept.context).forEach(([k, v]) => {
+					addWithGuard(k, v as string);
+				});
 			});
 		}
 	});
 
-	const rawModifiers = [...modifierKeys];
-
-	// Heuristics to avoid picking up wrong stuff
-	// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
-	const modifiers = rawModifiers.filter((v) => {
-		if (v.startsWith('ncit:')) return false;
-		return true;
-	});
-
+	const modifiers = [...modifierKeys];
 	return modifiers;
 };
 
@@ -222,13 +233,10 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		matrixMap.set(name, value);
 	});
 
-	tempMatrixMap.forEach((value) => {
-		console.log('');
-		console.log(extractTemplateMatrix(value));
-		console.log('');
-	});
-
-	return uniqueTemplates;
+	return {
+		templatesSummary: uniqueTemplates,
+		matrixMap
+	};
 };
 
 /**
@@ -296,7 +304,7 @@ export const createParameterMatrix = (
 	};
 };
 
-const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+// const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 
 export const converToIGraph = (templates: TemplateSummary[]) => {
 	const graph: IGraph<any, any> = {
@@ -332,7 +340,7 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 	// templates
 	templates.forEach((t) => {
 		graph.nodes.push({
-			id: genKey(t),
+			id: t.name,
 			label: '',
 			x: 0,
 			y: 0,
@@ -344,25 +352,19 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 	});
 
 	// Edges
-	// FIXME: controller edges
 	templates.forEach((t) => {
-		const key = genKey(t);
-
-		// FIXME: production and degradation
-
 		if (t.subject !== '') {
 			graph.edges.push({
 				source: t.subject,
-				target: key,
+				target: t.name,
 				points: [],
 				data: {}
 			});
 
-			// console.log(t.controllers);
 			t.controllers.forEach((controllerName) => {
 				graph.edges.push({
 					source: controllerName,
-					target: key,
+					target: t.name,
 					points: [],
 					data: { isController: true }
 				});
@@ -370,16 +372,15 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 		}
 		if (t.outcome !== '') {
 			graph.edges.push({
-				source: key,
+				source: t.name,
 				target: t.outcome,
 				points: [],
 				data: {}
 			});
 
-			// console.log(t.controllers);
 			t.controllers.forEach((controllerName) => {
 				graph.edges.push({
-					source: key,
+					source: t.name,
 					target: controllerName,
 					points: [],
 					data: { isController: true }
