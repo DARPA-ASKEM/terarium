@@ -107,3 +107,20 @@ export const extractSubjectControllersMatrix = (
 	}
 	return { rowNames, colNames, matrix };
 };
+
+export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
+	// FIXME: subject, outcome may not exist
+	const rowNames = extractConceptNames(templates, 'subject');
+	const colNames = extractConceptNames(templates, 'outcome');
+	const matrix = emptyMatrix(rowNames, colNames);
+
+	for (let i = 0; i < templates.length; i++) {
+		const template = templates[i];
+		const rowIdx = rowNames.indexOf(template.subject.name);
+		const colIdx = colNames.indexOf(template.outcome.name);
+
+		matrix[rowIdx][colIdx].value = template.rate_law;
+		matrix[rowIdx][colIdx].id = template.name;
+	}
+	return { rowNames, colNames, matrix };
+};

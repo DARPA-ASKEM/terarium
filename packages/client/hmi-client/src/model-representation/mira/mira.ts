@@ -3,6 +3,7 @@ import { IGraph } from '@graph-scaffolder/types';
 import {
 	extractSubjectControllersMatrix,
 	extractSubjectOutcomeMatrix,
+	extractTemplateMatrix,
 	removeModifiers
 } from './mira-util';
 import type { MiraModel, MiraTemplate, MiraTemplateParams, TemplateSummary } from './mira-common';
@@ -220,6 +221,13 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		const name = `template-${check.get(key)}`;
 		matrixMap.set(name, value);
 	});
+
+	tempMatrixMap.forEach((value) => {
+		console.log('');
+		console.log(extractTemplateMatrix(value));
+		console.log('');
+	});
+
 	return uniqueTemplates;
 };
 
@@ -306,7 +314,7 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 	// const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
 	// const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
 
-	// States
+	// concepts
 	nodeNames.forEach((nodeName) => {
 		if (nodeName === '') return;
 		graph.nodes.push({
@@ -321,7 +329,7 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 		});
 	});
 
-	// Transitions
+	// templates
 	templates.forEach((t) => {
 		graph.nodes.push({
 			id: genKey(t),
