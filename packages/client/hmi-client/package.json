@@ -47,7 +47,7 @@
 		"dagre": "0.8.5",
 		"eslint-import-resolver-typescript": "3.6.1",
 		"event-source-polyfill": "1.0.31",
-		"extended-eventsource": "1.4.5",
+		"extended-eventsource": "1.4.6",
 		"feather-icons": "4.29.1",
 		"graph-scaffolder": "*",
 		"katex": "0.16.9",

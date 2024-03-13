@@ -53,7 +53,13 @@ watch(isAdobePdfApiReady, () => {
 					},
 					metaData: { fileName: props.title }
 				},
-				{ embedMode: 'IN_LINE', showPrintPDF: true, showDownloadPDF: true }
+				{
+					embedMode: 'FULL_WINDOW',
+					showPrintPDF: true,
+					showDownloadPDF: true,
+					showAnnotationTools: false,
+					viewMode: 'FIT_WIDTH'
+				}
 			);
 		} else if (props.filePromise) {
 			adobeDCView.value.previewFile(
@@ -63,7 +69,13 @@ watch(isAdobePdfApiReady, () => {
 					},
 					metaData: { fileName: props.title }
 				},
-				{ embedMode: 'IN_LINE', showPrintPDF: true, showDownloadPDF: true }
+				{
+					embedMode: 'FULL_WINDOW',
+					showPrintPDF: true,
+					showDownloadPDF: true,
+					showAnnotationTools: false,
+					viewMode: 'FIT_WIDTH'
+				}
 			);
 		}
 	}
