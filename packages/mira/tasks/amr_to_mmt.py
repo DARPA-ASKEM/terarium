@@ -21,12 +21,12 @@ def main():
 
         template_params = {}
 
-        cnt = 0
+        count = 0
         for tm in mmt.templates:
             # Sanitize
-            cnt = cnt + 1
+            count = count + 1
             if tm.name == None or tm.name == "":
-                tm.name = "generated-" + str(cnt)
+                tm.name = "generated-" + str(count)
 
             params = tm.get_parameter_names()
             params = list(params)
