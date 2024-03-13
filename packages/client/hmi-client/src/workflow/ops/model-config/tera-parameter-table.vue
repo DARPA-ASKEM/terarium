@@ -28,9 +28,14 @@
 
 		<Column header="Description">
 			<template #body="slotProps">
-				<span class="truncate-text" :title="slotProps.data.yourFieldName">
+				<span
+					v-if="slotProps.data.value.description"
+					class="truncate-text"
+					:title="slotProps.data.yourFieldName"
+				>
 					{{ slotProps.data.value.description }}</span
 				>
+				<template v-else>--</template>
 			</template>
 		</Column>
 
@@ -66,8 +71,8 @@
 				<InputText
 					size="small"
 					class="w-full"
-					v-model.lazy="slotProps.data.value.unit"
-					@update:model-value="emit('update-value', [slotProps.data.value])"
+					:model-value="slotProps.data.unit"
+					@update:model-value="updateUnit(slotProps.data.value, $event)"
 				/>
 			</template>
 		</Column>
@@ -339,6 +344,7 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 					id: v,
 					name: v,
 					type: paramType,
+					unit: param.unit?.expression,
 					value: param,
 					source: sourceValue,
 					visibility: false,
@@ -369,6 +375,7 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				id: init,
 				name: init,
 				type: paramType,
+				unit: param.unit?.expression,
 				value: param,
 				source: sourceValue,
 				visibility: false,
@@ -418,6 +425,15 @@ const updateSource = (id: string, value: string) => {
 	const clonedConfig = cloneDeep(props.modelConfiguration);
 	clonedConfig.configuration.metadata.sources[id] = value;
 	emit('update-configuration', clonedConfig);
+};
+
+const updateUnit = (param: ModelParameter, value: string) => {
+	const clonedParam = cloneDeep(param);
+	if (!clonedParam.unit) {
+		clonedParam.unit = { expression: '', expression_mathml: '' };
+	}
+	clonedParam.unit.expression = value;
+	emit('update-value', [clonedParam]);
 };
 
 const validateTimeSeries = (values: string) => {
