@@ -1,12 +1,14 @@
 package software.uncharted.terarium.hmiserver.service.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataPreviewTask;
+import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataResponse;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataPreviewTaskRepository;
 
@@ -17,17 +19,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClimateDataService {
 
+    private final ObjectMapper objectMapper;
     private final ClimateDataProxy climateDataProxy;
     private final ClimateDataPreviewTaskRepository climateDataPreviewTaskRepository;
 
     @Scheduled(fixedRate = 1000 * 60 * 2L) // every 2 minutes
     public void checkJobStatusTask() {
         List<ClimateDataPreviewTask> previewTasks = climateDataPreviewTaskRepository.findAll();
-        log.info("TODO: Get jobs from database");
 
         for (ClimateDataPreviewTask previewTask : previewTasks) {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getClimateDataId());
-            log.info("TODO: if job complete write response to database as a data asset, then delete task");
+            ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
+            if (climateDataResponse.getResult().getJob_result() != null) {
+                // TODO: store result
+                climateDataPreviewTaskRepository.delete(previewTask);
+            }
+            if (climateDataResponse.getResult().getJob_error() != null) {
+                // TODO: store error
+                climateDataPreviewTaskRepository.delete(previewTask);
+            }
         }
     }
 
