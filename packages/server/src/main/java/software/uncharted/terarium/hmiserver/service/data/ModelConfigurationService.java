@@ -10,8 +10,8 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 
 public class ModelConfigurationService extends TerariumAssetService<ModelConfiguration> {
 
-	public ModelConfigurationService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService) {
-		super(elasticConfig, config, elasticService, ModelConfiguration.class);
+	public ModelConfigurationService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService) {
+		super(elasticConfig, config, elasticService, projectAssetService, ModelConfiguration.class);
 	}
 
 	@Override
