@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.climateData;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 
@@ -11,10 +12,15 @@ public class ClimateDataResponse {
 
     @Data
     public static class Result {
-        private String created_at;
-        private String enqueued_at;
-        private String started_at;
-        private JsonNode job_result;
-        private JsonNode job_error;
+        @JsonProperty("created_at")
+        private String createdAt;
+        @JsonProperty("enqueued_at")
+        private String enqueuedAt;
+        @JsonProperty("started_at")
+        private String startedAt;
+        @JsonProperty("job_result")
+        private JsonNode jobResult;
+        @JsonProperty("job_error")
+        private JsonNode jobError;
     }
 }
