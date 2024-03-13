@@ -29,29 +29,16 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
-import { isEmpty } from 'lodash';
 import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import Dropdown from 'primevue/dropdown';
 
-const props = defineProps<{
+defineProps<{
 	options: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 	output: WorkflowOutput<any>['id'];
 	isLoading?: boolean;
 }>();
 
 const emit = defineEmits(['update:selection']);
-
-// When a new output is added to the list choose it by default
-watch(
-	() => props.options,
-	(newOptions) => {
-		if (!isEmpty(newOptions)) {
-			const { items } = newOptions[0];
-			emit('update:selection', items[items.length - 1].id);
-		}
-	}
-);
 </script>
 
 <style scoped>

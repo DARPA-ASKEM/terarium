@@ -367,6 +367,8 @@ function appendOutput(
 	node.outputs.push(outputPort);
 	node.active = uuid;
 
+	selectOutput(node, uuid);
+
 	workflowDirty = true;
 }
 
