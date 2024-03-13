@@ -134,13 +134,13 @@ const runFromCode = () => {
 			console.log('error', data.content.evalue);
 			logger.error(data.content.evalue);
 			isRunningCode.value = false;
+		})
+		// FIXME: There isnt really a proper response we receive for llm output for decapodes
+		.register('decapodes_preview', (data) => {
+			console.log('decapodes_preview', data.content);
+			notebookResponse.value = data.content['application/json'];
+			isRunningCode.value = false;
 		});
-	// FIXME: There isnt really a proper response we receive for llm output for decapodes
-	// .register('decapodes_preview', (data) => {
-	// 	console.log('decapodes_preview', data.content);
-	// 	notebookResponse.value = data.content['application/json'];
-	// 	isRunningCode.value = false;
-	// });
 };
 
 const saveCodeToState = (code: string) => {
@@ -176,10 +176,6 @@ const inputChangeHandler = async () => {
 				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
-		}
-
-		if (codeText.value && codeText.value.length > 0) {
-			runFromCode();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
