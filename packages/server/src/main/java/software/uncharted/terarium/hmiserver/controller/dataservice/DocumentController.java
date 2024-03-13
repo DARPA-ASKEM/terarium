@@ -446,7 +446,7 @@ public class DocumentController {
 			documentAsset = uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
 
 			// add asset to project
-			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset.getId());
+			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(documentAsset);
 
