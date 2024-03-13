@@ -23,10 +23,10 @@ public class OptimizedIntervention {
 	private List<Integer> paramValues;
 	@TSOptional
 	@JsonAlias("start_time")
-	private List<Integer> startTimes;
+	private List<Integer> startTime;
 
 	@Override
 	public String toString() {
-		return " { Parameter Names: " + this.paramNames + " start time: " + startTimes.toString() + " } ";
+		return " { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } ";
 	}
 }

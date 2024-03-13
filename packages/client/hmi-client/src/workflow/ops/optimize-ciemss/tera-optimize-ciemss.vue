@@ -165,12 +165,16 @@
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
-						<!-- <tera-optimize-chart
-						  :forecast-run-id="knobs.forecastRunId"
-							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: knobs.targetVariables }"
+						<tera-optimize-chart
+							:run-results="simulationRunResults[knobs.forecastRunId]"
+							:risk-results="riskResults[knobs.forecastRunId]"
+							:chartConfig="{
+								selectedRun: knobs.forecastRunId,
+								selectedVariable: knobs.targetVariables
+							}"
 							:risk-tolerance="knobs.riskTolerance"
 							:target-variables="knobs.targetVariables"
-						/> -->
+						/>
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
@@ -222,7 +226,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
-// import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
+import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -347,6 +351,7 @@ const outputViewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
+const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 
@@ -419,12 +424,12 @@ const runOptimize = async () => {
 	}
 
 	const paramNames: string[] = [];
-	const startTimes: number[] = [];
+	const startTime: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
 		paramNames.push(ele.parameter);
-		startTimes.push(ele.startTime);
+		startTime.push(ele.startTime);
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);
 		listBoundsInterventions.push([ele.upperBound]);
@@ -433,7 +438,7 @@ const runOptimize = async () => {
 	const optimizeInterventions: OptimizedIntervention = {
 		selection: 'param_value',
 		paramNames,
-		startTimes
+		startTime
 	};
 
 	const optimizePayload: OptimizeRequestCiemss = {
@@ -584,6 +589,10 @@ const saveModelConfiguration = async () => {
 const setOutputValues = async () => {
 	const output = await getRunResultCiemss(knobs.value.forecastRunId);
 	simulationRunResults.value[knobs.value.forecastRunId] = output.runResults;
+	riskResults.value[knobs.value.forecastRunId] = await getRunResult(
+		knobs.value.forecastRunId,
+		'risk.json'
+	);
 	simulationRawContent.value[knobs.value.forecastRunId] = createCsvAssetFromRunResults(
 		simulationRunResults.value[knobs.value.forecastRunId]
 	);

@@ -825,7 +825,7 @@ export interface OptimizedIntervention {
     selection: string;
     paramNames: string[];
     paramValues?: number[];
-    startTimes?: number[];
+    startTime?: number[];
 }
 
 export interface TimeSpan {
