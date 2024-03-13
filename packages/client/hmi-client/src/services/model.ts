@@ -44,6 +44,16 @@ export async function getBulkModels(modelIDs: string[]) {
 	return result;
 }
 
+// Note: will not work with decapodes
+export async function getMMT(model: Model) {
+	const response = await API.post('/mira/amr-to-mmt', model);
+
+	const miraModel = response?.data?.response;
+	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
+
+	return response?.data?.response ?? null;
+}
+
 /**
  * Get all models
  * @return Array<Model>|null - the list of all models, or null if none returned by API

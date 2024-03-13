@@ -1,9 +1,12 @@
 import { MiraTemplate, MiraMatrix, TemplateSummary } from './mira-common';
 
-export const removeModifiers = (v: string, context: { [key: string]: string }) => {
+export const removeModifiers = (
+	v: string,
+	context: { [key: string]: string },
+	scrubbingKeys: string[]
+) => {
 	let result = v;
-	const contextKeys = Object.keys(context);
-	contextKeys.forEach((key) => {
+	scrubbingKeys.forEach((key) => {
 		result = result.replace(`_${context[key]}`, '');
 	});
 	return result;
@@ -28,6 +31,7 @@ export const extractConceptNames = (templates: MiraTemplate[], key: string) => {
 			}
 		});
 	}
+	names = names.filter((v) => v !== '');
 
 	const uniqueNames = [...new Set(names)];
 	uniqueNames.sort();
@@ -101,6 +105,45 @@ export const extractSubjectControllersMatrix = (
 			matrix[rowIdx][colIdx].value = paramValue;
 			matrix[rowIdx][colIdx].id = paramName;
 		});
+	}
+	return { rowNames, colNames, matrix };
+};
+
+export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
+	const rowNames = extractConceptNames(templates, 'subject');
+	const colNames = extractConceptNames(templates, 'outcome');
+
+	// Not sure how to parse templates with no subejct or no outcomes
+	// and interacts with only controllers and itself, return a matrix
+	// with a single row for now - Mar 13, 2024
+	if (rowNames.length === 0 || colNames.length === 0) {
+		const vector: MiraMatrix = [];
+		vector.push([]);
+		for (let i = 0; i < templates.length; i++) {
+			const template = templates[i];
+			vector[0].push({
+				value: template.rate_law,
+				id: template.name
+			});
+		}
+		return { rowNames, colNames, matrix: vector };
+	}
+
+	const matrix = emptyMatrix(rowNames, colNames);
+	for (let i = 0; i < templates.length; i++) {
+		const template = templates[i];
+		let rowIdx = 0;
+		let colIdx = 0;
+
+		if (template.subject) {
+			rowIdx = rowNames.indexOf(template.subject.name);
+		}
+		if (template.outcome) {
+			colIdx = colNames.indexOf(template.outcome.name);
+		}
+
+		matrix[rowIdx][colIdx].value = template.rate_law;
+		matrix[rowIdx][colIdx].id = template.name;
 	}
 	return { rowNames, colNames, matrix };
 };
