@@ -28,6 +28,7 @@ export interface ModelConfigTableData {
 	id: string;
 	name: string;
 	type: ParamType;
+	unit?: string;
 	value: any;
 	source: string;
 	visibility: boolean;
