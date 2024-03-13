@@ -2,9 +2,7 @@ import API from '@/api/api';
 import { updateModelConfiguration } from '@/services/model-configurations';
 import { Model, ModelConfiguration, PetriNetModel, PetriNetTransition } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { IGraph } from '@graph-scaffolder/types';
 import { AxiosError } from 'axios';
-import _ from 'lodash';
 
 export interface NodeData {
 	type: string;
@@ -42,108 +40,6 @@ export const mathmlToPetri = async (mathml: string[]) => {
 	}
 	return null;
 };
-
-export const convertToIGraph = (amr: Model) => {
-	const result: IGraph<NodeData, EdgeData> = {
-		width: 500,
-		height: 500,
-		amr: _.cloneDeep(amr),
-		nodes: [],
-		edges: []
-	};
-
-	const petrinetModel = amr.model as PetriNetModel;
-
-	petrinetModel.states.forEach((state) => {
-		// The structure of map is an array of arrays, where each inner array has 2 elements.
-		// The first element is a state or transition id, the second element is the type id.
-		// Find the inner array that matches the current state / transition that we are iterating on
-		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.map.find(
-			(map) => map.length === 2 && state.id === map[0]
-		);
-		const strataType = typeMap?.[1] ?? '';
-		result.nodes.push({
-			id: state.id,
-			label: state.name ?? state.id,
-			type: 'state',
-			x: 0,
-			y: 0,
-			width: 100,
-			height: 100,
-			data: { type: 'state', strataType },
-			nodes: []
-		});
-	});
-
-	petrinetModel.transitions.forEach((transition) => {
-		// The structure of map is an array of arrays, where each inner array has 2 elements.
-		// The first element is a state or transition id, the second element is the type id.
-		// Find the inner array that matches the current state / transition that we are iterating on
-		// Get the second element of that array, which is the id of its type
-		const typeMap = amr.semantics?.typing?.map.find(
-			(map) => map.length === 2 && transition.id === map[0]
-		);
-
-		const strataType = typeMap?.[1] ?? '';
-		result.nodes.push({
-			id: transition.id,
-			label: transition.id,
-			type: 'transition',
-			x: 0,
-			y: 0,
-			width: 40,
-			height: 40,
-			data: { type: 'transition', strataType },
-			nodes: []
-		});
-	});
-
-	petrinetModel.transitions.forEach((transition) => {
-		transition.input.forEach((input) => {
-			const key = `${input}:${transition.id}`;
-
-			// Collapse hyper edges
-			const existingEdge = result.edges.find((edge) => edge.id === key);
-			if (existingEdge && existingEdge.data) {
-				existingEdge.data.numEdges++;
-				return;
-			}
-
-			result.edges.push({
-				id: key,
-				source: input,
-				target: transition.id,
-				points: [],
-				data: { numEdges: 1 }
-			});
-		});
-	});
-
-	petrinetModel.transitions.forEach((transition) => {
-		transition.output.forEach((output) => {
-			const key = `${transition.id}:${output}`;
-
-			// Collapse hyper edges
-			const existingEdge = result.edges.find((edge) => edge.id === key);
-			if (existingEdge && existingEdge.data) {
-				existingEdge.data.numEdges++;
-				return;
-			}
-
-			result.edges.push({
-				id: key,
-				source: transition.id,
-				target: output,
-				points: [],
-				data: { numEdges: 1 }
-			});
-		});
-	});
-	return result;
-};
-
-export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
 
 // Update a transition's expression and expression_mathml fields based on
 // mass-kinetics
@@ -344,21 +240,6 @@ export const getStratificationType = (amr: Model) => {
 		}
 	}
 	return null;
-
-	// if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
-	//
-	// const hasModifiers = some(
-	// 	(amr.model as PetriNetModel).states,
-	// 	(s) =>
-	// 		s.grounding &&
-	// 		s.grounding.modifiers &&
-	// 		!isEmpty(Object.keys(s.grounding.modifiers)) &&
-	// 		// Temp hack to reject SBML type models with actual groundings, may not work
-	// 		// all the time, MIRA will move strata info to metadata section - Oct 2023
-	// 		s.id.includes('_')
-	// );
-	// if (hasModifiers) return StratifiedModel.Mira;
-	// return null;
 };
 
 export function newAMR(modelName: string) {

@@ -41,7 +41,17 @@ export const getContextKeys = (miraModel: MiraModel) => {
 			});
 		}
 	});
-	return [...modifierKeys];
+
+	const rawModifiers = [...modifierKeys];
+
+	// Heuristics to avoid picking up wrong stuff
+	// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
+	const modifiers = rawModifiers.filter((v) => {
+		if (!v.startsWith('ncit:')) return false;
+		return true;
+	});
+
+	return modifiers;
 };
 
 export const isStratifiedModel = (miraModel: MiraModel) => {
