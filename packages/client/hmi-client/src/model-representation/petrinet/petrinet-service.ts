@@ -210,7 +210,7 @@ export const mergeMetadata = (amr: Model, amrOld: Model) => {
 // - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
 export const getModifierMap = (amr: Model) => {
 	const modifierMap: Map<string, Set<string>> = new Map();
-	(amr.model as PetriNetModel).states.forEach((s) => {
+	(amr.model as PetriNetModel).states?.forEach((s) => {
 		if (s.grounding && s.grounding.modifiers) {
 			const modifiers = s.grounding.modifiers;
 			const keys: string[] = Object.keys(modifiers);

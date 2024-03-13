@@ -190,6 +190,9 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	if (schemaName === 'stockflow') {
 		return AMRSchemaNames.STOCKFLOW;
 	}
+	if (schemaName === 'decapodes' || schemaName === 'decapode') {
+		return AMRSchemaNames.DECAPODES;
+	}
 	return AMRSchemaNames.PETRINET;
 }
 

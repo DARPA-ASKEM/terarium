@@ -86,6 +86,7 @@
 					:kernelManager="kernelManager"
 					:defaultOptions="sampleAgentQuestions"
 					@llm-output="appendCode"
+					:context-language="contextLanguage"
 				/>
 				<v-ace-editor
 					v-model:value="code"
@@ -162,6 +163,7 @@ const llmAnswer = ref('');
 const code = ref('');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
+const contextLanguage = ref<string>('python3');
 
 const modelCardsToCompare = computed(() =>
 	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
