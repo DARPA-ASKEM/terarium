@@ -317,10 +317,10 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 
 	const subjects = new Set<string>(templates.map((d) => d.subject));
 	const outcomes = new Set<string>(templates.map((d) => d.outcome));
-	const nodeNames = [...new Set([...subjects, ...outcomes])];
+	// const nodeNames = [...new Set([...subjects, ...outcomes])];
 
-	// const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
-	// const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
+	const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
+	const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
 
 	// concepts
 	nodeNames.forEach((nodeName) => {

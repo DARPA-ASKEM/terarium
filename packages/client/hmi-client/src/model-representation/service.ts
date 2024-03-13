@@ -11,12 +11,14 @@ export const getModelRenderer = (
 	miraModel: MiraModel,
 	graphElement: HTMLDivElement
 ): PetrinetRenderer | NestedPetrinetRenderer => {
+	// Debug start
 	console.group('mmt info');
-	console.log('templates: ', miraModel.templates.length);
-	console.log('parameters: ', Object.keys(miraModel.parameters).length);
+	console.log('# templates: ', miraModel.templates.length);
+	console.log('# parameters: ', Object.keys(miraModel.parameters).length);
 	if (isStratifiedModel(miraModel)) {
 		console.log('stratified model detected');
 		console.groupEnd();
+		// Debug end
 
 		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
@@ -41,13 +43,6 @@ export const getModelRenderer = (
 		const { matrixMap } = collapseTemplates(miraModel);
 		const transitionMatrixMap = {};
 		matrixMap.forEach((value, key) => {
-			// console.log('>>>>>>', key, value);
-			// console.group(key);
-			// console.log(value.length);
-			// console.log(value.map(d => d.controller?.name));
-			// console.log(value.map(d => d.subject?.name));
-			// console.log(extractTemplateMatrix(value));
-			// console.groupEnd();
 			transitionMatrixMap[key] = extractTemplateMatrix(value).matrix;
 		});
 
