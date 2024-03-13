@@ -25,16 +25,6 @@ public interface KnowledgeMiddlewareProxy {
 			@PathVariable("id") String id);
 
 	/**
-	 * Post a PDF to get text
-	 *
-	 * @param documentId (String): The ID of the document to extract text from
-	 * @return
-	 */
-	@PostMapping("/pdf_extraction")
-	ResponseEntity<JsonNode> postPDFToCosmos(
-			@RequestParam("document_id") String documentId);
-
-	/**
 	 * Profile a model
 	 *
 	 * @return the profiled model
