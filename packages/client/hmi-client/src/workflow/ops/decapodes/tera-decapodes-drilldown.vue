@@ -72,7 +72,7 @@ const emit = defineEmits(['close', 'update-state']);
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
 
-const modelId = computed(() => props.node.inputs[0]?.value?.[0]);
+const modelId = computed(() => props.node.inputs?.[0]?.value?.[0]);
 const notebookResponse = ref();
 const sampleAgentQuestions = ['Convert the model to equations please'];
 const contextLanguage = 'julia-1.10';
