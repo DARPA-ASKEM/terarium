@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.climateData;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -10,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import java.util.UUID;
 
 @Data
+@Entity
 public class ClimateDataPreviewTask {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
