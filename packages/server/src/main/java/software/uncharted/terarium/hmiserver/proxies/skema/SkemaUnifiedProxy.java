@@ -36,8 +36,8 @@ public interface SkemaUnifiedProxy {
 
 	@PostMapping(value = "/metal/link_amr", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> linkAMRFile(
-			@RequestPart(value = "amr_file") MultipartFile amrFile,
-			@RequestPart(value = "text_extractions_file") MultipartFile extractionsFile);
+			@RequestPart("amr_file") MultipartFile amrFile,
+			@RequestPart("text_extractions_file") MultipartFile extractionsFile);
 
 	@Data
 	public static class IntegratedTextExtractionsBody {

@@ -13,6 +13,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Slf4j
@@ -41,6 +43,9 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private DocumentAssetService documentAssetService;
+
+	@Autowired
+	private ModelService modelService;
 
 	@Autowired
 	private ElasticsearchService elasticService;
@@ -239,7 +244,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions-skema")
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.param("document-id", documentAsset.getId().toString())
 				.param("annotate-skema", "true")
@@ -252,7 +257,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final DocumentAsset document = objectMapper.readValue(res.getResponse().getContentAsString(),
 				DocumentAsset.class);
 
-		log.info(document.getMetadata().toString());
+		Assertions.assertTrue(document.getMetadata() != null);
 	}
 
 	@Test
@@ -266,23 +271,33 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.param("document-id", documentAsset.getId().toString())
 				.param("annotate-skema", "true")
 				.param("annotate-mit", "true")
 				.param("domain", "epi")
 				.with(csrf()))
+				.andExpect(status().isOk());
+
+		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		Model model = objectMapper.readValue(content, Model.class);
+
+		model = modelService.createAsset(model);
+
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/link-amr")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.param("model-id", model.getId().toString())
+				.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
-		// final Model model =
+		model = objectMapper.readValue(res.getResponse().getContentAsString(),
+				Model.class);
 
-		// final DocumentAsset document =
-		// objectMapper.readValue(res.getResponse().getContentAsString(),
-		// DocumentAsset.class);
-
-		// log.info(document.getMetadata().toString());
+		Assertions.assertTrue(model != null);
 	}
 
 	@Test
@@ -311,6 +326,6 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.getAsset(documentAsset.getId()).orElseThrow();
 
-		log.info(documentAsset.getMetadata().toString());
+		Assertions.assertTrue(documentAsset.getAssets().size() > 0);
 	}
 }

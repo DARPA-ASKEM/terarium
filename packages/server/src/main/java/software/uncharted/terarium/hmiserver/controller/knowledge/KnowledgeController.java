@@ -362,8 +362,8 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (final IOException e) {
-			final String error = "Unable to get required assets";
+		} catch (final Exception e) {
+			final String error = "Unable to get link amr";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,

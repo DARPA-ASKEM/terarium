@@ -16,12 +16,12 @@ public interface MitProxy {
 	ResponseEntity<JsonNode> getMapping(
 			@RequestParam("gpt_key") final String gptKey,
 			@RequestParam("kg_domain") final String kgDomain,
-			@RequestPart(value = "mit_file") MultipartFile mitFile,
-			@RequestPart(value = "arizona_file") MultipartFile arizonaFile);
+			@RequestPart("mit_file") MultipartFile mitFile,
+			@RequestPart("arizona_file") MultipartFile arizonaFile);
 
 	@PostMapping(value = "/annotation/upload_file_extract", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> uploadFileExtract(
 			@RequestParam("gpt_key") final String gptKey,
 			@RequestParam("kg_domain") final String kgDomain,
-			@RequestPart(value = "file") MultipartFile file);
+			@RequestPart("file") MultipartFile file);
 }

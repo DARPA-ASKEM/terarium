@@ -36,7 +36,7 @@ public interface ExtractionProxy {
 	ResponseEntity<JsonNode> processPdfExtraction(
 			@RequestParam("compress_images") final Boolean compressImages,
 			@RequestParam("use_cache") final Boolean useCache,
-			@RequestPart(value = "pdf") MultipartFile file);
+			@RequestPart("pdf") MultipartFile file);
 
 	@GetMapping(value = "/cosmos_service/process/{id}/result")
 	ResponseEntity<byte[]> result(
