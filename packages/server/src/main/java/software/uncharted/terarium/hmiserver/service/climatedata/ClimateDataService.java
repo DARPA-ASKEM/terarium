@@ -29,13 +29,8 @@ public class ClimateDataService {
 
         for (final ClimateDataPreviewTask previewTask : previewTasks) {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getClimateDataId());
-<<<<<<< HEAD
-            ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
-            if (climateDataResponse.getResult().getJobResult() != null) {
-=======
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
-            if (climateDataResponse.getResult().getJob_result() != null) {
->>>>>>> 13647eca73b1b5a685362a1cb03a896014ec086c
+            if (climateDataResponse.getResult().getJobResult() != null) {
                 // TODO: store result
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
