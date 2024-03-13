@@ -17,7 +17,7 @@
 					<template #end>
 						<span>
 							<SelectButton
-								v-if="model && getStratificationType(model)"
+								v-if="model && isStratifiedModel(mmt)"
 								:model-value="stratifiedView"
 								@change="
 									if ($event.value) {
@@ -76,10 +76,7 @@ import { watch, ref, onMounted, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import {
-	getStratificationType,
-	StratifiedModel
-} from '@/model-representation/petrinet/petrinet-service';
+import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
@@ -90,6 +87,7 @@ import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import {
+	isStratifiedModel,
 	emptyMiraModel,
 	converToIGraph,
 	collapseTemplates
