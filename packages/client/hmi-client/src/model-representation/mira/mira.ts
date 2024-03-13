@@ -5,7 +5,7 @@ import {
 	extractSubjectOutcomeMatrix,
 	removeModifiers
 } from './mira-util';
-import type { MiraModel, MiraTemplateParams, TemplateSummary } from './mira-common';
+import type { MiraModel, MiraTemplate, MiraTemplateParams, TemplateSummary } from './mira-common';
 
 export const emptyMiraModel = () => {
 	const newModel: MiraModel = {
@@ -47,7 +47,7 @@ export const getContextKeys = (miraModel: MiraModel) => {
 	// Heuristics to avoid picking up wrong stuff
 	// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
 	const modifiers = rawModifiers.filter((v) => {
-		if (!v.startsWith('ncit:')) return false;
+		if (v.startsWith('ncit:')) return false;
 		return true;
 	});
 
@@ -149,43 +149,76 @@ export const collapseInitials = (miraModel: MiraModel) => {
 export const collapseTemplates = (miraModel: MiraModel) => {
 	const allTemplates: TemplateSummary[] = [];
 	const uniqueTemplates: TemplateSummary[] = [];
+	const scrubbingKeys = getContextKeys(miraModel);
 
 	// 1. Roll back to "original name" by trimming off modifiers
 	miraModel.templates.forEach((t) => {
 		const scrubbedTemplate: TemplateSummary = {
+			name: t.name,
 			subject: '',
 			outcome: '',
 			controllers: []
 		};
 
 		if (t.subject) {
-			scrubbedTemplate.subject = removeModifiers(t.subject.name, t.subject.context);
+			scrubbedTemplate.subject = removeModifiers(t.subject.name, t.subject.context, scrubbingKeys);
 		}
 		if (t.outcome) {
-			scrubbedTemplate.outcome = removeModifiers(t.outcome.name, t.outcome.context);
+			scrubbedTemplate.outcome = removeModifiers(t.outcome.name, t.outcome.context, scrubbingKeys);
 		}
 
 		// note controller and controllers are mutually exclusive
 		if (t.controller) {
-			scrubbedTemplate.controllers.push(removeModifiers(t.controller.name, t.controller.context));
+			scrubbedTemplate.controllers.push(
+				removeModifiers(t.controller.name, t.controller.context, scrubbingKeys)
+			);
 		}
 		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((miraConcept) => {
-				scrubbedTemplate.controllers.push(removeModifiers(miraConcept.name, miraConcept.context));
+				scrubbedTemplate.controllers.push(
+					removeModifiers(miraConcept.name, miraConcept.context, scrubbingKeys)
+				);
 			});
 			t.controllers.sort();
 		}
 		allTemplates.push(scrubbedTemplate);
 	});
 
-	// 2. Remove duplicated templates
-	const check = new Set<string>();
+	const templateMap = new Map<string, MiraTemplate>();
+	miraModel.templates.forEach((t) => {
+		templateMap.set(t.name, t);
+	});
+
+	// 2. Do post processing
+	// - Reduce down to the unique templates-summary, there are used to render the graph
+	// - Link unique template-summary back to the original MiraTemplates, this is for interaction
+	let keyCounter = 0;
+	const check = new Map<string, number>();
+	const tempMatrixMap = new Map<string, MiraTemplate[]>();
+	const matrixMap = new Map<string, MiraTemplate[]>();
+
 	allTemplates.forEach((t) => {
 		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+		if (!tempMatrixMap.has(key)) {
+			tempMatrixMap.set(key, []);
+		}
+		const originalTemplate = templateMap.get(t.name);
+		tempMatrixMap.get(key)?.push(originalTemplate as MiraTemplate);
+
 		if (check.has(key)) return;
 
 		uniqueTemplates.push(t);
-		check.add(key);
+		check.set(key, ++keyCounter);
+	});
+
+	// 3 Rename and sanitize everything
+	uniqueTemplates.forEach((t) => {
+		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+		t.name = `template-${check.get(key)}`;
+	});
+	tempMatrixMap.forEach((value, key) => {
+		const name = `template-${check.get(key)}`;
+		matrixMap.set(name, value);
 	});
 	return uniqueTemplates;
 };
@@ -213,6 +246,7 @@ export const createParameterMatrix = (
 			if (!paramLocationMap.has(paramName)) paramLocationMap.set(paramName, []);
 
 			paramLocationMap.get(paramName)?.push({
+				name: templateParam.name,
 				subject: templateParam.subject,
 				outcome: templateParam.outcome,
 				controllers: templateParam.controllers
