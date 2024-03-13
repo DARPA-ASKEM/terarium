@@ -30,11 +30,11 @@ public class ClimateDataService {
         for (ClimateDataPreviewTask previewTask : previewTasks) {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getClimateDataId());
             ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
-            if (climateDataResponse.getResult().getJob_result() != null) {
+            if (climateDataResponse.getResult().getJobResult() != null) {
                 // TODO: store result
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
-            if (climateDataResponse.getResult().getJob_error() != null) {
+            if (climateDataResponse.getResult().getJobError() != null) {
                 // TODO: store error
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
