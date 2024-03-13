@@ -1142,6 +1142,8 @@ export interface Rate {
 }
 
 export interface Initial {
+    description?: string;
+    grounding?: ModelGrounding;
     target: string;
     expression: string;
     expression_mathml: string;

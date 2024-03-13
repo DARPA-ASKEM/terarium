@@ -109,14 +109,11 @@
 					>
 						<AccordionTab>
 							<template #header>
-								Initial variable values<span class="artifact-amount"
-									>({{ tableFormattedInitials.length }})</span
-								>
+								Initial variable values<span class="artifact-amount">({{ initials.size }})</span>
 							</template>
-							<tera-model-config-table
+							<tera-initial-table
 								v-if="modelConfiguration"
 								:model-configuration="modelConfiguration"
-								:data="tableFormattedInitials"
 								@update-value="updateConfigInitial"
 								@update-configuration="
 									(configToUpdate: ModelConfiguration) => {
@@ -151,12 +148,11 @@
 					</template>
 					<AccordionTab>
 						<template #header>
-							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
+							Parameters<span class="artifact-amount">({{ parameters.size }})</span>
 						</template>
-						<tera-model-config-table
-							v-if="modelConfiguration && tableFormattedParams.length > 0"
+						<tera-parameter-table
+							v-if="modelConfiguration"
 							:model-configuration="modelConfiguration"
-							:data="tableFormattedParams"
 							@update-value="updateConfigParam"
 							@update-configuration="
 								(configToUpdate: ModelConfiguration) => {
@@ -258,7 +254,7 @@ import { getModel, getModelConfigurations, getModelType } from '@/services/model
 import { createModelConfiguration } from '@/services/model-configurations';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
-import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
+import { AMRSchemaNames } from '@/types/common';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
 	getUnstratifiedInitials,
@@ -286,7 +282,8 @@ import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import TeraModelConfigTable from './tera-model-config-table.vue';
+import TeraParameterTable from './tera-parameter-table.vue';
+import TeraInitialTable from './tera-initial-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -587,119 +584,7 @@ const initials = computed<Map<string, string[]>>(() => {
 	return result;
 });
 
-const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
-	const formattedInitials: ModelConfigTableData[] = [];
-
-	if (stratifiedModelType.value) {
-		initials.value.forEach((vals, init) => {
-			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = knobs.value.initials.find((i) => i.target === v);
-				const sourceValue = knobs.value.sources[initial!.target];
-				return {
-					id: v,
-					name: v,
-					type: ParamType.EXPRESSION,
-					value: initial,
-					source: sourceValue,
-					visibility: false
-				};
-			});
-			formattedInitials.push({
-				id: init,
-				name: init,
-				type: ParamType.MATRIX,
-				value: 'matrix',
-				source: '',
-				visibility: false,
-				tableFormattedMatrix
-			});
-		});
-	} else {
-		initials.value.forEach((vals, init) => {
-			const initial = knobs.value.initials.find((i) => i.target === vals[0]);
-			const sourceValue = knobs.value.sources[initial!.target];
-
-			formattedInitials.push({
-				id: init,
-				name: init,
-				type: ParamType.EXPRESSION,
-				value: initial,
-				source: sourceValue,
-				visibility: false
-			});
-		});
-	}
-
-	return formattedInitials;
-});
-
-const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
-	const formattedParams: ModelConfigTableData[] = [];
-
-	if (stratifiedModelType.value) {
-		parameters.value.forEach((vals, init) => {
-			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const param = knobs.value.parameters.find((i) => i.id === v);
-				const paramType = getParamType(param);
-				const timeseriesValue = knobs.value.timeseries[param!.id];
-				const sourceValue = knobs.value.sources[param!.id];
-				return {
-					id: v,
-					name: v,
-					type: paramType,
-					value: param,
-					source: sourceValue,
-					visibility: false,
-					timeseries: timeseriesValue
-				};
-			});
-			formattedParams.push({
-				id: init,
-				name: init,
-				type: ParamType.MATRIX,
-				value: 'matrix',
-				source: '',
-				visibility: false,
-				tableFormattedMatrix
-			});
-		});
-	} else {
-		parameters.value.forEach((vals, init) => {
-			const param = knobs.value.parameters.find((i) => i.id === vals[0]);
-			const paramType = getParamType(param);
-
-			const timeseriesValue = knobs.value.timeseries[param!.id];
-			const sourceValue = knobs.value.sources[param!.id];
-			formattedParams.push({
-				id: init,
-				name: init,
-				type: paramType,
-				value: param,
-				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
-			});
-		});
-	}
-
-	return formattedParams;
-});
-
 const modelType = computed(() => getModelType(model.value));
-
-const getParamType = (param: ModelParameter | undefined) => {
-	let type = ParamType.CONSTANT;
-	if (!param) return type;
-	if (
-		modelConfiguration.value?.configuration.metadata?.timeseries?.[param.id] ||
-		modelConfiguration.value?.configuration.metadata.timeseries?.[param.id] === ''
-	) {
-		type = ParamType.TIME_SERIES;
-	} else if (param?.distribution) {
-		type = ParamType.DISTRIBUTION;
-	}
-	return type;
-};
 
 const updateConfigParam = (params: ModelParameter[]) => {
 	for (let i = 0; i < knobs.value.parameters.length; i++) {
