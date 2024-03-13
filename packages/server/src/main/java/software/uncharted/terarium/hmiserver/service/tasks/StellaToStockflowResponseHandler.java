@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.mira.MiraController.ConversionAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -34,7 +35,13 @@ public class StellaToStockflowResponseHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Response modelResp = objectMapper.readValue(resp.getOutput(), Response.class);
-			final Model model = modelService.createAsset(modelResp.getResponse());
+			Model model = modelResp.getResponse();
+			final ConversionAdditionalProperties props = resp
+					.getAdditionalProperties(ConversionAdditionalProperties.class);
+			// override the default stockflow name / description
+			model.getHeader().setName(props.getFileName());
+			model.getHeader().setDescription(props.getFileName());
+			model = modelService.createAsset(model);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);
