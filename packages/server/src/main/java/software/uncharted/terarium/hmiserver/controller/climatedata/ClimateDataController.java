@@ -8,6 +8,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
+import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataStatusScheduledTask;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
 import java.util.ArrayList;
@@ -21,13 +22,7 @@ public class ClimateDataController {
 
 	private final ClimateDataProxy climateDataProxy;
 
-	@GetMapping("/status/{uuid}")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> status(@PathVariable final UUID uuid) {
-		final ResponseEntity<JsonNode> response = climateDataProxy.status(uuid.toString());
-
-		return ResponseEntity.ok(response.getBody());
-	}
+	private final ClimateDataStatusScheduledTask climateDataStatusScheduledTask;
 
 	@GetMapping("/search-esgf")
 	@Secured(Roles.USER)
@@ -56,7 +51,10 @@ public class ClimateDataController {
 	) {
 		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(datasetId.toString(), variableId, timestamps, timeIndex);
 
-		return ResponseEntity.ok(response.getBody());
+		String id = "find in response";
+		climateDataStatusScheduledTask.checkJob(id);
+
+		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/subset-esgf/{datasetId}")
@@ -69,7 +67,10 @@ public class ClimateDataController {
 	) {
 		final ResponseEntity<JsonNode> response = climateDataProxy.subsetEsgf(datasetId.toString(), parentDatasetId.toString(), timestamps, envelope, thinFactor);
 
-		return ResponseEntity.ok(response.getBody());
+		String id = "find in response";
+		climateDataStatusScheduledTask.checkJob(id);
+
+		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/fetch-esgf/{datasetId}")
