@@ -73,7 +73,7 @@
 			</template>
 		</Column>
 
-		<!-- Value type: Matrix or Expression, or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
+		<!-- Value type: Matrix or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
 		<Column field="type" header="Value Type" class="w-2">
 			<template #body="slotProps">
 				<Button
