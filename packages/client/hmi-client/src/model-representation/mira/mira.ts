@@ -338,7 +338,7 @@ export const createParameterMatrix = (
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 
-export const converToIGraph = (templates: TemplateSummary[]) => {
+export const convertToIGraph = (templates: TemplateSummary[]) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],

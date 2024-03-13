@@ -26,7 +26,7 @@ import { getModelRenderer } from '@/model-representation/service';
 
 import { onMounted, ref, watch } from 'vue';
 import * as mmtExample from '@/examples/mmt.json';
-import { collapseTemplates, converToIGraph } from '@/model-representation/mira/mira';
+import { collapseTemplates, convertToIGraph } from '@/model-representation/mira/mira';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
@@ -40,9 +40,9 @@ onMounted(async () => {
 		() => jsonStr.value,
 		async () => {
 			const jsonData = JSON.parse(jsonStr.value);
-			const renderer = getModelRenderer(jsonData, graphElement.value as HTMLDivElement);
+			const renderer = getModelRenderer(jsonData, graphElement.value as HTMLDivElement, true);
 			const { templatesSummary } = collapseTemplates(jsonData);
-			const graphData = converToIGraph(templatesSummary);
+			const graphData = convertToIGraph(templatesSummary);
 
 			await renderer.setData(graphData);
 			renderer.isGraphDirty = true;

@@ -89,7 +89,7 @@ import { MiraModel } from '@/model-representation/mira/mira-common';
 import {
 	isStratifiedModel,
 	emptyMiraModel,
-	converToIGraph,
+	convertToIGraph,
 	collapseTemplates,
 	rawTemplatesSummary
 } from '@/model-representation/mira/mira';
@@ -152,7 +152,7 @@ async function renderGraph() {
 
 	// Render graph
 	const graphData =
-		isCollapsed.value === true ? converToIGraph(templatesSummary) : converToIGraph(rawTemplates);
+		isCollapsed.value === true ? convertToIGraph(templatesSummary) : convertToIGraph(rawTemplates);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -179,30 +179,6 @@ watch(
 		mmt.value = (await getMMT(props.model)).mmt;
 
 		await renderGraph();
-		/*
-		const { templatesSummary } = collapseTemplates(mmt.value);
-		const graphData = converToIGraph(templatesSummary);
-
-		// Create renderer
-		renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement);
-
-		if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
-			graphLegendLabels.value = renderer.dims;
-			graphLegendColors.value = renderer.depthColorList;
-		}
-
-		renderer.on('node-click', (_eventName, _event, selection) => {
-			const { id, type } = selection.datum();
-			if (type === NodeType.Transition) {
-				selectedTransitionId.value = id;
-				openValueConfig.value = true;
-			}
-		});
-
-		// Render graph
-		await renderer?.setData(graphData);
-		await renderer?.render();
-		*/
 	},
 	{ deep: true }
 );
