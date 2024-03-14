@@ -65,7 +65,6 @@ const setChartOptions = () => ({
 		y: {
 			ticks: {
 				color: '#aaa',
-				maxTicksLimit: 3,
 				includeBounds: true,
 				precision: 4
 			},
