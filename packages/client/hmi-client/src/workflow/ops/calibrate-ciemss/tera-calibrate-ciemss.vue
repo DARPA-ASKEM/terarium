@@ -166,10 +166,6 @@ import Column from 'primevue/column';
 import {
 	getRunResultCiemss,
 	makeCalibrateJobCiemss,
-	simulationPollAction,
-	querySimulationInProgress,
-	getCalibrateBlobURL,
-	makeForecastJobCiemss,
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
@@ -198,9 +194,7 @@ import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { Poller, PollerState } from '@/api/api';
 import { getTimespan } from '@/workflow/util';
-import { logger } from '@/utils/logger';
 import { useToastService } from '@/services/toast';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { CalibrationOperationStateCiemss } from './calibrate-operation';
@@ -235,7 +229,7 @@ const previewChartWidth = ref(120);
 
 const showSpinner = ref(false);
 const progress = ref({ status: ProgressState.Retrieving, value: 0 });
-let lossValues: { [key: string]: number }[] = [];
+const lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -247,15 +241,8 @@ const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 */
 
-const poller = new Poller();
-
 const disableRunButton = computed(
-	() =>
-		!currentDatasetFileName.value ||
-		!modelConfig.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value
+	() => !currentDatasetFileName.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
 );
 
 const selectedOutputId = ref<string>();
@@ -272,13 +259,7 @@ const outputs = computed(() => {
 });
 
 const runCalibrate = async () => {
-	if (
-		!modelConfigId.value ||
-		!datasetId.value ||
-		!currentDatasetFileName.value ||
-		!modelConfig.value
-	)
-		return;
+	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
 	const formattedMap: { [index: string]: string } = {};
 	// If the user has done any mapping populate formattedMap
@@ -310,11 +291,15 @@ const runCalibrate = async () => {
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	if (response?.simulationId) {
-		getCalibrateStatus(response.simulationId);
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressCalibrationId = response?.simulationId;
+		state.inProgressForecastId = '';
+
+		emit('update-state', state);
 	}
 };
 
-const getMessageHandler = (event: ClientEvent<any>) => {
+const messageHandler = (event: ClientEvent<any>) => {
 	console.log('msg', event.data);
 	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
 
@@ -324,128 +309,6 @@ const getMessageHandler = (event: ClientEvent<any>) => {
 			height: 120
 		});
 	}
-};
-
-/**
- * This is a two step process
- * - Polling loop for calibration to finish, plot the loss values
- * - Polling loop for a sampmle simulation, plot the result against input dataset
- * */
-const getCalibrateStatus = async (simulationId: string) => {
-	showSpinner.value = true;
-	if (!simulationId) {
-		console.log('No sim id');
-		return;
-	}
-	const runIds = [simulationId];
-	lossValues = [];
-
-	// open a connection for each run id and handle the messages
-	await subscribeToUpdateMessages(
-		[simulationId],
-		ClientEventType.SimulationPyciemss,
-		getMessageHandler
-	);
-
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
-
-	const pollerResults = await poller.start();
-
-	// closing event source connections
-	await unsubscribeToUpdateMessages(
-		[simulationId],
-		ClientEventType.SimulationPyciemss,
-		getMessageHandler
-	);
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		logger.error(`Calibrate: ${simulationId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		throw Error('Failed Runs');
-	}
-
-	// Start 2nd simulation to get sample simulation from dill
-	const dillURL = await getCalibrateBlobURL(simulationId);
-	console.log('dill URL is', dillURL);
-
-	const resp = await makeForecastJobCiemss({
-		projectId: '',
-		modelConfigId: modelConfigId.value as string,
-		timespan: {
-			start: 0,
-			end: 100
-			// start: state.currentTimespan.start,
-			// end: state.currentTimespan.end
-		},
-		extra: {
-			num_samples: 5,
-			method: 'dopri5',
-			inferred_parameters: simulationId
-		},
-		engine: 'ciemss'
-	});
-
-	const sampleSimulateId = resp.id;
-
-	poller.stop();
-	poller
-		.setInterval(3000)
-		.setThreshold(500)
-		.setPollAction(async () =>
-			simulationPollAction([sampleSimulateId], props.node, progress, emit)
-		);
-	const sampleSimulateResults = await poller.start();
-
-	if (sampleSimulateResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (sampleSimulateResults.state !== PollerState.Done || !sampleSimulateResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		logger.error(`Simulation: ${sampleSimulateId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		throw Error('Failed Runs');
-	}
-
-	const output = await getRunResultCiemss(sampleSimulateId, 'result.csv');
-	runResults.value = output.runResults;
-
-	appendOutput(simulationId, sampleSimulateId);
-	showSpinner.value = false;
-};
-
-const appendOutput = async (calibrationId: string, simulationId: string) => {
-	const portLabel = props.node.inputs[0].label;
-	const state = _.cloneDeep(props.node.state);
-
-	state.chartConfigs = [
-		{
-			selectedRun: simulationId,
-			selectedVariable: []
-		}
-	];
-
-	state.calibrationId = calibrationId;
-	state.simulationId = simulationId;
-
-	emit('update-state', state);
-
-	emit('append-output', {
-		type: 'calibrateSimulationId',
-		label: `${portLabel} Result`,
-		value: [calibrationId]
-	});
 };
 
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
@@ -515,8 +378,6 @@ async function getAutoMapping() {
 }
 
 onMounted(async () => {
-	const runIds = querySimulationInProgress(props.node);
-
 	// Get sizing
 	if (drilldownLossPlot.value) {
 		previewChartWidth.value = drilldownLossPlot.value.offsetWidth;
@@ -532,16 +393,20 @@ onMounted(async () => {
 	currentDatasetFileName.value = filename;
 	csvAsset.value = csv;
 	datasetColumns.value = datasetOptions;
+});
 
-	// currently in progress
-	if (runIds.length > 0) {
-		getCalibrateStatus(runIds[0]);
+onUnmounted(() => {});
+
+watch(
+	() => props.node.state.inProgressCalibrationId,
+	(id) => {
+		if (id === '') {
+			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+		} else {
+			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+		}
 	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
+);
 
 watch(
 	() => props.node.active,
@@ -552,7 +417,7 @@ watch(
 
 			// FIXME: could still be running
 			const state = props.node.state;
-			const output = await getRunResultCiemss(state.simulationId, 'result.csv');
+			const output = await getRunResultCiemss(state.forecastId, 'result.csv');
 			runResults.value = output.runResults;
 		}
 	},
