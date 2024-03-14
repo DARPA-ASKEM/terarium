@@ -48,7 +48,6 @@
 						<div class="label-and-input">
 							<label>Solver method</label>
 							<Dropdown
-								disabled
 								class="p-inputtext-sm"
 								:options="['dopri5', 'euler']"
 								v-model="knobs.solverMethod"
@@ -112,12 +111,7 @@
 						</div>
 						<div class="label-and-input">
 							<label>Threshold</label>
-							<InputNumber
-								disabled
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.threshold"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.threshold" />
 						</div>
 					</div>
 				</div>
@@ -166,13 +160,11 @@
 							icon="pi pi-plus"
 						/>
 						<tera-optimize-chart
-							:run-results="simulationRunResults[knobs.forecastRunId]"
 							:risk-results="riskResults[knobs.forecastRunId]"
 							:chartConfig="{
 								selectedRun: knobs.forecastRunId,
 								selectedVariable: knobs.targetVariables
 							}"
-							:risk-tolerance="knobs.riskTolerance"
 							:target-variables="knobs.targetVariables"
 						/>
 					</div>
@@ -451,14 +443,16 @@ const runOptimize = async () => {
 		},
 		interventions: optimizeInterventions,
 		qoi: knobs.value.targetVariables,
-		riskBound: knobs.value.riskTolerance,
+		riskBound: knobs.value.threshold,
 		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: knobs.value.isMinimized,
 			numSamples: knobs.value.numStochasticSamples,
 			maxiter: 5,
-			maxfeval: 5
+			maxfeval: 5,
+			alpha: 100 - knobs.value.riskTolerance,
+			solverMethod: knobs.value.solverMethod
 		}
 	};
 
@@ -593,6 +587,8 @@ const setOutputValues = async () => {
 		knobs.value.forecastRunId,
 		'risk.json'
 	);
+	console.log(riskResults.value[knobs.value.forecastRunId]);
+
 	simulationRawContent.value[knobs.value.forecastRunId] = createCsvAssetFromRunResults(
 		simulationRunResults.value[knobs.value.forecastRunId]
 	);

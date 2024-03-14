@@ -819,6 +819,8 @@ export interface OptimizeExtra {
     maxiter?: number;
     maxfeval?: number;
     isMinimized?: boolean;
+    alpha?: number;
+    solverMethod?: string;
 }
 
 export interface OptimizedIntervention {
