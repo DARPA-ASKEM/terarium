@@ -592,7 +592,6 @@ const setOutputValues = async () => {
 		knobs.value.forecastRunId,
 		'risk.json'
 	);
-	console.log(riskResults.value[knobs.value.forecastRunId]);
 
 	simulationRawContent.value[knobs.value.forecastRunId] = createCsvAssetFromRunResults(
 		simulationRunResults.value[knobs.value.forecastRunId]
