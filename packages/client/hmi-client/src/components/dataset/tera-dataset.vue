@@ -99,6 +99,7 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+
 const groundingValues = ref<string[][]>([]);
 // originaGroundingValues are displayed as the first suggested value for concepts
 const originalGroundingValues = ref<string[]>([]);
@@ -151,7 +152,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		useProjects().refresh();
+		await useProjects().refresh();
 		isRenamingDataset.value = false;
 	}
 }
@@ -219,6 +220,7 @@ watch(
 <style scoped>
 .tab {
 	padding: var(--gap);
+
 	&.data-tab {
 		display: flex;
 		height: 100%;

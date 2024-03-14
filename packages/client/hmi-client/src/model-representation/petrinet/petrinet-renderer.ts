@@ -187,7 +187,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				}
 				return null;
 			})
-			.attr('marker-end', 'url(#arrowhead)');
+			.attr('marker-end', (d) => {
+				if (d.data && d.data.isController) return null;
+				return 'url(#arrowhead)';
+			});
 
 		this.updateMultiEdgeLabels();
 	}

@@ -32,6 +32,7 @@
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
 						:default-options="sampleAgentQuestions"
+						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
@@ -158,6 +159,8 @@ const sampleAgentQuestions = [
 	'Rename the state S to Susceptible in the infection transition.',
 	'Rename the transition infection to inf.'
 ];
+
+const contextLanguage = ref<string>('python3');
 
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';

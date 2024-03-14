@@ -24,6 +24,7 @@ export interface ClientLog {
 
 export interface TerariumAsset {
     id?: string;
+    name?: string;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
@@ -68,8 +69,8 @@ export interface GithubRepo {
 }
 
 export interface Artifact extends TerariumAsset {
-    userId: string;
     name: string;
+    userId: string;
     description?: string;
     fileNames: string[];
     metadata?: any;
@@ -130,8 +131,8 @@ export interface Dynamics {
 }
 
 export interface ActiveConcept extends TerariumAsset {
-    curie: string;
     name: string;
+    curie: string;
 }
 
 export interface OntologyConcept {
@@ -147,8 +148,8 @@ export interface OntologyConcept {
 }
 
 export interface Dataset extends TerariumAsset {
-    userId?: string;
     name: string;
+    userId?: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
@@ -181,7 +182,6 @@ export interface AddDocumentAssetFromXDDResponse {
 }
 
 export interface DocumentAsset extends TerariumAsset {
-    name?: string;
     description?: string;
     userId?: string;
     fileNames?: string[];
@@ -196,7 +196,6 @@ export interface DocumentAsset extends TerariumAsset {
 
 export interface Equation extends TerariumAsset {
     userId?: string;
-    name?: string;
     equationType: EquationType;
     content: string;
     metadata?: { [index: string]: any };
@@ -1269,15 +1268,16 @@ export enum RoleType {
 }
 
 export enum AssetType {
-    Dataset = "DATASET",
-    ModelConfiguration = "MODEL_CONFIGURATION",
-    Model = "MODEL",
-    Publication = "PUBLICATION",
-    Simulation = "SIMULATION",
-    Workflow = "WORKFLOW",
-    Artifact = "ARTIFACT",
-    Code = "CODE",
-    Document = "DOCUMENT",
+    Workflow = "workflow",
+    Model = "model",
+    Dataset = "dataset",
+    Simulation = "simulation",
+    Document = "document",
+    Code = "code",
+    ModelConfiguration = "model-configuration",
+    Artifact = "artifact",
+    Publication = "publication",
+    NotebookSession = "notebook-session",
 }
 
 export enum EvaluationScenarioStatus {
