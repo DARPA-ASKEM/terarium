@@ -117,7 +117,7 @@ import TeraModelObservable from '@/components/model/petrinet/tera-model-observab
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraInputSwitch from '@/components/widgets/tera-input-switch.vue';
-import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '../tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;

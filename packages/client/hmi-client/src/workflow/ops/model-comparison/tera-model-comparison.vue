@@ -415,7 +415,6 @@ ul {
 
 .legend-line {
 	position: relative;
-	white-space:;
 }
 
 .legend-line::before {
