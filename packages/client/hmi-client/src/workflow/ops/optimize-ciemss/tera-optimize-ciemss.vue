@@ -165,7 +165,7 @@
 								selectedRun: knobs.forecastRunId,
 								selectedVariable: knobs.targetVariables
 							}"
-							:target-variables="knobs.targetVariables"
+							:target-variable="knobs.targetVariables[0]"
 						/>
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">

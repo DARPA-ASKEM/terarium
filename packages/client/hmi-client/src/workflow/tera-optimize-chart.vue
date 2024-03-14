@@ -19,7 +19,7 @@ import { ChartConfig } from '@/types/SimulateConfig';
 
 const props = defineProps<{
 	riskResults: any;
-	targetVariables: string[];
+	targetVariable: string;
 	chartConfig: ChartConfig;
 	size?: { width: number; height: number };
 }>();
@@ -88,12 +88,10 @@ const getBinData = (data: number[]) => {
 		bins[index] += 1;
 	});
 
-	console.log(bins.map((ele, index) => ({ x: ele, y: index })));
 	return bins;
 };
 
 const setChartData = () => {
-	console.log(props.riskResults);
 	if (!props.riskResults)
 		return {
 			labels: [],
@@ -107,9 +105,10 @@ const setChartData = () => {
 			]
 		};
 
-	const riskValue = props.riskResults.Infected_state.risk[0];
-	// console.log(props.riskResults["Infected_state"]["qoi"]);
-	const qoiData = props.riskResults.Infected_state.qoi;
+	// TODO: risk.json has _state appended to all states. This is an ugly but fast fix.
+	const targetState = `${props.targetVariable}_state`;
+	const riskValue = props.riskResults[targetState].risk[0];
+	const qoiData = props.riskResults[targetState].qoi;
 	const riskLine: any[] = [];
 	for (let i = 0; i < binCount; i++) {
 		riskLine.push({ x: i, y: riskValue });
@@ -137,7 +136,6 @@ const setChartData = () => {
 watch(
 	() => props.riskResults,
 	async () => {
-		console.log(props.riskResults);
 		chartOptions.value = setChartOptions();
 		chartData.value = setChartData();
 	},
