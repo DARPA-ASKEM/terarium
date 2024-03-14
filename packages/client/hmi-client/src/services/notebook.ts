@@ -8,7 +8,7 @@ export interface NotebookHistory {
 
 // A common pattern used to save code from a notebook within an operator
 // This is ready to be ported to nodes such as tera-model-edit, tera-model-config and tera-stratify-mira
-// I just don't know if we are okay with ruining the states of the nodes that already exist with these differently named properties
+// Not ported yet since this will ruin the states of the nodes that already exist due to their differently named properties
 export const saveCodeToState = (node: WorkflowNode, code: string, hasCodeRun: boolean) => {
 	const state = cloneDeep(node.state);
 	if (!state.notebookHistory || !state.hasCodeRun) return state;
