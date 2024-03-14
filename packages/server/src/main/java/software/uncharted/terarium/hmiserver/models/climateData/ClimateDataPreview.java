@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.climateData;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,4 +26,21 @@ public class ClimateDataPreview {
     private String timeIndex;
     private String pngUrl;
     private String error;
+
+    public ClimateDataPreview(ClimateDataPreviewTask previewTask) {
+        this.esgfId = previewTask.getEsgfId();
+        this.variableId = previewTask.getVariableId();
+        this.timestamps = previewTask.getTimestamps();
+        this.timeIndex = previewTask.getTimeIndex();
+    }
+
+    public ClimateDataPreview(ClimateDataPreviewTask previewTask, JsonNode jobError) {
+        this.esgfId = previewTask.getEsgfId();
+        this.variableId = previewTask.getVariableId();
+        this.timestamps = previewTask.getTimestamps();
+        this.timeIndex = previewTask.getTimeIndex();
+        this.error = jobError.toString();
+    }
+
+    public ClimateDataPreview() {}
 }

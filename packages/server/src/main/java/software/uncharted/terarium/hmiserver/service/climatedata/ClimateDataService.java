@@ -19,6 +19,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -31,6 +32,8 @@ public class ClimateDataService {
     final ClimateDataPreviewRepository climateDataPreviewRepository;
     final S3ClientService s3ClientService;
     final Config config;
+
+    private final static long EXPIRATION = 60;
 
     @Scheduled(fixedRate = 1000 * 60 * 2L) // every 2 minutes
     public void checkJobStatusTask() {
@@ -47,15 +50,11 @@ public class ClimateDataService {
                     final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
 
                     final String bucket = config.getFileStorageS3BucketName();
-                    final String key = String.join("/dataset", previewTask.getEsgfId());
+                    final String key = getPreviewFilename(previewTask.getEsgfId(), previewTask.getVariableId());
 
                     s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
 
-                    final ClimateDataPreview preview = new ClimateDataPreview();
-                    preview.setEsgfId(previewTask.getEsgfId());
-                    preview.setVariableId(previewTask.getVariableId());
-                    preview.setTimestamps(previewTask.getTimestamps());
-                    preview.setTimeIndex(previewTask.getTimeIndex());
+                    final ClimateDataPreview preview = new ClimateDataPreview(previewTask);
 
                     climateDataPreviewRepository.save(preview);
                 }
@@ -63,12 +62,7 @@ public class ClimateDataService {
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
             if (climateDataResponse.getResult().getJobError() != null) {
-                final ClimateDataPreview preview = new ClimateDataPreview();
-                preview.setEsgfId(previewTask.getEsgfId());
-                preview.setVariableId(previewTask.getVariableId());
-                preview.setTimestamps(previewTask.getTimestamps());
-                preview.setTimeIndex(previewTask.getTimeIndex());
-                preview.setError(climateDataResponse.getResult().getJobError().toString());
+                final ClimateDataPreview preview = new ClimateDataPreview(previewTask, climateDataResponse.getResult().getJobError());
                 climateDataPreviewRepository.save(preview);
 
                 climateDataPreviewTaskRepository.delete(previewTask);
@@ -78,13 +72,12 @@ public class ClimateDataService {
         // TODO: work on subset jobs
     }
 
+    private String getPreviewFilename(String esgfId, String variableId) {
+        return String.join("/preview", esgfId, variableId);
+    }
+
     public void addPreviewJob(final String esgfId, final String variableId, final String timestamps, final String timeIndex, final String statusId) {
-        final ClimateDataPreviewTask task = new ClimateDataPreviewTask();
-        task.setStatusId(statusId);
-        task.setEsgfId(esgfId);
-        task.setVariableId(variableId);
-        task.setTimestamps(timestamps);
-        task.setTimeIndex(timeIndex);
+        final ClimateDataPreviewTask task = new ClimateDataPreviewTask(statusId, esgfId, variableId, timestamps, timeIndex);
         climateDataPreviewTaskRepository.save(task);
     }
 
@@ -94,9 +87,12 @@ public class ClimateDataService {
             if (preview.getError() != null) {
                 return ResponseEntity.internalServerError().body(preview.getError());
             }
-            // TODO: what is this url
-            final String pngUrl = "";
-            return ResponseEntity.ok(pngUrl);
+            final String filename = getPreviewFilename(preview.getEsgfId(), preview.getVariableId());
+            final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
+            if (url.isPresent()) {
+                return ResponseEntity.ok(url.get());
+            }
+            return ResponseEntity.internalServerError().body("Failed to generate presigned s3 url");
         }
         final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
         if (task != null) {
