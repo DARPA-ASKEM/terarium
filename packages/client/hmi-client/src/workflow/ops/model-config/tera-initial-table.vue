@@ -66,7 +66,7 @@
 		<Column header="Unit" class="w-1">
 			<template #body="slotProps">
 				<InputText
-					v-if="slotProps.data.type !== ParamType.MATRIX"
+					v-if="slotProps.data.type === ParamType.CONSTANT"
 					size="small"
 					class="w-full"
 					v-model.lazy="slotProps.data.unit"
@@ -87,13 +87,32 @@
 					@click="openMatrixModal(slotProps.data)"
 					class="p-0"
 				/>
-				<span
-					v-else-if="slotProps.data.type === ParamType.EXPRESSION"
-					class="flex align-items-center"
+				<Dropdown
+					v-else
+					class="value-type-dropdown w-9"
+					:model-value="slotProps.data.type"
+					:options="typeOptions"
+					optionLabel="label"
+					optionValue="value"
+					placeholder="Select a parameter type"
+					@update:model-value="(val) => changeType(slotProps.data.value, val)"
 				>
-					<span class="custom-icon-expression mr-2" />
-					Expression
-				</span>
+					<template #value="slotProps">
+						<span class="flex align-items-center">
+							<span
+								class="p-dropdown-item-icon mr-2"
+								:class="typeOptions.find((op) => slotProps.value === op.value)?.icon"
+							></span>
+							<span>{{ typeOptions.find((op) => slotProps.value === op.value)?.label }}</span>
+						</span>
+					</template>
+					<template #option="slotProps">
+						<span class="flex align-items-center">
+							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon"></span>
+							<span>{{ slotProps.option.label }}</span>
+						</span>
+					</template>
+				</Dropdown>
 			</template>
 		</Column>
 
@@ -108,7 +127,12 @@
 					>Click to open</span
 				>
 				<!-- Expression -->
-				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
+				<span
+					v-else-if="
+						slotProps.data.type === ParamType.EXPRESSION ||
+						slotProps.data.type === ParamType.CONSTANT
+					"
+				>
 					<InputText
 						size="small"
 						class="tabular-numbers w-full"
@@ -123,7 +147,7 @@
 		<Column field="source" header="Source" class="w-2">
 			<template #body="{ data }">
 				<InputText
-					v-if="data.type !== ParamType.MATRIX"
+					v-if="data.type === ParamType.CONSTANT || data.type === ParamType.MATRIX"
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
@@ -186,6 +210,12 @@ import {
 	getNameOfCurieCached
 } from '@/services/concept';
 import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-petri';
+import Dropdown from 'primevue/dropdown';
+
+const typeOptions = [
+	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
+	{ label: 'Expression', value: ParamType.EXPRESSION, icon: 'custom-icon-expression' }
+];
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -234,12 +264,13 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 				const unitValue = initialsMetadata?.unit;
 				const descriptionValue = initialsMetadata?.description;
 				const conceptValue = initialsMetadata?.concept;
+				const expressionValue = initialsMetadata?.expression;
 				return {
 					id: v,
 					name: v,
 					description: descriptionValue,
 					concept: conceptValue,
-					type: ParamType.EXPRESSION,
+					type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
 					unit: unitValue,
 					value: initial,
 					source: sourceValue,
@@ -266,12 +297,13 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 			const unitValue = initialsMetadata?.unit;
 			const descriptionValue = initialsMetadata?.description;
 			const conceptValue = initialsMetadata?.concept;
+			const expressionValue = initialsMetadata?.expression;
 			formattedInitials.push({
 				id: init,
 				name: init,
 				description: descriptionValue,
 				concept: conceptValue,
-				type: ParamType.EXPRESSION,
+				type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
 				unit: unitValue,
 				value: initial,
 				source: sourceValue,
@@ -372,6 +404,25 @@ const matrixEffect = () => {
 			canvas.style.opacity = '1';
 		}
 	}, 4000);
+};
+
+const changeType = (initial: Initial, typeIndex: number) => {
+	const clonedConfig = cloneDeep(props.modelConfiguration);
+	const metadata = clonedConfig.configuration.metadata.initials;
+	if (!metadata[initial.target]) {
+		metadata[initial.target] = {};
+	}
+	switch (typeIndex) {
+		case ParamType.EXPRESSION:
+			metadata[initial.target].expression = true;
+			break;
+		case ParamType.CONSTANT:
+		default:
+			metadata[initial.target].expression = false;
+			break;
+	}
+
+	emit('update-configuration', clonedConfig);
 };
 </script>
 
