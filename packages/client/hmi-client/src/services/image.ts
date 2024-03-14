@@ -13,9 +13,7 @@ export async function getImages(imageIds: string[]) {
 	});
 	const responsesRaw = await Promise.all(promiseList);
 	responsesRaw.forEach((r) => {
-		if (r) {
-			result.push(r);
-		}
+		if (r) result.push(r);
 	});
 	return result;
 }

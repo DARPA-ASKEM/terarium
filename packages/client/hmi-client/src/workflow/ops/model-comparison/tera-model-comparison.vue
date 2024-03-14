@@ -232,8 +232,8 @@ function formatField(field: string) {
 
 function saveState(newImageId?: string, clearImages = false) {
 	const state = saveCodeToState(props.node, code.value, true);
-	if (newImageId) state.compareImageIds.push(newImageId);
-	if (clearImages) state.compareImageIds = [];
+	if (newImageId) state.comparisonImageIds.push(newImageId);
+	if (clearImages) state.comparisonImageIds = [];
 	emit('update-state', state);
 }
 
@@ -312,9 +312,9 @@ async function buildJupyterContext() {
 }
 
 onMounted(async () => {
-	if (!isEmpty(props.node.state.compareImageIds)) {
+	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
-		structuralComparisons.value = await getImages(props.node.state.compareImageIds);
+		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
 		isLoadingStructuralComparisons.value = false;
 	}
 
@@ -325,7 +325,7 @@ onMounted(async () => {
 	});
 
 	const modelIds = props.node.inputs
-		.filter((input) => input.status === WorkflowPortStatus.Connected)
+		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
 	processCompareModels(modelIds);
 });
