@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 
 import java.io.Serial;
 import java.io.Serializable;
