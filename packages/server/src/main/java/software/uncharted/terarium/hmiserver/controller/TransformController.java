@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +41,7 @@ public class TransformController {
 		} catch (final Exception error) {
 			log.error("Error getting latex from simulation service", error);
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 				"Simulation Service is unable to provide the set of LaTeX equations from the Model.");
 		}
 	}
