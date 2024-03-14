@@ -1,6 +1,6 @@
 <template>
 	<div class="data-transform-container">
-		<ConfirmDialog></ConfirmDialog>
+		<ConfirmDialog class="w-5"></ConfirmDialog>
 		<!-- Jupyter Kernel Settings -->
 		<div class="settings-title" v-if="showKernels">Kernel Settings</div>
 		<div class="jupyter-settings" v-if="showKernels">
@@ -22,13 +22,13 @@
 				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
 				@click="confirmDelete"
 				:disabled="runningSessions.length <= 0"
-				>Delete Kernel</Button
+				>Delete kernel</Button
 			>
 			<Button
 				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
 				@click="confirmDeleteAll"
 				:disabled="runningSessions.length <= 0"
-				>Delete ALL</Button
+				>Delete all</Button
 			>
 			<Button
 				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
@@ -37,25 +37,35 @@
 				>Reconnect</Button
 			>
 		</div>
-		<div class="gpt-header flex">
+
+		<!-- Toolbar -->
+		<div class="toolbar flex">
 			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
-			<span><header id="GPT">TGPT</header></span>
-			<span style="margin-left: 2rem">
-				<label>Auto expand previews:</label><input v-model="autoExpandPreview" type="checkbox" />
-			</span>
+			<span
+				><header id="GPT">
+					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable' }}
+				</header></span
+			>
 			<span class="flex-auto"></span>
-			<Button label="Reset" class="p-button p-button-sm" @click="confirmReset">
+			<Button
+				label="Reset kernel"
+				severity="secondary"
+				outlined
+				class="p-button p-button-sm"
+				@click="confirmReset"
+			>
 				<span class="pi pi-replay p-button-icon p-button-icon-left"></span>
 				<span class="p-button-text">Reset</span>
 			</Button>
 		</div>
+
+		<!-- Jupyter Chat -->
 		<tera-jupyter-chat
 			ref="chat"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
-			:auto-expand-preview="autoExpandPreview"
 			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
@@ -141,7 +151,6 @@ const emit = defineEmits(['new-dataset-saved']);
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
-const autoExpandPreview = ref(<boolean>true);
 const actionTarget = ref('df');
 
 const newCsvContent: any = ref(null);
@@ -314,7 +323,7 @@ const confirmReset = () => {
 
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
-		header: 'Confirmation',
+		header: 'Reset kernel',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			resetKernel();
@@ -325,7 +334,7 @@ The code cells will need to be rerun.`,
 // Kernel Confirmation dialogs
 const confirmReconnect = () => {
 	confirm.require({
-		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} ?`,
+		message: `Are you sure you want to terminate ${runningSessions.value.length} ?`,
 		header: 'Confirmation',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
@@ -336,8 +345,8 @@ const confirmReconnect = () => {
 
 const confirmDeleteAll = () => {
 	confirm.require({
-		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} sessions?`,
-		header: 'Terminate All Kernels',
+		message: `Are you sure you want to terminate ${runningSessions.value.length} sessions?`,
+		header: 'Terminate all kernels',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			deleteAllKernels();
@@ -348,7 +357,7 @@ const confirmDeleteAll = () => {
 const confirmDelete = () => {
 	confirm.require({
 		message: `Are you sure you want to terminate session ${runningSessions.value.length}?`,
-		header: 'Terminate Kernel',
+		header: 'Terminate kernel',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			killKernel();
@@ -500,10 +509,8 @@ main .annotation-group {
 .data-transform-container {
 	display: flex;
 	flex-direction: column;
-	padding: 0.5rem;
 	padding-bottom: 5rem;
-	margin: 0.5rem;
-	max-height: 90%;
+	position: relative;
 }
 
 .kernel-status {
@@ -514,9 +521,19 @@ main .annotation-group {
 	margin-left: 10px;
 }
 
-.gpt-header {
+.toolbar {
 	display: flex;
-	width: 90%;
+	flex-direction: row;
+	align-items: center;
+	background-color: var(--surface-100);
+	border-top: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border-light);
+	position: sticky;
+	top: 0;
+	left: 0;
+	z-index: 2;
+	width: 100%;
+	padding: var(--gap-xsmall) var(--gap);
 }
 
 .variables-table {
