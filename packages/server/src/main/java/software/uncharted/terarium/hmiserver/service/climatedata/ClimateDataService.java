@@ -41,17 +41,17 @@ public class ClimateDataService {
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (climateDataResponse.getResult().getJobResult() != null) {
                 final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
-                int index = png.getPng().indexOf(',');
+                final int index = png.getPng().indexOf(',');
                 if (index > -1 && index + 1 < png.getPng().length()) {
-                    String pngBase64 = png.getPng().substring(index+1);
-                    byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
+                    final String pngBase64 = png.getPng().substring(index+1);
+                    final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
 
                     final String bucket = config.getFileStorageS3BucketName();
-                    final String key = String.join("/dataset", previewTask.getEsgfId());;
+                    final String key = String.join("/dataset", previewTask.getEsgfId());
 
                     s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
 
-                    ClimateDataPreview preview = new ClimateDataPreview();
+                    final ClimateDataPreview preview = new ClimateDataPreview();
                     preview.setEsgfId(previewTask.getEsgfId());
                     preview.setVariableId(previewTask.getVariableId());
                     preview.setTimestamps(previewTask.getTimestamps());
@@ -63,7 +63,7 @@ public class ClimateDataService {
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
             if (climateDataResponse.getResult().getJobError() != null) {
-                ClimateDataPreview preview = new ClimateDataPreview();
+                final ClimateDataPreview preview = new ClimateDataPreview();
                 preview.setEsgfId(previewTask.getEsgfId());
                 preview.setVariableId(previewTask.getVariableId());
                 preview.setTimestamps(previewTask.getTimestamps());
@@ -89,16 +89,16 @@ public class ClimateDataService {
     }
 
     public ResponseEntity<String> getPreview(final String esgfId, final String variableId, final String timestamps, final String timeIndex) {
-        final ClimateDataPreview preview = climateDataPreviewRepository.findByEsfgIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
+        final ClimateDataPreview preview = climateDataPreviewRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
         if (preview != null) {
             if (preview.getError() != null) {
                 return ResponseEntity.internalServerError().body(preview.getError());
             }
             // TODO: what is this url
-            String pngUrl = "";
+            final String pngUrl = "";
             return ResponseEntity.ok(pngUrl);
         }
-        final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByEsfgIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
+        final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
         if (task != null) {
             return ResponseEntity.accepted().build();
         }
