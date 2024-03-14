@@ -1,9 +1,5 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-
-export interface NotebookHistory {
-	code: string;
-	timestamp: number;
-}
+import { NotebookHistory } from '@/services/notebook';
 
 export interface ModelComparisonOperationState {
 	notebookHistory: NotebookHistory[];
@@ -25,7 +21,7 @@ export const ModelComparisonOperation: Operation = {
 	initState: () => {
 		const init: ModelComparisonOperationState = {
 			notebookHistory: [],
-			hasCodeBeenRun: false,
+			hasCodeRun: false,
 			structuralComparisons: []
 		};
 		return init;

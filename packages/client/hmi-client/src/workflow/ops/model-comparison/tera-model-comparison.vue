@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -136,6 +136,7 @@ import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotati
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { saveCodeToState } from '@/services/notebook';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -202,24 +203,8 @@ function formatField(field: string) {
 // 	console.log(gollmQuestion.value);
 // }
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
-const saveCodeToState = (hasCodeRun: boolean) => {
-	const state = cloneDeep(props.node.state);
-	state.hasCodeRun = hasCodeRun;
-	console.log(state);
-	// for now only save the last code executed, may want to save all code executed in the future
-	const notebookHistoryLength = props.node.state.notebookHistory?.length ?? 0;
-	const timestamp = Date.now();
-	if (notebookHistoryLength > 0) {
-		state.notebookHistory[0] = { code: code.value, timestamp };
-	} else {
-		state.notebookHistory.push({ code: code.value, timestamp });
-	}
-	return state;
-};
-
 function saveState() {
-	const state = saveCodeToState(true);
+	const state = saveCodeToState(props.node, code.value, true);
 	state.structuralComparisons = structuralComparisons.value;
 	emit('update-state', state);
 }
@@ -233,7 +218,6 @@ function runCode() {
 		stop_on_error: false,
 		code: editor?.getValue() as string
 	};
-	console.log(messageContent, structuralComparisons.value);
 	isLoadingStructuralComparisons.value = true;
 
 	kernelManager
@@ -271,9 +255,9 @@ async function buildJupyterContext() {
 			context: 'mira',
 			language: 'python3',
 			context_info: {
-				models: modelsToCompare.value.map((model, index) => ({
+				models: modelsToCompare.value.map((model) => ({
 					model_id: model.id,
-					name: `model_${index + 1}`
+					name: model.header.name.replace(/[^a-zA-Z0-9_]/g, '_') // Acceptable characters for python variable name
 				}))
 			}
 		};
