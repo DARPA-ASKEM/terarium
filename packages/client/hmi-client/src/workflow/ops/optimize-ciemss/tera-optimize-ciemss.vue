@@ -99,7 +99,7 @@
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label>Risk tolerance</label>
+							<label>Acceptable risk of failure</label>
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
