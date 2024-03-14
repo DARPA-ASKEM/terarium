@@ -461,9 +461,7 @@ const runOptimize = async () => {
 		}
 	};
 
-	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
-	console.log(optResult.simulationId);
 	await getOptimizeStatus(optResult.simulationId);
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
@@ -495,8 +493,6 @@ const runOptimize = async () => {
 	};
 
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
-	console.log('Simulation Response:');
-	console.log(simulationResponse);
 	getStatus(simulationResponse.id);
 };
 
@@ -513,7 +509,6 @@ const getStatus = async (runId: string) => {
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		console.log(pollerResults.state);
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
 		logger.error(`Simulate: ${runId} has failed`, {
@@ -544,7 +539,6 @@ const getOptimizeStatus = async (runId: string) => {
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		console.log(pollerResults.state);
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
 		logger.error(`Optimize Run: ${runId} has failed`, {
@@ -558,7 +552,6 @@ const getOptimizeStatus = async (runId: string) => {
 };
 
 const saveModelConfiguration = async () => {
-	console.log('save model Configuration');
 	if (!modelConfiguration.value) return;
 
 	const state = _.cloneDeep(props.node.state);
