@@ -118,7 +118,6 @@ onMounted(() => {
 	display: relative;
 	padding-top: 5px;
 	padding-bottom: 35px;
-	background-color: red;
 }
 
 .chat-input-container {
