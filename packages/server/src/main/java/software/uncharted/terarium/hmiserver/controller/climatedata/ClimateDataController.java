@@ -4,6 +4,8 @@ package software.uncharted.terarium.hmiserver.controller.climatedata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,10 @@ public class ClimateDataController {
 
 	@GetMapping("/search-esgf")
 	@Secured(Roles.USER)
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Search ESGF and get a list of datasets"),
+			@ApiResponse(responseCode = "500", description = "Internal server error")
+	})
 	public ResponseEntity<List<Dataset>> searchEsgf(@RequestParam("query") final String query) {
 		try {
 			final ResponseEntity<JsonNode> response = climateDataProxy.searchEsgf(query);
@@ -60,6 +66,10 @@ public class ClimateDataController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 
+		} catch(final Exception e) {
+			final String error = "Unable to search ESGF";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -104,11 +114,32 @@ public class ClimateDataController {
 		return ResponseEntity.accepted().build();
 	}
 
-	@GetMapping("/fetch-esgf/{datasetId}")
+	@GetMapping("/fetch-esgf/{esgfId}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> fetchEsgf(@PathVariable final UUID datasetId) {
-//		final ResponseEntity<JsonNode> response = climateDataProxy.fetchEsgf(datasetId.toString());
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Fetch ESGF dataset"),
+			@ApiResponse(responseCode = "500", description = "Internal server error")
+	})
+	public ResponseEntity<Dataset> fetchEsgf(@PathVariable final String esgfId) {
+		try{
+			final ResponseEntity<JsonNode> response = climateDataProxy.fetchEsgf(esgfId);
 
-		return ResponseEntity.status(413).build();
+			final Dataset dataset = new Dataset();
+			dataset.setEsgfId(esgfId);
+			dataset.setMetadata(response.getBody());
+			dataset.setName(esgfId);
+
+			return ResponseEntity.ok(dataset);
+		} catch(final FeignException.FeignClientException e) {
+			final String error = "Unable to fetch ESGF";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		} catch(final Exception e) {
+			final String error = "Unable to fetch ESGF";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
 	}
 }
