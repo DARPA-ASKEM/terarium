@@ -282,7 +282,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import { Vue3Lottie } from 'vue3-lottie';
-import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
