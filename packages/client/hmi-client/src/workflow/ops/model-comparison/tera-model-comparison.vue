@@ -140,6 +140,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -150,7 +151,7 @@ import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
 import type { Model } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -161,6 +162,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { saveCodeToState } from '@/services/notebook';
+import { getImages, updateImage } from '@/services/image';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -228,16 +230,17 @@ function formatField(field: string) {
 // 	console.log(gollmQuestion.value);
 // }
 
-function saveState() {
+function saveState(newImageId?: string, clearImages = false) {
 	const state = saveCodeToState(props.node, code.value, true);
-	state.structuralComparisons = structuralComparisons.value;
+	if (newImageId) state.compareImageIds.push(newImageId);
+	if (clearImages) state.compareImageIds = [];
 	emit('update-state', state);
 }
 
 function resetNotebook() {
 	code.value = '';
 	structuralComparisons.value = [];
-	saveState();
+	saveState(undefined, true);
 }
 
 function runCode() {
@@ -255,9 +258,12 @@ function runCode() {
 	kernelManager
 		.sendMessage('execute_request', messageContent)
 		.register('display_data', (data) => {
-			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
+			const newImageId = uuidv4();
+			const newImage = `data:image/png;base64,${data.content.data['image/png']}`;
+			structuralComparisons.value.push(newImage);
+			updateImage(newImageId, newImage);
+			saveState(newImageId);
 			isLoadingStructuralComparisons.value = false;
-			saveState();
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
@@ -306,6 +312,12 @@ async function buildJupyterContext() {
 }
 
 onMounted(async () => {
+	if (!isEmpty(props.node.state.compareImageIds)) {
+		isLoadingStructuralComparisons.value = true;
+		structuralComparisons.value = await getImages(props.node.state.compareImageIds);
+		isLoadingStructuralComparisons.value = false;
+	}
+
 	props.node.inputs.forEach((input) => {
 		if (input.value) {
 			addModelForComparison(input.value[0]);
@@ -313,7 +325,7 @@ onMounted(async () => {
 	});
 
 	const modelIds = props.node.inputs
-		.filter((input) => input.status === 'connected')
+		.filter((input) => input.status === WorkflowPortStatus.Connected)
 		.map((input) => input.value?.[0]);
 	processCompareModels(modelIds);
 });

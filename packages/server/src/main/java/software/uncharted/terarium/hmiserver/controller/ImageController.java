@@ -25,10 +25,8 @@ public class ImageController {
 
     @PutMapping("/{id}")
     @Secured(Roles.USER)
-    public ResponseEntity<Void> storeImage(@PathVariable UUID id,
-                                         @RequestParam(value = "data", required = true) final String base64Data) {
+    public ResponseEntity<Void> storeImage(@PathVariable UUID id, @RequestBody final String base64Data) {
         imageService.storeImage(id, base64Data);
-
         return ResponseEntity.ok().build();
     }
 }

@@ -4,7 +4,7 @@ import { NotebookHistory } from '@/services/notebook';
 export interface ModelComparisonOperationState {
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
-	structuralComparisons: string[];
+	comparisonImageIds: string[];
 }
 
 export const ModelComparisonOperation: Operation = {
@@ -22,7 +22,7 @@ export const ModelComparisonOperation: Operation = {
 		const init: ModelComparisonOperationState = {
 			notebookHistory: [],
 			hasCodeRun: false,
-			structuralComparisons: []
+			comparisonImageIds: []
 		};
 		return init;
 	}
