@@ -100,6 +100,7 @@ import {
 	FACET_FIELDS as XDD_FACET_FIELDS,
 	GITHUB_URL,
 	XDD_RESULT_DEFAULT_PAGE_SIZE,
+	XDDSearchParams,
 	YEAR
 } from '@/types/XDD';
 import useQueryStore from '@/stores/query';
@@ -113,6 +114,8 @@ import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.v
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
+import { DatasetSearchParams, DatasetSource } from '@/types/Dataset';
+import { ModelSearchParams } from '@/types/Model';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
 
@@ -178,8 +181,8 @@ const topicOptions = ref([
 const sourceOptions = ref(['xDD', 'Terarium']);
 const chosenSource = ref('xDD');
 
-const datasetSourceOptions: Ref<string[]> = ref(['ESGF', 'Terarium']);
-const chosenDatasetSource: Ref<string> = ref('Terarium');
+const datasetSourceOptions: Ref<DatasetSource[]> = ref(Object.values(DatasetSource));
+const chosenDatasetSource: Ref<DatasetSource> = ref(DatasetSource.TERARIUM);
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
@@ -271,7 +274,10 @@ const executeSearch = async () => {
 			known_entities: 'url_extractions,askem_object'
 		},
 		model: {},
-		dataset: {}
+		[ResourceType.DATASET]: {
+			source: chosenDatasetSource.value,
+			topic: 'covid-19'
+		}
 	};
 
 	// handle the search-by-example for finding related documents, models, and/or datasets
@@ -308,12 +314,12 @@ const executeSearch = async () => {
 			assetType.value = AssetType.Dataset;
 		}
 	}
-	const searchParamsWithFacetFilters = cloneDeep(searchParams);
+	const searchParamsWithFacetFilters: SearchParameters = cloneDeep(searchParams);
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
+	const xddSearchParams: XDDSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -344,17 +350,21 @@ const executeSearch = async () => {
 		}
 	});
 
-	let modelSearchParams;
+	let modelSearchParams: ModelSearchParams;
 	if (searchParamsWithFacetFilters?.[ResourceType.MODEL]?.filters) {
 		modelSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
 	} else {
 		modelSearchParams = { filters: clientFilters.value };
 	}
-	let datasetSearchParams;
+	let datasetSearchParams: DatasetSearchParams;
 	if (searchParamsWithFacetFilters?.[ResourceType.DATASET]?.filters) {
-		datasetSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+		datasetSearchParams = searchParamsWithFacetFilters[ResourceType.DATASET];
 	} else {
-		datasetSearchParams = { filters: clientFilters.value };
+		datasetSearchParams = {
+			filters: clientFilters.value,
+			source: chosenDatasetSource.value,
+			topic: 'covid-19' // TODO - this should be dynamic
+		};
 	}
 
 	// update search parameters object

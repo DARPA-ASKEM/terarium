@@ -5,6 +5,8 @@ export type DatasetSearchParams = {
 	filters?: Filters;
 	related_search_id?: string;
 	related_search_enabled?: boolean; // if true, then perform a search by example by finding related datasets
+	source: DatasetSource;
+	topic: string;
 };
 
 //
@@ -14,6 +16,11 @@ export const ID = 'id';
 export const NAME = 'name';
 export const DESCRIPTION = 'description';
 export const SIMULATION_RUN = 'simulation_run';
+
+export enum DatasetSource {
+	ESGF = 'ESGF',
+	TERARIUM = 'Terarium'
+}
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
 	[NAME]: 'Dataset Name',
