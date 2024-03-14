@@ -187,7 +187,8 @@ public class MiraController {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
-					error);
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				error);
 		}
 	}
 
