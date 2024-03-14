@@ -69,9 +69,9 @@ public class ClimateDataController {
 	@GetMapping("/subset-esgf/{esgfId}")
 	@Secured(Roles.USER)
 	public ResponseEntity<String> subsetEsgf(@PathVariable final String esgfId,
-																						 @RequestParam(value = "parent-dataset-id", required = false) final UUID parentDatasetId,
+																						 @RequestParam(value = "parent-dataset-id", required = true) final String parentDatasetId,
 																						 @RequestParam(value = "timestamps", required = false) final String timestamps,
-																						 @RequestParam(value = "envelope") final String envelope,
+																						 @RequestParam(value = "envelope", required = true) final String envelope,
 																						 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
 		ResponseEntity<String> subsetResponse = climateDataService.getSubset(esgfId, envelope, timestamps, thinFactor);

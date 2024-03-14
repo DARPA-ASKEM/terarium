@@ -86,8 +86,10 @@ public class ClimateDataService {
 
         for (final ClimateDataSubsetTask subsetTask : subsetTasks) {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(subsetTask.getStatusId());
+            log.info("Received Subset Response: " + response.getBody().toString());
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
-            if (climateDataResponse.getResult().getJobResult() != null) {
+            if (!climateDataResponse.getResult().getJobResult().isNull()) {
+                log.info("Received Subset Response: " + climateDataResponse.getResult().getJobResult().toString());
                 final String bucket = config.getFileStorageS3BucketName();
                 final String key = getPreviewFilename(subsetTask.getEsgfId(), subsetTask.getEnvelope());
 
@@ -99,7 +101,8 @@ public class ClimateDataService {
 
                 climateDataSubsetTaskRepository.delete(subsetTask);
             }
-            if (climateDataResponse.getResult().getJobError() != null) {
+            if (!climateDataResponse.getResult().getJobError().isNull()) {
+                log.info("Received Subset Response: " + climateDataResponse.getResult().getJobResult().toString());
                 final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, climateDataResponse.getResult().getJobError());
                 climateDataSubsetRepository.save(subset);
 
