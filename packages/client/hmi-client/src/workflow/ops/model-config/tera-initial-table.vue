@@ -221,17 +221,15 @@ const initials = computed<Map<string, string[]>>(() => {
 });
 
 const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
+	const configuration = props.modelConfiguration.configuration;
 	const formattedInitials: ModelConfigTableData[] = [];
 
 	if (stratifiedModelType.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = props.modelConfiguration.configuration.semantics.ode.initials.find(
-					(i) => i.target === v
-				);
+				const initial = configuration.semantics.ode.initials.find((i) => i.target === v);
 
-				const initialsMetadata =
-					props.modelConfiguration.configuration.metadata.initials?.[initial!.target];
+				const initialsMetadata = configuration.metadata.initials?.[initial!.target];
 				const sourceValue = initialsMetadata?.source;
 				const unitValue = initialsMetadata?.unit;
 				const descriptionValue = initialsMetadata?.description;
@@ -262,11 +260,8 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		initials.value.forEach((vals, init) => {
-			const initial = props.modelConfiguration.configuration.semantics.ode.initials.find(
-				(i) => i.target === vals[0]
-			);
-			const initialsMetadata =
-				props.modelConfiguration.configuration.metadata.initials?.[initial!.target];
+			const initial = configuration.semantics.ode.initials.find((i) => i.target === vals[0]);
+			const initialsMetadata = configuration.metadata.initials?.[initial!.target];
 			const sourceValue = initialsMetadata?.source;
 			const unitValue = initialsMetadata?.unit;
 			const descriptionValue = initialsMetadata?.description;

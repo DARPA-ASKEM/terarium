@@ -328,6 +328,7 @@ const getParamType = (param: ModelParameter | undefined) => {
 };
 
 const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
+	const configuration = props.modelConfiguration.configuration;
 	const formattedParams: ModelConfigTableData[] = [];
 
 	if (stratifiedModelType.value) {
@@ -335,17 +336,13 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				let param;
 				if (modelType.value === AMRSchemaNames.REGNET) {
-					param = props.modelConfiguration.configuration.model.parameters.find((i) => i.id === v);
+					param = configuration.model.parameters.find((i) => i.id === v);
 				} else {
-					param = props.modelConfiguration.configuration.semantics.ode.parameters.find(
-						(i) => i.id === v
-					);
+					param = configuration.semantics.ode.parameters.find((i) => i.id === v);
 				}
 				const paramType = getParamType(param);
-				const timeseriesValue =
-					props.modelConfiguration.configuration.metadata?.timeseries[param!.id];
-				const parametersMetadata =
-					props.modelConfiguration.configuration.metadata?.parameters?.[param!.id];
+				const timeseriesValue = configuration.metadata?.timeseries[param!.id];
+				const parametersMetadata = configuration.metadata?.parameters?.[param!.id];
 				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
@@ -376,21 +373,15 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 		parameters.value.forEach((vals, init) => {
 			let param;
 			if (modelType.value === AMRSchemaNames.REGNET) {
-				param = props.modelConfiguration.configuration.model.parameters.find(
-					(i) => i.id === vals[0]
-				);
+				param = configuration.model.parameters.find((i) => i.id === vals[0]);
 			} else {
-				param = props.modelConfiguration.configuration.semantics.ode.parameters.find(
-					(i) => i.id === vals[0]
-				);
+				param = configuration.semantics.ode.parameters.find((i) => i.id === vals[0]);
 			}
 
 			const paramType = getParamType(param);
 
-			const timeseriesValue =
-				props.modelConfiguration.configuration.metadata?.timeseries[param!.id];
-			const parametersMetadata =
-				props.modelConfiguration.configuration.metadata?.parameters?.[param!.id];
+			const timeseriesValue = configuration.metadata?.timeseries[param!.id];
+			const parametersMetadata = configuration.metadata?.parameters?.[param!.id];
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
