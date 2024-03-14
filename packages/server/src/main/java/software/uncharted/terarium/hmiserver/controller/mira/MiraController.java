@@ -116,7 +116,7 @@ public class MiraController {
 			return ResponseEntity.ok().body(mmtInfo);
 		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
-			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
+			log.error("Unable to convert Model to MIRA model template. \n{}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 				"Unable to convert Model to MIRA model template.");
