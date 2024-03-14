@@ -184,7 +184,7 @@ const sampleAgentQuestions = [
 ];
 
 const isLoadingStructuralComparisons = ref(false);
-const structuralComparisons = ref(props.node.state.structuralComparisons ?? []);
+const structuralComparisons = ref<string>([]);
 const llmAnswer = ref('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const isKernelReady = ref(false);
