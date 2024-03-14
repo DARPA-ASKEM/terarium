@@ -456,7 +456,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numStochasticSamples,
 			maxiter: 5,
 			maxfeval: 5,
-			alpha: 100 - knobs.value.riskTolerance,
+			alpha: (100 - knobs.value.riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
 		}
 	};
