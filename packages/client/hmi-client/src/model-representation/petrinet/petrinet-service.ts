@@ -1,8 +1,5 @@
-import API from '@/api/api';
 import { updateModelConfiguration } from '@/services/model-configurations';
-import { Model, ModelConfiguration, PetriNetModel, PetriNetTransition } from '@/types/Types';
-import { logger } from '@/utils/logger';
-import { AxiosError } from 'axios';
+import { Model, ModelConfiguration, PetriNetModel } from '@/types/Types';
 
 export interface NodeData {
 	type: string;
@@ -18,73 +15,6 @@ export enum StratifiedModel {
 	Mira = 'mira',
 	Catlab = 'catlab'
 }
-
-// Transform list of mathML strings to a petrinet ascet
-export const mathmlToPetri = async (mathml: string[]) => {
-	try {
-		const resp = await API.post('/transforms/mathml-to-acset', mathml);
-
-		if (resp && resp.status === 200 && resp.data) {
-			return resp.data;
-		}
-		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('mathmlToPetri Error: ', axiosError.response?.data || axiosError.message, {
-				showToast: false
-			});
-		} else {
-			logger.error(error, { showToast: false });
-		}
-	}
-	return null;
-};
-
-// Update a transition's expression and expression_mathml fields based on
-// mass-kinetics
-export const updateRateExpression = (
-	amr: Model,
-	transition: PetriNetTransition,
-	transitionExpression: string
-) => {
-	const param = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
-	if (!param) return;
-
-	updateRateExpressionWithParam(amr, transition, `${param.target}Param`, transitionExpression);
-};
-
-export const updateRateExpressionWithParam = (
-	amr: Model,
-	transition: PetriNetTransition,
-	parameterId: string,
-	transitionExpression: string
-) => {
-	const rate = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
-	if (!rate) return;
-
-	let expression = '';
-	let expressionMathml = '';
-
-	if (transitionExpression === '') {
-		const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
-		const inputStr = transition.input.map((d) => `${d}`);
-		if (!param) return;
-		// eslint-disable-next-line
-		expression = inputStr.join('*') + '*' + param.id;
-		// eslint-disable-next-line
-		expressionMathml =
-			`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
-			`</apply>`;
-	} else {
-		expression = transitionExpression;
-		expressionMathml = transitionExpression;
-	}
-
-	rate.target = transition.id;
-	rate.expression = expression;
-	rate.expression_mathml = expressionMathml;
-};
 
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
