@@ -73,6 +73,7 @@
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
+					<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
 					<Button
 						icon="pi pi-play"
 						label="Run"
@@ -233,6 +234,12 @@ function saveState() {
 	emit('update-state', state);
 }
 
+function resetNotebook() {
+	code.value = '';
+	structuralComparisons.value = [];
+	saveState();
+}
+
 function runCode() {
 	const messageContent = {
 		silent: false,
@@ -242,6 +249,7 @@ function runCode() {
 		stop_on_error: false,
 		code: editor?.getValue() as string
 	};
+	structuralComparisons.value = [];
 	isLoadingStructuralComparisons.value = true;
 
 	kernelManager
