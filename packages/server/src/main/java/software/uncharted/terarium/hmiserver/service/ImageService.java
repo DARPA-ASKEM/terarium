@@ -7,6 +7,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,12 +23,13 @@ public class ImageService {
      * @param id - unique id to identify the image by
      * @return
      */
-    public String getImageUrl(String id) {
+    public String getImageUrl(UUID id) {
         final String filename = getFilename(id);
         final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
         if (url.isPresent()) {
             url.get();
         }
+				return url.toString();
     }
 
     /**
@@ -35,7 +37,7 @@ public class ImageService {
      * @param id - unique id to identify the image by
      * @param base64Data image encoded in base64, prefixed by
      */
-    public void storeImage(String id, String base64Data) {
+    public void storeImage(UUID id, String base64Data) {
         final int index = base64Data.indexOf(',');
         if (index > -1 && index + 1 < base64Data.length()) {
             final String pngBase64 = base64Data.substring(index + 1);
@@ -48,7 +50,7 @@ public class ImageService {
         }
     }
 
-    private String getFilename(String id) {
-        return String.join("/image", id);
+    private String getFilename(UUID id) {
+        return String.join("/image", id.toString());
     }
 }

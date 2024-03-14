@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -15,7 +17,7 @@ public class ImageController {
 
     @GetMapping("/{id}")
     @Secured(Roles.USER)
-    public ResponseEntity<String> getImageUrl(@PathVariable String id) {
+    public ResponseEntity<String> getImageUrl(@PathVariable UUID id) {
         String url = imageService.getImageUrl(id);
 
         return ResponseEntity.ok(url);
@@ -23,7 +25,7 @@ public class ImageController {
 
     @PutMapping("/{id}")
     @Secured(Roles.USER)
-    public ResponseEntity<Void> storeImage(@PathVariable String id,
+    public ResponseEntity<Void> storeImage(@PathVariable UUID id,
                                          @RequestParam(value = "data", required = true) final String base64Data) {
         imageService.storeImage(id, base64Data);
 
