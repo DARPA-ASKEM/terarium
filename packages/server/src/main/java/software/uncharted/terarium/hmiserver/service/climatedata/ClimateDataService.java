@@ -106,8 +106,6 @@ public class ClimateDataService {
                 climateDataSubsetTaskRepository.delete(subsetTask);
             }
         }
-
-        // TODO: work on subset jobs
     }
 
     private String getPreviewFilename(String esgfId, String variableId) {
