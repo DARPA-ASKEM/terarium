@@ -28,7 +28,7 @@ export async function getModel(modelId: string): Promise<Model | null> {
 //
 // Retrieve multiple datasets by their IDs
 // FIXME: the backend does not support bulk fetch
-//        so for now we are fetching by issueing multiple API calls
+//        so for now we are fetching by issuing multiple API calls
 export async function getBulkModels(modelIDs: string[]) {
 	const result: Model[] = [];
 	const promiseList = [] as Promise<Model | null>[];
@@ -42,6 +42,16 @@ export async function getBulkModels(modelIDs: string[]) {
 		}
 	});
 	return result;
+}
+
+// Note: will not work with decapodes
+export async function getMMT(model: Model) {
+	const response = await API.post('/mira/amr-to-mmt', model);
+
+	const miraModel = response?.data?.response;
+	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
+
+	return response?.data?.response ?? null;
 }
 
 /**
@@ -70,16 +80,6 @@ export async function getModelConfigurations(modelId: Model['id']): Promise<Mode
 	return response?.data ?? ([] as ModelConfiguration[]);
 }
 
-/**
- * Reconstruct an petrinet AMR's ode semantics
- *
- * @deprecated moving to mira-stratify
- */
-export async function reconstructAMR(amr: any) {
-	const response = await API.post('/mira/reconstruct-ode-semantics', amr);
-	return response?.data;
-}
-
 // function adds model to project, returns modelId if successful otherwise null
 export async function addNewPetrinetModelToProject(modelName: string): Promise<string | null> {
 	// 1. Load an empty AMR
@@ -102,7 +102,7 @@ export async function processAndAddModelToProject(artifact: Artifact): Promise<s
 
 // A helper function to check if a model is empty.
 export function isModelEmpty(model: Model) {
-	if (model.header.schema_name === 'petrinet') {
+	if (getModelType(model) === AMRSchemaNames.PETRINET) {
 		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
 	}
 	// TODO: support different frameworks' version of empty
@@ -189,6 +189,9 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	}
 	if (schemaName === 'stockflow') {
 		return AMRSchemaNames.STOCKFLOW;
+	}
+	if (schemaName === 'decapodes' || schemaName === 'decapode') {
+		return AMRSchemaNames.DECAPODES;
 	}
 	return AMRSchemaNames.PETRINET;
 }

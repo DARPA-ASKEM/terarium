@@ -79,7 +79,7 @@ public class SearchByAssetTypeController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
 	})
 	public ResponseEntity<List<JsonNode>> searchByAssetType(
-			@PathVariable("asset-type") final AssetType assetType,
+			@PathVariable("asset-type") final String assetTypeName,
 			@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
 			@RequestParam(value = "text", defaultValue = "") final String text,
@@ -87,6 +87,7 @@ public class SearchByAssetTypeController {
 			@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates,
 			@RequestParam(value = "embedding-model", defaultValue = EMBEDDING_MODEL) final String embeddingModel,
 			@RequestParam(value = "index", defaultValue = "") String index) {
+		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 		try {
 
 			if (index.equals("")) {
