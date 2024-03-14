@@ -44,7 +44,7 @@ public class ClimateDataService {
         for (final ClimateDataPreviewTask previewTask : previewTasks) {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getStatusId());
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
-            if (climateDataResponse.getResult().getJobResult() != null) {
+            if (!climateDataResponse.getResult().getJobResult().isNull()) {
                 final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
                 if (png != null && png.getPng() != null) {
                     final int index = png.getPng().indexOf(',');
@@ -71,7 +71,7 @@ public class ClimateDataService {
 
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
-            if (climateDataResponse.getResult().getJobError() != null) {
+            if (!climateDataResponse.getResult().getJobError().isNull()) {
                 final ClimateDataPreview preview = new ClimateDataPreview(previewTask, climateDataResponse.getResult().getJobError());
                 climateDataPreviewRepository.save(preview);
 
