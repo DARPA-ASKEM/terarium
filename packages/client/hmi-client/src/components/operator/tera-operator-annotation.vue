@@ -2,12 +2,14 @@
 	<section :class="{ 'in-node': inNode, 'is-editing': isEditing }">
 		<template v-if="isEditing">
 			<Textarea
+				v-focus
 				v-model="annotation"
 				placeholder="Add a note..."
 				autoResize
 				rows="1"
 				@click.stop
 				@keydown.enter.prevent="saveAnnotation"
+				@keydown.esc.prevent="saveAnnotation"
 			/>
 			<div class="btn-group">
 				<Button icon="pi pi-trash" rounded text @click="deleteAnnotation" />
@@ -15,13 +17,12 @@
 			</div>
 		</template>
 		<div v-else-if="!isEmpty(annotation)" class="annotation">
-			<p>{{ annotation }}</p>
-			<Button icon="pi pi-pencil" rounded text @click="isEditing = true" />
+			<p @click="isEditing = true">{{ annotation }}</p>
 		</div>
 	</section>
 	<Button
 		v-if="!inNode && isEmpty(annotation) && !isEditing"
-		class="add-a-note"
+		class="add-a-note mr-auto"
 		label="Add a note"
 		icon="pi pi-pencil"
 		size="small"
@@ -96,6 +97,13 @@ section {
 		display: flex;
 		justify-content: space-between;
 		width: 100%;
+		font-size: var(--font-caption);
+		color: var(--text-color-subdued);
+		cursor: text;
+	}
+
+	& > .p-inputtext {
+		font-size: var(--font-caption);
 	}
 
 	&.in-node {
@@ -110,8 +118,8 @@ section {
 
 	/* In drilldown */
 	&:not(.in-node) {
-		background-color: var(--surface-section);
-		padding: var(--gap-xsmall) var(--gap-small) var(--gap-xsmall) var(--gap);
+		padding-bottom: var(--gap-small);
+		padding-left: var(--gap-small);
 		border-radius: var(--border-radius);
 		gap: var(--gap-small);
 		& > textarea {
@@ -129,7 +137,7 @@ section {
 		}
 
 		&.is-editing {
-			padding: var(--gap-xsmall) var(--gap-small);
+			padding: 0;
 		}
 	}
 }
