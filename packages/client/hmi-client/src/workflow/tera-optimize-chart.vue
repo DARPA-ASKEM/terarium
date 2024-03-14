@@ -50,6 +50,10 @@ const setChartOptions = () => ({
 	},
 	scales: {
 		x: {
+			title: {
+				display: true,
+				text: 'Number of Samples'
+			},
 			ticks: {
 				color: '#aaa',
 				maxTicksLimit: 5,
@@ -63,6 +67,10 @@ const setChartOptions = () => ({
 			}
 		},
 		y: {
+			title: {
+				display: true,
+				text: props.targetVariable
+			},
 			ticks: {
 				color: '#aaa',
 				includeBounds: true,
