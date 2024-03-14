@@ -25,16 +25,19 @@
 		</Column>
 
 		<!-- Value type: Matrix or Expression, or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
-		<Column field="type" header="Value type" class="w-2">
+		<Column field="type" header="Type" class="w-2">
 			<template #body="slotProps">
+				<!-- Matrix -->
 				<Button
-					text
 					v-if="slotProps.data.type === ParamType.MATRIX"
+					text
 					icon="pi pi-table"
 					label="Matrix"
 					@click="openMatrixModal(slotProps.data)"
 					class="p-0"
 				/>
+
+				<!-- Expression -->
 				<span
 					v-else-if="slotProps.data.type === ParamType.EXPRESSION"
 					class="flex align-items-center"
@@ -42,29 +45,27 @@
 					<span class="custom-icon-expression mr-2" />
 					Expression
 				</span>
+
+				<!-- Constant, Distribution, and Time Varying -->
 				<Dropdown
 					v-else
 					class="value-type-dropdown w-9"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
-					optionValue="value"
-					placeholder="Select a parameter type"
-					@update:model-value="(val) => changeType(slotProps.data.value, val)"
+					optionValue="paramType"
+					@update:model-value="(paramType: ParamType) => changeType(slotProps.data, paramType)"
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
-							<span
-								class="p-dropdown-item-icon mr-2"
-								:class="typeOptions[slotProps.value].icon"
-							></span>
-							<span>{{ typeOptions[slotProps.value].label }}</span>
+							<span class="p-dropdown-item-icon mr-2" :class="typeOptions[slotProps.value].icon" />
+							{{ typeOptions[slotProps.value].label }}
 						</span>
 					</template>
 					<template #option="slotProps">
 						<span class="flex align-items-center">
-							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon"></span>
-							<span>{{ slotProps.option.label }}</span>
+							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon" />
+							{{ slotProps.option.label }}
 						</span>
 					</template>
 				</Dropdown>
@@ -79,8 +80,9 @@
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
 					class="cursor-pointer secondary-text"
-					>Click to open</span
 				>
+					Click to open
+				</span>
 
 				<!-- Expression -->
 				<span v-else-if="slotProps.data.type === ParamType.EXPRESSION">
@@ -136,10 +138,10 @@
 					/>
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
 					<Button
-						class="ml-2 pt-0 pb-0 w-5"
+						class="ml-2 py-0 w-5"
 						text
-						@click="changeType(slotProps.data.value, 1)"
-						v-tooltip="'Convert to distribution'"
+						@click="constantToDistribution(slotProps.data)"
+						v-tooltip.top="'Convert to distribution'"
 					>
 						<span class="white-space-nowrap text-sm">Add ±</span>
 						<InputNumber
@@ -151,7 +153,6 @@
 							suffix="%"
 							:min="0"
 							:max="100"
-							@click.stop=""
 						/>
 					</Button>
 				</span>
@@ -191,6 +192,7 @@
 				<InputSwitch v-model="slotProps.data.visibility" @click.stop />
 			</template>
 		</Column> -->
+
 		<template #expansion="slotProps">
 			<tera-model-config-table
 				hide-header
@@ -217,15 +219,20 @@
 		/>
 	</Teleport>
 
-	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
+	<canvas id="matrix-canvas" />
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type { ModelConfiguration, ModelParameter, Initial } from '@/types/Types';
+import type {
+	Initial,
+	ModelConfiguration,
+	ModelDistribution,
+	ModelMetadata,
+	ModelParameter
+} from '@/types/Types';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
@@ -235,13 +242,19 @@ import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common'
 import Dropdown from 'primevue/dropdown';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
-import { cloneDeep } from 'lodash';
 import { getModelType } from '@/services/model';
+import { cloneDeep } from 'lodash';
 
-const typeOptions = [
-	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
-	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
+interface Option {
+	label: string;
+	paramType: ParamType;
+	icon: string;
+}
+
+const typeOptions: Option[] = [
+	{ label: 'Constant', paramType: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
+	{ label: 'Distribution', paramType: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
+	{ label: 'Time varying', paramType: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
 ];
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -258,16 +271,20 @@ const matrixModalContext = ref({
 });
 
 const modelType = computed(() => getModelType(props.modelConfiguration.configuration));
+const stratifiedModelType = computed(() =>
+	getStratificationType(props.modelConfiguration.configuration)
+);
 
 const addPlusMinus = ref(10);
 
 const errorMessage = ref('');
 
 const expandedRows = ref([]);
+
 const isInitial = (obj: Initial | ModelParameter): obj is Initial => 'target' in obj;
 
 const openMatrixModal = (datum: ModelConfigTableData) => {
-	// Matrix effect easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
+	// Matrix effect Easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
 	matrixEffect();
 
 	const id = datum.id;
@@ -310,67 +327,121 @@ const validateTimeSeries = (values: string) => {
 	return isValid;
 };
 
-const changeType = (param: ModelParameter, typeIndex: number) => {
-	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
-	const type = typeOptions[typeIndex];
+/**
+ * Change the type of the parameter
+ * @param data The parameter to change
+ * @param newParamType The new ParamType
+ */
+const changeType = (data: ModelConfigTableData, newParamType: ParamType) => {
+	console.debug('Changing type', data, newParamType);
+	// Keep the previous value for the previous ParamType
+	if (!data.values) data.values = new Map();
+	data.values.set(data.type, data.value);
+
+	data.type = newParamType;
+
+	// Define default values for different ParamTypes
+	let defaultValue: any;
+	if (newParamType === ParamType.DISTRIBUTION) {
+		defaultValue = {
+			type: 'Uniform1',
+			parameters: {
+				minimum: 0,
+				maximum: 0
+			}
+		} as ModelDistribution;
+	} else if (newParamType === ParamType.TIME_SERIES) {
+		defaultValue = { [data.id]: '' } as ModelMetadata['timeseries'];
+	} else {
+		// ParamType.CONSTANT
+		defaultValue = 0;
+	}
+
+	// Set the value based on the new ParamType
+	if (data.values.has(newParamType)) {
+		data.value = data.values.get(newParamType) ?? defaultValue;
+	} else {
+		data.value = defaultValue;
+	}
+
+	// Update the configuration
+	replaceParameter(data);
+};
+
+function constantToDistribution(data: ModelConfigTableData) {
+	const constant = data.value as number;
+
+	// Save the current value into the values map
+	if (!data.values) data.values = new Map();
+	data.values.set(ParamType.CONSTANT, constant);
+
+	// Create the distribution
+	const newDistribution: ModelDistribution = {
+		type: 'Uniform1',
+		parameters: {
+			minimum: constant - (constant * addPlusMinus.value) / 100,
+			maximum: constant + (constant * addPlusMinus.value) / 100
+		}
+	};
+
+	// Save the distribution as value and into the values map
+	data.type = ParamType.DISTRIBUTION;
+	data.value = newDistribution;
+	data.values.set(ParamType.DISTRIBUTION, newDistribution);
+
+	// Update the configuration
+	replaceParameter(data);
+}
+
+/**
+ * Replace the parameter in the model configuration with the new data
+ * @param data The new data
+ */
+const replaceParameter = (data: ModelConfigTableData) => {
+	// Clone the model configuration
 	const clonedConfig = cloneDeep(props.modelConfiguration);
 
-	let idx;
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		idx = clonedConfig.configuration.semantics.ode.parameters.findIndex((p) => p.id === param.id);
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		idx = clonedConfig.configuration.model.parameters.findIndex((p) => p.id === param.id);
+	// Fetch the parameter to be updated
+	const isPetrinetOrStockflow =
+		modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW;
+	const parameters = isPetrinetOrStockflow
+		? clonedConfig.configuration.semantics.ode.parameters
+		: clonedConfig.configuration.model.parameters;
+	const parameter = parameters.find((p) => p.id === data.id);
+
+	// Make sure we have a parameter to update
+	if (!parameter) {
+		console.warn(`Parameter ${data.id} not found in the configuration`);
+		return;
 	}
-	switch (type.value) {
-		case ParamType.CONSTANT:
-			delete param.distribution;
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			replaceParam(clonedConfig, param, idx);
-			break;
-		case ParamType.DISTRIBUTION:
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			param.distribution = {
-				type: 'Uniform1',
-				parameters: {
-					minimum: 0,
-					maximum: 0
-				}
-			};
-			replaceParam(clonedConfig, param, idx);
-			break;
-		case ParamType.TIME_SERIES:
-			delete param.distribution;
-			if (!clonedConfig.configuration.metadata?.timeseries) {
-				clonedConfig.configuration.metadata.timeseries = {};
-			}
-			replaceParam(clonedConfig, param, idx);
-			clonedConfig.configuration.metadata.timeseries[param.id] = '';
-			break;
-		default:
-			break;
+
+	// Delete the old parameter values from the configuration
+	delete parameter?.value; // Constant
+	delete parameter?.distribution; // Distribution
+	delete clonedConfig.configuration.metadata?.timeseries?.[parameter.id]; // Timeseries
+
+	// Update the parameter with the new value
+	if (data.type === ParamType.CONSTANT) {
+		parameter.value = data.value;
+	} else if (data.type === ParamType.DISTRIBUTION) {
+		parameter.distribution = data.value as ModelDistribution;
+	} else if (data.type === ParamType.TIME_SERIES) {
+		if (!clonedConfig.configuration?.metadata?.timeseries) {
+			clonedConfig.configuration.metadata.timeseries = {};
+		}
+		clonedConfig.configuration.metadata.timeseries[parameter.id] =
+			data.value as ModelMetadata['timeseries'];
 	}
+
 	emit('update-configuration', clonedConfig);
 };
 
-const stratifiedModelType = computed(() =>
-	getStratificationType(props.modelConfiguration.configuration)
-);
-
-const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		config.configuration.semantics.ode.parameters[index] = param;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		config.configuration.model.parameters[index] = param;
-	}
-};
-
 const updateExpression = async (value: Initial) => {
-	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
-	value.expression_mathml = mathml;
+	value.expression_mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
 	emit('update-value', [value]);
 };
 
-/* Matrix effect easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
+/* Matrix effect Easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
 const matrixEffect = () => {
 	if (Math.random() > 0.1) return;
 	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
@@ -489,6 +560,7 @@ const matrixEffect = () => {
 .min-value {
 	position: relative;
 }
+
 .min-value::before {
 	content: 'Min';
 	position: relative;
@@ -498,6 +570,7 @@ const matrixEffect = () => {
 	font-size: var(--font-caption);
 	width: 0;
 }
+
 .max-value::before {
 	content: 'Max';
 	position: relative;
@@ -516,6 +589,7 @@ const matrixEffect = () => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .custom-icon-expression {
 	background-image: url('@assets/svg/icons/expression.svg');
 	background-size: contain;
@@ -524,6 +598,7 @@ const matrixEffect = () => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .invalid-message {
 	color: var(--text-color-danger);
 }

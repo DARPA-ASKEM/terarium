@@ -29,24 +29,11 @@ export interface ModelConfigTableData {
 	name: string;
 	type: ParamType;
 	value: any;
+	values?: Map<ParamType, any>; // values entered by the users for other types
 	source: string;
 	visibility: boolean;
 	tableFormattedMatrix?: ModelConfigTableData[];
 	timeseries?: string;
-}
-
-// TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
-// But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
-export interface StringValueMap {
-	[key: string]: string;
-}
-
-export interface NumericValueMap {
-	[key: string]: number;
-}
-
-export interface AnyValueMap {
-	[key: string]: any;
 }
 
 export enum ViewType {
