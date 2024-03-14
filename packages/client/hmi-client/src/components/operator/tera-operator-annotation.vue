@@ -22,7 +22,7 @@
 	</section>
 	<Button
 		v-if="!inNode && isEmpty(annotation) && !isEditing"
-		class="add-a-note"
+		class="add-a-note mr-auto"
 		label="Add a note"
 		icon="pi pi-pencil"
 		size="small"
@@ -99,6 +99,7 @@ section {
 		width: 100%;
 		font-size: var(--font-caption);
 		color: var(--text-color-subdued);
+		cursor: text;
 	}
 
 	& > .p-inputtext {
@@ -117,7 +118,8 @@ section {
 
 	/* In drilldown */
 	&:not(.in-node) {
-		padding: var(--gap-xsmall) var(--gap-small) var(--gap-small) var(--gap);
+		padding-bottom: var(--gap-small);
+		padding-left: var(--gap-small);
 		border-radius: var(--border-radius);
 		gap: var(--gap-small);
 		& > textarea {
@@ -135,7 +137,7 @@ section {
 		}
 
 		&.is-editing {
-			padding: var(--gap-xsmall) var(--gap-small);
+			padding: 0;
 		}
 	}
 }

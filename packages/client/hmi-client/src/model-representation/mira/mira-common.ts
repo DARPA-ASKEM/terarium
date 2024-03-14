@@ -54,6 +54,7 @@ export type MiraMatrixEntry = { id: any; value: any };
 export type MiraMatrix = MiraMatrixEntry[][];
 
 export interface TemplateSummary {
+	name: string;
 	subject: string;
 	outcome: string;
 	controllers: string[];

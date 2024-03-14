@@ -308,7 +308,7 @@ describe('mira MMT', () => {
 	});
 
 	it('parse mira templates', () => {
-		const templates = collapseTemplates(mmt);
+		const templates = collapseTemplates(mmt).templatesSummary;
 		const rawParametersLength = mmt.templates.length;
 		const collapsedTemplatesLength = templates.length;
 

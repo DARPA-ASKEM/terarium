@@ -55,6 +55,7 @@ import Dropdown from 'primevue/dropdown';
 const props = defineProps<{
 	kernelManager: KernelSessionManager;
 	defaultOptions?: string[];
+	contextLanguage: string;
 }>();
 
 const emit = defineEmits(['llm-output']);
@@ -65,8 +66,8 @@ const kernelStatus = ref<string>('');
 const showAssistant = ref(true);
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
-const contextLanguage = ref<string>('python3');
-const contextLanguageOptions = ref<string[]>(['python3']);
+
+const contextLanguageOptions = ref<string[]>(['python3', 'julia-1.10']);
 
 const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {

@@ -5,7 +5,19 @@ import {
 	extractSubjectOutcomeMatrix,
 	removeModifiers
 } from './mira-util';
-import type { MiraModel, MiraTemplateParams, TemplateSummary } from './mira-common';
+import type { MiraModel, MiraTemplate, MiraTemplateParams, TemplateSummary } from './mira-common';
+
+export const emptyMiraModel = () => {
+	const newModel: MiraModel = {
+		templates: [],
+		parameters: {},
+		initials: {},
+		observables: {},
+		annotations: {},
+		time: {}
+	};
+	return newModel;
+};
 
 /**
  * Collection of MMT related functions
@@ -13,23 +25,50 @@ import type { MiraModel, MiraTemplateParams, TemplateSummary } from './mira-comm
 export const getContextKeys = (miraModel: MiraModel) => {
 	const modifierKeys = new Set<string>();
 
+	// Heuristics to avoid picking up wrong stuff
+	// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
+	// const modifiers = rawModifiers.filter((v) => {
+	// 	if (v.startsWith('ncit:')) return false;
+	// 	return true;
+	// });
+	const addWithGuard = (k: string, v: string) => {
+		if (v.startsWith('ncit:')) return;
+		modifierKeys.add(k);
+	};
+
 	miraModel.templates.forEach((t) => {
 		if (t.subject?.context) {
-			Object.keys(t.subject.context).forEach((key) => modifierKeys.add(key));
+			Object.entries(t.subject.context).forEach(([k, v]) => {
+				addWithGuard(k, v as string);
+			});
 		}
 		if (t.outcome?.context) {
-			Object.keys(t.outcome.context).forEach((key) => modifierKeys.add(key));
+			Object.entries(t.outcome.context).forEach(([k, v]) => {
+				addWithGuard(k, v as string);
+			});
 		}
 		if (t.controller?.context) {
-			Object.keys(t.controller.context).forEach((key) => modifierKeys.add(key));
+			Object.entries(t.controller.context).forEach(([k, v]) => {
+				addWithGuard(k, v as string);
+			});
 		}
 		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((miraConcept) => {
-				Object.keys(miraConcept.context).forEach((key) => modifierKeys.add(key));
+				// Object.keys(miraConcept.context).forEach((key) => modifierKeys.add(key));
+				Object.entries(miraConcept.context).forEach(([k, v]) => {
+					addWithGuard(k, v as string);
+				});
 			});
 		}
 	});
-	return [...modifierKeys];
+
+	const modifiers = [...modifierKeys];
+	return modifiers;
+};
+
+export const isStratifiedModel = (miraModel: MiraModel) => {
+	const keys = getContextKeys(miraModel);
+	return keys.length > 0;
 };
 
 /**
@@ -119,48 +158,117 @@ export const collapseInitials = (miraModel: MiraModel) => {
 	return map;
 };
 
-export const collapseTemplates = (miraModel: MiraModel) => {
+export const rawTemplatesSummary = (miraModel: MiraModel) => {
 	const allTemplates: TemplateSummary[] = [];
-	const uniqueTemplates: TemplateSummary[] = [];
-
-	// 1. Roll back to "original name" by trimming off modifiers
 	miraModel.templates.forEach((t) => {
-		const scrubbedTemplate: TemplateSummary = {
+		const summary: TemplateSummary = {
+			name: t.name,
 			subject: '',
 			outcome: '',
 			controllers: []
 		};
 
 		if (t.subject) {
-			scrubbedTemplate.subject = removeModifiers(t.subject.name, t.subject.context);
+			summary.subject = t.subject.name;
 		}
 		if (t.outcome) {
-			scrubbedTemplate.outcome = removeModifiers(t.outcome.name, t.outcome.context);
+			summary.outcome = t.outcome.name;
 		}
 
 		// note controller and controllers are mutually exclusive
 		if (t.controller) {
-			scrubbedTemplate.controllers.push(removeModifiers(t.controller.name, t.controller.context));
+			summary.controllers.push(t.controller.name);
 		}
 		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((miraConcept) => {
-				scrubbedTemplate.controllers.push(removeModifiers(miraConcept.name, miraConcept.context));
+				summary.controllers.push(miraConcept.name);
+			});
+			t.controllers.sort();
+		}
+		allTemplates.push(summary);
+	});
+	return allTemplates;
+};
+
+export const collapseTemplates = (miraModel: MiraModel) => {
+	const allTemplates: TemplateSummary[] = [];
+	const uniqueTemplates: TemplateSummary[] = [];
+	const scrubbingKeys = getContextKeys(miraModel);
+
+	// 1. Roll back to "original name" by trimming off modifiers
+	miraModel.templates.forEach((t) => {
+		const scrubbedTemplate: TemplateSummary = {
+			name: t.name,
+			subject: '',
+			outcome: '',
+			controllers: []
+		};
+
+		if (t.subject) {
+			scrubbedTemplate.subject = removeModifiers(t.subject.name, t.subject.context, scrubbingKeys);
+		}
+		if (t.outcome) {
+			scrubbedTemplate.outcome = removeModifiers(t.outcome.name, t.outcome.context, scrubbingKeys);
+		}
+
+		// note controller and controllers are mutually exclusive
+		if (t.controller) {
+			scrubbedTemplate.controllers.push(
+				removeModifiers(t.controller.name, t.controller.context, scrubbingKeys)
+			);
+		}
+		if (t.controllers && t.controllers.length > 0) {
+			t.controllers.forEach((miraConcept) => {
+				scrubbedTemplate.controllers.push(
+					removeModifiers(miraConcept.name, miraConcept.context, scrubbingKeys)
+				);
 			});
 			t.controllers.sort();
 		}
 		allTemplates.push(scrubbedTemplate);
 	});
 
-	// 2. Remove duplicated templates
-	const check = new Set<string>();
+	const templateMap = new Map<string, MiraTemplate>();
+	miraModel.templates.forEach((t) => {
+		templateMap.set(t.name, t);
+	});
+
+	// 2. Do post processing
+	// - Reduce down to the unique templates-summary, there are used to render the graph
+	// - Link unique template-summary back to the original MiraTemplates, this is for interaction
+	let keyCounter = 0;
+	const check = new Map<string, number>();
+	const tempMatrixMap = new Map<string, MiraTemplate[]>();
+	const matrixMap = new Map<string, MiraTemplate[]>();
+
 	allTemplates.forEach((t) => {
 		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+		if (!tempMatrixMap.has(key)) {
+			tempMatrixMap.set(key, []);
+		}
+		const originalTemplate = templateMap.get(t.name);
+		tempMatrixMap.get(key)?.push(originalTemplate as MiraTemplate);
+
 		if (check.has(key)) return;
 
 		uniqueTemplates.push(t);
-		check.add(key);
+		check.set(key, ++keyCounter);
 	});
-	return uniqueTemplates;
+
+	// 3 Rename and sanitize everything
+	uniqueTemplates.forEach((t) => {
+		const key = `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+		t.name = `template-${check.get(key)}`;
+	});
+	tempMatrixMap.forEach((value, key) => {
+		const name = `template-${check.get(key)}`;
+		matrixMap.set(name, value);
+	});
+
+	return {
+		templatesSummary: uniqueTemplates,
+		matrixMap
+	};
 };
 
 /**
@@ -186,6 +294,7 @@ export const createParameterMatrix = (
 			if (!paramLocationMap.has(paramName)) paramLocationMap.set(paramName, []);
 
 			paramLocationMap.get(paramName)?.push({
+				name: templateParam.name,
 				subject: templateParam.subject,
 				outcome: templateParam.outcome,
 				controllers: templateParam.controllers
@@ -227,9 +336,9 @@ export const createParameterMatrix = (
 	};
 };
 
-const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
+// const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 
-export const converToIGraph = (templates: TemplateSummary[]) => {
+export const convertToIGraph = (templates: TemplateSummary[]) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -240,12 +349,12 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 
 	const subjects = new Set<string>(templates.map((d) => d.subject));
 	const outcomes = new Set<string>(templates.map((d) => d.outcome));
-	const nodeNames = [...new Set([...subjects, ...outcomes])];
+	// const nodeNames = [...new Set([...subjects, ...outcomes])];
 
-	// const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
-	// const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
+	const controllers = new Set<string>(templates.map((d) => d.controllers).flat());
+	const nodeNames = [...new Set([...subjects, ...outcomes, ...controllers])];
 
-	// States
+	// concepts
 	nodeNames.forEach((nodeName) => {
 		if (nodeName === '') return;
 		graph.nodes.push({
@@ -260,10 +369,10 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 		});
 	});
 
-	// Transitions
+	// templates
 	templates.forEach((t) => {
 		graph.nodes.push({
-			id: genKey(t),
+			id: t.name,
 			label: '',
 			x: 0,
 			y: 0,
@@ -275,25 +384,19 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 	});
 
 	// Edges
-	// FIXME: controller edges
 	templates.forEach((t) => {
-		const key = genKey(t);
-
-		// FIXME: production and degradation
-
 		if (t.subject !== '') {
 			graph.edges.push({
 				source: t.subject,
-				target: key,
+				target: t.name,
 				points: [],
 				data: {}
 			});
 
-			// console.log(t.controllers);
 			t.controllers.forEach((controllerName) => {
 				graph.edges.push({
 					source: controllerName,
-					target: key,
+					target: t.name,
 					points: [],
 					data: { isController: true }
 				});
@@ -301,16 +404,15 @@ export const converToIGraph = (templates: TemplateSummary[]) => {
 		}
 		if (t.outcome !== '') {
 			graph.edges.push({
-				source: key,
+				source: t.name,
 				target: t.outcome,
 				points: [],
 				data: {}
 			});
 
-			// console.log(t.controllers);
 			t.controllers.forEach((controllerName) => {
 				graph.edges.push({
-					source: key,
+					source: t.name,
 					target: controllerName,
 					points: [],
 					data: { isController: true }

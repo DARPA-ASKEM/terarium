@@ -10,8 +10,8 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 public class WorkflowService extends TerariumAssetService<Workflow>{
 
 
-	public WorkflowService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService) {
-		super(elasticConfig, config, elasticService, Workflow.class);
+	public WorkflowService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService) {
+		super(elasticConfig, config, elasticService, projectAssetService, Workflow.class);
 	}
 
 	@Override
