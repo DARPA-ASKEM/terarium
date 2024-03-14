@@ -2,7 +2,7 @@
 	<div class="simulate-chart">
 		<div class="row">
 			<Chart
-				type="scatter"
+				type="bar"
 				:width="chartSize.width"
 				:height="chartSize.height"
 				:data="chartData"
@@ -34,6 +34,7 @@ const chartData = ref();
 const binCount = 6;
 
 const setChartOptions = () => ({
+	indexAxis: 'y',
 	responsive: false,
 	devicePixelRatio: 4,
 	maintainAspectRatio: false,
@@ -109,12 +110,13 @@ const setChartData = () => {
 	const binValues = binData.binValues.map((ele, index) => ({ x: ele, y: index }));
 	const riskLine: any[] = [];
 	for (let i = 0; i < binCount; i++) {
-		riskLine.push({ x: i, y: riskValue });
+		riskLine.push({ x: riskValue, y: i });
 	}
 	return {
 		labels: binLabels,
 		datasets: [
 			{
+				type: 'bar',
 				label: '',
 				data: binValues,
 				borderColor: '#440154',
@@ -122,6 +124,7 @@ const setChartData = () => {
 			},
 			// Risk:
 			{
+				type: 'line',
 				label: '',
 				data: riskLine,
 				borderColor: '#FF0000',
