@@ -111,7 +111,12 @@
 						</div>
 						<div class="label-and-input">
 							<label>Threshold</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.threshold" />
+							<InputNumber
+								class="p-inputtext-sm"
+								v-model="knobs.threshold"
+								:min-fraction-digits="1"
+								:max-fraction-digits="10"
+							/>
 						</div>
 					</div>
 				</div>
