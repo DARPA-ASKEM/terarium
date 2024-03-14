@@ -49,8 +49,8 @@ public class S3FileController {
 	private final CurrentUserService currentUserService;
 	private final Config config;
 
-	@Value("${terarium.file-storage-s3-bucket-name:terarium-file-storage}")
-	String FILE_STORAGE_DEFAULT_BUCKET_NAME;
+	@Value("${terarium.videos-storage-s3-bucket-name:terarium-file-storage}")
+	String VIDEOS_STORAGE_DEFAULT_BUCKET_NAME;
 
 	@Value("${terarium.file-storage-s3-client-name:default}")
 	String FILE_STORAGE_DEFAULT_S3_CLIENT_NAME;
@@ -59,8 +59,8 @@ public class S3FileController {
 	void init() {
 		// Create the file storage bucket if it doesn't exist
 		final S3Service s3Service = s3ClientService.getS3Service(FILE_STORAGE_DEFAULT_S3_CLIENT_NAME);
-		if (!s3Service.bucketExists(FILE_STORAGE_DEFAULT_BUCKET_NAME)) {
-			s3Service.createBucket(FILE_STORAGE_DEFAULT_BUCKET_NAME);
+		if (!s3Service.bucketExists(VIDEOS_STORAGE_DEFAULT_BUCKET_NAME)) {
+			s3Service.createBucket(VIDEOS_STORAGE_DEFAULT_BUCKET_NAME);
 		}
 	}
 

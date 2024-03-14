@@ -149,6 +149,8 @@ public class Config {
 	@Accessors(chain = true)
 	@TSModel
 	public static class ClientConfig implements Serializable {
+		@Serial
+		private static final long serialVersionUID = -4555190605364226582L;
 		/**
 		 * The base url of the deployed application. Mirror of {@link Config#baseUrl}
 		 */
@@ -178,6 +180,8 @@ public class Config {
 	public static class AmazonCredentials {
 		String accessKey;
 		String secretKey;
+		String videosAccessKey;
+		String videosSecretKey;
 	}
 
 	@Data
