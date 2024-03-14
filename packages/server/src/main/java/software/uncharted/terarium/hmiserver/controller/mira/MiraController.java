@@ -1,7 +1,26 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,12 +30,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -29,15 +42,11 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/mira")
 @RestController
@@ -75,6 +84,11 @@ public class MiraController {
 	final private MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	final private SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 
+	@Data
+	public static class ConversionAdditionalProperties {
+		String fileName;
+	}
+
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(stellaToStockflowResponseHandler);
@@ -108,8 +122,6 @@ public class MiraController {
 					error);
 		}
 	}
-
-
 
 	@PostMapping("/convert-and-create-model")
 	@Secured(Roles.USER)
@@ -146,9 +158,13 @@ public class MiraController {
 						"Unable to fetch file contents");
 			}
 
+			final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+			additionalProperties.setFileName(filename);
+
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.MIRA);
 			req.setInput(fileContents.get().getBytes());
+			req.setAdditionalProperties(additionalProperties);
 
 			if (endsWith(filename, List.of(".mdl"))) {
 				req.setScript(MdlToStockflowResponseHandler.NAME);
@@ -200,7 +216,7 @@ public class MiraController {
 	@GetMapping("/currie/{curies}")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> searchConcept(
-		@PathVariable("curies") final String curies) {
+			@PathVariable("curies") final String curies) {
 		try {
 			final ResponseEntity<List<DKG>> response = proxy.getEntities(curies);
 			if (response.getStatusCode().is2xxSuccessful()) {
@@ -219,9 +235,9 @@ public class MiraController {
 	@GetMapping("/search")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> search(
-		@RequestParam("q") final String q,
-		@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
-		@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset) {
+			@RequestParam("q") final String q,
+			@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
+			@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset) {
 		try {
 			final ResponseEntity<List<DKG>> response = proxy.search(q, limit, offset);
 			if (response.getStatusCode().is2xxSuccessful()) {
@@ -244,7 +260,7 @@ public class MiraController {
 	@PostMapping("/reconstruct-ode-semantics")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> reconstructODESemantics(
-		final Object amr) {
+			final Object amr) {
 		return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
 
 	}
@@ -252,7 +268,7 @@ public class MiraController {
 	@PostMapping("/entity-similarity")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(
-		@RequestBody final Curies obj) {
+			@RequestBody final Curies obj) {
 		return ResponseEntity.ok(proxy.entitySimilarity(obj).getBody());
 	}
 }
