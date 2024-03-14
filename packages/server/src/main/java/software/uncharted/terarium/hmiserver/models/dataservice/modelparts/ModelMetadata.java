@@ -44,12 +44,12 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	private Map<String, Object> timeseries;
 
-	/* Link user input string `source` to a parameter/variables of a model. */
-	@TSOptional
-	private Map<String, Object> sources;
 
 	@TSOptional
-	private Map<String, Object> units;
+	private Map<String, Object> initials;
+
+	@TSOptional
+	private Map<String, Object> parameters;
 
 	@TSOptional
 	private Card card;

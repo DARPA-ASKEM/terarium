@@ -4,6 +4,7 @@ import {
 	Document,
 	DocumentAsset,
 	Model,
+	ModelGrounding,
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
@@ -28,6 +29,8 @@ export interface ModelConfigTableData {
 	id: string;
 	name: string;
 	type: ParamType;
+	description: string;
+	concept: ModelGrounding;
 	unit?: string;
 	value: any;
 	source: string;

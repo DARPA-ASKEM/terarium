@@ -18,12 +18,6 @@ public class Initial extends SupportAdditionalProperties implements Serializable
 	@Serial
 	private static final long serialVersionUID = 492480233470286509L;
 
-	@TSOptional
-	private String description;
-
-	@TSOptional
-	private ModelGrounding grounding;
-
 	private String target;
 
 	private String expression;

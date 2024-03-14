@@ -28,30 +28,31 @@
 
 		<Column header="Description" class="w-2">
 			<template #body="slotProps">
-				<span v-if="slotProps.data.value.description" class="truncate-text">
-					{{ slotProps.data.value.description }}</span
+				<span v-if="slotProps.data.description" class="truncate-text">
+					{{ slotProps.data.description }}</span
 				>
 				<template v-else>--</template>
 			</template>
 		</Column>
 
 		<Column header="Concept" class="w-1">
-			Column field="grounding.identifiers" header="Concept">
 			<template #body="{ data }">
 				<template
-					v-if="data.value.grounding?.identifiers && !isEmpty(data.value.grounding.identifiers)"
+					v-if="
+						data.concept?.grounding?.identifiers && !isEmpty(data.concept.grounding.identifiers)
+					"
 				>
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.value.grounding.identifiers)
+							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.value.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -69,7 +70,7 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="slotProps.data.unit"
-					@update:model-value="(val) => updateUnit(slotProps.data.value.target, val)"
+					@update:model-value="(val) => updateMetadata(slotProps.data.value.target, 'unit', val)"
 				/>
 				<template v-else>--</template>
 			</template>
@@ -126,7 +127,7 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
-					@update:model-value="(val) => updateSource(data.value.target, val)"
+					@update:model-value="(val) => updateMetadata(data.value.target, 'source', val)"
 				/>
 			</template>
 		</Column>
@@ -228,14 +229,18 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 				const initial = props.modelConfiguration.configuration.semantics.ode.initials.find(
 					(i) => i.target === v
 				);
-				const sourceValue =
-					props.modelConfiguration.configuration.metadata.sources[initial!.target];
 
-				const unitValue =
-					props.modelConfiguration.configuration.metadata?.units?.[initial!.target] ?? '';
+				const initialsMetadata =
+					props.modelConfiguration.configuration.metadata.initials?.[initial!.target];
+				const sourceValue = initialsMetadata?.source;
+				const unitValue = initialsMetadata?.unit;
+				const descriptionValue = initialsMetadata?.description;
+				const conceptValue = initialsMetadata?.concept;
 				return {
 					id: v,
 					name: v,
+					description: descriptionValue,
+					concept: conceptValue,
 					type: ParamType.EXPRESSION,
 					unit: unitValue,
 					value: initial,
@@ -246,6 +251,8 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 			formattedInitials.push({
 				id: init,
 				name: init,
+				description: '',
+				concept: { identifiers: {} },
 				type: ParamType.MATRIX,
 				value: 'matrix',
 				source: '',
@@ -258,12 +265,17 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 			const initial = props.modelConfiguration.configuration.semantics.ode.initials.find(
 				(i) => i.target === vals[0]
 			);
-			const sourceValue = props.modelConfiguration.configuration.metadata.sources[initial!.target];
-			const unitValue =
-				props.modelConfiguration.configuration.metadata?.units?.[initial!.target] ?? '';
+			const initialsMetadata =
+				props.modelConfiguration.configuration.metadata.initials?.[initial!.target];
+			const sourceValue = initialsMetadata?.source;
+			const unitValue = initialsMetadata?.unit;
+			const descriptionValue = initialsMetadata?.description;
+			const conceptValue = initialsMetadata?.concept;
 			formattedInitials.push({
 				id: init,
 				name: init,
+				description: descriptionValue,
+				concept: conceptValue,
 				type: ParamType.EXPRESSION,
 				unit: unitValue,
 				value: initial,
@@ -290,21 +302,12 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
-const updateUnit = (id: string, value: string) => {
+const updateMetadata = (id: string, key: string, value: string) => {
 	const clonedConfig = cloneDeep(props.modelConfiguration);
-	if (!clonedConfig.configuration.metadata.units) {
-		clonedConfig.configuration.metadata.units = {};
+	if (!clonedConfig.configuration.metadata.initials?.[id]) {
+		clonedConfig.configuration.metadata.initials[id] = {};
 	}
-	clonedConfig.configuration.metadata.units[id] = value;
-	emit('update-configuration', clonedConfig);
-};
-
-const updateSource = (id: string, value: string) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	if (!clonedConfig.configuration.metadata.sources) {
-		clonedConfig.configuration.metadata.sources = {};
-	}
-	clonedConfig.configuration.metadata.sources[id] = value;
+	clonedConfig.configuration.metadata.initials[id][key] = value;
 	emit('update-configuration', clonedConfig);
 };
 

@@ -28,30 +28,31 @@
 
 		<Column header="Description" class="w-2">
 			<template #body="slotProps">
-				<span v-if="slotProps.data.value.description" class="truncate-text">
-					{{ slotProps.data.value.description }}</span
+				<span v-if="slotProps.data.description" class="truncate-text">
+					{{ slotProps.data.description }}</span
 				>
 				<template v-else>--</template>
 			</template>
 		</Column>
 
 		<Column header="Concept" class="w-1">
-			Column field="grounding.identifiers" header="Concept">
 			<template #body="{ data }">
 				<template
-					v-if="data.value.grounding?.identifiers && !isEmpty(data.value.grounding.identifiers)"
+					v-if="
+						data.concept?.grounding?.identifiers && !isEmpty(data.concept.grounding.identifiers)
+					"
 				>
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.value.grounding.identifiers)
+							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.value.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -338,11 +339,15 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				const paramType = getParamType(param);
 				const timeseriesValue =
 					props.modelConfiguration.configuration.metadata?.timeseries[param!.id];
-				const sourceValue = props.modelConfiguration.configuration.metadata?.sources[param!.id];
+				const parametersMetadata =
+					props.modelConfiguration.configuration.metadata?.parameters?.[param!.id];
+				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
 					name: v,
 					type: paramType,
+					description: param.description,
+					concept: param.grounding,
 					unit: param.unit?.expression,
 					value: param,
 					source: sourceValue,
@@ -353,6 +358,8 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			formattedParams.push({
 				id: init,
 				name: init,
+				description: '',
+				concept: { identifiers: {} },
 				type: ParamType.MATRIX,
 				value: 'matrix',
 				source: '',
@@ -369,11 +376,15 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 
 			const timeseriesValue =
 				props.modelConfiguration.configuration.metadata?.timeseries[param!.id];
-			const sourceValue = props.modelConfiguration.configuration.metadata?.sources[param!.id];
+			const parametersMetadata =
+				props.modelConfiguration.configuration.metadata?.parameters?.[param!.id];
+			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
 				name: init,
 				type: paramType,
+				description: param.description,
+				concept: param.grounding,
 				unit: param.unit?.expression,
 				value: param,
 				source: sourceValue,
@@ -422,7 +433,10 @@ const updateTimeseries = (id: string, value: string) => {
 
 const updateSource = (id: string, value: string) => {
 	const clonedConfig = cloneDeep(props.modelConfiguration);
-	clonedConfig.configuration.metadata.sources[id] = value;
+	if (!clonedConfig.configuration.metadata.parameters?.[id]) {
+		clonedConfig.configuration.metadata.parameters[id] = {};
+	}
+	clonedConfig.configuration.metadata.parameters[id].source = value;
 	emit('update-configuration', clonedConfig);
 };
 

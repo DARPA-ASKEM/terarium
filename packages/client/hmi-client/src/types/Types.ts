@@ -929,8 +929,8 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
-    sources?: { [index: string]: any };
-    units?: { [index: string]: any };
+    initials?: { [index: string]: any };
+    parameters?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
     processed_at?: number;
@@ -1142,8 +1142,6 @@ export interface Rate {
 }
 
 export interface Initial {
-    description?: string;
-    grounding?: ModelGrounding;
     target: string;
     expression: string;
     expression_mathml: string;
