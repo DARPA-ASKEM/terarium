@@ -224,7 +224,7 @@ public class SimulationController {
 			if (project.isPresent()) {
 				final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
 						AssetType.DATASET,
-						dataset.getId());
+						dataset);
 				// underlying asset does not exist
 				return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset)).orElseGet(() -> ResponseEntity.notFound().build());
 			} else {

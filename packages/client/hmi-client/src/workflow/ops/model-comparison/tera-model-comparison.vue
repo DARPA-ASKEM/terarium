@@ -8,12 +8,19 @@
 		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Panel v-if="llmAnswer" header="Comparison overview" toggleable>
-					<template #togglericon="{ collapsed }">
-						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
-					</template>
-					<p>{{ llmAnswer }}</p>
-				</Panel>
+				<!-- LLM generated overview -->
+				<section class="comparison-overview">
+					<Accordion :activeIndex="0">
+						<AccordionTab header="Overview">
+							<p v-if="llmAnswer">{{ llmAnswer }}</p>
+							<p v-else class="subdued">
+								Analyzing models metadata to generate a detailed comparison analysis...
+							</p>
+						</AccordionTab>
+					</Accordion>
+				</section>
+
+				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
@@ -28,7 +35,12 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram :model="model" :is-editable="false" is-preview />
+									<tera-model-diagram
+										:model="model"
+										:is-editable="false"
+										is-preview
+										class="diagram"
+									/>
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -74,6 +86,7 @@
 					:kernelManager="kernelManager"
 					:defaultOptions="sampleAgentQuestions"
 					@llm-output="appendCode"
+					:context-language="contextLanguage"
 				/>
 				<v-ace-editor
 					v-model:value="code"
@@ -97,12 +110,36 @@
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
+
+				<!-- Legend -->
+				<div
+					v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)"
+					class="legend flex align-items-center gap-7"
+				>
+					<span class="flex gap-5">
+						<span class="flex align-items-center gap-2">
+							<span class="legend-circle subdued">Name</span>
+							<span>State variable nodes</span>
+						</span>
+						<span class="flex align-items-center gap-2">
+							<span class="legend-square subdued">Name</span>
+							<span>Transition nodes</span>
+						</span>
+					</span>
+					<span class="flex gap-6">
+						<span class="legend-line orange">Model 1</span>
+						<span class="legend-line blue">Model 2</span>
+						<span class="legend-line red">Common to both models</span>
+					</span>
+				</div>
 			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import { isEmpty } from 'lodash';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -115,7 +152,6 @@ import type { Model } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import Panel from 'primevue/panel';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -149,6 +185,7 @@ const llmAnswer = ref('');
 const code = ref('');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
+const contextLanguage = ref<string>('python3');
 
 const modelCardsToCompare = computed(() =>
 	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
@@ -340,5 +377,61 @@ ul {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
+}
+
+.comparison-overview {
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius-medium);
+	padding: var(--gap-small);
+}
+
+.subdued {
+	color: var(--text-color-secondary);
+}
+
+.diagram {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
+.legend {
+	font-size: var(--font-caption);
+}
+
+.legend-circle {
+	padding: var(--gap-small) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	border-radius: 50%;
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-square {
+	padding: var(--gap-xsmall) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-line {
+	position: relative;
+	white-space:;
+}
+
+.legend-line::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 24px;
+	height: 2px;
+	background-color: red;
+	transform: translate(-30px, -50%);
+}
+.legend-line.orange::before {
+	background-color: orange;
+}
+.legend-line.blue::before {
+	background-color: blue;
 }
 </style>

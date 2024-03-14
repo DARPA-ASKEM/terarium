@@ -17,14 +17,19 @@
 		<template #foreground>
 			<div class="toolbar glass">
 				<div class="button-group w-full">
-					<InputText
-						v-if="isRenamingWorkflow"
-						class="p-inputtext w-full mr-8"
-						v-model.lazy="newWorkflowName"
-						placeholder="Workflow name"
-						@keyup.enter="updateWorkflowName"
-						@keyup.esc="updateWorkflowName"
-					/>
+					<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
+						<InputText
+							class="p-inputtext w-full"
+							v-model.lazy="newWorkflowName"
+							placeholder="Workflow name"
+							@keyup.enter="updateWorkflowName"
+							@keyup.esc="updateWorkflowName"
+							v-focus
+						/>
+						<div class="flex flex-nowrap ml-1 mr-3">
+							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
+						</div>
+					</div>
 					<h4 v-else>{{ wf.name }}</h4>
 					<Button
 						v-if="!isRenamingWorkflow"
@@ -241,6 +246,7 @@ import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
+import * as DecapodesOp from './ops/decapodes/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -266,6 +272,7 @@ registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
+registry.registerOp(DecapodesOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -316,7 +323,8 @@ const toggleOptionsMenu = (event) => {
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
-	workflowService.updateWorkflow(workflowClone);
+	await workflowService.updateWorkflow(workflowClone);
+	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
@@ -358,14 +366,11 @@ function appendOutput(
 		timestamp: new Date()
 	};
 
-	// Revert
-	node.outputs.forEach((o) => {
-		o.isSelected = false;
-	});
-
 	// Append and set active
 	node.outputs.push(outputPort);
 	node.active = uuid;
+
+	selectOutput(node, uuid);
 
 	workflowDirty = true;
 }
@@ -490,6 +495,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelComparisonOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelComparisonOp)
+			},
+			{
+				label: DecapodesOp.operation.displayName,
+				command: addOperatorToWorkflow(DecapodesOp)
 			}
 		]
 	},
@@ -778,6 +787,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 let prevX = 0;
 let prevY = 0;
+
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
 		const pointIndex = newEdge.value?.direction === WorkflowDirection.FROM_OUTPUT ? 1 : 0;
@@ -877,6 +887,7 @@ function cleanUpLayout() {
 	// TODO: clean up layout of nodes
 	console.log('clean up layout');
 }
+
 function resetZoom() {
 	// TODO: reset zoom level and position
 	console.log('clean up layout');
@@ -904,5 +915,11 @@ function resetZoom() {
 	align-items: center;
 	flex-direction: row;
 	gap: var(--gap-small);
+}
+
+.rename-workflow {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
 }
 </style>
