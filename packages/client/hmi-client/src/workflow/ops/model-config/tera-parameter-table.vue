@@ -333,9 +333,14 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	if (stratifiedModelType.value) {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const param = props.modelConfiguration.configuration.semantics.ode.parameters.find(
-					(i) => i.id === v
-				);
+				let param;
+				if (modelType.value === AMRSchemaNames.REGNET) {
+					param = props.modelConfiguration.configuration.model.parameters.find((i) => i.id === v);
+				} else {
+					param = props.modelConfiguration.configuration.semantics.ode.parameters.find(
+						(i) => i.id === v
+					);
+				}
 				const paramType = getParamType(param);
 				const timeseriesValue =
 					props.modelConfiguration.configuration.metadata?.timeseries[param!.id];
@@ -369,9 +374,17 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		parameters.value.forEach((vals, init) => {
-			const param = props.modelConfiguration.configuration.semantics.ode.parameters.find(
-				(i) => i.id === vals[0]
-			);
+			let param;
+			if (modelType.value === AMRSchemaNames.REGNET) {
+				param = props.modelConfiguration.configuration.model.parameters.find(
+					(i) => i.id === vals[0]
+				);
+			} else {
+				param = props.modelConfiguration.configuration.semantics.ode.parameters.find(
+					(i) => i.id === vals[0]
+				);
+			}
+
 			const paramType = getParamType(param);
 
 			const timeseriesValue =
