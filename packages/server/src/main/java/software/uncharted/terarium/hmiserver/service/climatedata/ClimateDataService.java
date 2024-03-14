@@ -43,21 +43,28 @@ public class ClimateDataService {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getStatusId());
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (climateDataResponse.getResult().getJobResult() != null) {
-                log.info(climateDataResponse.getResult().getJobResult().toString());
                 final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
-                final int index = png.getPng().indexOf(',');
-                if (index > -1 && index + 1 < png.getPng().length()) {
-                    final String pngBase64 = png.getPng().substring(index+1);
-                    final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
+                if (png != null && png.getPng() != null) {
+                    final int index = png.getPng().indexOf(',');
+                    if (index > -1 && index + 1 < png.getPng().length()) {
+                        final String pngBase64 = png.getPng().substring(index + 1);
+                        final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
 
-                    final String bucket = config.getFileStorageS3BucketName();
-                    final String key = getPreviewFilename(previewTask.getEsgfId(), previewTask.getVariableId());
+                        final String bucket = config.getFileStorageS3BucketName();
+                        final String key = getPreviewFilename(previewTask.getEsgfId(), previewTask.getVariableId());
 
-                    s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
+                        s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
 
-                    final ClimateDataPreview preview = new ClimateDataPreview(previewTask);
+                        final ClimateDataPreview preview = new ClimateDataPreview(previewTask);
 
+                        climateDataPreviewRepository.save(preview);
+                    }
+                } else {
+                   log.error("Failed to extract png");
+                    final ClimateDataPreview preview = new ClimateDataPreview(previewTask, "Failed to extract PNG from Result: " + climateDataResponse.getResult().getJobResult());
                     climateDataPreviewRepository.save(preview);
+
+                    climateDataPreviewTaskRepository.delete(previewTask);
                 }
 
                 climateDataPreviewTaskRepository.delete(previewTask);
