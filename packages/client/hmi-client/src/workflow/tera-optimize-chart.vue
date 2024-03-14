@@ -86,7 +86,9 @@ const getBinData = (data: number[]) => {
 	const binLabels: string[] = [];
 	for (let i = 0; i < binCount; i++) {
 		binLabels.push(
-			`${(minValue + stepSize * i).toString()} - ${(minValue + stepSize * (i + 1)).toString()}`
+			`${(minValue + stepSize * i).toFixed(4).toString()} - ${(minValue + stepSize * (i + 1))
+				.toFixed(4)
+				.toString()}`
 		);
 	}
 	// Fill bins:
