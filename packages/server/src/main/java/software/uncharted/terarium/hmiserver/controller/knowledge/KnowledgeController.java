@@ -137,12 +137,16 @@ public class KnowledgeController {
 
 		// If no model id is provided, create a new model
 		UUID modelId = null;
-		try {
-			modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
-		} catch (final IllegalArgumentException e) {
-			throw new ResponseStatusException(
+		final String modelIdString = req.get("modelId") != null ? req.get("modelId").asText() : null;
+		if (modelIdString != null) {
+			try {
+				// Get the model id if it is a valid UUID
+				modelId = UUID.fromString(modelIdString);
+			} catch (final IllegalArgumentException e) {
+				throw new ResponseStatusException(
 					HttpStatus.BAD_REQUEST,
 					serviceSuccessMessage + "The provided modelId is not a valid UUID.");
+			}
 		}
 
 		if (modelId == null) {
