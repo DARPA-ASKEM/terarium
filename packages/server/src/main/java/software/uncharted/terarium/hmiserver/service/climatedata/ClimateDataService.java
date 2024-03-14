@@ -8,10 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataPreview;
 import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataPreviewTask;
 import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataResponse;
 import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataResultPng;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
+import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataPreviewRepository;
 import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataPreviewTaskRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
@@ -26,6 +28,7 @@ public class ClimateDataService {
     final ObjectMapper objectMapper;
     final ClimateDataProxy climateDataProxy;
     final ClimateDataPreviewTaskRepository climateDataPreviewTaskRepository;
+    final ClimateDataPreviewRepository climateDataPreviewRepository;
     final S3ClientService s3ClientService;
     final Config config;
 
@@ -37,7 +40,6 @@ public class ClimateDataService {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getStatusId());
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (climateDataResponse.getResult().getJobResult() != null) {
-                // TODO: store result
                 final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
                 int index = png.getPng().indexOf(',');
                 if (index > -1 && index + 1 < png.getPng().length()) {
@@ -48,15 +50,32 @@ public class ClimateDataService {
                     final String key = String.join("/dataset", previewTask.getEsgfId());;
 
                     s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
+
+                    ClimateDataPreview preview = new ClimateDataPreview();
+                    preview.setEsgfId(previewTask.getEsgfId());
+                    preview.setVariableId(previewTask.getVariableId());
+                    preview.setTimestamps(previewTask.getTimestamps());
+                    preview.setTimeIndex(previewTask.getTimeIndex());
+
+                    climateDataPreviewRepository.save(preview);
                 }
 
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
             if (climateDataResponse.getResult().getJobError() != null) {
-                // TODO: store error
+                ClimateDataPreview preview = new ClimateDataPreview();
+                preview.setEsgfId(previewTask.getEsgfId());
+                preview.setVariableId(previewTask.getVariableId());
+                preview.setTimestamps(previewTask.getTimestamps());
+                preview.setTimeIndex(previewTask.getTimeIndex());
+                preview.setError(climateDataResponse.getResult().getJobError().toString());
+                climateDataPreviewRepository.save(preview);
+
                 climateDataPreviewTaskRepository.delete(previewTask);
             }
         }
+
+        // TODO: work on subset jobs
     }
 
     public void addPreviewJob(final String esgfId, final String variableId, final String timestamps, final String timeIndex, final String statusId) {
@@ -69,8 +88,20 @@ public class ClimateDataService {
         climateDataPreviewTaskRepository.save(task);
     }
 
-    public String getPreviewJob(final String esgfId, final String variableId, final String timestamps, final String timeIndex) {
+    public ResponseEntity<String> getPreview(final String esgfId, final String variableId, final String timestamps, final String timeIndex) {
+        final ClimateDataPreview preview = climateDataPreviewRepository.findByEsfgIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
+        if (preview != null) {
+            if (preview.getError() != null) {
+                return ResponseEntity.internalServerError().body(preview.getError());
+            }
+            // TODO: what is this url
+            String pngUrl = "";
+            return ResponseEntity.ok(pngUrl);
+        }
         final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByEsfgIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
+        if (task != null) {
+            return ResponseEntity.accepted().build();
+        }
         return null;
     }
 

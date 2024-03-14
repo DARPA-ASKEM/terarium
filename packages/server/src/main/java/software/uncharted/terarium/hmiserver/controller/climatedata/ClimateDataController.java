@@ -53,9 +53,9 @@ public class ClimateDataController {
 											  @RequestParam(value = "timestamps", required = false) final String timestamps,
 											  @RequestParam(value = "time-index", required = false) final String timeIndex
 	) {
-		final String png = climateDataService.getPreviewJob(esgfId, variableId, timestamps, timeIndex);
-		if (png != null) {
-			return ResponseEntity.ok().body(png);
+		ResponseEntity<String> previewResponse = climateDataService.getPreview(esgfId, variableId, timestamps, timeIndex);
+		if (previewResponse != null) {
+			return previewResponse;
 		}
 
 		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(esgfId, variableId, timestamps, timeIndex);
