@@ -40,23 +40,74 @@
 
 		<!-- Toolbar -->
 		<div class="toolbar flex">
-			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
-			<span
-				><header id="GPT">
-					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable' }}
-				</header></span
-			>
+			<!-- Kernel Status -->
+			<div class="toolbar-section">
+				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
+				<span
+					><header id="GPT">
+						{{
+							kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable'
+						}}
+					</header></span
+				>
+			</div>
+			<span class="flex-auto"></span>
+
+			<!-- Save and Download -->
+			<div class="toolbar-section">
+				<div v-if="kernelState">
+					<Dropdown
+						v-model="actionTarget"
+						placeholder="Select a dataframe"
+						:options="Object.keys(kernelState || [])"
+						class="mr-3"
+					/>
+
+					<Button
+						label="Save as"
+						icon="pi pi-save"
+						severity="secondary"
+						outlined
+						class="p-button p-button-sm"
+						v-tooltip.top="'Save the selected dataframe as a new Terarium asset'"
+						@click="showSaveInput = !showSaveInput"
+					/>
+					<span v-if="showSaveInput" class="ml-1">
+						<InputText v-focus v-model="saveAsName" class="save-as w-4" placeholder="Add a name" />
+
+						<Button
+							icon="pi pi-check i"
+							text
+							rounded
+							:class="{ save: hasValidDatasetName }"
+							@click="
+								saveAsNewDataset();
+								showSaveInput = false;
+							"
+						></Button>
+					</span>
+					<Button
+						label="Download"
+						icon="pi pi-download"
+						severity="secondary"
+						outlined
+						class="p-button p-button-sm ml-3"
+						v-tooltip.top="'Download the selected dataframe as a CSV file'"
+						@click="downloadDataset"
+					/>
+				</div>
+			</div>
+
+			<!-- Reset kernel -->
 			<span class="flex-auto"></span>
 			<Button
 				label="Reset kernel"
 				severity="secondary"
 				outlined
+				icon="pi pi-replay"
 				class="p-button p-button-sm"
 				@click="confirmReset"
-			>
-				<span class="pi pi-replay p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Reset</span>
-			</Button>
+			/>
 		</div>
 
 		<!-- Jupyter Chat -->
@@ -72,41 +123,6 @@
 			@download-response="onDownloadResponse"
 			:notebook-session="props.notebookSession"
 		/>
-		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
-			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
-			<Button
-				class="save-button p-button p-button-secondary p-button-sm"
-				title="Saves the current version of df as a new Terarium asset"
-				@click="showSaveInput = !showSaveInput"
-			>
-				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Save as</span>
-			</Button>
-			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
-				<i
-					class="pi pi-check i"
-					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveAsNewDataset();
-						showSaveInput = false;
-					"
-				></i>
-			</span>
-			<Button
-				class="save-button p-button p-button-secondary p-button-sm"
-				title="Download the current version of df as a CSV file"
-				@click="downloadDataset"
-			>
-				<span class="pi pi-download p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Download</span>
-			</Button>
-		</div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -536,6 +552,24 @@ main .annotation-group {
 	padding: var(--gap-xsmall) var(--gap);
 }
 
+.toolbar-section {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+}
+
+.toolbar-section:deep(.p-dropdown .p-dropdown-label) {
+	font-size: var(--font-caption);
+	padding: 8px;
+}
+
+.toolbar-section:deep(.save-as) {
+	font-size: var(--font-caption);
+	padding: 8px;
+	min-width: 10rem;
+}
 .variables-table {
 	display: grid;
 	grid-template-columns: 1fr;
