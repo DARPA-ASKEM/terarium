@@ -43,6 +43,7 @@ public class ClimateDataService {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getStatusId());
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (climateDataResponse.getResult().getJobResult() != null) {
+                log.info(climateDataResponse.getResult().getJobResult().toString());
                 final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
                 final int index = png.getPng().indexOf(',');
                 if (index > -1 && index + 1 < png.getPng().length()) {
@@ -82,8 +83,15 @@ public class ClimateDataService {
     }
 
     public ResponseEntity<String> getPreview(final String esgfId, final String variableId, final String timestamps, final String timeIndex) {
-        final ClimateDataPreview preview = climateDataPreviewRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
-        if (preview != null) {
+        final List<ClimateDataPreview> previews = climateDataPreviewRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
+        if (previews != null && previews.size() > 0) {
+            ClimateDataPreview preview = previews.get(0);
+            // find successful preview
+            for (ClimateDataPreview p : previews) {
+                if (p.getError() == null) {
+                    preview = p;
+                }
+            }
             if (preview.getError() != null) {
                 return ResponseEntity.internalServerError().body(preview.getError());
             }
