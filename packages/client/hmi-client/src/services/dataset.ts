@@ -36,7 +36,14 @@ async function getAllClimate(query: string): Promise<Dataset[] | null> {
  */
 async function getDataset(datasetId: string): Promise<Dataset | null> {
 	const response = await API.get(`/datasets/${datasetId}`).catch((error) => {
-		logger.error(`Error: data-service was not able to retreive the dataset ${datasetId} ${error}`);
+		logger.error(`Error: data-service was not able to retrieve the dataset ${datasetId} ${error}`);
+	});
+	return response?.data ?? null;
+}
+
+async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
+	const response = await API.get(`/climatedata/queries/fetch-esgf/${datasetId}`).catch((error) => {
+		logger.error(`Error: esgf-service was not able to retrieve the dataset ${datasetId} ${error}`);
 	});
 	return response?.data ?? null;
 }
@@ -329,6 +336,7 @@ export {
 	getAll,
 	getAllClimate,
 	getDataset,
+	getClimateDataset,
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,

@@ -75,6 +75,7 @@
 				:source="chosenSource"
 				:resource-type="resourceType"
 				:search-term="searchTerm"
+				:dataset-source="chosenDatasetSource"
 			/>
 		</section>
 	</main>

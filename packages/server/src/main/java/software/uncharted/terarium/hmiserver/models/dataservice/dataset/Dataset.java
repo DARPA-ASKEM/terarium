@@ -33,6 +33,12 @@ public class Dataset extends TerariumAsset {
 	private String userId;
 
 	/**
+	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
+	 **/
+	@TSOptional
+	private String esgfId;
+
+	/**
 	 * Name of the dataset
 	 **/
 	private String name;
