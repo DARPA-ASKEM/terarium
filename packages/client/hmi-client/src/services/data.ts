@@ -12,7 +12,7 @@ import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isDocument, isModel } from '@/utils/data-util';
 import { CONCEPT_FACETS_FIELD, ConceptFacets } from '@/types/Concept';
 import { Clause, ClauseValue } from '@/types/Filter';
-import { DATASET_FILTER_FIELDS, DatasetSearchParams } from '@/types/Dataset';
+import { DATASET_FILTER_FIELDS, DatasetSearchParams, DatasetSource } from '@/types/Dataset';
 import {
 	AssetType,
 	Dataset,
@@ -262,7 +262,10 @@ const getAssets = async (params: GetAssetsParams) => {
 			projectAssetType = AssetType.Model;
 			break;
 		case ResourceType.DATASET:
-			assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
+			if (searchParam.source === DatasetSource.TERARIUM)
+				assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
+			else if (searchParam.source === DatasetSource.ESGF)
+				assetList = (await DatasetService.getAllClimate(term)) ?? ([] as Dataset[]);
 			projectAssetType = AssetType.Dataset;
 			break;
 		case ResourceType.XDD:
@@ -289,7 +292,7 @@ const getAssets = async (params: GetAssetsParams) => {
 	}));
 
 	// first get un-filtered concept facets
-	let conceptFacets = await getConceptFacets(projectAssetType);
+	let conceptFacets: ConceptFacets | null = await getConceptFacets(projectAssetType);
 
 	// FIXME: this client-side computation of facets from "models" data should be done
 	//        at the HMI server
@@ -297,7 +300,8 @@ const getAssets = async (params: GetAssetsParams) => {
 	// This is going to calculate facets aggregations from the list of results
 
 	let assetResults =
-		resourceType === ResourceType.XDD
+		resourceType === ResourceType.XDD ||
+		(resourceType === ResourceType.DATASET && searchParam.source === DatasetSource.ESGF)
 			? allAssets
 			: filterAssets(allAssets, resourceType, conceptFacets, term);
 
