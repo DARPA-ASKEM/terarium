@@ -82,43 +82,41 @@ const getBinData = (data: number[]) => {
 	const maxValue = data[data.length - 1]; // data.getMax
 	const stepSize = (maxValue - minValue) / (binCount - 1);
 	const bins: number[] = Array<number>(binCount).fill(0);
+	const binLabels: string[] = [];
+	for (let i = 0; i < binCount; i++) {
+		binLabels.push(
+			`${(minValue + stepSize * i).toString()} - ${(minValue + stepSize * (i + 1)).toString()}`
+		);
+	}
 	// Fill bins:
 	data.forEach((ele) => {
 		const index = Math.abs(Math.floor((ele - minValue) / stepSize));
 		bins[index] += 1;
 	});
 
-	return bins;
+	return { binValues: bins, binLabes: binLabels };
 };
 
 const setChartData = () => {
-	if (!props.riskResults)
-		return {
-			labels: [],
-			datasets: [
-				{
-					label: '',
-					data: [],
-					borderColor: '#440154',
-					borderWidth: 1
-				}
-			]
-		};
+	if (!props.riskResults) return {};
 
 	// TODO: risk.json has _state appended to all states. This is an ugly but fast fix.
 	const targetState = `${props.targetVariable}_state`;
 	const riskValue = props.riskResults[targetState].risk[0];
 	const qoiData = props.riskResults[targetState].qoi;
+	const binData = getBinData(qoiData);
+	const binLabels = binData.binLabes;
+	const binValues = binData.binValues.map((ele, index) => ({ x: ele, y: index }));
 	const riskLine: any[] = [];
 	for (let i = 0; i < binCount; i++) {
 		riskLine.push({ x: i, y: riskValue });
 	}
 	return {
-		labels: [],
+		labels: binLabels,
 		datasets: [
 			{
 				label: '',
-				data: getBinData(qoiData).map((ele, index) => ({ x: ele, y: index })),
+				data: binValues,
 				borderColor: '#440154',
 				borderWidth: 1
 			},
