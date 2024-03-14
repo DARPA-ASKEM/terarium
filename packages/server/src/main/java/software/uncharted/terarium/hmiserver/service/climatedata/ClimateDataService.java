@@ -2,19 +2,19 @@ package software.uncharted.terarium.hmiserver.service.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jodd.cli.Cli;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataPreview;
-import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataPreviewTask;
-import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataResponse;
-import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataResultPng;
+import software.uncharted.terarium.hmiserver.models.climateData.*;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataPreviewRepository;
 import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataPreviewTaskRepository;
+import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataSubsetRepository;
+import software.uncharted.terarium.hmiserver.repository.climateData.ClimateDataSubsetTaskRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 import java.util.Base64;
@@ -30,13 +30,15 @@ public class ClimateDataService {
     final ClimateDataProxy climateDataProxy;
     final ClimateDataPreviewTaskRepository climateDataPreviewTaskRepository;
     final ClimateDataPreviewRepository climateDataPreviewRepository;
+    final ClimateDataSubsetRepository climateDataSubsetRepository;
+    final ClimateDataSubsetTaskRepository climateDataSubsetTaskRepository;
     final S3ClientService s3ClientService;
     final Config config;
 
     private final static long EXPIRATION = 60;
 
-    @Scheduled(fixedRate = 1000 * 60 * 2L) // every 2 minutes
-    public void checkJobStatusTask() {
+    @Scheduled(fixedRate = 1000 * 15 ) // every 15 seconds
+    public void checkPreviewTaskStatus() {
         final List<ClimateDataPreviewTask> previewTasks = climateDataPreviewTaskRepository.findAll();
 
         for (final ClimateDataPreviewTask previewTask : previewTasks) {
@@ -60,7 +62,7 @@ public class ClimateDataService {
                         climateDataPreviewRepository.save(preview);
                     }
                 } else {
-                   log.error("Failed to extract png");
+                    log.error("Failed to extract png");
                     final ClimateDataPreview preview = new ClimateDataPreview(previewTask, "Failed to extract PNG from Result: " + climateDataResponse.getResult().getJobResult());
                     climateDataPreviewRepository.save(preview);
 
@@ -74,6 +76,34 @@ public class ClimateDataService {
                 climateDataPreviewRepository.save(preview);
 
                 climateDataPreviewTaskRepository.delete(previewTask);
+            }
+        }
+    }
+
+    @Scheduled(fixedRate = 1000 * 60 * 2L) // every 2 minutes
+    public void checkSubsetTaskStatus() {
+        final List<ClimateDataSubsetTask> subsetTasks = climateDataSubsetTaskRepository.findAll();
+
+        for (final ClimateDataSubsetTask subsetTask : subsetTasks) {
+            final ResponseEntity<JsonNode> response = climateDataProxy.status(subsetTask.getStatusId());
+            final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
+            if (climateDataResponse.getResult().getJobResult() != null) {
+                final String bucket = config.getFileStorageS3BucketName();
+                final String key = getPreviewFilename(subsetTask.getEsgfId(), subsetTask.getEnvelope());
+
+                s3ClientService.getS3Service().putObject(bucket, key, climateDataResponse.getResult().getJobResult().toString().getBytes());
+
+                final ClimateDataSubset subset = new ClimateDataSubset(subsetTask);
+
+                climateDataSubsetRepository.save(subset);
+
+                climateDataSubsetTaskRepository.delete(subsetTask);
+            }
+            if (climateDataResponse.getResult().getJobError() != null) {
+                final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, climateDataResponse.getResult().getJobError());
+                climateDataSubsetRepository.save(subset);
+
+                climateDataSubsetTaskRepository.delete(subsetTask);
             }
         }
 
@@ -117,9 +147,34 @@ public class ClimateDataService {
     }
 
     public void addSubsetJob(final String esgfId, final String envelope, final String timestamps, final String thinFactor, final String statusId) {
+        final ClimateDataSubsetTask task = new ClimateDataSubsetTask(statusId, esgfId, envelope, timestamps, thinFactor);
+        climateDataSubsetTaskRepository.save(task);
     }
 
-    public static JsonNode getSubsetJob(final String esgfId, final String envelope, final String timestamps, final String thinFactor) {
+    public ResponseEntity<String> getSubset(final String esgfId, final String envelope, final String timestamps, final String thinFactor) {
+        final List<ClimateDataSubset> subsets = climateDataSubsetRepository.findByEsgfIdAndEnvelopeAndTimestampsAndThinFactor(esgfId, envelope, timestamps, thinFactor);
+        if (subsets != null && subsets.size() > 0) {
+            ClimateDataSubset subset = subsets.get(0);
+            // find successful subset
+            for (ClimateDataSubset s : subsets) {
+                if (s.getError() == null) {
+                    subset = s;
+                }
+            }
+            if (subset.getError() != null) {
+                return ResponseEntity.internalServerError().body(subset.getError());
+            }
+            final String filename = getPreviewFilename(subset.getEsgfId(), subset.getEnvelope());
+            final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
+            if (url.isPresent()) {
+                return ResponseEntity.ok(url.get());
+            }
+            return ResponseEntity.internalServerError().body("Failed to generate presigned s3 url");
+        }
+        final ClimateDataSubsetTask task = climateDataSubsetTaskRepository.findByEsgfIdAndEnvelopeAndTimestampsAndThinFactor(esgfId, envelope, timestamps, thinFactor);
+        if (task != null) {
+            return ResponseEntity.accepted().build();
+        }
         return null;
     }
 }
