@@ -109,14 +109,11 @@
 					>
 						<AccordionTab>
 							<template #header>
-								Initial variable values<span class="artifact-amount"
-									>({{ tableFormattedInitials.length }})</span
-								>
+								Initial variable values<span class="artifact-amount">({{ initials.size }})</span>
 							</template>
-							<tera-model-config-table
+							<tera-initial-table
 								v-if="modelConfiguration"
 								:model-configuration="modelConfiguration"
-								:data="tableFormattedInitials"
 								@update-value="updateConfigInitial"
 								@update-configuration="
 									(configToUpdate: ModelConfiguration) => {
@@ -151,12 +148,11 @@
 					</template>
 					<AccordionTab>
 						<template #header>
-							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
+							Parameters<span class="artifact-amount">({{ parameters.size }})</span>
 						</template>
-						<tera-model-config-table
-							v-if="modelConfiguration && tableFormattedParams.length > 0"
+						<tera-parameter-table
+							v-if="modelConfiguration"
 							:model-configuration="modelConfiguration"
-							:data="tableFormattedParams"
 							@update-value="updateConfigParam"
 							@update-configuration="
 								(configToUpdate: ModelConfiguration) => {
@@ -255,11 +251,12 @@ import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
+import { getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
-import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
+import { AMRSchemaNames } from '@/types/common';
+import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
 	getUnstratifiedInitials,
 	getUnstratifiedParameters
@@ -271,6 +268,7 @@ import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue'
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
+import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -284,10 +282,9 @@ import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-sema
 import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { isStratifiedModel, emptyMiraModel } from '@/model-representation/mira/mira';
-import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import TeraModelConfigTable from './tera-model-config-table.vue';
+import TeraParameterTable from './tera-parameter-table.vue';
+import TeraInitialTable from './tera-initial-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -318,7 +315,8 @@ interface BasicKnobs {
 	initials: Initial[];
 	parameters: ModelParameter[];
 	timeseries: { [index: string]: any };
-	sources: { [index: string]: any };
+	initialsMetadata: { [index: string]: any };
+	parametersMetadata: { [index: string]: any };
 	tempConfigId: string;
 }
 
@@ -328,7 +326,8 @@ const knobs = ref<BasicKnobs>({
 	initials: [],
 	parameters: [],
 	timeseries: {},
-	sources: {},
+	initialsMetadata: {},
+	parametersMetadata: {},
 	tempConfigId: ''
 });
 
@@ -483,8 +482,10 @@ const handleModelPreview = (data: any) => {
 	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 	knobs.value.timeseries =
 		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
-	knobs.value.sources =
-		model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
+	knobs.value.initialsMetadata =
+		model.value?.metadata?.initials !== undefined ? model.value?.metadata?.initials : {};
+	knobs.value.parametersMetadata =
+		model.value?.metadata?.parameters !== undefined ? model.value?.metadata?.parameters : {};
 };
 
 const selectedOutputId = ref<string>(props.node.active ?? '');
@@ -515,7 +516,6 @@ const isLoading = computed(
 );
 
 const model = ref<Model | null>(null);
-const mmt = ref<MiraModel>(emptyMiraModel());
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
@@ -538,32 +538,33 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 			cloneModel.semantics.ode.initials = knobs.value.initials;
 			cloneModel.semantics.ode.parameters = knobs.value.parameters;
 			cloneModel.metadata.timeseries = knobs.value.timeseries;
-			cloneModel.metadata.sources = knobs.value.sources;
+			cloneModel.metadata.initials = knobs.value.initialsMetadata;
+			cloneModel.metadata.parameters = knobs.value.parametersMetadata;
 		}
 		modelConfig.configuration = cloneModel;
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
 		cloneModel.model.parameters = knobs.value.parameters;
 		cloneModel.metadata.timeseries = knobs.value.timeseries;
-		cloneModel.metadata.sources = knobs.value.sources;
+		cloneModel.metadata.initials = knobs.value.initialsMetadata;
+		cloneModel.metadata.parameters = knobs.value.parametersMetadata;
 		modelConfig.configuration = cloneModel;
 	}
 
 	return modelConfig;
 });
 
-const isModelStratified = computed(() => {
-	if (!model.value) return false;
+const stratifiedModelType = computed(() => {
+	if (!model.value) return null;
 
 	// FIXME: dull out regnet/stockflow Feb 29, 2024
-	if (model.value.header.schema_name !== 'petrinet') return false;
+	if (model.value.header.schema_name !== 'petrinet') return null;
 
-	if (!mmt.value) return false;
-	return isStratifiedModel(mmt.value);
+	return getStratificationType(model.value);
 });
 
 const parameters = computed<Map<string, string[]>>(() => {
 	if (!model.value) return new Map();
-	if (isModelStratified.value) {
+	if (stratifiedModelType.value) {
 		return getUnstratifiedParameters(model.value);
 	}
 	const result = new Map<string, string[]>();
@@ -581,7 +582,7 @@ const parameters = computed<Map<string, string[]>>(() => {
 
 const initials = computed<Map<string, string[]>>(() => {
 	if (!model.value) return new Map();
-	if (isModelStratified.value) {
+	if (stratifiedModelType.value) {
 		return getUnstratifiedInitials(model.value);
 	}
 	const result = new Map<string, string[]>();
@@ -591,119 +592,7 @@ const initials = computed<Map<string, string[]>>(() => {
 	return result;
 });
 
-const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
-	const formattedInitials: ModelConfigTableData[] = [];
-
-	if (isModelStratified.value) {
-		initials.value.forEach((vals, init) => {
-			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = knobs.value.initials.find((i) => i.target === v);
-				const sourceValue = knobs.value.sources[initial!.target];
-				return {
-					id: v,
-					name: v,
-					type: ParamType.EXPRESSION,
-					value: initial,
-					source: sourceValue,
-					visibility: false
-				};
-			});
-			formattedInitials.push({
-				id: init,
-				name: init,
-				type: ParamType.MATRIX,
-				value: 'matrix',
-				source: '',
-				visibility: false,
-				tableFormattedMatrix
-			});
-		});
-	} else {
-		initials.value.forEach((vals, init) => {
-			const initial = knobs.value.initials.find((i) => i.target === vals[0]);
-			const sourceValue = knobs.value.sources[initial!.target];
-
-			formattedInitials.push({
-				id: init,
-				name: init,
-				type: ParamType.EXPRESSION,
-				value: initial,
-				source: sourceValue,
-				visibility: false
-			});
-		});
-	}
-
-	return formattedInitials;
-});
-
-const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
-	const formattedParams: ModelConfigTableData[] = [];
-
-	if (isModelStratified.value) {
-		parameters.value.forEach((vals, init) => {
-			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const param = knobs.value.parameters.find((i) => i.id === v);
-				const paramType = getParamType(param);
-				const timeseriesValue = knobs.value.timeseries[param!.id];
-				const sourceValue = knobs.value.sources[param!.id];
-				return {
-					id: v,
-					name: v,
-					type: paramType,
-					value: param,
-					source: sourceValue,
-					visibility: false,
-					timeseries: timeseriesValue
-				};
-			});
-			formattedParams.push({
-				id: init,
-				name: init,
-				type: ParamType.MATRIX,
-				value: 'matrix',
-				source: '',
-				visibility: false,
-				tableFormattedMatrix
-			});
-		});
-	} else {
-		parameters.value.forEach((vals, init) => {
-			const param = knobs.value.parameters.find((i) => i.id === vals[0]);
-			const paramType = getParamType(param);
-
-			const timeseriesValue = knobs.value.timeseries[param!.id];
-			const sourceValue = knobs.value.sources[param!.id];
-			formattedParams.push({
-				id: init,
-				name: init,
-				type: paramType,
-				value: param,
-				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
-			});
-		});
-	}
-
-	return formattedParams;
-});
-
 const modelType = computed(() => getModelType(model.value));
-
-const getParamType = (param: ModelParameter | undefined) => {
-	let type = ParamType.CONSTANT;
-	if (!param) return type;
-	if (
-		modelConfiguration.value?.configuration.metadata?.timeseries?.[param.id] ||
-		modelConfiguration.value?.configuration.metadata.timeseries?.[param.id] === ''
-	) {
-		type = ParamType.TIME_SERIES;
-	} else if (param?.distribution) {
-		type = ParamType.DISTRIBUTION;
-	}
-	return type;
-};
 
 const updateConfigParam = (params: ModelParameter[]) => {
 	for (let i = 0; i < knobs.value.parameters.length; i++) {
@@ -731,7 +620,8 @@ const updateFromConfig = (config: ModelConfiguration) => {
 		knobs.value.parameters = config.configuration.model?.parameters ?? [];
 	}
 	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
-	knobs.value.sources = config.configuration?.metadata?.sources ?? {};
+	knobs.value.initialsMetadata = config.configuration?.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = config.configuration?.metadata?.parameters ?? {};
 };
 
 const createConfiguration = async () => {
@@ -796,10 +686,6 @@ const initialize = async () => {
 	fetchConfigurations(modelId);
 	model.value = await getModel(modelId);
 
-	if (model.value) {
-		mmt.value = (await getMMT(model.value)).mmt;
-	}
-
 	knobs.value.name = state.name;
 	knobs.value.description = state.description;
 	knobs.value.tempConfigId = state.tempConfigId;
@@ -820,8 +706,10 @@ const initialize = async () => {
 		}
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
-		knobs.value.sources =
-			model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
+		knobs.value.initialsMetadata =
+			model.value?.metadata?.initials !== undefined ? model.value?.metadata?.initials : {};
+		knobs.value.parametersMetadata =
+			model.value?.metadata?.parameters !== undefined ? model.value?.metadata?.parameters : {};
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
@@ -829,7 +717,8 @@ const initialize = async () => {
 		knobs.value.initials = state.initials;
 		knobs.value.parameters = state.parameters;
 		knobs.value.timeseries = state.timeseries;
-		knobs.value.sources = state.sources;
+		knobs.value.initialsMetadata = state.initialsMetadata;
+		knobs.value.parametersMetadata = state.parametersMetadata;
 	}
 
 	// Create a new session and context based on model
@@ -857,7 +746,8 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 		knobs.value.parameters = config.configuration.model.parameters;
 	}
 	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
-	knobs.value.sources = config.configuration.metadata?.sources ?? {};
+	knobs.value.initialsMetadata = config.configuration.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = config.configuration.metadata?.parameters ?? {};
 	logger.success(`Configuration applied ${config.name}`);
 };
 
@@ -884,7 +774,8 @@ watch(
 		state.initials = knobs.value.initials;
 		state.parameters = knobs.value.parameters;
 		state.timeseries = knobs.value.timeseries;
-		state.sources = knobs.value.sources;
+		state.initialsMetadata = knobs.value.initialsMetadata;
+		state.parametersMetadata = knobs.value.parametersMetadata;
 		state.tempConfigId = knobs.value.tempConfigId;
 		emit('update-state', state);
 	},
