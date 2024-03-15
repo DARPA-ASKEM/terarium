@@ -251,12 +251,12 @@ import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel, getModelConfigurations, getModelType } from '@/services/model';
+import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
+// import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
 	getUnstratifiedInitials,
 	getUnstratifiedParameters
@@ -282,6 +282,8 @@ import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-sema
 import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { isStratifiedModel, emptyMiraModel } from '@/model-representation/mira/mira';
+import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraParameterTable from './tera-parameter-table.vue';
 import TeraInitialTable from './tera-initial-table.vue';
@@ -516,6 +518,7 @@ const isLoading = computed(
 );
 
 const model = ref<Model | null>(null);
+const mmt = ref<MiraModel>(emptyMiraModel());
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
@@ -553,18 +556,19 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	return modelConfig;
 });
 
-const stratifiedModelType = computed(() => {
-	if (!model.value) return null;
+const isStratified = computed(() => {
+	if (!model.value) return false;
 
 	// FIXME: dull out regnet/stockflow Feb 29, 2024
-	if (model.value.header.schema_name !== 'petrinet') return null;
+	if (model.value.header.schema_name !== 'petrinet') return false;
 
-	return getStratificationType(model.value);
+	if (!mmt.value) return false;
+	return isStratifiedModel(mmt.value);
 });
 
 const parameters = computed<Map<string, string[]>>(() => {
 	if (!model.value) return new Map();
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		return getUnstratifiedParameters(model.value);
 	}
 	const result = new Map<string, string[]>();
@@ -582,7 +586,7 @@ const parameters = computed<Map<string, string[]>>(() => {
 
 const initials = computed<Map<string, string[]>>(() => {
 	if (!model.value) return new Map();
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		return getUnstratifiedInitials(model.value);
 	}
 	const result = new Map<string, string[]>();
@@ -685,6 +689,10 @@ const initialize = async () => {
 	if (!modelId) return;
 	fetchConfigurations(modelId);
 	model.value = await getModel(modelId);
+
+	if (model.value) {
+		mmt.value = (await getMMT(model.value)).mmt;
+	}
 
 	knobs.value.name = state.name;
 	knobs.value.description = state.description;
