@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
+		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
 					<tera-input-switch
@@ -67,14 +67,14 @@
 			<AccordionTab header="Model equations">
 				<tera-model-equation
 					:model="model"
-					:is-editable="!featureConfig?.isPreview"
+					:is-editable="false"
 					@model-updated="emit('model-updated')"
 				/>
 			</AccordionTab>
 			<AccordionTab header="Model observables">
 				<tera-model-observable
 					:model="model"
-					:is-editable="!featureConfig?.isPreview"
+					:is-editable="false"
 					@update-model="updateModelContent"
 				/>
 			</AccordionTab>
@@ -94,6 +94,7 @@
 			:model="model"
 			:model-configurations="modelConfigurations"
 			@update-model="(modelClone) => emit('update-model', modelClone)"
+			class="mt-0"
 		/>
 	</main>
 </template>
