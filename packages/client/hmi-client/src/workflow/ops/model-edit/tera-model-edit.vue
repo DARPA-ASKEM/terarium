@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr && isKernelReady"
@@ -10,7 +16,7 @@
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
-			<tera-drilldown-section id="notebook-section">
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
 					<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
 					<Button
@@ -19,16 +25,15 @@
 						outlined
 						severity="secondary"
 						size="small"
-						@click="runFromCodeWrapper(editor?.getValue() as string)"
+						@click="runFromCodeWrapper"
 					/>
 				</div>
-
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
+						:default-options="sampleAgentQuestions"
+						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
-						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
@@ -85,7 +90,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, onUnmounted, ref, watch, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
@@ -97,6 +102,7 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -104,6 +110,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -153,12 +160,19 @@ const sampleAgentQuestions = [
 	'Rename the transition infection to inf.'
 ];
 
-const codeText = ref(
-	'# This environment contains the variable "model" \n# which is displayed on the right'
-);
+const contextLanguage = ref<string>('python3');
+
+const defaultCodeText =
+	'# This environment contains the variable "model" \n# which is displayed on the right';
+const codeText = ref(defaultCodeText);
 
 const appendCode = (data: any, property: string) => {
-	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+	const code = data.content[property] as string;
+	if (code) {
+		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+	} else {
+		logger.error('No code to append');
+	}
 };
 
 const syncWithMiraModel = (data: any) => {
@@ -166,10 +180,10 @@ const syncWithMiraModel = (data: any) => {
 };
 
 // Reset model, then execute the code
-const runFromCodeWrapper = (code: string) => {
+const runFromCodeWrapper = () => {
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode(code);
+		runFromCode(editor?.getValue() as string);
 	});
 };
 
@@ -221,7 +235,7 @@ const handleResetResponse = (data: any) => {
 	if (data.content.success) {
 		// updateStratifyGroupForm(blankStratifyGroup);
 
-		codeText.value = '';
+		codeText.value = defaultCodeText;
 		saveCodeToState('', false);
 
 		logger.info('Model reset');
@@ -251,7 +265,7 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
-	codeText.value = props.node.state.modelEditCodeHistory[0].code;
+	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
@@ -266,7 +280,7 @@ const inputChangeHandler = async () => {
 		}
 
 		if (codeText.value && codeText.value.length > 0) {
-			runFromCodeWrapper(codeText.value);
+			runFromCodeWrapper();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -348,7 +362,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* The wizard of this operator is atypical and needs the outside margins to be removed */
+/* The wizard of this operator is atypical and needs the outside margins to be removed
+	TODO: This case should be handled in the tera-drilldown component or something as it messes with the padding in the notebook tab */
 .overlay-container:deep(main) {
 	padding: 0 0 0 0;
 }
@@ -362,9 +377,12 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-#notebook-section:deep(main) {
+.notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+	/** TODO: Temporary solution, should be using the default overlay-container padding
+	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
+	margin-left: 1.5rem;
 }
 
 .toolbar-right-side {
@@ -374,10 +392,6 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
-}
-
-.ai-assistant-container {
-	margin-left: var(--gap);
 }
 
 .preview-container {

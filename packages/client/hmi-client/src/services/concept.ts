@@ -6,12 +6,12 @@ import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
 import type {
+	AssetType,
 	Curies,
+	DatasetColumn,
 	DKG,
 	EntitySimilarityResult,
-	AssetType,
-	State,
-	DatasetColumn
+	State
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
@@ -35,7 +35,7 @@ interface EntityMap {
  */
 async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<ConceptFacets | null> {
 	try {
-		let url = `/concepts/facets&types=${type}`;
+		let url = `/concepts/facets?types=${type}`;
 		if (curies) {
 			curies.forEach((curie) => {
 				url += `&curies=${curie}`;
@@ -55,14 +55,10 @@ async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<Conce
  * Get DKG entities, either single ones or multiple at a time
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
-	try {
-		const response = await API.get(`/mira/${curies.toString()}`);
-		if (response?.status !== 200) return null;
-		return response?.data ?? null;
-	} catch (error) {
-		logger.error(error, { showToast: false });
-		return null;
-	}
+	const response = await API.get(`/mira/currie/${curies.toString()}`);
+	if (response?.status === 200 && response?.data) return response.data;
+	if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
+	return null;
 }
 
 async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
@@ -111,7 +107,7 @@ async function getEntitySimilarity(
 	targets: string[]
 ): Promise<Array<EntitySimilarityResult> | null> {
 	try {
-		const response = await API.post('/mira/entity_similarity', { sources, targets } as Curies);
+		const response = await API.post('/mira/entity-similarity', { sources, targets } as Curies);
 		if (response?.status !== 200) return null;
 		return response?.data ?? null;
 	} catch (error) {

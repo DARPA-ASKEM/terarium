@@ -1,9 +1,12 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				@click.stop
-				style="margin-left: auto"
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
@@ -12,7 +15,78 @@
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
-				<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="pb-6">
+				<div class="box-container" v-if="model">
+					<Accordion multiple :active-index="[0]">
+						<AccordionTab>
+							<template #header>
+								Suggested configurations<span class="artifact-amount"
+									>({{ suggestedConfirgurationContext.tableData.length }})</span
+								>
+								<Button
+									icon="pi pi-sign-out"
+									label="Extract configurations from inputs"
+									outlined
+									severity="secondary"
+									@click.stop="extractConfigurationsFromInputs"
+									style="margin-left: auto"
+									:loading="isLoading"
+								/>
+							</template>
+
+							<DataTable
+								:value="suggestedConfirgurationContext.tableData"
+								size="small"
+								data-key="id"
+								:paginator="suggestedConfirgurationContext.tableData.length > 5"
+								:rows="5"
+								sort-field="createdOn"
+								:sort-order="-1"
+								:loading="isLoading"
+							>
+								<Column field="name" header="Name" style="width: 15%">
+									<template #body="{ data }">
+										<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
+									</template>
+								</Column>
+								<Column field="description" header="Description" style="width: 30%"></Column>
+								<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
+									<template #body="{ data }">
+										{{ formatTimestamp(data.createdOn) }}
+									</template>
+								</Column>
+								<Column header="Source" style="width: 30%">
+									<template #body="{ data }">
+										{{ data.configuration.metadata?.source?.join(',') || '--' }}
+									</template>
+								</Column>
+								<Column style="width: 7rem">
+									<template #body="{ data }">
+										<Button
+											class="use-button"
+											label="Apply configuration values"
+											@click="useSuggestedConfig(data)"
+											text
+										/>
+									</template>
+								</Column>
+								<template #loading>
+									<div>
+										<Vue3Lottie
+											:animationData="LoadingWateringCan"
+											:height="200"
+											:width="200"
+										></Vue3Lottie>
+										<p>Fetching suggested configurations.</p>
+									</div>
+								</template>
+								<template #empty>
+									<p class="empty-section m-3">No configurations found.</p>
+								</template>
+							</DataTable>
+						</AccordionTab>
+					</Accordion>
+				</div>
+				<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]" class="pb-6">
 					<AccordionTab header="Context">
 						<p class="text-sm mb-1">Name</p>
 						<InputText
@@ -27,89 +101,60 @@
 							v-model="knobs.description"
 						/>
 					</AccordionTab>
-					<AccordionTab v-if="model" header="Suggested Configurations">
-						<template #header>
-							<Button
-								outlined
-								label="Extract configurations from document"
-								size="small"
-								icon="pi pi-cog"
-								@click.stop="extractConfigurations"
-								:disabled="loadingConfigs || !documentId || !model.id"
-								style="margin-left: auto"
-							/>
-						</template>
-
-						<DataTable
-							:value="suggestedConfirgurationContext.tableData"
-							size="small"
-							data-key="id"
-							paginator
-							:rows="5"
-							sort-field="createdOn"
-							:sort-order="-1"
-							:loading="loadingConfigs"
-						>
-							<Column field="name" header="Name" style="width: 15%">
-								<template #body="{ data }">
-									<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
-								</template>
-							</Column>
-							<Column field="description" header="Description" style="width: 30%"></Column>
-							<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
-								<template #body="{ data }">
-									{{ new Date(data.createdOn).toISOString() }}
-								</template>
-							</Column>
-							<Column header="Source" style="width: 30%">
-								<template #body="{ data }">
-									{{ data.configuration.metadata?.source?.join(',') || '--' }}
-								</template>
-							</Column>
-							<Column style="width: 7rem">
-								<template #body="{ data }">
-									<Button
-										class="use-button"
-										label="Apply configuration values"
-										@click="useSuggestedConfig(data)"
-										text
-									/>
-								</template>
-							</Column>
-							<template #loading>
-								<div>
-									<Vue3Lottie
-										:animationData="LoadingWateringCan"
-										:height="200"
-										:width="200"
-									></Vue3Lottie>
-									<p>Fetching suggested configurations.</p>
-								</div>
-							</template>
-							<template #empty>
-								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
-							</template>
-						</DataTable>
-					</AccordionTab>
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
-					<AccordionTab header="Initials">
+					<template
+						v-if="modelType === AMRSchemaNames.PETRINET || modelType === AMRSchemaNames.STOCKFLOW"
+					>
+						<AccordionTab>
+							<template #header>
+								Initial variable values<span class="artifact-amount"
+									>({{ tableFormattedInitials.length }})</span
+								>
+							</template>
+							<tera-model-config-table
+								v-if="modelConfiguration"
+								:model-configuration="modelConfiguration"
+								:data="tableFormattedInitials"
+								@update-value="updateConfigInitial"
+								@update-configuration="
+									(configToUpdate: ModelConfiguration) => {
+										updateFromConfig(configToUpdate);
+									}
+								"
+							/>
+						</AccordionTab>
+					</template>
+					<template v-else-if="modelType === AMRSchemaNames.REGNET">
+						<AccordionTab header="Vertices">
+							<DataTable v-if="!isEmpty(vertices)" data-key="id" :value="vertices">
+								<Column field="id" header="Symbol" />
+								<Column field="name" header="Name" />
+								<Column field="rate_constant" header="Rate Constant" />
+								<Column field="initial" header="Initial Value">
+									<template #body="{ data, field }">
+										<!-- FIXME: temporary hack -->
+										<InputText v-model="data[field]" @blur="tempUpdate(data, field)" />
+									</template>
+								</Column>
+							</DataTable>
+						</AccordionTab>
+						<AccordionTab header="Edges">
+							<DataTable v-if="!isEmpty(edges)" data-key="id" :value="edges">
+								<Column field="id" header="Symbol" />
+								<Column field="source" header="Source" />
+								<Column field="target" header="Target" />
+								<Column field="properties.rate_constant" header="Rate Constant" />
+							</DataTable>
+						</AccordionTab>
+					</template>
+					<AccordionTab>
+						<template #header>
+							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
+						</template>
 						<tera-model-config-table
-							v-if="modelConfiguration"
-							:model-configuration="modelConfiguration"
-							:data="tableFormattedInitials"
-							@update-value="updateConfigInitial"
-							@update-configuration="
-								(configToUpdate: ModelConfiguration) => {
-									updateFromConfig(configToUpdate);
-								}
-							"
-						/>
-					</AccordionTab>
-					<AccordionTab header="Parameters">
-						<tera-model-config-table
-							v-if="modelConfiguration"
+							v-if="modelConfiguration && tableFormattedParams.length > 0"
 							:model-configuration="modelConfiguration"
 							:data="tableFormattedParams"
 							@update-value="updateConfigParam"
@@ -119,17 +164,21 @@
 								}
 							"
 						/>
+						<section v-else>
+							<p class="empty-section">No parameters found.</p>
+						</section>
 					</AccordionTab>
 				</Accordion>
 				<template #footer>
 					<Button
 						outlined
+						size="large"
 						:disabled="isSaveDisabled"
 						label="Run"
 						icon="pi pi-play"
 						@click="createConfiguration"
 					/>
-					<Button style="margin-left: auto" label="Close" @click="emit('close')" />
+					<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-section>
 		</section>
@@ -141,7 +190,6 @@
 						label="Run"
 						outlined
 						severity="secondary"
-						size="small"
 						@click="runFromCode"
 					/>
 				</div>
@@ -149,6 +197,7 @@
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
 						:defaultOptions="sampleAgentQuestions"
+						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
@@ -198,18 +247,19 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
-import { computed, ref, watch, onUnmounted, onMounted } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import { WorkflowNode } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel, getModelConfigurations } from '@/services/model';
+import { getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
-import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
-import { ModelConfigTableData, ParamType } from '@/types/common';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import { TaskStatus } from '@/types/Types';
+import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
 	getUnstratifiedInitials,
@@ -221,7 +271,7 @@ import { useToastService } from '@/services/toast';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { configureModel } from '@/services/goLLM';
+import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
@@ -229,10 +279,13 @@ import { VAceEditor } from 'vue3-ace-editor';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import { FatalError } from '@/api/api';
+import { formatTimestamp } from '@/utils/date';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraModelConfigTable from './tera-model-config-table.vue';
 
@@ -246,7 +299,7 @@ const props = defineProps<{
 }>();
 
 const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
+	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
 				label: 'Select outputs to display in operator',
@@ -308,6 +361,7 @@ const sampleAgentQuestions = [
 	'What are the current parameters values?',
 	'update the parameters {gamma: 0.13}'
 ];
+const contextLanguage = ref<string>('python3');
 
 const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
@@ -347,10 +401,12 @@ const runFromCode = () => {
 			}
 		});
 };
+const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);
+const vertices = computed(() => modelConfiguration?.value?.configuration.model?.vertices ?? []);
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 
 	// for now only save the last code executed, may want to save all code executed in the future
@@ -368,10 +424,60 @@ const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
+const extractConfigurationsFromInputs = async () => {
+	if (!model.value?.id) return;
+	if (documentId.value) {
+		modelFromDocumentHandler.value = await configureModelFromDocument(
+			documentId.value,
+			model.value.id,
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
+						throw new FatalError('Configs from document - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from document');
+						closeConnection();
+					}
+				},
+				onclose() {
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
+				}
+			}
+		);
+	}
+	if (datasetId.value) {
+		modelFromDatasetHandler.value = await configureModelFromDatasets(
+			model.value.id,
+			[datasetId.value],
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
+						throw new FatalError('Configs from datasets - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from dataset(s)');
+						closeConnection();
+					}
+				},
+				onclose() {
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
+				}
+			}
+		);
+	}
+};
+
 const handleModelPreview = (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
-	Object.assign(model.value, _.cloneDeep(data.content['application/json']));
+	Object.assign(model.value, cloneDeep(data.content['application/json']));
 	const ode = model.value?.semantics?.ode;
 	knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
 	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
@@ -387,6 +493,7 @@ const selectedConfigId = computed(
 );
 
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
+const datasetId = computed(() => props.node.inputs?.[2]?.value?.[0]);
 
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;
@@ -397,37 +504,58 @@ const suggestedConfirgurationContext = ref<{
 	tableData: [],
 	modelConfiguration: null
 });
+const isFetching = ref(false);
+const modelFromDocumentHandler = ref();
+const modelFromDatasetHandler = ref();
+const isLoading = computed(
+	() =>
+		modelFromDocumentHandler.value?.isRunning ||
+		modelFromDatasetHandler.value?.isRunning ||
+		isFetching.value
+);
 
-const loadingConfigs = ref(false);
-const model = ref<Model | null>();
+const model = ref<Model | null>(null);
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
 
-	const cloneModel = _.cloneDeep(model.value);
-	if (cloneModel.semantics) {
-		if (!cloneModel.metadata || !cloneModel.metadata.timeseries) {
-			cloneModel.metadata = {
-				...cloneModel.metadata,
-				timeseries: {}
-			};
-		}
-		cloneModel.semantics.ode.initials = knobs.value.initials;
-		cloneModel.semantics.ode.parameters = knobs.value.parameters;
-		cloneModel.metadata.timeseries = knobs.value.timeseries;
-		cloneModel.metadata.sources = knobs.value.sources;
-	}
+	const cloneModel = cloneDeep(model.value);
+
 	const modelConfig: ModelConfiguration = {
 		id: '',
 		name: '',
 		model_id: cloneModel.id ?? '',
 		configuration: cloneModel
 	};
+
+	if (!cloneModel.metadata || !cloneModel.metadata.timeseries) {
+		cloneModel.metadata = {};
+	}
+
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		if (cloneModel.semantics) {
+			cloneModel.semantics.ode.initials = knobs.value.initials;
+			cloneModel.semantics.ode.parameters = knobs.value.parameters;
+			cloneModel.metadata.timeseries = knobs.value.timeseries;
+			cloneModel.metadata.sources = knobs.value.sources;
+		}
+		modelConfig.configuration = cloneModel;
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		cloneModel.model.parameters = knobs.value.parameters;
+		cloneModel.metadata.timeseries = knobs.value.timeseries;
+		cloneModel.metadata.sources = knobs.value.sources;
+		modelConfig.configuration = cloneModel;
+	}
+
 	return modelConfig;
 });
 
 const stratifiedModelType = computed(() => {
 	if (!model.value) return null;
+
+	// FIXME: dull out regnet/stockflow Feb 29, 2024
+	if (model.value.header.schema_name !== 'petrinet') return null;
+
 	return getStratificationType(model.value);
 });
 
@@ -437,9 +565,15 @@ const parameters = computed<Map<string, string[]>>(() => {
 		return getUnstratifiedParameters(model.value);
 	}
 	const result = new Map<string, string[]>();
-	model.value.semantics?.ode.parameters?.forEach((p) => {
-		result.set(p.id, [p.id]);
-	});
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		model.value.semantics?.ode.parameters?.forEach((p) => {
+			result.set(p.id, [p.id]);
+		});
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		model.value.model.parameters?.forEach((p) => {
+			result.set(p.id, [p.id]);
+		});
+	}
 	return result;
 });
 
@@ -553,6 +687,8 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	return formattedParams;
 });
 
+const modelType = computed(() => getModelType(model.value));
+
 const getParamType = (param: ModelParameter | undefined) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
@@ -586,8 +722,12 @@ const updateConfigInitial = (inits: Initial[]) => {
 };
 
 const updateFromConfig = (config: ModelConfiguration) => {
-	knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
-	knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
+		knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		knobs.value.parameters = config.configuration.model?.parameters ?? [];
+	}
 	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
 	knobs.value.sources = config.configuration?.metadata?.sources ?? {};
 };
@@ -595,12 +735,12 @@ const updateFromConfig = (config: ModelConfiguration) => {
 const createConfiguration = async () => {
 	if (!model.value) return;
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value.name,
 		knobs.value.description,
-		model.value
+		modelConfiguration.value?.configuration
 	);
 
 	if (!data) {
@@ -624,16 +764,16 @@ const onSelection = (id: string) => {
 
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
-		loadingConfigs.value = true;
+		isFetching.value = true;
 		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-		loadingConfigs.value = false;
+		isFetching.value = false;
 	}
 };
 
 // Creates a temp config (if doesnt exist in state)
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	if (state.tempConfigId !== '' || !model.value) return;
 	const data = await createModelConfiguration(
 		model.value.id,
@@ -663,7 +803,15 @@ const initialize = async () => {
 		// Grab these values from model to inialize them
 		const ode = model.value?.semantics?.ode;
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-		knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
+		if (
+			modelType.value === AMRSchemaNames.PETRINET ||
+			modelType.value === AMRSchemaNames.STOCKFLOW
+		) {
+			knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
+		} else if (modelType.value === AMRSchemaNames.REGNET) {
+			knobs.value.parameters =
+				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
+		}
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.sources =
@@ -696,24 +844,25 @@ const initialize = async () => {
 const useSuggestedConfig = (config: ModelConfiguration) => {
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
-	knobs.value.initials = config.configuration.semantics.ode.initials;
-	knobs.value.parameters = config.configuration.semantics.ode.parameters;
+	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+		knobs.value.initials = config.configuration.semantics.ode.initials;
+		knobs.value.parameters = config.configuration.semantics.ode.parameters;
+	} else if (modelType.value === AMRSchemaNames.REGNET) {
+		knobs.value.parameters = config.configuration.model.parameters;
+	}
 	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
 	knobs.value.sources = config.configuration.metadata?.sources ?? {};
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const extractConfigurations = async () => {
-	if (!documentId.value || !model.value?.id) return;
-	loadingConfigs.value = true;
-	await configureModel(documentId.value, model.value.id);
-	loadingConfigs.value = false;
-	fetchConfigurations(model.value.id);
-};
-
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfirgurationContext.value.modelConfiguration = config;
 	suggestedConfirgurationContext.value.isOpen = true;
+};
+
+// FIXME: temporary hack, need proper config/states to handle all frameworks and fields
+const tempUpdate = (data: any, field: any) => {
+	data[field] = +data[field];
 };
 
 onMounted(async () => {
@@ -723,7 +872,7 @@ onMounted(async () => {
 watch(
 	() => knobs.value,
 	async () => {
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		state.name = knobs.value.name;
 		state.description = knobs.value.description;
 		state.initials = knobs.value.initials;
@@ -753,12 +902,62 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* This is for the box around the suggested configurations section */
+.box-container {
+	border: solid 1px var(--surface-border);
+	border-radius: var(--border-radius);
+	background-color: var(--surface-50);
+}
+
+.box-container:deep(.p-accordion .p-accordion-content) {
+	padding: 0;
+	background-color: transparent;
+}
+
+.box-container:deep(.p-datatable .p-datatable-tbody > tr) {
+	background-color: transparent;
+}
+
+.box-container:deep(.p-paginator) {
+	background-color: transparent;
+}
+
+.box-container:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+	background-color: transparent;
+}
+
+.box-container:deep(
+		.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link
+	) {
+	background-color: transparent;
+}
+.box-container:deep(.p-datatable .p-sortable-column.p-highlight) {
+	background-color: transparent;
+}
+.box-container:deep(table > thead > tr > th:nth-child(1)) {
+	padding-left: var(--gap);
+}
+.box-container:deep(.p-button .p-button-label) {
+	text-align: left;
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap);
 }
 
+.artifact-amount {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
+}
+.empty-section {
+	color: var(--text-color-subdued);
+}
+.p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
+	padding: 0;
+}
 .context-item {
 	width: 100%;
 }

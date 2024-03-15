@@ -17,7 +17,7 @@
 					<template #end>
 						<span>
 							<SelectButton
-								v-if="model && getStratificationType(model)"
+								v-if="model && isStratifiedModel(mmt)"
 								:model-value="stratifiedView"
 								@change="
 									if ($event.value) {
@@ -72,26 +72,28 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, onMounted, onUnmounted } from 'vue';
+import { watch, ref, onMounted, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
-import {
-	getStratificationType,
-	StratifiedModel
-} from '@/model-representation/petrinet/petrinet-service';
-import { IGraph } from '@graph-scaffolder/index';
-import {
-	PetrinetRenderer,
-	NodeData,
-	EdgeData,
-	NodeType
-} from '@/model-representation/petrinet/petrinet-renderer';
-import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import SelectButton from 'primevue/selectbutton';
+import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
+import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
+
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
-import SelectButton from 'primevue/selectbutton';
+import { AMRSchemaNames } from '@/types/common';
+import { MiraModel } from '@/model-representation/mira/mira-common';
+import {
+	isStratifiedModel,
+	emptyMiraModel,
+	convertToIGraph,
+	collapseTemplates,
+	rawTemplatesSummary
+} from '@/model-representation/mira/mira';
+import { getModelRenderer } from '@/model-representation/service';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -102,17 +104,16 @@ const props = defineProps<{
 	isPreview?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-configuration']);
+const emit = defineEmits(['update-configuration']);
 
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
-const splitterContainer = ref<HTMLElement | null>(null);
-const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
-const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
+const modelType = computed(() => getModelType(props.model));
+const mmt = ref<MiraModel>(emptyMiraModel());
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -125,33 +126,40 @@ const stratifiedViewOptions = ref([
 	{ value: StratifiedView.Collapsed }
 ]);
 
-// Is this going to consistently have an option to switch from diagram to equation if not the toggle should be somewherlse
-// enum
-
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-async function renderGraph(updatedModel: Model | null = null) {
-	const modelToRender = updatedModel ?? props.model;
+async function renderGraph() {
+	const { templatesSummary } = collapseTemplates(mmt.value);
+	const rawTemplates = rawTemplatesSummary(mmt.value);
 
-	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = getGraphData(modelToRender, isCollapsed.value);
+	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
+		graphLegendLabels.value = renderer.dims;
+		graphLegendColors.value = renderer.depthColorList;
+	}
+
+	renderer.on('node-click', (_eventName, _event, selection) => {
+		const { id, type } = selection.datum();
+		if (type === NodeType.Transition) {
+			selectedTransitionId.value = id;
+			openValueConfig.value = true;
+		}
+	});
 
 	// Render graph
+	const graphData =
+		isCollapsed.value === true ? convertToIGraph(templatesSummary) : convertToIGraph(rawTemplates);
+
 	if (renderer) {
 		renderer.isGraphDirty = true;
 		await renderer.setData(graphData);
 		await renderer.render();
-
-		if (updatedModel) {
-			emit('update-model', renderer.graph.amr);
-		}
 	}
 }
-defineExpose({ renderGraph });
 
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
@@ -164,50 +172,22 @@ async function toggleCollapsedView() {
 watch(
 	[() => props.model, graphElement],
 	async () => {
+		if (modelType.value === AMRSchemaNames.DECAPODES) return;
 		if (graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
 
-		// Create renderer
-		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
-		if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
-			graphLegendLabels.value = renderer.dims;
-			graphLegendColors.value = renderer.depthColorList;
-		}
+		// FIXME: inefficient, do not constant call API in watch
+		mmt.value = (await getMMT(props.model)).mmt;
 
-		renderer.on('node-click', (_eventName, _event, selection) => {
-			const { id, type } = selection.datum();
-			if (type === NodeType.Transition) {
-				selectedTransitionId.value = id;
-				openValueConfig.value = true;
-			}
-		});
-
-		// Render graph
-		await renderer?.setData(graphData);
-		await renderer?.render();
+		await renderGraph();
 	},
 	{ deep: true }
 );
 
-const updateLayout = () => {
-	if (splitterContainer.value) {
-		layout.value =
-			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
-			window.innerWidth < 800
-				? 'vertical'
-				: 'horizontal';
-	}
-};
-const handleResize = () => updateLayout();
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
+onMounted(async () => {
+	mmt.value = (await getMMT(props.model)).mmt;
 });
 
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
+onUnmounted(() => {});
 </script>
 
 <style scoped>

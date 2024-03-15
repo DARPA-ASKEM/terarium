@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
@@ -75,7 +76,7 @@ public class ConceptControllerTests extends TerariumApplicationTests {
 
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/concepts/facets")
 				.param("curies", "something", "another-curie")
-				.param("types", TaggableType.DATASETS.name())
+				.param("types", AssetType.DATASET.name())
 				.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();

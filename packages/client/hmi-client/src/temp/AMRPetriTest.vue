@@ -21,13 +21,13 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
+import { getModelRenderer } from '@/model-representation/service';
+import { getMMT } from '@/services/model';
+
 import { onMounted, ref, watch } from 'vue';
-import BasicRenderer from 'graph-scaffolder/src/core/basic-renderer';
-import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import * as amrExample from '@/examples/sir.json';
-import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import * as mmtExample from '@/examples/mira-petri.json';
+import { collapseTemplates, convertToIGraph } from '@/model-representation/mira/mira';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
@@ -35,31 +35,18 @@ const strataType = ref<string | null>(null);
 const isCollapse = ref(true);
 
 onMounted(async () => {
-	jsonStr.value = JSON.stringify(amrExample, null, 2);
+	jsonStr.value = JSON.stringify(mmtExample, null, 2);
 
 	watch(
-		() => [jsonStr.value, isCollapse.value],
+		() => jsonStr.value,
 		async () => {
-			let renderer: BasicRenderer<any, any>;
-			let data: any;
+			const jsonData = JSON.parse(jsonStr.value);
+			const mmt = (await getMMT(jsonData)).mmt;
+			const renderer = getModelRenderer(mmt, graphElement.value as HTMLDivElement, false);
+			const { templatesSummary } = collapseTemplates(mmt);
+			const graphData = convertToIGraph(templatesSummary);
 
-			const amr = JSON.parse(jsonStr.value);
-			strataType.value = getStratificationType(amr);
-
-			data = getGraphData(amr, isCollapse.value);
-
-			if (isCollapse.value === false) {
-				renderer = new PetrinetRenderer({
-					el: graphElement.value as HTMLDivElement,
-					useAStarRouting: false,
-					useStableZoomPan: true,
-					runLayout: runDagreLayout
-				});
-			} else {
-				renderer = getPetrinetRenderer(amr, graphElement.value as HTMLDivElement);
-			}
-
-			await renderer.setData(data);
+			await renderer.setData(graphData);
 			renderer.isGraphDirty = true;
 			renderer.render();
 		},

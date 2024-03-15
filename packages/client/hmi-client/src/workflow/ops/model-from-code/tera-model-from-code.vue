@@ -1,7 +1,10 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
-			<label>Output</label>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -144,9 +147,7 @@ import { cloneDeep, isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-julia';
-import 'ace-builds/src-noconflict/mode-r';
+import '@/ace-config';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
 import type { Card, Code, DocumentAsset, Model } from '@/types/Types';
 import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
@@ -168,6 +169,7 @@ import { ModelServiceType } from '@/types/common';
 import { extensionFromProgrammingLanguage } from '@/utils/data-util';
 import { getDocumentAsset } from '@/services/document-assets';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{

@@ -1,10 +1,12 @@
 <template>
 	<main>
-		<section>
-			<h5>Related publications</h5>
+		<p v-if="isEmpty(relatedDocuments)">
+			Terarium can extract information from documents to add relevant information to this resource.
+		</p>
+		<template v-else>
 			<p>
-				Terarium can extract information from documents to add relevant information to this
-				resource.
+				Related publications, documents, and other resources that are relevant to this
+				{{ assetType }}.
 			</p>
 			<ul>
 				<li v-for="document in relatedDocuments" :key="document.id">
@@ -14,18 +16,41 @@
 					/>
 				</li>
 			</ul>
-			<div class="extraction-commands">
-				<Button text label="Enrich description" :loading="isLoading" @click="dialogForEnrichment" />
-				<Button text label="Extract variables" :loading="isLoading" @click="dialogForExtraction" />
+		</template>
+		<footer class="flex gap-2">
+			<template v-if="assetType === AssetType.Dataset">
 				<Button
-					text
-					:disabled="props.assetType != AssetType.Model"
+					severity="secondary"
+					size="small"
+					label="Enrich description"
+					:loading="isLoading"
+					@click="dialogForEnrichment"
+				/>
+			</template>
+			<template v-if="assetType === AssetType.Model">
+				<Button
+					severity="secondary"
+					size="small"
+					label="Enrich description"
+					:loading="isLoading"
+					@click="dialogForEnrichment"
+				/>
+				<Button
+					severity="secondary"
+					size="small"
+					label="Extract variables"
+					:loading="isLoading"
+					@click="dialogForExtraction"
+				/>
+				<Button
+					severity="secondary"
+					size="small"
 					:label="`Align extractions to ${assetType}`"
 					:loading="isLoading"
 					@click="dialogForAlignment"
 				/>
-			</div>
-		</section>
+			</template>
+		</footer>
 		<Dialog
 			v-model:visible="visible"
 			modal
@@ -33,8 +58,8 @@
 			:style="{ width: '50vw' }"
 		>
 			<p class="constrain-width">
-				Terarium can extract information from artifacts to describe this
-				{{ assetType }}. Select the documents you would like to use.
+				Terarium can extract information from documents to describe this
+				{{ assetType }}. Select a document you would like to use.
 			</p>
 			<DataTable
 				v-if="documents && documents.length > 0"
@@ -111,7 +136,7 @@ import { isDocumentAsset } from '@/utils/data-util';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
-	documents?: Array<{ name: string | undefined; id: string | undefined }>;
+	documents: { name: string; id: string }[];
 	assetType: AssetType;
 	assetId: TerariumAsset['id'];
 }>();
@@ -130,7 +155,20 @@ const extractionService = ref<Extractor>(Extractor.SKEMA);
 const isLoading = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
-const dialogActionCopy = ref('');
+const dialogActionCopy = computed(() => {
+	let result: string = '';
+	if (dialogType.value === DialogType.ENRICH) {
+		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
+	} else if (dialogType.value === DialogType.EXTRACT) {
+		result = 'Extract variables';
+	} else if (dialogType.value === DialogType.ALIGN) {
+		result = `Align extractions to ${props.assetType}`;
+	}
+	if (isEmpty(selectedResources.value)) {
+		return result;
+	}
+	return `Use Document to ${result.toLowerCase()}`;
+});
 function openDialog() {
 	visible.value = true;
 }
@@ -140,19 +178,16 @@ function closeDialog() {
 
 function dialogForEnrichment() {
 	dialogType.value = DialogType.ENRICH;
-	dialogActionCopy.value = 'Use this resource to enrich descriptions';
 	openDialog();
 }
 
 function dialogForExtraction() {
 	dialogType.value = DialogType.EXTRACT;
-	dialogActionCopy.value = 'Use this resource to extract variables';
 	openDialog();
 }
 
 function dialogForAlignment() {
 	dialogType.value = DialogType.ALIGN;
-	dialogActionCopy.value = `Use this resource to align the ${props.assetType}`;
 	openDialog();
 }
 
@@ -254,9 +289,10 @@ watch(
 
 async function getRelatedDocuments() {
 	if (!props.assetType) return;
-	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 
+	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
+
 	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
 		ProvenanceType.Document
 	]);
@@ -273,16 +309,9 @@ async function getRelatedDocuments() {
 
 <style scoped>
 main {
-	background-color: var(--surface-highlight);
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border);
-	padding: var(--gap-small) var(--gap);
-
-	& > section {
-		display: flex;
-		gap: var(--gap-small);
-		flex-direction: column;
-	}
+	display: flex;
+	gap: var(--gap-small);
+	flex-direction: column;
 }
 
 ul {
@@ -298,10 +327,6 @@ ul:empty {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-}
-
-.extraction-commands > .p-button {
-	padding: 0.25rem var(--gap-small);
 }
 
 .no-documents-img {

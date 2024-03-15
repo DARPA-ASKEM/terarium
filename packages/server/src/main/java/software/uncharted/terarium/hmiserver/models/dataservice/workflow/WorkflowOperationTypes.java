@@ -20,8 +20,8 @@ public enum WorkflowOperationTypes {
 	MODEL_FROM_CODE = 'ModelFromCode',
 	FUNMAN = 'Funman',
 	CODE = 'Code',
-	MODEL_CONFIG = 'ModelConfiguraiton',
-	MODEL_OPTIMIZE = 'ModelOptimize',
+	MODEL_CONFIG = 'ModelConfiguration',
+	OPTIMIZE_CIEMSS = 'OptimizeCiemss',
 	MODEL_COUPLING = 'ModelCoupling',
 	MODEL_EDIT = 'ModelEdit',
 	DOCUMENT = 'Document'
@@ -44,8 +44,8 @@ public enum WorkflowOperationTypes {
 	MODEL_FROM_CODE("ModelFromCode"),
 	FUNMAN("Funman"),
 	CODE("Code"),
-	MODEL_CONFIG("ModelConfiguraiton"),
-	MODEL_OPTIMIZE("ModelOptimize"),
+	MODEL_CONFIG("ModelConfiguration"),
+	OPTIMIZE_CIEMSS("OptimizeCiemss"),
 	MODEL_COUPLING("ModelCoupling"),
 	MODEL_EDIT("ModelEdit"),
 	DOCUMENT("Document");

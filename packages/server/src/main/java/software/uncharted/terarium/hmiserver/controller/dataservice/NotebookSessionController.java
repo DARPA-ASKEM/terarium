@@ -48,7 +48,6 @@ public class NotebookSessionController {
 	@Operation(summary = "Gets all sessions")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "NotebookSessions found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no sessions found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving sessions from the data store", content = @Content)
 	})
 	ResponseEntity<List<NotebookSession>> getNotebookSessions(
@@ -104,16 +103,16 @@ public class NotebookSessionController {
 	@Operation(summary = "Gets session by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "NotebookSession found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
-			@ApiResponse(responseCode = "204", description = "There was no session found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no session found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the session from the data store", content = @Content)
 	})
 	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("id") final UUID id) {
 
 		try {
 			final Optional<NotebookSession> session = sessionService.getAsset(id);
-			return session.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return session.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
-			final String error = "Unable to get session";
+			final String error = "Unable to get notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -145,13 +144,35 @@ public class NotebookSessionController {
 			final Optional<NotebookSession> updated = sessionService.updateAsset(session);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
-			final String error = "Unable to update session";
+			final String error = "Unable to update notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
 	}
+
+	@PostMapping("/{id}/clone")
+	@Secured(Roles.USER)
+	@Operation(summary = "Clone a session")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "NotebookSession cloned.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue cloning the session", content = @Content)
+	})
+	ResponseEntity<NotebookSession> cloneNotebookSession(
+			@PathVariable("id") final UUID id) {
+		try {
+			final NotebookSession clone = sessionService.cloneAsset(id);
+			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
+		} catch (final IOException e) {
+			final String error = "Unable to clone notebook session";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
 
 	/**
 	 * Deletes and session
@@ -165,7 +186,6 @@ public class NotebookSessionController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Deleted session", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "NotebookSession could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("id") final UUID id) {
@@ -174,7 +194,7 @@ public class NotebookSessionController {
 			sessionService.deleteAsset(id);
 			return ResponseEntity.ok(new ResponseDeleted("NotebookSession", id));
 		} catch (final IOException e) {
-			final String error = "Unable to delete session";
+			final String error = "Unable to delete noteboko session";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,

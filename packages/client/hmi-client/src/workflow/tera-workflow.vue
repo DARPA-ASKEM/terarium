@@ -17,14 +17,19 @@
 		<template #foreground>
 			<div class="toolbar glass">
 				<div class="button-group w-full">
-					<InputText
-						v-if="isRenamingWorkflow"
-						class="p-inputtext w-full mr-8"
-						v-model.lazy="newWorkflowName"
-						placeholder="Workflow name"
-						@keyup.enter="updateWorkflowName"
-						@keyup.esc="updateWorkflowName"
-					/>
+					<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
+						<InputText
+							class="p-inputtext w-full"
+							v-model.lazy="newWorkflowName"
+							placeholder="Workflow name"
+							@keyup.enter="updateWorkflowName"
+							@keyup.esc="updateWorkflowName"
+							v-focus
+						/>
+						<div class="flex flex-nowrap ml-1 mr-3">
+							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
+						</div>
+					</div>
 					<h4 v-else>{{ wf.name }}</h4>
 					<Button
 						v-if="!isRenamingWorkflow"
@@ -99,6 +104,7 @@
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
+					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 				>
 					<template #body>
 						<component
@@ -178,10 +184,9 @@
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="dialogIsOpened = false"
+			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-		>
-		</component>
+		/>
 	</Teleport>
 </template>
 
@@ -196,10 +201,10 @@ import type {
 	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	WorkflowPort
 } from '@/types/workflow';
-import { WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -209,7 +214,7 @@ import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
 import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType } from '@/types/Types';
+import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -217,6 +222,9 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 
 import { logger } from '@/utils/logger';
 import { MenuItem } from 'primevue/menuitem';
+import * as EventService from '@/services/event';
+import { useProjects } from '@/composables/project';
+import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from './ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from './ops/stratify-mira/mod';
 import * as DatasetOp from './ops/dataset/mod';
@@ -233,11 +241,12 @@ import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod'
 import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
-import * as ModelOptimizeOp from './ops/model-optimize/mod';
+import * as OptimizeCiemssOp from './ops/optimize-ciemss/mod';
 import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
-import * as ModelFromDocumentOp from './ops/model-from-document/mod';
+import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
+import * as DecapodesOp from './ops/decapodes/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -258,11 +267,12 @@ registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(CalibrateJuliaOp);
-registry.registerOp(ModelOptimizeOp);
+registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
+registry.registerOp(DecapodesOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -276,6 +286,7 @@ let isMouseOverPort: boolean = false;
 let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
+let startTime: number = 0;
 
 const isWorkflowLoading = ref(false);
 
@@ -312,7 +323,8 @@ const toggleOptionsMenu = (event) => {
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
-	workflowService.updateWorkflow(workflowClone);
+	await workflowService.updateWorkflow(workflowClone);
+	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
@@ -354,14 +366,11 @@ function appendOutput(
 		timestamp: new Date()
 	};
 
-	// Revert
-	node.outputs.forEach((o) => {
-		o.isSelected = false;
-	});
-
 	// Append and set active
 	node.outputs.push(outputPort);
 	node.active = uuid;
+
+	selectOutput(node, uuid);
 
 	workflowDirty = true;
 }
@@ -374,7 +383,7 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 
 function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	if (!node) return;
-	workflowService.selectOutput(node, selectedOutputId);
+	workflowService.selectOutput(wf.value, node, selectedOutputId);
 	workflowDirty = true;
 }
 
@@ -386,7 +395,21 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 
 const openDrilldown = (node: WorkflowNode<any>) => {
 	currentActiveNode.value = node;
+	startTime = Date.now();
 	dialogIsOpened.value = true;
+};
+
+const closeDrilldown = async () => {
+	dialogIsOpened.value = false;
+	const timeSpent: number = Date.now() - startTime;
+	await EventService.create(
+		EventType.OperatorDrilldownTiming,
+		useProjects().activeProject.value?.id,
+		JSON.stringify({
+			node: currentActiveNode.value?.displayName,
+			timeSpent
+		})
+	);
 };
 
 const removeNode = (event) => {
@@ -395,6 +418,30 @@ const removeNode = (event) => {
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
+
+	cloneDataTransformSessions();
+};
+
+// We need to clone data-transform sessions, unlike other operators that are
+// append-only, data-transform updates so we need to create distinct copies.
+const cloneDataTransformSessions = async () => {
+	const sessionIdSet = new Set<string>();
+	for (let i = 0; i < wf.value.nodes.length; i++) {
+		const node = wf.value.nodes[i];
+		if (node.operationType === DatasetTransformerOp.operation.name) {
+			const state = node.state;
+			const sessionId = state.notebookSessionId as string;
+			if (!sessionId) continue;
+			if (!sessionIdSet.has(sessionId)) {
+				sessionIdSet.add(sessionId);
+			} else {
+				// eslint-disable-next-line
+				const session = await cloneNoteBookSession(sessionId);
+				state.notebookSessionId = session.id;
+				sessionIdSet.add(session.id);
+			}
+		}
+	}
 };
 
 const addOperatorToWorkflow: Function =
@@ -438,8 +485,8 @@ const contextMenuItems: MenuItem[] = [
 			},
 			{ separator: true },
 			{
-				label: ModelOptimizeOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelOptimizeOp)
+				label: OptimizeCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(OptimizeCiemssOp)
 			},
 			{
 				label: ModelCouplingOp.operation.displayName,
@@ -448,6 +495,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelComparisonOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelComparisonOp)
+			},
+			{
+				label: DecapodesOp.operation.displayName,
+				command: addOperatorToWorkflow(DecapodesOp)
 			}
 		]
 	},
@@ -736,6 +787,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 let prevX = 0;
 let prevY = 0;
+
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
 		const pointIndex = newEdge.value?.direction === WorkflowDirection.FROM_OUTPUT ? 1 : 0;
@@ -835,6 +887,7 @@ function cleanUpLayout() {
 	// TODO: clean up layout of nodes
 	console.log('clean up layout');
 }
+
 function resetZoom() {
 	// TODO: reset zoom level and position
 	console.log('clean up layout');
@@ -862,5 +915,11 @@ function resetZoom() {
 	align-items: center;
 	flex-direction: row;
 	gap: var(--gap-small);
+}
+
+.rename-workflow {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
 }
 </style>
