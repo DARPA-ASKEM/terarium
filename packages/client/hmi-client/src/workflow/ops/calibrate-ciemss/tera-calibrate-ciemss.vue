@@ -158,7 +158,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
@@ -394,8 +394,6 @@ onMounted(async () => {
 	datasetColumns.value = datasetOptions;
 });
 
-onUnmounted(() => {});
-
 watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
@@ -417,7 +415,6 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 
-			// FIXME: could still be running
 			const state = props.node.state;
 			const output = await getRunResultCiemss(state.forecastId, 'result.csv');
 			runResults.value = output.runResults;
