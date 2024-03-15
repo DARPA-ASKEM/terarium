@@ -257,31 +257,28 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type { ModelConfiguration, ModelParameter } from '@/types/Types';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import { StratifiedMatrix } from '@/types/Model';
-import Datatable from 'primevue/datatable';
-import Column from 'primevue/column';
-import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
-import { cloneDeep, isEmpty } from 'lodash';
-import { getModelType } from '@/services/model';
+import Datatable from 'primevue/datatable';
+import Column from 'primevue/column';
+import { StratifiedMatrix } from '@/types/Model';
+import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached
 } from '@/services/concept';
-import { getUnstratifiedParameters } from '@/model-representation/petrinet/mira-petri';
 
-const typeOptions = [
-	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
-	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
-];
+import { getUnstratifiedParameters } from '@/model-representation/petrinet/mira-petri';
+import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
+import { getModelType } from '@/services/model';
+import { matrixEffect } from '@/utils/easter-eggs';
+import type { ModelConfiguration, ModelParameter } from '@/types/Types';
+
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
@@ -290,23 +287,29 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-value', 'update-configuration']);
 
+const typeOptions = [
+	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
+	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
+	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
+];
+
 const matrixModalContext = ref({
 	isOpen: false,
 	matrixId: ''
 });
 
 const parameters = computed<Map<string, string[]>>(() => {
-	const model = props.modelConfiguration.configuration;
+	const amr = props.modelConfiguration.configuration;
 	if (stratifiedModelType.value) {
-		return getUnstratifiedParameters(model);
+		return getUnstratifiedParameters(amr);
 	}
 	const result = new Map<string, string[]>();
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		model.semantics?.ode.parameters?.forEach((p) => {
+		amr.semantics?.ode.parameters?.forEach((p) => {
 			result.set(p.id, [p.id]);
 		});
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		model.model.parameters?.forEach((p) => {
+		amr.model.parameters?.forEach((p) => {
 			result.set(p.id, [p.id]);
 		});
 	}
@@ -518,64 +521,6 @@ const replaceParam = (config: ModelConfiguration, param: any, index: number) => 
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
 		config.configuration.model.parameters[index] = param;
 	}
-};
-
-/* Matrix effect easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
-const matrixEffect = () => {
-	if (Math.random() > 0.1) return;
-	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
-	if (!canvas) return;
-	const ctx = (canvas as HTMLCanvasElement)?.getContext('2d');
-
-	// eslint-disable-next-line no-multi-assign
-	const w = (canvas.width = document.body.offsetWidth);
-	// eslint-disable-next-line no-multi-assign
-	const h = (canvas.height = document.body.offsetHeight);
-	const cols = Math.floor(w / 20) + 1;
-	const ypos = Array(cols).fill(0);
-
-	if (ctx) {
-		ctx.fillStyle = '#FFF';
-		ctx.fillRect(0, 0, w, h);
-	}
-
-	function matrix() {
-		if (ctx) {
-			ctx.fillStyle = '#FFF1';
-			ctx.fillRect(0, 0, w, h);
-
-			ctx.fillStyle = '#1B8073';
-			ctx.font = '15pt monospace';
-
-			ypos.forEach((y, ind) => {
-				const text = String.fromCharCode(Math.random() * 128);
-				const x = ind * 20;
-				ctx.fillText(text, x, y);
-				if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
-				else ypos[ind] = y + 20;
-			});
-		}
-	}
-
-	const intervalId = setInterval(matrix, 33);
-
-	// after 4 seconds begin the fade out
-	setTimeout(() => {
-		if (canvas) {
-			canvas.style.opacity = '0';
-		}
-	}, 3000);
-
-	// after 5 seconds clear the canvas, stop the interval, and reset the opacity
-	setTimeout(() => {
-		clearInterval(intervalId);
-		if (ctx) {
-			ctx.clearRect(0, 0, w, h);
-		}
-		if (canvas) {
-			canvas.style.opacity = '1';
-		}
-	}, 4000);
 };
 </script>
 
