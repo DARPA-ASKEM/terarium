@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,10 +39,10 @@ public class ImageService {
      * @param base64Data image encoded in base64, prefixed by
      */
     public void storeImage(UUID id, String base64Data) {
-        final int index = base64Data.indexOf(',');
-        if (index > -1 && index + 1 < base64Data.length()) {
-            final String pngBase64 = base64Data.substring(index + 1);
-            final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
+        String separator = ",";
+        if (base64Data.contains(separator)) {
+            final String pngBase64 = base64Data.split(separator)[1];
+            final byte[] pngBytes = Base64.getMimeDecoder().decode(pngBase64);
 
             final String bucket = config.getFileStorageS3BucketName();
             final String key = getFilename(id);

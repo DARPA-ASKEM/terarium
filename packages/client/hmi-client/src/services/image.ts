@@ -19,6 +19,9 @@ export async function getImages(imageIds: string[]) {
 }
 
 export async function updateImage(id: string, image: string) {
-	const response = await API.put(`/images/${id}`, image);
+	console.log(id, image);
+	const response = await API.put(`/images/${id}`, image, {
+		headers: { 'Content-Type': 'application/json' }
+	});
 	return response?.data ?? null;
 }
