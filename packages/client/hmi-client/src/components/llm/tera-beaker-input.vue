@@ -1,37 +1,41 @@
 <template>
 	<div class="tera-beaker-container" ref="containerElement">
 		<div class="chat-input-container">
-			<InputText
-				class="input"
-				ref="inputElement"
-				v-model="queryString"
-				type="text"
-				:disabled="props.kernelIsBusy"
-				:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
-				@keydown.enter="submitQuery"
-			/>
-			<Button
-				text
-				:icon="props.kernelIsBusy ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
-				rounded
-				size="large"
-				class="kernel-status"
-				:disabled="queryString.length === 0"
-				@click="submitQuery"
-			></Button>
-
-			<Button
-				ref="addCodeCellButton"
-				severity="secondary"
-				outlined
-				class="p-button p-button-secondary p-button-sm white-space-nowrap pr-4"
-				title="Add a code cell to the notebook"
-				@click="addCodeCell"
-			>
-				<span class="pi pi-plus p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Add a cell</span>
-			</Button>
-			<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" style="height: 3px"></ProgressBar>
+			<div class="top-row">
+				<InputText
+					class="input"
+					ref="inputElement"
+					v-model="queryString"
+					type="text"
+					:disabled="props.kernelIsBusy"
+					:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
+					@keydown.enter="submitQuery"
+				/>
+				<Button
+					text
+					:icon="props.kernelIsBusy ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
+					rounded
+					size="large"
+					class="kernel-status"
+					:disabled="queryString.length === 0"
+					@click="submitQuery"
+				></Button>
+			</div>
+			<div class="bottom-row">
+				<Button
+					ref="addCodeCellButton"
+					severity="secondary"
+					outlined
+					:disabled="props.kernelIsBusy"
+					class="white-space-nowrap"
+					title="Add a code cell to the notebook"
+					@click="addCodeCell"
+				>
+					<span class="pi pi-plus p-button-icon p-button-icon-left"></span>
+					<span class="p-button-text">Add a cell</span>
+				</Button>
+				<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" class="busy-bar"></ProgressBar>
+			</div>
 		</div>
 	</div>
 </template>
@@ -124,21 +128,28 @@ onMounted(() => {
 .chat-input-container {
 	position: fixed;
 	bottom: 0px;
-	height: fit-content;
+	height: 10rem;
 	padding: var(--gap);
 	padding-bottom: 1.5rem;
-	z-index: 30000;
+	z-index: 200;
 	border-top: 1px solid var(--surface-border-light);
 	background-color: var(--surface-transparent);
 	backdrop-filter: blur(10px);
 	width: calc(100% - 6 * var(--gap-small));
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
 	flex-wrap: nowrap;
-	align-items: center;
+	align-items: start;
 	justify-content: space-between;
 }
 
+.top-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
 .input {
 	color: var(--text-color);
 	background-color: var(--surface-0);
@@ -153,13 +164,17 @@ onMounted(() => {
 }
 
 .kernel-status {
-	position: relative;
-	right: 3rem;
+	position: absolute;
+	right: 2rem;
 }
 
 .input:disabled {
 	color: black;
 	opacity: 100;
 	background-color: var(--gray-300);
+}
+.busy-bar {
+	position: relative;
+	top: -4px;
 }
 </style>

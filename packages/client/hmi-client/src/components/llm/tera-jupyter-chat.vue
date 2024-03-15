@@ -16,6 +16,8 @@
 				@cell-updated="scrollToLastCell"
 				@preview-selected="previewSelected"
 			/>
+			<!-- spacer to maker room flor the floating input that covers the bottom -->
+			<div style="height: 120px"></div>
 
 			<!-- Beaker Input -->
 			<tera-beaker-input

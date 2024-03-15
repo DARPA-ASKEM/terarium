@@ -14,9 +14,10 @@
 			<div ref="resp" class="resp">
 				<section>
 					<div v-if="msg.query" class="query">{{ msg.query }}</div>
-					<div v-if="props.isExecutingCode" class="executing-message">
+					<!-- hiding this processing notification because it was applied to all messages, not just the one that is processing -->
+					<!-- <div v-if="props.isExecutingCode" class="executing-message">
 						<span class="pi pi-spinner pi-spin"></span>Processing
-					</div>
+					</div> -->
 				</section>
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_response type -->
@@ -44,7 +45,7 @@
 							:autorun="true"
 							:notebook-item-id="msg.query_id"
 							context="dataset"
-							:context_info="{ id: props.assetId }"
+							:context_info="{ id: props.assetId, query: msg.query }"
 						/>
 					</div>
 				</div>
@@ -87,7 +88,7 @@ const resp = ref(<HTMLElement | null>null);
 const showThought = ref(false);
 
 // Computed values for the labels and icons
-const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show Reasoning'));
+const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show reasoning'));
 const showHideIcon = computed(() =>
 	showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'
 );
@@ -158,7 +159,7 @@ defineExpose({
 	font-weight: 600;
 	font-family: var(--font-family);
 	padding-bottom: var(--gap);
-	padding-left: 30px;
+	padding-left: 60px;
 	/* Add ai-assistant icon */
 	background-image: url('@assets/svg/icons/message.svg');
 	background-repeat: no-repeat;
@@ -215,7 +216,8 @@ defineExpose({
 }
 
 .llm-response {
-	padding-left: 30px;
+	padding-left: 60px;
+	padding-right: 2rem;
 	padding-bottom: var(--gap-small);
 	white-space: pre-wrap;
 	color: var(--text-color);

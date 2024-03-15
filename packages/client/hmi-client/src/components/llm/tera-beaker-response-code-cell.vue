@@ -1,37 +1,15 @@
 <template>
-	<div
-		class="code-cell"
-		@mouseover="mouseOverParent = true"
-		@mouseleave="mouseOverParent = false"
-		@focusin="mouseOverParent = true"
-		@focusout="mouseOverParent = false"
-		@keyup.ctrl.enter.prevent="run"
-		@keyup.shift.enter.prevent="run"
-	>
+	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
 		<template ref="codeCell" />
-		<div class="controls">
-			<Button
-				label="Delete"
-				outlined
-				size="small"
-				severity="secondary"
-				icon="pi pi-trash"
-				disabled
-			/>
-			<Button
-				label="Run"
-				outlined
-				size="small"
-				severity="secondary"
-				icon="pi pi-play"
-				@click="run"
-			/>
+		<div class="controls" :class="{ 'controls-with-query': isQuestion }">
+			<Button text rounded severity="secondary" icon="pi pi-trash" disabled />
+			<Button text rounded icon="pi pi-play" @click="run" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
@@ -43,8 +21,6 @@ import {
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
 import Button from 'primevue/button';
-
-const mouseOverParent = ref(false);
 
 const props = defineProps({
 	jupyterSession: {
@@ -89,6 +65,8 @@ const props = defineProps({
 		default: null
 	}
 });
+
+const isQuestion = computed<boolean>(() => props.context_info?.query !== null);
 
 // const emit = defineEmits(['save-as-new-dataset']);
 // const savedFileName = ref<string>('');
@@ -208,13 +186,13 @@ defineExpose({
 	flex-direction: row;
 	justify-content: end;
 	gap: var(--gap-small);
+	position: absolute;
+	top: 3px;
+	right: 10px;
+	z-index: 2;
 }
 
-.visible {
-	display: block;
-}
-
-.hidden {
-	display: none;
+.controls-with-query {
+	top: 38px;
 }
 </style>

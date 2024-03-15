@@ -1,42 +1,6 @@
 <template>
 	<div class="data-transform-container">
 		<ConfirmDialog class="w-5"></ConfirmDialog>
-		<!-- Jupyter Kernel Settings -->
-		<div class="settings-title" v-if="showKernels">Kernel Settings</div>
-		<div class="jupyter-settings" v-if="showKernels">
-			<!-- Kernel Dropdown Selector -->
-			<div class="kernel-dropdown">
-				<Dropdown
-					v-model="selectedKernel"
-					:options="runningSessions"
-					filter
-					optionLabel="kernelId"
-					optionsValue="value"
-					:disabled="runningSessions.length === 0"
-					style="min-width: 100%; height: 30px; margin-bottom: 10px"
-				/>
-			</div>
-
-			<!-- Kernel Control Buttons -->
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmDelete"
-				:disabled="runningSessions.length <= 0"
-				>Delete kernel</Button
-			>
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmDeleteAll"
-				:disabled="runningSessions.length <= 0"
-				>Delete all</Button
-			>
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmReconnect"
-				:disabled="runningSessions.length <= 0"
-				>Reconnect</Button
-			>
-		</div>
 
 		<!-- Toolbar -->
 		<div class="toolbar flex">
@@ -53,49 +17,43 @@
 			</div>
 			<span class="flex-auto"></span>
 
-			<!-- Save and Download -->
-			<div class="toolbar-section">
-				<div v-if="kernelState">
-					<Dropdown
-						v-model="actionTarget"
-						placeholder="Select a dataframe"
-						:options="Object.keys(kernelState || [])"
-						class="mr-3"
-					/>
-
-					<Button
-						label="Save as"
-						icon="pi pi-save"
-						severity="secondary"
-						outlined
-						class="p-button p-button-sm"
-						v-tooltip.top="'Save the selected dataframe as a new Terarium asset'"
-						@click="showSaveInput = !showSaveInput"
-					/>
-					<span v-if="showSaveInput" class="ml-1">
-						<InputText v-focus v-model="saveAsName" class="save-as w-4" placeholder="Add a name" />
-
-						<Button
-							icon="pi pi-check i"
-							text
-							rounded
-							:class="{ save: hasValidDatasetName }"
-							@click="
-								saveAsNewDataset();
-								showSaveInput = false;
-							"
-						></Button>
-					</span>
-					<Button
-						label="Download"
-						icon="pi pi-download"
-						severity="secondary"
-						outlined
-						class="p-button p-button-sm ml-3"
-						v-tooltip.top="'Download the selected dataframe as a CSV file'"
-						@click="downloadDataset"
-					/>
-				</div>
+			<!-- Jupyter Kernel Settings -->
+			<div class="settings-title" v-if="showKernels">Kernel Settings</div>
+			<div class="jupyter-settings" v-if="showKernels">
+				<!-- Kernel Dropdown Selector -->
+				<Dropdown
+					v-model="selectedKernel"
+					:options="runningSessions"
+					filter
+					optionLabel="kernelId"
+					optionsValue="value"
+					:disabled="runningSessions.length === 0"
+				/>
+				<!-- Kernel Control Buttons -->
+				<Button
+					severity="secondary"
+					outlined
+					class="p-button p-button-sm"
+					@click="confirmDelete"
+					:disabled="runningSessions.length <= 0"
+					label="Delete kernel"
+				/>
+				<Button
+					severity="secondary"
+					outlined
+					class="p-button p-button-sm"
+					@click="confirmDeleteAll"
+					:disabled="runningSessions.length <= 0"
+					label="Delete all"
+				/>
+				<Button
+					severity="secondary"
+					outlined
+					class="p-button p-button-sm"
+					@click="confirmReconnect"
+					:disabled="runningSessions.length <= 0"
+					label="Reconnect"
+				/>
 			</div>
 
 			<!-- Reset kernel -->
@@ -123,11 +81,59 @@
 			@download-response="onDownloadResponse"
 			:notebook-session="props.notebookSession"
 		/>
+
+		<!-- Save, Download and Close buttons -->
+		<div class="bottom-right-button-group">
+			<div class="flex gap-2">
+				<Dropdown
+					v-model="actionTarget"
+					placeholder="Select a dataframe"
+					:options="Object.keys(kernelState || [])"
+					class="5"
+					:disabled="!kernelState"
+				/>
+
+				<Button
+					label="Save as"
+					icon="pi pi-save"
+					severity="secondary"
+					outlined
+					:disabled="!kernelState"
+					@click="showSaveInput = !showSaveInput"
+				/>
+				<Button
+					label="Download"
+					icon="pi pi-download"
+					severity="secondary"
+					outlined
+					:disabled="!kernelState"
+					@click="downloadDataset"
+				/>
+				<!-- <Button
+					label="Close"
+					@click="emit('close')"
+				/> -->
+			</div>
+		</div>
 	</div>
+
+	<!-- Save as dialog -->
+	<Dialog v-model:visible="showSaveInput" :modal="true" :style="{ width: '50vw' }" header="Save as">
+		<div class="p-fluid mt-4">
+			<div class="p-field">
+				<InputText id="name" v-model="saveAsName" placeholder="What do you want to call it?" />
+			</div>
+		</div>
+		<template #footer>
+			<Button label="Cancel" @click="showSaveInput = false" severity="secondary" outlined />
+			<Button label="Save" :disabled="!hasValidDatasetName" @click="saveAsNewDataset()" />
+		</template>
+	</Dialog>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
@@ -162,6 +168,7 @@ const props = defineProps<{
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
 }>();
+
 const emit = defineEmits(['new-dataset-saved']);
 
 const chat = ref();
@@ -311,6 +318,9 @@ const saveAsNewDataset = async () => {
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
+
+	// Close the modal when the dataset is saved
+	showSaveInput.value = false;
 };
 
 const resetKernel = async () => {
@@ -476,59 +486,6 @@ const onDownloadResponse = (payload) => {
 	flex: 1;
 }
 
-/* Datatable  */
-.data-row > section > header {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-}
-
-.data-row > section > section:last-child {
-	font-size: var(--font-body-small);
-}
-
-.feature-type {
-	color: var(--text-color-subdued);
-}
-
-.description {
-	padding: 1rem;
-	padding-bottom: 0.5rem;
-	max-width: var(--constrain-width);
-}
-
-main .annotation-group {
-	padding: 0.25rem;
-	border: solid 1px var(--surface-border-light);
-	background-color: var(--gray-50);
-	border-radius: var(--border-radius);
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-bottom: 1rem;
-	max-width: var(--constrain-width);
-}
-
-.annotation-subheader {
-	font-weight: var(--font-weight-semibold);
-}
-
-.annotation-row {
-	display: flex;
-	flex-direction: row;
-	gap: 3rem;
-}
-
-.tera-dataset-datatable {
-	width: 100%;
-}
-
-.data-transform-container {
-	display: flex;
-	flex-direction: column;
-	padding-bottom: 5rem;
-	position: relative;
-}
-
 .kernel-status {
 	margin-right: 10px;
 }
@@ -549,7 +506,7 @@ main .annotation-group {
 	left: 0;
 	z-index: 100;
 	width: 100%;
-	padding: var(--gap-xsmall) var(--gap);
+	padding: var(--gap-xsmall) var(--gap) var(--gap-xsmall) 1.5rem;
 }
 
 .toolbar-section {
@@ -560,16 +517,21 @@ main .annotation-group {
 	white-space: nowrap;
 }
 
-.toolbar-section:deep(.p-dropdown .p-dropdown-label) {
-	font-size: var(--font-caption);
-	padding: 8px;
+.bottom-right-button-group {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	position: absolute;
+	bottom: 21px;
+	right: 40px;
+	z-index: 200;
+}
+.bottom-right-button-group:deep(.p-dropdown .p-dropdown-label) {
+	padding: 9px;
 }
 
-.toolbar-section:deep(.save-as) {
-	font-size: var(--font-caption);
-	padding: 8px;
-	min-width: 10rem;
-}
 .variables-table {
 	display: grid;
 	grid-template-columns: 1fr;
