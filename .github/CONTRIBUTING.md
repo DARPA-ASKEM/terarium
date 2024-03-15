@@ -67,22 +67,6 @@ echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
 Login Succeeded
 ```
 
-## Error Message
-
-Effective error messaging is not about informing users of a problem; It’s about turning a negative experiences into
-opportunities for positive interactions and continued user engagement.
-
-* Be clear and concise. Use plain language and avoid passive voice to ensure users understand the message. Avoid
-  technical jargon that may confuse users.
-* Be specific and relevant by providing specific information about the error. Instead of a generic "Something went
-  wrong" describe the nature of the error, like "Unable to save your changes because the server is temporarily
-  unavailable.”
-* Offer a solution or the next possible step, guide users on what to do next. If it's a simple fix they can perform,
-  include that in the message. If not, provide information on how to get further help.
-* Avoid negative words like "fail" or "error" that can increase user anxiety. Opt for neutral language that doesn't
-  assign blame and focus on the solution rather than the problem.
-  When in doubt please reach to the UX team for guidance.
-
 ## Debugging Front End
 
 To debug the front end you need:
@@ -108,6 +92,9 @@ tag.
 ## Debugging in IntelliJ
 
 ### Back End
+
+
+
 
 ## Application Secrets
 
@@ -164,7 +151,7 @@ Tests have access to the `page` object from Playwright ([`Page`](https://playwri
 that has already navigated to the served main page. So, writing a test is as simple as:
 
 ```ts
-import { test, expect } from '@playwright/test';
+import {test, expect} from '@playwright/test';
 
 test('should work', async (page) => {
   expect(await page.textContent('.foo')).toMatch('foo')
@@ -185,7 +172,7 @@ Writing unit tests is simple and very similar to integration tests. Unit tests a
 are familiar with that this should be simple:
 
 ```ts
-import { assert, describe, expect, it } from 'vitest';
+import {assert, describe, expect, it} from 'vitest';
 
 describe('basic tests', () => {
   it('should have the correct square root', () => {
