@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.project;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 import lombok.Data;
@@ -49,6 +50,11 @@ public class Project extends TerariumAsset implements Serializable {
 	@TSOptional
 	@Schema(defaultValue = "My Project Description")
 	private String description;
+
+	@TSOptional
+	@Schema(defaultValue = "My Project Overview")
+	@Lob
+	private String overviewText;
 
 	@OneToMany(mappedBy = "project")
 	@Where(clause = "deleted_on IS NULL")
