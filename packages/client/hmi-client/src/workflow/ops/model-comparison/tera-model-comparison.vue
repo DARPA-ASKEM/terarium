@@ -320,7 +320,6 @@ async function buildJupyterContext() {
 }
 
 onMounted(async () => {
-	console.log(props.node.state.comparisonImageIds);
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
