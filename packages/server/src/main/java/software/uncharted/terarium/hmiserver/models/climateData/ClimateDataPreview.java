@@ -34,16 +34,13 @@ public class ClimateDataPreview {
         this.timeIndex = previewTask.getTimeIndex();
     }
 
-    public ClimateDataPreview(ClimateDataPreviewTask previewTask, JsonNode jobError) {
-        this(previewTask, jobError.toString());
+    public ClimateDataPreview(ClimateDataPreviewTask previewTask, String error) {
+        this(previewTask);
+        this.error = error;
     }
 
-    public ClimateDataPreview(ClimateDataPreviewTask previewTask, String error) {
-        this.esgfId = previewTask.getEsgfId();
-        this.variableId = previewTask.getVariableId();
-        this.timestamps = previewTask.getTimestamps();
-        this.timeIndex = previewTask.getTimeIndex();
-        this.error = error;
+    public ClimateDataPreview(ClimateDataPreviewTask previewTask, JsonNode jobError) {
+        this(previewTask, jobError.toString());
     }
 
     public ClimateDataPreview() {}

@@ -25,7 +25,7 @@ public class ClimateDataSubset {
     private String envelope;
     private String timestamps;
     private String thinFactor;
-    private String result;
+    private UUID datasetId;
     private String error;
 
     public ClimateDataSubset(ClimateDataSubsetTask subsetTask) {
@@ -35,10 +35,19 @@ public class ClimateDataSubset {
         this.thinFactor = subsetTask.getThinFactor();
     }
 
-    public ClimateDataSubset(ClimateDataSubsetTask subsetTask, JsonNode jobError) {
+    public ClimateDataSubset(ClimateDataSubsetTask subsetTask, String error) {
         this(subsetTask);
-        this.error = jobError.toString();
+        this.error = error;
+    }
+
+    public ClimateDataSubset(ClimateDataSubsetTask subsetTask, JsonNode jobError) {
+        this(subsetTask, jobError.toString());
     }
 
     public ClimateDataSubset() {}
+
+    public ClimateDataSubset(ClimateDataSubsetTask subsetTask, UUID datasetId) {
+        this(subsetTask);
+        this.datasetId = datasetId;
+    }
 }

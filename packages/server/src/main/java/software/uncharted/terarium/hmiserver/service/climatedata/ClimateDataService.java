@@ -47,19 +47,27 @@ public class ClimateDataService {
             if (!climateDataResponse.getResult().getJobResult().isNull()) {
                 final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
                 if (png != null && png.getPng() != null) {
-                    final int index = png.getPng().indexOf(',');
-                    if (index > -1 && index + 1 < png.getPng().length()) {
-                        final String pngBase64 = png.getPng().substring(index + 1);
-                        final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
+                    try {
+                        final int index = png.getPng().indexOf(',');
+                        if (index > -1 && index + 1 < png.getPng().length()) {
+                            final String pngBase64 = png.getPng().substring(index + 1);
+                            final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
 
-                        final String bucket = config.getFileStorageS3BucketName();
-                        final String key = getPreviewFilename(previewTask.getEsgfId(), previewTask.getVariableId());
+                            final String bucket = config.getFileStorageS3BucketName();
+                            final String key = getPreviewFilename(previewTask.getEsgfId(), previewTask.getVariableId());
 
-                        s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
+                            s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
 
-                        final ClimateDataPreview preview = new ClimateDataPreview(previewTask);
+                            final ClimateDataPreview preview = new ClimateDataPreview(previewTask);
 
+                            climateDataPreviewRepository.save(preview);
+                        }
+                    } catch(Exception e) {
+                        log.error("Failed to extract png", e);
+                        final ClimateDataPreview preview = new ClimateDataPreview(previewTask, "Failed to extract PNG from Result: " + e.getMessage());
                         climateDataPreviewRepository.save(preview);
+
+                        climateDataPreviewTaskRepository.delete(previewTask);
                     }
                 } else {
                     log.error("Failed to extract png");
@@ -88,18 +96,21 @@ public class ClimateDataService {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(subsetTask.getStatusId());
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (!climateDataResponse.getResult().getJobResult().isNull()) {
-                final ClimateDataResultSubset result = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultSubset.class);
-                // TODO: what to do with `result.getDatasetId()`
-                final String bucket = config.getFileStorageS3BucketName();
-                final String key = getPreviewFilename(subsetTask.getEsgfId(), subsetTask.getEnvelope());
+                try {
+                    final ClimateDataResultSubset result = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultSubset.class);
 
-                s3ClientService.getS3Service().putObject(bucket, key, climateDataResponse.getResult().getJobResult().toString().getBytes());
+                    final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, result.getDatasetId());
 
-                final ClimateDataSubset subset = new ClimateDataSubset(subsetTask);
+                    climateDataSubsetRepository.save(subset);
 
-                climateDataSubsetRepository.save(subset);
+                    climateDataSubsetTaskRepository.delete(subsetTask);
+                } catch (Exception e) {
+                    log.error("Failed to extract subset");
+                    final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, "Failed to extract subset from Result: " + climateDataResponse.getResult().getJobResult());
+                    climateDataSubsetRepository.save(subset);
 
-                climateDataSubsetTaskRepository.delete(subsetTask);
+                    climateDataSubsetTaskRepository.delete(subsetTask);
+                }
             }
             if (!climateDataResponse.getResult().getJobError().isNull()) {
                 final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, climateDataResponse.getResult().getJobError());
@@ -164,12 +175,7 @@ public class ClimateDataService {
             if (subset.getError() != null) {
                 return ResponseEntity.internalServerError().body(subset.getError());
             }
-            final String filename = getPreviewFilename(subset.getEsgfId(), subset.getEnvelope());
-            final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
-            if (url.isPresent()) {
-                return ResponseEntity.ok(url.get());
-            }
-            return ResponseEntity.internalServerError().body("Failed to generate presigned s3 url");
+            return ResponseEntity.ok(subset.getDatasetId().toString());
         }
         final ClimateDataSubsetTask task = climateDataSubsetTaskRepository.findByEsgfIdAndEnvelopeAndTimestampsAndThinFactor(esgfId, envelope, timestamps, thinFactor);
         if (task != null) {
