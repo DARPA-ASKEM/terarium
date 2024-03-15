@@ -45,8 +45,9 @@ const emptyMatrix = (rowNames: string[], colNames: string[]) => {
 		const row: any[] = [];
 		for (let colIdx = 0; colIdx < colNames.length; colIdx++) {
 			row.push({
-				value: null,
-				id: null
+				rowCriteria: rowNames[rowIdx],
+				colCriteria: colNames[colIdx],
+				content: {}
 			});
 		}
 		matrix.push(row);
@@ -70,12 +71,24 @@ export const extractSubjectOutcomeMatrix = (
 		const paramLocations = paramLocationMap.get(paramName);
 		if (!paramLocationMap) continue;
 
+		console.log(
+			'\t checking',
+			paramNames[i],
+			paramLocations[0].subject,
+			paramLocations[0].outcome,
+			paramLocations[0].controllers
+		);
+
 		paramLocations.forEach((location) => {
 			const rowIdx = rowNames.indexOf(location.subject);
 			const colIdx = colNames.indexOf(location.outcome);
 
-			matrix[rowIdx][colIdx].value = paramValue;
-			matrix[rowIdx][colIdx].id = paramName;
+			matrix[rowIdx][colIdx].rowCriteria = location.subject;
+			matrix[rowIdx][colIdx].colCriteria = location.outcome;
+			matrix[rowIdx][colIdx].content = {
+				value: paramValue,
+				id: paramName
+			};
 		});
 	}
 	return { rowNames, colNames, matrix };
@@ -102,8 +115,44 @@ export const extractSubjectControllersMatrix = (
 			const rowIdx = rowNames.indexOf(location.subject);
 			const colIdx = colNames.indexOf(location.controllers.join('-'));
 
-			matrix[rowIdx][colIdx].value = paramValue;
-			matrix[rowIdx][colIdx].id = paramName;
+			matrix[rowIdx][colIdx].rowCriteria = location.subject;
+			matrix[rowIdx][colIdx].colCriteria = location.controllers.join('-');
+			matrix[rowIdx][colIdx].content = {
+				value: paramValue,
+				id: paramName
+			};
+		});
+	}
+	return { rowNames, colNames, matrix };
+};
+
+export const extractOutcomeControllersMatrix = (
+	templates: MiraTemplate[],
+	paramNames: string[],
+	paramValueMap: Map<string, any>,
+	paramLocationMap: Map<string, TemplateSummary[]>
+) => {
+	const rowNames = extractConceptNames(templates, 'outcome');
+	const colNames = extractConceptNames(templates, 'controllers');
+	const matrix = emptyMatrix(rowNames, colNames);
+
+	for (let i = 0; i < paramNames.length; i++) {
+		const paramName = paramNames[i];
+		const paramValue = paramValueMap.get(paramName);
+		const paramLocations = paramLocationMap.get(paramName);
+		if (!paramLocationMap) continue;
+		if (!paramLocations) continue;
+
+		paramLocations.forEach((location) => {
+			const rowIdx = rowNames.indexOf(location.outcome);
+			const colIdx = colNames.indexOf(location.controllers.join('-'));
+
+			matrix[rowIdx][colIdx].rowCriteria = location.outcome;
+			matrix[rowIdx][colIdx].colCriteria = location.controllers.join('-');
+			matrix[rowIdx][colIdx].content = {
+				value: paramValue,
+				id: paramName
+			};
 		});
 	}
 	return { rowNames, colNames, matrix };
@@ -122,8 +171,12 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 		for (let i = 0; i < templates.length; i++) {
 			const template = templates[i];
 			vector[0].push({
-				value: template.rate_law,
-				id: template.name
+				rowCriteria: '',
+				colCriteria: '',
+				content: {
+					value: template.rate_law,
+					id: template.name
+				}
 			});
 		}
 		return { rowNames, colNames, matrix: vector };
@@ -141,9 +194,10 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 		if (template.outcome) {
 			colIdx = colNames.indexOf(template.outcome.name);
 		}
-
-		matrix[rowIdx][colIdx].value = template.rate_law;
-		matrix[rowIdx][colIdx].id = template.name;
+		matrix[rowIdx][colIdx].content = {
+			value: template.rate_law,
+			id: template.name
+		};
 	}
 	return { rowNames, colNames, matrix };
 };

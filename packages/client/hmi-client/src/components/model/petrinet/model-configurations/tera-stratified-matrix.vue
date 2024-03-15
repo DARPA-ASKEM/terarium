@@ -87,9 +87,14 @@ import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
 import { StratifiedMatrix } from '@/types/Model';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import {} from '@/model-representation/mira/mira-util';
+import { collapseParameters, createParameterMatrix } from '@/model-representation/mira/mira';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
@@ -206,6 +211,19 @@ function renderMatrix() {
 		props.id,
 		props.stratifiedMatrixType
 	);
+
+	const paramsMap = collapseParameters(props.mmt, props.mmtParams);
+	const childrenParams = paramsMap.get(props.id);
+	const matrices = createParameterMatrix(props.mmt, props.mmtParams, props.id);
+
+	console.group('matrix gen');
+	console.log('props.id', props.id);
+	console.log('children', childrenParams);
+	console.log('matrix data', matrices);
+	console.groupEnd();
+
+	matrix.value = matrices.outcomeControllers.matrix;
+	// matrix.value = matrices.subjectControllers.matrix;
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {

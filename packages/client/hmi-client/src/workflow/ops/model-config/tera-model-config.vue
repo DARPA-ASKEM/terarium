@@ -154,6 +154,7 @@
 							v-if="modelConfiguration"
 							:model-configuration="modelConfiguration"
 							:mmt="mmt"
+							:mmt-params="mmtParams"
 							@update-value="updateConfigParam"
 							@update-configuration="
 								(configToUpdate: ModelConfiguration) => {
@@ -257,7 +258,6 @@ import { createModelConfiguration } from '@/services/model-configurations';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-// import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import {
 	getUnstratifiedInitials,
 	getUnstratifiedParameters
@@ -284,7 +284,7 @@ import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { isStratifiedModel, emptyMiraModel } from '@/model-representation/mira/mira';
-import { MiraModel } from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraParameterTable from './tera-parameter-table.vue';
 import TeraInitialTable from './tera-initial-table.vue';
@@ -520,6 +520,7 @@ const isLoading = computed(
 
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
@@ -692,7 +693,9 @@ const initialize = async () => {
 	model.value = await getModel(modelId);
 
 	if (model.value) {
-		mmt.value = (await getMMT(model.value)).mmt;
+		const response: any = await getMMT(model.value);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
 	}
 
 	knobs.value.name = state.name;

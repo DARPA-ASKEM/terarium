@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import {
+	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
 	extractSubjectOutcomeMatrix,
 	removeModifiers
@@ -328,11 +329,18 @@ export const createParameterMatrix = (
 		paramValueMap,
 		paramLocationMap
 	);
+	const outcomeControllers = extractOutcomeControllersMatrix(
+		templates,
+		childrenParams,
+		paramValueMap,
+		paramLocationMap
+	);
 
 	// FIXME: check if we need to add outcomeController matrix
 	return {
 		subjectOutcome,
-		subjectControllers
+		subjectControllers,
+		outcomeControllers
 	};
 };
 

@@ -43,10 +43,13 @@ import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { StratifiedMatrix } from '@/types/Model';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import TeraStratifiedMatrix from './tera-stratified-matrix.vue';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
 	openValueConfig: boolean;

@@ -50,7 +50,14 @@ export interface MiraTemplateParams {
 }
 
 // Terarium MIRA types
-export type MiraMatrixEntry = { id: any; value: any };
+export type MiraMatrixEntry = {
+	content: {
+		id: any;
+		value: any;
+	};
+	rowCriteria: string;
+	colCriteria: string;
+};
 export type MiraMatrix = MiraMatrixEntry[][];
 
 export interface TemplateSummary {

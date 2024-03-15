@@ -231,6 +231,7 @@
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model-configuration="modelConfiguration"
 				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
 				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
@@ -242,6 +243,8 @@
 			v-if="matrixModalContext.isOpen && isStratified"
 			:id="matrixModalContext.matrixId"
 			:model-configuration="modelConfiguration"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
@@ -277,12 +280,13 @@ import { getUnstratifiedParameters } from '@/model-representation/petrinet/mira-
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
 import type { ModelConfiguration, ModelParameter } from '@/types/Types';
-import { MiraModel } from '@/model-representation/mira/mira-common';
-import { isStratifiedModel } from '@/model-representation/mira/mira';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
 	hideHeader?: boolean;
 }>();
@@ -305,8 +309,19 @@ const matrixModalContext = ref({
 const parameters = computed<Map<string, string[]>>(() => {
 	const amr = props.modelConfiguration.configuration;
 	if (isStratified.value) {
-		return getUnstratifiedParameters(amr);
+		const collapsedParams = collapseParameters(props.mmt, props.mmtParams);
+
+		console.log('');
+		console.log('before', getUnstratifiedParameters(amr));
+		console.log('after', collapsedParams);
+		console.log('');
+
+		// FIXME:
+		// return getUnstratifiedParameters(amr);
+		return collapsedParams;
 	}
+
+	// Non-stratified logic
 	const result = new Map<string, string[]>();
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
 		amr.semantics?.ode.parameters?.forEach((p) => {
@@ -425,6 +440,8 @@ const expandedRows = ref([]);
 const openMatrixModal = (datum: ModelConfigTableData) => {
 	// Matrix effect easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
 	matrixEffect();
+
+	console.log('>> row datum', datum);
 	const id = datum.id;
 	if (!datum.tableFormattedMatrix) return;
 	matrixModalContext.value = {
