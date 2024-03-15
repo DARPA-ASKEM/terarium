@@ -45,7 +45,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 
 export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
-	description: 'Optimize a model configuration using funman',
+	description: 'Optimize with PyCIEMSS',
 	displayName: 'Optimize model configuration',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'modelConfigId' }],

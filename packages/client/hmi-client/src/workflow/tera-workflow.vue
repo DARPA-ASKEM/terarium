@@ -456,18 +456,18 @@ const addOperatorToWorkflow: Function =
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [
 	{
-		label: 'Add Resource to Workflow',
+		label: 'Add resource',
 		items: [
 			{
 				label: ModelOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelOp)
 			},
 			{
-				label: 'Create model from code', // ModelFromCodeOp.operation.displayName,
+				label: ModelFromCodeOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelFromCodeOp)
 			},
 			{
-				label: 'Create model from equations', // ModelFromDocumentOp.operation.displayName,
+				label: ModelFromDocumentOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelFromDocumentOp)
 			},
 			{ separator: true },
@@ -476,30 +476,29 @@ const contextMenuItems: MenuItem[] = [
 			{ label: DocumentOp.operation.displayName, command: addOperatorToWorkflow(DocumentOp) },
 			{ separator: true },
 			{
-				label: 'Code', // CodeAssetOp.operation.displayName
+				label: CodeAssetOp.operation.displayName,
 				command: addOperatorToWorkflow(CodeAssetOp)
 			}
 		]
 	},
 	{
-		label: 'Work with Model',
+		label: 'Work with model',
 		items: [
 			{
 				label: ModelConfigOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelConfigOp)
 			},
 			{
-				label: 'Validate configuration', // FunmanOp.operation.displayName,
+				label: ModelEditOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelEditOp)
+			},
+			{
+				label: FunmanOp.operation.displayName,
 				command: addOperatorToWorkflow(FunmanOp)
 			},
 			{
 				label: StratifyMiraOp.operation.displayName,
 				command: addOperatorToWorkflow(StratifyMiraOp)
-			},
-			{
-				label: ModelEditOp.operation.displayName,
-				disabled: true,
-				command: addOperatorToWorkflow(ModelEditOp)
 			},
 			{
 				label: DecapodesOp.operation.displayName,
@@ -509,7 +508,7 @@ const contextMenuItems: MenuItem[] = [
 		]
 	},
 	{
-		label: 'Work with Multiple Models',
+		label: 'Work with multiple models',
 		items: [
 			{
 				label: ModelComparisonOp.operation.displayName,
@@ -521,17 +520,17 @@ const contextMenuItems: MenuItem[] = [
 			},
 			{ separator: true },
 			{
-				label: 'Simulate ensemble', // SimulateEnsembleCiemssOp.operation.displayName,
+				label: SimulateEnsembleCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
 			},
 			{
-				label: 'Calibrate ensemble', // CalibrateEnsembleCiemssOp.operation.displayName,
+				label: CalibrateEnsembleCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
 			}
 		]
 	},
 	{
-		label: 'Work with Dataset',
+		label: 'Work with dataset',
 		items: [
 			{
 				label: DatasetTransformerOp.operation.displayName,
@@ -542,27 +541,27 @@ const contextMenuItems: MenuItem[] = [
 		]
 	},
 	{
-		label: 'Run Model',
+		label: 'Run model',
 		items: [
 			{
-				label: 'Simulate with SciML', // SimulateJuliaOp.operation.displayName
+				label: SimulateJuliaOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateJuliaOp)
 			},
 			{
-				label: 'Calibrate with SciML', // CalibrateJuliaOp.operation.displayName
+				label: CalibrateJuliaOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateJuliaOp)
 			},
 			{ separator: true },
 			{
-				label: 'Simulate with PyCIEMSS', // SimulateCiemssOp.operation.displayName
+				label: SimulateCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateCiemssOp)
 			},
 			{
-				label: 'Calibrate with PyCIEMSS', // CalibrateCiemssOp.operation.displayName,
+				label: CalibrateCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateCiemssOp)
 			},
 			{
-				label: 'Optimize with PyCIEMSS', // OptimizeCiemssOp.operation.displayName,
+				label: OptimizeCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(OptimizeCiemssOp)
 			}
 		]
