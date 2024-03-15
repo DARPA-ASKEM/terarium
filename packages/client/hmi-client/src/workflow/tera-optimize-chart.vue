@@ -83,9 +83,8 @@ const setChartOptions = () => ({
 });
 
 const getBinData = (data: number[]) => {
-	data.sort();
-	const minValue = data[0]; // data.getMin
-	const maxValue = data[data.length - 1]; // data.getMax
+	const minValue = Math.min(...data);
+	const maxValue = Math.max(...data);
 	const stepSize = (maxValue - minValue) / (binCount - 1);
 	const bins: number[] = Array<number>(binCount).fill(0);
 	const binLabels: string[] = [];
