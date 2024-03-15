@@ -1,18 +1,18 @@
 <template>
 	<main v-if="!fetchingDocument">
 		<template v-if="document">
-			<h5>
-				<strong>{{ document?.name }}</strong>
-			</h5>
+			<h6>
+				<span class="truncate-after-three-lines">{{ document?.name }}</span>
+			</h6>
 			<tera-operator-placeholder :operation-type="node.operationType" />
-			<Button label="Open document" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
 				class="w-full p-dropdown-sm"
 				:options="documents"
 				option-label="assetName"
-				placeholder="Select document"
+				placeholder="Select a document"
 				@update:model-value="onDocumentChange"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
@@ -35,7 +35,7 @@ import { getDocumentAsset } from '@/services/document-assets';
 import teraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { DocumentOperationState } from './document-operation';
 
-const emit = defineEmits(['open-drilldown', 'update-state', 'append-output-port']);
+const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();
@@ -85,7 +85,7 @@ watch(
 					?.filter((asset) => asset.assetType === ExtractionAssetType.Equation)
 					.map((asset, i) => ({
 						name: `Equation ${i + 1}`,
-						includeInProcess: true,
+						includeInProcess: false,
 						asset
 					})) || [];
 
@@ -97,13 +97,21 @@ watch(
 			emit('update-state', state);
 
 			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
-				emit('append-output-port', {
+				emit('append-output', {
 					type: 'documentId',
-					label: `${document.value.name}`,
-					value: [document.value.id]
+					label: `document`,
+					value: [
+						{
+							documentId: document.value.id,
+							figures,
+							tables,
+							equations
+						}
+					]
 				});
 			}
 
+			/*
 			if (!props.node.outputs.find((port) => port.type === 'equations') && !isEmpty(equations)) {
 				const selected = equations.filter((e) => e.includeInProcess);
 				emit('append-output-port', {
@@ -145,10 +153,19 @@ watch(
 					]
 				});
 			}
+			*/
 		}
 	},
 	{ immediate: true }
 );
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Supported by Chromium, Safari, Webkit, Edge and others. Not supported by IE and Opera Mini */
+.truncate-after-three-lines {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+</style>

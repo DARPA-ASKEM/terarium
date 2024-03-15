@@ -2,7 +2,9 @@ package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -10,7 +12,7 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -38,6 +40,11 @@ public class Project extends TerariumAsset implements Serializable {
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private String userName;
+
+	@TSOptional
+	@Transient
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private List<String> authors;
 
 	@TSOptional
 	@Schema(defaultValue = "My Project Description")

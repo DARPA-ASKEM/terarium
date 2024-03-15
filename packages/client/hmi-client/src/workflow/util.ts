@@ -34,41 +34,36 @@ export const getGraphDataFromDatasetCSV = (
 	mapping?: { [key: string]: string }[],
 	runType?: RunType
 ): DataseriesConfig | null => {
-	// Julia's output has a (t) at the end of the variable name, so we need to remove it
-	let v = runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar;
-	let tVar = 'timestamp';
+	// TA3 quirks, adjust variable names - FIXME
+	const selectedVariableLookup = runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar;
+	// runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar.slice(0, -6);
+	const timeVariableLookup = 'timestamp';
 
-	// get the dataset variable from the mapping of model variable to dataset variable if there's a mapping
+	// Default
+	let selectedVariable = selectedVariableLookup;
+	let timeVariable = timeVariableLookup;
+
+	// Map variable names to dataset column names
 	if (mapping) {
-		if (!(mapping.length === 1 && Object.values(mapping[0]).some((val) => !val))) {
-			const varMap = mapping.find((m) => m.modelVariable === columnVar);
-			if (varMap) {
-				v = varMap.datasetVariable;
-			}
+		let result = mapping.find((m) => m.modelVariable === selectedVariable);
+		if (result) {
+			selectedVariable = result.datasetVariable;
+		}
 
-			// if there's a mapping for timestamp, then the model variable is guaranteed to be 'timestamp'
-			const tMap = mapping.find((m) => m.modelVariable === 'timestamp');
-			if (tMap) {
-				tVar = tMap.datasetVariable;
-			}
+		result = mapping.find((m) => m.modelVariable === timeVariable);
+		if (result) {
+			timeVariable = result.datasetVariable;
 		}
 	}
 
-	// get  the index of the timestamp column
-	let tIndex = dataset.headers.indexOf(tVar);
-	// if the timestamp column is not found, default to 0 as this is what is assumed to be the default
-	// timestamp column in the pyciemss backend
-	tIndex = tIndex === -1 ? 0 : tIndex;
-
-	// get the index of the variable column
-	let colIdx: number = -1;
+	// Graph dataset index columns for x: timeVariable and y: selectedVariable
+	let tIndex = -1;
+	let sIndex = -1;
 	for (let i = 0; i < dataset.headers.length; i++) {
-		if (dataset.headers[i].trim() === v.trim()) {
-			colIdx = i;
-			break;
-		}
+		if (timeVariable.trim() === dataset.headers[i].trim()) tIndex = i;
+		if (selectedVariable.trim() === dataset.headers[i].trim()) sIndex = i;
 	}
-	if (colIdx === -1) {
+	if (tIndex === -1 || sIndex === -1) {
 		return null;
 	}
 
@@ -76,7 +71,7 @@ export const getGraphDataFromDatasetCSV = (
 		// ignore the first row, it's the header
 		data: dataset.csv.slice(1).map((datum: string[]) => ({
 			x: +datum[tIndex],
-			y: +datum[colIdx]
+			y: +datum[sIndex]
 		})),
 		label: `${columnVar} - dataset`,
 		fill: false,

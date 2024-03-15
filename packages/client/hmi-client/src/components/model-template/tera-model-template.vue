@@ -16,14 +16,14 @@
 						@focusout="updateName"
 					/>
 				</header>
-				<tera-model-diagram :model="model" :is-editable="isEditable" is-preview />
+				<tera-model-diagram :model="model" :is-editable="false" is-preview />
 			</main>
 			<Button v-if="isEditable" @click="toggle" icon="pi pi-ellipsis-v" rounded text />
 			<Menu ref="menu" :model="cardOptions" :popup="true" />
 		</section>
 		<ul>
 			<li
-				v-for="({ id }, index) in [...model.model.states, ...model.semantics.ode.parameters]"
+				v-for="({ id }, index) in ports"
 				class="port"
 				:class="{ selectable: isEditable }"
 				:key="index"
@@ -47,7 +47,12 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import type { ModelTemplateCard } from '@/types/model-templating';
 import Menu from 'primevue/menu';
 
-const props = defineProps<{ model: any; isEditable: boolean }>();
+const props = defineProps<{
+	model: any;
+	isEditable: boolean;
+	isDecomposed: boolean;
+	showParameters?: boolean;
+}>();
 
 const emit = defineEmits([
 	'port-mouseover',
@@ -78,10 +83,16 @@ const toggle = (event) => {
 
 const cardWidth = computed(() => cardRef.value?.clientWidth ?? 0);
 
+const ports = computed(() =>
+	props.showParameters
+		? [...props.model.model.states, ...props.model.semantics.ode.parameters]
+		: props.model.model.states
+);
+
 const card = computed<ModelTemplateCard>(
 	() =>
 		props.model.metadata.templateCard ?? {
-			id: -1,
+			id: '',
 			name: props.model.header.name,
 			x: 0,
 			y: 0
@@ -89,7 +100,7 @@ const card = computed<ModelTemplateCard>(
 );
 
 async function turnOnNameEdit() {
-	if (props.isEditable) {
+	if (props.isEditable && props.isDecomposed) {
 		isEditingName.value = true;
 		await nextTick();
 		if (nameInputRef.value) nameInputRef.value.$el.focus();
@@ -97,7 +108,7 @@ async function turnOnNameEdit() {
 }
 
 function updateName() {
-	emit('update-name', name);
+	emit('update-name', name.value);
 	isEditingName.value = false;
 }
 </script>

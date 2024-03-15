@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="FunmanTabs.Wizard">
 			<tera-drilldown-section>
 				<main>
@@ -29,12 +35,20 @@
 						class="p-inputtext-sm timespan-list"
 						v-model="requestStepListString"
 					/>
-					<p v-if="!showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-						Show additional options
-					</p>
-					<p v-if="showAdditionalOptions" @click="toggleAdditonalOptions" class="green-text">
-						Hide additional options
-					</p>
+					<h4
+						class="primary-text green-text"
+						v-if="!showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					>
+						<i class="pi pi-angle-right" /> Show additional options
+					</h4>
+					<h4
+						class="primary-text green-text"
+						v-if="showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					>
+						<i class="pi pi-angle-down" /> Hide additional options
+					</h4>
 					<div v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
@@ -66,9 +80,11 @@
 						<h4>Add sanity checks</h4>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
+
+					<tera-compartment-constraint :variables="modelNodeOptions" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index"
+						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
 						:model-node-options="modelNodeOptions"
@@ -93,14 +109,13 @@
 			<tera-drilldown-preview
 				title="Validation results"
 				v-model:output="selectedOutputId"
-				@update:output="onUpdateOutput"
+				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
 			>
 				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Output</h4>
+				<div v-else class="flex flex-column h-full justify-content-center">
+					<tera-operator-placeholder :operation-type="node.operationType" />
 				</div>
 			</tera-drilldown-preview>
 		</template>
@@ -113,9 +128,10 @@
 				label="Run"
 				icon="pi pi-play"
 				@click="runMakeQuery"
+				size="large"
 			/>
-			<Button outlined label="Save as a new model" />
-			<Button label="Close" @click="emit('close')" />
+			<Button outlined label="Save as a new model" size="large" />
+			<Button label="Close" @click="emit('close')" size="large" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -130,10 +146,14 @@ import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import TeraCompartmentConstraint from '@/components/funman/tera-compartment-constraint.vue';
+
 import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -146,13 +166,14 @@ import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { Poller, PollerState } from '@/api/api';
+import { pythonInstance } from '@/python/PyodideController';
 import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'select-output', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'select-output', 'update-state', 'close']);
 
 enum FunmanTabs {
 	Wizard = 'Wizard',
@@ -172,32 +193,60 @@ interface BasicKnobs {
 		end: number;
 	};
 	numberOfSteps: number;
+	useCompartmentalConstraint: boolean;
 }
 
 const knobs = ref<BasicKnobs>({
 	tolerance: 0,
 	currentTimespan: { start: 0, end: 0 },
-	numberOfSteps: 0
+	numberOfSteps: 0,
+	useCompartmentalConstraint: false
 });
+
+const mass = ref('0');
 
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
+const MAX = 99999999999;
 const requestConstraints = computed(
 	() =>
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
+			if (ele.constraintType === 'monotonicityConstraint') {
+				const constraint = {
+					soft: true,
+					name: ele.name,
+					timepoints: null,
+					additive_bounds: {
+						lb: -MAX,
+						ub: 0.0,
+						closed_upper_bound: false,
+						original_width: MAX
+					},
+					variables: ele.variables,
+					weights: [1.0],
+					derivative: true
+				};
+
+				if (ele.derivativeType === 'increasing') {
+					constraint.weights = [-1.0];
+				}
+				return constraint;
+			}
+
 			if (ele.timepoints) {
 				ele.timepoints.closed_upper_bound = true;
 			}
 			if (ele.variables.length === 1) {
 				// State Variable Constraint
-				return {
+				const singleVarConstraint = {
 					name: ele.name,
 					variable: ele.variables[0],
 					interval: ele.interval,
 					timepoints: ele.timepoints
 				};
+				return singleVarConstraint;
 			}
 
 			return {
@@ -274,13 +323,20 @@ const runMakeQuery = async () => {
 				}
 			],
 			config: {
-				use_compartmental_constraints: true,
+				use_compartmental_constraints: knobs.value.useCompartmentalConstraint,
 				normalization_constant: 1,
 				tolerance: knobs.value.tolerance
 			}
 		}
 	};
 
+	// Calculate the normalization mass of the model = Sum(initials)
+	const semantics = model.value.semantics;
+	if (knobs.value.useCompartmentalConstraint && semantics) {
+		if (request.request.config) {
+			request.request.config.normalization_constant = parseFloat(mass.value);
+		}
+	}
 	const response = await makeQueries(request);
 	getStatus(response.id);
 };
@@ -316,16 +372,12 @@ const getStatus = async (runId: string) => {
 
 const addOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
-	emit('append-output-port', {
+	emit('append-output', {
 		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
 		type: FunmanOperation.outputs[0].type,
 		value: runId,
 		state: _.cloneDeep(props.node.state)
 	});
-	if (props.node.outputs.length === 1) {
-		const portId = props.node.outputs[0].id;
-		emit('select-output', portId);
-	}
 };
 
 const addConstraintForm = () => {
@@ -334,7 +386,9 @@ const addConstraintForm = () => {
 		borderColour: '#00c387',
 		name: '',
 		timepoints: { lb: 0, ub: 100 },
-		variables: []
+		variables: [],
+		constraintType: '',
+		derivativeType: ''
 	};
 	state.constraintGroups.push(newGroup);
 	emit('update-state', state);
@@ -378,13 +432,36 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
-	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
+	const renameReserved = (v: string) => {
+		const reserved = ['lambda'];
+		if (reserved.includes(v)) return `${v}_`;
+		return v;
+	};
+
+	// Calculate mass
+	const semantics = model.value.semantics;
+	const modelInitials = semantics?.ode.initials;
+	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
+
+	const parametersMap = {};
+	semantics?.ode.parameters?.forEach((d) => {
+		parametersMap[renameReserved(d.id)] = d.value;
+	});
+
+	const massValue = await pythonInstance.evaluateExpression(
+		modelMassExpression as string,
+		parametersMap
+	);
+	mass.value = massValue;
+
+	// const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
 	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
 
-	model.value.semantics?.ode.parameters?.forEach((param) => {
-		if (initialVars?.includes(param.id)) return;
-		modelColumnNameOptions.push(param.id);
-	});
+	// FIXME
+	// model.value.semantics?.ode.parameters?.forEach((param) => {
+	// 	if (initialVars?.includes(param.id)) return;
+	// 	modelColumnNameOptions.push(param.id);
+	// });
 
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
@@ -398,6 +475,7 @@ const setModelOptions = async () => {
 	knobs.value.numberOfSteps = state.numSteps;
 	knobs.value.currentTimespan = _.cloneDeep(state.currentTimespan);
 	knobs.value.tolerance = state.tolerance;
+	knobs.value.useCompartmentalConstraint = state.useCompartmentalConstraint;
 
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
@@ -436,7 +514,7 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	});
 };
 
-const onUpdateOutput = (id: string) => {
+const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
@@ -449,6 +527,7 @@ watch(
 		state.currentTimespan.start = knobs.value.currentTimespan.start;
 		state.currentTimespan.end = knobs.value.currentTimespan.end;
 		state.numSteps = knobs.value.numberOfSteps;
+		state.useCompartmentalConstraint = knobs.value.useCompartmentalConstraint;
 
 		emit('update-state', state);
 	},

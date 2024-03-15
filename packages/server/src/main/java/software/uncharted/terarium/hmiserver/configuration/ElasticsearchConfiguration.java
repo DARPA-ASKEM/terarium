@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import lombok.Data;
-import lombok.experimental.Accessors;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium.elasticsearch")
@@ -23,20 +22,8 @@ public class ElasticsearchConfiguration {
 
 	Index index;
 
-	public record Index(
-			String prefix,
-			String suffix,
-			String codeRoot,
-			String artifactRoot,
-			String datasetRoot,
-			String documentRoot,
-			String equationRoot,
-			String modelRoot,
-			String modelConfigurationRoot,
-			String notebookSessionRoot,
-			String simulationRoot,
-			String workflowRoot,
-			String externalPublicationRoot) {
+	public String getIndex(final String root) {
+		return String.join("_", index.prefix, root, index.suffix);
 	}
 
 	public String getCodeIndex() {
@@ -79,7 +66,28 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.workflowRoot, index.suffix);
 	}
 
-	public String getExternalPublicationIndex() {
-		return String.join("_", index.prefix, index.externalPublicationRoot, index.suffix);
+	public String getDecapodesConfigurationIndex() {
+		return String.join("_", index.prefix, index.decapodesConfigurationRoot, index.suffix);
+	}
+
+	public String getDecapodesContextIndex() {
+		return String.join("_", index.prefix, index.decapodesContextRoot, index.suffix);
+	}
+
+	public record Index(
+		String prefix,
+		String suffix,
+		String codeRoot,
+		String artifactRoot,
+		String datasetRoot,
+		String documentRoot,
+		String equationRoot,
+		String modelRoot,
+		String modelConfigurationRoot,
+		String notebookSessionRoot,
+		String simulationRoot,
+		String workflowRoot,
+		String decapodesConfigurationRoot,
+		String decapodesContextRoot) {
 	}
 }

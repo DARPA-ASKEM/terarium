@@ -1,9 +1,9 @@
 <template>
 	<section>
 		<!--FIXME: See fetchModel()-->
-		<template v-if="model">
+		<template v-if="node.inputs[0].value && model">
 			<tera-model-diagram :model="model" :is-editable="false" is-preview />
-			<Button @click="emit('open-drilldown')" label="Configure" severity="secondary" outlined />
+			<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<tera-operator-placeholder :operation-type="node.operationType">
@@ -33,8 +33,8 @@ const model = ref<Model | null>(null);
 
 const fetchModel = async () => {
 	// FIXME: The state now holds a modelConfigIds - so this may have to be updated to support that
-	if (!props.node?.state?.modelId) return;
-	model.value = await getModel(props.node?.state?.modelId);
+	if (!props.node.inputs[0].value?.[0]) return;
+	model.value = await getModel(props.node.inputs[0].value[0]);
 };
 
 onMounted(async () => {

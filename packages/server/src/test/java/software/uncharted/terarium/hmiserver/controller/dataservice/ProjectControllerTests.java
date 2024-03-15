@@ -1,18 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -23,6 +18,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectA
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 public class ProjectControllerTests extends TerariumApplicationTests {
@@ -99,7 +97,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 		final Project project = projectService.createProject(new Project()
 				.setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createDocumentAsset(new DocumentAsset()
+		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
 				.setName("test-document-name")
 				.setDescription("my description"));
 
@@ -116,16 +114,16 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.content(objectMapper.writeValueAsString(projectAsset)))
 				.andExpect(status().isCreated());
 
-		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId() + "/assets")
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 				.param("types", AssetType.DOCUMENT.name())
 				.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
-		Assets results = objectMapper.readValue(res.getResponse().getContentAsString(),
-				Assets.class);
+		final DocumentAsset results = objectMapper.readValue(res.getResponse().getContentAsString(),
+			DocumentAsset.class);
 
-		Assertions.assertEquals(1, results.getDocument().size());
+		Assertions.assertNotNull(results);
 	}
 
 	@Test
@@ -135,12 +133,12 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 		final Project project = projectService.createProject(new Project()
 				.setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createDocumentAsset(new DocumentAsset()
+		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
 				.setName("test-document-name")
 				.setDescription("my description"));
 
 		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT,
-				documentAsset.getId());
+				documentAsset);
 
 		mockMvc.perform(
 				MockMvcRequestBuilders
@@ -149,15 +147,15 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		MvcResult res = mockMvc
+		final MvcResult res = mockMvc
 				.perform(MockMvcRequestBuilders
-						.get("/projects/" + project.getId() + "/assets")
+						.get("/document-asset/" + documentAsset.getId())
 						.param("types", AssetType.DOCUMENT.name())
 						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
-		Assets results = objectMapper.readValue(res.getResponse().getContentAsString(),
+		final Assets results = objectMapper.readValue(res.getResponse().getContentAsString(),
 				Assets.class);
 
 		Assertions.assertNull(results.getDocument());

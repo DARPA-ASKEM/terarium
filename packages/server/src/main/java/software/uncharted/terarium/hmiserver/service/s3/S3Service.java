@@ -1,49 +1,14 @@
 package software.uncharted.terarium.hmiserver.service.s3;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.LongStream;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.Bucket;
-import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
-import software.amazon.awssdk.services.s3.model.CompletedPart;
-import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
-import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
-import software.amazon.awssdk.services.s3.model.DeleteBucketResponse;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
-import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
-import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.model.UploadPartRequest;
-import software.amazon.awssdk.services.s3.model.UploadPartResponse;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -52,6 +17,15 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 import software.uncharted.terarium.hmiserver.models.s3.S3Object;
 import software.uncharted.terarium.hmiserver.models.s3.S3ObjectListing;
 import software.uncharted.terarium.hmiserver.service.HashService;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.LongStream;
 
 @Slf4j
 public class S3Service {
@@ -65,7 +39,7 @@ public class S3Service {
 	 * @param client     The S3 client to use
 	 * @param bufferSize The size of the buffer to use when writing multipart files
 	 */
-	public S3Service(S3Client client, S3Presigner preSigner, int bufferSize) {
+	public S3Service(final S3Client client, final S3Presigner preSigner, final int bufferSize) {
 		if (client == null) {
 			throw new IllegalArgumentException("client cannot be null");
 		}
@@ -104,7 +78,7 @@ public class S3Service {
 			client.headBucket(request);
 			log.debug("Bucket {} exists", bucketName);
 			return true;
-		} catch (NoSuchBucketException e) {
+		} catch (final NoSuchBucketException e) {
 			log.debug("Bucket {} does not exist", bucketName);
 			return false;
 		}
@@ -113,20 +87,19 @@ public class S3Service {
 	/**
 	 * Checks if an object exists in a bucket
 	 *
-	 * @param s3Client
 	 * @param bucketName
 	 * @param key
 	 * @return
 	 */
-	public boolean doesObjectExist(String bucketName, String key) {
+	public boolean doesObjectExist(final String bucketName, final String key) {
 		try {
-			HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+			final HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
 					.bucket(bucketName)
 					.key(key)
 					.build();
 			client.headObject(headObjectRequest);
 			return true;
-		} catch (NoSuchKeyException e) {
+		} catch (final NoSuchKeyException e) {
 			return false;
 		}
 	}
@@ -180,7 +153,7 @@ public class S3Service {
 					.setLastModifiedMillis(response.lastModified().toEpochMilli())
 					.setETag(response.eTag())
 					.setSizeInBytes(response.contentLength());
-		} catch (NoSuchKeyException e) {
+		} catch (final NoSuchKeyException e) {
 			log.debug("Object {} does not exist in bucket {}", key, bucketName);
 			return null;
 		}
@@ -236,9 +209,9 @@ public class S3Service {
 			final List<CompletedPart> completedParts = new ArrayList<>();
 			final List<byte[]> buffers = new ArrayList<>();
 			long totalBytesWritten = 0L;
-			try (BufferedInputStream bufferedStream = new BufferedInputStream(stream, BUFFER_SIZE)) {
+			try (final BufferedInputStream bufferedStream = new BufferedInputStream(stream, BUFFER_SIZE)) {
 				int bytesRead;
-				byte[] buffer = new byte[BUFFER_SIZE];
+				final byte[] buffer = new byte[BUFFER_SIZE];
 				int totalBuffersSize = 0;
 				while ((bytesRead = stream.read(buffer)) != -1) {
 					// Copy the buffer to a new byte array of the correct size and add it to the
@@ -268,7 +241,7 @@ public class S3Service {
 					.key(key)
 					.uploadId(uploadId)
 					.multipartUpload(CompletedMultipartUpload.builder().parts(completedParts).build()));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error("Error putting multipart object {} in bucket {}", key, bucketName, e);
 		}
 	}
@@ -288,7 +261,7 @@ public class S3Service {
 			final String uploadId, final String key, final int partNumber) {
 		final byte[] newBuffer = new byte[totalBuffersSize];
 		int offset = 0;
-		for (byte[] b : buffers) {
+		for (final byte[] b : buffers) {
 			System.arraycopy(b, 0, newBuffer, offset, b.length);
 			offset += b.length;
 		}
@@ -344,7 +317,7 @@ public class S3Service {
 			client.headObject(request);
 			log.debug("Object {} exists in bucket {}", key, bucketName);
 			return true;
-		} catch (NoSuchKeyException e) {
+		} catch (final NoSuchKeyException e) {
 			log.debug("Object {} does not exist in bucket {}", key, bucketName);
 			return false;
 		}
@@ -433,7 +406,7 @@ public class S3Service {
 	 *
 	 * @param bucket            The bucket to download from
 	 * @param key               The key to download
-	 * @param expirationSeconds The number of minutes the signature is valid for
+	 * @param expirationMinutes The number of minutes the signature is valid for
 	 * @return The pre-signed URL
 	 */
 	public Optional<String> getS3PreSignedGetUrl(final String bucket, final String key, final long expirationMinutes) {
@@ -442,14 +415,14 @@ public class S3Service {
 			return Optional.empty();
 		}
 
-		GetObjectPresignRequest request = GetObjectPresignRequest.builder()
+		final GetObjectPresignRequest request = GetObjectPresignRequest.builder()
 				.signatureDuration(Duration.ofMinutes(expirationMinutes))
 				.getObjectRequest(GetObjectRequest.builder()
 						.bucket(bucket)
 						.key(key)
 						.build())
 				.build();
-		PresignedGetObjectRequest presignedGetObjectRequest = preSigner.presignGetObject(request);
+		final PresignedGetObjectRequest presignedGetObjectRequest = preSigner.presignGetObject(request);
 		return Optional.of(presignedGetObjectRequest.url().toString());
 	}
 
@@ -464,24 +437,24 @@ public class S3Service {
 	 * @return The pre-signed URL
 	 */
 	public String getS3PreSignedPutUrl(final String bucket, final String key, final long expirationMinutes) {
-		PutObjectPresignRequest request = PutObjectPresignRequest.builder()
+		final PutObjectPresignRequest request = PutObjectPresignRequest.builder()
 				.signatureDuration(Duration.ofMinutes(expirationMinutes))
 				.putObjectRequest(PutObjectRequest.builder()
 						.bucket(bucket)
 						.key(key)
 						.build())
 				.build();
-		PresignedPutObjectRequest presignedPutObjectRequest = preSigner.presignPutObject(request);
+		final PresignedPutObjectRequest presignedPutObjectRequest = preSigner.presignPutObject(request);
 		return presignedPutObjectRequest.url().toString();
 	}
 
-	public ResponseEntity<Void> getUploadStream(String bucket, String key, MultipartFile file) throws IOException {
+	public ResponseEntity<Void> getUploadStream(final String bucket, final String key, final MultipartFile file) throws IOException {
 		if (!bucketExists(bucket)) {
 			return ResponseEntity.notFound().build();
 		}
 
-		long SIZE_THRESHOLD = 1028 * 1028 * 5; // S3 does not allow streaming for files smaller than 5MB
-		long sizeInBytes = file.getSize();
+		final long SIZE_THRESHOLD = 1028 * 1028 * 5; // S3 does not allow streaming for files smaller than 5MB
+		final long sizeInBytes = file.getSize();
 		if (sizeInBytes < SIZE_THRESHOLD) {
 			// don't stream it
 			putObject(bucket, key, file.getBytes());
@@ -492,12 +465,12 @@ public class S3Service {
 
 		final String uploadId = createMultipartUpload(bucket, key).uploadId();
 
-		InputStream stream = file.getInputStream();
+		final InputStream stream = file.getInputStream();
 		putObject(uploadId, bucket, key, stream);
 		return ResponseEntity.ok().build();
 	}
 
-	public ResponseEntity<StreamingResponseBody> getDownloadStream(String bucket, String key) {
+	public ResponseEntity<StreamingResponseBody> getDownloadStream(final String bucket, final String key) {
 		if (!bucketExists(bucket)) {
 			return ResponseEntity.notFound().build();
 		}
@@ -508,7 +481,7 @@ public class S3Service {
 		final ResponseInputStream<GetObjectResponse> responseStream = getObject(bucket, key);
 		final StreamingResponseBody body = outputStream -> {
 			int numberOfBytesToWrite;
-			byte[] data = new byte[BUFFER_SIZE];
+			final byte[] data = new byte[BUFFER_SIZE];
 			while ((numberOfBytesToWrite = responseStream.read(data, 0, data.length)) != -1) {
 				outputStream.write(data, 0, numberOfBytesToWrite);
 			}
@@ -551,17 +524,16 @@ public class S3Service {
 	 * @param destinationBucket
 	 * @param destinationKey
 	 */
-	public void copyObject(String sourceBucket, String sourceKey, String destinationBucket, String destinationKey) {
-		S3Client s3 = S3Client.create();
+	public void copyObject(final String sourceBucket, final String sourceKey, final String destinationBucket, final String destinationKey) {
 
-		CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
+		final CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
 				.sourceBucket(sourceBucket)
 				.sourceKey(sourceKey)
 				.destinationBucket(destinationBucket)
 				.destinationKey(destinationKey)
 				.build();
 
-		s3.copyObject(copyObjectRequest);
+		client.copyObject(copyObjectRequest);
 	}
 
 	/**
@@ -570,10 +542,10 @@ public class S3Service {
 	 * @param path
 	 * @return
 	 */
-	public String parseFilename(String path) {
+	public static String parseFilename(final String path) {
 		String filename = path;
 		if (path.contains("http") || path.contains("s3")) {
-			String[] pieces = path.split("/");
+			final String[] pieces = path.split("/");
 			filename = pieces[pieces.length - 1];
 
 			if (filename.contains("?")) {

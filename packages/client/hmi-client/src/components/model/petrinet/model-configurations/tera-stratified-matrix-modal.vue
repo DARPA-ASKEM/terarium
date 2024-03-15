@@ -1,16 +1,17 @@
 <template>
 	<tera-modal @modal-mask-clicked="emit('close-modal')">
 		<template #header>
-			<h4>{{ id }}</h4>
-			<span>Configure the matrix values</span>
-			<div class="flex align-items-center">
-				<Checkbox
-					inputId="matrixShouldEval"
-					v-model="matrixShouldEval"
-					:binary="true"
-					label="Evaluate expressions?"
-				/>
-				<label for="matrixShouldEval" class="ml-2"> Evaluate Expressions? </label>
+			<div class="flex align-items-center justify-space-between">
+				<h4 class="w-full">{{ id }} matrix</h4>
+				<div class="flex align-items-center gap-2 white-space-nowrap">
+					<label for="matrixShouldEval" class="mr-2">Evaluate expressions</label>
+					<InputSwitch
+						inputId="matrixShouldEval"
+						v-model="matrixShouldEval"
+						:binary="true"
+						label="Evaluate expressions?"
+					/>
+				</div>
 			</div>
 		</template>
 		<template #default>
@@ -44,8 +45,14 @@
 			/>
 		</template>
 		<template #footer>
-			<Button label="OK" @click="emit('close-modal')" />
-			<Button class="p-button-outlined" label="Cancel" @click="emit('close-modal')" />
+			<Button size="large" label="OK" @click="emit('close-modal')" />
+			<Button
+				size="large"
+				severity="secondary"
+				class="p-button-outlined"
+				label="Cancel"
+				@click="emit('close-modal')"
+			/>
 		</template>
 	</tera-modal>
 </template>
@@ -54,7 +61,7 @@
 import { ref } from 'vue';
 import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import type { ModelConfiguration } from '@/types/Types';
-import Checkbox from 'primevue/checkbox';
+import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { StratifiedMatrix } from '@/types/Model';
@@ -70,5 +77,11 @@ const props = defineProps<{
 
 const emit = defineEmits(['close-modal', 'update-configuration']);
 
-const matrixShouldEval = ref(true);
+const matrixShouldEval = ref(false);
 </script>
+
+<style scoped>
+main:deep(.content) {
+	min-width: 40rem;
+}
+</style>

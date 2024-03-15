@@ -1,10 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.io.IOException;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,15 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
+import java.io.IOException;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class WorkflowControllerTests extends TerariumApplicationTests {
 
@@ -69,13 +67,13 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflows() throws Exception {
 
-		workflowService.createWorkflow(new Workflow()
+		workflowService.createAsset(new Workflow()
 				.setName("test-workflow-name0")
 				.setDescription("test-workflow-description"));
-		workflowService.createWorkflow(new Workflow()
+		workflowService.createAsset(new Workflow()
 				.setName("test-workflow-name0")
 				.setDescription("test-workflow-description"));
-		workflowService.createWorkflow(new Workflow()
+		workflowService.createAsset(new Workflow()
 				.setName("test-workflow-name0")
 				.setDescription("test-workflow-description"));
 
@@ -89,7 +87,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createWorkflow(new Workflow()
+		final Workflow workflow = workflowService.createAsset(new Workflow()
 				.setName("test-workflow-name0")
 				.setDescription("test-workflow-description"));
 
@@ -102,7 +100,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createWorkflow(new Workflow()
+		final Workflow workflow = workflowService.createAsset(new Workflow()
 				.setName("test-workflow-name0")
 				.setDescription("test-workflow-description"));
 
@@ -117,7 +115,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createWorkflow(new Workflow()
+		final Workflow workflow = workflowService.createAsset(new Workflow()
 				.setName("test-workflow-name0")
 				.setDescription("test-workflow-description"));
 
@@ -125,6 +123,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 				.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(workflowService.getWorkflow(workflow.getId()).isEmpty());
+		Assertions.assertTrue(workflowService.getAsset(workflow.getId()).isEmpty());
 	}
 }

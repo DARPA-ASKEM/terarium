@@ -1,18 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -20,7 +10,20 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Service class for handling simulations.  Note that this does not extend TerariumAssetService, as Simulations
+ * do not extend TerariumAsset. This is because simulations have special considerations around their date/time fields
+ * when it comes to formatting.
+ */
 @Service
 @RequiredArgsConstructor
 public class SimulationService {
@@ -31,20 +34,22 @@ public class SimulationService {
 	private final Config config;
 	private final S3ClientService s3ClientService;
 
-	private final long HOUR_EXPIRATION = 60;
+	private static final long HOUR_EXPIRATION = 60;
 
 	public List<Simulation> getSimulations(final Integer page, final Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getSimulationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
+				.query(q -> q.bool(b -> b
+					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.build();
 		return elasticService.search(req, Simulation.class);
 	}
 
 	public Optional<Simulation> getSimulation(final UUID id) throws IOException {
-		Simulation doc = elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
+		final Simulation doc = elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
 		if (doc != null && doc.getDeletedOn() == null) {
 			return Optional.of(doc);
 		}
@@ -53,7 +58,7 @@ public class SimulationService {
 
 	public void deleteSimulation(final UUID id) throws IOException {
 
-		Optional<Simulation> simulation = getSimulation(id);
+		final Optional<Simulation> simulation = getSimulation(id);
 		if (simulation.isEmpty()) {
 			return;
 		}
@@ -90,10 +95,9 @@ public class SimulationService {
 		return presigned;
 	}
 
-	public Optional<PresignedURL> getDownloadUrl(UUID id, String filename) {
-		long HOUR_EXPIRATION = 60;
+	public Optional<PresignedURL> getDownloadUrl(final UUID id, final String filename) {
 
-		Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
+		final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
 				config.getFileStorageS3BucketName(),
 				getPath(id, filename),
 				HOUR_EXPIRATION);
@@ -102,48 +106,31 @@ public class SimulationService {
 			return Optional.empty();
 		}
 
-		PresignedURL presigned = new PresignedURL();
+		final PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(url.get());
 		presigned.setMethod("GET");
 		return Optional.of(presigned);
 	}
 
-	private String getResultsPath(UUID simId, String filename) {
+	private String getResultsPath(final UUID simId, final String filename) {
 		return String.join("/", config.getResultsPath(), simId.toString(), filename);
 	}
 
-	private String getDatasetPath(UUID datasetId, String filename) {
+	private String getDatasetPath(final UUID datasetId, final String filename) {
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public Dataset copySimulationResultToDataset(Simulation simulation) {
-		UUID simId = simulation.getId();
-		String simName = simulation.getName();
-
-		Dataset dataset = new Dataset();
-		dataset.setName(simName + " Result Dataset");
-		dataset.setDescription(simulation.getDescription());
-		dataset.setMetadata(Map.of("simulationId", simId));
-		dataset.setFileNames(simulation.getResultFiles());
-		dataset.setDataSourceDate(simulation.getCompletedTime());
-		dataset.setColumns(new ArrayList<>());
-
-		// Attach the user to the dataset
-		if (simulation.getUserId() != null) {
-			dataset.setUserId(simulation.getUserId());
-		}
-
+	public void copySimulationResultToDataset(final Simulation simulation, final Dataset dataset) {
+		final UUID simId = simulation.getId();
 		if (simulation.getResultFiles() != null) {
-			for (String resultFile : simulation.getResultFiles()) {
-				String filename = s3ClientService.getS3Service().parseFilename(resultFile);
-				String srcPath = getResultsPath(simId, filename);
-				String destPath = getDatasetPath(dataset.getId(), filename);
-
+			for (final String resultFile : simulation.getResultFiles()) {
+				final String filename = S3Service.parseFilename(resultFile);
+				final String srcPath = getResultsPath(simId, filename);
+				final String destPath = getDatasetPath(dataset.getId(), filename);
 				s3ClientService.getS3Service().copyObject(config.getFileStorageS3BucketName(), srcPath,
 						config.getFileStorageS3BucketName(), destPath);
+
 			}
 		}
-
-		return dataset;
 	}
 }

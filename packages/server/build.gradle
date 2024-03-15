@@ -16,7 +16,7 @@ plugins {
 }
 
 ext {
-  set('springCloudVersion', "2022.0.4")
+  set('springCloudVersion', "2022.0.5")
 }
 
 dependencyManagement {
@@ -41,6 +41,9 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://artifacts.unidata.ucar.edu/repository/unidata-all/"
+    }
 }
 
 dependencies {
@@ -63,7 +66,7 @@ dependencies {
     implementation 'org.apache.commons:commons-csv:1.10.0'
     implementation 'org.apache.commons:commons-text:1.10.0'
     implementation 'org.eclipse.microprofile.jwt:microprofile-jwt-auth-api:2.1'
-    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.1'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.18'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.jsoup:jsoup:1.7.2'
     implementation 'org.keycloak:keycloak-admin-client:20.0.5'
@@ -84,6 +87,8 @@ dependencies {
 
     implementation(platform("software.amazon.awssdk:bom:2.21.26"))
     implementation("software.amazon.awssdk:s3")
+
+    implementation "edu.ucar:cdm-core:5.5.3"
 
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'

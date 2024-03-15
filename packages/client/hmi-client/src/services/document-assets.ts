@@ -2,10 +2,12 @@
  * Documents Asset
  */
 
-import API from '@/api/api';
+import API, { PollerState } from '@/api/api';
 import type { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
+import { fetchExtraction } from './knowledge';
+import { modelCard } from './goLLM';
 
 /**
  * Get all documents
@@ -87,12 +89,11 @@ async function createNewDocumentFromGithubFile(
 	const urlResponse = await API.put(
 		`/document-asset/${newDocument.id}/upload-document-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
 	if (!urlResponse || urlResponse.status >= 400) {
-		logger.error(`Failed to upload document from github: ${urlResponse}`);
 		return null;
 	}
 
@@ -137,7 +138,7 @@ async function addFileToDocumentAsset(
 				);
 			}
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	return response && response.status < 400;
@@ -164,8 +165,7 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting document file as text');
+	if (!response) {
 		return null;
 	}
 
@@ -181,8 +181,7 @@ async function getEquationFromImageUrl(
 		{}
 	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error getting equation from image url');
+	if (!response) {
 		return null;
 	}
 
@@ -209,16 +208,24 @@ async function createDocumentFromXDD(
 	projectId: string
 ): Promise<AddDocumentAssetFromXDDResponse | null> {
 	if (!document || !projectId) return null;
-	const response = await API.post(`/document-asset/create-document-from-xdd`, {
-		document,
-		projectId
-	});
+	const response = await API.post<AddDocumentAssetFromXDDResponse>(
+		`/document-asset/create-document-from-xdd`,
+		{
+			document,
+			projectId
+		}
+	);
 
-	if (!response || response.status >= 400) {
-		logger.error('Error upload file from doi');
+	if (!response) {
 		return null;
 	}
 
+	if (response.data.extractionJobId) {
+		const result = await fetchExtraction(response.data.extractionJobId);
+		if (result.state === PollerState.Done) {
+			modelCard(response.data.documentAssetId);
+		}
+	}
 	return response.data;
 }
 export {

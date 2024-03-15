@@ -1,21 +1,31 @@
 import type { Position } from '@/types/common';
+import type { Model } from '@/types/Types';
 
-export interface ModelTemplateEditor {
+export enum DecomposedModelTemplateTypes {
+	ControlledConversion = 'Controlled conversion',
+	ControlledDegradation = 'Controlled degradation',
+	ControlledProduction = 'Controlled production',
+	NaturalConversion = 'Natural conversion',
+	NaturalDegradation = 'Natural degradation',
+	NaturalProduction = 'Natural production',
+	Observable = 'Observable'
+}
+
+export interface ModelTemplateCanvas {
 	id: string;
-	name: string;
-	description: string;
 	transform: {
 		x: number;
 		y: number;
 		k: number;
 	};
-	models: any[];
+	models: Model[];
 	junctions: ModelTemplateJunction[];
 }
 
 export interface ModelTemplateCard {
 	id: string;
-	name: string;
+	name: string; // FIXME: name may not be necessary if it's already in model.header
+	templateType: DecomposedModelTemplateTypes;
 	x: number;
 	y: number;
 	// For collisionFn

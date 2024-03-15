@@ -16,6 +16,7 @@
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
 			@bring-to-front="bringToFront"
+			@show-annotation-editor="if (annotationRef) annotationRef.isEditing = true;"
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
@@ -28,6 +29,12 @@
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
+			<tera-operator-annotation
+				ref="annotationRef"
+				:state="node.state"
+				in-node
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<slot name="body" />
 		</section>
 		<tera-operator-outputs
@@ -47,14 +54,15 @@
 import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
-import { addHover, removeHover, addDrag, removeDrag } from '@/services/operator-bitmask';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { addDrag, addHover, removeDrag, removeHover } from '@/services/operator-bitmask';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
 import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -67,7 +75,8 @@ const emit = defineEmits([
 	'remove-operator',
 	'remove-edges',
 	'resize',
-	'duplicate-branch'
+	'duplicate-branch',
+	'update-state'
 ]);
 
 enum PortDirection {
@@ -77,6 +86,7 @@ enum PortDirection {
 
 const operator = ref<HTMLElement>();
 const interactionStatus = ref(0); // States will be added to it thorugh bitmasking
+const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -135,6 +145,7 @@ main {
 	box-shadow: var(--overlayMenuShadow);
 	min-width: 15rem;
 	transition: box-shadow 80ms ease;
+
 	&:hover {
 		box-shadow: var(--overlayMenuShadowHover);
 		z-index: 2;
@@ -144,13 +155,18 @@ main {
 		padding: 0.5rem;
 	}
 
-	& > ul,
-	& > .content,
-	& > .content:deep(> *)  /* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
+	&>ul,
+	&>.content,
+	&>.content:deep(> *)
+
+	/* Assumes that the child put in the slot will be wrapped in its own parent tag */ {
 		display: flex;
 		flex-direction: column;
 		justify-content: space-evenly;
 		gap: 0.5rem;
+		&:empty {
+			display: none;
+		}
 	}
 
 	/* Shared styles between tera-operator-inputs and tera-operator-outputs */
@@ -158,28 +174,25 @@ main {
 		padding: 0.5rem 0;
 		list-style: none;
 		font-size: var(--font-caption);
-		color: var(--text-color-secondary);
-
-		&:empty {
-			display: none;
-		}
+		color: var(--text-color-subdued);
 
 		/* Can't nest css within the deep selector */
 		&:deep(> li) {
 			display: flex;
 			flex-direction: column;
 			gap: 0.25rem;
-			width: fit-content;
 			cursor: pointer;
 		}
+
 		&:deep(> li:hover) {
 			background-color: var(--surface-highlight);
 		}
+
 		&:deep(li:hover .port) {
-			/* Not sure what color was intended */
 			background-color: var(--primary-color);
 			background-color: var(--surface-border);
 		}
+
 		&:deep(> li > section) {
 			display: flex;
 			align-items: center;
@@ -201,7 +214,6 @@ main {
 			display: block;
 			color: var(--text-color-primary);
 			padding: 0.25rem 0.5rem;
-			margin: 0.5rem;
 			background-color: var(--surface-0);
 			border: solid 1px var(--surface-border);
 		}
@@ -211,7 +223,7 @@ main {
 		}
 
 		&:deep(.port-container) {
-			width: calc(var(--port-base-size) * 2);
+			width: calc(var(--port-base-size) * 1.25);
 		}
 
 		&:deep(.port) {
@@ -220,16 +232,33 @@ main {
 			position: relative;
 			width: var(--port-base-size);
 			height: calc(var(--port-base-size) * 2);
+			top: 2px;
 		}
 
 		&:deep(.port-connected .port) {
+			position: relative;
 			width: calc(var(--port-base-size) * 2);
-			border: 2px solid var(--primary-color);
+			border: 2px solid var(--surface-border);
 			border-radius: var(--port-base-size);
-			background-color: var(--primary-color);
+			background-color: var(--surface-100);
+			transition: background-color 0.125s ease-in-out;
 		}
+
+		&:deep(.port-connected .port)::after {
+			content: '';
+			position: absolute;
+			/* This is crucial for positioning inside the parent */
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background-color: var(--text-color-subdued);
+		}
+
 		&:deep(.port-connected:hover .port) {
-			background-color: var(--primary-color);
+			background-color: var(--text-color-subdued);
 		}
 	}
 }

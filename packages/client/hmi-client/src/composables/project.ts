@@ -2,7 +2,7 @@
 	Use `activeProject` to get the active project in your component. It is read only and should not be directly modified.
 	`activeProject` can be refreshed by calling `getProject`
 	Use the functions in this composable to make modifications to the project and to add/remove assets from it.
-	Using these functions guarantees that such changes propogate to all components using `activeProject`.
+	Using these functions guarantees that such changes propagate to all components using `activeProject`.
 	Using the resource store for project data is no longer needed.
 */
 
@@ -146,6 +146,9 @@ export function useProjects() {
 				activeProject.value = await ProjectService.get(project.id);
 			}, 1000);
 		}
+		setTimeout(async () => {
+			getAll();
+		}, TIMEOUT_MS);
 		return updated;
 	}
 
@@ -166,6 +169,23 @@ export function useProjects() {
 			activeProject.value = null;
 		}
 		return removed;
+	}
+
+	async function setAccessibility(projectId: Project['id'], isPublic: boolean) {
+		const accessibilityChanged = await ProjectService.setAccessibility(projectId, isPublic);
+
+		// update the project accordingly
+		if (accessibilityChanged) {
+			if (activeProject.value) {
+				activeProject.value = { ...activeProject.value, publicProject: isPublic };
+			}
+			if (allProjects.value) {
+				allProjects.value = allProjects.value.map((project) => ({
+					...project,
+					publicProject: project.id === projectId ? isPublic : project.publicProject
+				}));
+			}
+		}
 	}
 
 	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
@@ -233,6 +253,7 @@ export function useProjects() {
 		update,
 		remove,
 		refresh,
+		setAccessibility,
 		getPermissions,
 		setPermissions,
 		removePermissions,

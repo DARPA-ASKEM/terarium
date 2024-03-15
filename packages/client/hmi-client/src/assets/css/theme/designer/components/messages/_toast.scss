@@ -1,5 +1,6 @@
 .p-toast {
     opacity: $toastOpacity;
+    width: 40rem;
 
     .p-toast-message {
         margin: $toastMargin;
@@ -16,7 +17,10 @@
 
             .p-toast-message-icon {
                 font-size: $toastIconFontSize;
-                display:none;
+                // display:none;
+                margin-left: 0.25rem;
+                width: 16px;
+                height: 16px;
             }
 
             .p-toast-summary {
@@ -25,6 +29,7 @@
 
             .p-toast-detail {
                 margin: $toastDetailMargin;
+                color: var(--text-color);
             }
         }
 
@@ -34,6 +39,8 @@
             border-radius: $actionIconBorderRadius;
             background: transparent;
             transition: $actionIconTransition;
+            color: var(--text-color-secondary) !important;
+            margin-top: -2px;
 
             &:hover {
                 background: rgba(255,255,255,.3);

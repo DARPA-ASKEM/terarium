@@ -12,6 +12,29 @@
 			outlined
 			rounded
 		/>
+		<aside
+			v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+			class="evaluation-scenario-widget"
+		>
+			{{ evaluationScenario.name }} &ndash; {{ evaluationScenarioTask.task }}
+			<span class="evaluation-scenario-widget-timer">{{ evaluationScenarioRuntimeString }}</span>
+			<Button
+				v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+				label="Stop"
+				rounded
+				size="small"
+				severity="primary"
+				@click="stopEvaluationScenario"
+			/>
+			<Button
+				v-else
+				label="Start"
+				rounded
+				size="small"
+				severity="primary"
+				@click="beginEvaluationScenario"
+			/>
+		</aside>
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
@@ -29,73 +52,82 @@
 			<tera-modal
 				v-if="isEvaluationScenarioModalVisible"
 				@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
+				class="evaluation-scenario-modal"
 			>
 				<template #header>
-					<h4>Evaluation Scenario</h4>
+					<div class="flex w-full justify-content-between align-items-center">
+						<h4>Evaluation scenario</h4>
+						<div>
+							<span class="text-sm">Status</span
+							><span class="ml-2 status-chip">{{
+								evaluationScenarioCurrentStatus ? evaluationScenarioCurrentStatus : 'Ready to start'
+							}}</span>
+						</div>
+					</div>
 				</template>
 				<template #default>
 					<form>
-						<label for="evaluation-scenario-name">Scenario</label>
-						<InputText id="evaluation-scenario-name" type="text" v-model="evaluationScenarioName" />
-
-						<label for="evaluation-scenario-task">Task</label>
-						<InputText
-							id="evaluation-scenario-task"
-							type="text"
-							v-model="evaluationScenarioTask"
-							placeholder="What is the scenario question?"
+						<label class="text-sm" for="evaluation-scenario-name">Scenario</label>
+						<Dropdown
+							id="evaluation-scenario-name"
+							v-model="evaluationScenario"
+							:options="evalScenarios.scenarios"
+							optionLabel="name"
+							@change="onScenarioChange"
 						/>
 
-						<label for="evaluation-scenario-description">Description</label>
+						<label class="text-sm" for="evaluation-scenario-task">Task</label>
+						<Dropdown
+							id="evaluation-scenario-task"
+							:options="evaluationScenario.questions"
+							v-model="evaluationScenarioTask"
+							optionLabel="task"
+							@change="onTaskChange"
+						/>
+
+						<label class="text-sm" for="evaluation-scenario-description">Description</label>
 						<Textarea
 							id="evaluation-scenario-description"
 							rows="5"
 							v-model="evaluationScenarioDescription"
-							placeholder="Describe what you are working on"
+							:readonly="true"
 						/>
 
-						<label for="evaluation-scenario-notes">Notes</label>
+						<label class="text-sm" for="evaluation-scenario-notes">Notes</label>
 						<Textarea id="evaluation-scenario-notes" rows="5" v-model="evaluationScenarioNotes" />
 
-						<p>Status: {{ evaluationScenarioCurrentStatus }}</p>
-						<p>Runtime: {{ evaluationScenarioRuntimeString }}</p>
+						<div class="field-checkbox">
+							<Checkbox name="multipleUsers" binary v-model="evaluationScenarioMultipleUsers" />
+							<label for="multipleUsers">Multiple Users</label>
+						</div>
 					</form>
 				</template>
 				<template #footer>
-					<Button class="p-button-secondary" @click="isEvaluationScenarioModalVisible = false"
-						>Close</Button
-					>
-					<Button
-						class="p-button-danger"
-						v-if="
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused
-						"
-						:disabled="!isEvaluationScenarioValid"
-						@click="stopEvaluationScenario"
-						>Stop</Button
-					>
-					<Button
-						class="p-button-warning"
-						v-if="
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started ||
-							evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Resumed
-						"
-						@click="pauseEvaluationScenario"
-						>Pause</Button
-					>
-					<Button
-						class="p-button-warning"
-						v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Paused"
-						@click="resumeEvaluationScenario"
-						>Resume</Button
-					>
-					<Button
-						:disabled="!isEvaluationScenarioValid || evaluationScenarioCurrentStatus !== ''"
-						@click="beginEvaluationScenario"
-						>Begin</Button
-					>
+					<div class="flex gap-2">
+						<Button
+							size="large"
+							class="p-button-danger"
+							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+							@click="stopEvaluationScenario"
+							>Stop</Button
+						>
+						<!-- sorry for this hackary but I couldn't figure out how to make the opposite logic work -->
+						<div
+							class="hidden"
+							v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
+						/>
+						<Button v-else size="large" @click="beginEvaluationScenario">Begin</Button>
+						<Button
+							size="large"
+							class="p-button-secondary"
+							outlined
+							@click="isEvaluationScenarioModalVisible = false"
+							>Close</Button
+						>
+					</div>
+					<div class="align-self-center">
+						<p>Runtime {{ evaluationScenarioRuntimeString }}</p>
+					</div>
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -158,7 +190,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, onMounted, Ref, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
@@ -168,7 +200,6 @@ import { MenuItem } from 'primevue/menuitem';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
-import InputText from 'primevue/inputtext';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Textarea from 'primevue/textarea';
@@ -177,6 +208,10 @@ import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
+import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
+import Dropdown from 'primevue/dropdown';
+import Checkbox from 'primevue/checkbox';
+import evalScenariosJson from './eval-scenarios.json';
 
 defineProps<{
 	active: boolean;
@@ -203,11 +238,15 @@ const menuLabel = computed(() => {
  * Evaluation scenario code
  */
 const isEvaluationScenarioModalVisible = ref(false);
-const evaluationScenarioName = ref('');
-const evaluationScenarioTask = ref('');
-const evaluationScenarioDescription = ref('');
+const evalScenarios: Ref<EvalScenario> = ref(evalScenariosJson);
+const evaluationScenario: Ref<Scenario> = ref(evalScenarios.value.scenarios[0]);
+const evaluationScenarioTask: Ref<Question> = ref(evaluationScenario.value.questions[0]);
+const evaluationScenarioDescription: Ref<string> = ref(evaluationScenarioTask.value.description);
+const evaluationScenarioMultipleUsers: Ref<boolean> = ref(false);
 const evaluationScenarioNotes = ref('');
-const evaluationScenarioCurrentStatus = ref('');
+const evaluationScenarioCurrentStatus: Ref<EvaluationScenarioStatus> = ref(
+	EvaluationScenarioStatus.Stopped
+);
 const evaluationScenarioRuntimeMillis = ref(0);
 let intervalId: number;
 
@@ -222,12 +261,6 @@ const evaluationScenarioRuntimeString = computed(() => {
 	const sS = s < 10 ? `0${s}` : `${s}`;
 	return `${hS}:${mS}:${sS}`;
 });
-const isEvaluationScenarioValid = computed(
-	() =>
-		evaluationScenarioName.value !== '' &&
-		evaluationScenarioTask.value !== '' &&
-		evaluationScenarioDescription.value !== ''
-);
 
 /**
  * Logs an event to the server to begin an evaluation. Additionally, persists the evaluation
@@ -262,26 +295,14 @@ const stopEvaluationScenario = async () => {
 /**
  * Logs an event to the server to pause an evaluation.
  */
-const pauseEvaluationScenario = async () => {
-	await EventService.create(
-		EventType.EvaluationScenario,
-		useProjects().activeProject.value?.id,
-		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Paused))
-	);
-	await refreshEvaluationScenario();
-	window.clearInterval(intervalId);
-	isEvaluationScenarioModalVisible.value = false;
+
+const onScenarioChange = () => {
+	evaluationScenarioTask.value = evaluationScenario.value.questions[0];
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
 };
 
-const resumeEvaluationScenario = async () => {
-	await EventService.create(
-		EventType.EvaluationScenario,
-		useProjects().activeProject.value?.id,
-		JSON.stringify(getEvaluationScenarioData(EvaluationScenarioStatus.Resumed))
-	);
-	await refreshEvaluationScenario();
-	startEvaluationTimer();
-	isEvaluationScenarioModalVisible.value = false;
+const onTaskChange = () => {
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
 };
 
 /**
@@ -290,10 +311,11 @@ const resumeEvaluationScenario = async () => {
  */
 
 const getEvaluationScenarioData = (action: string) => ({
-	name: evaluationScenarioName.value,
-	task: evaluationScenarioTask.value,
+	name: evaluationScenario.value.name,
+	task: evaluationScenarioTask.value.task,
 	description: evaluationScenarioDescription.value,
 	notes: evaluationScenarioNotes.value,
+	multipleUsers: evaluationScenarioMultipleUsers.value,
 	action
 });
 
@@ -301,39 +323,52 @@ const getEvaluationScenarioData = (action: string) => ({
  * Saves the model to local storage
  */
 const persistEvaluationScenario = () => {
-	window.localStorage.setItem('evaluationScenarioName', evaluationScenarioName.value);
-	window.localStorage.setItem('evaluationScenarioTask', evaluationScenarioTask.value);
+	window.localStorage.setItem('evaluationScenarioName', evaluationScenario.value.name);
+	window.localStorage.setItem('evaluationScenarioTask', evaluationScenarioTask.value.task);
 	window.localStorage.setItem('evaluationScenarioDescription', evaluationScenarioDescription.value);
 	window.localStorage.setItem('evaluationScenarioNotes', evaluationScenarioNotes.value);
+	window.localStorage.setItem(
+		'evaluationScenarioMultipleUsers',
+		evaluationScenarioMultipleUsers.value.toString()
+	);
 };
 
 const refreshEvaluationScenario = async () => {
 	evaluationScenarioCurrentStatus.value = (
-		await API.get(`/evaluation/status?name=${evaluationScenarioName.value}`)
+		await API.get(`/evaluation/status?name=${evaluationScenario.value.name}`)
 	).data;
 
 	evaluationScenarioRuntimeMillis.value = (
-		await API.get(`/evaluation/runtime?name=${evaluationScenarioName.value}`)
+		await API.get(`/evaluation/runtime?name=${evaluationScenario.value.name}`)
 	).data;
 };
 
 const loadEvaluationScenario = async () => {
-	evaluationScenarioName.value = window.localStorage.getItem('evaluationScenarioName') || '';
-	evaluationScenarioTask.value = window.localStorage.getItem('evaluationScenarioTask') || '';
-	evaluationScenarioDescription.value =
-		window.localStorage.getItem('evaluationScenarioDescription') || '';
+	const scenarioName: string | null = window.localStorage.getItem('evaluationScenarioName');
+	const scenarioIndex: number = scenarioName
+		? evalScenarios.value.scenarios.findIndex((s) => s.name === scenarioName)
+		: 0;
+	evaluationScenario.value = evalScenarios.value.scenarios[scenarioIndex];
+
+	const taskName: string | null = window.localStorage.getItem('evaluationScenarioTask');
+	const taskIndex: number = taskName
+		? evaluationScenario.value.questions.findIndex((q) => q.task === taskName)
+		: 0;
+	evaluationScenarioTask.value = evaluationScenario.value.questions[taskIndex];
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
+
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
 
-	if (evaluationScenarioName.value !== '') {
+	evaluationScenarioMultipleUsers.value =
+		window.localStorage.getItem('evaluationScenarioMultipleUsers') === 'true';
+
+	if (evaluationScenario.value) {
 		await refreshEvaluationScenario();
 	}
 };
 
 const startEvaluationTimer = () => {
-	if (
-		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Started ||
-		evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Resumed
-	) {
+	if (evaluationScenarioCurrentStatus.value === EvaluationScenarioStatus.Started) {
 		intervalId = window.setInterval(() => {
 			evaluationScenarioRuntimeMillis.value += 1000;
 		}, 1000);
@@ -344,12 +379,13 @@ const startEvaluationTimer = () => {
  * Clears the model from local storage in memory
  */
 const clearEvaluationScenario = () => {
-	evaluationScenarioName.value = '';
-	evaluationScenarioTask.value = '';
-	evaluationScenarioDescription.value = '';
+	evaluationScenario.value = evalScenarios.value.scenarios[0];
+	evaluationScenarioTask.value = evaluationScenario.value.questions[0];
+	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
 	evaluationScenarioNotes.value = '';
-	evaluationScenarioCurrentStatus.value = '';
+	evaluationScenarioCurrentStatus.value = EvaluationScenarioStatus.Stopped;
 	evaluationScenarioRuntimeMillis.value = 0;
+	evaluationScenarioMultipleUsers.value = false;
 	persistEvaluationScenario();
 };
 
@@ -375,9 +411,15 @@ const userMenu = ref();
 const isLogoutDialog = ref(false);
 const userMenuItems = ref([
 	{
-		label: 'Evaluation Scenario',
+		label: 'Evaluation scenario',
 		command: () => {
 			isEvaluationScenarioModalVisible.value = true;
+		}
+	},
+	{
+		label: 'Evaluation results',
+		command: () => {
+			router.push(RoutePath.EvaluationScenariosPath);
 		}
 	},
 	{
@@ -553,6 +595,26 @@ nav {
 	border-radius: 6px;
 	margin-top: 2rem;
 }
+
+.evaluation-scenario-widget {
+	border-radius: var(--border-radius-bigger);
+	background-color: var(--surface-highlight-hover);
+	display: flex;
+	padding-left: var(--gap);
+	margin-left: auto;
+	margin-right: auto;
+	align-items: center;
+	gap: var(--gap);
+
+	.evaluation-scenario-widget-timer {
+		font-feature-settings: 'tnum';
+	}
+}
+
+.about-modal {
+	max-width: 800px;
+}
+
 .about-uncharted-logo {
 	width: 8rem;
 	margin-bottom: 0.5rem;
@@ -568,5 +630,23 @@ nav {
 	justify-content: space-between;
 	width: 100%;
 	color: var(--text-color-subdued);
+}
+
+.evaluation-scenario-modal:deep(section) {
+	width: 60vw;
+}
+
+.evaluation-scenario-modal:deep(footer) {
+	justify-content: space-between;
+}
+.status-chip {
+	background-color: var(--surface-highlight);
+	padding: var(--gap-small);
+	border-radius: 3rem;
+}
+.field-checkbox {
+	font-size: var(--font-small);
+	color: var(--text-color-primary);
+	margin-bottom: 0rem;
 }
 </style>

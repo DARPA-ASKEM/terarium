@@ -1,17 +1,25 @@
 <template>
 	<aside class="overlay-container">
-		<section>
+		<section :class="{ popover: props.popover }">
 			<tera-drilldown-header
 				:active-index="selectedViewIndex"
 				:views="views"
 				:tooltip="tooltip"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
-				>{{ props.title }}</tera-drilldown-header
-			>
+				>{{ props.title }}
+				<template #actions>
+					<slot name="header-actions" />
+				</template>
+			</tera-drilldown-header>
 			<tera-columnar-panel>
 				<template v-for="(tab, index) in tabs" :key="index">
-					<component :is="tab" v-show="selectedViewIndex === index" />
+					<!--
+						TODO: We used to use v-show here but it ruined the rendering of tera-model-diagram
+						if it was in the unselected tab. For now we are using v-if but we may want to
+						use css to hide the unselected tab content instead.
+					-->
+					<component :is="tab" v-if="selectedViewIndex === index" />
 				</template>
 
 				<section v-if="slots.preview">
@@ -34,6 +42,7 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 const props = defineProps<{
 	title: string;
 	tooltip?: string;
+	popover?: boolean;
 }>();
 
 const emit = defineEmits(['on-close-clicked']);
@@ -72,7 +81,7 @@ const handleTabChange = (event: TabViewChangeEvent) => {
 	background-color: rgba(0, 0, 0, 0.32);
 }
 
-/* There is a performance issue with these large modals. 
+/* There is a performance issue with these large modals.
 When scrolling it takes time to render the content, paticularly heavy content such as the LLM integrations. This will show
 us the main application behind the modal temporarily as content loads when scrolling which is a bit of an eye sore.
 An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather
@@ -86,12 +95,15 @@ than the main application behind the modal when these render issues come, howeve
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	&.popover {
+		margin: 3rem 2.5rem 0rem 2.5rem;
+	}
 }
 
 main {
 	flex-grow: 1;
-	padding: var(--gap);
-	gap: var(--gap-small);
+	padding: var(--gap) 1.5rem var(--gap) 1.5rem;
+	gap: var(--gap);
 }
 
 main > :deep(*) {

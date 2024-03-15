@@ -22,6 +22,16 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface TerariumAsset {
+    id?: string;
+    name?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
+    temporary?: boolean;
+    publicAsset?: boolean;
+}
+
 export interface User {
     id: string;
     createdAtMs: number;
@@ -59,8 +69,8 @@ export interface GithubRepo {
 }
 
 export interface Artifact extends TerariumAsset {
-    userId: string;
     name: string;
+    userId: string;
     description?: string;
     fileNames: string[];
     metadata?: any;
@@ -101,15 +111,6 @@ export interface ResponseSuccess {
     success: boolean;
 }
 
-export interface TerariumAsset {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    temporary?: boolean;
-    publicAsset?: boolean;
-}
-
 export interface Code extends TerariumAsset {
     name: string;
     description: string;
@@ -130,11 +131,15 @@ export interface Dynamics {
 }
 
 export interface ActiveConcept extends TerariumAsset {
-    curie: string;
     name: string;
+    curie: string;
 }
 
-export interface OntologyConcept extends TerariumAsset {
+export interface OntologyConcept {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
+    deletedOn?: Date;
     curie: string;
     type: TaggableType;
     objectId: string;
@@ -143,8 +148,8 @@ export interface OntologyConcept extends TerariumAsset {
 }
 
 export interface Dataset extends TerariumAsset {
-    userId?: string;
     name: string;
+    userId?: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
@@ -177,7 +182,6 @@ export interface AddDocumentAssetFromXDDResponse {
 }
 
 export interface DocumentAsset extends TerariumAsset {
-    name?: string;
     description?: string;
     userId?: string;
     fileNames?: string[];
@@ -192,7 +196,6 @@ export interface DocumentAsset extends TerariumAsset {
 
 export interface Equation extends TerariumAsset {
     userId?: string;
-    name?: string;
     equationType: EquationType;
     content: string;
     metadata?: { [index: string]: any };
@@ -210,7 +213,7 @@ export interface ExternalPublication extends TerariumAsset {
     xdd_uri: string;
 }
 
-export interface Model extends TerariumAsset {
+export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     header: ModelHeader;
     userId?: string;
     model: { [index: string]: any };
@@ -219,7 +222,7 @@ export interface Model extends TerariumAsset {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration extends TerariumAsset {
+export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     description?: string;
     configuration: any;
@@ -233,7 +236,7 @@ export interface ModelDescription {
     userId?: string;
 }
 
-export interface ModelFramework extends TerariumAsset {
+export interface ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     version: string;
     semantics: string;
@@ -255,31 +258,113 @@ export interface Transition {
     properties?: Properties;
 }
 
-export interface TypeSystem {
-    states: State[];
-    transitions: Transition[];
+export interface Configuration {
+    parameters: { [index: string]: ConfigurationParameter };
+    initialConditions: { [index: string]: ConfigurationCondition };
+    boundryConditions: { [index: string]: ConfigurationCondition };
+    datasets: { [index: string]: ConfigurationDataset };
 }
 
-export interface TypeSystemExtended {
+export interface ConfigurationCondition {
+    _type: string;
+    type: string;
+    value: string;
+    domainMesh: string;
+}
+
+export interface ConfigurationDataset {
+    _type: string;
+    type: string;
     name: string;
     description: string;
-    schema: string;
-    model_version: string;
-    model: { [index: string]: any };
-    properties?: any;
-    semantics?: ModelSemantics;
-    metadata?: ModelMetadata;
+    file: ConfigurationDatasetFile;
 }
 
-export interface TypingSemantics {
-    map: string[][];
-    system: any;
+export interface ConfigurationDatasetFile {
+    _type: string;
+    uri: string;
+    format: string;
+    shape: number[];
+}
+
+export interface ConfigurationHeader {
+    id: string;
+    description: string;
+    name: string;
+    parentContext: string;
+}
+
+export interface ConfigurationParameter {
+    _type: string;
+    type: string;
+    value: any;
+}
+
+export interface Context {
+    constants: { [index: string]: ContextConstant };
+    spatialConstraints: any;
+    temporalConstraints: any;
+    primalDualRelations: ContextPrimalDualRelation[];
+    meshSubmeshRelations: ContextMeshSubmeshRelation[];
+    meshes: ContextMesh[];
+}
+
+export interface ContextConstant {
+    _type: string;
+    value: any;
+}
+
+export interface ContextFile {
+    uri: string;
+    format: string;
+}
+
+export interface ContextHeader {
+    id: string;
+    description: string;
+    name: string;
+    parentModel: string;
+}
+
+export interface ContextMesh {
+    id: string;
+    description: string;
+    dimensionality: any;
+    vertexCount: number;
+    edgeCount: number;
+    faceCount: number;
+    volumeCount: number;
+    regions: any[];
+    checksum: string;
+    file: ContextFile;
+}
+
+export interface ContextMeshSubmeshRelation {
+    mesh: string;
+    submesh: string;
+    relation: any;
+}
+
+export interface ContextPrimalDualRelation {
+    primal: string;
+    dual: string;
+    method: any;
 }
 
 export interface DecapodesComponent {
     modelInterface: string[];
     model: DecapodesExpression;
     _type: string;
+}
+
+export interface DecapodesConfiguration extends TerariumAsset {
+    header: ConfigurationHeader;
+    configuration: Configuration;
+}
+
+export interface DecapodesContext extends TerariumAsset {
+    header: ContextHeader;
+    context: Context;
 }
 
 export interface DecapodesEquation {
@@ -337,6 +422,7 @@ export interface Project extends TerariumAsset {
     name: string;
     userId: string;
     userName?: string;
+    authors?: string[];
     description?: string;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
@@ -512,6 +598,7 @@ export interface EvaluationScenarioSummary {
     task: string;
     description: string;
     notes: string;
+    multipleUsers: boolean;
     timestampMillis: number;
 }
 
@@ -591,7 +678,7 @@ export interface DKG {
 export interface EntitySimilarityResult {
     source: string;
     target: string;
-    distance: number;
+    similarity: number;
 }
 
 export interface PermissionGroup {
@@ -654,6 +741,12 @@ export interface CalibrationRequestJulia {
     engine: string;
 }
 
+export interface CiemssStatusUpdate {
+    loss: number;
+    progress: number;
+    jobId: string;
+}
+
 export interface EnsembleCalibrationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     dataset: DatasetLocation;
@@ -667,6 +760,20 @@ export interface EnsembleSimulationCiemssRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
+}
+
+export interface OptimizeRequestCiemss {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    interventions?: OptimizedIntervention[];
+    stepSize?: number;
+    qoi: string[];
+    riskBound: number;
+    initialGuessInterventions: number[];
+    boundsInterventions: number[][];
+    extra: OptimizeExtra;
+    engine: string;
+    userId: string;
 }
 
 export interface ScimlStatusUpdate {
@@ -705,9 +812,30 @@ export interface Intervention {
     value: number;
 }
 
+export interface OptimizeExtra {
+    numSamples: number;
+    inferredParameters?: string;
+    maxiter?: number;
+    maxfeval?: number;
+    isMinimized?: boolean;
+}
+
+export interface OptimizedIntervention {
+    name: string;
+    timestep: number;
+}
+
 export interface TimeSpan {
     start: number;
     end: number;
+}
+
+export interface TaskResponse {
+    id: string;
+    script: string;
+    status: TaskStatus;
+    output: any;
+    additionalProperties: any;
 }
 
 export interface Annotation {
@@ -794,21 +922,25 @@ export interface ModelHeader {
 export interface ModelSemantics {
     ode: OdeSemantics;
     span?: any[];
-    typing?: TypingSemantics;
+    typing?: any;
 }
 
-/**
- * @deprecated
- */
 export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
+    initials?: { [index: string]: any };
+    parameters?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
+    gollmCard?: any;
+    templateCard?: any;
+}
+
+export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 }
 
 export interface ModelGrounding {
@@ -902,7 +1034,7 @@ export interface AuthorityInstance {
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
-    summaries: string[];
+    summaries: any[];
 }
 
 export interface KnownEntitiesCounts {
@@ -944,6 +1076,8 @@ export interface Card {
     complexity?: string;
     usage?: string;
     license?: string;
+    assumptions?: string;
+    strengths?: string;
 }
 
 export interface VariableStatement {
@@ -1105,6 +1239,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    OperatorDrilldownTiming = "OPERATOR_DRILLDOWN_TIMING",
     TestType = "TEST_TYPE",
 }
 
@@ -1130,22 +1265,30 @@ export enum RoleType {
 }
 
 export enum AssetType {
-    Dataset = "DATASET",
-    ModelConfiguration = "MODEL_CONFIGURATION",
-    Model = "MODEL",
-    Publication = "PUBLICATION",
-    Simulation = "SIMULATION",
-    Workflow = "WORKFLOW",
-    Artifact = "ARTIFACT",
-    Code = "CODE",
-    Document = "DOCUMENT",
+    Workflow = "workflow",
+    Model = "model",
+    Dataset = "dataset",
+    Simulation = "simulation",
+    Document = "document",
+    Code = "code",
+    ModelConfiguration = "model-configuration",
+    Artifact = "artifact",
+    Publication = "publication",
+    NotebookSession = "notebook-session",
 }
 
 export enum EvaluationScenarioStatus {
     Started = "STARTED",
-    Paused = "PAUSED",
-    Resumed = "RESUMED",
     Stopped = "STOPPED",
+}
+
+export enum TaskStatus {
+    Queued = "QUEUED",
+    Running = "RUNNING",
+    Success = "SUCCESS",
+    Failed = "FAILED",
+    Cancelling = "CANCELLING",
+    Cancelled = "CANCELLED",
 }
 
 export enum ClientEventType {
@@ -1259,6 +1402,7 @@ export enum SimulationType {
     Ensemble = "ENSEMBLE",
     Simulation = "SIMULATION",
     Calibration = "CALIBRATION",
+    Optimization = "OPTIMIZATION",
 }
 
 export enum ProgressState {
@@ -1300,7 +1444,7 @@ export enum WorkflowOperationTypes {
     Funman = "FUNMAN",
     Code = "CODE",
     ModelConfig = "MODEL_CONFIG",
-    ModelOptimize = "MODEL_OPTIMIZE",
+    OptimizeCiemss = "OPTIMIZE_CIEMSS",
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
     Document = "DOCUMENT",

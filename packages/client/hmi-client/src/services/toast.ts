@@ -5,12 +5,11 @@ const DEFAULT_DURATION = 3000; // 3 seconds
 // TODO: Define more.
 export enum ToastSummaries {
 	NETWORK_ERROR = 'Network Error',
-	UNKNOWN_ERROR = 'Unknown Error',
 	SERVICE_UNAVAILABLE = 'Service Unavailable',
-	ATTENTION = 'Attention',
 	INFO = 'Info',
 	WARNING = 'Warning',
-	ERROR = 'Error'
+	ERROR = 'Error',
+	SUCCESS = 'Success'
 }
 
 export enum ToastSeverity {
@@ -45,13 +44,12 @@ export const useToastService = () => {
 		});
 	};
 
-	const error = (summary: string | undefined, detail: string, life: number = DEFAULT_DURATION) => {
+	const error = (summary: string | undefined, detail: string) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.error,
 			summary: summary || ToastSummaries.ERROR,
 			group: ToastSeverity.error,
-			detail,
-			life
+			detail
 		});
 	};
 
@@ -62,7 +60,7 @@ export const useToastService = () => {
 	) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.success,
-			summary: summary || ToastSummaries.INFO,
+			summary: summary || ToastSummaries.SUCCESS,
 			group: ToastSeverity.success,
 			detail,
 			life

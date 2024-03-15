@@ -76,7 +76,7 @@ const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
 const datasets = useProjects().getActiveProjectAssets(AssetType.Dataset);
 
@@ -106,7 +106,7 @@ async function getDatasetById(id: string) {
 				datasetId: dataset.value.id
 			});
 
-			emit('append-output-port', {
+			emit('append-output', {
 				type: 'datasetId',
 				label: dataset.value.name,
 				value: [dataset.value.id]
@@ -183,6 +183,10 @@ section {
 .p-datatable.p-datatable-xsm:deep(.p-datatable-thead > tr > th) {
 	padding: 0 0.5rem;
 	background-color: var(--surface-50);
+	white-space: nowrap;
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .p-datatable.p-datatable-xsm:deep(.p-datatable-tbody > tr > td:not(:first-child)),

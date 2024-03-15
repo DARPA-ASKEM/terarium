@@ -6,6 +6,11 @@ export interface StratifyGroup {
 	selectedVariables: string[];
 	groupLabels: string;
 	cartesianProduct: boolean;
+
+	directed: boolean;
+	structure: null | any[];
+
+	useStructure: boolean;
 }
 
 export interface StratifyCode {
@@ -24,12 +29,28 @@ export const blankStratifyGroup: StratifyGroup = {
 	name: '',
 	selectedVariables: [],
 	groupLabels: '',
-	cartesianProduct: true
+
+	// Allow existing transitions to involve multiple strata
+	cartesianProduct: true,
+
+	// Create new transitions between strata, this act as a proxy to MIRA "structure", which is
+	//   null = everything
+	//   [] = nothing
+	//   [[a, b], [c, d]] = somewhere in between
+	//
+	// Here we use a simpler proxy useStructure, where
+	//   true => structure = null
+	//   false => structuer = []
+	structure: null,
+	useStructure: true,
+
+	// Always true for now - Feb 2024
+	directed: true
 };
 
 export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
-	displayName: 'Stratify MIRA',
+	displayName: 'Stratify model',
 	description: 'Stratify a model',
 	inputs: [{ type: 'modelId', label: 'Model', acceptMultiple: false }],
 	outputs: [{ type: 'model' }],

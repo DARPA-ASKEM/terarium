@@ -29,11 +29,11 @@ import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
 import type { Model } from '@/types/Types';
-import { convertAMRToACSet, petriToLatex } from '@/model-representation/petrinet/petrinet-service';
 import { equationsToAMR } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { isEmpty } from 'lodash';
 import { useToastService } from '@/services/toast';
+import { getModelEquation } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;
@@ -76,8 +76,8 @@ const updateLatexFormula = (equationsList: string[]) => {
 const updateModelFromEquations = async () => {
 	isUpdating.value = true;
 	isEditing.value = false;
-	const updated = await equationsToAMR('latex', equations.value, 'petrinet', props.model.id);
-	if (updated) {
+	const modelId = await equationsToAMR(equations.value, 'petrinet', props.model.id);
+	if (modelId) {
 		emit('model-updated');
 		useToastService().success('Success', `Model Updated from equation`);
 	}
@@ -87,7 +87,7 @@ const updateModelFromEquations = async () => {
 watch(
 	() => props.model,
 	async () => {
-		const latexFormula = await petriToLatex(convertAMRToACSet(props.model));
+		const latexFormula = await getModelEquation(props.model);
 		if (latexFormula) {
 			updateLatexFormula(cleanLatexEquations(latexFormula.split(' \\\\')));
 		}

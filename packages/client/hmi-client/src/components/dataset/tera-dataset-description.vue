@@ -1,78 +1,51 @@
 <template>
-	<div>
-		<tera-columnar-panel>
-			<Accordion multiple :active-index="[0, 1]">
-				<AccordionTab header="Description">
-					<section class="description">
-						<tera-show-more-text :text="description" :lines="5" />
-					</section>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(provenance)" header="Provenance">
-					<section class="provenance">
-						<article>
-							<p v-html="provenance" />
-						</article>
-					</section>
-				</AccordionTab>
-			</Accordion>
-			<section class="details-column">
-				<tera-grey-card class="details">
-					<ul>
-						<li class="multiple">
-							<span>
-								<label>Rows</label>
-								<div class="framework">{{ rawContent?.rowCount }}</div>
-							</span>
-							<span>
-								<label>Columns</label>
-								<div>{{ rawContent?.stats?.length }}</div>
-							</span>
-							<span>
-								<label>Date created</label>
-								<div>{{ dataset?.createdOn?.toLocaleString('en-US') }}</div>
-							</span>
-						</li>
-						<li>
-							<label>Created by</label>
-							<div><tera-show-more-text v-if="authors" :text="authors" :lines="2" /></div>
-						</li>
-						<li>
-							<label>Source Name</label>
-							<div>{{ card?.authorEmail }}</div>
-						</li>
-						<li>
-							<label>Source URL</label>
-							<div>{{ dataset?.metadata?.processed_by }}</div>
-						</li>
-					</ul>
-				</tera-grey-card>
-				<tera-related-documents
-					:documents="documents"
-					:asset-type="AssetType.Dataset"
-					:assetId="dataset?.id ?? ''"
-					@enriched="fetchAsset"
-				/>
+	<Accordion multiple :active-index="[0, 1, 2]">
+		<AccordionTab header="Description">
+			<section class="description">
+				<tera-show-more-text :text="description" :lines="5" />
+
+				<template v-if="datasetType">
+					<label class="p-text-secondary">Dataset type</label>
+					<p>{{ datasetType }}</p>
+				</template>
+				<template v-if="author">
+					<label class="p-text-secondary">Author</label>
+					<p>{{ author }}</p>
+				</template>
 			</section>
-		</tera-columnar-panel>
-		<h4>Column Information</h4>
-		<tera-dataset-overview-table v-if="dataset?.columns" :data="dataset.columns" />
-	</div>
+		</AccordionTab>
+		<!-- <AccordionTab header="Charts">
+					TBD
+				</AccordionTab> -->
+		<AccordionTab header="Provenance">
+			<tera-related-documents
+				:documents="documents"
+				:asset-type="AssetType.Dataset"
+				:assetId="dataset?.id ?? ''"
+				@enriched="fetchAsset"
+			/>
+		</AccordionTab>
+		<AccordionTab header="Column information">
+			<tera-dataset-overview-table
+				v-if="dataset"
+				:dataset="dataset"
+				@update-dataset="(dataset: Dataset) => emit('update-dataset', dataset)"
+			/>
+		</AccordionTab>
+	</Accordion>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import { computed } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import type { CsvAsset, Dataset, DocumentAsset } from '@/types/Types';
+import type { CsvAsset, Dataset, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { AcceptedExtensions, FeatureConfig } from '@/types/common';
+import { FeatureConfig } from '@/types/common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import * as textUtil from '@/utils/text';
 import { useProjects } from '@/composables/project';
-import TeraGreyCard from '@/components/widgets/tera-grey-card.vue';
-import TeraColumnarPanel from '../widgets/tera-columnar-panel.vue';
 import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 
 const props = defineProps<{
@@ -82,10 +55,10 @@ const props = defineProps<{
 	rawContent: CsvAsset | null;
 }>();
 
-const emit = defineEmits(['fetch-dataset']);
+const emit = defineEmits(['fetch-dataset', 'update-dataset']);
 const card = computed(() => {
-	if (props.dataset?.metadata?.card) {
-		const cardWithUnknowns = props.dataset.metadata?.card;
+	if (props.dataset?.metadata?.data_card) {
+		const cardWithUnknowns = props.dataset.metadata?.data_card;
 		const cardWithUnknownsArr = Object.entries(cardWithUnknowns);
 
 		for (let i = 0; i < cardWithUnknownsArr.length; i++) {
@@ -98,37 +71,22 @@ const card = computed(() => {
 	}
 	return null;
 });
-const provenance = computed(() => card.value?.provenance ?? '');
 const description = computed(() =>
-	highlightSearchTerms(props.dataset?.description?.concat(' ', card.value?.description ?? ''))
+	highlightSearchTerms(props.dataset?.description?.concat('\n', card.value?.DESCRIPTION ?? ''))
 );
-const documents = computed(
+const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
+
+const documents = computed<{ name: string; id: string }[]>(
 	() =>
 		useProjects()
 			.getActiveProjectAssets(AssetType.Document)
-			.filter((document: DocumentAsset) =>
-				[AcceptedExtensions.PDF, AcceptedExtensions.TXT, AcceptedExtensions.MD].some(
-					(extension) => {
-						if (document.fileNames && !isEmpty(document.fileNames)) {
-							return document.fileNames[0]?.endsWith(extension);
-						}
-						return false;
-					}
-				)
-			)
-			.map((document: DocumentAsset) => ({
-				name: document.name,
-				id: document.id
+			.map((projectAsset: ProjectAsset) => ({
+				name: projectAsset.assetName,
+				id: projectAsset.assetId
 			})) ?? []
 );
 
-const authors = computed(() => {
-	const authorsArray = props.dataset?.metadata?.annotations?.authors ?? [];
-
-	if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
-
-	return authorsArray.join(', ');
-});
+const author = computed(() => card.value?.AUTHOR_NAME ?? '');
 
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -143,35 +101,10 @@ function fetchAsset() {
 </script>
 
 <style scoped>
-.details-column {
+.description {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
-	> .details {
-		> ul {
-			list-style: none;
-			padding: 0.5rem 1rem;
-			display: flex;
-			flex-direction: column;
-			gap: var(--gap-small);
-
-			& > li.multiple {
-				display: flex;
-
-				& > span {
-					flex: 1 0 0;
-				}
-			}
-
-			& > li label {
-				color: var(--text-color-subdued);
-				font-size: var(--font-caption);
-
-				& + *:empty:before {
-					content: '--';
-				}
-			}
-		}
-	}
+	margin-left: 1.5rem;
 }
 </style>

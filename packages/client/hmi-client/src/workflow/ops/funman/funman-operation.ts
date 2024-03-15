@@ -4,10 +4,18 @@ import type { TimeSpan, FunmanInterval } from '@/types/Types';
 export interface ConstraintGroup {
 	borderColour: string;
 	name: string;
+
+	// One of
+	// - monotonicityConstraint
+	// - stateConstraint
+	constraintType: string;
+
 	variables: string[]; // If len = 1, need to rename to "variable" for request formatting
 	weights?: number[]; // 1 to 1 mapping with variables
 	timepoints?: FunmanInterval;
 	interval?: FunmanInterval;
+
+	derivativeType?: string;
 }
 
 export interface RequestParameter {
@@ -20,6 +28,7 @@ export interface FunmanOperationState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;
+	useCompartmentalConstraint: boolean;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
 }
@@ -36,9 +45,10 @@ export const FunmanOperation: Operation = {
 		const init: FunmanOperationState = {
 			currentTimespan: { start: 0, end: 100 },
 			numSteps: 10,
-			tolerance: 0.89,
+			tolerance: 0.5,
 			constraintGroups: [],
-			requestParameters: []
+			requestParameters: [],
+			useCompartmentalConstraint: true
 		};
 		return init;
 	}

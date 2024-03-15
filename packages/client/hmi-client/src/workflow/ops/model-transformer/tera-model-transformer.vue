@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div class="background">
 			<Suspense>
 				<tera-model-jupyter-panel
@@ -28,12 +34,13 @@ import { cloneDeep } from 'lodash';
 import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelTransformerState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const modelId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
@@ -83,7 +90,7 @@ const addOutputPort = async (data) => {
 	// set default configuration
 	await addDefaultConfiguration(model);
 
-	emit('append-output-port', {
+	emit('append-output', {
 		id: uuidv4(),
 		label: model.header.name,
 		type: 'modelId',

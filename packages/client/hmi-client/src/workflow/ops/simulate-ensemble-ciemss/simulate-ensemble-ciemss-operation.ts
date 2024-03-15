@@ -1,6 +1,4 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-// import type { EnsembleRequest } from '@/types/Types';
-// import { makeEnsembleJob } from '@/services/models/simulation-service';
 import { ChartConfig } from '@/types/SimulateConfig';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
@@ -10,7 +8,7 @@ export interface SimulateEnsembleCiemssOperationState {
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	numSamples: number;
-	simulationsInProgress: string[];
+	inProgressSimulationId: string;
 }
 
 export const SimulateEnsembleCiemssOperation: Operation = {
@@ -18,7 +16,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	displayName: 'Simulate ensemble (probabilistic)',
 	description: '',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
-	outputs: [{ type: 'number' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	// TODO: Figure out mapping
@@ -34,7 +32,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
 			numSamples: 40,
-			simulationsInProgress: []
+			inProgressSimulationId: ''
 		};
 		return init;
 	}

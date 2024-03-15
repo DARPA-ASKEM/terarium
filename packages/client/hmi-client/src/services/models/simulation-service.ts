@@ -11,6 +11,7 @@ import {
 	EnsembleCalibrationCiemssRequest,
 	EnsembleSimulationCiemssRequest,
 	EventType,
+	OptimizeRequestCiemss,
 	ProgressState,
 	Simulation,
 	SimulationRequest
@@ -102,6 +103,15 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
+// Return the presigned download URL of the calibration output blob
+// This is only applicable to CIEMSS functionalities
+export async function getCalibrateBlobURL(runId: string) {
+	const resp = await API.get(`simulations/${runId}/download-url`, {
+		params: { filename: 'parameters.dill' }
+	});
+	return resp.data.url;
+}
+
 export async function getRunResultCiemss(runId: string, filename = 'result.csv') {
 	const resultCsv = await getRunResult(runId, filename);
 	const csvData = csvParse(resultCsv);
@@ -189,6 +199,17 @@ export async function makeCalibrateJobCiemss(calibrationParams: CalibrationReque
 	}
 }
 
+export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss) {
+	try {
+		const resp = await API.post('simulation-request/ciemss/optimize', optimizeParams);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
 export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', params);
@@ -252,7 +273,7 @@ export async function subscribeToUpdateMessages(
 	eventType: ClientEventType,
 	messageHandler: (data: ClientEvent<any>) => void
 ) {
-	await API.get(`/simulations/subscribe?simulationIds=${simulationIds}`);
+	await API.get(`/simulations/subscribe?simulation-ids=${simulationIds}`);
 	await subscribe(eventType, messageHandler);
 }
 
@@ -261,15 +282,34 @@ export async function unsubscribeToUpdateMessages(
 	eventType: ClientEventType,
 	messageHandler: (data: ClientEvent<any>) => void
 ) {
-	await API.get(`/simulations/unsubscribe?simulationIds=${simulationIds}`);
+	await API.get(`/simulations/unsubscribe?simulation-ids=${simulationIds}`);
 	await unsubscribe(eventType, messageHandler);
 }
 
+export async function pollAction(id: string) {
+	const simResponse = await getSimulation(id);
+	if (!simResponse) {
+		console.error(`Error occured with simulation ${id}`);
+		return { data: null, progress: null, error: `Failed running simulation ${id}` };
+	}
+
+	if ([ProgressState.Queued, ProgressState.Running].includes(simResponse.status)) {
+		// TODO: untangle progress
+		return { data: null, progress: null, error: null };
+	}
+
+	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
+		return { data: null, progress: null, error: `Failed running simulation ${id}` };
+	}
+	return { data: simResponse, progress: null, error: null };
+}
+
+// @deprecated
 export async function simulationPollAction(
 	simulationIds: string[],
 	node: WorkflowNode<any>,
 	progress: Ref<{ status: ProgressState; value: number }>,
-	emitFn: (event: 'append-output-port' | 'update-state', ...args: any[]) => void
+	emitFn: (event: 'append-output' | 'update-state', ...args: any[]) => void
 ) {
 	const requestList: Promise<Simulation | null>[] = [];
 

@@ -17,7 +17,13 @@
 				</template>
 			</template>
 		</MultiSelect>
-		<Chart type="scatter" :data="chartData" :options="CHART_OPTIONS" />
+		<Chart
+			type="scatter"
+			:width="chartSize.width"
+			:height="chartSize.height"
+			:data="chartData"
+			:options="CHART_OPTIONS"
+		/>
 	</div>
 </template>
 
@@ -40,7 +46,13 @@ const props = defineProps<{
 	initialData?: CsvAsset;
 	mapping?: { [key: string]: string }[];
 	runType?: RunType;
+	size?: { width: number; height: number };
 }>();
+
+const chartSize = computed(() => {
+	if (props.size) return props.size;
+	return { width: 390, height: 190 };
+});
 
 const renderedRuns = computed<RunResults>(() => {
 	if (!props.hasMeanLine) return _.cloneDeep(props.runResults);
@@ -87,6 +99,7 @@ const lineWidthArray = computed(() => {
 });
 
 const CHART_OPTIONS = {
+	responsive: false,
 	devicePixelRatio: 4,
 	maintainAspectRatio: false,
 	pointStyle: false,
@@ -257,7 +270,9 @@ onMounted(() => {
 
 	watch(
 		() => props.chartConfig,
-		() => {
+		(n, o) => {
+			if (!n || _.isEqual(n, o)) return;
+
 			selectedVariable.value = props.chartConfig.selectedVariable;
 			renderGraph();
 		},
@@ -274,7 +289,7 @@ onMounted(() => {
 
 .p-chart {
 	width: 100%;
-	height: 200px;
+	/* height: 200px; */
 	margin-top: 0.5em;
 }
 

@@ -1,13 +1,8 @@
 <template>
 	<main>
 		<template v-if="code">
-			<div>{{ code?.name }}</div>
-			<Button
-				label="Open code editor"
-				@click="emit('open-drilldown')"
-				severity="secondary"
-				outlined
-			/>
+			<h6>{{ code?.name }}</h6>
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
 			<Dropdown
@@ -15,7 +10,7 @@
 				:options="codeAssets"
 				option-label="name"
 				v-model="code"
-				placeholder="Select code asset"
+				placeholder="Select a code asset"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
@@ -40,7 +35,7 @@ const props = defineProps<{
 	node: WorkflowNode<CodeAssetState>;
 }>();
 
-const emit = defineEmits(['update-state', 'append-output-port', 'open-drilldown']);
+const emit = defineEmits(['update-state', 'append-output', 'open-drilldown']);
 
 const code = ref<Code | null>(null);
 const codeAssets = useProjects().getActiveProjectAssets(AssetType.Code);
@@ -61,7 +56,7 @@ watch(
 
 			if (_.isEmpty(props.node.outputs)) {
 				const blocks = await getCodeBlocks(code.value);
-				emit('append-output-port', {
+				emit('append-output', {
 					type: 'codeAssetId',
 					label: `${code.value.name} code blocks (${blocks.length})`,
 					value: [code.value.id]

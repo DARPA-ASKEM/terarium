@@ -20,6 +20,9 @@ jobs:
   lint:
     uses: ./.github/workflows/lint.yaml
 
+  lint-types:
+    uses: ./.github/workflows/lint-types.yaml
+
   # Lint Client Code
   lint-client:
     uses: ./.github/workflows/lint-client.yaml
@@ -102,7 +105,7 @@ jobs:
 
       - name: Validate GradleW JAR
         if: matrix.target != 'hmi-client'
-        uses: gradle/wrapper-validation-action@1ff5a18cc396177ebd27c4250f7132e72af93462
+        uses: gradle/wrapper-validation-action@63d15e7a1e697b1de6f3ba0507106f89100c8518
 
       - name: Setup Java v17
         if: matrix.target != 'hmi-client'

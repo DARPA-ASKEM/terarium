@@ -42,12 +42,27 @@ image-hmi-client: clean-hmi-client yarn-install
 
 TARGETS += db-migration
 clean-db-migration: clean-db-migration-base
-	rm -rf $(PROJECT_DIR)/packages/server/docker/build
+	rm -rf $(PROJECT_DIR)/packages/db-migration/docker/build
 
 image-db-migration: clean-db-migration
-	./gradlew :packages:server:build -x test
-	mv $(PROJECT_DIR)/packages/server/build $(PROJECT_DIR)/packages/server/docker/build
+	./gradlew :packages:db-migration:build -x test
+	mv $(PROJECT_DIR)/packages/db-migration/build $(PROJECT_DIR)/packages/db-migration/docker/build
 
+TARGETS += gollm-taskrunner
+clean-gollm-taskrunner: clean-gollm-taskrunner-base
+	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
+
+image-gollm-taskrunner: clean-gollm-taskrunner
+	./gradlew :packages:taskrunner:build -x test
+	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
+
+TARGETS += mira-taskrunner
+clean-mira-taskrunner: clean-mira-taskrunner-base
+	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
+
+image-mira-taskrunner: clean-mira-taskrunner
+	./gradlew :packages:taskrunner:build -x test
+	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
 
 
 ## Clean
@@ -62,6 +77,14 @@ clean-hmi-server-base:
 .PHONY: clean-db-migration-base
 clean-db-migration-base:
 	./gradlew :packages:db-migration:clean
+
+.PHONY: clean-gollm-taskrunner-base
+clean-gollm-taskrunner-base:
+	./gradlew :packages:taskrunner:clean
+
+.PHONY: clean-mira-taskrunner-base
+clean-mira-taskrunner-base:
+	./gradlew :packages:taskrunner:clean
 
 
 

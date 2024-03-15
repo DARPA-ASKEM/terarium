@@ -1,11 +1,40 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="ModelCouplingTabgs.Wizard">
 			<tera-drilldown-section> </tera-drilldown-section>
 		</div>
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
-				<h4>Code Editor - Julia</h4>
+				<div class="notebook-toolbar">
+					<div class="toolbar-left-side">
+						<Dropdown
+							v-model="selectedLanguage"
+							optionLabel="name"
+							:options="languages"
+							outlined
+							placeholder="Language"
+							disabled
+						></Dropdown>
+					</div>
+					<div class="toolbar-right-side">
+						<Button
+							class="mr-auto"
+							icon="pi pi-play"
+							label="Run"
+							outlined
+							severity="secondary"
+							size="small"
+							@click="runCodeModelCoupling"
+						/>
+					</div>
+				</div>
+
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -13,11 +42,12 @@
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
+					:options="{ showPrintMargin: false }"
 				/>
-
+				<!--
 				<template #footer>
-					<Button style="margin-right: auto" label="Run" @click="runCodeModelCoupling" />
-				</template>
+					<Button style="margin-right: auto" icon="pi pi-play" label="Run" size="large" @click="runCodeModelCoupling" />
+				</template> -->
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
@@ -26,9 +56,9 @@
 					<div v-if="modelCouplingResult">
 						{{ modelCouplingResult }}
 					</div>
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
+					<div v-else class="empty-state-container">
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" class="empty-state-image" />
+						<p>No model provided</p>
 					</div>
 				</div>
 				<template #footer>
@@ -36,22 +66,25 @@
 						v-model="newModelName"
 						placeholder="model name"
 						type="text"
-						class="input-small"
+						class="input-small white-space-nowrap"
 					/>
-					<Button
-						:disabled="!modelCouplingResult"
-						outlined
-						style="margin-right: auto"
-						label="Save as new Model"
-						@click="
-							() =>
-								saveNewModel(newModelName, {
-									addToProject: true,
-									appendOutputPort: true
-								})
-						"
-					/>
-					<Button label="Close" @click="emit('close')" />
+					<div class="w-full flex gap-2 justify-content-end">
+						<Button
+							:disabled="!modelCouplingResult"
+							outlined
+							class="white-space-nowrap"
+							size="large"
+							label="Save as new model"
+							@click="
+								() =>
+									saveNewModel(newModelName, {
+										addToProject: true,
+										appendOutputPort: true
+									})
+							"
+						/>
+						<Button label="Close" size="large" @click="emit('close')" />
+					</div>
 				</template>
 			</tera-drilldown-preview>
 		</template>
@@ -69,10 +102,13 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import Dropdown from 'primevue/dropdown';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -81,7 +117,7 @@ import { ModelCouplingState } from './model-coupling-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelCouplingState>;
 }>();
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close']);
 const modelCouplingResult = ref<any>(null);
 
 enum ModelCouplingTabgs {
@@ -129,7 +165,7 @@ decapode = apex(ice_dynamics_cospan)
 
 const buildJupyterContext = () => ({
 	context: 'decapodes',
-	language: 'julia-1.9',
+	language: 'julia-1.10',
 	context_info: modelMap.value
 });
 
@@ -171,7 +207,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	}
 
 	if (options.appendOutputPort) {
-		emit('append-output-port', {
+		emit('append-output', {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',
@@ -247,6 +283,9 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const selectedLanguage = ref({ name: 'Julia' });
+const languages = ref([{ name: 'Julia' }, { name: 'Python' }]);
 </script>
 
 <style scoped>
@@ -257,5 +296,26 @@ watch(
 
 .input-small {
 	padding: 0.5rem;
+	width: 100%;
+}
+
+.empty-state-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 1rem;
+	min-height: calc(100vh - 18rem);
+}
+
+.empty-state-image {
+	height: 10rem;
+}
+
+.notebook-toolbar {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+	justify-content: space-between;
 }
 </style>

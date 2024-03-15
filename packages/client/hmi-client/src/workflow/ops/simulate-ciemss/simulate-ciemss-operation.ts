@@ -9,15 +9,20 @@ export interface SimulateCiemssOperationState {
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	method: string;
-	simulationsInProgress: string[];
+
+	// In progress
+	inProgressSimulationId: string;
 }
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
 	displayName: 'Simulate (probabilistic)',
 	description: 'given a model id, and configuration id, run a simulation',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
-	outputs: [{ type: 'simOutput' }],
+	inputs: [
+		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
+		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+	],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {
@@ -26,7 +31,7 @@ export const SimulateCiemssOperation: Operation = {
 			currentTimespan: { start: 1, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',
-			simulationsInProgress: []
+			inProgressSimulationId: ''
 		};
 		return init;
 	},

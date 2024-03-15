@@ -7,7 +7,9 @@ export interface SimulateJuliaOperationState {
 
 	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
-	simulationsInProgress: string[];
+
+	// In progress
+	inProgressSimulationId: string;
 }
 
 export const SimulateJuliaOperation: Operation = {
@@ -15,14 +17,14 @@ export const SimulateJuliaOperation: Operation = {
 	displayName: 'Simulate (deterministic)',
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
-	outputs: [{ type: 'simOutput' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {
 		const init: SimulateJuliaOperationState = {
 			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 },
-			simulationsInProgress: []
+			inProgressSimulationId: ''
 		};
 		return init;
 	},

@@ -6,10 +6,8 @@
 				<tera-output-dropdown
 					v-if="options && output"
 					:options="options"
-					:is-selectable="isSelectable ?? false"
 					:is-loading="isLoading"
 					:output="output"
-					@update:output="(e) => emit('update:output', e)"
 					@update:selection="(e) => emit('update:selection', e)"
 				/>
 			</header>
@@ -37,13 +35,12 @@ defineProps<{
 	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
-	isSelectable?: boolean;
 	hideHeader?: boolean;
 }>();
 
 const slots = useSlots();
 
-const emit = defineEmits(['update:output', 'update:selection']);
+const emit = defineEmits(['update:selection']);
 </script>
 
 <style scoped>
@@ -76,6 +73,5 @@ main {
 	flex-grow: 1;
 	overflow-y: auto;
 	gap: 1.5rem;
-	padding: 1.5rem 1.5rem 1.5rem 1rem;
 }
 </style>

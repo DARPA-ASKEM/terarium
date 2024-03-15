@@ -11,8 +11,16 @@ public enum ExtractionAssetType {
 		this.type = type.toLowerCase();
 	}
 
-	public static ExtractionAssetType fromString(String type) {
-		for (ExtractionAssetType assetType : ExtractionAssetType.values()) {
+	public String toString() {
+		return type.toLowerCase();
+	}
+
+	public String toStringPlural() {
+		return toString() + "s";
+	}
+
+	public static ExtractionAssetType fromString(final String type) {
+		for (final ExtractionAssetType assetType : ExtractionAssetType.values()) {
 			if (assetType.toString().equalsIgnoreCase(type)) {
 				return assetType;
 			}

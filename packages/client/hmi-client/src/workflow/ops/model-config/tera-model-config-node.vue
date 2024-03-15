@@ -1,56 +1,35 @@
 <template>
 	<section>
-		<template v-if="!isEmpty(node.state)">
-			<ul>
-				<li v-for="config of modelConfigs" :key="config.id">
-					{{ config.name }}
-				</li>
-			</ul>
-			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
-		</template>
-		<template v-else>
-			<tera-operator-placeholder :operation-type="node.operationType">
-				Attach a model
-			</tera-operator-placeholder>
-		</template>
+		<tera-operator-placeholder v-if="!node.inputs[0].value" :operation-type="node.operationType">
+			Attach a model
+		</tera-operator-placeholder>
+		<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
-import { watch, ref } from 'vue';
-import { WorkflowNode } from '@/types/workflow';
-import { ModelConfiguration } from '@/types/Types';
-import { getModelConfigurations } from '@/services/model';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { watch } from 'vue';
 import { ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
-const emit = defineEmits(['append-output-port', 'open-drilldown']);
-
-const modelConfigs = ref<ModelConfiguration[]>([]);
-
-const refresh = async (modelId: string) => {
-	modelConfigs.value = await getModelConfigurations(modelId);
-	modelConfigs.value.forEach((config) => {
-		emit('append-output-port', {
-			type: 'modelConfigId',
-			label: config.name,
-			value: [config.id]
-		});
-	});
-};
+const emit = defineEmits(['open-drilldown', 'append-input-port']);
 
 watch(
-	() => [props.node.inputs[0].value],
-	async () => {
-		if (props.node.inputs[0].value) {
-			const modelId = props.node.inputs[0].value[0];
-			await refresh(modelId);
+	() => props.node.inputs,
+	() => {
+		if (
+			props.node.inputs
+				.filter((input) => input.type === 'datasetId')
+				.every((input) => input.status === WorkflowPortStatus.CONNECTED)
+		) {
+			emit('append-input-port', { type: 'datasetId', label: 'Dataset', isOptional: true });
 		}
-	}
+	},
+	{ deep: true }
 );
 </script>

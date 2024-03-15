@@ -37,7 +37,6 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
  * @return Dataset|null - the dataset, or null if none returned by API
  */
 async function updateDataset(dataset: Dataset) {
-	delete dataset.columns;
 	const response = await API.put(`/datasets/${dataset.id}`, dataset);
 	return response?.data ?? null;
 }
@@ -128,7 +127,7 @@ async function createNewDatasetFromGithubFile(
 	const urlResponse = await API.put(
 		`/datasets/${newDataset.id}/upload-csv-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
@@ -140,20 +139,21 @@ async function createNewDatasetFromGithubFile(
 }
 
 /**
- * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
+ * This is a helper function which creates a new dataset and adds a given file to it. The data set will
  * share the same name as the file and can optionally have a description
  * @param progress reference to display in ui
- * @param file the CSV file
+ * @param file an arbitrary or csv file
  * @param userName uploader of this dataset
  * @param projectId the project ID
  * @param description description of the file. Optional. If not given description will be just the csv name
  */
-async function createNewDatasetFromCSV(
+async function createNewDatasetFromFile(
 	progress: Ref<number>,
 	file: File,
 	userId: string,
 	description?: string
 ): Promise<Dataset | null> {
+	const fileType = file.name.endsWith('.csv') ? 'csv' : 'file';
 	// Remove the file extension from the name, if any
 	const name = file.name.replace(/\.[^/.]+$/, '');
 
@@ -171,7 +171,7 @@ async function createNewDatasetFromCSV(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const urlResponse = await API.put(`/datasets/${newDataset.id}/upload-csv`, formData, {
+	const urlResponse = await API.put(`/datasets/${newDataset.id}/upload-${fileType}`, formData, {
 		params: {
 			filename: file.name
 		},
@@ -184,7 +184,7 @@ async function createNewDatasetFromCSV(
 				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
 			);
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	if (!urlResponse || urlResponse.status >= 400) {
@@ -206,9 +206,6 @@ async function createDatasetFromSimulationResult(
 		if (response && response.status === 201) {
 			return true;
 		}
-		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
-			toastTitle: 'TDS - Simulation'
-		});
 		return false;
 	} catch (error) {
 		logger.error(
@@ -325,7 +322,7 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
-	createNewDatasetFromCSV,
+	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
 	saveDataset,

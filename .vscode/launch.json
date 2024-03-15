@@ -5,17 +5,38 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "java",
-            "name": "Current File",
+            "type": "node",
             "request": "launch",
-            "mainClass": "${file}"
+            "name": "HMI Client",
+            "runtimeExecutable": "yarn",
+            "cwd": "${workspaceFolder}/packages/client/hmi-client",
+            "runtimeArgs": [
+                "dev"
+            ],
+            // Run vite dev server using `yarn dev` and then luanch the chrome browser
+            "serverReadyAction": {
+                "action": "debugWithChrome",
+                "pattern": "Local:[ ]+http://.+:([0-9]+)",
+                "uriFormat": "http://localhost:%s",
+                "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
+            }
         },
         {
-            "type": "java",
-            "name": "DbMigration",
+            "type": "node",
             "request": "launch",
-            "mainClass": "software.uncharted.terarium.db.migration.DbMigration",
-            "projectName": "db-migration"
+            "name": "HMI Client (Local)",
+            "runtimeExecutable": "yarn",
+            "cwd": "${workspaceFolder}/packages/client/hmi-client",
+            "runtimeArgs": [
+                "local"
+            ],
+            // Run vite dev server using `yarn local` and then luanch the chrome browser
+            "serverReadyAction": {
+                "action": "debugWithChrome",
+                "pattern": "Local:[ ]+http://.+:([0-9]+)",
+                "uriFormat": "http://localhost:%s",
+                "webRoot": "${workspaceFolder}/packages/client/hmi-client/src"
+            }
         },
         {
             "type": "java",
@@ -24,7 +45,27 @@
             "mainClass": "software.uncharted.terarium.hmiserver.TerariumApplication",
             "projectName": "server",
             "args": [
-                "--spring.profiles.active=default,secrets,local"
+                "--spring.profiles.active=default,secrets,local,ide"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "TaskRunnerApplication",
+            "request": "launch",
+            "mainClass": "software.uncharted.terarium.taskrunner.TaskRunnerApplication",
+            "projectName": "taskrunner",
+            "args": [
+                "--spring.profiles.active=default,local,ide"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "ElasticIngestApplication",
+            "request": "launch",
+            "mainClass": "software.uncharted.terarium.esingest.ElasticIngestApplication",
+            "projectName": "es-ingest",
+            "args": [
+                "--spring.profiles.active=default,local,ide"
             ]
         }
     ]

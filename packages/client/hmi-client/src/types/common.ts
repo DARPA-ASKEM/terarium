@@ -1,10 +1,11 @@
 import {
-	XDDFacetsItemResponse,
-	Document,
-	Dataset,
-	Model,
 	AssetType,
-	DocumentAsset
+	Dataset,
+	Document,
+	DocumentAsset,
+	Model,
+	ModelGrounding,
+	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
@@ -28,6 +29,9 @@ export interface ModelConfigTableData {
 	id: string;
 	name: string;
 	type: ParamType;
+	description: string;
+	concept: ModelGrounding;
+	unit?: string;
 	value: any;
 	source: string;
 	visibility: boolean;
@@ -74,7 +78,7 @@ export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
 	rawConceptFacets?: ConceptFacets | null;
-	searchSubsystem: string;
+	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
 	nextPage?: string;
@@ -136,7 +140,15 @@ export enum AcceptedTypes {
 	MD = 'text/markdown',
 	PY = 'text/x-python-script',
 	R = 'text/x-r',
-	JL = 'application/julia'
+	JL = 'application/julia',
+	NC = 'application/x-netcdf',
+	JSON = 'application/json',
+	XML = 'application/xml',
+	SBML = 'application/sbml+xml',
+	MDL = `application/vnd.vensim.mdl`,
+	XMILE = 'application/vnd.stella.xmile',
+	ITMX = 'application/vnd.stella.itmx',
+	STMX = 'application/vnd.stella.stmx'
 }
 
 export enum AcceptedExtensions {
@@ -146,7 +158,27 @@ export enum AcceptedExtensions {
 	MD = 'md',
 	PY = 'py',
 	R = 'r',
-	JL = 'jl'
+	JL = 'jl',
+	// NetCDF format
+	NC = 'nc',
+	// Model file extensions
+	JSON = 'json',
+	// SBML formats
+	XML = 'xml',
+	SBML = 'sbml',
+	// Vensim format
+	MDL = 'mdl',
+	// Stella formats
+	XMILE = 'xmile',
+	ITMX = 'itmx',
+	STMX = 'stmx'
+}
+
+export enum AMRSchemaNames {
+	PETRINET = 'petrinet',
+	REGNET = 'regnet',
+	STOCKFLOW = 'stockflow',
+	DECAPODES = 'decapodes'
 }
 
 export interface PDFExtractionResponseType {
@@ -157,4 +189,12 @@ export interface PDFExtractionResponseType {
 export interface Position {
 	x: number;
 	y: number;
+}
+export enum ModelServiceType {
+	TA1 = 'SKEMA-MIT',
+	TA4 = 'GoLLM'
+}
+
+export interface CompareModelsResponseType {
+	response: string;
 }

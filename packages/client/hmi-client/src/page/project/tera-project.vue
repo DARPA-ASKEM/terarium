@@ -16,6 +16,19 @@
 					@open-new-asset="openNewAsset"
 				/>
 			</template>
+			<template v-slot:footerButtons>
+				<Button
+					class="upload-resources-button"
+					size="small"
+					icon="pi pi-upload"
+					label="Upload resources"
+					@click="isUploadResourcesModalVisible = true"
+				/>
+				<tera-upload-resources-modal
+					:visible="isUploadResourcesModalVisible"
+					@close="isUploadResourcesModalVisible = false"
+				/>
+			</template>
 		</tera-slider-panel>
 		<section class="project-page">
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
@@ -78,7 +91,9 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraWorkflow from '@/workflow/tera-workflow.vue';
+import Button from 'primevue/button';
 import TeraModelModal from './components/tera-model-modal.vue';
+import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -87,6 +102,7 @@ const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);
+const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as string) ?? '');
@@ -140,10 +156,8 @@ async function removeAsset(assetRoute: AssetRoute) {
 				openAsset({ assetId: '', pageType: ProjectPages.OVERVIEW });
 			}
 			logger.info(`${assetRoute.assetId} was removed.`, { showToast: true });
-			return;
 		}
 	}
-	logger.error(`Failed to remove ${assetRoute.assetId}`, { showToast: true });
 }
 
 const openWorkflow = async () => {
@@ -220,6 +234,16 @@ section {
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
+}
+
+.upload-resources-button {
+	margin: 0 1rem;
+	flex-grow: 1;
+	min-width: 140px;
+	justify-content: center;
+	& :deep(.p-button-label) {
+		flex-grow: 0;
+	}
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {

@@ -7,7 +7,7 @@
 		>
 			<div v-html="text"></div>
 		</div>
-		<span @click="collapseOrExpand">
+		<span v-if="text > '' && (triggerShowMore || expanded)" @click="collapseOrExpand">
 			<template v-if="triggerShowMore">Show more</template>
 			<template v-if="expanded">Show less</template>
 		</span>
