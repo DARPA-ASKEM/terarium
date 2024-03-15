@@ -52,13 +52,25 @@
 		</div>
 		<div :tabName="SubsetDataTabs.Notebook"></div>
 		<template #preview>
-			<tera-drilldown-preview>sdsd<template #footer> </template></tera-drilldown-preview>
+			<tera-drilldown-preview
+				title="Output"
+				:options="outputs"
+				@update:selection="onSelection"
+				v-model:output="selectedOutputId"
+				is-selectable
+			>
+				<template #footer>
+					<Button label="Save as new dataset" outlined severity="secondary" />
+					<Button label="Close" @click="emit('close')" />
+				</template>
+			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, computed } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -70,12 +82,11 @@ import Calender from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
 import { SubsetDataOperationState } from './subset-data-operation';
 
-// const props =
-defineProps<{
+const props = defineProps<{
 	node: WorkflowNode<SubsetDataOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['append-output-port', 'update-state', 'select-output', 'close']);
 
 enum SubsetDataTabs {
 	Wizard = 'Wizard',
@@ -95,6 +106,24 @@ const timeSkipping = ref(0);
 
 const fromDate = ref('');
 const toDate = ref('');
+
+const selectedOutputId = ref<string>(props.node.active ?? '');
+
+const outputs = computed(() => {
+	if (isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+
+const onSelection = (id: string) => {
+	emit('select-output', id);
+};
 </script>
 
 <style scoped>
