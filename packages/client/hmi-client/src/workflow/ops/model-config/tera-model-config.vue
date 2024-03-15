@@ -114,6 +114,8 @@
 							<tera-initial-table
 								v-if="modelConfiguration"
 								:model-configuration="modelConfiguration"
+								:mmt="mmt"
+								:mmt-params="mmtParams"
 								@update-value="updateConfigInitial"
 								@update-configuration="
 									(configToUpdate: ModelConfiguration) => {

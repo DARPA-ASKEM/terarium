@@ -166,6 +166,8 @@
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model-configuration="modelConfiguration"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
 				@update-value="(val: Initial) => emit('update-value', [val])"
 				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
@@ -177,6 +179,8 @@
 			v-if="matrixModalContext.isOpen && stratifiedModelType"
 			:id="matrixModalContext.matrixId"
 			:model-configuration="modelConfiguration"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
 			:stratified-model-type="stratifiedModelType"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
 			:open-value-config="matrixModalContext.isOpen"
@@ -211,6 +215,7 @@ import {
 } from '@/services/concept';
 import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-petri';
 import Dropdown from 'primevue/dropdown';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -219,6 +224,8 @@ const typeOptions = [
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[];
 	hideHeader?: boolean;
 }>();

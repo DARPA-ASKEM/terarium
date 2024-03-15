@@ -336,7 +336,6 @@ export const createParameterMatrix = (
 		paramLocationMap
 	);
 
-	// FIXME: check if we need to add outcomeController matrix
 	return {
 		subjectOutcome,
 		subjectControllers,
@@ -345,7 +344,6 @@ export const createParameterMatrix = (
 };
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-
 export const convertToIGraph = (templates: TemplateSummary[]) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],

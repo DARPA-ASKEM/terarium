@@ -83,13 +83,16 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
+import { pythonInstance } from '@/python/PyodideController';
 import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
-import { pythonInstance } from '@/python/PyodideController';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import {} from '@/model-representation/mira/mira-util';
-import { collapseParameters, createParameterMatrix } from '@/model-representation/mira/mira';
+import {
+	collapseParameters,
+	createParameterMatrix,
+	collapseInitials
+} from '@/model-representation/mira/mira';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -211,19 +214,31 @@ function renderMatrix() {
 		props.id,
 		props.stratifiedMatrixType
 	);
+	matrix.value = null;
 
-	const paramsMap = collapseParameters(props.mmt, props.mmtParams);
-	const childrenParams = paramsMap.get(props.id);
-	const matrices = createParameterMatrix(props.mmt, props.mmtParams, props.id);
+	const matrixType = props.stratifiedMatrixType;
 
-	console.group('matrix gen');
-	console.log('props.id', props.id);
-	console.log('children', childrenParams);
-	console.log('matrix data', matrices);
-	console.groupEnd();
+	if (matrixType === StratifiedMatrix.Initials) {
+		const initialsMap = collapseInitials(props.mmt);
+		const childrenInitials = initialsMap.get(props.id);
+		console.group('initials matrix gen');
+		console.log('props.id', props.id);
+		console.log('children', childrenInitials);
+	} else if (matrixType === StratifiedMatrix.Parameters) {
+		const paramsMap = collapseParameters(props.mmt, props.mmtParams);
+		const childrenParams = paramsMap.get(props.id);
+		const matrices = createParameterMatrix(props.mmt, props.mmtParams, props.id);
 
-	matrix.value = matrices.outcomeControllers.matrix;
-	// matrix.value = matrices.subjectControllers.matrix;
+		console.group('param matrix gen');
+		console.log('props.id', props.id);
+		console.log('children', childrenParams);
+		console.log('matrix data', matrices);
+		console.groupEnd();
+		// FIXME: should be matrices
+		matrix.value = matrices.outcomeControllers.matrix;
+	} else {
+		console.log('TODO!!!');
+	}
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
