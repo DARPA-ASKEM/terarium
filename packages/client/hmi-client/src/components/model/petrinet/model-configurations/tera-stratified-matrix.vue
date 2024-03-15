@@ -82,7 +82,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
 import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
@@ -92,7 +91,6 @@ import { StratifiedMatrix } from '@/types/Model';
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	id: string;
-	stratifiedModelType: StratifiedModel;
 	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
 }>();
