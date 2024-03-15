@@ -138,7 +138,7 @@
 					</section>
 				</div>
 				<section v-else>
-					<tera-progress-bar :value="progress.value" :status="progress.status" />
+					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</section>
 			</tera-drilldown-preview>
 		</template>
@@ -163,22 +163,6 @@ import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-import {
-	getRunResultCiemss,
-	makeCalibrateJobCiemss,
-	subscribeToUpdateMessages,
-	unsubscribeToUpdateMessages
-} from '@/services/models/simulation-service';
-import {
-	CalibrationRequestCiemss,
-	ClientEvent,
-	ClientEventType,
-	CsvAsset,
-	DatasetColumn,
-	ModelConfiguration,
-	ProgressState,
-	State
-} from '@/types/Types';
 // import InputNumber from 'primevue/inputnumber';
 import {
 	CalibrateMap,
@@ -186,18 +170,34 @@ import {
 	setupDatasetInput,
 	setupModelInput
 } from '@/services/calibrate-workflow';
-import { autoCalibrationMapping } from '@/services/concept';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import {
+	CalibrationRequestCiemss,
+	ClientEvent,
+	ClientEventType,
+	CsvAsset,
+	DatasetColumn,
+	ModelConfiguration,
+	State
+} from '@/types/Types';
 import { getTimespan } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { autoCalibrationMapping } from '@/services/concept';
+import {
+	getRunResultCiemss,
+	makeCalibrateJobCiemss,
+	subscribeToUpdateMessages,
+	unsubscribeToUpdateMessages
+} from '@/services/models/simulation-service';
+
+import type { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import type { WorkflowNode } from '@/types/workflow';
+import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -228,7 +228,6 @@ const runResults = ref<RunResults>({});
 const previewChartWidth = ref(120);
 
 const showSpinner = ref(false);
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
 const lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
@@ -401,11 +400,14 @@ watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
 		if (id === '') {
-			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+			showSpinner.value = false;
+			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
-			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+			showSpinner.value = true;
+			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
-	}
+	},
+	{ immediate: true }
 );
 
 watch(

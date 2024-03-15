@@ -1,13 +1,20 @@
 <template>
 	<main>
 		<tera-simulate-chart
-			v-if="runResults && csvAsset"
+			v-if="!inProgressCalibrationId && runResults && csvAsset"
 			:run-results="runResults"
 			:chartConfig="props.node.state.chartConfigs[0]"
 			:mapping="props.node.state.mapping as any"
 			:initial-data="csvAsset"
 			:size="{ width: 190, height: 120 }"
 			has-mean-line
+		/>
+
+		<tera-progress-spinner
+			v-if="inProgressCalibrationId"
+			:font-size="2"
+			is-centered
+			style="height: 100%"
 		/>
 
 		<Button
@@ -26,22 +33,24 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, watch, ref, shallowRef } from 'vue';
+import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
-import Button from 'primevue/button';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
 	makeForecastJobCiemss
 } from '@/services/models/simulation-service';
-import { RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import type { CsvAsset } from '@/types/Types';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { CalibrationOperationStateCiemss } from './calibrate-operation';
+
+import type { WorkflowNode } from '@/types/workflow';
+import type { CsvAsset } from '@/types/Types';
+import type { RunResults } from '@/types/SimulateConfig';
+import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -53,6 +62,7 @@ const runResults = ref<RunResults>({});
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
+const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
