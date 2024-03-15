@@ -1,21 +1,32 @@
 <template>
-	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
+	<div
+		class="code-cell"
+		@mouseover="mouseOverParent = true"
+		@mouseleave="mouseOverParent = false"
+		@focusin="mouseOverParent = true"
+		@focusout="mouseOverParent = false"
+		@keyup.ctrl.enter.prevent="run"
+		@keyup.shift.enter.prevent="run"
+	>
 		<template ref="codeCell" />
 		<div class="controls">
-			<i class="pi pi-play play" v-tooltip="`Run again`" @click="run" />
-			<div class="run">Run again</div>
-			<i class="pi pi-check-circle check" />
-			<div class="run">Success</div>
+			<Button
+				label="Delete"
+				outlined
+				size="small"
+				severity="secondary"
+				icon="pi pi-trash"
+				disabled
+			/>
+			<Button
+				label="Run"
+				outlined
+				size="small"
+				severity="secondary"
+				icon="pi pi-play"
+				@click="run"
+			/>
 		</div>
-		<!--
-		<div class="save-file-container">
-			<div class="save-as">Save As:</div>
-			<div class="saved-name">{{ props.savedName }}</div>
-			<InputText v-model="savedFileName" class="post-fix" :style="`padding:3px;`" />
-			<i class="pi pi-times i" :class="{ clear: hasValidFileName }" @click="savedFileName = ''" />
-			<i class="pi pi-check i" :class="{ save: hasValidFileName }" @click="saveAsNewDataset()" />
-		</div>
-		 -->
 	</div>
 </template>
 
@@ -31,7 +42,9 @@ import {
 } from '@jupyterlab/completer';
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
-// import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+
+const mouseOverParent = ref(false);
 
 const props = defineProps({
 	jupyterSession: {
@@ -185,75 +198,23 @@ defineExpose({
 @import '@jupyterlab/completer/style/index.css';
 
 .jp-CodeCell {
-	background-color: var(--gray-50);
 	min-width: 300px;
 }
 
 .controls {
+	padding-top: var(--gap-small);
 	display: flex;
-	align-items: center;
-	padding-top: 15px;
-	padding-bottom: 10px;
+	align-items: end;
 	flex-direction: row;
-	font-size: 0.8rem;
+	justify-content: end;
+	gap: var(--gap-small);
 }
 
-.run {
-	color: var(--gray-800);
-	font-family: var(--font-family);
-	padding-left: 5px;
-	padding-right: 10px;
-}
-// .save-file-container {
-// 	display: flex;
-// 	flex-direction: row;
-// 	align-items: center;
-// 	padding-bottom: 5px;
-// 	padding-top: 5px;
-// 	font-size: 1rem;
-// }
-
-// .saved-name {
-// 	display: flex;
-// 	flex-direction: row;
-// 	padding-left: 5px;
-// 	padding-right: 5px;
-// }
-.post-fix {
-	padding: 0px;
-	height: 20px;
+.visible {
+	display: block;
 }
 
-.play {
-	color: var(--primary-color);
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.play:hover {
-	color: green;
-}
-
-.check {
-	color: var(--primary-color);
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.clear {
-	color: red;
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.save {
-	color: var(--primary-color);
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.i {
-	padding-left: 5px;
-	padding-right: 5px;
+.hidden {
+	display: none;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-	<div class="jupyter-response">
+	<section class="jupyter-response">
 		<section>
 			<div class="menu-container">
 				<!-- Button to show chat window menu -->
@@ -50,7 +50,7 @@
 				</div>
 			</div>
 		</section>
-	</div>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -157,12 +157,12 @@ defineExpose({
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
-	padding-bottom: 4px;
-	padding-left: 24px;
+	padding-bottom: var(--gap);
+	padding-left: 30px;
 	/* Add ai-assistant icon */
 	background-image: url('@assets/svg/icons/message.svg');
 	background-repeat: no-repeat;
-	background-position: 0 center; /* Adjust 10px according to your icon size and position */
+	background-position: 4px 3px;
 }
 .executing-message {
 	color: var(--text-color-subdued);
@@ -186,7 +186,7 @@ defineExpose({
 	display: flex;
 	flex-direction: column;
 	font-family: var(--font-family);
-	border-radius: 3px;
+	border-radius: var(--border-radius);
 	margin-top: 10px;
 	background-color: var(--surface-0);
 	transition:
@@ -197,7 +197,7 @@ defineExpose({
 
 .jupyter-response:hover {
 	background-color: var(--surface-50);
-	border: 1px solid var(--surface-border);
+	border: 1px solid var(--surface-border-light);
 }
 
 .jupyter-response .menu-container {
@@ -215,14 +215,14 @@ defineExpose({
 }
 
 .llm-response {
-	padding-top: var(--gap-small);
-	padding-left: 26px;
+	padding-left: 30px;
+	padding-bottom: var(--gap-small);
 	white-space: pre-wrap;
 	color: var(--text-color);
 	/* Add ai-assistant magic icon */
 	background-image: url('@assets/svg/icons/magic.svg');
 	background-repeat: no-repeat;
-	background-position: 0 8px; /* Adjust 10px according to your icon size and position */
+	background-position: 4px 2px;
 }
 
 .date {

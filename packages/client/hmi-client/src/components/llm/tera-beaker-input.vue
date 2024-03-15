@@ -14,6 +14,7 @@
 				text
 				:icon="props.kernelIsBusy ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
 				rounded
+				size="large"
 				class="kernel-status"
 				:disabled="queryString.length === 0"
 				@click="submitQuery"
@@ -125,9 +126,10 @@ onMounted(() => {
 	bottom: 0px;
 	height: fit-content;
 	padding: var(--gap);
+	padding-bottom: 1.5rem;
 	z-index: 30000;
 	border-top: 1px solid var(--surface-border-light);
-	background-color: var(--surface-glass);
+	background-color: var(--surface-transparent);
 	backdrop-filter: blur(10px);
 	width: calc(100% - 6 * var(--gap-small));
 	display: flex;
@@ -139,7 +141,7 @@ onMounted(() => {
 
 .input {
 	color: var(--text-color);
-	background-color: var(--surface-secondary);
+	background-color: var(--surface-0);
 	border: 2px solid var(--primary-color);
 	padding: var(--gap);
 	padding-left: 3rem;
@@ -152,7 +154,7 @@ onMounted(() => {
 
 .kernel-status {
 	position: relative;
-	right: 2.5rem;
+	right: 3rem;
 }
 
 .input:disabled {
