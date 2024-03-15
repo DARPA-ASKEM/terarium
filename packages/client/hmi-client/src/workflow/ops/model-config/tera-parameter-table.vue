@@ -45,14 +45,14 @@
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
+							getCurieFromGroundingIdentifier(data.concept.grounding.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroundingIdentifier(data.concept.grounding.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -271,7 +271,7 @@ import InputText from 'primevue/inputtext';
 import { cloneDeep, isEmpty } from 'lodash';
 import { getModelType } from '@/services/model';
 import {
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached
 } from '@/services/concept';
@@ -639,6 +639,7 @@ const matrixEffect = () => {
 .min-value {
 	position: relative;
 }
+
 .min-value::before {
 	content: 'Min';
 	position: relative;
@@ -648,6 +649,7 @@ const matrixEffect = () => {
 	font-size: var(--font-caption);
 	width: 0;
 }
+
 .max-value::before {
 	content: 'Max';
 	position: relative;
@@ -666,6 +668,7 @@ const matrixEffect = () => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .custom-icon-expression {
 	background-image: url('@assets/svg/icons/expression.svg');
 	background-size: contain;
@@ -674,6 +677,7 @@ const matrixEffect = () => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .invalid-message {
 	color: var(--text-color-danger);
 }

@@ -21,14 +21,14 @@
 							{{
 								getNameOfCurieCached(
 									nameOfCurieCache,
-									getCurieFromGroudingIdentifier(data.grounding.identifiers)
+									getCurieFromGroundingIdentifier(data.grounding.identifiers)
 								)
 							}}
 
 							<a
 								target="_blank"
 								rel="noopener noreferrer"
-								:href="getCurieUrl(getCurieFromGroudingIdentifier(data.grounding.identifiers))"
+								:href="getCurieUrl(getCurieFromGroundingIdentifier(data.grounding.identifiers))"
 								@click.stop
 								aria-label="Open Concept"
 							>
@@ -178,8 +178,8 @@
 				<Column field="payload.groundings" header="Concept">
 					<template #body="{ data }">
 						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1"
-							>--</template
-						>
+							>--
+						</template>
 						<template
 							v-else
 							v-for="grounding in data?.payload?.groundings"
@@ -225,11 +225,11 @@ import {
 } from '@/model-representation/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
 import {
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached,
-	searchCuriesEntities,
-	parseCurie
+	parseCurie,
+	searchCuriesEntities
 } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';

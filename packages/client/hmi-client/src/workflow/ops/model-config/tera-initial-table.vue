@@ -45,14 +45,14 @@
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
+							getCurieFromGroundingIdentifier(data.concept.grounding.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroundingIdentifier(data.concept.grounding.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -194,7 +194,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
-import type { ModelConfiguration, Initial } from '@/types/Types';
+import type { Initial, ModelConfiguration } from '@/types/Types';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
@@ -205,7 +205,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import { cloneDeep, isEmpty } from 'lodash';
 import {
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached
 } from '@/services/concept';
@@ -486,6 +486,7 @@ const changeType = (initial: Initial, typeIndex: number) => {
 .min-value {
 	position: relative;
 }
+
 .min-value::before {
 	content: 'Min';
 	position: relative;
@@ -495,6 +496,7 @@ const changeType = (initial: Initial, typeIndex: number) => {
 	font-size: var(--font-caption);
 	width: 0;
 }
+
 .max-value::before {
 	content: 'Max';
 	position: relative;
@@ -513,6 +515,7 @@ const changeType = (initial: Initial, typeIndex: number) => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .custom-icon-expression {
 	background-image: url('@assets/svg/icons/expression.svg');
 	background-size: contain;
@@ -521,6 +524,7 @@ const changeType = (initial: Initial, typeIndex: number) => {
 	width: 1rem;
 	height: 1rem;
 }
+
 .invalid-message {
 	color: var(--text-color-danger);
 }

@@ -15,13 +15,13 @@
 				<template v-if="!isEmpty(data.concept)">
 					<div class="flex flex-row align-items-center">
 						{{
-							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept))
+							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.concept))
 						}}
 						<i class="pi pi-chevron-down pl-2 text-xs" />
 						<a
 							target="_blank"
 							rel="noopener noreferrer"
-							:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept))"
+							:href="getCurieUrl(getCurieFromGroundingIdentifier(data.concept))"
 							@click.stop
 							aria-label="Open Concept"
 						>
@@ -66,7 +66,7 @@ import type { Dataset, DatasetColumn, DKG } from '@/types/Types';
 import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import {
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached,
 	parseCurie,

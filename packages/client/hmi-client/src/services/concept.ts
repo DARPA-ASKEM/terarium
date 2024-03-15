@@ -116,14 +116,16 @@ async function getEntitySimilarity(
 	}
 }
 
-const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string => {
+function getNameOfCurieCached(cache: Map<string, string>, curie: string) {
 	if (!cache.has(curie)) {
-		getCuriesEntities([curie]).then((response) => cache.set(curie, response?.[0].name ?? ''));
+		getCuriesEntities([curie]).then((response) => {
+			cache.set(curie, response?.[0].name ?? '');
+		});
 	}
-	return cache.get(curie) ?? '';
-};
+	return cache.get(curie) ?? curie;
+}
 
-function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
+function getCurieFromGroundingIdentifier(identifier: Object | undefined): string {
 	if (!!identifier && !isEmpty(identifier)) {
 		const [key, value] = Object.entries(identifier)[0];
 		return `${key}:${value}`;
@@ -292,7 +294,7 @@ export {
 	getEntitySimilarity,
 	searchCuriesEntities,
 	getNameOfCurieCached,
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	parseCurie,
 	autoModelMapping,
