@@ -45,7 +45,7 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { ref, watch, onUpdated, Ref, PropType } from 'vue';
+import { onUpdated, PropType, Ref, ref, watch } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
@@ -99,6 +99,7 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+
 const groundingValues = ref<string[][]>([]);
 // originaGroundingValues are displayed as the first suggested value for concepts
 const originalGroundingValues = ref<string[]>([]);
@@ -139,7 +140,6 @@ const optionsMenuItems = ref([
 							project.id
 						);
 						if (response) logger.info(`Added asset to ${project.name}`);
-						else logger.error('Failed to add asset to project');
 					}
 				})) ?? []
 	}
@@ -152,7 +152,7 @@ async function updateDatasetName() {
 		datasetClone.name = newDatasetName.value;
 		await updateDataset(datasetClone);
 		dataset.value = await getDataset(props.assetId);
-		useProjects().refresh();
+		await useProjects().refresh();
 		isRenamingDataset.value = false;
 	}
 }
@@ -165,9 +165,9 @@ async function updateAndFetchDataset(ds: Dataset) {
 const fetchDataset = async () => {
 	const datasetTemp: Dataset | null = await getDataset(props.assetId);
 
-	// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-	rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 	if (datasetTemp) {
+		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+		rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 		Object.entries(datasetTemp).forEach(([key, value]) => {
 			if (isString(value)) {
 				datasetTemp[key] = highlightSearchTerms(value);
@@ -220,6 +220,7 @@ watch(
 <style scoped>
 .tab {
 	padding: var(--gap);
+
 	&.data-tab {
 		display: flex;
 		height: 100%;

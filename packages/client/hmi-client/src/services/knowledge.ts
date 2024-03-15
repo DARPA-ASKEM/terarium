@@ -1,6 +1,6 @@
-import API, { Poller, PollerState, PollResponse, PollerResult } from '@/api/api';
+import API, { Poller, PollerResult, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import type { Code, Dataset, ExtractionResponse, Model } from '@/types/Types';
+import type { Code, Dataset, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { modelCard } from './goLLM';
 
@@ -46,29 +46,17 @@ export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
  * @return {Promise<any>}
  */
 export const equationsToAMR = async (
-	format: string,
 	equations: string[],
 	framework: string = 'petrinet',
 	modelId?: string
-): Promise<any> => {
+): Promise<string | null> => {
 	try {
-		const response: AxiosResponse<ExtractionResponse> = await API.post(
-			`/knowledge/equations-to-model`,
-			{ format, framework, modelId, equations }
-		);
-		if (response && response?.status === 200) {
-			const { id, status } = response.data;
-			if (status === 'queued') {
-				const result = await fetchExtraction(id);
-				if (result?.state === PollerState.Done && result?.data?.job_result?.status_code === 200) {
-					return result.data;
-				}
-			}
-			if (status === 'finished' && response.data.result.job_result?.status_code === 200) {
-				return response.data.result;
-			}
-		}
-		logger.error(`Equations to AMR request failed`, { toastTitle: 'Error - Knowledge Middleware' });
+		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, {
+			model: framework,
+			modelId,
+			equations
+		});
+		return response.data;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
 	}

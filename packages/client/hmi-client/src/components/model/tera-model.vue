@@ -116,7 +116,6 @@ const optionsMenuItems = computed(() => [
 							project.id
 						);
 						if (response) logger.info(`Added asset to ${project.name}`);
-						else logger.error('Failed to add asset to project');
 					}
 				})) ?? []
 	}
@@ -127,9 +126,9 @@ const optionsMenuItems = computed(() => [
 
 async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
+	await useProjects().refresh();
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().refresh();
 	}, 800);
 }
 

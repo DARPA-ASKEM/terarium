@@ -1,20 +1,26 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Dropdown
-					:editable="true"
-					class="input"
-					v-model="gollmQuestion"
-					type="text"
-					:placeholder="'What would you like to compare?'"
-					@keydown.enter="submitGollmQuestion"
-				/>
-				<Panel v-if="llmAnswer || !isEmpty(llmThoughts)" header="Answer" toggleable>
-					<template #togglericon="{ collapsed }">
-						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
-					</template>
-				</Panel>
+				<!-- LLM generated overview -->
+				<section class="comparison-overview">
+					<Accordion :activeIndex="0">
+						<AccordionTab header="Overview">
+							<p v-if="llmAnswer">{{ llmAnswer }}</p>
+							<p v-else class="subdued">
+								Analyzing models metadata to generate a detailed comparison analysis...
+							</p>
+						</AccordionTab>
+					</Accordion>
+				</section>
+
+				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
@@ -29,7 +35,12 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram :model="model" :is-editable="false" is-preview />
+									<tera-model-diagram
+										:model="model"
+										:is-editable="false"
+										is-preview
+										class="diagram"
+									/>
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -58,7 +69,9 @@
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="Tabs.Notebook">
-			<tera-drilldown-section>
+			<!--TODO: The notebook input and buttons works well here, but it the html/css
+				organization should be refactored here (same for tera-model-edit)-->
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
 					<Button
 						icon="pi pi-play"
@@ -69,14 +82,11 @@
 						@click="runCode"
 					/>
 				</div>
-				<Dropdown
-					:editable="true"
-					:disabled="!isKernelReady"
-					class="input"
-					v-model="beakerQuestion"
-					type="text"
-					:placeholder="!isKernelReady ? 'Please wait...' : 'What would you like to compare?'"
-					@keydown.enter="submitBeakerQuestion"
+				<tera-notebook-jupyter-input
+					:kernelManager="kernelManager"
+					:defaultOptions="sampleAgentQuestions"
+					@llm-output="appendCode"
+					:context-language="contextLanguage"
 				/>
 				<v-ace-editor
 					v-model:value="code"
@@ -88,26 +98,67 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
+			<tera-drilldown-preview>
+				<tera-progress-spinner
+					v-if="isLoadingStructuralComparisons && isEmpty(structuralComparisons)"
+					is-centered
+					:font-size="3"
+				/>
+				<ul>
+					<li v-for="(image, index) in structuralComparisons" :key="index">
+						<label>Comparison {{ index + 1 }}</label>
+						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
+					</li>
+				</ul>
+
+				<!-- Legend -->
+				<div
+					v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)"
+					class="legend flex align-items-center gap-7"
+				>
+					<span class="flex gap-5">
+						<span class="flex align-items-center gap-2">
+							<span class="legend-circle subdued">Name</span>
+							<span>State variable nodes</span>
+						</span>
+						<span class="flex align-items-center gap-2">
+							<span class="legend-square subdued">Name</span>
+							<span>Transition nodes</span>
+						</span>
+					</span>
+					<span class="flex gap-6">
+						<span class="legend-line orange">Model 1</span>
+						<span class="legend-line blue">Model 2</span>
+						<span class="legend-line red">Common to both models</span>
+					</span>
+				</div>
+			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import { isEmpty } from 'lodash';
-import { onMounted, onUnmounted, ref, computed } from 'vue';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import Panel from 'primevue/panel';
-import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
-import { WorkflowNode } from '@/types/workflow';
+import { compareModels } from '@/services/goLLM';
+import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
 import type { Model } from '@/types/Types';
-import { KernelSessionManager } from '@/services/jupyter';
+import { WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
+import Button from 'primevue/button';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import Image from 'primevue/image';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -122,14 +173,20 @@ enum Tabs {
 }
 
 let editor: VAceEditorInstance['_editor'] | null;
+const kernelManager = new KernelSessionManager();
+const sampleAgentQuestions = [
+	'Compare the three models and visualize and display them.',
+	'Compare the two models and visualize and display them.'
+];
 
-const gollmQuestion = ref('');
-const beakerQuestion = ref('');
-const llmThoughts = ref<string[]>([]);
+const isLoadingStructuralComparisons = ref(false);
+const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref('');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
+const contextLanguage = ref<string>('python3');
+
 const modelCardsToCompare = computed(() =>
 	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
 );
@@ -141,11 +198,21 @@ const fields = computed(
 );
 const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
-const kernelManager = new KernelSessionManager();
-
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
+
+async function addModelForComparison(modelId: Model['id']) {
+	if (!modelId) return;
+	const model = await getModel(modelId);
+	if (model) modelsToCompare.value.push(model);
+	if (
+		modelsToCompare.value.length === props.node.inputs.length - 1 &&
+		modelsToCompare.value.length > 1
+	) {
+		buildJupyterContext();
+	}
+}
 
 function formatField(field: string) {
 	const result = field
@@ -155,9 +222,9 @@ function formatField(field: string) {
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-function submitGollmQuestion() {
-	console.log(gollmQuestion.value);
-}
+// function submitGollmQuestion() {
+// 	console.log(gollmQuestion.value);
+// }
 
 function runCode() {
 	const messageContent = {
@@ -168,56 +235,37 @@ function runCode() {
 		stop_on_error: false,
 		code: editor?.getValue() as string
 	};
+	isLoadingStructuralComparisons.value = true;
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
-		.register('execute_input', (data) => {
-			console.log(data);
-		})
-		.register('stream', (data) => {
-			console.log('stream', data);
+		.register('display_data', (data) => {
+			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
+			isLoadingStructuralComparisons.value = false;
 		})
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
+			isLoadingStructuralComparisons.value = false;
 		});
 }
 
-function submitBeakerQuestion() {
-	console.log(beakerQuestion.value);
-	kernelManager
-		.sendMessage('llm_request', {
-			request: beakerQuestion.value
-		})
-		.register('llm_thought', (d) => {
-			console.log(d.content);
-			llmThoughts.value.push(d.content.thought);
-		})
-		.register('code_cell', (d) => {
-			console.log(d);
-			code.value = d.content.code;
-		});
+function appendCode(data: any) {
+	const newCode = data.content.code;
+	if (newCode) code.value = newCode;
+	else logger.error('No code to append');
 }
 
-async function addModelForComparison(modelId: string) {
-	const model = await getModel(modelId);
-	if (model) modelsToCompare.value.push(model);
-	if (modelsToCompare.value.length === 3) buildJupyterContext();
+function processCompareModels(modelIds) {
+	compareModels(modelIds).then((response) => {
+		llmAnswer.value = response.response;
+	});
 }
 
 async function buildJupyterContext() {
-	if (modelsToCompare.value.length < 3) {
+	if (modelsToCompare.value.length < 2) {
 		logger.warn('Cannot build Jupyter context without models');
 		return;
 	}
-
-	console.log({
-		models: modelsToCompare.value.map((model, index) => ({
-			model_id: model.id,
-			name: `model_${index + 1}`
-		}))
-	});
-
 	try {
 		const jupyterContext = {
 			context: 'mira',
@@ -247,6 +295,11 @@ onMounted(async () => {
 			addModelForComparison(input.value[0]);
 		}
 	});
+
+	const modelIds = props.node.inputs
+		.filter((input) => input.status === 'connected')
+		.map((input) => input.value?.[0]);
+	processCompareModels(modelIds);
 });
 
 onUnmounted(() => {
@@ -294,8 +347,91 @@ table {
 	text-indent: 30px;
 }
 
-.toolbar-right-side {
+ul {
 	display: flex;
-	justify-content: right;
+	flex-direction: column;
+	gap: var(--gap);
+
+	& > li {
+		display: flex;
+		flex-direction: column;
+		gap: var(--gap-xsmall);
+
+		& > span {
+			width: fit-content;
+			margin-right: calc(var(--gap-xxlarge) * 3);
+		}
+	}
+}
+
+/* TODO: Improve this pattern later same in (tera-model-input) */
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
+}
+
+.comparison-overview {
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius-medium);
+	padding: var(--gap-small);
+}
+
+.subdued {
+	color: var(--text-color-secondary);
+}
+
+.diagram {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
+.legend {
+	font-size: var(--font-caption);
+}
+
+.legend-circle {
+	padding: var(--gap-small) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	border-radius: 50%;
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-square {
+	padding: var(--gap-xsmall) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-line {
+	position: relative;
+	white-space:;
+}
+
+.legend-line::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 24px;
+	height: 2px;
+	background-color: red;
+	transform: translate(-30px, -50%);
+}
+.legend-line.orange::before {
+	background-color: orange;
+}
+.legend-line.blue::before {
+	background-color: blue;
 }
 </style>

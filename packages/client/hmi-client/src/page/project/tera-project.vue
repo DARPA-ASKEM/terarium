@@ -156,10 +156,8 @@ async function removeAsset(assetRoute: AssetRoute) {
 				openAsset({ assetId: '', pageType: ProjectPages.OVERVIEW });
 			}
 			logger.info(`${assetRoute.assetId} was removed.`, { showToast: true });
-			return;
 		}
 	}
-	logger.error(`Failed to remove ${assetRoute.assetId}`, { showToast: true });
 }
 
 const openWorkflow = async () => {

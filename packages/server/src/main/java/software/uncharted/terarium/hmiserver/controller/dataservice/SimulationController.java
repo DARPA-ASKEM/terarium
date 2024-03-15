@@ -33,9 +33,7 @@ import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RequestMapping("/simulations")
 @RestController
@@ -199,22 +197,31 @@ public class SimulationController {
 				return ResponseEntity.notFound().build();
 			}
 
-			// Duplicate the simulation results to a new dataset
-			final Dataset dataset = simulationService.copySimulationResultToDataset(sim.get());
-			if (dataset == null) {
-				log.error("Failed to create dataset from simulation {} result", id);
-				return ResponseEntity.internalServerError().build();
+			//Create the dataset asset:
+			final UUID simId = sim.get().getId();
+			final Dataset dataset = datasetService.createAsset(new Dataset());
+			dataset.setName(datasetName + " Result Dataset");
+			dataset.setDescription(sim.get().getDescription());
+			dataset.setMetadata(Map.of("simulationId", simId));
+			dataset.setFileNames(sim.get().getResultFiles());
+			dataset.setDataSourceDate(sim.get().getCompletedTime());
+			dataset.setColumns(new ArrayList<>());
+
+			// Attach the user to the dataset
+			if (sim.get().getUserId() != null) {
+				dataset.setUserId(sim.get().getUserId());
 			}
 
-			dataset.setName(datasetName);
-			datasetService.createAsset(dataset);
+			// Duplicate the simulation results to a new dataset
+			simulationService.copySimulationResultToDataset(sim.get(), dataset);
+			datasetService.updateAsset(dataset);
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
 				final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
 						AssetType.DATASET,
-						dataset.getId());
+						dataset);
 				// underlying asset does not exist
 				return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset)).orElseGet(() -> ResponseEntity.notFound().build());
 			} else {

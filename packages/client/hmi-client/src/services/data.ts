@@ -451,10 +451,6 @@ const getRelatedDocuments = async (docid: string): Promise<Document[]> => {
 		}
 		if (status === 204) {
 			logger.error('Request received successfully, but there are no documents');
-		} else if (status === 400) {
-			logger.error('Query must contain a docid');
-		} else if (status === 500) {
-			logger.error('An error occurred retrieving documents');
 		}
 	}
 	return [] as Document[];

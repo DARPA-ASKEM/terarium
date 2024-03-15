@@ -75,7 +75,6 @@ public class DatasetController {
 	@Operation(summary = "Gets all datasets")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Datasets found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no datasets found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving datasets from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Dataset>> getDatasets(
@@ -138,7 +137,6 @@ public class DatasetController {
 					error);
 		}
 	}
-
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
@@ -164,7 +162,7 @@ public class DatasetController {
 	@Operation(summary = "Gets dataset by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dataset found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no dataset found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no dataset found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
@@ -177,7 +175,7 @@ public class DatasetController {
 				log.error(error, e);
 				// This doesn't actually warrant a 500 since its just column metadata, so we'll let it pass.
 			}
-			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
@@ -232,7 +230,6 @@ public class DatasetController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Delete dataset", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Dataset could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteDataset(
@@ -273,12 +270,6 @@ public class DatasetController {
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
-	}
-
-	@ExceptionHandler
-	@org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.BAD_REQUEST)
-	public void handle(final Exception e) {
-		log.info("Returning HTTP 400 Bad Request", e);
 	}
 
 	@GetMapping("/{id}/download-csv")
@@ -588,7 +579,9 @@ public class DatasetController {
 
 		} catch (final Exception e) {
 			log.error("Unable to PUT csv data", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to PUT csv data");
 		}
 	}
 
@@ -671,7 +664,6 @@ public class DatasetController {
 	@Operation(summary = "Gets a preview of the data asset")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Dataset preview.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
-			@ApiResponse(responseCode = "404", description = "Dataset could not be found to create a preview for", content = @Content),
 			@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
 	})
@@ -695,7 +687,9 @@ public class DatasetController {
 					}
 					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
 				} catch (final IOException ioe) {
-					return ResponseEntity.status(415).build();
+					throw new ResponseStatusException(
+							org.springframework.http.HttpStatus.valueOf(415),
+							"Unable to open file");
 				}
 			}
 		} catch (final Exception e) {

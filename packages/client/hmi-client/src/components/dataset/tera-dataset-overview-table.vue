@@ -14,9 +14,9 @@
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
 					<div class="flex flex-row align-items-center">
-						<!-- HACK: just hit the service directly for the curie name -->
-						<!-- {{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept)) }} -->
-						{{ getCurieFromGroudingIdentifier(data.concept) }}
+						{{
+							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept))
+						}}
 						<i class="pi pi-chevron-down pl-2 text-xs" />
 						<a
 							target="_blank"
@@ -53,11 +53,7 @@
 		<Column field="dataType" header="Datatype" sortable style="width: 10%" />
 		<Column field="stats" header="Stats" style="width: 20%">
 			<template #body="{ data }">
-				<ul v-if="data.stats">
-					<li v-for="(stat, index) in Object.keys(data.stats)" :key="index">
-						{{ stat }}: {{ data.stats[stat] }}
-					</li>
-				</ul>
+				<tera-boxplot v-if="data.stats" :stats="data.stats" />
 			</template>
 		</Column>
 	</DataTable>
@@ -72,10 +68,12 @@ import { cloneDeep, isEmpty } from 'lodash';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
+	getNameOfCurieCached,
 	parseCurie,
 	searchCuriesEntities
 } from '@/services/concept';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 
 const props = defineProps<{
 	dataset: Dataset;
@@ -87,8 +85,7 @@ const conceptSearchTerm = ref({
 	name: ''
 });
 const curies = ref<DKG[]>([]);
-
-// const nameOfCurieCache = ref(new Map<string, string>());
+const nameOfCurieCache = ref(new Map<string, string>());
 
 const formattedData = computed(() => {
 	if (!props.dataset?.columns) return [];

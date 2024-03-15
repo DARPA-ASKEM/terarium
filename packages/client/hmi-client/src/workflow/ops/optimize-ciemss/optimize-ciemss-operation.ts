@@ -4,7 +4,6 @@ export interface InterventionPolicyGroup {
 	borderColour: string;
 	name: string;
 	parameter: string;
-	costBenefitFn: string;
 	startTime: number;
 	lowerBound: number;
 	upperBound: number;
@@ -16,32 +15,27 @@ export interface OptimizeCiemssOperationState {
 	// Settings
 	startTime: number;
 	endTime: number;
-	timeUnit: string;
 	numStochasticSamples: number;
 	solverMethod: string;
 	// Intervention policies
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
 	targetVariables: string[];
-	statistic: string;
-	numSamples: number;
 	riskTolerance: number;
-	aboveOrBelow: string;
 	threshold: number;
 	isMinimized: boolean;
 	chartConfigs: string[][];
 	simulationsInProgress: string[];
-	simulationRunId: string;
+	forecastRunId: string;
+	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
-	datasetName: string;
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	borderColour: '#cee2a4',
 	name: 'Policy bounds',
 	parameter: '',
-	costBenefitFn: '',
 	startTime: 0,
 	lowerBound: 0,
 	upperBound: 0,
@@ -61,23 +55,19 @@ export const OptimizeCiemssOperation: Operation = {
 		const init: OptimizeCiemssOperationState = {
 			startTime: 0,
 			endTime: 90,
-			timeUnit: '',
 			numStochasticSamples: 5,
 			solverMethod: 'euler',
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
-			statistic: 'mean',
-			numSamples: 4,
 			riskTolerance: 95,
-			aboveOrBelow: 'Below',
 			threshold: 0,
 			isMinimized: true,
 			chartConfigs: [],
 			simulationsInProgress: [],
-			simulationRunId: '',
+			forecastRunId: '',
+			optimzationRunId: '',
 			modelConfigName: '',
-			modelConfigDesc: '',
-			datasetName: ''
+			modelConfigDesc: ''
 		};
 		return init;
 	}
