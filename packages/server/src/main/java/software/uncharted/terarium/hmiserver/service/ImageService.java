@@ -51,6 +51,16 @@ public class ImageService {
         }
     }
 
+		/**
+		 *
+		 * @param id - unique id to identify the image by
+		 */
+		public void deleteImage(UUID id) {
+				final String bucket = config.getFileStorageS3BucketName();
+				final String key = getFilename(id);
+				s3ClientService.getS3Service().deleteObject(bucket, key);
+		}
+
     private String getFilename(UUID id) {
         return String.join("/image", id.toString());
     }

@@ -113,33 +113,32 @@
 				</ul>
 
 				<!-- Legend -->
-				<div
-					v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)"
-					class="legend flex align-items-center gap-7"
-				>
-					<span class="flex gap-5">
-						<span class="flex align-items-center gap-2">
-							<span class="legend-circle subdued">Name</span>
-							<span>State variable nodes</span>
+				<template #footer v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)">
+					<div class="legend flex align-items-center gap-7">
+						<span class="flex gap-5">
+							<span class="flex align-items-center gap-2">
+								<span class="legend-circle subdued">Name</span>
+								<span>State variable nodes</span>
+							</span>
+							<span class="flex align-items-center gap-2">
+								<span class="legend-square subdued">Name</span>
+								<span>Transition nodes</span>
+							</span>
 						</span>
-						<span class="flex align-items-center gap-2">
-							<span class="legend-square subdued">Name</span>
-							<span>Transition nodes</span>
+						<span class="flex gap-6">
+							<span class="legend-line orange">Model 1</span>
+							<span class="legend-line blue">Model 2</span>
+							<span class="legend-line red">Common to both models</span>
 						</span>
-					</span>
-					<span class="flex gap-6">
-						<span class="legend-line orange">Model 1</span>
-						<span class="legend-line blue">Model 2</span>
-						<span class="legend-line red">Common to both models</span>
-					</span>
-				</div>
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -162,7 +161,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { saveCodeToState } from '@/services/notebook';
-import { getImages, updateImage } from '@/services/image';
+import { getImages, addImage, deleteImages } from '@/services/image';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -179,12 +178,13 @@ enum Tabs {
 let editor: VAceEditorInstance['_editor'] | null;
 const kernelManager = new KernelSessionManager();
 const sampleAgentQuestions = [
+	'Compare models',
 	'Compare the three models and visualize and display them.',
 	'Compare the two models and visualize and display them.'
 ];
 
 const isLoadingStructuralComparisons = ref(false);
-const structuralComparisons = ref<string>([]);
+const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const isKernelReady = ref(false);
@@ -226,21 +226,28 @@ function formatField(field: string) {
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-// function submitGollmQuestion() {
-// 	console.log(gollmQuestion.value);
-// }
-
-function saveState(newImageId?: string, clearImages = false) {
-	const state = saveCodeToState(props.node, code.value, true);
+function updateImagesState(newImageId?: string, clearImages = false) {
+	const state = cloneDeep(props.node.state);
 	if (newImageId) state.comparisonImageIds.push(newImageId);
 	if (clearImages) state.comparisonImageIds = [];
 	emit('update-state', state);
 }
 
+function updateCodeState() {
+	const state = saveCodeToState(props.node, code.value, true);
+	emit('update-state', state);
+}
+
+function emptyImages() {
+	structuralComparisons.value = [];
+	updateImagesState(undefined, true);
+	deleteImages(props.node.state.comparisonImageIds);
+}
+
 function resetNotebook() {
 	code.value = '';
-	structuralComparisons.value = [];
-	saveState(undefined, true);
+	emptyImages();
+	updateCodeState();
 }
 
 function runCode() {
@@ -252,8 +259,9 @@ function runCode() {
 		stop_on_error: false,
 		code: editor?.getValue() as string
 	};
-	structuralComparisons.value = [];
 	isLoadingStructuralComparisons.value = true;
+	emptyImages();
+	updateCodeState();
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
@@ -261,8 +269,8 @@ function runCode() {
 			const newImageId = uuidv4();
 			const newImage = `data:image/png;base64,${data.content.data['image/png']}`;
 			structuralComparisons.value.push(newImage);
-			updateImage(newImageId, newImage);
-			saveState(newImageId);
+			addImage(newImageId, newImage);
+			updateImagesState(newImageId);
 			isLoadingStructuralComparisons.value = false;
 		})
 		.register('error', (data) => {
@@ -387,7 +395,7 @@ ul {
 
 		& > span {
 			width: fit-content;
-			margin-right: calc(var(--gap-xxlarge) * 3);
+			margin-right: var(--gap-xxlarge);
 		}
 	}
 }
@@ -424,6 +432,7 @@ ul {
 
 .legend {
 	font-size: var(--font-caption);
+	flex: 1;
 }
 
 .legend-circle {

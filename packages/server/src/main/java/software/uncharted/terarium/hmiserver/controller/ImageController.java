@@ -32,4 +32,11 @@ public class ImageController {
         imageService.storeImage(id, base64Data);
         return ResponseEntity.ok().build();
     }
+
+		@DeleteMapping("/{id}")
+		@Secured(Roles.USER)
+		public ResponseEntity<Void> deleteImage(@PathVariable UUID id) {
+			imageService.deleteImage(id);
+			return ResponseEntity.ok().build();
+		}
 }

@@ -11,7 +11,6 @@ export interface NotebookHistory {
 // Not ported yet since this will ruin the states of the nodes that already exist due to their differently named properties
 export const saveCodeToState = (node: WorkflowNode<any>, code: string, hasCodeRun: boolean) => {
 	const state = cloneDeep(node.state);
-	if (!state.notebookHistory || !state.hasCodeRun) return state;
 
 	state.hasCodeRun = hasCodeRun;
 	// for now only save the last code executed, may want to save all code executed in the future

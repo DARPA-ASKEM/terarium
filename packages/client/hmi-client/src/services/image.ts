@@ -5,11 +5,11 @@ export async function getImage(id: string): Promise<string | null> {
 	return response?.data ?? null;
 }
 
-export async function getImages(imageIds: string[]) {
+export async function getImages(ids: string[]) {
 	const result: string[] = [];
 	const promiseList = [] as Promise<string | null>[];
-	imageIds.forEach((imageId) => {
-		promiseList.push(getImage(imageId));
+	ids.forEach((id) => {
+		promiseList.push(getImage(id));
 	});
 	const responsesRaw = await Promise.all(promiseList);
 	responsesRaw.forEach((r) => {
@@ -18,10 +18,27 @@ export async function getImages(imageIds: string[]) {
 	return result;
 }
 
-export async function updateImage(id: string, image: string) {
-	console.log(id, image);
+export async function addImage(id: string, image: string) {
 	const response = await API.put(`/images/${id}`, image, {
 		headers: { 'Content-Type': 'application/json' }
 	});
 	return response?.data ?? null;
+}
+
+export async function deleteImage(id: string) {
+	const response = await API.delete(`/images/${id}`);
+	return response?.data ?? null;
+}
+
+export async function deleteImages(ids: string[]) {
+	const result: string[] = [];
+	const promiseList = [] as Promise<string | null>[];
+	ids.forEach((id) => {
+		promiseList.push(deleteImage(id));
+	});
+	const responsesRaw = await Promise.all(promiseList);
+	responsesRaw.forEach((r) => {
+		if (r) result.push(r);
+	});
+	return result;
 }
