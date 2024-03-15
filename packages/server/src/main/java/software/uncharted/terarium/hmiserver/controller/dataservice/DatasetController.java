@@ -207,17 +207,21 @@ public class DatasetController {
 		}
 
 		for(final String filename : dataset.get().getFileNames()) {
+			if (!filename.endsWith(".nc")) {
 				try {
 					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId());
-					if(csv == null || csv.isEmpty()){
+					if (csv == null || csv.isEmpty()) {
 						continue;
 					}
 					updateHeaders(dataset.get(), csv.get(0));
 				} catch (final IOException e) {
-						final String error = "Unable to get dataset CSV for file " + filename;
-						log.error(error, e);
-						continue;
+					final String error = "Unable to get dataset CSV for file " + filename;
+					log.error(error, e);
+					continue;
 				}
+			} else {
+				return dataset;
+			}
 		}
 
 		return datasetService.updateAsset(dataset.get());
