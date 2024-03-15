@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.controller.mira.MiraController.ConversionAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
@@ -156,10 +157,14 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
+		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+		additionalProperties.setFileName("IndiaNonSubscriptedPulsed.mdl");
+
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
 		req.setScript("mira_task:mdl_to_stockflow");
 		req.setInput(content.getBytes());
+		req.setAdditionalProperties(additionalProperties);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
@@ -173,10 +178,14 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final ClassPathResource resource = new ClassPathResource("mira/SIR.xmile");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
+		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+		additionalProperties.setFileName("SIR.xmile");
+
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
 		req.setScript("mira_task:stella_to_stockflow");
 		req.setInput(content.getBytes());
+		req.setAdditionalProperties(additionalProperties);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 

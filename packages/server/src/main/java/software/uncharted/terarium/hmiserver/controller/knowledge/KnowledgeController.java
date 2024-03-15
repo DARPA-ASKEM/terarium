@@ -127,22 +127,33 @@ public class KnowledgeController {
 						HttpStatus.UNPROCESSABLE_ENTITY,
 						"Skema Unified Service did not return any AMR based on the provided Equations. This could be due to invalid equations or the inability to parse them into the requested framework.");
 			}
+			// Catch every exception thrown by the Proxy
 		} catch (final FeignException e) {
+			// If the Skema Unified Service does not return a 2xx status code, we throw a 500 error
+			final int status = e.status() < 400 ? 500 : e.status();
 			throw new ResponseStatusException(
-					HttpStatus.valueOf(e.status()),
-					"Skema Unified Service did not return any AMR based on the provided Equations. " + e.getMessage());
+				HttpStatus.valueOf(status),
+				"Skema Unified Service did not return any AMR based on the provided Equations. \n" + e.getMessage());
+		} catch (final Exception e) {
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to reach Skema Unified Service. " + e.getMessage());
 		}
 
 		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations. ";
 
 		// If no model id is provided, create a new model
 		UUID modelId = null;
-		try {
-			modelId = req.get("modelId") != null ? UUID.fromString(req.get("modelId").asText()) : null;
-		} catch (final IllegalArgumentException e) {
-			throw new ResponseStatusException(
+		final String modelIdString = req.get("modelId") != null ? req.get("modelId").asText() : null;
+		if (modelIdString != null) {
+			try {
+				// Get the model id if it is a valid UUID
+				modelId = UUID.fromString(modelIdString);
+			} catch (final IllegalArgumentException e) {
+				throw new ResponseStatusException(
 					HttpStatus.BAD_REQUEST,
 					serviceSuccessMessage + "The provided modelId is not a valid UUID.");
+			}
 		}
 
 		if (modelId == null) {
