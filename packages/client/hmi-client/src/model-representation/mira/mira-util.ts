@@ -65,7 +65,9 @@ export const extractSubjectOutcomeMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
 	const colNames = extractConceptNames(templates, 'outcome');
-	if (rowNames.length === 0 || colNames.length === 0) return [];
+	if (rowNames.length === 0 || colNames.length === 0) {
+		return { rowNames, colNames, matrix: [] };
+	}
 
 	const matrix = emptyMatrix(rowNames, colNames);
 
@@ -106,7 +108,9 @@ export const extractSubjectControllersMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
 	const colNames = extractConceptNames(templates, 'controllers');
-	if (rowNames.length === 0 || colNames.length === 0) return [];
+	if (rowNames.length === 0 || colNames.length === 0) {
+		return { rowNames, colNames, matrix: [] };
+	}
 
 	const matrix = emptyMatrix(rowNames, colNames);
 
@@ -140,7 +144,9 @@ export const extractOutcomeControllersMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'outcome');
 	const colNames = extractConceptNames(templates, 'controllers');
-	if (rowNames.length === 0 || colNames.length === 0) return [];
+	if (rowNames.length === 0 || colNames.length === 0) {
+		return { rowNames, colNames, matrix: [] };
+	}
 
 	const matrix = emptyMatrix(rowNames, colNames);
 
