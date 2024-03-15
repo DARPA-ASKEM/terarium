@@ -59,6 +59,12 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
+				<!--FIXME: Should universally define css rules for tabs so that the styles used in the drilldowns are sharable here-->
+				<TabView>
+					<TabPanel header="Description"> </TabPanel>
+					<TabPanel header="Map view"> </TabPanel>
+					<TabPanel header="Data"> </TabPanel>
+				</TabView>
 				<template #footer>
 					<Button label="Save as new dataset" outlined severity="secondary" />
 					<Button label="Close" @click="emit('close')" />
@@ -75,6 +81,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
@@ -154,5 +162,19 @@ code {
 
 .number-entry {
 	width: 14rem;
+}
+
+.p-tabview {
+	margin-top: var(--gap-small);
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+
+	&:deep(.p-tabview-panels) {
+		flex: 1;
+		border: 1px solid var(--surface-border);
+		border-radius: var(--border-radius);
+		background-color: var(--surface-ground);
+	}
 }
 </style>
