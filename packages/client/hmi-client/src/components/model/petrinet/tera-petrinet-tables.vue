@@ -60,46 +60,11 @@
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 			</template>
-			<DataTable
-				v-if="!isEmpty(parameters)"
-				:edit-mode="readonly ? undefined : 'cell'"
-				data-key="id"
-				:value="parameters"
-			>
-				<Column field="id" header="Symbol">
-					<template #editor="{ data, index }">
-						<InputText
-							:value="data?.id ?? '--'"
-							@input="updateTable('parameters', index, 'id', $event.target?.['value'])"
-						/>
-					</template>
-				</Column>
-				<Column field="name" header="Name">
-					<template #editor="{ data, index }">
-						<InputText
-							:value="data?.name ?? '--'"
-							@input="updateTable('parameters', index, 'name', $event.target?.['value'])"
-						/>
-					</template>
-				</Column>
-				<Column field="value" header="Value">
-					<template #editor="{ data, index }">
-						<InputText
-							:value="data?.value ?? '--'"
-							@input="updateTable('parameters', index, 'value', $event.target?.['value'])"
-						/>
-					</template>
-				</Column>
-				<Column field="distribution.parameters" header="Distribution">
-					<template #body="{ data }">
-						<template v-if="data?.distribution?.parameters">
-							[{{ round(data?.distribution?.parameters.minimum, 4) }},
-							{{ round(data?.distribution?.parameters.maximum, 4) }}]
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-			</DataTable>
+			<tera-parameter-table
+				:model="model"
+				@update-value="updateParam"
+				@update-model="(model: Model) => emit('update-model', model)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -213,8 +178,8 @@
 </template>
 
 <script setup lang="ts">
-import type { DKG, Model, ModelConfiguration } from '@/types/Types';
-import { cloneDeep, groupBy, isEmpty, round } from 'lodash';
+import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref } from 'vue';
@@ -234,7 +199,7 @@ import {
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
-import InputText from 'primevue/inputtext';
+import teraParameterTable from '@/workflow/ops/model-config/tera-parameter-table.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -378,6 +343,19 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 		curies.value = response;
 	}
 }
+
+const updateParam = (params: ModelParameter[]) => {
+	const clonedModel = cloneDeep(props.model);
+	const modelParameters = clonedModel.semantics?.ode.parameters ?? [];
+	for (let i = 0; i < modelParameters.length; i++) {
+		const foundParam = params.find((p) => p.id === parameters![i].id);
+		if (foundParam) {
+			modelParameters[i] = foundParam;
+		}
+	}
+
+	emit('update-model', clonedModel);
+};
 
 function onCellEditComplete() {
 	conceptSearchTerm.value = { curie: '', name: '' };

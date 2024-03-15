@@ -165,10 +165,10 @@
 			<tera-initial-table
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
-				:model-configuration="modelConfiguration"
+				:model="model"
 				:data="slotProps.data.tableFormattedMatrix"
 				@update-value="(val: Initial) => emit('update-value', [val])"
-				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
+				@update-model="(model: Model) => emit('update-model', model)"
 			/>
 		</template>
 	</Datatable>
@@ -176,14 +176,12 @@
 		<tera-stratified-matrix-modal
 			v-if="matrixModalContext.isOpen && stratifiedModelType"
 			:id="matrixModalContext.matrixId"
-			:model-configuration="modelConfiguration"
+			:model="model"
 			:stratified-model-type="stratifiedModelType"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
-			@update-configuration="
-				(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-			"
+			@update-model="(model: Model) => emit('update-model', model)"
 		/>
 	</Teleport>
 
@@ -194,7 +192,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
-import type { ModelConfiguration, Initial } from '@/types/Types';
+import type { Initial, Model } from '@/types/Types';
 import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { StratifiedMatrix } from '@/types/Model';
 import Datatable from 'primevue/datatable';
@@ -218,12 +216,12 @@ const typeOptions = [
 ];
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	model: Model;
 	data?: ModelConfigTableData[];
 	hideHeader?: boolean;
 }>();
 
-const emit = defineEmits(['update-value', 'update-configuration']);
+const emit = defineEmits(['update-value', 'update-model']);
 
 const matrixModalContext = ref({
 	isOpen: false,
@@ -239,7 +237,7 @@ const nameOfCurieCache = ref(new Map<string, string>());
 const expandedRows = ref([]);
 
 const initials = computed<Map<string, string[]>>(() => {
-	const model = props.modelConfiguration.configuration;
+	const model = props.model;
 	if (stratifiedModelType.value) {
 		return getUnstratifiedInitials(model);
 	}
@@ -251,15 +249,15 @@ const initials = computed<Map<string, string[]>>(() => {
 });
 
 const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
-	const configuration = props.modelConfiguration.configuration;
+	const model = props.model;
 	const formattedInitials: ModelConfigTableData[] = [];
 
 	if (stratifiedModelType.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = configuration.semantics.ode.initials.find((i) => i.target === v);
+				const initial = model.semantics?.ode.initials?.find((i) => i.target === v);
 
-				const initialsMetadata = configuration.metadata.initials?.[initial!.target];
+				const initialsMetadata = model.metadata?.initials?.[initial!.target];
 				const sourceValue = initialsMetadata?.source;
 				const unitValue = initialsMetadata?.unit;
 				const descriptionValue = initialsMetadata?.description;
@@ -291,8 +289,8 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		initials.value.forEach((vals, init) => {
-			const initial = configuration.semantics.ode.initials.find((i) => i.target === vals[0]);
-			const initialsMetadata = configuration.metadata.initials?.[initial!.target];
+			const initial = model.semantics?.ode.initials?.find((i) => i.target === vals[0]);
+			const initialsMetadata = model.metadata?.initials?.[initial!.target];
 			const sourceValue = initialsMetadata?.source;
 			const unitValue = initialsMetadata?.unit;
 			const descriptionValue = initialsMetadata?.description;
@@ -330,17 +328,16 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
 const updateMetadata = (id: string, key: string, value: string) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	if (!clonedConfig.configuration.metadata.initials?.[id]) {
-		clonedConfig.configuration.metadata.initials[id] = {};
+	const clonedModel = cloneDeep(props.model);
+	if (!clonedModel.metadata?.initials?.[id]) {
+		clonedModel.metadata ??= {};
+		clonedModel.metadata.initials ??= {};
 	}
-	clonedConfig.configuration.metadata.initials[id][key] = value;
-	emit('update-configuration', clonedConfig);
+	clonedModel.metadata.initials[id][key] = value;
+	emit('update-model', clonedModel);
 };
 
-const stratifiedModelType = computed(() =>
-	getStratificationType(props.modelConfiguration.configuration)
-);
+const stratifiedModelType = computed(() => getStratificationType(props.model));
 
 const updateExpression = async (value: Initial) => {
 	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
@@ -407,14 +404,15 @@ const matrixEffect = () => {
 };
 
 const changeType = (initial: Initial, typeIndex: number) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	const metadata = clonedConfig.configuration.metadata.initials;
+	const clonedModel = cloneDeep(props.model);
+	const metadata = clonedModel.metadata?.initials;
+	if (!metadata) return;
 	if (!metadata[initial.target]) {
 		metadata[initial.target] = {};
 	}
 	switch (typeIndex) {
 		case ParamType.EXPRESSION:
-			metadata[initial.target].expression = true;
+			if (metadata) metadata[initial.target].expression = true;
 			break;
 		case ParamType.CONSTANT:
 		default:
@@ -422,7 +420,7 @@ const changeType = (initial: Initial, typeIndex: number) => {
 			break;
 	}
 
-	emit('update-configuration', clonedConfig);
+	emit('update-model', clonedModel);
 };
 </script>
 

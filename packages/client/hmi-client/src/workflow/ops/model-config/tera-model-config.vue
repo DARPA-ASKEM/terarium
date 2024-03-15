@@ -113,11 +113,11 @@
 							</template>
 							<tera-initial-table
 								v-if="modelConfiguration"
-								:model-configuration="modelConfiguration"
+								:model="modelConfiguration.configuration"
 								@update-value="updateConfigInitial"
-								@update-configuration="
-									(configToUpdate: ModelConfiguration) => {
-										updateFromConfig(configToUpdate);
+								@update-model="
+									(modelToUpdate: Model) => {
+										updateConfigFromModel(modelToUpdate);
 									}
 								"
 							/>
@@ -152,11 +152,11 @@
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
-							:model-configuration="modelConfiguration"
+							:model="modelConfiguration.configuration"
 							@update-value="updateConfigParam"
-							@update-configuration="
-								(configToUpdate: ModelConfiguration) => {
-									updateFromConfig(configToUpdate);
+							@update-model="
+								(modelToUpdate: Model) => {
+									updateConfigFromModel(modelToUpdate);
 								}
 							"
 						/>
@@ -612,16 +612,16 @@ const updateConfigInitial = (inits: Initial[]) => {
 	}
 };
 
-const updateFromConfig = (config: ModelConfiguration) => {
+const updateConfigFromModel = (inputModel: Model) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
-		knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
+		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		knobs.value.parameters = config.configuration.model?.parameters ?? [];
+		knobs.value.parameters = inputModel.model?.parameters ?? [];
 	}
-	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
-	knobs.value.initialsMetadata = config.configuration?.metadata?.initials ?? {};
-	knobs.value.parametersMetadata = config.configuration?.metadata?.parameters ?? {};
+	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
+	knobs.value.initialsMetadata = inputModel.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = inputModel.metadata?.parameters ?? {};
 };
 
 const createConfiguration = async () => {

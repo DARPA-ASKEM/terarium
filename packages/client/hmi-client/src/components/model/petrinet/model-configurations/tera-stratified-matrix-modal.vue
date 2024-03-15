@@ -39,9 +39,7 @@
 			<tera-stratified-matrix
 				v-bind="props"
 				:should-eval="matrixShouldEval"
-				@update-configuration="
-					(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-				"
+				@update-model="(modelToUpdate: Model) => emit('update-model', modelToUpdate)"
 			/>
 		</template>
 		<template #footer>
@@ -60,7 +58,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
-import type { ModelConfiguration } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -68,14 +66,14 @@ import { StratifiedMatrix } from '@/types/Model';
 import TeraStratifiedMatrix from './tera-stratified-matrix.vue';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	model: Model;
 	id: string;
 	stratifiedModelType: StratifiedModel;
 	stratifiedMatrixType: StratifiedMatrix;
 	openValueConfig: boolean;
 }>();
 
-const emit = defineEmits(['close-modal', 'update-configuration']);
+const emit = defineEmits(['close-modal', 'update-model']);
 
 const matrixShouldEval = ref(false);
 </script>
