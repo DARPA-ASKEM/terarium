@@ -20,6 +20,9 @@ public class ImageController {
     public ResponseEntity<String> getImageUrl(@PathVariable UUID id) {
         String url = imageService.getImageUrl(id);
 
+        if (url == null) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(url);
     }
 

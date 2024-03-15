@@ -27,9 +27,9 @@ public class ImageService {
         final String filename = getFilename(id);
         final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
         if (url.isPresent()) {
-            url.get();
+            return url.get();
         }
-				return url.toString();
+        return null;
     }
 
     /**
