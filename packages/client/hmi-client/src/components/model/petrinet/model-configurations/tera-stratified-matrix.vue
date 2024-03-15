@@ -13,14 +13,11 @@
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
+						<!-- Row label -->
 						<td v-if="matrix.length > 0" class="p-frozen-column">
-							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
-								{{ Object.values(row[0].rowCriteria)[0] }}
-							</template>
-							<template v-else>
-								{{ row[0].rowCriteria }}
-							</template>
+							{{ row[0].rowCriteria }}
 						</td>
+
 						<td
 							v-for="(cell, colIdx) in row"
 							:key="colIdx"
@@ -82,7 +79,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
 import { pythonInstance } from '@/python/PyodideController';
 import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
@@ -209,21 +205,33 @@ async function getMatrixValue(variableName: string) {
 }
 
 function renderMatrix() {
-	matrix.value = generateMatrix(
-		props.modelConfiguration.configuration,
-		props.id,
-		props.stratifiedMatrixType
-	);
-	matrix.value = null;
-
 	const matrixType = props.stratifiedMatrixType;
 
 	if (matrixType === StratifiedMatrix.Initials) {
 		const initialsMap = collapseInitials(props.mmt);
 		const childrenInitials = initialsMap.get(props.id);
+
+		const m2: any[] = [];
+		childrenInitials?.forEach((name, idx) => {
+			const row: any[] = [];
+			row.push({
+				row: idx,
+				col: 0,
+				rowCriteria: name,
+				colCriteria: '',
+				content: {
+					id: name,
+					value: props.mmt.initials[name].expression
+				}
+			});
+			m2.push(row);
+		});
+
 		console.group('initials matrix gen');
 		console.log('props.id', props.id);
 		console.log('children', childrenInitials);
+		console.log('matrix', m2);
+		matrix.value = m2;
 	} else if (matrixType === StratifiedMatrix.Parameters) {
 		const paramsMap = collapseParameters(props.mmt, props.mmtParams);
 		const childrenParams = paramsMap.get(props.id);

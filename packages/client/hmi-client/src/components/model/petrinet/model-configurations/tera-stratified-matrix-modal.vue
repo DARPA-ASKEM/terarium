@@ -38,12 +38,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { ModelConfiguration } from '@/types/Types';
 import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type { ModelConfiguration } from '@/types/Types';
 import TeraStratifiedMatrix from './tera-stratified-matrix.vue';
 
 const props = defineProps<{

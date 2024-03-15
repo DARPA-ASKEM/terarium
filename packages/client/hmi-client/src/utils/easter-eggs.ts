@@ -1,6 +1,6 @@
 /* Matrix effect easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
 export const matrixEffect = () => {
-	if (Math.random() > 0.1) return;
+	if (Math.random() > 0.02) return;
 	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
 	if (!canvas) return;
 	const ctx = (canvas as HTMLCanvasElement)?.getContext('2d');

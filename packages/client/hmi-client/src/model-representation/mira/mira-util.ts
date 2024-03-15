@@ -45,6 +45,8 @@ const emptyMatrix = (rowNames: string[], colNames: string[]) => {
 		const row: any[] = [];
 		for (let colIdx = 0; colIdx < colNames.length; colIdx++) {
 			row.push({
+				row: rowIdx,
+				col: colIdx,
 				rowCriteria: rowNames[rowIdx],
 				colCriteria: colNames[colIdx],
 				content: {}
@@ -63,6 +65,8 @@ export const extractSubjectOutcomeMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
 	const colNames = extractConceptNames(templates, 'outcome');
+	if (rowNames.length === 0 || colNames.length === 0) return [];
+
 	const matrix = emptyMatrix(rowNames, colNames);
 
 	for (let i = 0; i < paramNames.length; i++) {
@@ -102,6 +106,8 @@ export const extractSubjectControllersMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
 	const colNames = extractConceptNames(templates, 'controllers');
+	if (rowNames.length === 0 || colNames.length === 0) return [];
+
 	const matrix = emptyMatrix(rowNames, colNames);
 
 	for (let i = 0; i < paramNames.length; i++) {
@@ -134,6 +140,8 @@ export const extractOutcomeControllersMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'outcome');
 	const colNames = extractConceptNames(templates, 'controllers');
+	if (rowNames.length === 0 || colNames.length === 0) return [];
+
 	const matrix = emptyMatrix(rowNames, colNames);
 
 	for (let i = 0; i < paramNames.length; i++) {
