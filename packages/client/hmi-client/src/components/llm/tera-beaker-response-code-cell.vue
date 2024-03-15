@@ -2,10 +2,25 @@
 	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
 		<template ref="codeCell" />
 		<div class="controls" :class="{ 'controls-with-query': isQuestion }">
-			<Button text rounded severity="secondary" icon="pi pi-trash" disabled />
+			<Button text rounded icon="pi pi-trash" class="danger-hover" @click="showDialog" />
 			<Button text rounded icon="pi pi-play" @click="run" />
 		</div>
 	</div>
+
+	<!-- Are you sure? dialog -->
+	<Dialog
+		v-model:visible="showConfirmDialog"
+		modal
+		:closable="false"
+		class="w-3"
+		header="Are you sure?"
+	>
+		<div class="mt-3">This cannot be undone.</div>
+		<template #footer>
+			<Button label="No" @click="cancelDelete" severity="secondary" outlined />
+			<Button label="Yes" @click="confirmDelete" class="p-button-danger" />
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
@@ -21,6 +36,7 @@ import {
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 
 const props = defineProps({
 	jupyterSession: {
@@ -167,6 +183,25 @@ defineExpose({
 	cellWidget,
 	clear
 });
+
+// Delete cell function
+const emit = defineEmits(['deleteRequested']);
+
+// Are you sure? dialog
+const showConfirmDialog = ref(false);
+
+function showDialog() {
+	showConfirmDialog.value = true;
+}
+
+function confirmDelete() {
+	emit('deleteRequested');
+	showConfirmDialog.value = false; // Close the dialog
+}
+
+function cancelDelete() {
+	showConfirmDialog.value = false; // Close the dialog
+}
 </script>
 
 <style lang="scss" global>

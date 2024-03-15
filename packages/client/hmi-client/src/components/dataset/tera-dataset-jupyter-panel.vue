@@ -1,6 +1,7 @@
 <template>
 	<div class="data-transform-container">
-		<ConfirmDialog class="w-5"></ConfirmDialog>
+		<!-- Confirm Dialogs -->
+		<ConfirmDialog class="w-4" @accept="onAccept"> </ConfirmDialog>
 
 		<!-- Toolbar -->
 		<div class="toolbar flex">

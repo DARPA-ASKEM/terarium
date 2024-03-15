@@ -1,7 +1,7 @@
 <template>
 	<section class="jupyter-response">
 		<section>
-			<div class="menu-container">
+			<section class="menu-container">
 				<!-- Button to show chat window menu -->
 				<Button
 					v-if="msg.query"
@@ -10,15 +10,17 @@
 					@click.stop="showChatWindowMenu"
 				/>
 				<Menu ref="chatWindowMenu" :model="chatWindowMenuItems" :popup="true" />
-			</div>
-			<div ref="resp" class="resp">
+			</section>
+			<section ref="resp" class="resp">
 				<section>
 					<div v-if="msg.query" class="query">{{ msg.query }}</div>
-					<!-- hiding this processing notification because it was applied to all messages, not just the one that is processing -->
+					<!-- TODO: This processing notification was applied to all messages, not just the one that is processing. Need to add id check. -->
 					<!-- <div v-if="props.isExecutingCode" class="executing-message">
 						<span class="pi pi-spinner pi-spin"></span>Processing
 					</div> -->
 				</section>
+
+				<!-- Loop through the messages and display them -->
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_response type -->
 					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
@@ -46,10 +48,11 @@
 							:notebook-item-id="msg.query_id"
 							context="dataset"
 							:context_info="{ id: props.assetId, query: msg.query }"
+							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
 					</div>
 				</div>
-			</div>
+			</section>
 		</section>
 	</section>
 </template>
@@ -61,7 +64,7 @@ import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.
 import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { ref, computed, onMounted, watch } from 'vue';
+import { defineEmits, ref, computed, onMounted, watch } from 'vue';
 import type { CsvAsset } from '@/types/Types';
 
 const emit = defineEmits(['cell-updated', 'preview-selected', 'update-kernel-state']);
@@ -80,6 +83,7 @@ const props = defineProps<{
 	assetId?: string;
 	autoExpandPreview?: boolean;
 	defaultPreview?: string;
+	index: Number; // Index of the cell in the notebookItems list
 }>();
 
 const codeCell = ref(null);
@@ -144,13 +148,26 @@ onMounted(() => {
 watch(
 	() => props.msg.messages,
 	() => {
-		emit('cell-updated', resp.value, props.msg);
+		emit('cell-updated', resp.value, props.msg, 'delete-cell');
 	}
 );
 
 defineExpose({
 	codeCell
 });
+
+function onDeleteRequested(msgId) {
+	// Emit an event to request the deletion of a message with the specified msgId
+	emit('deleteMessage', msgId);
+}
+
+// // This computed value filters the messages to only include the ones we want to display
+// const filteredMessages = computed(() => props.msg.messages.filter(m =>
+//   (m.header.msg_type === 'llm_response' && m.content.name === 'response_text') ||
+//   (m.header.msg_type === 'stream' && m.content.name === 'stderr') ||
+//   (m.header.msg_type === 'stream' && m.content.name === 'stdout') ||
+//   (m.header.msg_type === 'code_cell')
+// ));
 </script>
 
 <style scoped>
