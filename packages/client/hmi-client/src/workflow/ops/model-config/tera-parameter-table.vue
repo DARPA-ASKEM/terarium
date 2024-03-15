@@ -230,6 +230,7 @@
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model-configuration="modelConfiguration"
+				:mmt="mmt"
 				:data="slotProps.data.tableFormattedMatrix"
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
 				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
@@ -238,10 +239,9 @@
 	</Datatable>
 	<Teleport to="body">
 		<tera-stratified-matrix-modal
-			v-if="matrixModalContext.isOpen && stratifiedModelType"
+			v-if="matrixModalContext.isOpen && isStratified"
 			:id="matrixModalContext.matrixId"
 			:model-configuration="modelConfiguration"
-			:stratified-model-type="stratifiedModelType"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
@@ -274,13 +274,15 @@ import {
 } from '@/services/concept';
 
 import { getUnstratifiedParameters } from '@/model-representation/petrinet/mira-petri';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
 import type { ModelConfiguration, ModelParameter } from '@/types/Types';
+import { MiraModel } from '@/model-representation/mira/mira-common';
+import { isStratifiedModel } from '@/model-representation/mira/mira';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	mmt: MiraModel;
 	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
 	hideHeader?: boolean;
 }>();
@@ -293,6 +295,8 @@ const typeOptions = [
 	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
 ];
 
+const isStratified = computed(() => isStratifiedModel(props.mmt));
+
 const matrixModalContext = ref({
 	isOpen: false,
 	matrixId: ''
@@ -300,7 +304,7 @@ const matrixModalContext = ref({
 
 const parameters = computed<Map<string, string[]>>(() => {
 	const amr = props.modelConfiguration.configuration;
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		return getUnstratifiedParameters(amr);
 	}
 	const result = new Map<string, string[]>();
@@ -334,7 +338,7 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	const configuration = props.modelConfiguration.configuration;
 	const formattedParams: ModelConfigTableData[] = [];
 
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				let param;
@@ -510,10 +514,6 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	}
 	emit('update-configuration', clonedConfig);
 };
-
-const stratifiedModelType = computed(() =>
-	getStratificationType(props.modelConfiguration.configuration)
-);
 
 const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {

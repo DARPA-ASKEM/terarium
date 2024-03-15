@@ -153,6 +153,7 @@
 						<tera-parameter-table
 							v-if="modelConfiguration"
 							:model-configuration="modelConfiguration"
+							:mmt="mmt"
 							@update-value="updateConfigParam"
 							@update-configuration="
 								(configToUpdate: ModelConfiguration) => {
