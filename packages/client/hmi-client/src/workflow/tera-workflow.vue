@@ -455,101 +455,101 @@ const addOperatorToWorkflow: Function =
 
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [
-	// Model
 	{
-		label: 'Model operators',
+		label: 'Add resource',
 		items: [
 			{
 				label: ModelOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelOp)
 			},
 			{
+				label: ModelFromCodeOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelFromCodeOp)
+			},
+			{
+				label: ModelFromDocumentOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelFromDocumentOp)
+			},
+			{ separator: true },
+			{ label: DatasetOp.operation.displayName, command: addOperatorToWorkflow(DatasetOp) },
+			{ separator: true },
+			{ label: DocumentOp.operation.displayName, command: addOperatorToWorkflow(DocumentOp) },
+			{ separator: true },
+			{
+				label: CodeAssetOp.operation.displayName,
+				command: addOperatorToWorkflow(CodeAssetOp)
+			}
+		]
+	},
+	{
+		label: 'Work with model',
+		items: [
+			{
+				label: ModelConfigOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelConfigOp)
+			},
+			{
 				label: ModelEditOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelEditOp)
 			},
 			{
-				label: ModelConfigOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelConfigOp)
+				label: FunmanOp.operation.displayName,
+				command: addOperatorToWorkflow(FunmanOp)
 			},
 			{
 				label: StratifyMiraOp.operation.displayName,
 				command: addOperatorToWorkflow(StratifyMiraOp)
 			},
 			{
-				label: ModelTransformerOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelTransformerOp)
-			},
-			{
-				label: FunmanOp.operation.displayName,
-				command: addOperatorToWorkflow(FunmanOp)
-			},
-			{ separator: true },
-			{
-				label: OptimizeCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(OptimizeCiemssOp)
-			},
-			{
-				label: ModelCouplingOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelCouplingOp)
-			},
+				label: DecapodesOp.operation.displayName,
+				disabled: true,
+				command: addOperatorToWorkflow(DecapodesOp)
+			}
+		]
+	},
+	{
+		label: 'Work with multiple models',
+		items: [
 			{
 				label: ModelComparisonOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelComparisonOp)
 			},
 			{
-				label: DecapodesOp.operation.displayName,
-				command: addOperatorToWorkflow(DecapodesOp)
-			}
-		]
-	},
-	// Code
-	{
-		label: 'Code operators',
-		items: [
-			{ label: CodeAssetOp.operation.displayName, command: addOperatorToWorkflow(CodeAssetOp) },
+				label: ModelCouplingOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelCouplingOp)
+			},
+			{ separator: true },
 			{
-				label: ModelFromCodeOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelFromCodeOp)
-			}
-		]
-	},
-	// Document
-	{
-		label: 'Document operators',
-		items: [
-			{ label: DocumentOp.operation.displayName, command: addOperatorToWorkflow(DocumentOp) },
+				label: SimulateEnsembleCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
+			},
 			{
-				label: ModelFromDocumentOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelFromDocumentOp)
+				label: CalibrateEnsembleCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
 			}
 		]
 	},
-	// Dataset
 	{
-		label: 'Dataset operators',
+		label: 'Work with dataset',
 		items: [
-			{ label: DatasetOp.operation.displayName, command: addOperatorToWorkflow(DatasetOp) },
 			{
 				label: DatasetTransformerOp.operation.displayName,
 				command: addOperatorToWorkflow(DatasetTransformerOp)
-			}
+			},
+			{ label: 'Subset dataset', disabled: true },
+			{ label: 'Transform gridded dataset', disabled: true }
 		]
 	},
-	// —————
 	{
-		separator: true
-	},
-	// Simulate
-	{
-		label: 'Simulate',
+		label: 'Run model',
 		items: [
-			{
-				label: CalibrateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateJuliaOp)
-			},
 			{
 				label: SimulateJuliaOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateJuliaOp)
+			},
+			{
+				label: CalibrateJuliaOp.operation.displayName,
+				command: addOperatorToWorkflow(CalibrateJuliaOp)
 			},
 			{ separator: true },
 			{
@@ -560,24 +560,13 @@ const contextMenuItems: MenuItem[] = [
 				label: CalibrateCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateCiemssOp)
 			},
-			{ separator: true },
 			{
-				label: CalibrateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
-			},
-			{
-				label: SimulateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
+				label: OptimizeCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(OptimizeCiemssOp)
 			}
 		]
-	},
-	// Agent LLM
-	{
-		label: "Ask 'em LLM tool",
-		disabled: true
 	}
 ];
-
 const addComponentMenu = ref();
 const showAddComponentMenu = () => {
 	const el = document.querySelector('#add-component-btn');
