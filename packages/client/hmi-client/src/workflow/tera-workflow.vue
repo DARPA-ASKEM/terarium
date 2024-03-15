@@ -455,7 +455,6 @@ const addOperatorToWorkflow: Function =
 
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [
-	// Add Resource to Workflow
 	{
 		label: 'Add Resource to Workflow',
 		items: [
@@ -482,7 +481,6 @@ const contextMenuItems: MenuItem[] = [
 			}
 		]
 	},
-	// Work with Model
 	{
 		label: 'Work with Model',
 		items: [
@@ -493,10 +491,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: 'Validate configuration', // FunmanOp.operation.displayName,
 				command: addOperatorToWorkflow(FunmanOp)
-			},
-			{
-				label: ModelTransformerOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelTransformerOp)
 			},
 			{
 				label: StratifyMiraOp.operation.displayName,
@@ -514,7 +508,6 @@ const contextMenuItems: MenuItem[] = [
 			}
 		]
 	},
-	// Work with Multiple Models
 	{
 		label: 'Work with Multiple Models',
 		items: [
@@ -537,7 +530,6 @@ const contextMenuItems: MenuItem[] = [
 			}
 		]
 	},
-	// Work with Dataset
 	{
 		label: 'Work with Dataset',
 		items: [
@@ -549,7 +541,6 @@ const contextMenuItems: MenuItem[] = [
 			{ label: 'Transform gridded dataset', disabled: true }
 		]
 	},
-	// Run Model
 	{
 		label: 'Run Model',
 		items: [
