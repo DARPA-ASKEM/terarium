@@ -1,14 +1,12 @@
 <template>
-	<div class="simulate-chart">
-		<div class="row">
-			<Chart
-				type="bar"
-				:width="chartSize.width"
-				:height="chartSize.height"
-				:data="chartData"
-				:options="chartOptions"
-			/>
-		</div>
+	<div class="row">
+		<Chart
+			type="bar"
+			:width="chartSize.width"
+			:height="chartSize.height"
+			:data="chartData"
+			:options="chartOptions"
+		/>
 	</div>
 </template>
 
@@ -152,21 +150,6 @@ watch(
 </script>
 
 <style scoped>
-.multiselect-title {
-	font-size: smaller;
-	font-weight: 700;
-}
-
-.p-chart {
-	width: 100%;
-	margin-top: 0.5em;
-}
-
-.p-multiselect {
-	width: 100%;
-	border-color: lightgrey;
-}
-
 .row {
 	display: flex;
 }
