@@ -250,43 +250,45 @@
 <script setup lang="ts">
 import { cloneDeep, isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Vue3Lottie } from 'vue3-lottie';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
-import { WorkflowNode } from '@/types/workflow';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
-import { createModelConfiguration } from '@/services/model-configurations';
-import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
-import { TaskStatus } from '@/types/Types';
-import { AMRSchemaNames } from '@/types/common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { useToastService } from '@/services/toast';
-import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-import { logger } from '@/utils/logger';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { VAceEditor } from 'vue3-ace-editor';
+
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { KernelSessionManager } from '@/services/jupyter';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import '@/ace-config';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
+import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
+import { createModelConfiguration } from '@/services/model-configurations';
+import { TaskStatus } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
+import { useToastService } from '@/services/toast';
+import { logger } from '@/utils/logger';
+import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
+import { KernelSessionManager } from '@/services/jupyter';
 import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type { WorkflowNode } from '@/types/workflow';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import TeraParameterTable from './tera-parameter-table.vue';
 import TeraInitialTable from './tera-initial-table.vue';
+import TeraParameterTable from './tera-parameter-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -714,17 +716,19 @@ const initialize = async () => {
 };
 
 const useSuggestedConfig = (config: ModelConfiguration) => {
+	const amr = config.configuration;
+
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		knobs.value.initials = config.configuration.semantics.ode.initials;
-		knobs.value.parameters = config.configuration.semantics.ode.parameters;
+		knobs.value.initials = amr.semantics.ode.initials;
+		knobs.value.parameters = amr.semantics.ode.parameters;
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		knobs.value.parameters = config.configuration.model.parameters;
+		knobs.value.parameters = amr.model.parameters;
 	}
-	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
-	knobs.value.initialsMetadata = config.configuration.metadata?.initials ?? {};
-	knobs.value.parametersMetadata = config.configuration.metadata?.parameters ?? {};
+	knobs.value.timeseries = amr.metadata?.timeseries ?? {};
+	knobs.value.initialsMetadata = amr.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = amr.metadata?.parameters ?? {};
 	logger.success(`Configuration applied ${config.name}`);
 };
 
@@ -848,18 +852,6 @@ onUnmounted(() => {
 	width: 100%;
 }
 
-.floating-footer {
-	display: flex;
-	justify-content: flex-end;
-	position: fixed;
-	padding-top: 0.75rem;
-	bottom: 16px;
-	left: 3rem;
-	width: calc(100% - 6rem);
-	background-color: var(--surface-glass);
-	backdrop-filter: blur(8px);
-	border-top: 1px solid var(--surface-border);
-}
 :deep(.p-button:disabled.p-button-outlined) {
 	background-color: var(--surface-0) !important;
 }
