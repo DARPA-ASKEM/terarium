@@ -306,24 +306,17 @@ const matrixModalContext = ref({
 });
 
 const parameters = computed<Map<string, string[]>>(() => {
-	const amr = props.modelConfiguration.configuration;
 	if (isStratified.value) {
 		const collapsedParams = collapseParameters(props.mmt, props.mmtParams);
-
 		return collapsedParams;
 	}
 
 	// Non-stratified logic
 	const result = new Map<string, string[]>();
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		amr.semantics?.ode.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		amr.model.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	}
+	Object.keys(props.mmt.parameters).forEach((key) => {
+		const p = props.mmt.parameters[key];
+		result.set(p.name, [p.name]);
+	});
 	return result;
 });
 
