@@ -697,12 +697,6 @@ const initialize = async () => {
 	fetchConfigurations(modelId);
 	model.value = await getModel(modelId);
 
-	if (model.value) {
-		const response: any = await getMMT(model.value);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	}
-
 	knobs.value.name = state.name;
 	knobs.value.description = state.description;
 	knobs.value.tempConfigId = state.tempConfigId;
@@ -781,6 +775,17 @@ const tempUpdate = (data: any, field: any) => {
 onMounted(async () => {
 	await initialize();
 });
+
+watch(
+	() => modelConfiguration.value,
+	async (config) => {
+		if (!config) return;
+		const response: any = await getMMT(config.configuration);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => knobs.value,

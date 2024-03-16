@@ -240,7 +240,7 @@ watch(
 	}
 );
 
-watch([() => props.id, () => props.modelConfiguration.configuration], () => {
+watch([() => props.id, () => props.mmt], () => {
 	configureMatrix();
 });
 
