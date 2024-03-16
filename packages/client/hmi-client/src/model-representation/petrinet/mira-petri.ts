@@ -1,8 +1,5 @@
 import _ from 'lodash';
 import type { Model, PetriNetTransition } from '@/types/Types';
-import { createMatrix1D } from '@/utils/pivot';
-import { StratifiedMatrix } from '@/types/Model';
-import { createParameterMatrix, createTransitionMatrix } from './petri-matrix-service';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -166,21 +163,6 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
  *
  * For example "beta_1_1", "beta_1_2" will collapse into "beta": ["beta_1_1", "beta_1_2"]
  */
-export const getUnstratifiedParameters = (amr: Model) => {
-	const parameters = amr.semantics?.ode.parameters || [];
-	const map = new Map<string, string[]>();
-	parameters.forEach((p) => {
-		const rootName = _.first(p.id.split('_')) as string;
-		const name = p.name ? p.name : rootName;
-		if (map.has(name)) {
-			map.get(name)?.push(p.id);
-		} else {
-			map.set(name, [p.id]);
-		}
-	});
-	return map;
-};
-
 export const getUnstratifiedInitials = (amr: Model) => {
 	const initials = amr.semantics?.ode.initials || [];
 	const map = new Map<string, string[]>();
@@ -193,80 +175,4 @@ export const getUnstratifiedInitials = (amr: Model) => {
 		}
 	});
 	return map;
-};
-
-// Holds all points that have the parameter
-export const filterParameterLocations = (
-	amr: Model,
-	transitionMatrixData: any[],
-	parameterIds: string[]
-) =>
-	transitionMatrixData.filter((d) => {
-		// Check if the transition's expression include the usage
-		const rate = amr.semantics?.ode?.rates?.find((r) => r.target === d.id);
-		if (!rate) return false;
-		// FIXME: should check through sympy to be more accurate
-		for (let i = 0; i < parameterIds.length; i++) {
-			if (rate.expression.includes(parameterIds[i])) return true;
-		}
-		return false;
-	});
-
-/**
- * Given an MIRA AMR, extract and compute a presentation-layer data format
- */
-export const getMiraAMRPresentationData = (amr: Model) => {
-	const statesData = getStates(amr);
-	const transitionsData = getTransitions(amr, statesData.lookup);
-
-	const compactModel = {
-		model: {
-			states: statesData.uniqueStates,
-			transitions: transitionsData.uniqueTransitions
-		},
-		semantics: {
-			ode: {}
-		}
-	};
-
-	return {
-		compactModel,
-		stateMatrixData: statesData.matrixData,
-		transitionMatrixData: transitionsData.matrixData
-	};
-};
-
-export const generateMatrix = (amr: Model, id: string, stratifiedMatrixType: StratifiedMatrix) => {
-	const { stateMatrixData, transitionMatrixData } = getMiraAMRPresentationData(amr);
-
-	// Get only the states/transitions that are mapped to the base model
-	let matrixData: any[] = [];
-	let childParameterIds: string[] = [];
-
-	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
-		matrixData = stateMatrixData.filter(({ base }) => base === id);
-	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
-		const paramsMap = getUnstratifiedParameters(amr);
-		if (!paramsMap.has(id)) return null;
-
-		// IDs to find within the rates
-		childParameterIds = paramsMap.get(id) as string[];
-		// Holds all points that have the parameter
-		matrixData = filterParameterLocations(amr, transitionMatrixData, [...childParameterIds, id]);
-	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
-		matrixData = transitionMatrixData.filter(({ base }) => base === id);
-	}
-
-	if (_.isEmpty(matrixData)) return null;
-
-	let matrix: any[] = [];
-
-	if (stratifiedMatrixType === StratifiedMatrix.Initials) {
-		matrix = createMatrix1D(matrixData).matrix;
-	} else if (stratifiedMatrixType === StratifiedMatrix.Parameters) {
-		matrix = createParameterMatrix(amr, matrixData, childParameterIds).matrix;
-	} else if (stratifiedMatrixType === StratifiedMatrix.Rates) {
-		matrix = createTransitionMatrix(amr, matrixData).matrix;
-	}
-	return matrix;
 };
