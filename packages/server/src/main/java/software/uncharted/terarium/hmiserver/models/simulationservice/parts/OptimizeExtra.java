@@ -24,4 +24,9 @@ public class OptimizeExtra implements Serializable {
 	@JsonAlias("is_minimized")
 	@TSOptional
 	private Boolean isMinimized;
+	@TSOptional
+	private Double alpha;
+	@JsonAlias("solver_method")
+	@TSOptional
+	private String solverMethod;
 }
