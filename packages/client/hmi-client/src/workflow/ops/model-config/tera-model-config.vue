@@ -13,6 +13,7 @@
 				@update:selection="onSelection"
 			/>
 		</template>
+
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="box-container" v-if="model">
@@ -621,15 +622,17 @@ const updateConfigInitial = (inits: Initial[]) => {
 };
 
 const updateFromConfig = (config: ModelConfiguration) => {
+	const amr = config.configuration;
+
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
-		knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+		knobs.value.initials = amr.semantics?.ode.initials ?? [];
+		knobs.value.parameters = amr.semantics?.ode.parameters ?? [];
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		knobs.value.parameters = config.configuration.model?.parameters ?? [];
+		knobs.value.parameters = amr.model?.parameters ?? [];
 	}
-	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
-	knobs.value.initialsMetadata = config.configuration?.metadata?.initials ?? {};
-	knobs.value.parametersMetadata = config.configuration?.metadata?.parameters ?? {};
+	knobs.value.timeseries = amr?.metadata?.timeseries ?? {};
+	knobs.value.initialsMetadata = amr?.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = amr?.metadata?.parameters ?? {};
 };
 
 const createConfiguration = async () => {
@@ -791,6 +794,7 @@ watch(
 		state.initialsMetadata = knobs.value.initialsMetadata;
 		state.parametersMetadata = knobs.value.parametersMetadata;
 		state.tempConfigId = knobs.value.tempConfigId;
+
 		emit('update-state', state);
 	},
 	{ deep: true }

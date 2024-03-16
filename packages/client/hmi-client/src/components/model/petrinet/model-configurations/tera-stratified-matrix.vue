@@ -80,7 +80,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
-import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
+import type { ModelConfiguration } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
@@ -89,6 +89,7 @@ import {
 	createParameterMatrix,
 	collapseInitials
 } from '@/model-representation/mira/mira';
+import { getVariable, updateVariable } from '@/model-representation/service';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -104,94 +105,34 @@ const emit = defineEmits(['update-configuration']);
 const matrix = ref<any>([]);
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
-
 const matrixExpressionsList = ref<string[][]>([]);
 
-const parametersValueMap = computed(
-	() =>
-		props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
-			acc[val.id] = val.value;
-			return acc;
-		}, {})
-);
+const parametersValueMap = computed(() => {
+	const keys = Object.keys(props.mmt.parameters);
+	const result: any = {};
+	keys.forEach((key) => {
+		result[key] = props.mmt.parameters[key].value;
+	});
+	return result;
+});
 
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
 
-watch(
-	() => [matrix.value, props.shouldEval],
-	async () => {
-		if (!matrix.value) return;
-		const output: string[][] = [];
-		await Promise.all(
-			matrix.value
-				.map((row) =>
-					row.map(async (cell) => {
-						if (cell.content?.id) {
-							if (!output[cell.row]) {
-								output[cell.row] = [];
-							}
-							output[cell.row][cell.col] = await getMatrixValue(cell.content.id);
-						}
-					})
-				)
-				.flat()
-		);
-		matrixExpressionsList.value = output;
-	}
-);
-
-// Finds where to get the value within the AMR based on the variable name
-function findOdeObjectLocation(variableName: string): {
-	odeFieldObject: Rate & Initial & ModelParameter;
-	fieldName: string;
-	fieldIndex: number;
-} | null {
-	const ode = props.modelConfiguration.configuration?.semantics?.ode;
-	if (!ode) return null;
-
-	const fieldNames = [
-		StratifiedMatrix.Rates,
-		StratifiedMatrix.Initials,
-		StratifiedMatrix.Parameters
-	];
-
-	for (let i = 0; i < fieldNames.length; i++) {
-		const fieldIndex = ode[fieldNames[i]].findIndex(
-			({ target, id }) => target === variableName || id === variableName
-		);
-		if (fieldIndex === -1) continue;
-
-		return {
-			odeFieldObject: ode[fieldNames[i]][fieldIndex],
-			fieldName: fieldNames[i],
-			fieldIndex
-		};
-	}
-	return null;
-}
-
-function getMatrixExpression(variableName: string) {
-	const odeObjectLocation = findOdeObjectLocation(variableName);
-	if (odeObjectLocation) {
-		const { odeFieldObject } = odeObjectLocation;
-		return odeFieldObject?.expression ?? odeFieldObject?.value;
-	}
-	return variableName;
-}
-
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
 	if (!variableName) return;
-	valueToEdit.value = getMatrixExpression(variableName);
+	valueToEdit.value = getVariable(props.mmt, variableName).value;
 	editableCellStates.value[rowIdx][colIdx] = true;
 }
 
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string) {
-	const expressionBase = getMatrixExpression(variableName);
+	const expressionBase = getVariable(props.mmt, variableName).value;
+
+	console.log('debugging', variableName, expressionBase);
 
 	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
@@ -200,7 +141,6 @@ async function getMatrixValue(variableName: string) {
 		);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
-
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
@@ -245,39 +185,26 @@ function renderMatrix() {
 		// FIXME: should be matrices
 		matrix.value = matrices.outcomeControllers.matrix;
 	} else {
-		console.log('TODO!!!');
+		console.log('TODO template!!!');
 	}
 }
 
 async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
 	editableCellStates.value[rowIdx][colIdx] = false;
 	const newValue = valueToEdit.value;
-	const odeObjectLocation = findOdeObjectLocation(variableName);
+	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
-	if (odeObjectLocation) {
-		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
+	const clone = cloneDeep(props.modelConfiguration);
+	updateVariable(
+		clone.configuration,
+		props.stratifiedMatrixType.toString(),
+		variableName,
+		newValue,
+		mathml
+	);
 
-		// Update if the value is different
-		if (odeFieldObject.expression) {
-			if (odeFieldObject.expression === newValue) return;
-
-			// If expression changed, we want to update the the twin fields
-			// - expression
-			// - expression_mathml
-			odeFieldObject.expression = newValue;
-			const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
-			odeFieldObject.expression_mathml = mathml;
-		} else if (odeFieldObject.value) {
-			if (odeFieldObject.value === Number(newValue)) return;
-			odeFieldObject.value = Number(newValue);
-		}
-
-		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
-		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
-
-		emit('update-configuration', modelConfigurationClone);
-		renderMatrix();
-	}
+	emit('update-configuration', clone);
+	renderMatrix();
 }
 
 function configureMatrix() {
@@ -289,6 +216,29 @@ function configureMatrix() {
 		}
 	}
 }
+
+watch(
+	() => [matrix.value, props.shouldEval],
+	async () => {
+		if (!matrix.value) return;
+		const output: string[][] = [];
+		await Promise.all(
+			matrix.value
+				.map((row) =>
+					row.map(async (cell) => {
+						if (cell.content?.id) {
+							if (!output[cell.row]) {
+								output[cell.row] = [];
+							}
+							output[cell.row][cell.col] = await getMatrixValue(cell.content.id);
+						}
+					})
+				)
+				.flat()
+		);
+		matrixExpressionsList.value = output;
+	}
+);
 
 watch([() => props.id, () => props.modelConfiguration.configuration], () => {
 	configureMatrix();

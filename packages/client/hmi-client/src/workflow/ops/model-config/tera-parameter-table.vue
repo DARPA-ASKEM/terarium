@@ -276,7 +276,6 @@ import {
 	getNameOfCurieCached
 } from '@/services/concept';
 
-import { getUnstratifiedParameters } from '@/model-representation/petrinet/mira-petri';
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
 import type { ModelConfiguration, ModelParameter } from '@/types/Types';
@@ -311,13 +310,6 @@ const parameters = computed<Map<string, string[]>>(() => {
 	if (isStratified.value) {
 		const collapsedParams = collapseParameters(props.mmt, props.mmtParams);
 
-		console.log('');
-		console.log('before', getUnstratifiedParameters(amr));
-		console.log('after', collapsedParams);
-		console.log('');
-
-		// FIXME:
-		// return getUnstratifiedParameters(amr);
 		return collapsedParams;
 	}
 

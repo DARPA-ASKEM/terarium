@@ -77,14 +77,6 @@ export const extractSubjectOutcomeMatrix = (
 		const paramLocations = paramLocationMap.get(paramName);
 		if (!paramLocationMap) continue;
 
-		console.log(
-			'\t checking',
-			paramNames[i],
-			paramLocations[0].subject,
-			paramLocations[0].outcome,
-			paramLocations[0].controllers
-		);
-
 		paramLocations.forEach((location) => {
 			const rowIdx = rowNames.indexOf(location.subject);
 			const colIdx = colNames.indexOf(location.outcome);

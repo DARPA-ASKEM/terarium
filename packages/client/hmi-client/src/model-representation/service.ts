@@ -3,9 +3,56 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
+import type { Model } from '@/types/Types';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
+
+export const getVariable = (miraModel: MiraModel, variableName: string) => {
+	if (miraModel.initials[variableName]) {
+		return {
+			value: miraModel.initials[variableName].expression
+		};
+	}
+	if (miraModel.parameters[variableName]) {
+		return {
+			value: miraModel.parameters[variableName].value
+		};
+	}
+	throw new Error(`${variableName} not found`);
+};
+
+export const updateVariable = (
+	amr: Model,
+	variableType: string,
+	variableName: string,
+	value: any,
+	valueMathML: string
+) => {
+	const schemaName = amr.header.schema_name;
+
+	if (schemaName === 'petrinet' && amr.semantics?.ode) {
+		const ode = amr.semantics.ode;
+
+		if (variableType === 'initials') {
+			const obj = ode.initials?.find((d) => d.target === variableName);
+			if (obj) {
+				obj.expression = value;
+				obj.expression_mathml = valueMathML;
+			}
+		}
+		if (variableType === 'parameters') {
+			const obj = ode.parameters?.find((d) => d.id === variableName);
+			if (obj) {
+				console.log('about to update ', obj);
+				obj.value = +value;
+			}
+		}
+		if (variableType === 'rates') {
+			// TODO
+		}
+	}
+};
 
 export const getModelRenderer = (
 	miraModel: MiraModel,
