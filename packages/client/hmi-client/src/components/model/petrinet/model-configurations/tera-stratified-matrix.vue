@@ -37,8 +37,8 @@
 										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
 										v-model.lazy="valueToEdit"
 										v-focus
-										@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
-										@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+										@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
+										@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
 									/>
 									<div
 										class="w-full"
@@ -78,9 +78,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
-import type { ModelConfiguration } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
@@ -89,10 +88,9 @@ import {
 	createParameterMatrix,
 	collapseInitials
 } from '@/model-representation/mira/mira';
-import { getVariable, updateVariable } from '@/model-representation/service';
+import { getVariable } from '@/model-representation/service';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	id: string;
@@ -100,7 +98,7 @@ const props = defineProps<{
 	shouldEval: boolean;
 }>();
 
-const emit = defineEmits(['update-configuration']);
+const emit = defineEmits(['update-cell-value']);
 
 const matrix = ref<any>([]);
 const valueToEdit = ref('');
@@ -131,8 +129,6 @@ function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) 
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string) {
 	const expressionBase = getVariable(props.mmt, variableName).value;
-
-	console.log('debugging', variableName, expressionBase);
 
 	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
@@ -189,21 +185,12 @@ function renderMatrix() {
 	}
 }
 
-async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
+async function updateCellValue(variableName: string, rowIdx: number, colIdx: number) {
 	editableCellStates.value[rowIdx][colIdx] = false;
 	const newValue = valueToEdit.value;
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
-	const clone = cloneDeep(props.modelConfiguration);
-	updateVariable(
-		clone.configuration,
-		props.stratifiedMatrixType.toString(),
-		variableName,
-		newValue,
-		mathml
-	);
-
-	emit('update-configuration', clone);
+	emit('update-cell-value', { variableName, newValue, mathml });
 	renderMatrix();
 }
 

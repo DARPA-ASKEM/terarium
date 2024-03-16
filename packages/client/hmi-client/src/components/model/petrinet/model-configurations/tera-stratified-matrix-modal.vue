@@ -18,9 +18,7 @@
 			<tera-stratified-matrix
 				v-bind="props"
 				:should-eval="matrixShouldEval"
-				@update-configuration="
-					(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-				"
+				@update-cell-value="(configToUpdate: any) => emit('update-cell-value', configToUpdate)"
 			/>
 		</template>
 		<template #footer>
@@ -43,11 +41,9 @@ import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import type { ModelConfiguration } from '@/types/Types';
 import TeraStratifiedMatrix from './tera-stratified-matrix.vue';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	id: string;
@@ -55,7 +51,7 @@ const props = defineProps<{
 	openValueConfig: boolean;
 }>();
 
-const emit = defineEmits(['close-modal', 'update-configuration']);
+const emit = defineEmits(['close-modal', 'update-cell-value']);
 
 const matrixShouldEval = ref(false);
 </script>

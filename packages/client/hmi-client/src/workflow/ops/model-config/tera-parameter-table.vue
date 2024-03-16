@@ -242,20 +242,14 @@
 		<tera-stratified-matrix-modal
 			v-if="matrixModalContext.isOpen && isStratified"
 			:id="matrixModalContext.matrixId"
-			:model-configuration="modelConfiguration"
 			:mmt="mmt"
 			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
-			@update-configuration="
-				(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-			"
+			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>
 	</Teleport>
-
-	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
 </template>
 
 <script setup lang="ts">
@@ -281,6 +275,7 @@ import { matrixEffect } from '@/utils/easter-eggs';
 import type { ModelConfiguration, ModelParameter } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
+import { updateVariable } from '@/model-representation/service';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -426,7 +421,6 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 	// Matrix effect easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
 	matrixEffect();
 
-	console.log('>> row datum', datum);
 	const id = datum.id;
 	if (!datum.tableFormattedMatrix) return;
 	matrixModalContext.value = {
@@ -436,6 +430,13 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 };
 
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
+
+const updateCellValue = (v: any) => {
+	console.log('parameter update cell value', v);
+	const clone = cloneDeep(props.modelConfiguration);
+	updateVariable(clone.configuration, 'parameters', v.variableName, v.newValue, v.mathml);
+	emit('update-configuration', clone);
+};
 
 const updateTimeseries = (id: string, value: string) => {
 	if (!validateTimeSeries(value)) return;
@@ -636,18 +637,5 @@ const replaceParam = (config: ModelConfiguration, param: any, index: number) => 
 
 .value-type-dropdown {
 	min-width: 10rem;
-}
-
-#matrix-canvas {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1000;
-	pointer-events: none;
-	mix-blend-mode: darken;
-	opacity: 1;
-	transition: opacity 1s;
 }
 </style>

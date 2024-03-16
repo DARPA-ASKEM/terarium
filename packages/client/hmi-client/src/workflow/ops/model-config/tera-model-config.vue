@@ -245,6 +245,8 @@
 			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
+	<!-- Matrix effect easter egg  -->
+	<canvas id="matrix-canvas"></canvas>
 </template>
 
 <script setup lang="ts">
@@ -876,5 +878,18 @@ onUnmounted(() => {
 
 .use-button {
 	white-space: nowrap;
+}
+
+#matrix-canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+	pointer-events: none;
+	mix-blend-mode: darken;
+	opacity: 1;
+	transition: opacity 1s;
 }
 </style>

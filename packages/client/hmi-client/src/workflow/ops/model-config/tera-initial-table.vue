@@ -178,15 +178,12 @@
 		<tera-stratified-matrix-modal
 			v-if="matrixModalContext.isOpen && isStratified"
 			:id="matrixModalContext.matrixId"
-			:model-configuration="modelConfiguration"
 			:mmt="mmt"
 			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
-			@update-configuration="
-				(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-			"
+			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>
 	</Teleport>
 
@@ -217,6 +214,7 @@ import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-pe
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel } from '@/model-representation/mira/mira';
 import { matrixEffect } from '@/utils/easter-eggs';
+import { updateVariable } from '@/model-representation/service';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -231,7 +229,7 @@ const props = defineProps<{
 	hideHeader?: boolean;
 }>();
 
-const emit = defineEmits(['update-value', 'update-configuration']);
+const emit = defineEmits(['update-value', 'update-configuration', 'update-cell-value']);
 
 const matrixModalContext = ref({
 	isOpen: false,
@@ -338,6 +336,12 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
+const updateCellValue = (v: any) => {
+	const clone = cloneDeep(props.modelConfiguration);
+	updateVariable(clone.configuration, 'initials', v.variableName, v.newValue, v.mathml);
+	emit('update-configuration', clone);
+};
+
 const updateMetadata = (id: string, key: string, value: string) => {
 	const clonedConfig = cloneDeep(props.modelConfiguration);
 	if (!clonedConfig.configuration.metadata.initials?.[id]) {
@@ -432,18 +436,5 @@ const changeType = (initial: Initial, typeIndex: number) => {
 
 .value-type-dropdown {
 	min-width: 10rem;
-}
-
-#matrix-canvas {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1000;
-	pointer-events: none;
-	mix-blend-mode: darken;
-	opacity: 1;
-	transition: opacity 1s;
 }
 </style>
