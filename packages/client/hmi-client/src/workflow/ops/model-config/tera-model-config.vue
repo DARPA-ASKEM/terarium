@@ -110,7 +110,7 @@
 					>
 						<AccordionTab>
 							<template #header>
-								Initial variable values<span class="artifact-amount">({{ initials.size }})</span>
+								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
 							<tera-initial-table
 								v-if="modelConfiguration"
@@ -151,7 +151,7 @@
 					</template>
 					<AccordionTab>
 						<template #header>
-							Parameters<span class="artifact-amount">({{ parameters.size }})</span>
+							Parameters<span class="artifact-amount">({{ numParameters }})</span>
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
@@ -261,10 +261,6 @@ import { createModelConfiguration } from '@/services/model-configurations';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-import {
-	getUnstratifiedInitials,
-	getUnstratifiedParameters
-} from '@/model-representation/petrinet/mira-petri';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { useToastService } from '@/services/toast';
@@ -286,7 +282,7 @@ import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-sema
 import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { isStratifiedModel, emptyMiraModel } from '@/model-representation/mira/mira';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraParameterTable from './tera-parameter-table.vue';
@@ -494,7 +490,7 @@ const handleModelPreview = (data: any) => {
 		model.value?.metadata?.parameters !== undefined ? model.value?.metadata?.parameters : {};
 };
 
-const selectedOutputId = ref<string>(props.node.active ?? '');
+const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
@@ -561,44 +557,14 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	return modelConfig;
 });
 
-const isStratified = computed(() => {
-	if (!model.value) return false;
-
-	// FIXME: dull out regnet/stockflow Feb 29, 2024
-	if (model.value.header.schema_name !== 'petrinet') return false;
-
-	if (!mmt.value) return false;
-	return isStratifiedModel(mmt.value);
+const numParameters = computed(() => {
+	if (!mmt.value) return 0;
+	return Object.keys(mmt.value.parameters).length;
 });
 
-const parameters = computed<Map<string, string[]>>(() => {
-	if (!model.value) return new Map();
-	if (isStratified.value) {
-		return getUnstratifiedParameters(model.value);
-	}
-	const result = new Map<string, string[]>();
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		model.value.semantics?.ode.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		model.value.model.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	}
-	return result;
-});
-
-const initials = computed<Map<string, string[]>>(() => {
-	if (!model.value) return new Map();
-	if (isStratified.value) {
-		return getUnstratifiedInitials(model.value);
-	}
-	const result = new Map<string, string[]>();
-	model.value.semantics?.ode.initials?.forEach((initial) => {
-		result.set(initial.target, [initial.target]);
-	});
-	return result;
+const numInitials = computed(() => {
+	if (!mmt.value) return 0;
+	return Object.keys(mmt.value.initials).length;
 });
 
 const modelType = computed(() => getModelType(model.value));
@@ -813,7 +779,7 @@ watch(
 			await initialize();
 		}
 	},
-	{ deep: true }
+	{ immediate: true }
 );
 
 onUnmounted(() => {
