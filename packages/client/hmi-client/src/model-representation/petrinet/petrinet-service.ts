@@ -1,5 +1,5 @@
 import { updateModelConfiguration } from '@/services/model-configurations';
-import { Model, ModelConfiguration, PetriNetModel } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 
 export interface NodeData {
 	type: string;
@@ -125,51 +125,6 @@ export const updateConfigFields = async (
 		// since we don't immediately need the updated configs
 		updateModelConfiguration(config);
 	});
-};
-
-export const mergeMetadata = (amr: Model, amrOld: Model) => {
-	console.log(amr, amrOld);
-};
-
-/**
- * Stratification
- * */
-
-// Heuristic to get the straitified modifier mappings, we assume that
-// - if there is a single unique value for modifier-key then it is not user initiated stratification
-// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
-export const getModifierMap = (amr: Model) => {
-	const modifierMap: Map<string, Set<string>> = new Map();
-	(amr.model as PetriNetModel).states?.forEach((s) => {
-		if (s.grounding && s.grounding.modifiers) {
-			const modifiers = s.grounding.modifiers;
-			const keys: string[] = Object.keys(modifiers);
-			keys.forEach((key) => {
-				if (!modifierMap.has(key)) {
-					modifierMap.set(key, new Set());
-				}
-				const modifier = modifiers[key];
-				if (!modifier.startsWith('ncit:')) {
-					modifierMap.get(key)?.add(modifiers[key]);
-				}
-			});
-		}
-	});
-	return modifierMap;
-};
-
-// Check if AMR is a stratified AMR
-export const getStratificationType = (amr: Model) => {
-	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
-
-	const modifierMap = getModifierMap(amr);
-	// eslint-disable-next-line
-	for (const ele of modifierMap) {
-		if (ele[1].size > 1) {
-			return StratifiedModel.Mira;
-		}
-	}
-	return null;
 };
 
 export function newAMR(modelName: string) {

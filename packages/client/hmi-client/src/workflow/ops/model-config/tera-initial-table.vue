@@ -176,12 +176,11 @@
 	</Datatable>
 	<Teleport to="body">
 		<tera-stratified-matrix-modal
-			v-if="matrixModalContext.isOpen && stratifiedModelType"
+			v-if="matrixModalContext.isOpen && isStratified"
 			:id="matrixModalContext.matrixId"
 			:model-configuration="modelConfiguration"
 			:mmt="mmt"
 			:mmt-params="mmtParams"
-			:stratified-model-type="stratifiedModelType"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
@@ -197,25 +196,26 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import type { ModelConfiguration, Initial } from '@/types/Types';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import { StratifiedMatrix } from '@/types/Model';
-import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Datatable from 'primevue/datatable';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import type { ModelConfiguration, Initial } from '@/types/Types';
+import { StratifiedMatrix } from '@/types/Model';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import { pythonInstance } from '@/python/PyodideController';
-import InputText from 'primevue/inputtext';
-import { cloneDeep, isEmpty } from 'lodash';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached
 } from '@/services/concept';
 import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-petri';
-import Dropdown from 'primevue/dropdown';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { isStratifiedModel } from '@/model-representation/mira/mira';
 import { matrixEffect } from '@/utils/easter-eggs';
 
 const typeOptions = [
@@ -247,11 +247,13 @@ const nameOfCurieCache = ref(new Map<string, string>());
 const expandedRows = ref([]);
 
 const initials = computed<Map<string, string[]>>(() => {
+	const result = new Map<string, string[]>();
+	if (!props.mmt) return result;
+
 	const model = props.modelConfiguration.configuration;
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		return getUnstratifiedInitials(model);
 	}
-	const result = new Map<string, string[]>();
 	model.semantics?.ode.initials?.forEach((initial) => {
 		result.set(initial.target, [initial.target]);
 	});
@@ -262,7 +264,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 	const configuration = props.modelConfiguration.configuration;
 	const formattedInitials: ModelConfigTableData[] = [];
 
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const initial = configuration.semantics.ode.initials.find((i) => i.target === v);
@@ -345,9 +347,10 @@ const updateMetadata = (id: string, key: string, value: string) => {
 	emit('update-configuration', clonedConfig);
 };
 
-const stratifiedModelType = computed(() =>
-	getStratificationType(props.modelConfiguration.configuration)
-);
+const isStratified = computed(() => {
+	if (!props.mmt) return false;
+	return isStratifiedModel(props.mmt);
+});
 
 const updateExpression = async (value: Initial) => {
 	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
