@@ -57,6 +57,7 @@
 											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 										>
 											{{ cell?.content.id }}
+											<!--
 											<span
 												v-if="cell?.content?.controllers"
 												class="pi pi-info-circle"
@@ -65,6 +66,7 @@
 													pt: 'grid col'
 												}"
 											/>
+											-->
 										</div>
 										<div>
 											<div

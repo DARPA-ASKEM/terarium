@@ -432,7 +432,6 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
 const updateCellValue = (v: any) => {
-	console.log('parameter update cell value', v);
 	const clone = cloneDeep(props.modelConfiguration);
 	updateVariable(clone.configuration, 'parameters', v.variableName, v.newValue, v.mathml);
 	emit('update-configuration', clone);

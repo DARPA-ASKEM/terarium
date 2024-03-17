@@ -31,6 +31,7 @@ export const updateVariable = (
 ) => {
 	const schemaName = amr.header.schema_name;
 
+	// ======== PETRINET =======
 	if (schemaName === 'petrinet' && amr.semantics?.ode) {
 		const ode = amr.semantics.ode;
 
@@ -44,7 +45,6 @@ export const updateVariable = (
 		if (variableType === 'parameters') {
 			const obj = ode.parameters?.find((d) => d.id === variableName);
 			if (obj) {
-				console.log('about to update ', obj);
 				obj.value = +value;
 			}
 		}
@@ -52,6 +52,8 @@ export const updateVariable = (
 			// TODO
 		}
 	}
+
+	// ======== PETRINET =======
 };
 
 export const getModelRenderer = (
