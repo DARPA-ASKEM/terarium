@@ -3,7 +3,7 @@
 		<Dropdown
 			v-if="matrixMap && Object.keys(matrixMap).length > 0"
 			:model-value="matrixType"
-			:options="['subjectOutcome', 'subjectControllers', 'outcomeControllers']"
+			:options="['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other']"
 			placeholder="Select matrix type"
 			@update:model-value="(v) => changeMatrix(v)"
 		/>
@@ -69,7 +69,7 @@
 										<div>
 											<div
 												class="mathml-container"
-												v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+												v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
 											/>
 										</div>
 									</div>
@@ -111,7 +111,7 @@ const matrix = ref<any>([]);
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
-const matrixExpressionsList = ref<string[][]>([]);
+const expressionMap = ref<{ [key: string]: string }>({});
 
 const parametersValueMap = computed(() => {
 	const keys = Object.keys(props.mmt.parameters);
@@ -153,7 +153,7 @@ async function getMatrixValue(variableName: string) {
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
-function renderMatrix() {
+function generateMatrix() {
 	const stratifiedType = props.stratifiedMatrixType;
 
 	if (stratifiedType === StratifiedMatrix.Initials) {
@@ -167,7 +167,8 @@ function renderMatrix() {
 		matrixMap.value = {
 			subjectOutcome: matrices.subjectOutcome.matrix,
 			subjectControllers: matrices.subjectControllers.matrix,
-			outcomeControllers: matrices.outcomeControllers.matrix
+			outcomeControllers: matrices.outcomeControllers.matrix,
+			other: matrices.other
 		};
 	} else {
 		console.log('TODO template!!!');
@@ -180,11 +181,10 @@ async function updateCellValue(variableName: string, rowIdx: number, colIdx: num
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
 	emit('update-cell-value', { variableName, newValue, mathml });
-	renderMatrix();
 }
 
-function configureMatrix() {
-	renderMatrix();
+function resetEditState() {
+	editableCellStates.value = [];
 
 	if (!isEmpty(matrix.value)) {
 		for (let i = 0; i < matrix.value.length; i++) {
@@ -197,31 +197,36 @@ watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
 		if (!matrix.value) return;
-		const output: string[][] = [];
-		await Promise.all(
-			matrix.value
-				.map((row) =>
-					row.map(async (cell) => {
-						if (cell.content?.id) {
-							if (!output[cell.row]) {
-								output[cell.row] = [];
-							}
-							output[cell.row][cell.col] = await getMatrixValue(cell.content.id);
-						}
-					})
-				)
-				.flat()
-		);
-		matrixExpressionsList.value = output;
+		resetEditState();
+		expressionMap.value = {};
+
+		const evalList: any[] = [];
+		const tempMap: { [key: string]: any } = {};
+
+		const assignExpression = async (id: string, row: number, col: number) => {
+			if (!id) return;
+			tempMap[`${row}:${col}`] = await getMatrixValue(id);
+		};
+
+		matrix.value.forEach((matrixRow: any) => {
+			matrixRow.forEach((cell: any) => {
+				evalList.push(assignExpression(cell.content.id, cell.row, cell.col));
+			});
+		});
+
+		await Promise.all(evalList);
+		expressionMap.value = tempMap;
 	}
 );
 
 watch([() => props.id, () => props.mmt], () => {
-	configureMatrix();
+	generateMatrix();
+	resetEditState();
 });
 
 onMounted(() => {
-	configureMatrix();
+	generateMatrix();
+	resetEditState();
 });
 </script>
 

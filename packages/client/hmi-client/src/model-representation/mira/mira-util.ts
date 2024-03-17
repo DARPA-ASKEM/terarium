@@ -1,4 +1,4 @@
-import { MiraTemplate, MiraMatrix, TemplateSummary } from './mira-common';
+import { MiraTemplate, MiraMatrix, TemplateSummary, MiraMatrixEntry } from './mira-common';
 
 export const removeModifiers = (
 	v: string,
@@ -42,14 +42,14 @@ export const extractConceptNames = (templates: MiraTemplate[], key: string) => {
 const emptyMatrix = (rowNames: string[], colNames: string[]) => {
 	const matrix: MiraMatrix = [];
 	for (let rowIdx = 0; rowIdx < rowNames.length; rowIdx++) {
-		const row: any[] = [];
+		const row: MiraMatrixEntry[] = [];
 		for (let colIdx = 0; colIdx < colNames.length; colIdx++) {
 			row.push({
 				row: rowIdx,
 				col: colIdx,
 				rowCriteria: rowNames[rowIdx],
 				colCriteria: colNames[colIdx],
-				content: {}
+				content: { id: null, value: null }
 			});
 		}
 		matrix.push(row);

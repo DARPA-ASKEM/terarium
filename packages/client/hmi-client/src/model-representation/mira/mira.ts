@@ -6,7 +6,14 @@ import {
 	extractSubjectOutcomeMatrix,
 	removeModifiers
 } from './mira-util';
-import type { MiraModel, MiraTemplate, MiraTemplateParams, TemplateSummary } from './mira-common';
+import type {
+	MiraMatrix,
+	MiraMatrixEntry,
+	MiraModel,
+	MiraTemplate,
+	MiraTemplateParams,
+	TemplateSummary
+} from './mira-common';
 
 export const emptyMiraModel = () => {
 	const newModel: MiraModel = {
@@ -275,9 +282,10 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
 	const initialsMap = collapseInitials(miraModel);
 	const childrenInitials = initialsMap.get(key);
-	const m2: any[] = [];
+
+	const m2: MiraMatrix = [];
 	childrenInitials?.forEach((name, idx) => {
-		const row: any[] = [];
+		const row: MiraMatrixEntry[] = [];
 		row.push({
 			row: idx,
 			col: 0,
@@ -357,10 +365,29 @@ export const createParameterMatrix = (
 		paramLocationMap
 	);
 
+	// Others, may be initial, maybe no in use ...
+	const other: MiraMatrix = [];
+	childrenParams.forEach((name, idx) => {
+		const row: MiraMatrixEntry[] = [];
+		row.push({
+			row: idx,
+			col: 0,
+			rowCriteria: name,
+			colCriteria: '',
+			content: {
+				id: name,
+				value: miraModel.parameters[name].value
+			}
+		});
+		other.push(row);
+	});
+	console.log('others', other);
+
 	return {
 		subjectOutcome,
 		subjectControllers,
-		outcomeControllers
+		outcomeControllers,
+		other
 	};
 };
 

@@ -60,6 +60,8 @@ export type MiraMatrixEntry = {
 		id: any;
 		value: any;
 	};
+	row: number;
+	col: number;
 	rowCriteria: string;
 	colCriteria: string;
 };
