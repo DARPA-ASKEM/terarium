@@ -272,6 +272,27 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
+export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
+	const initialsMap = collapseInitials(miraModel);
+	const childrenInitials = initialsMap.get(key);
+	const m2: any[] = [];
+	childrenInitials?.forEach((name, idx) => {
+		const row: any[] = [];
+		row.push({
+			row: idx,
+			col: 0,
+			rowCriteria: name,
+			colCriteria: '',
+			content: {
+				id: name,
+				value: miraModel.initials[name].expression
+			}
+		});
+		m2.push(row);
+	});
+	return m2;
+};
+
 /**
  * Assumes one-to-one with cells
  *

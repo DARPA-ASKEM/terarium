@@ -1,9 +1,17 @@
 <template>
-	<div
-		v-if="!isEmpty(matrix)"
-		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
-	>
-		<div class="p-datatable-wrapper">
+	<div class="p-datatable-wrapper">
+		<Dropdown
+			v-if="matrixMap && Object.keys(matrixMap).length > 0"
+			:model-value="matrixType"
+			:options="['subjectOutcome', 'subjectControllers', 'outcomeControllers']"
+			placeholder="Select matrix type"
+			@update:model-value="(v) => changeMatrix(v)"
+		/>
+
+		<div
+			v-if="!isEmpty(matrix)"
+			class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
+		>
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead v-if="matrix[0].length > 0" class="p-datatable-thead">
 					<tr>
@@ -81,13 +89,10 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import {
-	collapseParameters,
-	createParameterMatrix,
-	collapseInitials
-} from '@/model-representation/mira/mira';
+import { createParameterMatrix, createInitialMatrix } from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
 
 const props = defineProps<{
@@ -100,7 +105,10 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-cell-value']);
 
+const matrixType = ref('subjectOutcome');
+const matrixMap = ref<any>();
 const matrix = ref<any>([]);
+
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 const matrixExpressionsList = ref<string[][]>([]);
@@ -113,6 +121,11 @@ const parametersValueMap = computed(() => {
 	});
 	return result;
 });
+
+const changeMatrix = (v: string) => {
+	matrixType.value = v;
+	matrix.value = matrixMap.value[v];
+};
 
 // Makes cell inputs focus once they appear
 const vFocus = {
@@ -141,45 +154,21 @@ async function getMatrixValue(variableName: string) {
 }
 
 function renderMatrix() {
-	const matrixType = props.stratifiedMatrixType;
+	const stratifiedType = props.stratifiedMatrixType;
 
-	if (matrixType === StratifiedMatrix.Initials) {
-		const initialsMap = collapseInitials(props.mmt);
-		const childrenInitials = initialsMap.get(props.id);
-
-		const m2: any[] = [];
-		childrenInitials?.forEach((name, idx) => {
-			const row: any[] = [];
-			row.push({
-				row: idx,
-				col: 0,
-				rowCriteria: name,
-				colCriteria: '',
-				content: {
-					id: name,
-					value: props.mmt.initials[name].expression
-				}
-			});
-			m2.push(row);
-		});
-
-		console.group('initials matrix gen');
-		console.log('props.id', props.id);
-		console.log('children', childrenInitials);
-		console.log('matrix', m2);
-		matrix.value = m2;
-	} else if (matrixType === StratifiedMatrix.Parameters) {
-		const paramsMap = collapseParameters(props.mmt, props.mmtParams);
-		const childrenParams = paramsMap.get(props.id);
+	if (stratifiedType === StratifiedMatrix.Initials) {
+		matrix.value = createInitialMatrix(props.mmt, props.id);
+	} else if (stratifiedType === StratifiedMatrix.Parameters) {
 		const matrices = createParameterMatrix(props.mmt, props.mmtParams, props.id);
 
-		console.group('param matrix gen');
-		console.log('props.id', props.id);
-		console.log('children', childrenParams);
-		console.log('matrix data', matrices);
-		console.groupEnd();
-		// FIXME: should be matrices
-		matrix.value = matrices.outcomeControllers.matrix;
+		// Default
+		matrix.value = matrices.subjectOutcome.matrix;
+
+		matrixMap.value = {
+			subjectOutcome: matrices.subjectOutcome.matrix,
+			subjectControllers: matrices.subjectControllers.matrix,
+			outcomeControllers: matrices.outcomeControllers.matrix
+		};
 	} else {
 		console.log('TODO template!!!');
 	}
@@ -309,6 +298,7 @@ onMounted(() => {
 
 .p-dropdown {
 	min-width: 11rem;
+	margin-bottom: 1rem;
 }
 
 .subdue {

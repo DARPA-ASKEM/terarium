@@ -186,9 +186,6 @@
 			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>
 	</Teleport>
-
-	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
 </template>
 
 <script setup lang="ts">
