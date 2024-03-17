@@ -381,7 +381,6 @@ export const createParameterMatrix = (
 		});
 		other.push(row);
 	});
-	console.log('others', other);
 
 	return {
 		subjectOutcome,

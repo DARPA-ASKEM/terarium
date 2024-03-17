@@ -30,6 +30,7 @@ export const updateVariable = (
 	valueMathML: string
 ) => {
 	const schemaName = amr.header.schema_name;
+	console.log('updating regnet variable', variableName, schemaName);
 
 	// ======== PETRINET =======
 	if (schemaName === 'petrinet' && amr.semantics?.ode) {
@@ -49,11 +50,38 @@ export const updateVariable = (
 			}
 		}
 		if (variableType === 'rates') {
-			// TODO
+			const obj = ode.rates?.find((d) => d.target === variableName);
+			if (obj) {
+				obj.expression = value;
+				obj.expression_mathml = valueMathML;
+			}
 		}
 	}
 
-	// ======== PETRINET =======
+	// ======== REGNET =======
+	if (schemaName === 'regnet') {
+		if (variableType === 'initials') {
+			const obj = amr.model.vertices.find((d) => d.id === variableName);
+			if (obj) {
+				obj.initial = value;
+			}
+		}
+		if (variableType === 'parameters') {
+			const obj = amr.model.parameters.find((d) => d.id === variableName);
+			if (obj) {
+				obj.value = value;
+			}
+		}
+		if (variableType === 'rates') {
+			const obj = amr.semantics?.ode.rates.find((d) => d.target === variableName);
+			if (obj) {
+				obj.expression = value;
+				obj.expression_mathml = valueMathML;
+			}
+		}
+	}
+
+	// FIXME: stocknflow
 };
 
 export const getModelRenderer = (

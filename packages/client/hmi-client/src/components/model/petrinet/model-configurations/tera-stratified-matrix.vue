@@ -3,7 +3,7 @@
 		<Dropdown
 			v-if="matrixMap && Object.keys(matrixMap).length > 0"
 			:model-value="matrixType"
-			:options="['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other']"
+			:options="matrixTypes"
 			placeholder="Select matrix type"
 			@update:model-value="(v) => changeMatrix(v)"
 		/>
@@ -107,6 +107,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-cell-value']);
 
+const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other'];
 const matrixType = ref('subjectOutcome');
 const matrixMap = ref<any>();
 const matrix = ref<any>([]);
@@ -163,15 +164,22 @@ function generateMatrix() {
 	} else if (stratifiedType === StratifiedMatrix.Parameters) {
 		const matrices = createParameterMatrix(props.mmt, props.mmtParams, props.id);
 
-		// Default
-		matrix.value = matrices.subjectOutcome.matrix;
-
 		matrixMap.value = {
 			subjectOutcome: matrices.subjectOutcome.matrix,
 			subjectControllers: matrices.subjectControllers.matrix,
 			outcomeControllers: matrices.outcomeControllers.matrix,
 			other: matrices.other
 		};
+
+		// Find a default
+		for (let i = 0; i < matrixTypes.length; i++) {
+			const typeStr = matrixTypes[i];
+			if (matrices[typeStr].matrix.length > 0) {
+				matrix.value = matrices[typeStr].matrix;
+				matrixType.value = typeStr;
+				break;
+			}
+		}
 	} else {
 		console.log('TODO template!!!');
 	}
