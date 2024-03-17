@@ -58,8 +58,8 @@
 			<tera-stratified-matrix-modal
 				v-if="openValueConfig && modelConfiguration"
 				:id="selectedTransitionId"
-				:model-configuration="modelConfiguration"
-				:stratified-model-type="StratifiedModel.Mira"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:stratified-matrix-type="StratifiedMatrix.Rates"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
@@ -76,7 +76,6 @@ import { watch, ref, onMounted, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
@@ -85,7 +84,7 @@ import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
-import { MiraModel } from '@/model-representation/mira/mira-common';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import {
 	isStratifiedModel,
 	emptyMiraModel,
@@ -114,6 +113,7 @@ const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -176,15 +176,18 @@ watch(
 		if (graphElement.value === null) return;
 
 		// FIXME: inefficient, do not constant call API in watch
-		mmt.value = (await getMMT(props.model)).mmt;
-
+		const response: any = await getMMT(props.model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
 		await renderGraph();
 	},
 	{ deep: true }
 );
 
 onMounted(async () => {
-	mmt.value = (await getMMT(props.model)).mmt;
+	const response: any = await getMMT(props.model);
+	mmt.value = response.mmt;
+	mmtParams.value = response.template_params;
 });
 
 onUnmounted(() => {});

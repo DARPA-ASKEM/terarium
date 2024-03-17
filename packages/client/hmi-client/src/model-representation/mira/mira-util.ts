@@ -177,6 +177,8 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 		for (let i = 0; i < templates.length; i++) {
 			const template = templates[i];
 			vector[0].push({
+				row: 0,
+				col: i,
 				rowCriteria: '',
 				colCriteria: '',
 				content: {
