@@ -128,63 +128,11 @@ export const extractTextFromPDFDocument = async (documentId: string): Promise<st
 	return null;
 };
 
-export enum Extractor {
-	SKEMA = 'SKEMA',
-	MIT = 'MIT'
-}
-export const pdfExtractions = async (
-	documentId: string,
-	extractor: Extractor,
-	pdfName?: string,
-	description?: string
-): Promise<string | null> => {
-	let url = `/knowledge/pdf-extractions?document_id=${documentId}`;
-
-	if (extractor === Extractor.SKEMA) {
-		url += '&annotate_skema=true&annotate_mit=false';
-	} else if (extractor === Extractor.MIT) {
-		url += '&annotate_skema=false&annotate_mit=true';
-	}
-
-	if (pdfName) {
-		url += `&name=${pdfName}`;
-	}
-	if (description) {
-		url += `&description=${description}`;
-	}
-
-	try {
-		const response = await API.post(url);
-		if (response?.status === 200 && response?.data?.id) return response.data.id;
-		logger.error('pdf Extractions request failed', {
-			showToast: false,
-			toastTitle: 'Error - pdfExtractions'
-		});
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('[pdfExtractions]', axiosError.response?.data || axiosError.message, {
-				showToast: false,
-				toastTitle: 'Error - pdfExtractions'
-			});
-		} else {
-			logger.error(error, { showToast: false, toastTitle: 'Error - pdfExtractions' });
-		}
-	}
-
-	return null;
-};
-
 export const extractPDF = async (documentId: string) => {
 	if (documentId) {
 		const resp: string | null = await extractTextFromPDFDocument(documentId);
 		if (resp) {
-			const pollResult = await fetchExtraction(resp);
-			if (pollResult?.state === PollerState.Done) {
-				modelCard(documentId);
-				pdfExtractions(documentId, Extractor.SKEMA);
-				pdfExtractions(documentId, Extractor.MIT);
-			}
+		  modelCard(documentId);
 		}
 	}
 };
