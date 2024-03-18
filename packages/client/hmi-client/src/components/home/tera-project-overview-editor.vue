@@ -1,5 +1,10 @@
 <template>
-	<Editor v-model="editorContent" class="editor h-full" />
+	<Editor
+		v-model="editorContent"
+		class="h-full"
+		:class="{ readonly: !hasEditPermission }"
+		:readonly="!hasEditPermission"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -28,6 +33,9 @@ const DEFAULT_EDITOR_CONTENT = `
 const props = defineProps<{ project: Project | null }>();
 const editorContent = ref('');
 const lastSavedContent = computed(() => props.project?.overviewContent ?? DEFAULT_EDITOR_CONTENT);
+const hasEditPermission = computed(() =>
+	['creator', 'writer'].includes(props.project?.userPermission ?? '')
+);
 
 let autoSaveIntervalId: NodeJS.Timeout | null = null;
 const startAutoSave = () => {
@@ -62,6 +70,7 @@ onMounted(() => {
 });
 
 watch(editorContent, () => {
+	if (!hasEditPermission.value) return;
 	// If the content changes, start the auto-save timer if it's not already running
 	if (autoSaveIntervalId !== null) return;
 	startAutoSave();
@@ -79,6 +88,10 @@ onUnmounted(() => {
 }
 
 /* Editor toolbar formatting */
+.readonly :deep(.p-editor-toolbar) {
+	display: none;
+}
+
 :deep(.p-editor-container .p-editor-toolbar) {
 	border-radius: 0px;
 	border-color: var(--surface-border-light) !important;
