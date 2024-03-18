@@ -56,6 +56,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
@@ -66,6 +67,7 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
@@ -521,8 +523,17 @@ public class KnowledgeController {
 
 	@PostMapping("/pdf-to-cosmos")
 	@Secured(Roles.USER)
-	public ResponseEntity<DocumentAsset> postPDFToCosmos(
+	public ResponseEntity<Void> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId) {
+
+		new Runnable() {
+
+			@Override
+			public void run() {
+
+			}
+		};
+		Return 202;
 
 		try {
 			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
@@ -667,7 +678,31 @@ public class KnowledgeController {
 			// update the document
 			document = documentService.updateAsset(document).orElseThrow();
 
-			return ResponseEntity.ok(document);
+			if (document.getText() == null || document.getText().isEmpty()) {
+				log.warn("Document {} has no text to send", documentId);
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
+			}
+
+			// check for input length
+			if (document.getText().length() > 600000) {
+				log.warn("Document {} text too long for GoLLM model card task", documentId);
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
+			}
+
+			final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
+			input.setResearchPaper(document.getText());
+
+			// Create the task
+			final TaskRequest req = new TaskRequest();
+			req.setType(TaskRequest.TaskType.GOLLM);
+			req.setScript(ModelCardResponseHandler.NAME);
+			req.setInput(mapper.writeValueAsBytes(input));
+
+			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+			props.setDocumentId(documentId);
+			req.setAdditionalProperties(props);
+
+			return ResponseEntity.accepted().build();
 
 		} catch (final Exception e) {
 			final String error = "Unable to extract pdf";
