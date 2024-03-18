@@ -18,6 +18,11 @@ export interface MiraParameter {
 	distribution: any;
 }
 
+export interface MiraInitial {
+	concept: MiraConcept;
+	expression: string;
+}
+
 export interface MiraTemplate {
 	rate_law: string;
 	name: string;
@@ -33,7 +38,7 @@ export interface MiraTemplate {
 export interface MiraModel {
 	templates: MiraTemplate[];
 	parameters: { [key: string]: MiraParameter };
-	initials: { [key: string]: any };
+	initials: { [key: string]: MiraInitial };
 	observables: { [key: string]: any };
 	annotations: any;
 	time: any;
@@ -50,11 +55,21 @@ export interface MiraTemplateParams {
 }
 
 // Terarium MIRA types
-export type MiraMatrixEntry = { id: any; value: any };
+export type MiraMatrixEntry = {
+	content: {
+		id: any;
+		value: any;
+	};
+	row: number;
+	col: number;
+	rowCriteria: string;
+	colCriteria: string;
+};
 export type MiraMatrix = MiraMatrixEntry[][];
 
 export interface TemplateSummary {
 	name: string;
+	expression?: string;
 	subject: string;
 	outcome: string;
 	controllers: string[];
