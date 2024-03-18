@@ -37,7 +37,11 @@
 						<div class="toggles" v-if="assetType === AssetType.Dataset">
 							<span>
 								<label class="mr-2">Source</label>
-								<Dropdown v-model="chosenDatasetSource" :options="datasetSourceOptions" />
+								<Dropdown
+									v-model="chosenDatasetSource"
+									:options="datasetSourceOptions"
+									@change="executeNewQuery"
+								/>
 							</span>
 							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
 						</div>
