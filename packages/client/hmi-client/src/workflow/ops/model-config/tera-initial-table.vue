@@ -226,7 +226,7 @@ const props = defineProps<{
 	hideHeader?: boolean;
 }>();
 
-const emit = defineEmits(['update-value', 'update-configuration', 'update-cell-value']);
+const emit = defineEmits(['update-value', 'update-configuration']);
 
 const matrixModalContext = ref({
 	isOpen: false,
