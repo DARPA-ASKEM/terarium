@@ -166,6 +166,8 @@
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model="model"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
 				@update-value="(val: Initial) => emit('update-value', [val])"
 				@update-model="(model: Model) => emit('update-model', model)"
@@ -174,41 +176,42 @@
 	</Datatable>
 	<Teleport to="body">
 		<tera-stratified-matrix-modal
-			v-if="matrixModalContext.isOpen && stratifiedModelType"
+			v-if="matrixModalContext.isOpen && isStratified"
 			:id="matrixModalContext.matrixId"
-			:model="model"
-			:stratified-model-type="stratifiedModelType"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
-			@update-model="(model: Model) => emit('update-model', model)"
+			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>
 	</Teleport>
-
-	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import type { Initial, Model } from '@/types/Types';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import { StratifiedMatrix } from '@/types/Model';
+import type { Model, Initial } from '@/types/Types';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import { StratifiedMatrix } from '@/types/Model';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import { pythonInstance } from '@/python/PyodideController';
-import InputText from 'primevue/inputtext';
-import { cloneDeep, isEmpty } from 'lodash';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached
 } from '@/services/concept';
 import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-petri';
-import Dropdown from 'primevue/dropdown';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { isStratifiedModel } from '@/model-representation/mira/mira';
+import { matrixEffect } from '@/utils/easter-eggs';
+import { updateVariable } from '@/model-representation/service';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -217,6 +220,8 @@ const typeOptions = [
 
 const props = defineProps<{
 	model: Model;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[];
 	hideHeader?: boolean;
 }>();
@@ -237,11 +242,13 @@ const nameOfCurieCache = ref(new Map<string, string>());
 const expandedRows = ref([]);
 
 const initials = computed<Map<string, string[]>>(() => {
+	const result = new Map<string, string[]>();
+	if (!props.mmt) return result;
+
 	const model = props.model;
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		return getUnstratifiedInitials(model);
 	}
-	const result = new Map<string, string[]>();
 	model.semantics?.ode.initials?.forEach((initial) => {
 		result.set(initial.target, [initial.target]);
 	});
@@ -252,7 +259,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 	const model = props.model;
 	const formattedInitials: ModelConfigTableData[] = [];
 
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const initial = model.semantics?.ode.initials?.find((i) => i.target === v);
@@ -314,7 +321,6 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 });
 
 const openMatrixModal = (datum: ModelConfigTableData) => {
-	// Matrix effect easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
 	matrixEffect();
 
 	const id = datum.id;
@@ -327,6 +333,12 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
+const updateCellValue = (v: any) => {
+	const clone = cloneDeep(props.model);
+	updateVariable(clone, 'initials', v.variableName, v.newValue, v.mathml);
+	emit('update-model', clone);
+};
+
 const updateMetadata = (id: string, key: string, value: string) => {
 	const clonedModel = cloneDeep(props.model);
 	if (!clonedModel.metadata?.initials?.[id]) {
@@ -338,70 +350,15 @@ const updateMetadata = (id: string, key: string, value: string) => {
 	emit('update-model', clonedModel);
 };
 
-const stratifiedModelType = computed(() => getStratificationType(props.model));
+const isStratified = computed(() => {
+	if (!props.mmt) return false;
+	return isStratifiedModel(props.mmt);
+});
 
 const updateExpression = async (value: Initial) => {
 	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
 	value.expression_mathml = mathml;
 	emit('update-value', [value]);
-};
-
-/* Matrix effect easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
-const matrixEffect = () => {
-	if (Math.random() > 0.1) return;
-	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
-	if (!canvas) return;
-	const ctx = (canvas as HTMLCanvasElement)?.getContext('2d');
-
-	// eslint-disable-next-line no-multi-assign
-	const w = (canvas.width = document.body.offsetWidth);
-	// eslint-disable-next-line no-multi-assign
-	const h = (canvas.height = document.body.offsetHeight);
-	const cols = Math.floor(w / 20) + 1;
-	const ypos = Array(cols).fill(0);
-
-	if (ctx) {
-		ctx.fillStyle = '#FFF';
-		ctx.fillRect(0, 0, w, h);
-	}
-
-	function matrix() {
-		if (ctx) {
-			ctx.fillStyle = '#FFF1';
-			ctx.fillRect(0, 0, w, h);
-
-			ctx.fillStyle = '#1B8073';
-			ctx.font = '15pt monospace';
-
-			ypos.forEach((y, ind) => {
-				const text = String.fromCharCode(Math.random() * 128);
-				const x = ind * 20;
-				ctx.fillText(text, x, y);
-				if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
-				else ypos[ind] = y + 20;
-			});
-		}
-	}
-
-	const intervalId = setInterval(matrix, 33);
-
-	// after 4 seconds begin the fade out
-	setTimeout(() => {
-		if (canvas) {
-			canvas.style.opacity = '0';
-		}
-	}, 3000);
-
-	// after 5 seconds clear the canvas, stop the interval, and reset the opacity
-	setTimeout(() => {
-		clearInterval(intervalId);
-		if (ctx) {
-			ctx.clearRect(0, 0, w, h);
-		}
-		if (canvas) {
-			canvas.style.opacity = '1';
-		}
-	}, 4000);
 };
 
 const changeType = (initial: Initial, typeIndex: number) => {
@@ -452,28 +409,10 @@ const changeType = (initial: Initial, typeIndex: number) => {
 	display: none;
 }
 
-.distribution-container {
-	display: flex;
-	align-items: center;
-	gap: var(--gap-small);
-}
-
-.distribution-item > :deep(input) {
-	width: 100%;
-	font-feature-settings: 'tnum';
-	font-size: var(--font-caption);
-	text-align: right;
-}
-
 .constant-number > :deep(input) {
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
 	text-align: right;
-}
-
-.add-plus-minus > :deep(input) {
-	width: 3rem;
-	margin-left: var(--gap-xsmall);
 }
 
 .tabular-numbers {
@@ -482,36 +421,6 @@ const changeType = (initial: Initial, typeIndex: number) => {
 	text-align: right;
 }
 
-.min-value {
-	position: relative;
-}
-.min-value::before {
-	content: 'Min';
-	position: relative;
-	top: var(--gap-small);
-	left: var(--gap-small);
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
-	width: 0;
-}
-.max-value::before {
-	content: 'Max';
-	position: relative;
-	top: var(--gap-small);
-	left: var(--gap-small);
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
-	width: 0;
-}
-
-.custom-icon-distribution {
-	background-image: url('@assets/svg/icons/distribution.svg');
-	background-size: contain;
-	background-repeat: no-repeat;
-	display: inline-block;
-	width: 1rem;
-	height: 1rem;
-}
 .custom-icon-expression {
 	background-image: url('@assets/svg/icons/expression.svg');
 	background-size: contain;
@@ -520,14 +429,6 @@ const changeType = (initial: Initial, typeIndex: number) => {
 	width: 1rem;
 	height: 1rem;
 }
-.invalid-message {
-	color: var(--text-color-danger);
-}
-
-.timeseries-container {
-	display: flex;
-	flex-direction: column;
-}
 
 .secondary-text {
 	color: var(--text-color-subdued);
@@ -535,18 +436,5 @@ const changeType = (initial: Initial, typeIndex: number) => {
 
 .value-type-dropdown {
 	min-width: 10rem;
-}
-
-#matrix-canvas {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1000;
-	pointer-events: none;
-	mix-blend-mode: darken;
-	opacity: 1;
-	transition: opacity 1s;
 }
 </style>
