@@ -20,11 +20,12 @@ const props = defineProps<{
 	targetVariable: string;
 	chartConfig: ChartConfig;
 	size?: { width: number; height: number };
+	threshold: number;
 }>();
 
 const chartSize = computed(() => {
 	if (props.size) return props.size;
-	return { width: 390, height: 190 };
+	return { width: 520, height: 190 };
 });
 
 const chartOptions = ref();
@@ -88,7 +89,7 @@ const getBinData = (data: number[]) => {
 	const stepSize = (maxValue - minValue) / (binCount - 1);
 	const bins: number[] = Array<number>(binCount).fill(0);
 	const binLabels: string[] = [];
-	for (let i = 0; i < binCount; i++) {
+	for (let i = binCount - 1; i >= 0; i--) {
 		binLabels.push(
 			`${(minValue + stepSize * i).toFixed(4)} - ${(minValue + stepSize * (i + 1)).toFixed(4)}`
 		);
@@ -124,14 +125,6 @@ const setChartData = () => {
 				label: '',
 				data: binValues,
 				borderColor: '#440154',
-				borderWidth: 1
-			},
-			// Risk:
-			{
-				type: 'line',
-				label: '',
-				data: riskLine,
-				borderColor: '#FF0000',
 				borderWidth: 1
 			}
 		]

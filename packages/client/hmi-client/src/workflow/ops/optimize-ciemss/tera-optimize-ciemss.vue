@@ -9,7 +9,7 @@
 		<section :tabName="OptimizeTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Settings</h4>
+					<h5>Settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
@@ -21,12 +21,6 @@
 						</div>
 					</div>
 					<div>
-						<Button
-							v-if="showAdditionalOptions"
-							class="p-button-sm p-button-text"
-							label="Hide additional options"
-							@click="toggleAdditonalOptions"
-						/>
 						<Button
 							v-if="!showAdditionalOptions"
 							class="p-button-sm p-button-text"
@@ -56,7 +50,7 @@
 						</div>
 						<div class="label-and-input">
 							<!-- TODO: This could likely be better explained to user -->
-							<label> Minimized</label>
+							<label> Optimize towards guess</label>
 							<Dropdown
 								class="toolbar-button"
 								v-model="knobs.isMinimized"
@@ -64,9 +58,15 @@
 							/>
 						</div>
 					</div>
+					<Button
+						v-if="showAdditionalOptions"
+						class="p-button-sm p-button-text w-3"
+						label="Hide additional options"
+						@click="toggleAdditonalOptions"
+					/>
 				</div>
 				<div class="form-section">
-					<h4>Intervention policy</h4>
+					<h5>Intervention policy</h5>
 					<tera-intervention-policy-group-form
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
@@ -85,7 +85,7 @@
 					</div>
 				</div>
 				<div class="form-section">
-					<h4>Constraint</h4>
+					<h5>Constraint</h5>
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Target-variable(s)</label>
@@ -94,6 +94,7 @@
 								:options="modelStateOptions.map((ele) => ele.id)"
 								v-model="knobs.targetVariables"
 								placeholder="Select"
+								filter
 							/>
 						</div>
 					</div>
@@ -123,7 +124,7 @@
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="OptimizeTabs.Notebook">
-			<h4>Notebook</h4>
+			<h5>Notebook</h5>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -133,21 +134,45 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				:class="optimizationResult.success === 'False' ? 'failed-run' : ''"
+				id="output-panel"
 			>
-				<div v-if="optimizationResult">
-					{{ optimizationResult }}
+				<!-- Show optimization message -->
+				<div v-if="optimizationResult && displayOptimizationResult" class="result-grid">
+					<span class="flex flex-row">
+						<h6>Response</h6>
+						<Button
+							icon="pi pi-times"
+							text
+							rounded
+							size="small"
+							class="ml-auto p-button-text"
+							@click="displayOptimizationResult = !displayOptimizationResult"
+						/>
+					</span>
+					<div v-for="(value, key) in optimizationResult" :key="key" class="result-row">
+						<div class="label">{{ key }}:</div>
+						<div class="value">{{ formatValue(value) }}</div>
+					</div>
 				</div>
-				<SelectButton
-					:model-value="outputViewSelection"
-					@change="if ($event.value) outputViewSelection = $event.value;"
-					:options="outputViewOptions"
-					option-value="value"
-				>
-					<template #option="{ option }">
-						<i :class="`${option.icon} p-button-icon-left`" />
-						<span class="p-button-label">{{ option.value }}</span>
-					</template>
-				</SelectButton>
+
+				<!-- Charts / Data switcher -->
+				<div class="flex flex-row align-items-center gap-2">
+					What do you want to see?
+					<SelectButton
+						:model-value="outputViewSelection"
+						@change="if ($event.value) outputViewSelection = $event.value;"
+						:options="outputViewOptions"
+						option-value="value"
+					>
+						<template #option="{ option }">
+							<i :class="`${option.icon} p-button-icon-left`" />
+							<span class="p-button-label">{{ option.value }}</span>
+						</template>
+					</SelectButton>
+				</div>
+
+				<!-- Output -->
 				<template v-if="simulationRunResults[knobs.forecastRunId]">
 					<div v-if="outputViewSelection === OutputView.Charts">
 						<tera-simulate-chart
@@ -157,6 +182,8 @@
 							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="configurationChange(idx, $event)"
+							:size="parentSize"
+							class="mb-2"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
@@ -171,6 +198,8 @@
 								selectedVariable: knobs.targetVariables
 							}"
 							:target-variable="knobs.targetVariables[0]"
+							:size="parentSize"
+							:threshold="knobs.threshold"
 						/>
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">
@@ -351,6 +380,7 @@ const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
+const displayOptimizationResult = ref(true);
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateOptions = ref<State[]>([]);
@@ -595,6 +625,7 @@ const setOutputValues = async () => {
 		'optimize_results.json'
 	);
 	optimizationResult.value = optimzationResult;
+	displayOptimizationResult.value = true;
 };
 
 onMounted(async () => {
@@ -646,6 +677,20 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const formatValue = (value) => {
+	if (typeof value === 'object' && value !== null) {
+		return JSON.stringify(value);
+	}
+	return value;
+};
+
+const parentSize = ref({ width: 0, height: 270 }); // Set the initial height or any default height
+// Calculate the parent container's width
+onMounted(async () => {
+	const parentContainerWidth = document.querySelector('#output-panel').clientWidth - 48;
+	parentSize.value.width = parentContainerWidth;
+});
 </script>
 
 <style scoped>
@@ -706,5 +751,37 @@ watch(
 		flex: 9;
 		margin-right: 0.5rem;
 	}
+}
+
+.result-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 2px; /* Adjust the gap between rows as needed */
+	font-size: var(--font-caption);
+	background-color: var(--surface-glass);
+	border: solid 1px var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-small);
+}
+
+.result-row {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-small);
+}
+
+.label {
+	font-weight: bold;
+	width: 150px; /* Adjust the width of the label column as needed */
+}
+
+.value {
+	flex-grow: 1;
+}
+
+.failed-run {
+	border: 2px solid var(--error-color);
+	border-radius: var(--border-radius-big);
+	color: var(--error-color-text);
 }
 </style>
