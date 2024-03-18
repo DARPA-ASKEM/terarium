@@ -33,5 +33,3 @@ import teraProjectOverviewEditor from '@/components/home/tera-project-overview-e
 
 const isRenamingProject = ref(false);
 </script>
-
-<style scoped></style>

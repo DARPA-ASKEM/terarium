@@ -37,13 +37,13 @@ const hasEditPermission = computed(() =>
 	['creator', 'writer'].includes(props.project?.userPermission ?? '')
 );
 
-let autoSaveIntervalId: NodeJS.Timeout | null = null;
+let autoSaveIntervalId: number | null = null;
 const startAutoSave = () => {
-	autoSaveIntervalId = setInterval(saveContent, AUTO_SAVE_DELAY);
+	autoSaveIntervalId = window.setInterval(saveContent, AUTO_SAVE_DELAY);
 };
 const stopAutoSave = () => {
 	if (autoSaveIntervalId === null) return;
-	clearInterval(autoSaveIntervalId);
+	window.clearInterval(autoSaveIntervalId);
 	autoSaveIntervalId = null;
 };
 
