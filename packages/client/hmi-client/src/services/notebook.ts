@@ -12,9 +12,11 @@ export interface NotebookHistory {
 export const saveCodeToState = (node: WorkflowNode<any>, code: string, hasCodeRun: boolean) => {
 	const state = cloneDeep(node.state);
 
+	if (!('notebookHistory' in state) || !('hasCodeRun' in state)) return state;
+
 	state.hasCodeRun = hasCodeRun;
 	// for now only save the last code executed, may want to save all code executed in the future
-	const notebookHistoryLength = node.state.notebookHistory.length;
+	const notebookHistoryLength = state.notebookHistory.length;
 	const timestamp = Date.now();
 	if (notebookHistoryLength > 0) {
 		state.notebookHistory[0] = { code, timestamp };

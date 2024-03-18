@@ -226,10 +226,10 @@ function formatField(field: string) {
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-function updateImagesState(newImageId?: string, clearImages = false) {
+function updateImagesState(operationType: string, newImageId: string | null = null) {
 	const state = cloneDeep(props.node.state);
-	if (newImageId) state.comparisonImageIds.push(newImageId);
-	if (clearImages) state.comparisonImageIds = [];
+	if (operationType === 'add' && newImageId) state.comparisonImageIds.push(newImageId);
+	else if (operationType === 'clear') state.comparisonImageIds = [];
 	emit('update-state', state);
 }
 
@@ -240,7 +240,7 @@ function updateCodeState() {
 
 function emptyImages() {
 	deleteImages(props.node.state.comparisonImageIds); // Delete images from S3
-	updateImagesState(undefined, true); // Then their ids can be removed from the state
+	updateImagesState('clear'); // Then their ids can be removed from the state
 	structuralComparisons.value = [];
 }
 
@@ -270,7 +270,7 @@ function runCode() {
 			const newImage = `data:image/png;base64,${data.content.data['image/png']}`;
 			structuralComparisons.value.push(newImage);
 			addImage(newImageId, newImage);
-			updateImagesState(newImageId);
+			updateImagesState('add', newImageId);
 			isLoadingStructuralComparisons.value = false;
 		})
 		.register('error', (data) => {
