@@ -262,4 +262,11 @@ section {
 .clickable-tag:hover {
 	cursor: pointer;
 }
+
+:deep(.p-accordion-content:empty::before) {
+	content: 'None';
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	margin-left: 1rem;
+}
 </style>
