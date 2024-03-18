@@ -343,7 +343,6 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
-	// FIXME: probably switch to multiport instead of multivalue
 	const modelConfigurationIds: string[] = [];
 	props.node.inputs.forEach((ele) => {
 		if (ele.value) modelConfigurationIds.push(ele.value[0]);
