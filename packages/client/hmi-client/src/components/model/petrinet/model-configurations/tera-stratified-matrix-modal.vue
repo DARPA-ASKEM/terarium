@@ -15,33 +15,10 @@
 			</div>
 		</template>
 		<template #default>
-			<!-- TODO: Implement value tabs for the modal once we are ready
-					<TabView v-model:activeIndex="activeIndex">
-					<TabPanel v-for="(extraction, i) in extractions" :key="i">
-						<template #header>
-							<span>{{ extraction.name }}</span>
-						</template>
-						<div>
-							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" :key="'name' + i" v-model="extraction.name" />
-						</div>
-						<div>
-							<label for="name">Matrix</label>
-							<tera-stratified-value-matrix
-								:model-configuration="modelConfigurations[modalAttributes.configIndex]"
-								:id="modalAttributes.id"
-								:stratified-model-type="stratifiedModelType"
-								:node-type="modalAttributes.stratifiedMatrixType"
-							/>
-						</div>
-					</TabPanel>
-				</TabView> -->
 			<tera-stratified-matrix
 				v-bind="props"
 				:should-eval="matrixShouldEval"
-				@update-configuration="
-					(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-				"
+				@update-cell-value="(configToUpdate: any) => emit('update-cell-value', configToUpdate)"
 			/>
 		</template>
 		<template #footer>
@@ -59,23 +36,22 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
-import type { ModelConfiguration } from '@/types/Types';
 import InputSwitch from 'primevue/inputswitch';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { StratifiedMatrix } from '@/types/Model';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import TeraStratifiedMatrix from './tera-stratified-matrix.vue';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	id: string;
-	stratifiedModelType: StratifiedModel;
 	stratifiedMatrixType: StratifiedMatrix;
 	openValueConfig: boolean;
 }>();
 
-const emit = defineEmits(['close-modal', 'update-configuration']);
+const emit = defineEmits(['close-modal', 'update-cell-value']);
 
 const matrixShouldEval = ref(false);
 </script>
