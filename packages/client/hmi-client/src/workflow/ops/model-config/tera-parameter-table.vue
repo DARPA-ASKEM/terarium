@@ -230,6 +230,8 @@
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model-configuration="modelConfiguration"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
 				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
@@ -238,57 +240,60 @@
 	</Datatable>
 	<Teleport to="body">
 		<tera-stratified-matrix-modal
-			v-if="matrixModalContext.isOpen && stratifiedModelType"
+			v-if="matrixModalContext.isOpen && isStratified"
 			:id="matrixModalContext.matrixId"
-			:model-configuration="modelConfiguration"
-			:stratified-model-type="stratifiedModelType"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
 			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
-			@update-configuration="
-				(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-			"
+			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>
 	</Teleport>
-
-	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type { ModelConfiguration, ModelParameter } from '@/types/Types';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import { StratifiedMatrix } from '@/types/Model';
-import Datatable from 'primevue/datatable';
-import Column from 'primevue/column';
-import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
-import { cloneDeep, isEmpty } from 'lodash';
-import { getModelType } from '@/services/model';
+import Datatable from 'primevue/datatable';
+import Column from 'primevue/column';
+import { StratifiedMatrix } from '@/types/Model';
+import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached
 } from '@/services/concept';
-import { getUnstratifiedParameters } from '@/model-representation/petrinet/mira-petri';
+
+import { getModelType } from '@/services/model';
+import { matrixEffect } from '@/utils/easter-eggs';
+import type { ModelConfiguration, ModelParameter } from '@/types/Types';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
+import { updateVariable } from '@/model-representation/service';
+
+const props = defineProps<{
+	modelConfiguration: ModelConfiguration;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
+	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
+	hideHeader?: boolean;
+}>();
+
+const emit = defineEmits(['update-value', 'update-configuration']);
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
 	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
 	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
 ];
-const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
-	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
-	hideHeader?: boolean;
-}>();
 
-const emit = defineEmits(['update-value', 'update-configuration']);
+const isStratified = computed(() => isStratifiedModel(props.mmt));
 
 const matrixModalContext = ref({
 	isOpen: false,
@@ -296,20 +301,17 @@ const matrixModalContext = ref({
 });
 
 const parameters = computed<Map<string, string[]>>(() => {
-	const model = props.modelConfiguration.configuration;
-	if (stratifiedModelType.value) {
-		return getUnstratifiedParameters(model);
+	if (isStratified.value) {
+		const collapsedParams = collapseParameters(props.mmt, props.mmtParams);
+		return collapsedParams;
 	}
+
+	// Non-stratified logic
 	const result = new Map<string, string[]>();
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		model.semantics?.ode.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		model.model.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	}
+	Object.keys(props.mmt.parameters).forEach((key) => {
+		const p = props.mmt.parameters[key];
+		result.set(p.name, [p.name]);
+	});
 	return result;
 });
 
@@ -331,7 +333,7 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 	const configuration = props.modelConfiguration.configuration;
 	const formattedParams: ModelConfigTableData[] = [];
 
-	if (stratifiedModelType.value) {
+	if (isStratified.value) {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				let param;
@@ -418,6 +420,7 @@ const expandedRows = ref([]);
 const openMatrixModal = (datum: ModelConfigTableData) => {
 	// Matrix effect easter egg (shows matrix effect 1 in 10 times a person clicks the Matrix button)
 	matrixEffect();
+
 	const id = datum.id;
 	if (!datum.tableFormattedMatrix) return;
 	matrixModalContext.value = {
@@ -427,6 +430,12 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 };
 
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
+
+const updateCellValue = (v: any) => {
+	const clone = cloneDeep(props.modelConfiguration);
+	updateVariable(clone.configuration, 'parameters', v.variableName, v.newValue, v.mathml);
+	emit('update-configuration', clone);
+};
 
 const updateTimeseries = (id: string, value: string) => {
 	if (!validateTimeSeries(value)) return;
@@ -508,74 +517,12 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	emit('update-configuration', clonedConfig);
 };
 
-const stratifiedModelType = computed(() =>
-	getStratificationType(props.modelConfiguration.configuration)
-);
-
 const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
 		config.configuration.semantics.ode.parameters[index] = param;
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
 		config.configuration.model.parameters[index] = param;
 	}
-};
-
-/* Matrix effect easter egg: This gets triggered 1 in 10 times a person clicks the Matrix button */
-const matrixEffect = () => {
-	if (Math.random() > 0.1) return;
-	const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
-	if (!canvas) return;
-	const ctx = (canvas as HTMLCanvasElement)?.getContext('2d');
-
-	// eslint-disable-next-line no-multi-assign
-	const w = (canvas.width = document.body.offsetWidth);
-	// eslint-disable-next-line no-multi-assign
-	const h = (canvas.height = document.body.offsetHeight);
-	const cols = Math.floor(w / 20) + 1;
-	const ypos = Array(cols).fill(0);
-
-	if (ctx) {
-		ctx.fillStyle = '#FFF';
-		ctx.fillRect(0, 0, w, h);
-	}
-
-	function matrix() {
-		if (ctx) {
-			ctx.fillStyle = '#FFF1';
-			ctx.fillRect(0, 0, w, h);
-
-			ctx.fillStyle = '#1B8073';
-			ctx.font = '15pt monospace';
-
-			ypos.forEach((y, ind) => {
-				const text = String.fromCharCode(Math.random() * 128);
-				const x = ind * 20;
-				ctx.fillText(text, x, y);
-				if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
-				else ypos[ind] = y + 20;
-			});
-		}
-	}
-
-	const intervalId = setInterval(matrix, 33);
-
-	// after 4 seconds begin the fade out
-	setTimeout(() => {
-		if (canvas) {
-			canvas.style.opacity = '0';
-		}
-	}, 3000);
-
-	// after 5 seconds clear the canvas, stop the interval, and reset the opacity
-	setTimeout(() => {
-		clearInterval(intervalId);
-		if (ctx) {
-			ctx.clearRect(0, 0, w, h);
-		}
-		if (canvas) {
-			canvas.style.opacity = '1';
-		}
-	}, 4000);
 };
 </script>
 
@@ -689,18 +636,5 @@ const matrixEffect = () => {
 
 .value-type-dropdown {
 	min-width: 10rem;
-}
-
-#matrix-canvas {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1000;
-	pointer-events: none;
-	mix-blend-mode: darken;
-	opacity: 1;
-	transition: opacity 1s;
 }
 </style>
