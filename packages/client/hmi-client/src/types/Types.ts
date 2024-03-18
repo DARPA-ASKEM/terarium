@@ -155,7 +155,7 @@ export interface Dataset extends TerariumAsset {
     fileNames?: string[];
     datasetUrl?: string;
     columns?: DatasetColumn[];
-    metadata?: any;
+    metadata?: { [index: string]: any };
     source?: string;
     grounding?: Grounding;
 }
@@ -942,6 +942,7 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     gollmCard?: any;
     templateCard?: any;
+    code_id?: string;
 }
 
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
