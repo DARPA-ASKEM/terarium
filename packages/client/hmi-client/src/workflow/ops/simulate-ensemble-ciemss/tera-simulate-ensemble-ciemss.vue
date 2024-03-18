@@ -134,7 +134,7 @@
 					:run-results="runResults"
 					:chartConfig="cfg"
 					has-mean-line
-					@configuration-change="chartConfigurationChange(index, $event)"
+					@configuration-change="chartProxy.configurationChange(index, $event)"
 				/>
 			</tera-drilldown-preview>
 		</template>
@@ -172,6 +172,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { chartActionsProxy } from '@/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type {
@@ -179,7 +180,7 @@ import type {
 	EnsembleModelConfigs,
 	EnsembleSimulationCiemssRequest
 } from '@/types/Types';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { RunResults } from '@/types/SimulateConfig';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
@@ -235,12 +236,12 @@ const outputs = computed(() => {
 });
 const selectedOutputId = ref<string>();
 
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
-	emit('update-state', state);
-};
+const chartProxy = chartActionsProxy(
+	props.node.state,
+	(state: SimulateEnsembleCiemssOperationState) => {
+		emit('update-state', state);
+	}
+);
 
 const onSelection = (id: string) => {
 	emit('select-output', id);

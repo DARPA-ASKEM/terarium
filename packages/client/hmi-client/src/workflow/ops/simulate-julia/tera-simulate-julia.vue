@@ -169,7 +169,7 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
+const chartProxy = chartActionsProxy(props.node.state, (state: SimulateJuliaOperationState) => {
 	emit('update-state', state);
 });
 

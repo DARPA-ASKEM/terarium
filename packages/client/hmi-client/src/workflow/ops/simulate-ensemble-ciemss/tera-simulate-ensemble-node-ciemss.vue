@@ -6,7 +6,7 @@
 			:run-results="runResults[selectedRunId]"
 			:chartConfig="cfg"
 			has-mean-line
-			@configuration-change="chartConfigurationChange(index, $event)"
+			@configuration-change="chartProxy.configurationChange(index, $event)"
 			:size="{ width: 190, height: 120 }"
 		/>
 	</section>
@@ -33,15 +33,16 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { logger } from '@/utils/logger';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { logger } from '@/utils/logger';
+import { chartActionsProxy } from '@/workflow/util';
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
@@ -57,15 +58,14 @@ const runResults = ref<{ [runId: string]: RunResults }>({});
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const selectedRunId = ref<string>('');
 
+const chartProxy = chartActionsProxy(
+	props.node.state,
+	(state: SimulateEnsembleCiemssOperationState) => {
+		emit('update-state', state);
+	}
+);
+
 const poller = new Poller();
-
-// Tom TODO: Make this generic, its copy paste from drilldown
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
-	emit('update-state', state);
-};
 
 const getStatus = async (simulationId: string) => {
 	poller
@@ -158,9 +158,5 @@ section {
 
 .simulate-chart {
 	margin: 1em 0em;
-}
-
-.add-chart {
-	width: 9em;
 }
 </style>
