@@ -69,6 +69,7 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -89,14 +90,13 @@ public class DocumentController {
 
 	final DownloadService downloadService;
 
-	final KnowledgeController knowledgeController;
-
 	private final ProjectService projectService;
 	private final ProjectAssetService projectAssetService;
 
 	final DocumentAssetService documentAssetService;
 
 	final ObjectMapper objectMapper;
+	final ExtractionService extractionService;
 
 	@Value("${xdd.api-key}")
 	String apikey;
@@ -443,7 +443,7 @@ public class DocumentController {
 			}
 
 			// Upload the PDF from unpaywall
-			documentAsset = uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
 
 			// add asset to project
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
@@ -635,7 +635,7 @@ public class DocumentController {
 	 * @param docId    document id
 	 * @return extraction job id
 	 */
-	private DocumentAsset uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
+	private void uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
 			final UUID docId) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
@@ -664,17 +664,9 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			final ResponseEntity<DocumentAsset> res = knowledgeController.postPDFToCosmos(docId);
-			if (res.getStatusCode().is2xxSuccessful()) {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						"Unable to extract pdf");
-			}
-			return res.getBody();
-
+			extractionService.extractPDF(docId);
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
-			return null;
 		}
 	}
 }

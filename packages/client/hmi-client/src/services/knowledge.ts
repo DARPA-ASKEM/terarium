@@ -2,7 +2,6 @@ import API, { Poller, PollerResult, PollerState, PollResponse } from '@/api/api'
 import { AxiosError, AxiosResponse } from 'axios';
 import type { Code, Dataset, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { modelCard } from './goLLM';
 
 /**
  * Fetch information from the extraction service via the Poller utility
@@ -105,34 +104,25 @@ export const profileDataset = async (
 	return response.data.id;
 };
 
-export const extractTextFromPDFDocument = async (documentId: string): Promise<string | null> => {
-	try {
-		const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
-		if (response?.status === 200 && response?.data?.id) return response.data.id;
-		logger.error('pdf text extraction request failed', {
-			showToast: false,
-			toastTitle: 'Error - pdfExtractions'
-		});
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('[pdfExtractions]', axiosError.response?.data || axiosError.message, {
-				showToast: false,
-				toastTitle: 'Error - pdf text extraction'
-			});
-		} else {
-			logger.error(error, { showToast: false, toastTitle: 'Error - pdf text extraction' });
-		}
-	}
-
-	return null;
-};
-
 export const extractPDF = async (documentId: string) => {
 	if (documentId) {
-		const resp: string | null = await extractTextFromPDFDocument(documentId);
-		if (resp) {
-		  modelCard(documentId);
+		try {
+			const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
+			if (response?.status === 202) return;
+			logger.error('pdf text extraction request failed', {
+				showToast: false,
+				toastTitle: 'Error - pdfExtractions'
+			});
+		} catch (error: unknown) {
+			if ((error as AxiosError).isAxiosError) {
+				const axiosError = error as AxiosError;
+				logger.error('[pdfExtractions]', axiosError.response?.data || axiosError.message, {
+					showToast: false,
+					toastTitle: 'Error - pdf text extraction'
+				});
+			} else {
+				logger.error(error, { showToast: false, toastTitle: 'Error - pdf text extraction' });
+			}
 		}
 	}
 };
