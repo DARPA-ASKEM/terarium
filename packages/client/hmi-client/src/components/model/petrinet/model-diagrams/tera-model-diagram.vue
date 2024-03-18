@@ -3,7 +3,7 @@
 		<TeraResizablePanel
 			v-if="!isPreview"
 			class="diagram-container"
-			:class="isLocked ? '' : 'unlocked'"
+			:class="{ unlocked: !isLocked }"
 			:style="isLocked ? { pointerEvents: 'none' } : {}"
 		>
 			<section class="graph-element">
