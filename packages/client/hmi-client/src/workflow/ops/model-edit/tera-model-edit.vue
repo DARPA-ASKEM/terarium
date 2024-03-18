@@ -174,6 +174,7 @@ const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
 
+// This is just a test
 const emitStatus = () => {
 	const status: OperatorStatus = OperatorStatus.WARNING;
 	emit('update-status', status);
@@ -216,23 +217,24 @@ const runFromCode = (code: string) => {
 		.sendMessage('execute_request', messageContent)
 		.register('execute_input', (data) => {
 			executedCode = data.content.code;
+			emit('update-status', OperatorStatus.IN_PROGRESS);
 		})
 		.register('stream', (data) => {
 			console.log('stream', data);
 		})
 		.register('error', (data) => {
-			handleErrorResponse(data);
+			console.log(data);
+			emit('update-status', OperatorStatus.ERROR);
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
 		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;
-
 			syncWithMiraModel(data);
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
 			}
+			emit('update-status', OperatorStatus.SUCCESS);
 		});
 };
 
@@ -256,10 +258,6 @@ const handleResetResponse = (data: any) => {
 	} else {
 		logger.error('Error resetting model');
 	}
-};
-
-const handleErrorResponse = (data: any) => {
-	console.log(data);
 };
 
 const buildJupyterContext = () => {
