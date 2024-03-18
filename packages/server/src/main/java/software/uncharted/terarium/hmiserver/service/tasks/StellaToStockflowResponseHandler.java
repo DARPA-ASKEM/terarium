@@ -40,6 +40,13 @@ public class StellaToStockflowResponseHandler extends TaskResponseHandler {
 			model.setName(props.getFileName());
 			model.getHeader().setName(props.getFileName());
 			model.getHeader().setDescription(props.getFileName());
+
+			model.getSemantics().getOde().getParameters().forEach((param) -> {
+				if (param.getName() == null || param.getName().isEmpty()) {
+					param.setName(param.getId());
+				}
+			});
+
 			model = modelService.createAsset(model);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
