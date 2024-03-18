@@ -18,8 +18,6 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -51,7 +49,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -225,10 +222,8 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	ResponseEntity<Model> postCodeToAMR(
 			@RequestParam("code-id") final UUID codeId,
-			@RequestParam(name = "name", required = false) final String name,
-			@RequestParam(name = "description", required = false) final String description,
-			@RequestParam(name = "dynamics-only", required = false) Boolean dynamicsOnly,
-			@RequestParam(name = "llm-assisted", required = false) final Boolean llmAssisted) {
+			@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
+			@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted) {
 
 		try {
 
@@ -356,21 +351,22 @@ public class KnowledgeController {
 			// 2. upload file to code asset
 			final byte[] fileAsBytes = input.getBytes();
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final String filename = input.getOriginalFilename();
 
-			// we have pre-formatted the files object already so no need to use uploadCode
-			final PresignedURL presignedURL = codeService.getUploadUrl(createdCode.getId(),
-					input.getOriginalFilename());
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse response = httpClient.execute(put);
+			codeService.uploadFile(code.getId(), filename, fileEntity);
 
-			if (response.getStatusLine().getStatusCode() != 200) {
-				throw new Exception("Error uploading file");
+			// add the code file to the code asset
+			final CodeFile codeFile = new CodeFile();
+			codeFile.setProgrammingLanguageFromFileName(filename);
+
+			if (code.getFiles() == null) {
+				code.setFiles(new HashMap<>());
 			}
+			code.getFiles().put(filename, codeFile);
+			codeService.updateAsset(code);
+
 			// 3. create model from code asset
-			return ResponseEntity.ok(
-					postCodeToAMR(createdCode.getId(), "temp model", "temp model description", false, false)
-							.getBody());
+			return postCodeToAMR(createdCode.getId(), false, false);
 		} catch (final Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
