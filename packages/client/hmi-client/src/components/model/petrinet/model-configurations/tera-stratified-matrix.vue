@@ -40,8 +40,8 @@
 										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
 										v-model.lazy="valueToEdit"
 										v-focus
-										@focusout="updateModelValue(cell.content.id, rowIdx, colIdx)"
-										@keyup.stop.enter="updateModelValue(cell.content.id, rowIdx, colIdx)"
+										@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+										@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
 									/>
 									<div
 										class="w-full"
@@ -84,20 +84,20 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, Model, ModelParameter, Rate } from '@/types/Types';
+import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import { pythonInstance } from '@/python/PyodideController';
 import { StratifiedMatrix } from '@/types/Model';
 
 const props = defineProps<{
-	model: Model;
+	modelConfiguration: ModelConfiguration;
 	id: string;
 	stratifiedModelType: StratifiedModel;
 	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
 }>();
 
-const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-configuration']);
 
 const matrix = ref<any>([]);
 const valueToEdit = ref('');
@@ -107,7 +107,7 @@ const matrixExpressionsList = ref<string[][]>([]);
 
 const parametersValueMap = computed(
 	() =>
-		props.model.semantics?.ode.parameters?.reduce((acc, val) => {
+		props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
 			acc[val.id] = val.value;
 			return acc;
 		}, {})
@@ -147,7 +147,7 @@ function findOdeObjectLocation(variableName: string): {
 	fieldName: string;
 	fieldIndex: number;
 } | null {
-	const ode = props.model.semantics?.ode;
+	const ode = props.modelConfiguration.configuration?.semantics?.ode;
 	if (!ode) return null;
 
 	const fieldNames = [
@@ -157,15 +157,13 @@ function findOdeObjectLocation(variableName: string): {
 	];
 
 	for (let i = 0; i < fieldNames.length; i++) {
-		const fieldIndex =
-			ode[fieldNames[i]]?.findIndex((fieldObj) => {
-				const { target, id } = fieldObj;
-				return target === variableName || id === variableName;
-			}) ?? -1;
+		const fieldIndex = ode[fieldNames[i]].findIndex(
+			({ target, id }) => target === variableName || id === variableName
+		);
 		if (fieldIndex === -1) continue;
 
 		return {
-			odeFieldObject: ode?.[fieldNames[i]]?.[fieldIndex ?? 0] as Rate & Initial & ModelParameter,
+			odeFieldObject: ode[fieldNames[i]][fieldIndex],
 			fieldName: fieldNames[i],
 			fieldIndex
 		};
@@ -196,7 +194,7 @@ async function getMatrixValue(variableName: string) {
 	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
 			expressionBase,
-			parametersValueMap.value as object
+			parametersValueMap.value
 		);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
@@ -205,10 +203,14 @@ async function getMatrixValue(variableName: string) {
 }
 
 function renderMatrix() {
-	matrix.value = generateMatrix(props.model, props.id, props.stratifiedMatrixType);
+	matrix.value = generateMatrix(
+		props.modelConfiguration.configuration,
+		props.id,
+		props.stratifiedMatrixType
+	);
 }
 
-async function updateModelValue(variableName: string, rowIdx: number, colIdx: number) {
+async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
 	editableCellStates.value[rowIdx][colIdx] = false;
 	const newValue = valueToEdit.value;
 	const odeObjectLocation = findOdeObjectLocation(variableName);
@@ -231,12 +233,10 @@ async function updateModelValue(variableName: string, rowIdx: number, colIdx: nu
 			odeFieldObject.value = Number(newValue);
 		}
 
-		const modelClone = cloneDeep(props.model);
-		if (modelClone.semantics?.ode[fieldName] !== undefined) {
-			modelClone.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
-		}
+		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
+		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
 
-		emit('update-model', modelClone);
+		emit('update-configuration', modelConfigurationClone);
 		renderMatrix();
 	}
 }
@@ -251,7 +251,7 @@ function configureMatrix() {
 	}
 }
 
-watch([() => props.id, () => props.model], () => {
+watch([() => props.id, () => props.modelConfiguration.configuration], () => {
 	configureMatrix();
 });
 
