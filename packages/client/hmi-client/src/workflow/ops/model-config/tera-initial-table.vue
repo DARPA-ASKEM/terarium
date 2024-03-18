@@ -332,6 +332,7 @@ const updateMetadata = (id: string, key: string, value: string) => {
 	if (!clonedModel.metadata?.initials?.[id]) {
 		clonedModel.metadata ??= {};
 		clonedModel.metadata.initials ??= {};
+		clonedModel.metadata.initials[id] ??= {};
 	}
 	clonedModel.metadata.initials[id][key] = value;
 	emit('update-model', clonedModel);
