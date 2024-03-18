@@ -27,7 +27,7 @@ const DEFAULT_EDITOR_CONTENT = `
 `;
 const props = defineProps<{ project: Project | null }>();
 const editorContent = ref('');
-const lastSavedContent = computed(() => props.project?.overviewText ?? DEFAULT_EDITOR_CONTENT);
+const lastSavedContent = computed(() => props.project?.overviewContent ?? DEFAULT_EDITOR_CONTENT);
 
 let autoSaveIntervalId: NodeJS.Timeout | null = null;
 const startAutoSave = () => {
@@ -47,7 +47,7 @@ const isContentSameAsLastSaved = computed(
 const saveContent = async () => {
 	if (!props.project) return;
 	if (isContentSameAsLastSaved.value) return;
-	const res = await update({ ...props.project, overviewText: editorContent.value });
+	const res = await update({ ...props.project, overviewContent: editorContent.value });
 	// Note that an error has happened when res is null since the `update` function's swallowing the error and returning null instead of throwing it.
 	if (!res) {
 		stopAutoSave();

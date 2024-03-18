@@ -424,7 +424,7 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     description?: string;
-    overviewText?: string;
+    overviewContent?: string;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;

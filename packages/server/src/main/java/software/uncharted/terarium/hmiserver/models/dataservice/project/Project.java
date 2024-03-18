@@ -54,7 +54,7 @@ public class Project extends TerariumAsset implements Serializable {
 	@TSOptional
 	@Schema(defaultValue = "My Project Overview")
 	@Lob
-	private String overviewText;
+	private String overviewContent;
 
 	@OneToMany(mappedBy = "project")
 	@Where(clause = "deleted_on IS NULL")
