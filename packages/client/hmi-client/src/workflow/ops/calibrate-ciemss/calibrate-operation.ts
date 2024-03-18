@@ -16,7 +16,7 @@ export interface CalibrationOperationStateCiemss {
 
 export const CalibrationOperationCiemss: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION_CIEMSS,
-	displayName: 'Calibrate & Simulate',
+	displayName: 'Calibrate with PyCIEMSS',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [
