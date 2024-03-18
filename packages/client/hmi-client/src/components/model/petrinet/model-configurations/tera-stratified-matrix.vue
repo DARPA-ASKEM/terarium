@@ -1,9 +1,17 @@
 <template>
-	<div
-		v-if="!isEmpty(matrix)"
-		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
-	>
-		<div class="p-datatable-wrapper">
+	<div class="p-datatable-wrapper">
+		<Dropdown
+			v-if="matrixMap && Object.keys(matrixMap).length > 0"
+			:model-value="matrixType"
+			:options="matrixTypes"
+			placeholder="Select matrix type"
+			@update:model-value="(v) => changeMatrix(v)"
+		/>
+
+		<div
+			v-if="!isEmpty(matrix)"
+			class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
+		>
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead v-if="matrix[0].length > 0" class="p-datatable-thead">
 					<tr>
@@ -13,14 +21,11 @@
 				</thead>
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
+						<!-- Row label -->
 						<td v-if="matrix.length > 0" class="p-frozen-column">
-							<template v-if="stratifiedMatrixType === StratifiedMatrix.Initials">
-								{{ Object.values(row[0].rowCriteria)[0] }}
-							</template>
-							<template v-else>
-								{{ row[0].rowCriteria }}
-							</template>
+							{{ row[0].rowCriteria }}
 						</td>
+
 						<td
 							v-for="(cell, colIdx) in row"
 							:key="colIdx"
@@ -40,8 +45,8 @@
 										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
 										v-model.lazy="valueToEdit"
 										v-focus
-										@focusout="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
-										@keyup.stop.enter="updateModelConfigValue(cell.content.id, rowIdx, colIdx)"
+										@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
+										@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
 									/>
 									<div
 										class="w-full"
@@ -52,6 +57,7 @@
 											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 										>
 											{{ cell?.content.id }}
+											<!--
 											<span
 												v-if="cell?.content?.controllers"
 												class="pi pi-info-circle"
@@ -60,11 +66,12 @@
 													pt: 'grid col'
 												}"
 											/>
+											-->
 										</div>
 										<div>
 											<div
 												class="mathml-container"
-												v-html="matrixExpressionsList?.[rowIdx]?.[colIdx] ?? '...'"
+												v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
 											/>
 										</div>
 									</div>
@@ -81,115 +88,63 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
-import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
-import { generateMatrix } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, ModelConfiguration, ModelParameter, Rate } from '@/types/Types';
-import InputText from 'primevue/inputtext';
+import { isEmpty } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
 import { StratifiedMatrix } from '@/types/Model';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { createParameterMatrix, createInitialMatrix } from '@/model-representation/mira/mira';
+import { getVariable } from '@/model-representation/service';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	id: string;
-	stratifiedModelType: StratifiedModel;
 	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
 }>();
 
-const emit = defineEmits(['update-configuration']);
+const emit = defineEmits(['update-cell-value']);
 
+const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other'];
+const matrixType = ref('subjectOutcome');
+const matrixMap = ref<any>();
 const matrix = ref<any>([]);
+
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
+const expressionMap = ref<{ [key: string]: string }>({});
 
-const matrixExpressionsList = ref<string[][]>([]);
+const parametersValueMap = computed(() => {
+	const keys = Object.keys(props.mmt.parameters);
+	const result: any = {};
+	keys.forEach((key) => {
+		result[key] = props.mmt.parameters[key].value;
+	});
+	return result;
+});
 
-const parametersValueMap = computed(
-	() =>
-		props.modelConfiguration.configuration?.semantics.ode.parameters.reduce((acc, val) => {
-			acc[val.id] = val.value;
-			return acc;
-		}, {})
-);
+const changeMatrix = (v: string) => {
+	matrixType.value = v;
+	matrix.value = matrixMap.value[v];
+};
 
 // Makes cell inputs focus once they appear
 const vFocus = {
 	mounted: (el) => el.focus()
 };
 
-watch(
-	() => [matrix.value, props.shouldEval],
-	async () => {
-		if (!matrix.value) return;
-		const output: string[][] = [];
-		await Promise.all(
-			matrix.value
-				.map((row) =>
-					row.map(async (cell) => {
-						if (cell.content?.id) {
-							if (!output[cell.row]) {
-								output[cell.row] = [];
-							}
-							output[cell.row][cell.col] = await getMatrixValue(cell.content.id);
-						}
-					})
-				)
-				.flat()
-		);
-		matrixExpressionsList.value = output;
-	}
-);
-
-// Finds where to get the value within the AMR based on the variable name
-function findOdeObjectLocation(variableName: string): {
-	odeFieldObject: Rate & Initial & ModelParameter;
-	fieldName: string;
-	fieldIndex: number;
-} | null {
-	const ode = props.modelConfiguration.configuration?.semantics?.ode;
-	if (!ode) return null;
-
-	const fieldNames = [
-		StratifiedMatrix.Rates,
-		StratifiedMatrix.Initials,
-		StratifiedMatrix.Parameters
-	];
-
-	for (let i = 0; i < fieldNames.length; i++) {
-		const fieldIndex = ode[fieldNames[i]].findIndex(
-			({ target, id }) => target === variableName || id === variableName
-		);
-		if (fieldIndex === -1) continue;
-
-		return {
-			odeFieldObject: ode[fieldNames[i]][fieldIndex],
-			fieldName: fieldNames[i],
-			fieldIndex
-		};
-	}
-	return null;
-}
-
-function getMatrixExpression(variableName: string) {
-	const odeObjectLocation = findOdeObjectLocation(variableName);
-	if (odeObjectLocation) {
-		const { odeFieldObject } = odeObjectLocation;
-		return odeFieldObject?.expression ?? odeFieldObject?.value;
-	}
-	return variableName;
-}
-
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
 	if (!variableName) return;
-	valueToEdit.value = getMatrixExpression(variableName);
+	valueToEdit.value = getVariable(props.mmt, variableName).value;
 	editableCellStates.value[rowIdx][colIdx] = true;
 }
 
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string) {
-	const expressionBase = getMatrixExpression(variableName);
+	const expressionBase = getVariable(props.mmt, variableName).value;
 
 	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
@@ -198,51 +153,49 @@ async function getMatrixValue(variableName: string) {
 		);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
-
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;
 }
 
-function renderMatrix() {
-	matrix.value = generateMatrix(
-		props.modelConfiguration.configuration,
-		props.id,
-		props.stratifiedMatrixType
-	);
-}
+function generateMatrix() {
+	const stratifiedType = props.stratifiedMatrixType;
 
-async function updateModelConfigValue(variableName: string, rowIdx: number, colIdx: number) {
-	editableCellStates.value[rowIdx][colIdx] = false;
-	const newValue = valueToEdit.value;
-	const odeObjectLocation = findOdeObjectLocation(variableName);
+	if (stratifiedType === StratifiedMatrix.Initials) {
+		matrix.value = createInitialMatrix(props.mmt, props.id);
+	} else if (stratifiedType === StratifiedMatrix.Parameters) {
+		const matrices = createParameterMatrix(props.mmt, props.mmtParams, props.id);
 
-	if (odeObjectLocation) {
-		const { odeFieldObject, fieldName, fieldIndex } = odeObjectLocation;
+		matrixMap.value = {
+			subjectOutcome: matrices.subjectOutcome.matrix,
+			subjectControllers: matrices.subjectControllers.matrix,
+			outcomeControllers: matrices.outcomeControllers.matrix,
+			other: matrices.other
+		};
 
-		// Update if the value is different
-		if (odeFieldObject.expression) {
-			if (odeFieldObject.expression === newValue) return;
+		// Find a default
+		for (let i = 0; i < matrixTypes.length; i++) {
+			const typeStr = matrixTypes[i];
 
-			// If expression changed, we want to update the the twin fields
-			// - expression
-			// - expression_mathml
-			odeFieldObject.expression = newValue;
-			const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
-			odeFieldObject.expression_mathml = mathml;
-		} else if (odeFieldObject.value) {
-			if (odeFieldObject.value === Number(newValue)) return;
-			odeFieldObject.value = Number(newValue);
+			if (matrixMap.value[typeStr] && matrixMap.value[typeStr].length > 0) {
+				matrix.value = matrixMap.value[typeStr];
+				matrixType.value = typeStr;
+				break;
+			}
 		}
-
-		const modelConfigurationClone = cloneDeep(props.modelConfiguration);
-		modelConfigurationClone.configuration.semantics.ode[fieldName][fieldIndex] = odeFieldObject;
-
-		emit('update-configuration', modelConfigurationClone);
-		renderMatrix();
+	} else {
+		console.log('TODO template!!!');
 	}
 }
 
-function configureMatrix() {
-	renderMatrix();
+async function updateCellValue(variableName: string, rowIdx: number, colIdx: number) {
+	editableCellStates.value[rowIdx][colIdx] = false;
+	const newValue = valueToEdit.value;
+	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
+
+	emit('update-cell-value', { variableName, newValue, mathml });
+}
+
+function resetEditState() {
+	editableCellStates.value = [];
 
 	if (!isEmpty(matrix.value)) {
 		for (let i = 0; i < matrix.value.length; i++) {
@@ -251,12 +204,40 @@ function configureMatrix() {
 	}
 }
 
-watch([() => props.id, () => props.modelConfiguration.configuration], () => {
-	configureMatrix();
+watch(
+	() => [matrix.value, props.shouldEval],
+	async () => {
+		if (!matrix.value) return;
+		resetEditState();
+		expressionMap.value = {};
+
+		const evalList: any[] = [];
+		const tempMap: { [key: string]: any } = {};
+
+		const assignExpression = async (id: string, row: number, col: number) => {
+			if (!id) return;
+			tempMap[`${row}:${col}`] = await getMatrixValue(id);
+		};
+
+		matrix.value.forEach((matrixRow: any) => {
+			matrixRow.forEach((cell: any) => {
+				evalList.push(assignExpression(cell.content.id, cell.row, cell.col));
+			});
+		});
+
+		await Promise.all(evalList);
+		expressionMap.value = tempMap;
+	}
+);
+
+watch([() => props.id, () => props.mmt], () => {
+	generateMatrix();
+	resetEditState();
 });
 
 onMounted(() => {
-	configureMatrix();
+	generateMatrix();
+	resetEditState();
 });
 </script>
 
@@ -333,6 +314,7 @@ onMounted(() => {
 
 .p-dropdown {
 	min-width: 11rem;
+	margin-bottom: var(--gap);
 }
 
 .subdue {

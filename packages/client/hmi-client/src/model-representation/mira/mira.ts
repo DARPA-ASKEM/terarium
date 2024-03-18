@@ -1,11 +1,19 @@
 import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import {
+	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
 	extractSubjectOutcomeMatrix,
 	removeModifiers
 } from './mira-util';
-import type { MiraModel, MiraTemplate, MiraTemplateParams, TemplateSummary } from './mira-common';
+import type {
+	MiraMatrix,
+	MiraMatrixEntry,
+	MiraModel,
+	MiraTemplate,
+	MiraTemplateParams,
+	TemplateSummary
+} from './mira-common';
 
 export const emptyMiraModel = () => {
 	const newModel: MiraModel = {
@@ -163,6 +171,7 @@ export const rawTemplatesSummary = (miraModel: MiraModel) => {
 	miraModel.templates.forEach((t) => {
 		const summary: TemplateSummary = {
 			name: t.name,
+			expression: t.rate_law,
 			subject: '',
 			outcome: '',
 			controllers: []
@@ -199,6 +208,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	miraModel.templates.forEach((t) => {
 		const scrubbedTemplate: TemplateSummary = {
 			name: t.name,
+			expression: t.rate_law,
 			subject: '',
 			outcome: '',
 			controllers: []
@@ -271,6 +281,28 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
+export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
+	const initialsMap = collapseInitials(miraModel);
+	const childrenInitials = initialsMap.get(key);
+
+	const m2: MiraMatrix = [];
+	childrenInitials?.forEach((name, idx) => {
+		const row: MiraMatrixEntry[] = [];
+		row.push({
+			row: idx,
+			col: 0,
+			rowCriteria: name,
+			colCriteria: '',
+			content: {
+				id: name,
+				value: miraModel.initials[name].expression
+			}
+		});
+		m2.push(row);
+	});
+	return m2;
+};
+
 /**
  * Assumes one-to-one with cells
  *
@@ -328,16 +360,39 @@ export const createParameterMatrix = (
 		paramValueMap,
 		paramLocationMap
 	);
+	const outcomeControllers = extractOutcomeControllersMatrix(
+		templates,
+		childrenParams,
+		paramValueMap,
+		paramLocationMap
+	);
 
-	// FIXME: check if we need to add outcomeController matrix
+	// Others, may be initial, maybe no in use ...
+	const other: MiraMatrix = [];
+	childrenParams.forEach((name, idx) => {
+		const row: MiraMatrixEntry[] = [];
+		row.push({
+			row: idx,
+			col: 0,
+			rowCriteria: name,
+			colCriteria: '',
+			content: {
+				id: name,
+				value: miraModel.parameters[name].value
+			}
+		});
+		other.push(row);
+	});
+
 	return {
 		subjectOutcome,
-		subjectControllers
+		subjectControllers,
+		outcomeControllers,
+		other
 	};
 };
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-
 export const convertToIGraph = (templates: TemplateSummary[]) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],
@@ -371,6 +426,11 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 
 	// templates
 	templates.forEach((t) => {
+		const nodeData: any = {
+			type: 'transition',
+			expression: t.expression
+		};
+
 		graph.nodes.push({
 			id: t.name,
 			label: '',
@@ -378,12 +438,12 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			y: 0,
 			width: 50,
 			height: 50,
-			data: { type: 'transition' },
+			data: nodeData,
 			nodes: []
 		});
 	});
 
-	// Edges
+	// edges
 	templates.forEach((t) => {
 		if (t.subject !== '') {
 			graph.edges.push({
