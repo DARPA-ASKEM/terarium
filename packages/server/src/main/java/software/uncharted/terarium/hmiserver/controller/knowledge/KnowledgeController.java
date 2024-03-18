@@ -24,6 +24,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -101,6 +102,9 @@ public class KnowledgeController {
 	final ProvenanceSearchService provenanceSearchService;
 
 	final CodeService codeService;
+
+	@Value("${mit-openai-api-key:}")
+	String MIT_OPENAI_API_KEY;
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
@@ -303,7 +307,9 @@ public class KnowledgeController {
 			}
 
 			// create the model
-			final ModelMetadata metadata = model.getMetadata() != null ? model.getMetadata() : new ModelMetadata();
+			if (model.getMetadata() == null) {
+				model.setMetadata(new ModelMetadata());
+			}
 			model.getMetadata().setCodeId(codeId.toString());
 			model = modelService.createAsset(model);
 
@@ -402,39 +408,41 @@ public class KnowledgeController {
 
 			final Set<String> codeIds = provenanceSearchService.modelsFromCode(payload);
 
-			if (codeIds.size() < 0) {
-				throw new ResponseStatusException(
-						HttpStatus.NOT_FOUND,
-						"No code found for model " + modelId);
+			String codeContentString = "No available code associated with model";
+			if (codeIds.size() > 0) {
+				final UUID codeId = UUID.fromString(codeIds.iterator().next());
+
+				final Code code = codeService.getAsset(codeId).orElseThrow();
+
+				final Map<String, String> codeContent = new HashMap<>();
+
+				for (final Entry<String, CodeFile> file : code.getFiles().entrySet()) {
+
+					final String name = file.getKey();
+					final String content = codeService.fetchFileAsString(codeId, file.getKey()).orElseThrow();
+
+					codeContent.put(name, content);
+				}
+				codeContentString = mapper.writeValueAsString(codeContent);
 			}
 
-			final UUID codeId = UUID.fromString(codeIds.iterator().next());
+			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
+			String documentText = "There is no documentation for this model";
+			if (documentOptional.isPresent()) {
+				final int MAX_CHAR_LIMIT = 9000;
 
-			final Code code = codeService.getAsset(codeId).orElseThrow();
-
-			final Map<String, String> codeContent = new HashMap<>();
-
-			for (final Entry<String, CodeFile> file : code.getFiles().entrySet()) {
-
-				final String name = file.getKey();
-				final String content = codeService.fetchFileAsString(codeId, file.getKey()).orElseThrow();
-
-				codeContent.put(name, content);
+				final DocumentAsset document = documentOptional.get();
+				documentText = document.getText().substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
 			}
-			final String codeContentString = mapper.writeValueAsString(codeContent);
-
-			final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
-
-			final int MAX_CHAR_LIMIT = 9000;
-			final String text = document.getText().substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
 
 			final Model model = modelService.getAsset(modelId).orElseThrow();
 
-			final StringMultipartFile textFile = new StringMultipartFile(text, documentId + ".txt", "application/text");
-			final StringMultipartFile codeFile = new StringMultipartFile(codeContentString, codeId + ".txt",
-					"application/json");
+			final StringMultipartFile textFile = new StringMultipartFile(documentText, "document.txt",
+					"application/text");
+			final StringMultipartFile codeFile = new StringMultipartFile(codeContentString, "code.txt",
+					"application/text");
 
-			final ResponseEntity<JsonNode> resp = mitProxy.modelCard(textFile, codeFile);
+			final ResponseEntity<JsonNode> resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
 				throw new RuntimeException("Unable to get model card: " + resp.getBody().asText());
 			}
@@ -510,7 +518,7 @@ public class KnowledgeController {
 
 			final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
 
-			final ResponseEntity<JsonNode> resp = mitProxy.dataCard(csvFile, documentFile);
+			final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
 				throw new RuntimeException("Unable to get data card: " + resp.getBody().asText());
 			}
@@ -538,6 +546,9 @@ public class KnowledgeController {
 					if (g.size() < 2) {
 						log.warn("Invalid dkg_grounding: {}", g);
 						continue;
+					}
+					if (groundings.getIdentifiers() == null) {
+						groundings.setIdentifiers(new HashMap<>());
 					}
 					groundings.getIdentifiers().put(g.get(0).asText(), g.get(1).asText());
 				}
@@ -676,7 +687,7 @@ public class KnowledgeController {
 				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
 						"application/text");
 
-				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(domain, file);
+				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
 
 				if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
 					mitCollection = resp.getBody();
@@ -686,7 +697,7 @@ public class KnowledgeController {
 				}
 
 			} catch (final Exception e) {
-				log.error("SKEMA variable extraction for document {} failed", documentId, e);
+				log.error("MIT variable extraction for document {} failed", documentId, e);
 			}
 
 			if (skemaCollection == null && mitCollection == null) {
@@ -715,7 +726,7 @@ public class KnowledgeController {
 						"text.json",
 						"application/json");
 
-				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(domain, mitFile,
+				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
 						arizonaFile);
 
 				if (resp.getStatusCode().is2xxSuccessful()) {
