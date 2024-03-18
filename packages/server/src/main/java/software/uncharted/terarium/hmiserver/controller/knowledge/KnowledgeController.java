@@ -262,33 +262,41 @@ public class KnowledgeController {
 
 			ResponseEntity<JsonNode> resp = null;
 
-			if (dynamicsOnly) {
-				for (final Entry<String, String> entry : codeContent.entrySet()) {
-					files.add(entry.getKey());
-					blobs.add(entry.getValue());
+			try {
+				if (dynamicsOnly) {
+					for (final Entry<String, String> entry : codeContent.entrySet()) {
+						files.add(entry.getKey());
+						blobs.add(entry.getValue());
+					}
+
+					resp = skemaUnifiedProxy.snippetsToAMR(files, blobs);
+
+				} else {
+					final ByteArrayOutputStream zipBuffer = new ByteArrayOutputStream();
+					final ZipOutputStream zipf = new ZipOutputStream(zipBuffer, StandardCharsets.UTF_8);
+
+					for (final Map.Entry<String, String> entry : codeContent.entrySet()) {
+						final String codeName = entry.getKey();
+						final String content = entry.getValue();
+						final ZipEntry zipEntry = new ZipEntry(codeName);
+						zipf.putNextEntry(zipEntry);
+						zipf.write(content.getBytes(StandardCharsets.UTF_8));
+						zipf.closeEntry();
+					}
+					zipf.close();
+
+					final ByteMultipartFile file = new ByteMultipartFile(zipBuffer.toByteArray(), "zip_file.zip",
+							"application/zip");
+
+					resp = llmAssisted ? skemaUnifiedProxy.llmCodebaseToAMR(file)
+							: skemaUnifiedProxy.codebaseToAMR(file);
+
 				}
-
-				resp = skemaUnifiedProxy.snippetsToAMR(files, blobs);
-
-			} else {
-				final ByteArrayOutputStream zipBuffer = new ByteArrayOutputStream();
-				final ZipOutputStream zipf = new ZipOutputStream(zipBuffer, StandardCharsets.UTF_8);
-
-				for (final Map.Entry<String, String> entry : codeContent.entrySet()) {
-					final String codeName = entry.getKey();
-					final String content = entry.getValue();
-					final ZipEntry zipEntry = new ZipEntry(codeName);
-					zipf.putNextEntry(zipEntry);
-					zipf.write(content.getBytes(StandardCharsets.UTF_8));
-					zipf.closeEntry();
-				}
-				zipf.close();
-
-				final ByteMultipartFile file = new ByteMultipartFile(zipBuffer.toByteArray(), "zip_file.zip",
-						"application/zip");
-
-				resp = llmAssisted ? skemaUnifiedProxy.llmCodebaseToAMR(file) : skemaUnifiedProxy.codebaseToAMR(file);
-
+			} catch (final FeignException e) {
+				log.error("SKEMA was unable to create a model with the code provided", e);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY,
+						"Unable to get code to amr");
 			}
 
 			if (!resp.getStatusCode().is2xxSuccessful()) {
@@ -322,9 +330,7 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (
-
-		final Exception e) {
+		} catch (final Exception e) {
 			log.error("Unable to get code to amr", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
