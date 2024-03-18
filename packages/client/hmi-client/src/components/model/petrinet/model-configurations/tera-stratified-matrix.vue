@@ -174,8 +174,9 @@ function generateMatrix() {
 		// Find a default
 		for (let i = 0; i < matrixTypes.length; i++) {
 			const typeStr = matrixTypes[i];
-			if (matrices[typeStr].matrix.length > 0) {
-				matrix.value = matrices[typeStr].matrix;
+
+			if (matrixMap.value[typeStr] && matrixMap.value[typeStr].length > 0) {
+				matrix.value = matrixMap.value[typeStr];
 				matrixType.value = typeStr;
 				break;
 			}
