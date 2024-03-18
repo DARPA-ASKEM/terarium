@@ -314,7 +314,7 @@ onMounted(() => {
 
 .p-dropdown {
 	min-width: 11rem;
-	margin-bottom: 1rem;
+	margin-bottom: var(--gap);
 }
 
 .subdue {
