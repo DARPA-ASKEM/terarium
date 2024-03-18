@@ -52,9 +52,11 @@
 					v-model:output="selectedOutputId"
 					@update:selection="onSelection"
 					:options="outputs"
+					:status="node.status"
 					is-selectable
 					class="h-full"
 				>
+					<Button label="Tom Test" @click="emitStatus" />
 					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
@@ -97,7 +99,7 @@ import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -116,7 +118,13 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits([
+	'append-output',
+	'update-state',
+	'close',
+	'select-output',
+	'update-status'
+]);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -166,6 +174,11 @@ const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
 
+const emitStatus = () => {
+	const status: OperatorStatus = OperatorStatus.WARNING;
+	emit('update-status', status);
+};
+
 const appendCode = (data: any, property: string) => {
 	const code = data.content[property] as string;
 	if (code) {
@@ -208,6 +221,7 @@ const runFromCode = (code: string) => {
 			console.log('stream', data);
 		})
 		.register('error', (data) => {
+			handleErrorResponse(data);
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
 			console.log('error', data.content);
 		})
@@ -242,6 +256,10 @@ const handleResetResponse = (data: any) => {
 	} else {
 		logger.error('Error resetting model');
 	}
+};
+
+const handleErrorResponse = (data: any) => {
+	console.log(data);
 };
 
 const buildJupyterContext = () => {

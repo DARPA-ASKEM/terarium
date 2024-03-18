@@ -3,6 +3,7 @@
 		<div class="content-container">
 			<header v-if="!hideHeader">
 				<h5>{{ title ?? 'Preview' }}</h5>
+				<h5 v-if="status">{{ status }}</h5>
 				<tera-output-dropdown
 					v-if="options && output"
 					:options="options"
@@ -25,7 +26,7 @@
 <script setup lang="ts">
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
-import { WorkflowOutput } from '@/types/workflow';
+import { WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 
@@ -36,6 +37,7 @@ defineProps<{
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
 	hideHeader?: boolean;
+	status?: OperatorStatus;
 }>();
 
 const slots = useSlots();
