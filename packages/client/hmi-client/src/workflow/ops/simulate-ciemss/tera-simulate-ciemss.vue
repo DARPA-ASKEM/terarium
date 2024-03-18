@@ -10,6 +10,7 @@
 			<tera-drilldown-section>
 				<div class="form-section">
 					<h4>Set simulation parameters</h4>
+					<!-- Start, End, Number of samples -->
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="2">Start time</label>
@@ -40,6 +41,15 @@
 							/>
 						</div>
 					</div>
+
+					<!-- This is the time slice preview -->
+					<div class="input-row">
+						<div class="example-string">
+							{{ exampleString }}
+						</div>
+					</div>
+
+					<!-- Method -->
 					<div class="input-row mt-3">
 						<div class="label-and-input">
 							<label for="5">Method</label>
@@ -162,6 +172,23 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+
+// Computed property to generate the example string
+const exampleString = computed(() => {
+	const { start, end } = timespan.value;
+	const step = (end - start) / (numSamples.value - 1);
+	const values = [];
+	for (let i = 0; i < numSamples.value; i++) {
+		const value = start + i * step;
+		if (value % 1 === 0) {
+			values.push(Math.floor(value));
+		} else {
+			values.push(value.toFixed(2));
+		}
+	}
+	return values.join(', ');
+});
+
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
@@ -216,6 +243,7 @@ const updateState = () => {
 	state.currentTimespan = timespan.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
+	state.exampleString = exampleString.value;
 	emit('update-state', state);
 };
 
@@ -331,5 +359,10 @@ watch(
 	& > * {
 		flex: 1;
 	}
+}
+
+.example-string {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
 }
 </style>
