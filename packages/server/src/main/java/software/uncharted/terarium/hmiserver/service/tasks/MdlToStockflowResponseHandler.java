@@ -36,10 +36,18 @@ public class MdlToStockflowResponseHandler extends TaskResponseHandler {
 			Model model = modelResp.getResponse();
 			final ConversionAdditionalProperties props = resp
 					.getAdditionalProperties(ConversionAdditionalProperties.class);
+
 			// override the default stockflow name / description
 			model.setName(props.getFileName());
 			model.getHeader().setName(props.getFileName());
 			model.getHeader().setDescription(props.getFileName());
+
+			model.getSemantics().getOde().getParameters().forEach((param) -> {
+				if (param.getName() == null || param.getName().isEmpty()) {
+					param.setName(param.getId());
+				}
+			});
+
 			model = modelService.createAsset(model);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
