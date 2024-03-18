@@ -6,11 +6,13 @@ import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 
 export interface NodeData {
 	type: string;
+	expression?: string;
 	strataType?: string;
 }
 
 export interface EdgeData {
 	numEdges: number;
+	isController?: boolean;
 }
 
 export enum NodeType {
@@ -137,11 +139,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
-				if (!this.graph.amr) return '';
-				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
-				if (rate) {
-					return rate.expression;
-				}
+				if (d.data.expression) return d.data.expression;
 				return '';
 			});
 
@@ -180,7 +178,16 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke', EDGE_COLOR)
 			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 3)
-			.attr('marker-end', 'url(#arrowhead)');
+			.style('stroke-dasharray', (d) => {
+				if (d.data && d.data.isController === true) {
+					return 4;
+				}
+				return null;
+			})
+			.attr('marker-end', (d) => {
+				if (d.data && d.data.isController) return null;
+				return 'url(#arrowhead)';
+			});
 
 		this.updateMultiEdgeLabels();
 	}

@@ -1,5 +1,5 @@
 <template>
-	<main v-if="modelType === AMRSchemaNames.PETRINET">
+	<main>
 		<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 			<section class="graph-element">
 				<Toolbar>
@@ -17,7 +17,7 @@
 					<template #end>
 						<span>
 							<SelectButton
-								v-if="model && getStratificationType(model)"
+								v-if="model && isStratifiedModel(mmt)"
 								:model-value="stratifiedView"
 								@change="
 									if ($event.value) {
@@ -58,8 +58,8 @@
 			<tera-stratified-matrix-modal
 				v-if="openValueConfig && modelConfiguration"
 				:id="selectedTransitionId"
-				:model-configuration="modelConfiguration"
-				:stratified-model-type="StratifiedModel.Mira"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:stratified-matrix-type="StratifiedMatrix.Rates"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
@@ -69,43 +69,32 @@
 			/>
 		</Teleport>
 	</main>
-
-	<!--REGNET and STOCKFLOW models use beaker to generate an image-->
-	<main v-else-if="modelType === AMRSchemaNames.REGNET || modelType === AMRSchemaNames.STOCKFLOW">
-		<div v-if="!isGeneratingModelPreview">
-			<img :src="templatePreview" alt="" :style="{ 'max-height': isPreview ? '180px' : '400px' }" />
-		</div>
-		<tera-progress-spinner v-else is-centered> Generating model preview... </tera-progress-spinner>
-	</main>
 </template>
 
 <script setup lang="ts">
 import { watch, ref, onMounted, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
-import {
-	getStratificationType,
-	StratifiedModel
-} from '@/model-representation/petrinet/petrinet-service';
-import { IGraph } from '@graph-scaffolder/index';
-import {
-	PetrinetRenderer,
-	NodeData,
-	EdgeData,
-	NodeType
-} from '@/model-representation/petrinet/petrinet-renderer';
-import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import SelectButton from 'primevue/selectbutton';
+import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
+
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
-import SelectButton from 'primevue/selectbutton';
 import { AMRSchemaNames } from '@/types/common';
-import { KernelSessionManager } from '@/services/jupyter';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getModelType } from '@/services/model';
-import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import {
+	isStratifiedModel,
+	emptyMiraModel,
+	convertToIGraph,
+	collapseTemplates,
+	rawTemplatesSummary
+} from '@/model-representation/mira/mira';
+import { getModelRenderer } from '@/model-representation/service';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
+import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -114,20 +103,17 @@ const props = defineProps<{
 	isPreview?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-configuration']);
+const emit = defineEmits(['update-configuration']);
 
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
-const splitterContainer = ref<HTMLElement | null>(null);
-const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
-const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
-const templatePreview = ref('');
-const isGeneratingModelPreview = ref(false);
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -140,33 +126,42 @@ const stratifiedViewOptions = ref([
 	{ value: StratifiedView.Collapsed }
 ]);
 
-// Is this going to consistently have an option to switch from diagram to equation if not the toggle should be somewherlse
-// enum
-
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-async function renderGraph(updatedModel: Model | null = null) {
-	const modelToRender = updatedModel ?? props.model;
+async function renderGraph() {
+	const { templatesSummary } = collapseTemplates(mmt.value);
+	const rawTemplates = rawTemplatesSummary(mmt.value);
 
-	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = getGraphData(modelToRender, isCollapsed.value);
+	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
+		graphLegendLabels.value = renderer.dims;
+		graphLegendColors.value = renderer.depthColorList;
+	}
+
+	renderer.on('node-click', (_eventName, _event, selection) => {
+		const { id, type } = selection.datum();
+		if (type === NodeType.Transition) {
+			selectedTransitionId.value = id;
+			openValueConfig.value = true;
+		}
+	});
 
 	// Render graph
+	const graphData =
+		isCollapsed.value === true && isStratifiedModel(mmt.value)
+			? convertToIGraph(templatesSummary)
+			: convertToIGraph(rawTemplates);
+
 	if (renderer) {
 		renderer.isGraphDirty = true;
 		await renderer.setData(graphData);
 		await renderer.render();
-
-		if (updatedModel) {
-			emit('update-model', renderer.graph.amr);
-		}
 	}
 }
-defineExpose({ renderGraph });
 
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
@@ -179,87 +174,25 @@ async function toggleCollapsedView() {
 watch(
 	[() => props.model, graphElement],
 	async () => {
-		if (modelType.value === AMRSchemaNames.PETRINET) {
-			if (graphElement.value === null) return;
-			const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
+		if (modelType.value === AMRSchemaNames.DECAPODES) return;
+		if (graphElement.value === null) return;
 
-			// Create renderer
-			renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
-			if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
-				graphLegendLabels.value = renderer.dims;
-				graphLegendColors.value = renderer.depthColorList;
-			}
-
-			renderer.on('node-click', (_eventName, _event, selection) => {
-				const { id, type } = selection.datum();
-				if (type === NodeType.Transition) {
-					selectedTransitionId.value = id;
-					openValueConfig.value = true;
-				}
-			});
-
-			// Render graph
-			await renderer?.setData(graphData);
-			await renderer?.render();
-		}
-
-		if (modelType.value === AMRSchemaNames.REGNET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-			generateTemplatePreview();
-		}
+		// FIXME: inefficient, do not constant call API in watch
+		const response: any = await getMMT(props.model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+		await renderGraph();
 	},
 	{ deep: true }
 );
 
-const updateLayout = () => {
-	if (splitterContainer.value) {
-		layout.value =
-			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
-			window.innerWidth < 800
-				? 'vertical'
-				: 'horizontal';
-	}
-};
-const handleResize = () => updateLayout();
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-	if (modelType.value === AMRSchemaNames.REGNET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		generateTemplatePreview();
-	}
+onMounted(async () => {
+	const response: any = await getMMT(props.model);
+	mmt.value = response.mmt;
+	mmtParams.value = response.template_params;
 });
 
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
-
-// Create a preview image based on MMT
-const generateTemplatePreview = async () => {
-	if (!props.model) return;
-	try {
-		const kernelManager = new KernelSessionManager();
-		isGeneratingModelPreview.value = true;
-		await kernelManager.init('beaker_kernel', 'Beaker Kernel', {
-			context: 'mira_model',
-			language: 'python3',
-			context_info: {
-				id: props.model.id
-			}
-		});
-
-		kernelManager
-			.sendMessage('reset_request', {})
-			.register('reset_response', () => null) // noop
-			.register('model_preview', (data) => {
-				templatePreview.value = `data:image/png;base64, ${data?.content?.['image/png']}`;
-				kernelManager.shutdown();
-				isGeneratingModelPreview.value = false;
-			});
-	} catch (err) {
-		console.error(err);
-		isGeneratingModelPreview.value = false;
-	}
-};
+onUnmounted(() => {});
 </script>
 
 <style scoped>

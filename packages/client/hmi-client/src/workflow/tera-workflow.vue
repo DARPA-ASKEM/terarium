@@ -17,14 +17,19 @@
 		<template #foreground>
 			<div class="toolbar glass">
 				<div class="button-group w-full">
-					<InputText
-						v-if="isRenamingWorkflow"
-						class="p-inputtext w-full mr-8"
-						v-model.lazy="newWorkflowName"
-						placeholder="Workflow name"
-						@keyup.enter="updateWorkflowName"
-						@keyup.esc="updateWorkflowName"
-					/>
+					<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
+						<InputText
+							class="p-inputtext w-full"
+							v-model.lazy="newWorkflowName"
+							placeholder="Workflow name"
+							@keyup.enter="updateWorkflowName"
+							@keyup.esc="updateWorkflowName"
+							v-focus
+						/>
+						<div class="flex flex-nowrap ml-1 mr-3">
+							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
+						</div>
+					</div>
 					<h4 v-else>{{ wf.name }}</h4>
 					<Button
 						v-if="!isRenamingWorkflow"
@@ -241,6 +246,7 @@ import * as ModelCouplingOp from './ops/model-coupling/mod';
 import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
+import * as DecapodesOp from './ops/decapodes/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -266,6 +272,7 @@ registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
+registry.registerOp(DecapodesOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -316,7 +323,8 @@ const toggleOptionsMenu = (event) => {
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
 	workflowClone.name = newWorkflowName.value;
-	workflowService.updateWorkflow(workflowClone);
+	await workflowService.updateWorkflow(workflowClone);
+	await useProjects().refresh();
 	isRenamingWorkflow.value = false;
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
@@ -358,14 +366,11 @@ function appendOutput(
 		timestamp: new Date()
 	};
 
-	// Revert
-	node.outputs.forEach((o) => {
-		o.isSelected = false;
-	});
-
 	// Append and set active
 	node.outputs.push(outputPort);
 	node.active = uuid;
+
+	selectOutput(node, uuid);
 
 	workflowDirty = true;
 }
@@ -450,97 +455,101 @@ const addOperatorToWorkflow: Function =
 
 // Menu categories and list items are in order of appearance for separators to work
 const contextMenuItems: MenuItem[] = [
-	// Model
 	{
-		label: 'Model operators',
+		label: 'Add resource',
 		items: [
 			{
 				label: ModelOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelOp)
 			},
 			{
+				label: ModelFromCodeOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelFromCodeOp)
+			},
+			{
+				label: ModelFromDocumentOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelFromDocumentOp)
+			},
+			{ separator: true },
+			{ label: DatasetOp.operation.displayName, command: addOperatorToWorkflow(DatasetOp) },
+			{ separator: true },
+			{ label: DocumentOp.operation.displayName, command: addOperatorToWorkflow(DocumentOp) },
+			{ separator: true },
+			{
+				label: CodeAssetOp.operation.displayName,
+				command: addOperatorToWorkflow(CodeAssetOp)
+			}
+		]
+	},
+	{
+		label: 'Work with model',
+		items: [
+			{
+				label: ModelConfigOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelConfigOp)
+			},
+			{
 				label: ModelEditOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelEditOp)
 			},
 			{
-				label: ModelConfigOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelConfigOp)
+				label: FunmanOp.operation.displayName,
+				command: addOperatorToWorkflow(FunmanOp)
 			},
 			{
 				label: StratifyMiraOp.operation.displayName,
 				command: addOperatorToWorkflow(StratifyMiraOp)
 			},
 			{
-				label: ModelTransformerOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelTransformerOp)
-			},
+				label: DecapodesOp.operation.displayName,
+				disabled: true,
+				command: addOperatorToWorkflow(DecapodesOp)
+			}
+		]
+	},
+	{
+		label: 'Work with multiple models',
+		items: [
 			{
-				label: FunmanOp.operation.displayName,
-				command: addOperatorToWorkflow(FunmanOp)
-			},
-			{ separator: true },
-			{
-				label: OptimizeCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(OptimizeCiemssOp)
+				label: ModelComparisonOp.operation.displayName,
+				command: addOperatorToWorkflow(ModelComparisonOp)
 			},
 			{
 				label: ModelCouplingOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelCouplingOp)
 			},
+			{ separator: true },
 			{
-				label: ModelComparisonOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelComparisonOp)
+				label: SimulateEnsembleCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
+			},
+			{
+				label: CalibrateEnsembleCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
 			}
 		]
 	},
-	// Code
 	{
-		label: 'Code operators',
+		label: 'Work with dataset',
 		items: [
-			{ label: CodeAssetOp.operation.displayName, command: addOperatorToWorkflow(CodeAssetOp) },
-			{
-				label: ModelFromCodeOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelFromCodeOp)
-			}
-		]
-	},
-	// Document
-	{
-		label: 'Document operators',
-		items: [
-			{ label: DocumentOp.operation.displayName, command: addOperatorToWorkflow(DocumentOp) },
-			{
-				label: ModelFromDocumentOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelFromDocumentOp)
-			}
-		]
-	},
-	// Dataset
-	{
-		label: 'Dataset operators',
-		items: [
-			{ label: DatasetOp.operation.displayName, command: addOperatorToWorkflow(DatasetOp) },
 			{
 				label: DatasetTransformerOp.operation.displayName,
 				command: addOperatorToWorkflow(DatasetTransformerOp)
-			}
+			},
+			{ label: 'Subset dataset', disabled: true },
+			{ label: 'Transform gridded dataset', disabled: true }
 		]
 	},
-	// —————
 	{
-		separator: true
-	},
-	// Simulate
-	{
-		label: 'Simulate',
+		label: 'Run model',
 		items: [
-			{
-				label: CalibrateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateJuliaOp)
-			},
 			{
 				label: SimulateJuliaOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateJuliaOp)
+			},
+			{
+				label: CalibrateJuliaOp.operation.displayName,
+				command: addOperatorToWorkflow(CalibrateJuliaOp)
 			},
 			{ separator: true },
 			{
@@ -551,24 +560,13 @@ const contextMenuItems: MenuItem[] = [
 				label: CalibrateCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateCiemssOp)
 			},
-			{ separator: true },
 			{
-				label: CalibrateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
-			},
-			{
-				label: SimulateEnsembleCiemssOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateEnsembleCiemssOp)
+				label: OptimizeCiemssOp.operation.displayName,
+				command: addOperatorToWorkflow(OptimizeCiemssOp)
 			}
 		]
-	},
-	// Agent LLM
-	{
-		label: "Ask 'em LLM tool",
-		disabled: true
 	}
 ];
-
 const addComponentMenu = ref();
 const showAddComponentMenu = () => {
 	const el = document.querySelector('#add-component-btn');
@@ -778,6 +776,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 
 let prevX = 0;
 let prevY = 0;
+
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
 		const pointIndex = newEdge.value?.direction === WorkflowDirection.FROM_OUTPUT ? 1 : 0;
@@ -877,6 +876,7 @@ function cleanUpLayout() {
 	// TODO: clean up layout of nodes
 	console.log('clean up layout');
 }
+
 function resetZoom() {
 	// TODO: reset zoom level and position
 	console.log('clean up layout');
@@ -904,5 +904,11 @@ function resetZoom() {
 	align-items: center;
 	flex-direction: row;
 	gap: var(--gap-small);
+}
+
+.rename-workflow {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
 }
 </style>

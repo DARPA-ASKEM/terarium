@@ -432,14 +432,20 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
+	const renameReserved = (v: string) => {
+		const reserved = ['lambda'];
+		if (reserved.includes(v)) return `${v}_`;
+		return v;
+	};
+
 	// Calculate mass
 	const semantics = model.value.semantics;
 	const modelInitials = semantics?.ode.initials;
-	const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
+	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
 
 	const parametersMap = {};
 	semantics?.ode.parameters?.forEach((d) => {
-		parametersMap[d.id] = d.value;
+		parametersMap[renameReserved(d.id)] = d.value;
 	});
 
 	const massValue = await pythonInstance.evaluateExpression(

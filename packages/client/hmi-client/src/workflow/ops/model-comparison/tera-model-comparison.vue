@@ -8,12 +8,19 @@
 		</template>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<Panel v-if="llmAnswer" header="Comparison overview" toggleable>
-					<template #togglericon="{ collapsed }">
-						<i :class="collapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
-					</template>
-					<p>{{ llmAnswer }}</p>
-				</Panel>
+				<!-- LLM generated overview -->
+				<section class="comparison-overview">
+					<Accordion :activeIndex="0">
+						<AccordionTab header="Overview">
+							<p v-if="llmAnswer">{{ llmAnswer }}</p>
+							<p v-else class="subdued">
+								Analyzing models metadata to generate a detailed comparison analysis...
+							</p>
+						</AccordionTab>
+					</Accordion>
+				</section>
+
+				<!-- Model comparison table -->
 				<div class="p-datatable-wrapper">
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
@@ -28,7 +35,12 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram :model="model" :is-editable="false" is-preview />
+									<tera-model-diagram
+										:model="model"
+										:is-editable="false"
+										is-preview
+										class="diagram"
+									/>
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -61,6 +73,7 @@
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
+					<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
 					<Button
 						icon="pi pi-play"
 						label="Run"
@@ -74,6 +87,7 @@
 					:kernelManager="kernelManager"
 					:defaultOptions="sampleAgentQuestions"
 					@llm-output="appendCode"
+					:context-language="contextLanguage"
 				/>
 				<v-ace-editor
 					v-model:value="code"
@@ -97,13 +111,37 @@
 						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
+
+				<!-- Legend -->
+				<template #footer v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)">
+					<div class="legend flex align-items-center gap-7">
+						<span class="flex gap-5">
+							<span class="flex align-items-center gap-2">
+								<span class="legend-circle subdued">Name</span>
+								<span>State variable nodes</span>
+							</span>
+							<span class="flex align-items-center gap-2">
+								<span class="legend-square subdued">Name</span>
+								<span>Transition nodes</span>
+							</span>
+						</span>
+						<span class="flex gap-6">
+							<span class="legend-line orange">Model 1</span>
+							<span class="legend-line blue">Model 2</span>
+							<span class="legend-line red">Common to both models</span>
+						</span>
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -112,10 +150,9 @@ import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
 import type { Model } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import Panel from 'primevue/panel';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -123,6 +160,8 @@ import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotati
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { saveCodeToState } from '@/services/notebook';
+import { getImages, addImage, deleteImages } from '@/services/image';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -139,6 +178,7 @@ enum Tabs {
 let editor: VAceEditorInstance['_editor'] | null;
 const kernelManager = new KernelSessionManager();
 const sampleAgentQuestions = [
+	'Compare models',
 	'Compare the three models and visualize and display them.',
 	'Compare the two models and visualize and display them.'
 ];
@@ -146,9 +186,10 @@ const sampleAgentQuestions = [
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
-const code = ref('');
+const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
+const contextLanguage = ref<string>('python3');
 
 const modelCardsToCompare = computed(() =>
 	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
@@ -185,9 +226,29 @@ function formatField(field: string) {
 	return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-// function submitGollmQuestion() {
-// 	console.log(gollmQuestion.value);
-// }
+function updateImagesState(operationType: string, newImageId: string | null = null) {
+	const state = cloneDeep(props.node.state);
+	if (operationType === 'add' && newImageId) state.comparisonImageIds.push(newImageId);
+	else if (operationType === 'clear') state.comparisonImageIds = [];
+	emit('update-state', state);
+}
+
+function updateCodeState() {
+	const state = saveCodeToState(props.node, code.value, true);
+	emit('update-state', state);
+}
+
+function emptyImages() {
+	deleteImages(props.node.state.comparisonImageIds); // Delete images from S3
+	updateImagesState('clear'); // Then their ids can be removed from the state
+	structuralComparisons.value = [];
+}
+
+function resetNotebook() {
+	code.value = '';
+	emptyImages();
+	updateCodeState();
+}
 
 function runCode() {
 	const messageContent = {
@@ -199,11 +260,17 @@ function runCode() {
 		code: editor?.getValue() as string
 	};
 	isLoadingStructuralComparisons.value = true;
+	emptyImages();
+	updateCodeState();
 
 	kernelManager
 		.sendMessage('execute_request', messageContent)
 		.register('display_data', (data) => {
-			structuralComparisons.value.push(`data:image/png;base64,${data.content.data['image/png']}`);
+			const newImageId = uuidv4();
+			const newImage = `data:image/png;base64,${data.content.data['image/png']}`;
+			structuralComparisons.value.push(newImage);
+			addImage(newImageId, newImage);
+			updateImagesState('add', newImageId);
 			isLoadingStructuralComparisons.value = false;
 		})
 		.register('error', (data) => {
@@ -234,9 +301,9 @@ async function buildJupyterContext() {
 			context: 'mira',
 			language: 'python3',
 			context_info: {
-				models: modelsToCompare.value.map((model, index) => ({
+				models: modelsToCompare.value.map((model) => ({
 					model_id: model.id,
-					name: `model_${index + 1}`
+					name: model.header.name.replace(/[^a-zA-Z0-9_]/g, '_') // Acceptable characters for python variable name
 				}))
 			}
 		};
@@ -253,6 +320,12 @@ async function buildJupyterContext() {
 }
 
 onMounted(async () => {
+	if (!isEmpty(props.node.state.comparisonImageIds)) {
+		isLoadingStructuralComparisons.value = true;
+		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
+		isLoadingStructuralComparisons.value = false;
+	}
+
 	props.node.inputs.forEach((input) => {
 		if (input.value) {
 			addModelForComparison(input.value[0]);
@@ -260,7 +333,7 @@ onMounted(async () => {
 	});
 
 	const modelIds = props.node.inputs
-		.filter((input) => input.status === 'connected')
+		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
 	processCompareModels(modelIds);
 });
@@ -322,7 +395,7 @@ ul {
 
 		& > span {
 			width: fit-content;
-			margin-right: calc(var(--gap-xxlarge) * 3);
+			margin-right: var(--gap-xxlarge);
 		}
 	}
 }
@@ -340,5 +413,61 @@ ul {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
+}
+
+.comparison-overview {
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius-medium);
+	padding: var(--gap-small);
+}
+
+.subdued {
+	color: var(--text-color-secondary);
+}
+
+.diagram {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
+.legend {
+	font-size: var(--font-caption);
+	flex: 1;
+}
+
+.legend-circle {
+	padding: var(--gap-small) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	border-radius: 50%;
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-square {
+	padding: var(--gap-xsmall) var(--gap);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	font-family: 'Times New Roman', Times, serif;
+}
+
+.legend-line {
+	position: relative;
+}
+
+.legend-line::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 24px;
+	height: 2px;
+	background-color: red;
+	transform: translate(-30px, -50%);
+}
+.legend-line.orange::before {
+	background-color: orange;
+}
+.legend-line.blue::before {
+	background-color: blue;
 }
 </style>

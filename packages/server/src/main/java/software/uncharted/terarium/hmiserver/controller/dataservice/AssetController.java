@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -39,6 +40,7 @@ public class AssetController {
 	final ProjectAssetService projectAssetService;
 	final ReBACService reBACService;
 	final CurrentUserService currentUserService;
+	final ObjectMapper objectMapper;
 
 	/**
 	 * Check if an asset name is available for a given asset type. If a ProjectId is
@@ -48,7 +50,7 @@ public class AssetController {
 	 * a 204 No Content response is returned. If the asset name is not available, a
 	 * 409 Conflict response is returned.
 	 *
-	 * @param assetType Asset type to check
+	 * @param assetTypeName Asset type to check
 	 * @param assetName Asset name to check
 	 * @param projectId Project ID to limit the search to (optional)
 	 * @return 204 No Content if the asset name is available, 409 Conflict if the
@@ -65,9 +67,10 @@ public class AssetController {
 			@ApiResponse(responseCode = "500", description = "Unable to verify project permissions")
 	})
 	public ResponseEntity<Void> verifyAssetNameAvailability(
-			@PathVariable("asset-type") final AssetType assetType,
+			@PathVariable("asset-type") final String assetTypeName,
 			@PathVariable("asset-name") final String assetName,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		if (projectId == null) {
 

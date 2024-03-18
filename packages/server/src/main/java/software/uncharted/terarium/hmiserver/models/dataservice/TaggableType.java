@@ -3,19 +3,20 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 import java.util.Arrays;
 
 public enum TaggableType {
-	DATASETS("datasets"),
-	FEATURES("features"),
-	INTERMEDIATES("intermediates"),
-	MODEL_PARAMETERS("model_parameters"),
-	MODELS("models"),
-	PROJECTS("projects"),
-	PUBLICATIONS("publications"),
-	QUALIFIERS("qualifiers"),
-	SIMULATION_PARAMETERS("simulation_parameters"),
-	SIMULATION_PLANS("simulation_plans"),
-	SIMULATION_RUNS("simulation_runs");
+	DATASETS("datasets", AssetType.DATASET),
+	FEATURES("features", null),
+	INTERMEDIATES("intermediates", null),
+	MODEL_PARAMETERS("model_parameters", null),
+	MODELS("models", AssetType.MODEL),
+	PROJECTS("projects", null),
+	PUBLICATIONS("publications", AssetType.PUBLICATION),
+	QUALIFIERS("qualifiers", null),
+	SIMULATION_PARAMETERS("simulation_parameters", null),
+	SIMULATION_PLANS("simulation_plans", null),
+	SIMULATION_RUNS("simulation_runs", null);
 
 	public final String type;
+	public final AssetType assetType;
 
 	/**
 	 * Returns the enum for a given string representation of a TaggableType
@@ -30,7 +31,17 @@ public enum TaggableType {
 		);
 	}
 
-	TaggableType(final String type) {
+	TaggableType(final String type, final AssetType assetType) {
 		this.type = type;
+		this.assetType = assetType;
+	}
+
+	public static TaggableType getTaggableTypeFromAssetType(AssetType assetType) {
+		for (TaggableType type : TaggableType.values()) {
+			if (type.assetType != null && type.assetType.equals(assetType)) {
+				return type;
+			}
+		}
+		return null;
 	}
 }
