@@ -39,9 +39,14 @@ const stopAutoSave = () => {
 	autoSaveIntervalId = null;
 };
 
+const isContentSameAsLastSaved = computed(
+	() =>
+		lastSavedContent.value.length === editorContent.value.length &&
+		lastSavedContent.value === editorContent.value
+);
 const saveContent = async () => {
 	if (!props.project) return;
-	if (lastSavedContent.value === editorContent.value) return;
+	if (isContentSameAsLastSaved.value) return;
 	const res = await update({ ...props.project, overviewText: editorContent.value });
 	// Note that an error has happened when res is null since the `update` function's swallowing the error and returning null instead of throwing it.
 	if (!res) {
