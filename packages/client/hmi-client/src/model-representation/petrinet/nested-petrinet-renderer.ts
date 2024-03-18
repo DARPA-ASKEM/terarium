@@ -172,7 +172,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				const rowIdx = ridx;
 				row.forEach((col, cidx) => {
 					const colIdx = cidx;
-					if (col.value) {
+					if (col.content && col.content.value) {
 						transitionNode
 							.append('rect')
 							.attr('width', d.width / matrixColLen)
