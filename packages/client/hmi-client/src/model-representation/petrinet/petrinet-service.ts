@@ -1,8 +1,5 @@
-import API from '@/api/api';
 import { updateModelConfiguration } from '@/services/model-configurations';
-import { Model, ModelConfiguration, PetriNetModel, PetriNetTransition } from '@/types/Types';
-import { logger } from '@/utils/logger';
-import { AxiosError } from 'axios';
+import { Model, ModelConfiguration } from '@/types/Types';
 
 export interface NodeData {
 	type: string;
@@ -18,73 +15,6 @@ export enum StratifiedModel {
 	Mira = 'mira',
 	Catlab = 'catlab'
 }
-
-// Transform list of mathML strings to a petrinet ascet
-export const mathmlToPetri = async (mathml: string[]) => {
-	try {
-		const resp = await API.post('/transforms/mathml-to-acset', mathml);
-
-		if (resp && resp.status === 200 && resp.data) {
-			return resp.data;
-		}
-		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });
-	} catch (error: unknown) {
-		if ((error as AxiosError).isAxiosError) {
-			const axiosError = error as AxiosError;
-			logger.error('mathmlToPetri Error: ', axiosError.response?.data || axiosError.message, {
-				showToast: false
-			});
-		} else {
-			logger.error(error, { showToast: false });
-		}
-	}
-	return null;
-};
-
-// Update a transition's expression and expression_mathml fields based on
-// mass-kinetics
-export const updateRateExpression = (
-	amr: Model,
-	transition: PetriNetTransition,
-	transitionExpression: string
-) => {
-	const param = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
-	if (!param) return;
-
-	updateRateExpressionWithParam(amr, transition, `${param.target}Param`, transitionExpression);
-};
-
-export const updateRateExpressionWithParam = (
-	amr: Model,
-	transition: PetriNetTransition,
-	parameterId: string,
-	transitionExpression: string
-) => {
-	const rate = amr.semantics?.ode?.rates?.find((d) => d.target === transition.id);
-	if (!rate) return;
-
-	let expression = '';
-	let expressionMathml = '';
-
-	if (transitionExpression === '') {
-		const param = amr.semantics?.ode?.parameters?.find((d) => d.id === parameterId);
-		const inputStr = transition.input.map((d) => `${d}`);
-		if (!param) return;
-		// eslint-disable-next-line
-		expression = inputStr.join('*') + '*' + param.id;
-		// eslint-disable-next-line
-		expressionMathml =
-			`<apply><times/>${inputStr.map((d) => `<ci>${d}</ci>`).join('')}<ci>${param.id}</ci>` +
-			`</apply>`;
-	} else {
-		expression = transitionExpression;
-		expressionMathml = transitionExpression;
-	}
-
-	rate.target = transition.id;
-	rate.expression = expression;
-	rate.expression_mathml = expressionMathml;
-};
 
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
@@ -195,51 +125,6 @@ export const updateConfigFields = async (
 		// since we don't immediately need the updated configs
 		updateModelConfiguration(config);
 	});
-};
-
-export const mergeMetadata = (amr: Model, amrOld: Model) => {
-	console.log(amr, amrOld);
-};
-
-/**
- * Stratification
- * */
-
-// Heuristic to get the straitified modifier mappings, we assume that
-// - if there is a single unique value for modifier-key then it is not user initiated stratification
-// - if the modifier value starts with 'ncit:' then it is not a user initiated stratification
-export const getModifierMap = (amr: Model) => {
-	const modifierMap: Map<string, Set<string>> = new Map();
-	(amr.model as PetriNetModel).states?.forEach((s) => {
-		if (s.grounding && s.grounding.modifiers) {
-			const modifiers = s.grounding.modifiers;
-			const keys: string[] = Object.keys(modifiers);
-			keys.forEach((key) => {
-				if (!modifierMap.has(key)) {
-					modifierMap.set(key, new Set());
-				}
-				const modifier = modifiers[key];
-				if (!modifier.startsWith('ncit:')) {
-					modifierMap.get(key)?.add(modifiers[key]);
-				}
-			});
-		}
-	});
-	return modifierMap;
-};
-
-// Check if AMR is a stratified AMR
-export const getStratificationType = (amr: Model) => {
-	if (amr.semantics?.span && amr.semantics.span.length > 1) return StratifiedModel.Catlab;
-
-	const modifierMap = getModifierMap(amr);
-	// eslint-disable-next-line
-	for (const ele of modifierMap) {
-		if (ele[1].size > 1) {
-			return StratifiedModel.Mira;
-		}
-	}
-	return null;
 };
 
 export function newAMR(modelName: string) {
