@@ -4,6 +4,8 @@ package software.uncharted.terarium.hmiserver.controller.climatedata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
@@ -73,8 +75,21 @@ public class ClimateDataController {
 		}
 	}
 
+	/**
+	 * @param esgfId The id of the ESGF (in the form `CMIP6.CMIP.NCAR.CESM2.historical.r11i1p1f1.CFday.ua.gn.v20190514`)
+	 * @param variableId The variable to preview (ie `ua`)
+	 * @param timestamps Leave blank to generate for all times
+	 * @param timeIndex Leave blank to generate for all times
+	 * @return
+	 */
 	@GetMapping("/preview-esgf/{esgfId}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Generates a PNG for a given ESGF id")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "URL for the generated PNG", content = @Content),
+			@ApiResponse(responseCode = "202", description = "A PNG generation request has been accepted and is being worked on", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue generating the PNG", content = @Content)
+	})
 	public ResponseEntity<String> previewEsgf(@PathVariable final String esgfId,
 											  @RequestParam(value = "variable-id") final String variableId,
 											  @RequestParam(value = "timestamps", required = false) final String timestamps,
@@ -93,13 +108,28 @@ public class ClimateDataController {
 		return ResponseEntity.accepted().build();
 	}
 
+	/**
+	 *
+	 * @param esgfId The id of the ESGF (in the form `CMIP6.CMIP.NCAR.CESM2.historical.r11i1p1f1.CFday.ua.gn.v20190514`)
+	 * @param parentDatasetId Dataset id of an existing dataset which this would be a child
+	 * @param timestamps String of two ISO-8601 timestamps or the terms start or end separated by commas, example `start,2010-01-01T00:00:00`. Leave blank to generate for all times
+	 * @param envelope Geographical envelope provided as a comma-separated series of 4 degrees: lon, lon, lat, lat. example `40,45,-80,-75`.
+	 * @param thinFactor Take every nth datapoint along specified fields given by thin_fields. Leave blank for all data
+	 * @return
+	 */
 	@GetMapping("/subset-esgf/{esgfId}")
 	@Secured(Roles.USER)
+	@Operation(summary = "Generates a subset for a given ESGF id")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "DatasetId for the subset", content = @Content),
+			@ApiResponse(responseCode = "202", description = "A subset generation request has been accepted and is being worked on", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue generating the subset", content = @Content)
+	})
 	public ResponseEntity<String> subsetEsgf(@PathVariable final String esgfId,
-																						 @RequestParam(value = "parent-dataset-id", required = true) final String parentDatasetId,
-																						 @RequestParam(value = "timestamps", required = false) final String timestamps,
-																						 @RequestParam(value = "envelope", required = true) final String envelope,
-																						 @RequestParam(value = "thin-factor", required = false) final String thinFactor
+											 @RequestParam(value = "parent-dataset-id") final String parentDatasetId,
+											 @RequestParam(value = "timestamps", required = false) final String timestamps,
+											 @RequestParam(value = "envelope") final String envelope,
+											 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
 		ResponseEntity<String> subsetResponse = climateDataService.getSubset(esgfId, envelope, timestamps, thinFactor);
 		if (subsetResponse != null) {
