@@ -128,11 +128,13 @@ public class ModelService extends TerariumAssetService<Model> {
 	@Override
 	public Model createAsset(final Model asset) throws IOException {
 		// Set default value for model parameters (0.0)
-		asset.getSemantics().getOde().getParameters().forEach((param) -> {
-			if (param.getValue() == null) {
-				param.setValue(0.0);
-			}
-		});
+		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null && asset.getSemantics().getOde().getParameters() != null) {
+			asset.getSemantics().getOde().getParameters().forEach(param -> {
+				if (param.getValue() == null) {
+					param.setValue(0.0);
+				}
+			});
+		}
 		return super.createAsset(asset);
 	}
 }
