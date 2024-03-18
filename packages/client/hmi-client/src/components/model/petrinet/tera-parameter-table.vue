@@ -19,10 +19,13 @@
 			</template>
 		</Column>
 		<Column header="Name">
-			<template #body="slotProps">
-				<span class="truncate-text">
-					{{ slotProps.data.name }}
-				</span>
+			<template #body="{ data }">
+				<InputText
+					size="small"
+					v-model.lazy="data.name"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateParamValue(data.value, 'name', $event)"
+				/>
 			</template>
 		</Column>
 
@@ -32,7 +35,7 @@
 					size="small"
 					v-model.lazy="data.description"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
-					@update:model-value="updateDescription(data.value, $event)"
+					@update:model-value="updateParamValue(data.value, 'description', $event)"
 				/>
 			</template>
 		</Column>
@@ -64,7 +67,11 @@
 					v-model="conceptSearchTerm.name"
 					:suggestions="curies"
 					@complete="onSearch"
-					@item-select="updateConcept(data.value, $event.value.curie)"
+					@item-select="
+						updateParamValue(data.value, 'grounding', {
+							identifiers: parseCurie($event.value.curie)
+						})
+					"
 					optionLabel="name"
 					:forceSelection="true"
 					:inputStyle="{ width: '100%' }"
@@ -80,7 +87,12 @@
 					class="w-full"
 					v-model.lazy="slotProps.data.unit"
 					:disabled="readonly"
-					@update:model-value="updateUnit(slotProps.data.value, $event)"
+					@update:model-value="
+						updateParamValue(slotProps.data.value, 'unit', {
+							...slotProps.data.value.unit,
+							expression: $event
+						})
+					"
 				/>
 				<template v-else>--</template>
 			</template>
@@ -372,7 +384,7 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
-					name: v,
+					name: param.name,
 					type: paramType,
 					description: param.description,
 					concept: param.grounding,
@@ -411,7 +423,7 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
-				name: init,
+				name: param.name,
 				type: paramType,
 				description: param.description,
 				concept: param.grounding,
@@ -463,6 +475,12 @@ const updateCellValue = (v: any) => {
 	emit('update-model', clone);
 };
 
+const updateParamValue = (param: ModelParameter, key: string, value: any) => {
+	const clonedParam = cloneDeep(param);
+	clonedParam[key] = value;
+	emit('update-value', [clonedParam]);
+};
+
 const updateTimeseries = (id: string, value: string) => {
 	if (!validateTimeSeries(value)) return;
 	const clonedModel = cloneDeep(props.model);
@@ -481,30 +499,6 @@ const updateSource = (id: string, value: string) => {
 	}
 	clonedModel.metadata.parameters[id].source = value;
 	emit('update-model', clonedModel);
-};
-
-const updateUnit = (param: ModelParameter, value: string) => {
-	const clonedParam = cloneDeep(param);
-	if (!clonedParam.unit) {
-		clonedParam.unit = { expression: '', expression_mathml: '' };
-	}
-	clonedParam.unit.expression = value;
-	emit('update-value', [clonedParam]);
-};
-
-const updateConcept = (param: ModelParameter, value: string) => {
-	const clonedParam = cloneDeep(param);
-	if (!clonedParam.grounding) {
-		clonedParam.grounding = { identifiers: {} };
-	}
-	clonedParam.grounding.identifiers = parseCurie(value);
-	emit('update-value', [clonedParam]);
-};
-
-const updateDescription = (param: ModelParameter, value: string) => {
-	const clonedParam = cloneDeep(param);
-	clonedParam.description = value;
-	emit('update-value', [clonedParam]);
 };
 
 const validateTimeSeries = (values: string) => {

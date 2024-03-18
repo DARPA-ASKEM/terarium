@@ -19,10 +19,13 @@
 			</template>
 		</Column>
 		<Column header="Name">
-			<template #body="slotProps">
-				<span class="truncate-text">
-					{{ slotProps.data.name }}
-				</span>
+			<template #body="{ data }">
+				<InputText
+					size="small"
+					v-model.lazy="data.name"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateMetadata(data.value.target, 'name', $event)"
+				/>
 			</template>
 		</Column>
 
@@ -292,12 +295,13 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 				const initialsMetadata = model.metadata?.initials?.[initial!.target];
 				const sourceValue = initialsMetadata?.source;
 				const unitValue = initialsMetadata?.unit;
+				const nameValue = initialsMetadata?.name;
 				const descriptionValue = initialsMetadata?.description;
 				const conceptValue = initialsMetadata?.concept;
 				const expressionValue = initialsMetadata?.expression;
 				return {
 					id: v,
-					name: v,
+					name: nameValue,
 					description: descriptionValue,
 					concept: conceptValue?.grounding,
 					type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
@@ -325,12 +329,13 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 			const initialsMetadata = model.metadata?.initials?.[initial!.target];
 			const sourceValue = initialsMetadata?.source;
 			const unitValue = initialsMetadata?.unit;
+			const nameValue = initialsMetadata?.name;
 			const descriptionValue = initialsMetadata?.description;
 			const conceptValue = initialsMetadata?.concept;
 			const expressionValue = initialsMetadata?.expression;
 			formattedInitials.push({
 				id: init,
-				name: init,
+				name: nameValue,
 				description: descriptionValue,
 				concept: conceptValue?.grounding,
 				type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
