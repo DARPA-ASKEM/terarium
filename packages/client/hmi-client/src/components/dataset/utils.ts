@@ -32,6 +32,12 @@ function enrichDataset(dataset: Dataset): Dataset {
 
 	// Set the default value for the properties
 	propertiesToSetDefault.forEach((property) => {
+		if (!dataset.metadata) {
+			dataset.metadata = {};
+		}
+		if (!dataset?.metadata?.dataCard) {
+			dataset.metadata.dataCard = {};
+		}
 		if (!dataset?.metadata?.dataCard?.[property]) {
 			dataset.metadata.dataCard[property] = '-';
 		}
