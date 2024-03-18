@@ -1,5 +1,34 @@
-import { DataseriesConfig, RunType } from '@/types/SimulateConfig';
+import _ from 'lodash';
+import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
+
+export const chartActionsProxy = (state: any, updateStateCallback: Function) => {
+	if (!state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
+
+	const addChart = () => {
+		const copy = _.cloneDeep(state);
+		copy.chartConfigs.push([]);
+		updateStateCallback(copy);
+	};
+
+	const removeChart = (index: number) => {
+		const copy = _.cloneDeep(state);
+		copy.chartConfigs.splice(index, 1);
+		updateStateCallback(copy);
+	};
+
+	const configurationChange = (index: number, config: ChartConfig) => {
+		const copy = _.cloneDeep(state);
+		copy.chartConfigs[index] = config.selectedVariable;
+		updateStateCallback(copy);
+	};
+
+	return {
+		addChart,
+		removeChart,
+		configurationChange
+	};
+};
 
 export const getTimespan = (
 	dataset?: CsvAsset,
