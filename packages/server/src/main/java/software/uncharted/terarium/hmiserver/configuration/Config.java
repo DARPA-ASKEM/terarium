@@ -96,6 +96,7 @@ public class Config {
 	String artifactPath;
 	String documentPath;
 	String codePath;
+	String imagePath;
 
 	@Data
 	@Accessors(chain = true)

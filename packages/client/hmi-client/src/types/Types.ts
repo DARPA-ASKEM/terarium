@@ -766,7 +766,7 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    interventions?: OptimizedIntervention[];
+    interventions?: OptimizedIntervention;
     stepSize?: number;
     qoi: string[];
     riskBound: number;
@@ -819,11 +819,15 @@ export interface OptimizeExtra {
     maxiter?: number;
     maxfeval?: number;
     isMinimized?: boolean;
+    alpha?: number;
+    solverMethod?: string;
 }
 
 export interface OptimizedIntervention {
-    name: string;
-    timestep: number;
+    selection: string;
+    paramNames: string[];
+    paramValues?: number[];
+    startTime?: number[];
 }
 
 export interface TimeSpan {
@@ -930,7 +934,8 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
-    sources?: { [index: string]: any };
+    initials?: { [index: string]: any };
+    parameters?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
     processed_at?: number;
