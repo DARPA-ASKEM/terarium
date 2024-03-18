@@ -383,9 +383,12 @@ const getAssets = async (params: GetAssetsParams) => {
 				// FIXME:
 				// This step won't be needed if the concept facets API is able to receive filters as well
 				// to only provide concept aggregations based on a filtered set of models rather than the full list of models
-				const finalAssetIDs = assetResults.map((m) => m.id);
+				const finalAssetIDs = assetResults.map((m) => {
+					const modelOrDataset: Model | Dataset = m as Model | Dataset;
+					return modelOrDataset.id;
+				});
 				conceptFacets.results.forEach((conceptFacetResult) => {
-					if (finalAssetIDs.includes(conceptFacetResult.id)) {
+					if (finalAssetIDs.includes(`${conceptFacetResult.id}`)) {
 						curies.push(conceptFacetResult.curie);
 					}
 				});

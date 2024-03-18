@@ -52,6 +52,7 @@ import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 import { DatasetSource } from '@/types/Dataset';
+import { Dataset } from '@/types/Types';
 
 const props = defineProps({
 	// slider props
@@ -102,7 +103,8 @@ const previewItemId = computed(() => {
 		previewItemResourceType.value === ResourceType.DATASET &&
 		props.datasetSource === DatasetSource.ESGF
 	) {
-		return previewItemState.value.esgfId;
+		const dataset: Dataset = previewItemState.value as Dataset;
+		return dataset.esgfId;
 	}
 	return previewItemState.value.id as string;
 });

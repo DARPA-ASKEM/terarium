@@ -178,7 +178,7 @@ const projectOptions = computed(() => [
 						const document = selectedAsset.value as DocumentAsset;
 						const assetType = AssetType.Document;
 						response = await useProjects().addAsset(assetType, document.id, project.id);
-						assetName = selectedAsset.value.name;
+						assetName = document.name;
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
