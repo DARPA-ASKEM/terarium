@@ -458,7 +458,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		dataset = datasetService.getAsset(dataset.getId()).orElseThrow();
 
-		Assertions.assertTrue(dataset.getMetadata().get("data_card") != null);
+		Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
 	}
 
 	@Test

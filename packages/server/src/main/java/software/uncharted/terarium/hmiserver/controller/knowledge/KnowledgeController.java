@@ -569,7 +569,7 @@ public class KnowledgeController {
 				dataset.setMetadata(new HashMap<>());
 			}
 
-			dataset.getMetadata().put("data_card", card);
+			dataset.getMetadata().put("dataCard", card);
 
 			return ResponseEntity.ok(datasetService.updateAsset(dataset).orElseThrow());
 
