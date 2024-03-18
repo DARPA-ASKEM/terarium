@@ -4,7 +4,7 @@
 			v-if="!isPreview"
 			class="diagram-container"
 			:class="{ unlocked: !isLocked }"
-			:style="isLocked ? { pointerEvents: 'none' } : {}"
+			:style="isLocked && { pointerEvents: 'none' }"
 		>
 			<section class="graph-element">
 				<Toolbar>
