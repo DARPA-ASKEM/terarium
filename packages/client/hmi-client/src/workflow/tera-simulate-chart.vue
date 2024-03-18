@@ -5,8 +5,9 @@
 			v-model="selectedVariable"
 			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
-			placeholder="Select a state variable"
+			placeholder="What do you want to see?"
 			@update:model-value="updateSelectedVariable"
+			display="chip"
 		>
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
@@ -282,15 +283,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.simulate-chart {
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-small);
+}
 .multiselect-title {
 	font-size: smaller;
 	font-weight: 700;
 }
 
 .p-chart {
-	width: 100%;
-	/* height: 200px; */
-	margin-top: 0.5em;
+	margin-top: var(--gap-small);
 }
 
 .p-multiselect {

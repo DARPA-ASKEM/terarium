@@ -15,7 +15,6 @@
 							<label for="2">Start time</label>
 							<InputNumber
 								id="2"
-								class="p-inputtext-sm"
 								v-model="timespan.start"
 								inputId="integeronly"
 								@update:model-value="updateState"
@@ -25,7 +24,6 @@
 							<label for="3">End time</label>
 							<InputNumber
 								id="3"
-								class="p-inputtext-sm"
 								v-model="timespan.end"
 								inputId="integeronly"
 								@update:model-value="updateState"
@@ -35,18 +33,18 @@
 							<label for="4">Number of samples</label>
 							<InputNumber
 								id="4"
-								class="p-inputtext-sm"
 								v-model="numSamples"
 								inputId="integeronly"
 								:min="1"
 								@update:model-value="updateState"
 							/>
 						</div>
+					</div>
+					<div class="input-row mt-3">
 						<div class="label-and-input">
 							<label for="5">Method</label>
 							<Dropdown
 								id="5"
-								class="p-inputtext-sm"
 								v-model="method"
 								:options="ciemssMethodOptions"
 								@update:model-value="updateState"
@@ -70,18 +68,24 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				id="output-panel"
 			>
-				<SelectButton
-					:model-value="view"
-					@change="if ($event.value) view = $event.value;"
-					:options="viewOptions"
-					option-value="value"
-				>
-					<template #option="{ option }">
-						<i :class="`${option.icon} p-button-icon-left`" />
-						<span class="p-button-label">{{ option.value }}</span>
-					</template>
-				</SelectButton>
+				<div class="flex flex-row align-items-center gap-2">
+					What do you want to see?
+					<SelectButton
+						class=""
+						:model-value="view"
+						@change="if ($event.value) view = $event.value;"
+						:options="viewOptions"
+						option-value="value"
+					>
+						<template #option="{ option }">
+							<i :class="`${option.icon} p-button-icon-left`" />
+							<span class="p-button-label">{{ option.value }}</span>
+						</template>
+					</SelectButton>
+				</div>
+
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts">
 						<tera-simulate-chart
@@ -91,6 +95,8 @@
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="configurationChange(idx, $event)"
+							:size="parentSize"
+							class="mb-2"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
@@ -126,7 +132,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
@@ -197,6 +203,13 @@ const selectedOutputId = ref<string>();
 const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
+
+const parentSize = ref({ width: 0, height: 270 }); // Set the initial height or any default height
+// Calculate the parent container's width
+onMounted(async () => {
+	const parentContainerWidth = document.querySelector('#output-panel').clientWidth - 48;
+	parentSize.value.width = parentContainerWidth;
+});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -293,7 +306,6 @@ watch(
 
 <style scoped>
 .simulate-chart {
-	margin: 2em 1.5em;
 }
 
 .form-section {
