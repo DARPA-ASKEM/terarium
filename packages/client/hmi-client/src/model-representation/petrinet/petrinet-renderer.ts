@@ -6,6 +6,7 @@ import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 
 export interface NodeData {
 	type: string;
+	expression?: string;
 	strataType?: string;
 }
 
@@ -138,11 +139,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
-				if (!this.graph.amr) return '';
-				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
-				if (rate) {
-					return rate.expression;
-				}
+				if (d.data.expression) return d.data.expression;
 				return '';
 			});
 

@@ -15,7 +15,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS,
 	displayName: 'Simulate ensemble',
 	description: '',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
