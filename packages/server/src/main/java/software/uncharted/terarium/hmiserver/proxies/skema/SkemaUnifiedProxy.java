@@ -34,6 +34,19 @@ public interface SkemaUnifiedProxy {
 	@PostMapping("/workflows/images/base64/equations-to-latex")
 	ResponseEntity<String> base64EquationsToLatex(@RequestBody JsonNode request);
 
+	@PostMapping(value = "/workflows/code/llm-assisted-codebase-to-pn-amr", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> llmCodebaseToAMR(
+			@RequestPart("zip_file") MultipartFile file);
+
+	@PostMapping(value = "/workflows/code/codebase-to-pn-amr", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> codebaseToAMR(
+			@RequestPart("zip_file") MultipartFile file);
+
+	@PostMapping(value = "/workflows/code/snippets-to-amr", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> snippetsToAMR(
+			@RequestPart("files") List<String> files,
+			@RequestPart("blobs") List<String> blobs);
+
 	@PostMapping(value = "/metal/link_amr", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> linkAMRFile(
 			@RequestPart("amr_file") MultipartFile amrFile,

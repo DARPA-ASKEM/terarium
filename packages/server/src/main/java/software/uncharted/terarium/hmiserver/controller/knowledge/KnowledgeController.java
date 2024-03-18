@@ -3,14 +3,19 @@ package software.uncharted.terarium.hmiserver.controller.knowledge;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -19,12 +24,10 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,25 +49,34 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
-import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
@@ -78,33 +90,17 @@ public class KnowledgeController {
 
 	final ObjectMapper mapper;
 
-	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
-
 	final SkemaUnifiedProxy skemaUnifiedProxy;
 	final MitProxy mitProxy;
 	final ExtractionProxy extractionProxy;
 
 	final DocumentAssetService documentService;
+	final DatasetService datasetService;
 	final ModelService modelService;
 	final ProvenanceService provenanceService;
+	final ProvenanceSearchService provenanceSearchService;
 
 	final CodeService codeService;
-
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
-
-	/**
-	 * Retrieve the status of an extraction job
-	 *
-	 * @param id (String) the id of the extraction job
-	 * @return the status of the extraction job
-	 */
-	@GetMapping("/status/{id}")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> getTaskStatus(
-			@PathVariable("id") final String id) {
-		return ResponseEntity.ok(knowledgeMiddlewareProxy.getTaskStatus(id).getBody());
-	}
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
@@ -129,15 +125,17 @@ public class KnowledgeController {
 			}
 			// Catch every exception thrown by the Proxy
 		} catch (final FeignException e) {
-			// If the Skema Unified Service does not return a 2xx status code, we throw a 500 error
+			// If the Skema Unified Service does not return a 2xx status code, we throw a
+			// 500 error
 			final int status = e.status() < 400 ? 500 : e.status();
 			throw new ResponseStatusException(
-				HttpStatus.valueOf(status),
-				"Skema Unified Service did not return any AMR based on the provided Equations. \n" + e.getMessage());
+					HttpStatus.valueOf(status),
+					"Skema Unified Service did not return any AMR based on the provided Equations. \n"
+							+ e.getMessage());
 		} catch (final Exception e) {
 			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to reach Skema Unified Service. " + e.getMessage());
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to reach Skema Unified Service. " + e.getMessage());
 		}
 
 		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations. ";
@@ -151,8 +149,8 @@ public class KnowledgeController {
 				modelId = UUID.fromString(modelIdString);
 			} catch (final IllegalArgumentException e) {
 				throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
-					serviceSuccessMessage + "The provided modelId is not a valid UUID.");
+						HttpStatus.BAD_REQUEST,
+						serviceSuccessMessage + "The provided modelId is not a valid UUID.");
 			}
 		}
 
@@ -217,19 +215,120 @@ public class KnowledgeController {
 	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
 	 *                     specified dynamics from the code object in TDS
 	 * @param llmAssisted  (Boolean): whether amr extraction is llm assisted
-	 * @return (ExtractionResponse)
+	 * @return Model
 	 */
 	@PostMapping("/code-to-amr")
 	@Secured(Roles.USER)
-	ResponseEntity<ExtractionResponse> postCodeToAMR(
-			@RequestParam("code_id") final UUID codeId,
+	ResponseEntity<Model> postCodeToAMR(
+			@RequestParam("code-id") final UUID codeId,
 			@RequestParam(name = "name", required = false) final String name,
 			@RequestParam(name = "description", required = false) final String description,
-			@RequestParam(name = "dynamics_only", required = false) final Boolean dynamicsOnly,
-			@RequestParam(name = "llm_assisted", required = false) final Boolean llmAssisted) {
-		return ResponseEntity.ok(
-				knowledgeMiddlewareProxy.postCodeToAMR(codeId.toString(), name, description, dynamicsOnly, llmAssisted)
-						.getBody());
+			@RequestParam(name = "dynamics-only", required = false) Boolean dynamicsOnly,
+			@RequestParam(name = "llm-assisted", required = false) final Boolean llmAssisted) {
+
+		try {
+
+			final Code code = codeService.getAsset(codeId).orElseThrow();
+			final Map<String, CodeFile> codeFiles = code.getFiles();
+
+			final Map<String, String> codeContent = new HashMap<>();
+
+			for (final Entry<String, CodeFile> file : codeFiles.entrySet()) {
+				final String filename = file.getKey();
+				final CodeFile codeFile = file.getValue();
+				final String content = codeService.fetchFileAsString(codeId, filename).orElseThrow();
+
+				if (dynamicsOnly && codeFile.getDynamics() != null && codeFile.getDynamics().getBlock() != null) {
+					final List<String> blocks = codeFile.getDynamics().getBlock();
+					for (final String block : blocks) {
+						final String[] parts = block.split("-");
+						final int startLine = Integer.parseInt(parts[0].substring(1));
+						final int endLine = Integer.parseInt(parts[1].substring(1));
+
+						final String[] codeLines = content.split("\n");
+						final List<String> targetLines = Arrays.asList(codeLines).subList(startLine - 1, endLine);
+
+						final String targetBlock = String.join("\n", targetLines);
+
+						codeContent.put(filename, targetBlock);
+					}
+				} else {
+					codeContent.put(filename, content);
+					dynamicsOnly = false;
+				}
+			}
+
+			final List<String> files = new ArrayList<>();
+			final List<String> blobs = new ArrayList<>();
+
+			ResponseEntity<JsonNode> resp = null;
+
+			if (dynamicsOnly) {
+				for (final Entry<String, String> entry : codeContent.entrySet()) {
+					files.add(entry.getKey());
+					blobs.add(entry.getValue());
+				}
+
+				resp = skemaUnifiedProxy.snippetsToAMR(files, blobs);
+
+			} else {
+				final ByteArrayOutputStream zipBuffer = new ByteArrayOutputStream();
+				final ZipOutputStream zipf = new ZipOutputStream(zipBuffer, StandardCharsets.UTF_8);
+
+				for (final Map.Entry<String, String> entry : codeContent.entrySet()) {
+					final String codeName = entry.getKey();
+					final String content = entry.getValue();
+					final ZipEntry zipEntry = new ZipEntry(codeName);
+					zipf.putNextEntry(zipEntry);
+					zipf.write(content.getBytes(StandardCharsets.UTF_8));
+					zipf.closeEntry();
+				}
+				zipf.close();
+
+				final ByteMultipartFile file = new ByteMultipartFile(zipBuffer.toByteArray(), "zip_file.zip",
+						"application/zip");
+
+				resp = llmAssisted ? skemaUnifiedProxy.llmCodebaseToAMR(file) : skemaUnifiedProxy.codebaseToAMR(file);
+
+			}
+
+			if (!resp.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to get code to amr: " + resp.getBody().asText());
+			}
+
+			Model model = mapper.treeToValue(resp.getBody(), Model.class);
+
+			if (model.getMetadata() == null) {
+				model.setMetadata(new ModelMetadata());
+			}
+
+			// create the model
+			final ModelMetadata metadata = model.getMetadata() != null ? model.getMetadata() : new ModelMetadata();
+			model.getMetadata().setCodeId(codeId.toString());
+			model = modelService.createAsset(model);
+
+			// update the code
+			if (code.getMetadata() == null) {
+				code.setMetadata(new HashMap<>());
+			}
+			code.getMetadata().put("model_id", model.getId().toString());
+			codeService.updateAsset(code);
+
+			// set the provenance
+			final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, model.getId(),
+					ProvenanceType.MODEL, codeId, ProvenanceType.CODE);
+			provenanceService.createProvenance(provenancePayload);
+
+			return ResponseEntity.ok(model);
+
+		} catch (
+
+		final Exception e) {
+			log.error("Unable to get code to amr", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to get code to amr");
+		}
 	}
 
 	// Create a model from code blocks
@@ -240,7 +339,7 @@ public class KnowledgeController {
 	})
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<ExtractionResponse> codeBlocksToModel(@RequestPart final Code code,
+	public ResponseEntity<Model> codeBlocksToModel(@RequestPart final Code code,
 			@RequestPart("file") final MultipartFile input) throws IOException {
 
 		try (final CloseableHttpClient httpClient = HttpClients.custom()
@@ -263,9 +362,9 @@ public class KnowledgeController {
 				throw new Exception("Error uploading file");
 			}
 			// 3. create model from code asset
-			return ResponseEntity.ok(knowledgeMiddlewareProxy
-					.postCodeToAMR(createdCode.getId().toString(), "temp model", "temp model description", false, false)
-					.getBody());
+			return ResponseEntity.ok(
+					postCodeToAMR(createdCode.getId(), "temp model", "temp model description", false, false)
+							.getBody());
 		} catch (final Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
@@ -281,11 +380,11 @@ public class KnowledgeController {
 	 * @param documentId (String): The text of the document to profile
 	 * @return the profiled model
 	 */
-	@PostMapping("/profile-model/{model_id}")
+	@PostMapping("/profile-model/{model-id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> postProfileModel(
-			@PathVariable("model_id") final UUID modelId,
-			@RequestParam("document_id") final UUID documentId) {
+	public ResponseEntity<Model> postProfileModel(
+			@PathVariable("model-id") final UUID modelId,
+			@RequestParam("document-id") final UUID documentId) {
 
 		try {
 			final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
@@ -296,38 +395,184 @@ public class KnowledgeController {
 			log.error(error, e);
 		}
 
-		return ResponseEntity
-				.ok(knowledgeMiddlewareProxy.postProfileModel(modelId.toString(), documentId.toString()).getBody());
+		try {
+			final ProvenanceQueryParam payload = new ProvenanceQueryParam();
+			payload.setRootId(modelId);
+			payload.setRootType(ProvenanceType.MODEL);
+
+			final Set<String> codeIds = provenanceSearchService.modelsFromCode(payload);
+
+			if (codeIds.size() < 0) {
+				throw new ResponseStatusException(
+						HttpStatus.NOT_FOUND,
+						"No code found for model " + modelId);
+			}
+
+			final UUID codeId = UUID.fromString(codeIds.iterator().next());
+
+			final Code code = codeService.getAsset(codeId).orElseThrow();
+
+			final Map<String, String> codeContent = new HashMap<>();
+
+			for (final Entry<String, CodeFile> file : code.getFiles().entrySet()) {
+
+				final String name = file.getKey();
+				final String content = codeService.fetchFileAsString(codeId, file.getKey()).orElseThrow();
+
+				codeContent.put(name, content);
+			}
+			final String codeContentString = mapper.writeValueAsString(codeContent);
+
+			final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+
+			final int MAX_CHAR_LIMIT = 9000;
+			final String text = document.getText().substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+
+			final Model model = modelService.getAsset(modelId).orElseThrow();
+
+			final StringMultipartFile textFile = new StringMultipartFile(text, documentId + ".txt", "application/text");
+			final StringMultipartFile codeFile = new StringMultipartFile(codeContentString, codeId + ".txt",
+					"application/json");
+
+			final ResponseEntity<JsonNode> resp = mitProxy.modelCard(textFile, codeFile);
+			if (!resp.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to get model card: " + resp.getBody().asText());
+			}
+
+			final Card card = mapper.treeToValue(resp.getBody(), Card.class);
+
+			if (model.getHeader() == null) {
+				model.setHeader(new ModelHeader());
+			}
+
+			if (model.getMetadata() == null) {
+				model.setMetadata(new ModelMetadata());
+			}
+
+			model.getHeader().setDescription(card.getDescription());
+			model.getMetadata().setCard(card);
+
+			return ResponseEntity.ok(modelService.updateAsset(model).orElseThrow());
+
+		} catch (final Exception e) {
+			log.error("Unable to get profile model", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to get profile model");
+		}
 	}
 
 	/**
 	 * Profile a dataset
 	 *
-	 * @param datasetId   (String): The ID of the dataset to profile
-	 * @param documentId= (String): The ID of the document to profile
+	 * @param datasetId  (String): The ID of the dataset to profile
+	 * @param documentId (String): The ID of the document to profile
 	 * @return the profiled dataset
 	 */
-	@PostMapping("/profile-dataset/{dataset_id}")
+	@PostMapping("/profile-dataset/{dataset-id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> postProfileDataset(
-			@PathVariable("dataset_id") final UUID datasetId,
-			@RequestParam(name = "document_id", required = false) final Optional<UUID> documentId) {
+	public ResponseEntity<Dataset> postProfileDataset(
+			@PathVariable("dataset-id") final UUID datasetId,
+			@RequestParam(name = "document-id", required = false) final Optional<UUID> documentId) {
 
-		// Provenance call if a document id is provided
-		if (documentId.isPresent()) {
-			try {
-				final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, datasetId,
-						ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
-				provenanceService.createProvenance(provenancePayload);
-			} catch (final Exception e) {
-				final String error = "Unable to create provenance for profile-dataset";
-				log.error(error, e);
+		try {
+			// Provenance call if a document id is provided
+			StringMultipartFile documentFile = null;
+			if (documentId.isPresent()) {
+
+				final DocumentAsset document = documentService.getAsset(documentId.get()).orElseThrow();
+				documentFile = new StringMultipartFile(document.getText(), documentId.get() + ".txt",
+						"application/text");
+
+				try {
+					final Provenance provenancePayload = new Provenance(ProvenanceRelationType.EXTRACTED_FROM,
+							datasetId,
+							ProvenanceType.DATASET, documentId.get(), ProvenanceType.DOCUMENT);
+					provenanceService.createProvenance(provenancePayload);
+
+				} catch (final Exception e) {
+					final String error = "Unable to create provenance for profile-dataset";
+					log.error(error, e);
+				}
+			} else {
+				documentFile = new StringMultipartFile("There is no documentation for this dataset",
+						documentId.get() + ".txt", "application/text");
 			}
-		}
 
-		final String docIdString = documentId.map(UUID::toString).orElse(null);
-		return ResponseEntity.ok(
-				knowledgeMiddlewareProxy.postProfileDataset(datasetId.toString(), docIdString).getBody());
+			final Dataset dataset = datasetService.getAsset(datasetId).orElseThrow();
+
+			if (dataset.getFileNames().isEmpty()) {
+				throw new RuntimeException("No files found on dataset");
+			}
+			final String filename = dataset.getFileNames().get(0);
+
+			final String csvContents = datasetService.fetchFileAsString(datasetId, filename).orElseThrow();
+
+			final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
+
+			final ResponseEntity<JsonNode> resp = mitProxy.dataCard(csvFile, documentFile);
+			if (!resp.getStatusCode().is2xxSuccessful()) {
+				throw new RuntimeException("Unable to get data card: " + resp.getBody().asText());
+			}
+
+			final JsonNode card = resp.getBody();
+			final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
+
+			final List<DatasetColumn> columns = new ArrayList<>();
+			for (final DatasetColumn col : dataset.getColumns()) {
+
+				final JsonNode annotation = profilingResult.get(col.getName());
+				if (annotation == null) {
+					log.warn("No annotations for column: {}", col.getName());
+					continue;
+				}
+
+				final JsonNode dkgGroundings = annotation.get("dkg_groundings");
+				if (dkgGroundings == null) {
+					log.warn("No dkg_groundings for column: {}", col.getName());
+					continue;
+				}
+
+				final Grounding groundings = new Grounding();
+				for (final JsonNode g : annotation.get("dkg_groundings")) {
+					if (g.size() < 2) {
+						log.warn("Invalid dkg_grounding: {}", g);
+						continue;
+					}
+					groundings.getIdentifiers().put(g.get(0).asText(), g.get(1).asText());
+				}
+
+				// remove groundings from annotation object
+				((ObjectNode) annotation).remove("dkg_groundings");
+
+				final DatasetColumn newCol = new DatasetColumn();
+				newCol.setName(col.getName());
+				newCol.setDataType(col.getDataType());
+				newCol.setFormatStr(col.getFormatStr());
+				newCol.setGrounding(col.getGrounding());
+				newCol.setAnnotations(col.getAnnotations());
+				newCol.setDescription(annotation.get("description").asText());
+				newCol.setMetadata(mapper.convertValue(annotation, Map.class));
+				columns.add(newCol);
+			}
+
+			dataset.setColumns(columns);
+
+			if (dataset.getMetadata() == null) {
+				dataset.setMetadata(new HashMap<>());
+			}
+
+			dataset.getMetadata().put("data_card", card);
+
+			return ResponseEntity.ok(datasetService.updateAsset(dataset).orElseThrow());
+
+		} catch (final Exception e) {
+			final String error = "Unable to get profile dataset";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
 	}
 
 	@PostMapping("/link-amr")
@@ -431,7 +676,7 @@ public class KnowledgeController {
 				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
 						"application/text");
 
-				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
+				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(domain, file);
 
 				if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
 					mitCollection = resp.getBody();
@@ -470,7 +715,7 @@ public class KnowledgeController {
 						"text.json",
 						"application/json");
 
-				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
+				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(domain, mitFile,
 						arizonaFile);
 
 				if (resp.getStatusCode().is2xxSuccessful()) {
