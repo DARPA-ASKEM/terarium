@@ -25,7 +25,8 @@ export interface OptimizeCiemssOperationState {
 	threshold: number;
 	isMinimized: boolean;
 	chartConfigs: string[][];
-	inProgressSimulationId: string;
+	inProgressForecastId: string;
+	inProgressOptimizeId: string;
 	forecastRunId: string;
 	optimzationRunId: string;
 	modelConfigName: string;
@@ -63,7 +64,8 @@ export const OptimizeCiemssOperation: Operation = {
 			threshold: 1,
 			isMinimized: true,
 			chartConfigs: [],
-			inProgressSimulationId: '',
+			inProgressForecastId: '',
+			inProgressOptimizeId: '',
 			forecastRunId: '',
 			optimzationRunId: '',
 			modelConfigName: '',
