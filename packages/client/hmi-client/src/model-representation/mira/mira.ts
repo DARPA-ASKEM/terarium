@@ -171,6 +171,7 @@ export const rawTemplatesSummary = (miraModel: MiraModel) => {
 	miraModel.templates.forEach((t) => {
 		const summary: TemplateSummary = {
 			name: t.name,
+			expression: t.rate_law,
 			subject: '',
 			outcome: '',
 			controllers: []
@@ -207,6 +208,7 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	miraModel.templates.forEach((t) => {
 		const scrubbedTemplate: TemplateSummary = {
 			name: t.name,
+			expression: t.rate_law,
 			subject: '',
 			outcome: '',
 			controllers: []
@@ -424,6 +426,11 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 
 	// templates
 	templates.forEach((t) => {
+		const nodeData: any = {
+			type: 'transition',
+			expression: t.expression
+		};
+
 		graph.nodes.push({
 			id: t.name,
 			label: '',
@@ -431,12 +438,12 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			y: 0,
 			width: 50,
 			height: 50,
-			data: { type: 'transition' },
+			data: nodeData,
 			nodes: []
 		});
 	});
 
-	// Edges
+	// edges
 	templates.forEach((t) => {
 		if (t.subject !== '') {
 			graph.edges.push({

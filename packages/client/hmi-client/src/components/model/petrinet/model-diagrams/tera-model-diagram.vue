@@ -152,7 +152,9 @@ async function renderGraph() {
 
 	// Render graph
 	const graphData =
-		isCollapsed.value === true ? convertToIGraph(templatesSummary) : convertToIGraph(rawTemplates);
+		isCollapsed.value === true && isStratifiedModel(mmt.value)
+			? convertToIGraph(templatesSummary)
+			: convertToIGraph(rawTemplates);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
