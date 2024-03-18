@@ -492,6 +492,8 @@ const runOptimize = async () => {
 	};
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
+	optimizationResult.value = '';
+
 	await getOptimizeStatus(optResult.simulationId);
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
