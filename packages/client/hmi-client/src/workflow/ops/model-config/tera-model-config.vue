@@ -290,9 +290,9 @@ import { emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import type { WorkflowNode } from '@/types/workflow';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import TeraInitialTable from './tera-initial-table.vue';
-import TeraParameterTable from './tera-parameter-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',

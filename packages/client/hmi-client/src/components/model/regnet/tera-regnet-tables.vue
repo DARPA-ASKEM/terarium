@@ -63,30 +63,31 @@
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab header="Parameters">
-			<DataTable v-if="!isEmpty(parameters)" data-key="id" :value="parameters" edit-mode="cell">
-				<Column field="id" header="Symbol" />
-				<Column field="value" header="Value">
-					<template v-if="!readonly" #editor="{ data }">
-						<InputText
-							:value="data?.value"
-							@input="updateParameter(data?.id, 'value', $event.target?.['value'])"
-						/>
-					</template>
-				</Column>
-			</DataTable>
+			<template #header>
+				<Button @click.stop="emit('update-model', transientModel)" style="margin-left: auto"
+					>Save Changes</Button
+				>
+			</template>
+			<tera-parameter-table
+				:model="transientModel"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				@update-value="updateParam"
+				@update-model="(updatedModel: Model) => (transientModel = updatedModel)"
+				:readonly="readonly"
+			/>
 		</AccordionTab>
 	</Accordion>
 </template>
 
 <script setup lang="ts">
-import type { DKG, Model, ModelConfiguration } from '@/types/Types';
+import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import {
 	searchCuriesEntities,
@@ -95,6 +96,11 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import { getMMT } from '@/services/model';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	model: Model;
@@ -102,20 +108,26 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
+const transientModel = ref(cloneDeep(props.model));
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 const vertices = computed(() => props.model?.model?.vertices ?? []);
 const edges = computed(() => props.model.model?.edges ?? []);
-const parameters = computed(() => props.model?.model?.parameters ?? []);
 const nameOfCurieCache = ref(new Map<string, string>());
 const curies = ref<DKG[]>([]);
 const conceptSearchTerm = ref('');
 
 const emit = defineEmits(['update-model']);
 
-function updateParameter(id: string, key: string, value: string) {
-	const model = cloneDeep(props.model);
-	model.model.parameters.find((p) => p.id === id)[key] = value;
-	emit('update-model', model);
-}
+const updateParam = (params: ModelParameter[]) => {
+	const modelParameters = transientModel.value.model?.parameters ?? [];
+	for (let i = 0; i < modelParameters.length; i++) {
+		const foundParam = params.find((p) => p.id === modelParameters![i].id);
+		if (foundParam) {
+			modelParameters[i] = foundParam;
+		}
+	}
+};
 
 function updateVertex(id: string, key: string, value: any) {
 	const model = cloneDeep(props.model);
@@ -134,6 +146,18 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 function onCellEditComplete() {
 	conceptSearchTerm.value = '';
 }
+
+watch(
+	() => props.model,
+	async (model) => {
+		if (!model) return;
+		transientModel.value = cloneDeep(model);
+		const response: any = await getMMT(model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>

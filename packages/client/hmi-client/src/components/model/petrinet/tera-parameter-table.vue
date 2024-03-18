@@ -27,20 +27,13 @@
 		</Column>
 
 		<Column header="Description" class="w-2">
-			<template #body="slotProps">
-				<template v-if="!configView && !readonly">
-					<InputText
-						size="small"
-						v-model.lazy="slotProps.data.description"
-						@update:model-value="updateDescription(slotProps.data.value, $event)"
-					/>
-				</template>
-				<template v-else>
-					<span v-if="slotProps.data.description" class="truncate-text">
-						{{ slotProps.data.description }}
-					</span>
-					<template v-else>--</template>
-				</template>
+			<template #body="{ data }">
+				<InputText
+					size="small"
+					v-model.lazy="data.description"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateDescription(data.value, $event)"
+				/>
 			</template>
 		</Column>
 
@@ -86,6 +79,7 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="slotProps.data.unit"
+					:disabled="readonly"
 					@update:model-value="updateUnit(slotProps.data.value, $event)"
 				/>
 				<template v-else>--</template>
@@ -111,6 +105,7 @@
 					optionLabel="label"
 					optionValue="value"
 					placeholder="Select a parameter type"
+					:disabled="readonly"
 					@update:model-value="(val) => changeType(slotProps.data.value, val)"
 				>
 					<template #value="slotProps">
@@ -155,6 +150,7 @@
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<InputNumber
@@ -165,6 +161,7 @@
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.maximum"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
@@ -182,10 +179,12 @@
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.value"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
 					<Button
+						v-if="!readonly"
 						class="ml-2 pt-0 pb-0 w-5"
 						text
 						@click="changeType(slotProps.data.value, 1)"
@@ -201,7 +200,8 @@
 							suffix="%"
 							:min="0"
 							:max="100"
-							@click.stop=""
+							:disabled="readonly"
+							@click.stop
 						/>
 					</Button>
 				</span>
@@ -215,6 +215,7 @@
 						size="small"
 						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
 						v-model.lazy="slotProps.data.timeseries"
+						:disabled="readonly"
 						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
 					/>
 					<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
@@ -230,6 +231,7 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
+					:disabled="readonly"
 					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
 				/>
 			</template>
@@ -249,6 +251,7 @@
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
+				:readonly="readonly"
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
 				@update-model="(model: Model) => emit('update-model', model)"
 			/>

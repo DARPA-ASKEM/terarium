@@ -28,19 +28,12 @@
 
 		<Column header="Description" class="w-2">
 			<template #body="slotProps">
-				<template v-if="!configView && !readonly">
-					<InputText
-						size="small"
-						v-model.lazy="slotProps.data.description"
-						@update:model-value="updateMetadata(slotProps.data.value.target, 'description', $event)"
-					/>
-				</template>
-				<template v-else>
-					<span v-if="slotProps.data.description" class="truncate-text">
-						{{ slotProps.data.description }}</span
-					>
-					<template v-else>--</template>
-				</template>
+				<InputText
+					size="small"
+					v-model.lazy="slotProps.data.description"
+					:disabled="configView || readonly || slotProps.data.type === ParamType.MATRIX"
+					@update:model-value="updateMetadata(slotProps.data.value.target, 'description', $event)"
+				/>
 			</template>
 		</Column>
 
@@ -66,7 +59,7 @@
 				</template>
 				<template v-else>--</template>
 			</template>
-			<template v-if="!configView || !readonly" #editor="{ data }">
+			<template v-if="!configView && !readonly" #editor="{ data }">
 				<AutoComplete
 					v-model="conceptSearchTerm.name"
 					:suggestions="curies"
@@ -89,6 +82,7 @@
 					v-if="slotProps.data.type === ParamType.CONSTANT"
 					size="small"
 					class="w-full"
+					:disabled="readonly"
 					v-model.lazy="slotProps.data.unit"
 					@update:model-value="(val) => updateMetadata(slotProps.data.value.target, 'unit', val)"
 				/>
@@ -115,6 +109,7 @@
 					optionLabel="label"
 					optionValue="value"
 					placeholder="Select a parameter type"
+					:disabled="readonly"
 					@update:model-value="(val) => changeType(slotProps.data.value, val)"
 				>
 					<template #value="slotProps">
@@ -157,6 +152,7 @@
 						size="small"
 						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
+						:disabled="readonly"
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
 				</span>
@@ -171,6 +167,7 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
+					:disabled="readonly"
 					@update:model-value="(val) => updateMetadata(data.value.target, 'source', val)"
 				/>
 			</template>
@@ -189,6 +186,8 @@
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
+				:config-view="configView"
+				:readonly="readonly"
 				@update-value="(val: Initial) => emit('update-value', [val])"
 				@update-model="(model: Model) => emit('update-model', model)"
 			/>

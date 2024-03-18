@@ -3,27 +3,32 @@
 		<AccordionTab>
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ states.length }})</span>
+				<Button @click.stop="emit('update-model', transientModel)" style="margin-left: auto"
+					>Save Changes</Button
+				>
 			</template>
 			<tera-initial-table
 				:model="transientModel"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				@update-value="updateInitial"
-				@update-model="(model: Model) => (transientModel = model)"
+				@update-model="(updateModel: Model) => (transientModel = updateModel)"
 				:readonly="readonly"
 			/>
-			<Button @click="emit('update-model', transientModel)">Save Changes</Button>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
+				<Button @click.stop="emit('update-model', transientModel)" style="margin-left: auto"
+					>Save Changes</Button
+				>
 			</template>
 			<tera-parameter-table
 				:model="transientModel"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				@update-value="updateParam"
-				@update-model="(model: Model) => (transientModel = model)"
+				@update-model="(updatedModel: Model) => (transientModel = updatedModel)"
 				:readonly="readonly"
 			/>
 		</AccordionTab>
@@ -148,8 +153,8 @@ import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import teraParameterTable from '@/workflow/ops/model-config/tera-parameter-table.vue';
-import TeraInitialTable from '@/workflow/ops/model-config/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
@@ -217,29 +222,23 @@ const otherConcepts = computed(() => {
 });
 
 const updateInitial = (inits: Initial[]) => {
-	const clonedModel = cloneDeep(props.model);
-	const modelInitials = clonedModel.semantics?.ode.initials ?? [];
+	const modelInitials = transientModel.value.semantics?.ode.initials ?? [];
 	for (let i = 0; i < modelInitials.length; i++) {
 		const foundInitial = inits.find((init) => init.target === modelInitials![i].target);
 		if (foundInitial) {
 			modelInitials[i] = foundInitial;
 		}
 	}
-
-	transientModel.value = clonedModel;
 };
 
 const updateParam = (params: ModelParameter[]) => {
-	const clonedModel = cloneDeep(props.model);
-	const modelParameters = clonedModel.semantics?.ode.parameters ?? [];
+	const modelParameters = transientModel.value.semantics?.ode.parameters ?? [];
 	for (let i = 0; i < modelParameters.length; i++) {
 		const foundParam = params.find((p) => p.id === modelParameters![i].id);
 		if (foundParam) {
 			modelParameters[i] = foundParam;
 		}
 	}
-
-	transientModel.value = clonedModel;
 };
 
 watch(
