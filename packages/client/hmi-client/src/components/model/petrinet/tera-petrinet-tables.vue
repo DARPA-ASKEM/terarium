@@ -5,19 +5,26 @@
 				Initial variables<span class="artifact-amount">({{ states.length }})</span>
 			</template>
 			<tera-initial-table
-				:model="model"
+				:model="transientModel"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				@update-value="updateInitial"
-				@update-model="(model: Model) => emit('update-model', model)"
+				@update-model="(model: Model) => (transientModel = model)"
+				:readonly="readonly"
 			/>
+			<Button @click="emit('update-model', transientModel)">Save Changes</Button>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 			</template>
 			<tera-parameter-table
-				:model="model"
+				:model="transientModel"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				@update-value="updateParam"
-				@update-model="(model: Model) => emit('update-model', model)"
+				@update-model="(model: Model) => (transientModel = model)"
+				:readonly="readonly"
 			/>
 		</AccordionTab>
 		<AccordionTab>
@@ -136,13 +143,17 @@ import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types
 import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import teraParameterTable from '@/workflow/ops/model-config/tera-parameter-table.vue';
 import TeraInitialTable from '@/workflow/ops/model-config/tera-initial-table.vue';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import { getMMT } from '@/services/model';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	model: Model;
@@ -152,6 +163,10 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
+
+const transientModel = ref(cloneDeep(props.model));
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
@@ -211,21 +226,33 @@ const updateInitial = (inits: Initial[]) => {
 		}
 	}
 
-	emit('update-model', clonedModel);
+	transientModel.value = clonedModel;
 };
 
 const updateParam = (params: ModelParameter[]) => {
 	const clonedModel = cloneDeep(props.model);
 	const modelParameters = clonedModel.semantics?.ode.parameters ?? [];
 	for (let i = 0; i < modelParameters.length; i++) {
-		const foundParam = params.find((p) => p.id === parameters![i].id);
+		const foundParam = params.find((p) => p.id === modelParameters![i].id);
 		if (foundParam) {
 			modelParameters[i] = foundParam;
 		}
 	}
 
-	emit('update-model', clonedModel);
+	transientModel.value = clonedModel;
 };
+
+watch(
+	() => props.model,
+	async (model) => {
+		if (!model) return;
+		transientModel.value = cloneDeep(model);
+		const response: any = await getMMT(model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>

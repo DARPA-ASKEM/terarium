@@ -28,31 +28,36 @@
 
 		<Column header="Description" class="w-2">
 			<template #body="slotProps">
-				<span v-if="slotProps.data.description" class="truncate-text">
-					{{ slotProps.data.description }}</span
-				>
-				<template v-else>--</template>
+				<template v-if="!configView && !readonly">
+					<InputText
+						size="small"
+						v-model.lazy="slotProps.data.description"
+						@update:model-value="updateMetadata(slotProps.data.value.target, 'description', $event)"
+					/>
+				</template>
+				<template v-else>
+					<span v-if="slotProps.data.description" class="truncate-text">
+						{{ slotProps.data.description }}</span
+					>
+					<template v-else>--</template>
+				</template>
 			</template>
 		</Column>
 
 		<Column header="Concept" class="w-1">
 			<template #body="{ data }">
-				<template
-					v-if="
-						data.concept?.grounding?.identifiers && !isEmpty(data.concept.grounding.identifiers)
-					"
-				>
+				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
+							getCurieFromGroudingIdentifier(data.concept.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -60,6 +65,21 @@
 					</a>
 				</template>
 				<template v-else>--</template>
+			</template>
+			<template v-if="!configView || !readonly" #editor="{ data }">
+				<AutoComplete
+					v-model="conceptSearchTerm.name"
+					:suggestions="curies"
+					@complete="onSearch"
+					@item-select="
+						updateMetadata(data.value.target, 'concept', {
+							grounding: { identifiers: parseCurie($event.value.curie) }
+						})
+					"
+					optionLabel="name"
+					:forceSelection="true"
+					:inputStyle="{ width: '100%' }"
+				/>
 			</template>
 		</Column>
 
@@ -147,7 +167,7 @@
 		<Column field="source" header="Source" class="w-2">
 			<template #body="{ data }">
 				<InputText
-					v-if="data.type === ParamType.CONSTANT || data.type === ParamType.MATRIX"
+					v-if="data.type === ParamType.CONSTANT"
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
@@ -192,7 +212,7 @@
 import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import type { Model, Initial } from '@/types/Types';
+import type { Model, Initial, DKG } from '@/types/Types';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
@@ -205,13 +225,16 @@ import { pythonInstance } from '@/python/PyodideController';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
-	getNameOfCurieCached
+	getNameOfCurieCached,
+	searchCuriesEntities,
+	parseCurie
 } from '@/services/concept';
 import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-petri';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel } from '@/model-representation/mira/mira';
 import { matrixEffect } from '@/utils/easter-eggs';
 import { updateVariable } from '@/model-representation/service';
+import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -224,6 +247,8 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[];
 	hideHeader?: boolean;
+	readonly?: boolean;
+	configView?: boolean;
 }>();
 
 const emit = defineEmits(['update-value', 'update-model']);
@@ -233,6 +258,7 @@ const matrixModalContext = ref({
 	matrixId: ''
 });
 
+const curies = ref<DKG[]>([]);
 const conceptSearchTerm = ref({
 	curie: '',
 	name: ''
@@ -274,7 +300,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 					id: v,
 					name: v,
 					description: descriptionValue,
-					concept: conceptValue,
+					concept: conceptValue?.grounding,
 					type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
 					unit: unitValue,
 					value: initial,
@@ -307,7 +333,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 				id: init,
 				name: init,
 				description: descriptionValue,
-				concept: conceptValue,
+				concept: conceptValue?.grounding,
 				type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
 				unit: unitValue,
 				value: initial,
@@ -339,7 +365,7 @@ const updateCellValue = (v: any) => {
 	emit('update-model', clone);
 };
 
-const updateMetadata = (id: string, key: string, value: string) => {
+const updateMetadata = (id: string, key: string, value: any) => {
 	const clonedModel = cloneDeep(props.model);
 	if (!clonedModel.metadata?.initials?.[id]) {
 		clonedModel.metadata ??= {};
@@ -360,6 +386,13 @@ const updateExpression = async (value: Initial) => {
 	value.expression_mathml = mathml;
 	emit('update-value', [value]);
 };
+async function onSearch(event: AutoCompleteCompleteEvent) {
+	const query = event.query;
+	if (query.length > 2) {
+		const response = await searchCuriesEntities(query);
+		curies.value = response;
+	}
+}
 
 const changeType = (initial: Initial, typeIndex: number) => {
 	const clonedModel = cloneDeep(props.model);

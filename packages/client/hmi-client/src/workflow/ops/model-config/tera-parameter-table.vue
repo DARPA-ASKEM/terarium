@@ -28,31 +28,36 @@
 
 		<Column header="Description" class="w-2">
 			<template #body="slotProps">
-				<span v-if="slotProps.data.description" class="truncate-text">
-					{{ slotProps.data.description }}</span
-				>
-				<template v-else>--</template>
+				<template v-if="!configView && !readonly">
+					<InputText
+						size="small"
+						v-model.lazy="slotProps.data.description"
+						@update:model-value="updateDescription(slotProps.data.value, $event)"
+					/>
+				</template>
+				<template v-else>
+					<span v-if="slotProps.data.description" class="truncate-text">
+						{{ slotProps.data.description }}
+					</span>
+					<template v-else>--</template>
+				</template>
 			</template>
 		</Column>
 
 		<Column header="Concept" class="w-1">
 			<template #body="{ data }">
-				<template
-					v-if="
-						data.concept?.grounding?.identifiers && !isEmpty(data.concept.grounding.identifiers)
-					"
-				>
+				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
+							getCurieFromGroudingIdentifier(data.concept.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -60,6 +65,17 @@
 					</a>
 				</template>
 				<template v-else>--</template>
+			</template>
+			<template v-if="!configView && !readonly" #editor="{ data }">
+				<AutoComplete
+					v-model="conceptSearchTerm.name"
+					:suggestions="curies"
+					@complete="onSearch"
+					@item-select="updateConcept(data.value, $event.value.curie)"
+					optionLabel="name"
+					:forceSelection="true"
+					:inputStyle="{ width: '100%' }"
+				/>
 			</template>
 		</Column>
 
@@ -257,7 +273,7 @@ import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type { Model, ModelParameter } from '@/types/Types';
+import type { DKG, Model, ModelParameter } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
@@ -268,8 +284,11 @@ import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common'
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
-	getNameOfCurieCached
+	getNameOfCurieCached,
+	parseCurie,
+	searchCuriesEntities
 } from '@/services/concept';
+import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
@@ -411,6 +430,8 @@ const conceptSearchTerm = ref({
 });
 const nameOfCurieCache = ref(new Map<string, string>());
 
+const curies = ref<DKG[]>([]);
+
 const modelType = computed(() => getModelType(props.model));
 
 const addPlusMinus = ref(10);
@@ -465,6 +486,21 @@ const updateUnit = (param: ModelParameter, value: string) => {
 		clonedParam.unit = { expression: '', expression_mathml: '' };
 	}
 	clonedParam.unit.expression = value;
+	emit('update-value', [clonedParam]);
+};
+
+const updateConcept = (param: ModelParameter, value: string) => {
+	const clonedParam = cloneDeep(param);
+	if (!clonedParam.grounding) {
+		clonedParam.grounding = { identifiers: {} };
+	}
+	clonedParam.grounding.identifiers = parseCurie(value);
+	emit('update-value', [clonedParam]);
+};
+
+const updateDescription = (param: ModelParameter, value: string) => {
+	const clonedParam = cloneDeep(param);
+	clonedParam.description = value;
 	emit('update-value', [clonedParam]);
 };
 
@@ -531,6 +567,14 @@ const replaceParam = (model: Model, param: any, index: number) => {
 		model.model.parameters[index] = param;
 	}
 };
+
+async function onSearch(event: AutoCompleteCompleteEvent) {
+	const query = event.query;
+	if (query.length > 2) {
+		const response = await searchCuriesEntities(query);
+		curies.value = response;
+	}
+}
 </script>
 
 <style scoped>

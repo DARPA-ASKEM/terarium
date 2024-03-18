@@ -117,6 +117,7 @@
 								:model="modelConfiguration.configuration"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
+								config-view
 								@update-value="updateConfigInitial"
 								@update-model="
 									(modelToUpdate: Model) => {
@@ -158,6 +159,7 @@
 							:model="modelConfiguration.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
+							config-view
 							@update-value="updateConfigParam"
 							@update-model="
 								(modelToUpdate: Model) => {
