@@ -55,9 +55,6 @@
 					</template>
 				</Column>
 			</DataTable>
-			<section v-else>
-				<p class="subdued">None</p>
-			</section>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -103,9 +100,6 @@
 					</template>
 				</Column>
 			</DataTable>
-			<section v-else>
-				<p class="subdued">None</p>
-			</section>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -125,9 +119,6 @@
 					</template>
 				</Column>
 			</DataTable>
-			<section v-else>
-				<p class="subdued">None</p>
-			</section>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -149,9 +140,6 @@
 					</template>
 				</Column>
 			</DataTable>
-			<section v-else>
-				<p class="subdued">None</p>
-			</section>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -210,9 +198,6 @@
 					</template>
 				</Column>
 			</DataTable>
-			<section v-else>
-				<p class="subdued">None</p>
-			</section>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -223,9 +208,6 @@
 				<Column field="id" header="Symbol" />
 				<Column field="units.expression" header="Unit" />
 			</DataTable>
-			<section v-else>
-				<p class="subdued">None</p>
-			</section>
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -410,8 +392,11 @@ section {
 .clickable-tag:hover {
 	cursor: pointer;
 }
-.subdued {
+
+:deep(.p-accordion-content:empty::before) {
+	content: 'None';
 	color: var(--text-color-secondary);
 	font-size: var(--font-caption);
+	margin-left: 1rem;
 }
 </style>
