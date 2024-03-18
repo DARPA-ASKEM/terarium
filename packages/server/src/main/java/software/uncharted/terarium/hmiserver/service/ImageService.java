@@ -64,4 +64,5 @@ public class ImageService {
     private String getFilename(UUID id) {
         return String.join("/image", id.toString());
     }
+		return String.join("/", config.getImagePath(), id.toString());
 }
