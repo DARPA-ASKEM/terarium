@@ -5,12 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -39,7 +35,14 @@ public class TransformController {
 	@GetMapping("/model-to-latex/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> model2Latex(@PathVariable("id") final UUID id) {
-		return ResponseEntity
+		try {
+			return ResponseEntity
 				.ok(simulationServiceProxy.getModelEquation(id.toString()).getBody());
+		} catch (final Exception error) {
+			log.error("Error getting latex from simulation service", error);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Simulation Service is unable to provide the set of LaTeX equations from the Model.");
+		}
 	}
 }

@@ -16,7 +16,7 @@ export interface SimulateCiemssOperationState {
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
-	displayName: 'Simulate (probabilistic)',
+	displayName: 'Simulate with PyCIEMSS',
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },

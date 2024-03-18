@@ -44,12 +44,17 @@ export const useToastService = () => {
 		});
 	};
 
-	const error = (summary: string | undefined, detail: string) => {
+	const error = (
+		summary: string | undefined,
+		detail: string,
+		life: number = DEFAULT_DURATION * 3
+	) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.error,
 			summary: summary || ToastSummaries.ERROR,
 			group: ToastSeverity.error,
-			detail
+			detail,
+			life
 		});
 	};
 

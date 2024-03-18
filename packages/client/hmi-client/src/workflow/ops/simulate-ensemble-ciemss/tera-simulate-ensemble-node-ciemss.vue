@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -50,7 +50,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown', 'append-input-port']);
 
 // const runResults = ref<RunResults>({});
 const runResults = ref<{ [runId: string]: RunResults }>({});
@@ -104,6 +104,16 @@ const processResult = async (simulationId: string) => {
 		isSelected: false
 	});
 };
+
+watch(
+	() => props.node.inputs,
+	() => {
+		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
+			emit('append-input-port', { type: 'modelConfigId', label: 'Model configuration' });
+		}
+	},
+	{ deep: true }
+);
 
 watch(
 	() => props.node.state.inProgressSimulationId,

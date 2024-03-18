@@ -22,7 +22,8 @@ public class OptimizeRequestCiemss implements Serializable {
 	private String modelConfigId;
 	private TimeSpan timespan;
 	@TSOptional
-	private List<OptimizedIntervention> interventions;
+	// FIXME: make pluraal more consistent here: https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
+	private OptimizedIntervention interventions;
 	@JsonAlias("step_size")
 	@TSOptional
 	private Double stepSize;

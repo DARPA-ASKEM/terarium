@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import type { TimeSpan, FunmanInterval } from '@/types/Types';
+import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
 export interface ConstraintGroup {
 	borderColour: string;
@@ -35,8 +35,8 @@ export interface FunmanOperationState {
 
 export const FunmanOperation: Operation = {
 	name: WorkflowOperationTypes.FUNMAN,
-	displayName: 'Validate model configuration',
-	description: 'Validate model configuration',
+	displayName: 'Validate configuration',
+	description: 'Validate configuration',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'funmanQueryId' }],
 	isRunnable: true,
