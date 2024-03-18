@@ -118,7 +118,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-configuration']);
 
-const isLocked = ref(false);
+const isLocked = ref(true);
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
