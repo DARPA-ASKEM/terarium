@@ -25,12 +25,15 @@
 				@enriched="fetchAsset"
 			/>
 		</AccordionTab>
-		<AccordionTab header="Column information">
+		<AccordionTab header="Column information" v-if="!dataset?.esgfId">
 			<tera-dataset-overview-table
 				v-if="dataset"
 				:dataset="dataset"
 				@update-dataset="(dataset: Dataset) => emit('update-dataset', dataset)"
 			/>
+		</AccordionTab>
+		<AccordionTab header="Preview" v-if="dataset?.esgfId">
+			<img :src="image" alt="" />
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -50,6 +53,7 @@ import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 
 const props = defineProps<{
 	dataset: Dataset | null;
+	image: string | undefined;
 	highlight?: string;
 	featureConfig?: FeatureConfig;
 	rawContent: CsvAsset | null;

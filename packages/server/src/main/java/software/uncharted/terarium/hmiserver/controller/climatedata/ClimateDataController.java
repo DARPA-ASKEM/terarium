@@ -23,7 +23,6 @@ import software.uncharted.terarium.hmiserver.service.climatedata.ClimateDataServ
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/climatedata/queries")
@@ -91,7 +90,7 @@ public class ClimateDataController {
 			@ApiResponse(responseCode = "500", description = "There was an issue generating the PNG", content = @Content)
 	})
 	public ResponseEntity<String> previewEsgf(@PathVariable final String esgfId,
-											  @RequestParam(value = "variable-id") final String variableId,
+											  @RequestParam(value = "variable-id", required = false) final String variableId,
 											  @RequestParam(value = "timestamps", required = false) final String timestamps,
 											  @RequestParam(value = "time-index", required = false) final String timeIndex
 	) {
@@ -131,7 +130,7 @@ public class ClimateDataController {
 											 @RequestParam(value = "envelope") final String envelope,
 											 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
-		ResponseEntity<String> subsetResponse = climateDataService.getSubset(esgfId, envelope, timestamps, thinFactor);
+		final ResponseEntity<String> subsetResponse = climateDataService.getSubset(esgfId, envelope, timestamps, thinFactor);
 		if (subsetResponse != null) {
 			return subsetResponse;
 		}

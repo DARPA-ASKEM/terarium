@@ -48,6 +48,13 @@ async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
 	return response?.data ?? null;
 }
 
+async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
+	const response = await API.get(`/climatedata/queries/preview-esgf/${esgfId}`).catch((error) => {
+		logger.error(`Error: esgf-service was not able to preview the dataset ${esgfId} ${error}`);
+	});
+	return response?.data ?? undefined;
+}
+
 /**
  * Update dataset from the dataservice
  * @return Dataset|null - the dataset, or null if none returned by API
@@ -337,6 +344,7 @@ export {
 	getAllClimate,
 	getDataset,
 	getClimateDataset,
+	getClimateDatasetPreview,
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
@@ -344,5 +352,6 @@ export {
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
 	saveDataset,
-	createCsvAssetFromRunResults
+	createCsvAssetFromRunResults,
+	createDataset
 };
