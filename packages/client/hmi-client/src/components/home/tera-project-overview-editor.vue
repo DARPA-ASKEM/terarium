@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
 import Editor from 'primevue/editor';
 import { update } from '@/services/project';
 import { useProjects } from '@/composables/project';
@@ -29,19 +29,41 @@ const props = defineProps<{ project: Project | null }>();
 const editorContent = ref('');
 const lastSavedContent = computed(() => props.project?.overviewText ?? DEFAULT_EDITOR_CONTENT);
 
-const saveIntervalId = setInterval(async () => {
+let autoSaveIntervalId: NodeJS.Timeout | null = null;
+const startAutoSave = () => {
+	autoSaveIntervalId = setInterval(saveContent, AUTO_SAVE_DELAY);
+};
+const stopAutoSave = () => {
+	if (autoSaveIntervalId === null) return;
+	clearInterval(autoSaveIntervalId);
+	autoSaveIntervalId = null;
+};
+
+const saveContent = async () => {
 	if (!props.project) return;
 	if (lastSavedContent.value === editorContent.value) return;
-	await update({ ...props.project, overviewText: editorContent.value });
+	const res = await update({ ...props.project, overviewText: editorContent.value });
+	// Note that an error has happened when res is null since the `update` function's swallowing the error and returning null instead of throwing it.
+	if (!res) {
+		stopAutoSave();
+		return;
+	}
+	// This will update the last saved content to the current content
 	await useProjects().refresh();
-}, AUTO_SAVE_DELAY);
+};
 
-onMounted(async () => {
-	// Init editor content
+onMounted(() => {
 	editorContent.value = lastSavedContent.value;
 });
+
+watch(editorContent, () => {
+	// If the content changes, start the auto-save timer if it's not already running
+	if (autoSaveIntervalId !== null) return;
+	startAutoSave();
+});
+
 onUnmounted(() => {
-	clearInterval(saveIntervalId);
+	stopAutoSave();
 });
 </script>
 
