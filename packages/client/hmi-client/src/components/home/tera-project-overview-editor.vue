@@ -12,16 +12,15 @@ import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
 import Editor from 'primevue/editor';
 import { update } from '@/services/project';
 import { useProjects } from '@/composables/project';
-import { Project } from '@/types/Types';
 
 const AUTO_SAVE_DELAY = 3000;
 
-const props = defineProps<{ project: Project | null }>();
-const editorContent = ref('');
-const lastSavedContent = computed(() => props.project?.overviewContent ?? '');
+const { activeProject, refresh } = useProjects();
+const lastSavedContent = computed(() => activeProject.value?.overviewContent ?? '');
 const hasEditPermission = computed(() =>
-	['creator', 'writer'].includes(props.project?.userPermission ?? '')
+	['creator', 'writer'].includes(activeProject.value?.userPermission ?? '')
 );
+const editorContent = ref('');
 
 let autoSaveIntervalId: number | null = null;
 const startAutoSave = () => {
@@ -39,16 +38,16 @@ const isContentSameAsLastSaved = computed(
 		lastSavedContent.value === editorContent.value
 );
 const saveContent = async () => {
-	if (!props.project) return;
+	if (!activeProject.value) return;
 	if (isContentSameAsLastSaved.value) return;
-	const res = await update({ ...props.project, overviewContent: editorContent.value });
+	const res = await update({ ...activeProject.value, overviewContent: editorContent.value });
 	// Note that an error has happened when res is null since the `update` function's swallowing the error and returning null instead of throwing it.
 	if (!res) {
 		stopAutoSave();
 		return;
 	}
 	// This will update the last saved content to the current content
-	await useProjects().refresh();
+	await refresh();
 };
 
 onMounted(() => {

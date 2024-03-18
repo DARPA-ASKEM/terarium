@@ -18,7 +18,7 @@
 			</p>
 		</template>
 		<template #default>
-			<tera-project-overview-editor :project="useProjects().activeProject.value" />
+			<tera-project-overview-editor />
 		</template>
 	</tera-asset>
 </template>
