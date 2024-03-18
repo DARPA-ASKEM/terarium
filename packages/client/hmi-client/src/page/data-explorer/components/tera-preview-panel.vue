@@ -104,7 +104,7 @@ const previewItemId = computed(() => {
 		props.datasetSource === DatasetSource.ESGF
 	) {
 		const dataset: Dataset = previewItemState.value as Dataset;
-		return dataset.esgfId;
+		return dataset.esgfId as string;
 	}
 	return previewItemState.value.id as string;
 });
