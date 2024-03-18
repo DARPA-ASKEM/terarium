@@ -1,6 +1,11 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!isPreview" class="diagram-container">
+		<TeraResizablePanel
+			v-if="!isPreview"
+			class="diagram-container"
+			:class="isLocked ? '' : 'unlocked'"
+			:style="isLocked ? { pointerEvents: 'none' } : {}"
+		>
 			<section class="graph-element">
 				<Toolbar>
 					<template #start>
@@ -8,6 +13,13 @@
 							<Button
 								@click="resetZoom"
 								label="Reset zoom"
+								class="p-button-sm p-button-outlined"
+								severity="secondary"
+							/>
+							<Button
+								@click="isLocked = !isLocked"
+								:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
+								:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
 								class="p-button-sm p-button-outlined"
 								severity="secondary"
 							/>
@@ -106,6 +118,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-configuration']);
 
+const isLocked = ref(false);
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
@@ -207,7 +220,9 @@ main {
 	display: flex;
 	flex-direction: column;
 }
-
+.unlocked {
+	border: 1px solid var(--primary-color);
+}
 .preview {
 	/* Having both min and max heights prevents height from resizing itself while being dragged on templating canvas
 	This resizes on template canvas but not when its in a workflow node?? (tera-model-node)
@@ -228,11 +243,13 @@ main {
 	isolation: isolate;
 	background: transparent;
 	padding: 0.5rem;
+	pointer-events: none;
 }
 
 .p-toolbar:deep(> div > span) {
 	gap: 0.25rem;
 	display: flex;
+	pointer-events: all;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
