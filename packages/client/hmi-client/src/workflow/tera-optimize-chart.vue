@@ -1,21 +1,38 @@
 <template>
 	<div class="row">
-		<Chart
-			type="bar"
-			:width="chartSize.width"
-			:height="chartSize.height"
-			:data="chartData"
-			:options="chartOptions"
-			s
-		/>
+		<canvas ref="chartCanvas"></canvas>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import Chart from 'primevue/chart';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import ChartAnnotation from 'chartjs-plugin-annotation';
 import { ChartConfig } from '@/types/SimulateConfig';
-// import annotationPlugin from 'chartjs-plugin-annotation';
+import { Chart } from 'chart.js';
+
+// Note: There's seems to be a problem with vueprime/chart, chart.js and chartjs-plugin-annotation where the annotation plugin is not working properly throwing errors unexpectedly.
+// In order to work around this issue, we are using the chart.js directly and importing the annotation plugin from chartjs-plugin-annotation instead of using the vueprime/chart component.
+// Also there's weird issue with eslint complaining about the import of ChartAnnotation from 'chartjs-plugin-annotation' even though it's in the package.json and being used in the code.
+// To workaround this, we are disabling the eslint rule for this line.
+
+Chart.register(ChartAnnotation);
+
+const chartCanvas = ref(null);
+const chart = ref<any>(null);
+
+const renderChart = () => {
+	if (chart.value !== null) {
+		chart.value.destroy();
+	}
+	// eslint-disable-next-line no-new
+	chart.value = new Chart(chartCanvas.value, {
+		type: 'bar',
+		data: chartData.value,
+		options: chartOptions.value
+	});
+	chart.value.resize(chartSize.value.width, chartSize.value.height);
+};
 
 const props = defineProps<{
 	riskResults: any;
@@ -47,18 +64,18 @@ const setChartOptions = () => ({
 	plugins: {
 		legend: {
 			display: false
+		},
+		annotation: {
+			annotations: {
+				line1: {
+					type: 'line',
+					yMin: props.threshold,
+					yMax: props.threshold,
+					borderColor: 'rgb(255, 99, 132)',
+					borderWidth: 2
+				}
+			}
 		}
-		// annotation: {
-		// 	annotations: {
-		// 		line1: {
-		// 			type: 'line',
-		// 			yMin: threshold,
-		// 			yMax: threshold,
-		// 			borderColor: 'rgb(255, 99, 132)',
-		// 			borderWidth: 2
-		// 		}
-		// 	}
-		// }
 	},
 	scales: {
 		x: {
@@ -149,6 +166,7 @@ watch(
 	async () => {
 		chartOptions.value = setChartOptions();
 		chartData.value = setChartData();
+		renderChart();
 	},
 	{ immediate: true }
 );
