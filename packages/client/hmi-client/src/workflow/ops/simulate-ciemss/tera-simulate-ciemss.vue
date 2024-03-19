@@ -90,11 +90,11 @@
 							:run-results="runResults[selectedRunId]"
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							has-mean-line
-							@configuration-change="configurationChange(idx, $event)"
+							@configuration-change="chartProxy.configurationChange(idx, $event)"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
@@ -131,14 +131,16 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import type { RunResults } from '@/types/SimulateConfig';
+import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCiemss,
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
-import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
+import { chartActionsProxy } from '@/workflow/util';
+
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -198,6 +200,10 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
+const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
+	emit('update-state', state);
+});
+
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.currentTimespan = timespan.value;
@@ -250,20 +256,6 @@ const lazyLoadSimulationData = async (runId: string) => {
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
-	emit('update-state', state);
 };
 
 watch(

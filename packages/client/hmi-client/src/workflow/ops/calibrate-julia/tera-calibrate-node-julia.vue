@@ -1,17 +1,20 @@
 <template>
 	<main>
-		<tera-simulate-chart
-			v-if="!inProgressSimulationId && simulationId && csvData"
-			:run-results="{ [simulationId]: csvData }"
-			:initial-data="csvAsset"
-			:mapping="props.node.state.mapping as any"
-			:run-type="RunType.Julia"
-			:chartConfig="{
-				selectedRun: simulationId.value,
-				selectedVariable: props.node.state.chartConfigs[0]
-			}"
-			:size="{ width: 190, height: 120 }"
-		/>
+		<template v-if="!inProgressSimulationId && simulationId && csvData">
+			<tera-simulate-chart
+				v-for="(config, index) of props.node.state.chartConfigs"
+				:key="index"
+				:run-results="{ [simulationId]: csvData }"
+				:initial-data="csvAsset"
+				:mapping="props.node.state.mapping as any"
+				:run-type="RunType.Julia"
+				:chartConfig="{
+					selectedRun: simulationId.value,
+					selectedVariable: config
+				}"
+				:size="{ width: 190, height: 120 }"
+			/>
+		</template>
 
 		<tera-progress-spinner
 			v-if="inProgressSimulationId"
@@ -46,6 +49,7 @@ import { csvParse } from 'd3';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { chartActionsProxy } from '@/workflow/util';
 import type { CsvAsset } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { CalibrationOperationStateJulia, CalibrationOperationJulia } from './calibrate-operation';
@@ -61,6 +65,10 @@ const csvData = ref<any>(null);
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+
+const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateJulia) => {
+	emit('update-state', state);
+});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -84,17 +92,11 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-	emit('update-state', state);
-};
-
 const processResult = (id: string) => {
 	const state = _.cloneDeep(props.node.state);
 
 	if (state.chartConfigs.length === 0) {
-		addChart();
+		chartProxy.addChart();
 	}
 
 	emit('append-output', {
