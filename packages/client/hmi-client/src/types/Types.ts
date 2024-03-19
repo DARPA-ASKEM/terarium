@@ -156,7 +156,7 @@ export interface Dataset extends TerariumAsset {
     fileNames?: string[];
     datasetUrl?: string;
     columns?: DatasetColumn[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     source?: string;
     grounding?: Grounding;
 }
