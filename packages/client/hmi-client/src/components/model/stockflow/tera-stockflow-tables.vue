@@ -217,13 +217,19 @@ const updateInitial = (inits: Initial[]) => {
 };
 
 const updateParam = (params: ModelParameter[]) => {
-	const modelParameters = (transientModel.value.semantics?.ode?.parameters ?? []).push(
-		transientModel.value.model?.auxiliaries ?? []
-	);
+	const modelParameters = transientModel.value.semantics?.ode?.parameters ?? [];
 	for (let i = 0; i < modelParameters.length; i++) {
 		const foundParam = params.find((p) => p.id === modelParameters![i].id);
 		if (foundParam) {
 			modelParameters[i] = foundParam;
+		}
+	}
+	// FIXME: Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
+	const modelAuxiliaries = transientModel.value.model?.auxiliaries ?? [];
+	for (let i = 0; i < modelAuxiliaries.length; i++) {
+		const foundParam = params.find((p) => p.id === modelAuxiliaries![i].id);
+		if (foundParam) {
+			modelAuxiliaries[i] = foundParam;
 		}
 	}
 };
