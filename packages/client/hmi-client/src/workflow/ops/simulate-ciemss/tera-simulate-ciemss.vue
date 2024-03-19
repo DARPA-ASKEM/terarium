@@ -71,7 +71,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="output-panel"
 			>
 				<div class="flex flex-row align-items-center gap-2">
 					What do you want to see?
@@ -90,7 +89,7 @@
 				</div>
 
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts">
+					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
@@ -98,7 +97,7 @@
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
-							:size="parentSize"
+							:size="chartSize"
 							class="mb-2"
 						/>
 						<Button
@@ -135,7 +134,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
@@ -210,7 +209,13 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const parentSize = ref({ width: 0, height: 270 }); // Set the initial height or any default height
+const outputPanel = ref(null);
+const chartSize = computed(() => {
+	if (!outputPanel.value) return { width: 100, height: 270 };
+
+	const parentContainerWidth = (outputPanel.value as HTMLElement).clientWidth - 48;
+	return { width: parentContainerWidth, height: 270 };
+});
 
 const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
@@ -270,12 +275,6 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-onMounted(() => {
-	// Calculate the parent container's width
-	const parentContainerWidth = document.querySelector('.output-panel').clientWidth - 48;
-	parentSize.value.width = parentContainerWidth;
-});
-
 watch(
 	() => props.node.state.inProgressSimulationId,
 	(id) => {
@@ -302,9 +301,6 @@ watch(
 </script>
 
 <style scoped>
-.simulate-chart {
-}
-
 .form-section {
 	display: flex;
 	flex-direction: column;
@@ -328,10 +324,5 @@ watch(
 	& > * {
 		flex: 1;
 	}
-}
-
-.example-string {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
 }
 </style>
