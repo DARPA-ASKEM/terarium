@@ -74,7 +74,7 @@
 						:value="executeResponse.value"
 						:traceback="executeResponse.traceback"
 					/>
-					<template v-if="stratifiedAmr && executeResponse.status !== OperatorStatus.ERROR">
+					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
 						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
@@ -429,9 +429,17 @@ const runCodeStratify = () => {
 					saveCodeToState(executedCode, true);
 				}
 			})
-			.register('execute_response', (data) => {
-				// FIXME: in this branch
-				console.log(data);
+			.register('any_execute_reply', (data) => {
+				let status = OperatorStatus.DEFAULT;
+				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+				executeResponse.value = {
+					status,
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
+				emit('update-status', status);
 			});
 	});
 };

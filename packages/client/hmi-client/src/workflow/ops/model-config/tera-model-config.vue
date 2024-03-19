@@ -426,9 +426,17 @@ const runFromCode = () => {
 				saveCodeToState(executedCode, true);
 			}
 		})
-		.register('execute_response', (data) => {
-			// FIXME: in this branch
-			console.log(data);
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+			executeResponse.value = {
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+			};
+			emit('update-status', status);
 		});
 };
 const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);

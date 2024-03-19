@@ -237,6 +237,16 @@ export class KernelSessionManager {
 			}
 		};
 
+		const anyMessageHandler = (_session: any, message: any) => {
+			// const msgDirection = message.direction;
+			const msgType = `any_${message.msg.header.msg_type}`;
+			const msgId = message.msg.parent_header.msg_id;
+
+			if (this.map.has(msgId)) {
+				this.map.get(msgId)?.emit(msgType, message);
+			}
+		};
+
 		// Assign
 		this.jupyterSession = session;
 
@@ -246,8 +256,8 @@ export class KernelSessionManager {
 
 			const sessionKernel = kernelInfo.newValue as IKernelConnection;
 			if (sessionKernel.name === kernelName) {
+				sessionKernel.anyMessage.connect(anyMessageHandler);
 				session.iopubMessage.connect(iopubMessageHandler);
-
 				const messageBody = {
 					session: session.name || '',
 					channel: 'shell',

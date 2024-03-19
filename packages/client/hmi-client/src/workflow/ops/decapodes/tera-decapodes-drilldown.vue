@@ -156,16 +156,17 @@ const runFromCode = () => {
 			notebookResponse.value = data.content['application/json'];
 			isRunningCode.value = false;
 		})
-		.register('execute_response', (data) => {
-			// FIXME: in this branch
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
 			executeResponse.value = {
-				status: OperatorStatus.ERROR,
-				name: 'this is name',
-				value: 'this is the error value:',
-				traceback:
-					'This is just a sample error message at the moment that is very long and verbose.'
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
 			};
-			console.log(data);
+			emit('update-status', status);
 		});
 };
 

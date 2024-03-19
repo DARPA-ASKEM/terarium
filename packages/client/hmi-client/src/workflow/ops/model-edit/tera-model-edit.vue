@@ -56,18 +56,13 @@
 					is-selectable
 					class="h-full"
 				>
-					<Button label="Tom Test" @click="emitStatus" />
 					<tera-drilldown-error-preview
 						v-if="executeResponse.status === OperatorStatus.ERROR"
 						:name="executeResponse.name"
 						:value="executeResponse.value"
 						:traceback="executeResponse.traceback"
 					/>
-					<tera-model-diagram
-						v-if="amr && executeResponse.status !== OperatorStatus.ERROR"
-						:model="amr"
-						:is-editable="true"
-					/>
+					<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					</div>
@@ -191,12 +186,6 @@ const executeResponse = ref({
 	traceback: ''
 });
 
-// This is just a test
-const emitStatus = () => {
-	const status: OperatorStatus = OperatorStatus.WARNING;
-	emit('update-status', status);
-};
-
 const appendCode = (data: any, property: string) => {
 	const code = data.content[property] as string;
 	if (code) {
@@ -250,18 +239,17 @@ const runFromCode = (code: string) => {
 				saveCodeToState(executedCode, true);
 			}
 		})
-		.register('execute_response', (data) => {
-			// FIXME: in this branch
-			console.log(data);
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
 			executeResponse.value = {
-				status: OperatorStatus.ERROR,
-				name: 'this is name',
-				value: 'this is the error value:',
-				traceback:
-					'This is just a sample error message at the moment that is very long and verbose.'
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
 			};
-			// Need to look into this object but it needs fixing from beaker first
-			emit('update-status', OperatorStatus.WARNING);
+			emit('update-status', status);
 		});
 };
 
