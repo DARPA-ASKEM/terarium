@@ -9,7 +9,7 @@ import { fileToJson } from '@/utils/file';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { modelCard } from './goLLM';
-import { fetchExtraction, profileModel } from './knowledge';
+import { profileModel } from './knowledge';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -154,10 +154,8 @@ export function isValidAMR(json: Record<string, unknown>) {
 	return true;
 }
 
-export async function profile(modelId: string, documentId: string): Promise<string | null> {
-	const profileModelJobId = await profileModel(modelId, documentId);
-	await fetchExtraction(profileModelJobId);
-	return modelId;
+export async function profile(modelId: string, documentId: string): Promise<Model | null> {
+	return profileModel(modelId, documentId);
 }
 
 /**

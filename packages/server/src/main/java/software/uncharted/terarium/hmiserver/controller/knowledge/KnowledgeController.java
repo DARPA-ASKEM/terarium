@@ -1,5 +1,20 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -29,8 +44,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -45,20 +58,17 @@ import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.data.*;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.ExtractionService;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -79,6 +89,9 @@ public class KnowledgeController {
 	final ProvenanceSearchService provenanceSearchService;
 
 	final CodeService codeService;
+
+	final ExtractionService extractionService;
+	private final CurrentUserService currentUserService;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
@@ -200,6 +213,8 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	ResponseEntity<Model> postCodeToAMR(
 			@RequestParam("code-id") final UUID codeId,
+			@RequestParam(name = "name", required = false, defaultValue = "") final String name,
+			@RequestParam(name = "description", required = false, defaultValue = "") final String description,
 			@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
 			@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted) {
 
@@ -288,10 +303,20 @@ public class KnowledgeController {
 			}
 
 			// create the model
+			if (!name.isEmpty()) {
+				model.setName(name);
+			}
 			if (model.getMetadata() == null) {
 				model.setMetadata(new ModelMetadata());
 			}
 			model.getMetadata().setCodeId(codeId.toString());
+
+			if (!description.isEmpty()) {
+				if (model.getHeader() == null) {
+					model.setHeader(new ModelHeader());
+				}
+				model.getHeader().setDescription(description);
+			}
 			model = modelService.createAsset(model);
 
 			// update the code
@@ -350,7 +375,7 @@ public class KnowledgeController {
 			codeService.updateAsset(code);
 
 			// 3. create model from code asset
-			return postCodeToAMR(createdCode.getId(), false, false);
+			return postCodeToAMR(createdCode.getId(), "temp model", "temp model description", false, false);
 		} catch (final Exception e) {
 			log.error("unable to upload file", e);
 			throw new ResponseStatusException(
@@ -748,174 +773,19 @@ public class KnowledgeController {
 		}
 	}
 
-	public static HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
-		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		final byte[] buffer = new byte[1024];
-		int len;
-		while ((len = zipInputStream.read(buffer)) > 0) {
-			byteArrayOutputStream.write(buffer, 0, len);
-		}
-
-		return new ByteArrayEntity(byteArrayOutputStream.toByteArray());
-	}
-
-	@PostMapping("/pdf-to-cosmos")
+	/**
+	 * Document Extractions
+	 *
+	 * @param documentId (String): The ID of the document to profile
+	 * @return the profiled dataset
+	 */
+	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
-	public ResponseEntity<DocumentAsset> postPDFToCosmos(
+	public ResponseEntity<Void> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId) {
-
-		try {
-			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
-
-			if (document.getFileNames().isEmpty()) {
-				throw new RuntimeException("No files found on document");
-			}
-
-			final String filename = document.getFileNames().get(0);
-
-			final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).orElseThrow();
-
-			final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, filename,
-					"application/pdf");
-
-			final boolean compressImages = false;
-			final boolean forceRun = false;
-			final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
-					!forceRun,
-					documentFile);
-
-			final JsonNode body = extractionResp.getBody();
-			final UUID jobId = UUID.fromString(body.get("job_id").asText());
-
-			final int POLLING_INTERVAL_SECONDS = 5;
-			final int MAX_EXECUTION_TIME_SECONDS = 600;
-			final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
-
-			boolean jobDone = false;
-			for (int i = 0; i < MAX_ITERATIONS; i++) {
-
-				final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
-				if (!statusResp.getStatusCode().is2xxSuccessful()) {
-					throw new RuntimeException("Unable to poll status endpoint");
-				}
-
-				final JsonNode statusData = statusResp.getBody();
-				if (!statusData.get("error").isNull()) {
-					throw new RuntimeException("Extraction job failed: " + statusData.has("error"));
-				}
-
-				log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
-				jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
-				if (jobDone) {
-					break;
-				}
-				Thread.sleep(POLLING_INTERVAL_SECONDS * 1000);
-			}
-
-			if (!jobDone) {
-				throw new RuntimeException("Extraction job did not complete within the expected time");
-			}
-
-			final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
-			if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to fetch the extraction result");
-			}
-
-			final String zipFileName = documentId + "_cosmos.zip";
-			documentService.uploadFile(documentId, zipFileName, new ByteArrayEntity(zipFileResp.getBody()));
-
-			document.getFileNames().add(zipFileName);
-
-			// Open the zipfile and extract the contents
-
-			final Map<String, HttpEntity> fileMap = new HashMap<>();
-			try {
-				final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
-				final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
-
-				ZipEntry entry = zipInputStream.getNextEntry();
-				while (entry != null) {
-
-					fileMap.put(entry.getName(), zipEntryToHttpEntity(zipInputStream));
-
-					entry = zipInputStream.getNextEntry();
-				}
-
-				zipInputStream.closeEntry();
-				zipInputStream.close();
-			} catch (final IOException e) {
-				throw new RuntimeException("Unable to extract the contents of the zip file", e);
-			}
-
-			final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
-			if (!textResp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to fetch the text extractions");
-			}
-
-			// clear existing assets
-			document.setAssets(new ArrayList<>());
-
-			for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
-				final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
-						extractionType.toStringPlural());
-				log.info(" {} response status: {}", extractionType, response.getStatusCode());
-				if (!response.getStatusCode().is2xxSuccessful()) {
-					log.warn("Unable to fetch the {} extractions", extractionType);
-					continue;
-				}
-
-				for (final JsonNode record : response.getBody()) {
-
-					String fileName = "";
-					if (record.has("img_pth")) {
-
-						final String path = record.get("img_pth").asText();
-						fileName = path.substring(path.lastIndexOf("/") + 1);
-
-						if (fileMap.containsKey(fileName)) {
-							log.warn("Unable to find file {} in zipfile", fileName);
-						}
-
-						final HttpEntity file = fileMap.get(fileName);
-
-						documentService.uploadFile(documentId, fileName, file);
-
-					} else {
-						log.warn("No img_pth found in record: {}", record);
-					}
-
-					final DocumentExtraction extraction = new DocumentExtraction();
-					extraction.setFileName(fileName);
-					extraction.setAssetType(extractionType);
-					extraction.setMetadata(mapper.convertValue(record, Map.class));
-
-					document.getAssets().add(extraction);
-				}
-			}
-
-			String responseText = "";
-			for (final JsonNode record : textResp.getBody()) {
-				if (record.has("content")) {
-					responseText += record.get("content").asText() + "\n";
-				} else {
-					log.warn("No content found in record: {}", record);
-				}
-			}
-
-			document.setText(responseText);
-
-			// update the document
-			document = documentService.updateAsset(document).orElseThrow();
-
-			return ResponseEntity.ok(document);
-
-		} catch (final Exception e) {
-			final String error = "Unable to extract pdf";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
-		}
+		final String currentUserId = currentUserService.get().getId();
+		extractionService.extractPDF(documentId, currentUserId);
+		return ResponseEntity.accepted().build();
 	}
 
 }

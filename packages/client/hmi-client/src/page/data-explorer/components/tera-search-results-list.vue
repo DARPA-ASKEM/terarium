@@ -62,10 +62,10 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
-import { computed, PropType, Ref, ref } from 'vue';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import { useProjects } from '@/composables/project';
 import {
-	AddDocumentAssetFromXDDResponse,
 	AssetType,
 	Dataset,
 	Document,
@@ -83,15 +83,13 @@ import {
 	getSearchByExampleOptionsString,
 	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
-import { useProjects } from '@/composables/project';
 import { createDocumentFromXDD } from '@/services/document-assets';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
+import { computed, PropType, Ref, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { createDataset } from '@/services/dataset';
-import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
 
@@ -165,13 +163,13 @@ const projectOptions = computed(() => [
 						}
 					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
 						const document = selectedAsset.value as Document;
-						const xddDoc: AddDocumentAssetFromXDDResponse | null = await createDocumentFromXDD(
+						const xddDoc: DocumentAsset | null = await createDocumentFromXDD(
 							document,
 							project.id as string
 						);
 						// finally add asset to project
 						response = xddDoc
-							? await useProjects().addAsset(AssetType.Document, xddDoc.documentAssetId, project.id)
+							? await useProjects().addAsset(AssetType.Document, xddDoc.id, project.id)
 							: null;
 						assetName = selectedAsset.value.title;
 					} else if (props.source === 'Terarium') {
