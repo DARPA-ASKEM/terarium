@@ -40,15 +40,22 @@
 			</tera-drilldown-section>
 
 			<tera-drilldown-preview title="Output Preview">
-				<div>{{ notebookResponse }}</div>
+				<tera-drilldown-error-preview
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</main>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -68,12 +75,19 @@ const props = defineProps<{
 	node: WorkflowNode<DecapodesOperationState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state']);
+const emit = defineEmits(['close', 'update-state', 'update-status']);
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
 
 const modelId = computed(() => props.node.inputs?.[0]?.value?.[0]);
 const notebookResponse = ref();
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
+
 const sampleAgentQuestions = ['Convert the model to equations please'];
 const contextLanguage = 'julia-1.10';
 const isRunningCode = ref<boolean>(false);
@@ -126,6 +140,7 @@ const runFromCode = () => {
 		.sendMessage('execute_request', messageContent)
 		.register('execute_input', (data) => {
 			console.log('execute_input', data.content);
+			emit('update-status', OperatorStatus.IN_PROGRESS);
 		})
 		.register('stream', (data) => {
 			console.log('stream', data.content);
@@ -140,6 +155,17 @@ const runFromCode = () => {
 			console.log('decapodes_preview', data.content);
 			notebookResponse.value = data.content['application/json'];
 			isRunningCode.value = false;
+		})
+		.register('execute_response', (data) => {
+			// FIXME: in this branch
+			executeResponse.value = {
+				status: OperatorStatus.ERROR,
+				name: 'this is name',
+				value: 'this is the error value:',
+				traceback:
+					'This is just a sample error message at the moment that is very long and verbose.'
+			};
+			console.log(data);
 		});
 };
 

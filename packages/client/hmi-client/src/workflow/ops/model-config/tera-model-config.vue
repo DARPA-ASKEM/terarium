@@ -227,7 +227,13 @@
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
-				<div>{{ notebookResponse }}</div>
+				<tera-drilldown-error-preview
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</section>
 	</tera-drilldown>
@@ -273,6 +279,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
 
 import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
@@ -288,6 +295,7 @@ import { emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import type { WorkflowNode } from '@/types/workflow';
+import { OperatorStatus } from '@/types/workflow';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 import TeraInitialTable from './tera-initial-table.vue';
 import TeraParameterTable from './tera-parameter-table.vue';
@@ -313,7 +321,13 @@ const outputs = computed(() => {
 	return [];
 });
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+const emit = defineEmits([
+	'append-output',
+	'update-state',
+	'select-output',
+	'close',
+	'update-status'
+]);
 
 interface BasicKnobs {
 	name: string;
@@ -362,6 +376,12 @@ const codeText = ref(
 	'# This environment contains the variable "model_config" to be read and updated'
 );
 const notebookResponse = ref();
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 const sampleAgentQuestions = [
 	'What are the current parameters values?',
 	'update the parameters {gamma: 0.13}'
@@ -389,6 +409,7 @@ const runFromCode = () => {
 		.sendMessage('execute_request', messageContent)
 		.register('execute_input', (data) => {
 			executedCode = data.content.code;
+			emit('update-status', OperatorStatus.IN_PROGRESS);
 		})
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
@@ -404,6 +425,10 @@ const runFromCode = () => {
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
 			}
+		})
+		.register('execute_response', (data) => {
+			// FIXME: in this branch
+			console.log(data);
 		});
 };
 const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);

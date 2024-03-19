@@ -57,7 +57,17 @@
 					class="h-full"
 				>
 					<Button label="Tom Test" @click="emitStatus" />
-					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
+					<tera-drilldown-error-preview
+						v-if="executeResponse.status === OperatorStatus.ERROR"
+						:name="executeResponse.name"
+						:value="executeResponse.value"
+						:traceback="executeResponse.traceback"
+					/>
+					<tera-model-diagram
+						v-if="amr && executeResponse.status !== OperatorStatus.ERROR"
+						:model="amr"
+						:is-editable="true"
+					/>
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					</div>
@@ -97,7 +107,6 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
@@ -106,6 +115,8 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -173,6 +184,12 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 
 // This is just a test
 const emitStatus = () => {
@@ -223,8 +240,6 @@ const runFromCode = (code: string) => {
 			console.log('stream', data);
 		})
 		.register('error', (data) => {
-			console.log(data);
-			emit('update-status', OperatorStatus.ERROR);
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
 		})
 		.register('model_preview', (data) => {
@@ -234,7 +249,19 @@ const runFromCode = (code: string) => {
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
 			}
-			emit('update-status', OperatorStatus.SUCCESS);
+		})
+		.register('execute_response', (data) => {
+			// FIXME: in this branch
+			console.log(data);
+			executeResponse.value = {
+				status: OperatorStatus.ERROR,
+				name: 'this is name',
+				value: 'this is the error value:',
+				traceback:
+					'This is just a sample error message at the moment that is very long and verbose.'
+			};
+			// Need to look into this object but it needs fixing from beaker first
+			emit('update-status', OperatorStatus.WARNING);
 		});
 };
 

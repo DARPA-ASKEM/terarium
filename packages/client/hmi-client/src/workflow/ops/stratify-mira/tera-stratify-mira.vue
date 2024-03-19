@@ -68,7 +68,13 @@
 				is-selectable
 			>
 				<div class="h-full">
-					<template v-if="stratifiedAmr">
+					<tera-drilldown-error-preview
+						v-if="executeResponse.status === OperatorStatus.ERROR"
+						:name="executeResponse.name"
+						:value="executeResponse.value"
+						:traceback="executeResponse.traceback"
+					/>
+					<template v-if="stratifiedAmr && executeResponse.status !== OperatorStatus.ERROR">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
 						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
@@ -128,7 +134,7 @@ import teraStratificationGroupForm from '@/components/stratification/tera-strati
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import _ from 'lodash';
 import Button from 'primevue/button';
@@ -139,6 +145,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useToastService } from '@/services/toast';
 import '@/ace-config';
+import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -156,7 +163,8 @@ const emit = defineEmits([
 	'update-state',
 	'close',
 	'update-output-port',
-	'select-output'
+	'select-output',
+	'update-status'
 ]);
 
 enum StratifyTabs {
@@ -166,7 +174,12 @@ enum StratifyTabs {
 
 const amr = ref<Model | null>(null);
 const stratifiedAmr = ref<Model | null>(null);
-
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 const modelNodeOptions = ref<string[]>([]);
 
 const isNewModelModalVisible = ref(false);
@@ -397,6 +410,7 @@ const runCodeStratify = () => {
 			.sendMessage('execute_request', messageContent)
 			.register('execute_input', (data) => {
 				executedCode = data.content.code;
+				emit('update-status', OperatorStatus.IN_PROGRESS);
 			})
 			.register('stream', (data) => {
 				console.log('stream', data);
@@ -414,6 +428,10 @@ const runCodeStratify = () => {
 				if (executedCode) {
 					saveCodeToState(executedCode, true);
 				}
+			})
+			.register('execute_response', (data) => {
+				// FIXME: in this branch
+				console.log(data);
 			});
 	});
 };
