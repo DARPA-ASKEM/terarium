@@ -1,7 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
@@ -10,11 +16,6 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
-
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 
 @Data
 @AMRSchemaType
@@ -44,7 +45,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	private Map<String, Object> timeseries;
 
-
 	@TSOptional
 	private Map<String, Object> initials;
 
@@ -64,4 +64,8 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	@JsonProperty("templateCard")
 	private Object templateCard;
+
+	@TSOptional
+	@JsonProperty("code_id")
+	String codeId;
 }
