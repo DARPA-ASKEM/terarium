@@ -19,40 +19,41 @@
 			</template>
 		</Column>
 		<Column header="Name">
-			<template #body="slotProps">
-				<span class="truncate-text">
-					{{ slotProps.data.name }}
-				</span>
+			<template #body="{ data }">
+				<InputText
+					size="small"
+					v-model.lazy="data.name"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateParamValue(data.value, 'name', $event)"
+				/>
 			</template>
 		</Column>
 
 		<Column header="Description" class="w-2">
-			<template #body="slotProps">
-				<span v-if="slotProps.data.description" class="truncate-text">
-					{{ slotProps.data.description }}</span
-				>
-				<template v-else>--</template>
+			<template #body="{ data }">
+				<InputText
+					size="small"
+					v-model.lazy="data.description"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateParamValue(data.value, 'description', $event)"
+				/>
 			</template>
 		</Column>
 
 		<Column header="Concept" class="w-1">
 			<template #body="{ data }">
-				<template
-					v-if="
-						data.concept?.grounding?.identifiers && !isEmpty(data.concept.grounding.identifiers)
-					"
-				>
+				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
+							getCurieFromGroudingIdentifier(data.concept.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -60,6 +61,21 @@
 					</a>
 				</template>
 				<template v-else>--</template>
+			</template>
+			<template v-if="!configView && !readonly" #editor="{ data }">
+				<AutoComplete
+					v-model="conceptSearchTerm.name"
+					:suggestions="curies"
+					@complete="onSearch"
+					@item-select="
+						updateParamValue(data.value, 'grounding', {
+							identifiers: parseCurie($event.value.curie)
+						})
+					"
+					optionLabel="name"
+					:forceSelection="true"
+					:inputStyle="{ width: '100%' }"
+				/>
 			</template>
 		</Column>
 
@@ -70,7 +86,13 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="slotProps.data.unit"
-					@update:model-value="updateUnit(slotProps.data.value, $event)"
+					:disabled="readonly"
+					@update:model-value="
+						updateParamValue(slotProps.data.value, 'unit', {
+							...slotProps.data.value.unit,
+							expression: $event
+						})
+					"
 				/>
 				<template v-else>--</template>
 			</template>
@@ -95,6 +117,7 @@
 					optionLabel="label"
 					optionValue="value"
 					placeholder="Select a parameter type"
+					:disabled="readonly"
 					@update:model-value="(val) => changeType(slotProps.data.value, val)"
 				>
 					<template #value="slotProps">
@@ -139,6 +162,7 @@
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<InputNumber
@@ -149,6 +173,7 @@
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.maximum"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
@@ -166,10 +191,12 @@
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.value"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
 					<Button
+						v-if="!readonly"
 						class="ml-2 pt-0 pb-0 w-5"
 						text
 						@click="changeType(slotProps.data.value, 1)"
@@ -185,7 +212,8 @@
 							suffix="%"
 							:min="0"
 							:max="100"
-							@click.stop=""
+							:disabled="readonly"
+							@click.stop
 						/>
 					</Button>
 				</span>
@@ -199,6 +227,7 @@
 						size="small"
 						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
 						v-model.lazy="slotProps.data.timeseries"
+						:disabled="readonly"
 						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
 					/>
 					<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
@@ -214,6 +243,7 @@
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
+					:disabled="readonly"
 					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
 				/>
 			</template>
@@ -229,12 +259,13 @@
 			<tera-parameter-table
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
-				:model-configuration="modelConfiguration"
+				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
+				:readonly="readonly"
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
-				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
+				@update-model="(model: Model) => emit('update-model', model)"
 			/>
 		</template>
 	</Datatable>
@@ -257,6 +288,7 @@ import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import type { DKG, Model, ModelParameter } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
@@ -267,31 +299,35 @@ import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common'
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
-	getNameOfCurieCached
+	getNameOfCurieCached,
+	parseCurie,
+	searchCuriesEntities
 } from '@/services/concept';
+import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
-import type { ModelConfiguration, ModelParameter } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import { updateVariable } from '@/model-representation/service';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
 	hideHeader?: boolean;
+	readonly?: boolean;
+	configView?: boolean; // if the table is in the model config view we have limited functionality
 }>();
-
-const emit = defineEmits(['update-value', 'update-configuration']);
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
 	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
 	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
 ];
+
+const emit = defineEmits(['update-value', 'update-model']);
 
 const isStratified = computed(() => isStratifiedModel(props.mmt));
 
@@ -319,8 +355,8 @@ const getParamType = (param: ModelParameter | undefined) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
 	if (
-		props.modelConfiguration.configuration.metadata?.timeseries?.[param.id] ||
-		props.modelConfiguration.configuration.metadata.timeseries?.[param.id] === ''
+		props.model.metadata?.timeseries?.[param.id] ||
+		props.model.metadata?.timeseries?.[param.id] === ''
 	) {
 		type = ParamType.TIME_SERIES;
 	} else if (param?.distribution) {
@@ -330,7 +366,7 @@ const getParamType = (param: ModelParameter | undefined) => {
 };
 
 const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
-	const configuration = props.modelConfiguration.configuration;
+	const model = props.model;
 	const formattedParams: ModelConfigTableData[] = [];
 
 	if (isStratified.value) {
@@ -338,17 +374,17 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				let param;
 				if (modelType.value === AMRSchemaNames.REGNET) {
-					param = configuration.model.parameters.find((i) => i.id === v);
+					param = model.model.parameters.find((i) => i.id === v);
 				} else {
-					param = configuration.semantics.ode.parameters.find((i) => i.id === v);
+					param = model.semantics?.ode?.parameters?.find((i) => i.id === v);
 				}
 				const paramType = getParamType(param);
-				const timeseriesValue = configuration.metadata?.timeseries[param!.id];
-				const parametersMetadata = configuration.metadata?.parameters?.[param!.id];
+				const timeseriesValue = model.metadata?.timeseries?.[param!.id];
+				const parametersMetadata = model.metadata?.parameters?.[param!.id];
 				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
-					name: v,
+					name: param.name,
 					type: paramType,
 					description: param.description,
 					concept: param.grounding,
@@ -375,19 +411,19 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 		parameters.value.forEach((vals, init) => {
 			let param;
 			if (modelType.value === AMRSchemaNames.REGNET) {
-				param = configuration.model.parameters.find((i) => i.id === vals[0]);
+				param = model.model.parameters.find((i) => i.id === vals[0]);
 			} else {
-				param = configuration.semantics.ode.parameters.find((i) => i.id === vals[0]);
+				param = model.semantics?.ode.parameters?.find((i) => i.id === vals[0]);
 			}
 
 			const paramType = getParamType(param);
 
-			const timeseriesValue = configuration.metadata?.timeseries[param!.id];
-			const parametersMetadata = configuration.metadata?.parameters?.[param!.id];
+			const timeseriesValue = model.metadata?.timeseries?.[param!.id];
+			const parametersMetadata = model.metadata?.parameters?.[param!.id];
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
-				name: init,
+				name: param.name,
 				type: paramType,
 				description: param.description,
 				concept: param.grounding,
@@ -409,7 +445,9 @@ const conceptSearchTerm = ref({
 });
 const nameOfCurieCache = ref(new Map<string, string>());
 
-const modelType = computed(() => getModelType(props.modelConfiguration.configuration));
+const curies = ref<DKG[]>([]);
+
+const modelType = computed(() => getModelType(props.model));
 
 const addPlusMinus = ref(10);
 
@@ -432,34 +470,35 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
 const updateCellValue = (v: any) => {
-	const clone = cloneDeep(props.modelConfiguration);
-	updateVariable(clone.configuration, 'parameters', v.variableName, v.newValue, v.mathml);
-	emit('update-configuration', clone);
+	const clone = cloneDeep(props.model);
+	updateVariable(clone, 'parameters', v.variableName, v.newValue, v.mathml);
+	emit('update-model', clone);
+};
+
+const updateParamValue = (param: ModelParameter, key: string, value: any) => {
+	const clonedParam = cloneDeep(param);
+	clonedParam[key] = value;
+	emit('update-value', [clonedParam]);
 };
 
 const updateTimeseries = (id: string, value: string) => {
 	if (!validateTimeSeries(value)) return;
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	clonedConfig.configuration.metadata.timeseries[id] = value;
-	emit('update-configuration', clonedConfig);
+	const clonedModel = cloneDeep(props.model);
+	clonedModel.metadata ??= {};
+	clonedModel.metadata.timeseries ??= {};
+	clonedModel.metadata.timeseries[id] = value;
+	emit('update-model', clonedModel);
 };
 
 const updateSource = (id: string, value: string) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	if (!clonedConfig.configuration.metadata.parameters?.[id]) {
-		clonedConfig.configuration.metadata.parameters[id] = {};
+	const clonedModel = cloneDeep(props.model);
+	if (!clonedModel.metadata?.parameters?.[id]) {
+		clonedModel.metadata ??= {};
+		clonedModel.metadata.parameters ??= {};
+		clonedModel.metadata.parameters[id] = {};
 	}
-	clonedConfig.configuration.metadata.parameters[id].source = value;
-	emit('update-configuration', clonedConfig);
-};
-
-const updateUnit = (param: ModelParameter, value: string) => {
-	const clonedParam = cloneDeep(param);
-	if (!clonedParam.unit) {
-		clonedParam.unit = { expression: '', expression_mathml: '' };
-	}
-	clonedParam.unit.expression = value;
-	emit('update-value', [clonedParam]);
+	clonedModel.metadata.parameters[id].source = value;
+	emit('update-model', clonedModel);
 };
 
 const validateTimeSeries = (values: string) => {
@@ -478,22 +517,22 @@ const validateTimeSeries = (values: string) => {
 const changeType = (param: ModelParameter, typeIndex: number) => {
 	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
 	const type = typeOptions[typeIndex];
-	const clonedConfig = cloneDeep(props.modelConfiguration);
+	const clonedModel = cloneDeep(props.model);
 
 	let idx;
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		idx = clonedConfig.configuration.semantics.ode.parameters.findIndex((p) => p.id === param.id);
+		idx = clonedModel.semantics?.ode.parameters?.findIndex((p) => p.id === param.id);
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		idx = clonedConfig.configuration.model.parameters.findIndex((p) => p.id === param.id);
+		idx = clonedModel.model.parameters.findIndex((p) => p.id === param.id);
 	}
 	switch (type.value) {
 		case ParamType.CONSTANT:
 			delete param.distribution;
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			replaceParam(clonedConfig, param, idx);
+			delete clonedModel.metadata?.timeseries?.[param.id];
+			replaceParam(clonedModel, param, idx);
 			break;
 		case ParamType.DISTRIBUTION:
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
+			delete clonedModel.metadata?.timeseries?.[param.id];
 			param.distribution = {
 				type: 'Uniform1',
 				parameters: {
@@ -501,29 +540,38 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 					maximum: 0
 				}
 			};
-			replaceParam(clonedConfig, param, idx);
+			replaceParam(clonedModel, param, idx);
 			break;
 		case ParamType.TIME_SERIES:
 			delete param.distribution;
-			if (!clonedConfig.configuration.metadata?.timeseries) {
-				clonedConfig.configuration.metadata.timeseries = {};
+			if (!clonedModel.metadata?.timeseries) {
+				clonedModel.metadata ??= {};
+				clonedModel.metadata.timeseries = {};
 			}
-			replaceParam(clonedConfig, param, idx);
-			clonedConfig.configuration.metadata.timeseries[param.id] = '';
+			replaceParam(clonedModel, param, idx);
+			clonedModel.metadata.timeseries[param.id] = '';
 			break;
 		default:
 			break;
 	}
-	emit('update-configuration', clonedConfig);
+	emit('update-model', clonedModel);
 };
 
-const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
+const replaceParam = (model: Model, param: any, index: number) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		config.configuration.semantics.ode.parameters[index] = param;
+		if (model.semantics?.ode.parameters) model.semantics.ode.parameters[index] = param;
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		config.configuration.model.parameters[index] = param;
+		model.model.parameters[index] = param;
 	}
 };
+
+async function onSearch(event: AutoCompleteCompleteEvent) {
+	const query = event.query;
+	if (query.length > 2) {
+		const response = await searchCuriesEntities(query);
+		curies.value = response;
+	}
+}
 </script>
 
 <style scoped>
