@@ -7,7 +7,7 @@
 			:options="stateVariablesList"
 			placeholder="What do you want to see?"
 			@update:model-value="updateSelectedVariable"
-			display="chip"
+			filter
 		>
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
@@ -25,6 +25,9 @@
 			:data="chartData"
 			:options="CHART_OPTIONS"
 		/>
+		<section class="empty-chart" v-if="!selectedVariable.length">
+			Select which variables to display
+		</section>
 	</div>
 </template>
 
@@ -288,6 +291,7 @@ onMounted(() => {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: var(--gap-small);
+	position: relative;
 }
 .multiselect-title {
 	font-size: smaller;
@@ -301,5 +305,13 @@ onMounted(() => {
 .p-multiselect {
 	width: 100%;
 	border-color: lightgrey;
+}
+
+.empty-chart {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: var(--text-color-subdued);
 }
 </style>

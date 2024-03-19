@@ -71,7 +71,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				id="output-panel"
+				class="output-panel"
 			>
 				<div class="flex flex-row align-items-center gap-2">
 					What do you want to see?
@@ -226,8 +226,8 @@ const selectedRunId = computed(
 
 const parentSize = ref({ width: 0, height: 270 }); // Set the initial height or any default height
 // Calculate the parent container's width
-onMounted(async () => {
-	const parentContainerWidth = document.querySelector('#output-panel').clientWidth - 48;
+onMounted(() => {
+	const parentContainerWidth = document.querySelector('.output-panel').clientWidth - 48;
 	parentSize.value.width = parentContainerWidth;
 });
 
