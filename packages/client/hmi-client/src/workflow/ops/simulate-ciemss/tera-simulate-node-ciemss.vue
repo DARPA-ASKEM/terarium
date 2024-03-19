@@ -102,8 +102,7 @@ const processResult = (runId: string) => {
 		state: {
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
-			method: state.method,
-			inProgressSimulationId: state.inProgressSimulationId
+			method: state.method
 		},
 		isSelected: false
 	});
