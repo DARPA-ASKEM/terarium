@@ -1,6 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
+import java.io.Serial;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -8,10 +14,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-
-import java.io.Serial;
-import java.sql.Timestamp;
-import java.util.List;
 
 /**
  * Represents a dataset document from TDS
@@ -21,7 +23,6 @@ import java.util.List;
 @Accessors(chain = true)
 @TSModel
 public class Dataset extends TerariumAsset {
-
 
 	@Serial
 	private static final long serialVersionUID = 6927286281160755696L;
@@ -73,7 +74,7 @@ public class Dataset extends TerariumAsset {
 	 * (Optional) Unformatted metadata about the dataset
 	 **/
 	@TSOptional
-	private Object metadata;
+	private Map<String, Object> metadata;
 
 	/**
 	 * (Optional) Source of dataset
