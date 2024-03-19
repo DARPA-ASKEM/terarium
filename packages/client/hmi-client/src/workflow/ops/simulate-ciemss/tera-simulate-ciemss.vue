@@ -97,13 +97,13 @@
 							:run-results="runResults[selectedRunId]"
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							has-mean-line
-							@configuration-change="configurationChange(idx, $event)"
+							@configuration-change="chartProxy.configurationChange(idx, $event)"
 							:size="parentSize"
 							class="mb-2"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
@@ -140,14 +140,16 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import type { RunResults } from '@/types/SimulateConfig';
+import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCiemss,
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
-import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
+import { chartActionsProxy } from '@/workflow/util';
+
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -165,22 +167,6 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
-
-// Computed property to generate the example string
-const exampleString = computed(() => {
-	const { start, end } = timespan.value;
-	const step = (end - start) / (numSamples.value - 1);
-	const values = [];
-	for (let i = 0; i < numSamples.value; i++) {
-		const value = start + i * step;
-		if (value % 1 === 0) {
-			values.push(Math.floor(value));
-		} else {
-			values.push(value.toFixed(2));
-		}
-	}
-	return values.join(', ');
-});
 
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -225,10 +211,9 @@ const selectedRunId = computed(
 );
 
 const parentSize = ref({ width: 0, height: 270 }); // Set the initial height or any default height
-// Calculate the parent container's width
-onMounted(() => {
-	const parentContainerWidth = document.querySelector('.output-panel').clientWidth - 48;
-	parentSize.value.width = parentContainerWidth;
+
+const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
+	emit('update-state', state);
 });
 
 const updateState = () => {
@@ -236,7 +221,6 @@ const updateState = () => {
 	state.currentTimespan = timespan.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
-	state.exampleString = exampleString.value;
 	emit('update-state', state);
 };
 
@@ -286,19 +270,11 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
-	emit('update-state', state);
-};
+onMounted(() => {
+	// Calculate the parent container's width
+	const parentContainerWidth = document.querySelector('.output-panel').clientWidth - 48;
+	parentSize.value.width = parentContainerWidth;
+});
 
 watch(
 	() => props.node.state.inProgressSimulationId,
