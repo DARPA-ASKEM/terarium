@@ -47,6 +47,7 @@ const emit = defineEmits(['update:selection']);
 .content-container {
 	display: flex;
 	flex-direction: column;
+	gap: var(--gap-1);
 	background-color: var(--surface-50);
 	flex-grow: 1;
 	padding: 1rem;
@@ -72,6 +73,6 @@ main {
 	flex-direction: column;
 	flex-grow: 1;
 	overflow-y: auto;
-	gap: 1.5rem;
+	gap: var(--gap-small);
 }
 </style>
