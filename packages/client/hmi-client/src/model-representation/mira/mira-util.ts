@@ -1,4 +1,10 @@
-import { MiraTemplate, MiraMatrix, TemplateSummary, MiraMatrixEntry } from './mira-common';
+import {
+	MiraTemplate,
+	MiraMatrix,
+	TemplateSummary,
+	MiraMatrixEntry,
+	MiraParameter
+} from './mira-common';
 
 export const removeModifiers = (
 	v: string,
@@ -60,7 +66,7 @@ const emptyMatrix = (rowNames: string[], colNames: string[]) => {
 export const extractSubjectOutcomeMatrix = (
 	templates: MiraTemplate[],
 	paramNames: string[],
-	paramValueMap: Map<string, any>,
+	paramValueMap: Map<string, MiraParameter>,
 	paramLocationMap: Map<string, any>
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
@@ -95,7 +101,7 @@ export const extractSubjectOutcomeMatrix = (
 export const extractSubjectControllersMatrix = (
 	templates: MiraTemplate[],
 	paramNames: string[],
-	paramValueMap: Map<string, any>,
+	paramValueMap: Map<string, MiraParameter>,
 	paramLocationMap: Map<string, TemplateSummary[]>
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
@@ -131,7 +137,7 @@ export const extractSubjectControllersMatrix = (
 export const extractOutcomeControllersMatrix = (
 	templates: MiraTemplate[],
 	paramNames: string[],
-	paramValueMap: Map<string, any>,
+	paramValueMap: Map<string, MiraParameter>,
 	paramLocationMap: Map<string, TemplateSummary[]>
 ) => {
 	const rowNames = extractConceptNames(templates, 'outcome');
