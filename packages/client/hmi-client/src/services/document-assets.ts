@@ -223,18 +223,19 @@ const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	}
 };
 
-async function createDocumentFromXDD(
-	document: Document,
-	projectId: string
-): Promise<DocumentAsset | null> {
-	if (!document || !projectId) return null;
+async function createDocumentFromXDD(document: Document, projectId: string) {
+	if (!document || !projectId) return;
 	const response = await API.post<DocumentAsset>(`/document-asset/create-document-from-xdd`, {
 		document,
 		projectId
 	});
-	await subscribe(ClientEventType.Extraction, messageHandler);
-	return response.data ?? null;
+	if (response?.status === 202) {
+		await subscribe(ClientEventType.Extraction, messageHandler);
+	} else {
+		console.debug('Creating document from XDD failed', response);
+	}
 }
+
 export {
 	createDocumentFromXDD,
 	createNewDocumentAsset,
