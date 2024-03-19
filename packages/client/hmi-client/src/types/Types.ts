@@ -618,6 +618,14 @@ export interface ExtractionResponseResult {
     job_result: any;
 }
 
+export interface ExtractionStatusUpdate {
+    documentId: string;
+    step: number;
+    totalSteps: number;
+    message: string;
+    error: string;
+}
+
 export interface FunmanPostQueriesRequest {
     model: Model;
     request: FunmanWorkRequest;
@@ -1304,6 +1312,7 @@ export enum ClientEventType {
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Extraction = "EXTRACTION",
 }
 
 export enum FileType {
