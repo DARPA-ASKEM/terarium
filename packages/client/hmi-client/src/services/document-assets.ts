@@ -3,9 +3,11 @@
  */
 
 import API from '@/api/api';
-import type { Document, DocumentAsset } from '@/types/Types';
+import type { ClientEvent, Document, DocumentAsset, ExtractionStatusUpdate } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
+import { ClientEventType } from '@/types/Types';
 
 /**
  * Get all documents
@@ -201,6 +203,26 @@ async function getBulkDocumentAssets(docIDs: string[]) {
 	return result;
 }
 
+const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
+	if (event.data.error) {
+		logger.error(
+			`Extraction client-event: ERROR [${event.data.step}/${event.data.totalSteps}]: ${event.data.error}`
+		);
+		await unsubscribe(ClientEventType.Extraction, messageHandler);
+		return;
+	}
+	if (event.data.message) {
+		console.debug(
+			`Extraction client-event: [${event.data.step}/${event.data.totalSteps}]: ${event.data.message}`
+		);
+	} else {
+		logger.success(`Extraction client-event: [${event.data.step}/${event.data.totalSteps}]`);
+	}
+	if (event.data.step === event.data.totalSteps) {
+		await unsubscribe(ClientEventType.Extraction, messageHandler);
+	}
+};
+
 async function createDocumentFromXDD(
 	document: Document,
 	projectId: string
@@ -210,7 +232,7 @@ async function createDocumentFromXDD(
 		document,
 		projectId
 	});
-	// TODO : subscribe to EXTRACTION messages
+	await subscribe(ClientEventType.Extraction, messageHandler);
 	return response.data ?? null;
 }
 export {
