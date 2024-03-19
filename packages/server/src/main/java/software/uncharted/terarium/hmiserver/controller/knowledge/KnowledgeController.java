@@ -203,14 +203,7 @@ public class KnowledgeController {
 	 * Transform source code to AMR
 	 *
 	 * @param codeId       (String): id of the code artifact
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 	 *                     model
->>>>>>> origin/main
-=======
-	 *                     model
->>>>>>> origin/3026-extractpdf-refactor-with-new-knowledgecontroller
 	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
 	 *                     specified dynamics from the code object in TDS
 	 * @param llmAssisted  (Boolean): whether amr extraction is llm assisted
