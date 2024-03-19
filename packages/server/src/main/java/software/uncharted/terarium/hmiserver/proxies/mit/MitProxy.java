@@ -24,4 +24,16 @@ public interface MitProxy {
 			@RequestParam("gpt_key") final String gptKey,
 			@RequestParam("kg_domain") final String kgDomain,
 			@RequestPart("file") MultipartFile file);
+
+	@PostMapping(value = "/cards/get_model_card", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> modelCard(
+			@RequestParam("gpt_key") final String gptKey,
+			@RequestPart("text_file") MultipartFile textFile,
+			@RequestPart("code_file") MultipartFile codeFile);
+
+	@PostMapping(value = "/cards/get_data_card", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> dataCard(
+			@RequestParam("gpt_key") final String gptKey,
+			@RequestPart("csv_file") MultipartFile textFile,
+			@RequestPart("doc_file") MultipartFile codeFile);
 }
