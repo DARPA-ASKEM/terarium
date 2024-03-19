@@ -447,7 +447,7 @@ a {
 }
 
 .video-thumbnail {
-	background-image: radial-gradient(circle, var(--primary-color), #004f3c),
+	background-image: radial-gradient(circle, var(--primary-color), #004f45),
 		url('@/assets/images/video-thumbnail.png');
 	background-blend-mode: multiply;
 	background-size: cover;
