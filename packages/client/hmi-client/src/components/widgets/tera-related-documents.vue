@@ -11,8 +11,8 @@
 			<ul>
 				<li v-for="document in relatedDocuments" :key="document.id">
 					<tera-asset-link
-						:label="document.name!"
-						:asset-route="{ assetId: document.id!, pageType: AssetType.Document }"
+						:label="document.name"
+						:asset-route="{ assetId: document.id, pageType: AssetType.Document }"
 					/>
 				</li>
 			</ul>
@@ -52,20 +52,19 @@
 			</template>
 		</footer>
 		<Dialog
-			v-model:visible="visible"
 			modal
+			v-model:visible="visible"
 			:header="`Describe this ${assetType}`"
 			:style="{ width: '50vw' }"
 		>
-			<p class="constrain-width">
+			<p class="constrain-width mt-2 mb-4">
 				Terarium can extract information from documents to describe this
-				{{ assetType }}. Select a document you would like to use.
+				{{ assetType }}.<br />Select a document you would like to use.
 			</p>
 			<DataTable
-				v-if="documents && documents.length > 0"
+				v-if="!isEmpty(documents)"
 				:value="documents"
 				v-model:selection="selectedResources"
-				tableStyle="min-width: 50rem"
 				selection-mode="single"
 			>
 				<Column selectionMode="single" headerStyle="width: 3rem" />
@@ -126,7 +125,14 @@ const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
-const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
+const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
+
+// Disable the dialog action button if no resources are selected
+// and the dialog type is not enrichment
+const isDialogDisabled = computed(() => {
+	if (dialogType.value === DialogType.ENRICH) return false;
+	return !selectedResources.value;
+});
 
 const dialogActionCopy = computed(() => {
 	let result: string = '';
@@ -174,13 +180,6 @@ const acceptDialog = () => {
 	}
 	closeDialog();
 };
-
-// Disable the dialog action button if no resources are selected
-// and the dialog type is not enrichment
-const isDialogDisabled = computed(() => {
-	if (dialogType.value === DialogType.ENRICH) return false;
-	return !selectedResources.value;
-});
 
 const sendForEnrichment = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
@@ -253,10 +252,7 @@ async function getRelatedDocuments() {
 
 	relatedDocuments.value =
 		(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
-			(documentAsset) => ({
-				name: documentAsset.name,
-				id: documentAsset.id
-			})
+			({ id, name }) => ({ id: id ?? '', name: name ?? '' })
 		) ?? [];
 }
 </script>

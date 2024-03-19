@@ -90,7 +90,6 @@ import { isEmpty } from 'lodash';
 import { computed, PropType, Ref, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
 import { createDataset } from '@/services/dataset';
-import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
 

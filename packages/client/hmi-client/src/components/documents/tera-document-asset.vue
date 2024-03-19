@@ -136,7 +136,7 @@
 				viewOptions[1]?.value === DocumentView.PDF
 			"
 		>
-			PDF Extractions may still be processsing please refresh in some time...
+			PDF Extractions may still be processing please refresh in some time...
 		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
@@ -185,6 +185,8 @@ const props = defineProps<{
 	previewLineLimit: number;
 	featureConfig?: FeatureConfig;
 }>();
+
+const emit = defineEmits(['close-preview', 'asset-loaded', 'remove']);
 
 const document = ref<DocumentAsset | null>(null);
 const pdfLink = ref<string | null>(null);
@@ -249,11 +251,9 @@ const optionsMenuItems = ref([
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
-	}
-	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
+	},
+	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove') }
 ]);
-
-const emit = defineEmits(['close-preview', 'asset-loaded']);
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -298,10 +298,7 @@ watch(
 	{ immediate: true }
 );
 
-const formattedAbstract = computed(() => {
-	if (!document.value || !document.value.description) return '';
-	return highlightSearchTerms(document.value.description);
-});
+const formattedAbstract = computed<string>(() => document.value?.description ?? '');
 
 onUpdated(() => {
 	if (document.value) {

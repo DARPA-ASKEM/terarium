@@ -204,9 +204,13 @@ public class KnowledgeController {
 	 *
 	 * @param codeId       (String): id of the code artifact
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	 *                     model
 >>>>>>> origin/main
+=======
+	 *                     model
+>>>>>>> origin/3026-extractpdf-refactor-with-new-knowledgecontroller
 	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
 	 *                     specified dynamics from the code object in TDS
 	 * @param llmAssisted  (Boolean): whether amr extraction is llm assisted
@@ -776,7 +780,13 @@ public class KnowledgeController {
 		}
 	}
 
-	@PostMapping("/pdf-to-cosmos")
+	/**
+	 * Document Extractions
+	 *
+	 * @param documentId (String): The ID of the document to profile
+	 * @return the profiled dataset
+	 */
+	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<Void> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId) {

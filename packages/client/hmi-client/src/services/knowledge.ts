@@ -1,9 +1,16 @@
 import API from '@/api/api';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import type { ClientEvent, Code, Dataset, ExtractionStatusUpdate, Model } from '@/types/Types';
+import type {
+	ClientEvent,
+	Code,
+	Dataset,
+	DocumentAsset,
+	ExtractionStatusUpdate,
+	Model
+} from '@/types/Types';
 import { ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 
 /**
  * Transform a list of LaTeX or mathml strings to an AMR
@@ -55,6 +62,7 @@ export const alignModel = async (
 	);
 	return response.data ?? null;
 };
+
 /**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
@@ -73,6 +81,7 @@ export const profileDataset = async (
 	return response.data.id;
 };
 
+/** Handle messages received from the extraction client-event */
 const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	if (event.data.error) {
 		logger.error(
@@ -93,32 +102,17 @@ const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	}
 };
 
-export const extractPDF = async (documentId: string) => {
+/** Extract text and artifacts from a PDF document */
+export const extractPDF = async (documentId: DocumentAsset['id']) => {
 	if (documentId) {
-		try {
-			const response = await API.post(`/knowledge/pdf-to-cosmos?document-id=${documentId}`);
-			if (response?.status === 202) {
-				await subscribe(ClientEventType.Extraction, messageHandler);
-				return;
-			}
-			logger.error('pdf text extraction request failed', {
-				showToast: false,
-				toastTitle: 'Error - pdfExtractions'
-			});
-		} catch (error: unknown) {
-			if ((error as AxiosError).isAxiosError) {
-				const axiosError = error as AxiosError;
-				logger.error('[pdfExtractions]', axiosError.response?.data || axiosError.message, {
-					showToast: false,
-					toastTitle: 'Error - pdf text extraction'
-				});
-			} else {
-				logger.error(error, {
-					showToast: false,
-					toastTitle: 'Error - pdf text extraction'
-				});
-			}
+		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}`);
+		if (response?.status === 202) {
+			await subscribe(ClientEventType.Extraction, messageHandler);
+		} else {
+			console.debug('PDF extraction failed', response);
 		}
+	} else {
+		console.debug('PDF extraction failed', 'No documentId provided for pdf extraction.');
 	}
 };
 
