@@ -6,7 +6,7 @@
 			:height="chartSize.height"
 			:data="chartData"
 			:options="chartOptions"
-			:plugins="[annotationPlugin]"
+			s
 		/>
 	</div>
 </template>
@@ -15,7 +15,7 @@
 import { ref, computed, watch } from 'vue';
 import Chart from 'primevue/chart';
 import { ChartConfig } from '@/types/SimulateConfig';
-import annotationPlugin from 'chartjs-plugin-annotation';
+// import annotationPlugin from 'chartjs-plugin-annotation';
 
 const props = defineProps<{
 	riskResults: any;
@@ -47,18 +47,18 @@ const setChartOptions = () => ({
 	plugins: {
 		legend: {
 			display: false
-		},
-		annotation: {
-			annotations: {
-				line1: {
-					type: 'line',
-					yMin: threshold,
-					yMax: threshold,
-					borderColor: 'rgb(255, 99, 132)',
-					borderWidth: 2
-				}
-			}
 		}
+		// annotation: {
+		// 	annotations: {
+		// 		line1: {
+		// 			type: 'line',
+		// 			yMin: threshold,
+		// 			yMax: threshold,
+		// 			borderColor: 'rgb(255, 99, 132)',
+		// 			borderWidth: 2
+		// 		}
+		// 	}
+		// }
 	},
 	scales: {
 		x: {

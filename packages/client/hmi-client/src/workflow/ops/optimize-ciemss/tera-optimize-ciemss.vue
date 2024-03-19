@@ -216,29 +216,50 @@
 			<Button
 				:disabled="isRunDisabled"
 				outlined
+				severity="secondary"
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
 				@click="runOptimize"
 			/>
-			<div class="label-and-input">
-				<label> Model Config Name</label>
-				<InputText v-model="knobs.modelConfigName" />
-			</div>
-			<div class="label-and-input">
-				<label> Model Config Description</label>
-				<InputText v-model="knobs.modelConfigDesc" />
-			</div>
-			<Button
+			<!-- <Button
 				:disabled="knobs.modelConfigName === ''"
 				outlined
+				severity="secondary"
 				label="Save as a new model configuration"
-				@click="saveModelConfiguration"
+				@click="showModelInput = true"
+			/> -->
+			<Button
+				outlined
+				severity="secondary"
+				label="Save as a new model configuration"
+				@click="showModelInput = true"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
+	<Dialog
+		v-model:visible="showModelInput"
+		modal
+		header="Save as new model configuration"
+		class="save-dialog w-4"
+	>
+		<div class="label-and-input mt-2 gap-2">
+			<label>What do you want to call it?</label>
+			<InputText v-model="knobs.modelConfigName" />
+		</div>
+		<div class="label-and-input mt-3 gap-2">
+			<label>Add a description (optional)</label>
+			<InputText v-model="knobs.modelConfigDesc" />
+		</div>
+		<template #footer>
+			<div class="p-dialog-footer p-0 mb-2">
+				<Button label="Cancel" outlined severity="secondary" @click="showModelInput = false" />
+				<Button label="Save" @click="saveModelConfiguration" />
+			</div>
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
@@ -246,6 +267,7 @@ import _ from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
@@ -296,6 +318,8 @@ import {
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
+
+const showModelInput = ref(false);
 
 const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
@@ -608,6 +632,7 @@ const saveModelConfiguration = async () => {
 		isSelected: false,
 		state
 	});
+	showModelInput.value = false;
 };
 
 const setOutputValues = async () => {
