@@ -776,7 +776,13 @@ public class KnowledgeController {
 		}
 	}
 
-	@PostMapping("/pdf-to-cosmos")
+	/**
+	 * Document Extractions
+	 *
+	 * @param documentId (String): The ID of the document to profile
+	 * @return the profiled dataset
+	 */
+	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<Void> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId) {
