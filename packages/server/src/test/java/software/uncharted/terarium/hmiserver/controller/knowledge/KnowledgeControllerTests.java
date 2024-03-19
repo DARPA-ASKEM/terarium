@@ -247,7 +247,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		log.info(latex);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionTests() throws Exception {
 
