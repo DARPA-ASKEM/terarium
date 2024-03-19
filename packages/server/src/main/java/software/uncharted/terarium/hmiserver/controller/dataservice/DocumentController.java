@@ -668,8 +668,14 @@ public class DocumentController {
 
 			// fire and forgot pdf extractions
 			extractionService.extractPDF(docId, currentUserId);
+		} catch (final ResponseStatusException e) {
+			log.error("Unable to upload PDF document then extract", e);
+			throw e;
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to upload document");
 		}
 	}
 }
