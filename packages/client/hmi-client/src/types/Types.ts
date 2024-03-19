@@ -155,7 +155,7 @@ export interface Dataset extends TerariumAsset {
     fileNames?: string[];
     datasetUrl?: string;
     columns?: DatasetColumn[];
-    metadata?: any;
+    metadata?: { [index: string]: any };
     source?: string;
     grounding?: Grounding;
 }
@@ -424,6 +424,7 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     description?: string;
+    overviewContent?: string;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -765,7 +766,7 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    interventions?: OptimizedIntervention[];
+    interventions?: OptimizedIntervention;
     stepSize?: number;
     qoi: string[];
     riskBound: number;
@@ -818,11 +819,15 @@ export interface OptimizeExtra {
     maxiter?: number;
     maxfeval?: number;
     isMinimized?: boolean;
+    alpha?: number;
+    solverMethod?: string;
 }
 
 export interface OptimizedIntervention {
-    name: string;
-    timestep: number;
+    selection: string;
+    paramNames: string[];
+    paramValues?: number[];
+    startTime?: number[];
 }
 
 export interface TimeSpan {
@@ -938,6 +943,7 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     gollmCard?: any;
     templateCard?: any;
+    code_id?: string;
 }
 
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {

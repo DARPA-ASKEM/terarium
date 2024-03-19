@@ -1,6 +1,11 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!isPreview" class="diagram-container">
+		<TeraResizablePanel
+			v-if="!isPreview"
+			class="diagram-container"
+			:class="{ unlocked: !isLocked }"
+			:style="isLocked && { pointerEvents: 'none' }"
+		>
 			<section class="graph-element">
 				<Toolbar>
 					<template #start>
@@ -8,6 +13,13 @@
 							<Button
 								@click="resetZoom"
 								label="Reset zoom"
+								class="p-button-sm p-button-outlined"
+								severity="secondary"
+							/>
+							<Button
+								@click="isLocked = !isLocked"
+								:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
+								:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
 								class="p-button-sm p-button-outlined"
 								severity="secondary"
 							/>
@@ -58,8 +70,8 @@
 			<tera-stratified-matrix-modal
 				v-if="openValueConfig && modelConfiguration"
 				:id="selectedTransitionId"
-				:model-configuration="modelConfiguration"
-				:stratified-model-type="StratifiedModel.Mira"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:stratified-matrix-type="StratifiedMatrix.Rates"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
@@ -76,7 +88,6 @@ import { watch, ref, onMounted, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { StratifiedModel } from '@/model-representation/petrinet/petrinet-service';
 import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
@@ -85,7 +96,7 @@ import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
-import { MiraModel } from '@/model-representation/mira/mira-common';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import {
 	isStratifiedModel,
 	emptyMiraModel,
@@ -106,6 +117,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-configuration']);
 
+const isLocked = ref(true);
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
@@ -114,6 +126,7 @@ const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -152,7 +165,9 @@ async function renderGraph() {
 
 	// Render graph
 	const graphData =
-		isCollapsed.value === true ? convertToIGraph(templatesSummary) : convertToIGraph(rawTemplates);
+		isCollapsed.value === true && isStratifiedModel(mmt.value)
+			? convertToIGraph(templatesSummary)
+			: convertToIGraph(rawTemplates);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -176,15 +191,18 @@ watch(
 		if (graphElement.value === null) return;
 
 		// FIXME: inefficient, do not constant call API in watch
-		mmt.value = (await getMMT(props.model)).mmt;
-
+		const response: any = await getMMT(props.model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
 		await renderGraph();
 	},
 	{ deep: true }
 );
 
 onMounted(async () => {
-	mmt.value = (await getMMT(props.model)).mmt;
+	const response: any = await getMMT(props.model);
+	mmt.value = response.mmt;
+	mmtParams.value = response.template_params;
 });
 
 onUnmounted(() => {});
@@ -207,7 +225,9 @@ main {
 	display: flex;
 	flex-direction: column;
 }
-
+.unlocked {
+	border: 1px solid var(--primary-color);
+}
 .preview {
 	/* Having both min and max heights prevents height from resizing itself while being dragged on templating canvas
 	This resizes on template canvas but not when its in a workflow node?? (tera-model-node)
@@ -228,11 +248,13 @@ main {
 	isolation: isolate;
 	background: transparent;
 	padding: 0.5rem;
+	pointer-events: none;
 }
 
 .p-toolbar:deep(> div > span) {
 	gap: 0.25rem;
 	display: flex;
+	pointer-events: all;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
