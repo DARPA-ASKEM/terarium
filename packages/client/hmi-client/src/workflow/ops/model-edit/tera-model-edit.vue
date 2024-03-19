@@ -52,7 +52,6 @@
 					v-model:output="selectedOutputId"
 					@update:selection="onSelection"
 					:options="outputs"
-					:status="node.status"
 					is-selectable
 					class="h-full"
 				>
@@ -124,13 +123,7 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'select-output',
-	'update-status'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -223,7 +216,6 @@ const runFromCode = (code: string) => {
 		.sendMessage('execute_request', messageContent)
 		.register('execute_input', (data) => {
 			executedCode = data.content.code;
-			emit('update-status', OperatorStatus.IN_PROGRESS);
 		})
 		.register('stream', (data) => {
 			console.log('stream', data);
@@ -246,7 +238,6 @@ const runFromCode = (code: string) => {
 				value: data.msg.content.evalue ? data.msg.content.evalue : '',
 				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
 			};
-			emit('update-status', status);
 		});
 };
 

@@ -321,13 +321,7 @@ const outputs = computed(() => {
 	return [];
 });
 
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'select-output',
-	'close',
-	'update-status'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
 	name: string;
@@ -409,7 +403,6 @@ const runFromCode = () => {
 		.sendMessage('execute_request', messageContent)
 		.register('execute_input', (data) => {
 			executedCode = data.content.code;
-			emit('update-status', OperatorStatus.IN_PROGRESS);
 		})
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
@@ -432,7 +425,6 @@ const runFromCode = () => {
 				value: data.msg.content.evalue ? data.msg.content.evalue : '',
 				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
 			};
-			emit('update-status', status);
 		});
 };
 const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);

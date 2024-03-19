@@ -75,7 +75,7 @@ const props = defineProps<{
 	node: WorkflowNode<DecapodesOperationState>;
 }>();
 
-const emit = defineEmits(['close', 'update-state', 'update-status']);
+const emit = defineEmits(['close', 'update-state']);
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
 
@@ -140,7 +140,6 @@ const runFromCode = () => {
 		.sendMessage('execute_request', messageContent)
 		.register('execute_input', (data) => {
 			console.log('execute_input', data.content);
-			emit('update-status', OperatorStatus.IN_PROGRESS);
 		})
 		.register('stream', (data) => {
 			console.log('stream', data.content);
@@ -162,7 +161,6 @@ const runFromCode = () => {
 				value: data.msg.content.evalue ? data.msg.content.evalue : '',
 				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
 			};
-			emit('update-status', status);
 		});
 };
 

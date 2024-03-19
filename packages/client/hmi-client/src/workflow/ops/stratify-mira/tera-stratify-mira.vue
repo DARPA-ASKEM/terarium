@@ -163,8 +163,7 @@ const emit = defineEmits([
 	'update-state',
 	'close',
 	'update-output-port',
-	'select-output',
-	'update-status'
+	'select-output'
 ]);
 
 enum StratifyTabs {
@@ -410,7 +409,6 @@ const runCodeStratify = () => {
 			.sendMessage('execute_request', messageContent)
 			.register('execute_input', (data) => {
 				executedCode = data.content.code;
-				emit('update-status', OperatorStatus.IN_PROGRESS);
 			})
 			.register('stream', (data) => {
 				console.log('stream', data);
@@ -436,7 +434,6 @@ const runCodeStratify = () => {
 					value: data.msg.content.evalue ? data.msg.content.evalue : '',
 					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
 				};
-				emit('update-status', status);
 			});
 	});
 };
