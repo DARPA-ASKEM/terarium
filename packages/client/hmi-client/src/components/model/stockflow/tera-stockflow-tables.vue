@@ -2,104 +2,35 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				State variables<span class="artifact-amount">({{ states.length }})</span>
+				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
+				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
+					>Save Changes</Button
+				>
 			</template>
-
-			<DataTable
-				v-if="!isEmpty(states)"
-				:edit-mode="readonly ? undefined : 'cell'"
-				data-key="id"
-				:value="states"
-				@cell-edit-complete="onCellEditComplete"
-			>
-				<Column field="id" header="Symbol" />
-				<Column field="name" header="Name" />
-				<Column field="units.expression" header="Unit" />
-				<Column field="grounding.identifiers" header="Concept">
-					<template #body="{ data }">
-						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
-							{{
-								getNameOfCurieCached(
-									nameOfCurieCache,
-									getCurieFromGroudingIdentifier(data.grounding.identifiers)
-								)
-							}}
-
-							<a
-								target="_blank"
-								rel="noopener noreferrer"
-								:href="getCurieUrl(getCurieFromGroudingIdentifier(data.grounding.identifiers))"
-								@click.stop
-								aria-label="Open Concept"
-							>
-								<i class="pi pi-external-link" />
-							</a>
-						</template>
-						<template v-else>--</template>
-					</template>
-					<template #editor="{ index }">
-						<AutoComplete
-							v-if="!readonly"
-							v-model="conceptSearchTerm.name"
-							:suggestions="curies"
-							@complete="onSearch"
-							@item-select="
-								updateTable('states', index, 'grounding', {
-									identifiers: parseCurie($event.value?.curie)
-								})
-							"
-							optionLabel="name"
-							:forceSelection="true"
-							:inputStyle="{ width: '100%' }"
-						/>
-					</template>
-				</Column>
-			</DataTable>
+			<tera-initial-table
+				:model="transientModel"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				@update-value="updateInitial"
+				@update-model="(updateModel: Model) => (transientModel = updateModel)"
+				:readonly="readonly"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
+				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
+					>Save Changes</Button
+				>
 			</template>
-			<DataTable
-				v-if="!isEmpty(parameters)"
-				:edit-mode="readonly ? undefined : 'cell'"
-				data-key="id"
-				:value="parameters"
-			>
-				<Column field="id" header="Symbol">
-					<template #editor="{ data, index }">
-						<InputText
-							:value="data?.id ?? '--'"
-							@input="updateTable('parameters', index, 'id', $event.target?.['value'])"
-						/>
-					</template>
-				</Column>
-				<Column field="name" header="Name">
-					<template #editor="{ data, index }">
-						<InputText
-							:value="data?.name ?? '--'"
-							@input="updateTable('parameters', index, 'name', $event.target?.['value'])"
-						/>
-					</template>
-				</Column>
-				<Column field="value" header="Value">
-					<template #editor="{ data, index }">
-						<InputText
-							:value="data?.value ?? '--'"
-							@input="updateTable('parameters', index, 'value', $event.target?.['value'])"
-						/>
-					</template>
-				</Column>
-				<Column field="distribution.parameters" header="Distribution">
-					<template #body="{ data }">
-						<template v-if="data?.distribution?.parameters">
-							[{{ round(data?.distribution?.parameters.minimum, 4) }},
-							{{ round(data?.distribution?.parameters.maximum, 4) }}]
-						</template>
-						<template v-else>--</template>
-					</template>
-				</Column>
-			</DataTable>
+			<tera-parameter-table
+				:model="transientModel"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				@update-value="updateParam"
+				@update-model="(updatedModel: Model) => (transientModel = updatedModel)"
+				:readonly="readonly"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -122,14 +53,14 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
+				Flows<span class="artifact-amount">({{ flows.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
-				<Column field="id" header="Symbol" />
+			<DataTable v-if="!isEmpty(flows)" data-key="id" :value="flows">
+				<Column field="id" header="ID" />
 				<Column field="name" header="Name" />
-				<Column field="input" header="Input" />
-				<Column field="output" header="Output" />
-				<Column field="expression" header="Expression">
+				<Column field="upstream_stock" header="Upstream stock" />
+				<Column field="downstream_stock" header="Downstream stock" />
+				<Column field="rate_expression_mathml" header="Expression">
 					<template #body="{ data }">
 						<katex-element
 							v-if="data.expression"
@@ -213,28 +144,21 @@
 </template>
 
 <script setup lang="ts">
-import type { DKG, Model, ModelConfiguration } from '@/types/Types';
-import { cloneDeep, groupBy, isEmpty, round } from 'lodash';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Dictionary } from 'vue-gtag';
-import {
-	updateConfigFields,
-	updateParameterId
-} from '@/model-representation/petrinet/petrinet-service';
-import { logger } from '@/utils/logger';
-import {
-	getCurieFromGroudingIdentifier,
-	getCurieUrl,
-	getNameOfCurieCached,
-	searchCuriesEntities,
-	parseCurie
-} from '@/services/concept';
+import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
-import InputText from 'primevue/inputtext';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import { getMMT } from '@/services/model';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	model: Model;
@@ -244,23 +168,11 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
-// Used to keep track of the values of the current row being edited
-interface ModelTableTypes {
-	tableType: string;
-	idx: number;
-	updateProperty: { [key: string]: string };
-}
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
-const isRowEditable = ref<string | null>();
-const transientTableValue = ref<ModelTableTypes | null>(null);
-
-const conceptSearchTerm = ref({
-	curie: '',
-	name: ''
-});
-const curies = ref<DKG[]>([]);
-const nameOfCurieCache = ref(new Map<string, string>());
-
+const transientModel = ref(cloneDeep(props.model));
+const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
@@ -270,30 +182,10 @@ const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
 });
-const states = computed(() => props.model?.model?.states ?? []);
-const transitions = computed(() => {
-	const results: any[] = [];
-	if (props.model?.model?.transitions) {
-		props.model.model.transitions.forEach((t) => {
-			results.push({
-				id: t.id,
-				name: t?.properties?.name ?? '--',
-				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
-				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
-				expression:
-					props.model?.semantics?.ode?.rates?.find((rate) => rate.target === t.id)?.expression ??
-					null,
-				extractions: extractions?.[t.id] ?? null
-			});
-		});
-	}
-	return results;
-});
+const stocks = computed(() => props.model?.model?.stocks ?? []);
+const flows = computed(() => props.model?.model?.flows ?? []);
 const otherConcepts = computed(() => {
-	const ids = [
-		...(states.value?.map((s) => s.id) ?? []),
-		...(transitions.value?.map((t) => t.id) ?? [])
-	];
+	const ids = [...(stocks.value?.map((s) => s.id) ?? []), ...(flows.value?.map((f) => f.id) ?? [])];
 
 	// find keys that are not aligned
 	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
@@ -310,78 +202,37 @@ const otherConcepts = computed(() => {
 	return unalignedExtractions ?? [];
 });
 
-function updateTable(tableType: string, idx: number, key: string, value: any) {
-	transientTableValue.value = {
-		...transientTableValue.value,
-		tableType,
-		idx,
-		updateProperty: {
-			...transientTableValue.value?.updateProperty,
-			[key]: value
+const updateInitial = (inits: Initial[]) => {
+	const modelInitials = transientModel.value.semantics?.ode.initials ?? [];
+	for (let i = 0; i < modelInitials.length; i++) {
+		const foundInitial = inits.find((init) => init.target === modelInitials![i].target);
+		if (foundInitial) {
+			modelInitials[i] = foundInitial;
 		}
-	};
-	confirmEdit();
-}
+	}
+};
 
-async function confirmEdit() {
-	if (props.model && transientTableValue.value) {
-		const { tableType, idx, updateProperty } = transientTableValue.value;
-		const modelClone = cloneDeep(props.model);
-
-		switch (tableType) {
-			case 'parameters':
-				if (props.model.semantics?.ode.parameters) {
-					Object.entries(updateProperty).forEach(([key, value]) => {
-						modelClone.semantics!.ode.parameters![idx][key] = value;
-
-						if (key === 'id') {
-							const ode = props.model!.semantics!.ode;
-							// update the parameter id in the model (as well as rate expression and expression_mathml)
-							updateParameterId(modelClone, ode.parameters![idx][key], value as string);
-
-							// note that this is making a call to an async function to update the different model configs
-							// but we don't need to wait for it to finish because we don't need immediate access to the model configs
-							if (!isEmpty(props.modelConfigurations)) {
-								updateConfigFields(
-									props.modelConfigurations!,
-									ode.parameters![idx][key],
-									value as string
-								);
-							}
-						}
-					});
-				}
-				break;
-			case 'states':
-				Object.entries(updateProperty).forEach(([key, value]) => {
-					if (key !== 'unit') {
-						// TODO: remove this condition when we have proper editing of unit
-						modelClone.model.states[idx][key] = value;
-					}
-					// TODO: update all of the properties affected by state id
-				});
-				break;
-			default:
-				logger.info(`${tableType} not recognized`);
+const updateParam = (params: ModelParameter[]) => {
+	const modelParameters = transientModel.value.semantics?.ode.parameters ?? [];
+	for (let i = 0; i < modelParameters.length; i++) {
+		const foundParam = params.find((p) => p.id === modelParameters![i].id);
+		if (foundParam) {
+			modelParameters[i] = foundParam;
 		}
-		emit('update-model', modelClone);
 	}
+};
 
-	isRowEditable.value = null;
-	transientTableValue.value = null;
-}
-
-async function onSearch(event: AutoCompleteCompleteEvent) {
-	const query = event.query;
-	if (query.length > 2) {
-		const response = await searchCuriesEntities(query);
-		curies.value = response;
-	}
-}
-
-function onCellEditComplete() {
-	conceptSearchTerm.value = { curie: '', name: '' };
-}
+watch(
+	() => props.model,
+	async (model) => {
+		if (!model) return;
+		transientModel.value = cloneDeep(model);
+		const response: any = await getMMT(model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -391,5 +242,12 @@ section {
 
 .clickable-tag:hover {
 	cursor: pointer;
+}
+
+:deep(.p-accordion-content:empty::before) {
+	content: 'None';
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	margin-left: 1rem;
 }
 </style>

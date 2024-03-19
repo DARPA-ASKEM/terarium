@@ -2,7 +2,7 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				Initial variables<span class="artifact-amount">({{ states.length }})</span>
+				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
@@ -172,6 +172,7 @@ const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
 const transientModel = ref(cloneDeep(props.model));
+const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
