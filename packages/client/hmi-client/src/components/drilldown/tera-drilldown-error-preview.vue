@@ -1,8 +1,8 @@
 <template>
 	<div class="container">
-		{{ props.name }}
-		{{ props.value }}
-		{{ props.traceback }}
+		<h6>{{ props.name }}</h6>
+		<p>{{ props.value }}</p>
+		<p>{{ props.traceback }}</p>
 	</div>
 </template>
 
