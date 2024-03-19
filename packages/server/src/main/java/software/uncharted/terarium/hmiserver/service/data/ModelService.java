@@ -1,16 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
@@ -18,12 +7,21 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ModelService extends TerariumAssetService<Model> {
@@ -127,4 +125,16 @@ public class ModelService extends TerariumAssetService<Model> {
 		throw new UnsupportedOperationException("Not implemented. Use ModelService.searchModels instead");
 	}
 
+	@Override
+	public Model createAsset(final Model asset) throws IOException {
+		// Set default value for model parameters (0.0)
+		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null && asset.getSemantics().getOde().getParameters() != null) {
+			asset.getSemantics().getOde().getParameters().forEach(param -> {
+				if (param.getValue() == null) {
+					param.setValue(1.0);
+				}
+			});
+		}
+		return super.createAsset(asset);
+	}
 }

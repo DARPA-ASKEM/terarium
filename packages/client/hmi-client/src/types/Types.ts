@@ -150,6 +150,7 @@ export interface OntologyConcept {
 export interface Dataset extends TerariumAsset {
     name: string;
     userId?: string;
+    esgfId?: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
@@ -424,6 +425,7 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     description?: string;
+    overviewContent?: string;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -942,6 +944,7 @@ export interface ModelMetadata {
     variable_statements?: VariableStatement[];
     gollmCard?: any;
     templateCard?: any;
+    code_id?: string;
 }
 
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {

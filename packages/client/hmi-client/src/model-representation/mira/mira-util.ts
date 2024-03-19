@@ -1,4 +1,4 @@
-import { MiraTemplate, MiraMatrix, TemplateSummary } from './mira-common';
+import { MiraTemplate, MiraMatrix, TemplateSummary, MiraMatrixEntry } from './mira-common';
 
 export const removeModifiers = (
 	v: string,
@@ -42,11 +42,14 @@ export const extractConceptNames = (templates: MiraTemplate[], key: string) => {
 const emptyMatrix = (rowNames: string[], colNames: string[]) => {
 	const matrix: MiraMatrix = [];
 	for (let rowIdx = 0; rowIdx < rowNames.length; rowIdx++) {
-		const row: any[] = [];
+		const row: MiraMatrixEntry[] = [];
 		for (let colIdx = 0; colIdx < colNames.length; colIdx++) {
 			row.push({
-				value: null,
-				id: null
+				row: rowIdx,
+				col: colIdx,
+				rowCriteria: rowNames[rowIdx],
+				colCriteria: colNames[colIdx],
+				content: { id: null, value: null }
 			});
 		}
 		matrix.push(row);
@@ -62,6 +65,9 @@ export const extractSubjectOutcomeMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
 	const colNames = extractConceptNames(templates, 'outcome');
+	if (rowNames.length === 0 || colNames.length === 0) {
+		return { rowNames, colNames, matrix: [] };
+	}
 	const matrix = emptyMatrix(rowNames, colNames);
 
 	for (let i = 0; i < paramNames.length; i++) {
@@ -74,8 +80,14 @@ export const extractSubjectOutcomeMatrix = (
 			const rowIdx = rowNames.indexOf(location.subject);
 			const colIdx = colNames.indexOf(location.outcome);
 
-			matrix[rowIdx][colIdx].value = paramValue;
-			matrix[rowIdx][colIdx].id = paramName;
+			if (rowIdx === -1 || colIdx === -1) return;
+
+			matrix[rowIdx][colIdx].rowCriteria = location.subject;
+			matrix[rowIdx][colIdx].colCriteria = location.outcome;
+			matrix[rowIdx][colIdx].content = {
+				value: paramValue,
+				id: paramName
+			};
 		});
 	}
 	return { rowNames, colNames, matrix };
@@ -89,6 +101,10 @@ export const extractSubjectControllersMatrix = (
 ) => {
 	const rowNames = extractConceptNames(templates, 'subject');
 	const colNames = extractConceptNames(templates, 'controllers');
+	if (rowNames.length === 0 || colNames.length === 0) {
+		return { rowNames, colNames, matrix: [] };
+	}
+
 	const matrix = emptyMatrix(rowNames, colNames);
 
 	for (let i = 0; i < paramNames.length; i++) {
@@ -102,8 +118,52 @@ export const extractSubjectControllersMatrix = (
 			const rowIdx = rowNames.indexOf(location.subject);
 			const colIdx = colNames.indexOf(location.controllers.join('-'));
 
-			matrix[rowIdx][colIdx].value = paramValue;
-			matrix[rowIdx][colIdx].id = paramName;
+			if (rowIdx === -1 || colIdx === -1) return;
+
+			matrix[rowIdx][colIdx].rowCriteria = location.subject;
+			matrix[rowIdx][colIdx].colCriteria = location.controllers.join('-');
+			matrix[rowIdx][colIdx].content = {
+				value: paramValue,
+				id: paramName
+			};
+		});
+	}
+	return { rowNames, colNames, matrix };
+};
+
+export const extractOutcomeControllersMatrix = (
+	templates: MiraTemplate[],
+	paramNames: string[],
+	paramValueMap: Map<string, any>,
+	paramLocationMap: Map<string, TemplateSummary[]>
+) => {
+	const rowNames = extractConceptNames(templates, 'outcome');
+	const colNames = extractConceptNames(templates, 'controllers');
+	if (rowNames.length === 0 || colNames.length === 0) {
+		return { rowNames, colNames, matrix: [] };
+	}
+
+	const matrix = emptyMatrix(rowNames, colNames);
+
+	for (let i = 0; i < paramNames.length; i++) {
+		const paramName = paramNames[i];
+		const paramValue = paramValueMap.get(paramName);
+		const paramLocations = paramLocationMap.get(paramName);
+		if (!paramLocationMap) continue;
+		if (!paramLocations) continue;
+
+		paramLocations.forEach((location) => {
+			const rowIdx = rowNames.indexOf(location.outcome);
+			const colIdx = colNames.indexOf(location.controllers.join('-'));
+
+			if (rowIdx === -1 || colIdx === -1) return;
+
+			matrix[rowIdx][colIdx].rowCriteria = location.outcome;
+			matrix[rowIdx][colIdx].colCriteria = location.controllers.join('-');
+			matrix[rowIdx][colIdx].content = {
+				value: paramValue,
+				id: paramName
+			};
 		});
 	}
 	return { rowNames, colNames, matrix };
@@ -122,8 +182,14 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 		for (let i = 0; i < templates.length; i++) {
 			const template = templates[i];
 			vector[0].push({
-				value: template.rate_law,
-				id: template.name
+				row: 0,
+				col: i,
+				rowCriteria: '',
+				colCriteria: '',
+				content: {
+					value: template.rate_law,
+					id: template.name
+				}
 			});
 		}
 		return { rowNames, colNames, matrix: vector };
@@ -141,9 +207,10 @@ export const extractTemplateMatrix = (templates: MiraTemplate[]) => {
 		if (template.outcome) {
 			colIdx = colNames.indexOf(template.outcome.name);
 		}
-
-		matrix[rowIdx][colIdx].value = template.rate_law;
-		matrix[rowIdx][colIdx].id = template.name;
+		matrix[rowIdx][colIdx].content = {
+			value: template.rate_law,
+			id: template.name
+		};
 	}
 	return { rowNames, colNames, matrix };
 };
