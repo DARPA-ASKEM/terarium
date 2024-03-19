@@ -150,12 +150,13 @@ export interface OntologyConcept {
 export interface Dataset extends TerariumAsset {
     name: string;
     userId?: string;
+    esgfId?: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
     datasetUrl?: string;
     columns?: DatasetColumn[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     source?: string;
     grounding?: Grounding;
 }

@@ -16,7 +16,9 @@
 			v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
 			class="evaluation-scenario-widget"
 		>
-			{{ evaluationScenario.name }} &ndash; {{ evaluationScenarioTask.task }}
+			{{ evaluationScenario.name }} &ndash; {{ evaluationScenarioTask.task }} ({{
+				evaluationScenarioMultipleUsers ? 'Multiple Users' : 'Single User'
+			}})
 			<span class="evaluation-scenario-widget-timer">{{ evaluationScenarioRuntimeString }}</span>
 			<Button
 				v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"

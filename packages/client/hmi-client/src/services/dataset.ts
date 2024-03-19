@@ -21,15 +21,42 @@ async function getAll(): Promise<Dataset[] | null> {
 	return response?.data ?? null;
 }
 
+async function getAllClimate(query: string): Promise<Dataset[] | null> {
+	const response = await API.get(`/climatedata/queries/search-esgf?query=${query}`).catch(
+		(error) => {
+			logger.error(`Error: ${error}`);
+		}
+	);
+	return response?.data ?? null;
+}
+
 /**
  * Get Dataset from the data service
  * @return Dataset|null - the dataset, or null if none returned by API
  */
 async function getDataset(datasetId: string): Promise<Dataset | null> {
 	const response = await API.get(`/datasets/${datasetId}`).catch((error) => {
-		logger.error(`Error: data-service was not able to retreive the dataset ${datasetId} ${error}`);
+		logger.error(`Error: data-service was not able to retrieve the dataset ${datasetId} ${error}`);
 	});
 	return response?.data ?? null;
+}
+
+async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
+	const response = await API.get(`/climatedata/queries/fetch-esgf/${datasetId}`).catch((error) => {
+		logger.error(
+			`Error: climate data service was not able to retrieve the dataset ${datasetId} ${error}`
+		);
+	});
+	return response?.data ?? null;
+}
+
+async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
+	const response = await API.get(`/climatedata/queries/preview-esgf/${esgfId}`).catch((error) => {
+		logger.error(
+			`Error: climate data service was not able to preview the dataset ${esgfId} ${error}`
+		);
+	});
+	return response?.data ?? undefined;
 }
 
 /**
@@ -318,7 +345,10 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 
 export {
 	getAll,
+	getAllClimate,
 	getDataset,
+	getClimateDataset,
+	getClimateDatasetPreview,
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
@@ -326,5 +356,6 @@ export {
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
 	saveDataset,
-	createCsvAssetFromRunResults
+	createCsvAssetFromRunResults,
+	createDataset
 };

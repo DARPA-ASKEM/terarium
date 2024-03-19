@@ -1,9 +1,8 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { ChartConfig } from '@/types/SimulateConfig';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 
 export interface CalibrationOperationStateCiemss {
-	chartConfigs: ChartConfig[];
+	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
 
