@@ -113,21 +113,24 @@
 					<h4>Variables</h4>
 					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset">
 						<tera-simulate-chart
-							v-for="(cfg, index) of node.state.chartConfigs"
-							:key="cfg.selectedRun"
+							v-for="(config, index) of node.state.chartConfigs"
+							:key="index"
 							:run-results="runResults"
-							:chartConfig="cfg"
+							:chartConfig="{
+								selectedRun: props.node.state.forecastId,
+								selectedVariable: config
+							}"
 							:initial-data="csvAsset"
 							:mapping="mapping"
 							has-mean-line
-							@configuration-change="chartConfigurationChange(index, $event)"
+							@configuration-change="chartProxy.configurationChange(index, $event)"
 							:size="{ width: previewChartWidth, height: 140 }"
 						/>
 						<Button
 							class="add-chart"
 							text
 							:outlined="true"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						></Button>
@@ -185,7 +188,7 @@ import {
 	ModelConfiguration,
 	State
 } from '@/types/Types';
-import { getTimespan } from '@/workflow/util';
+import { getTimespan, chartActionsProxy } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -195,7 +198,7 @@ import {
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
 
-import type { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
@@ -257,6 +260,10 @@ const outputs = computed(() => {
 	return [];
 });
 
+const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateCiemss) => {
+	emit('update-state', state);
+});
+
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
@@ -308,20 +315,6 @@ const messageHandler = (event: ClientEvent<any>) => {
 			height: 120
 		});
 	}
-};
-
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
-
-	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {

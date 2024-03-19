@@ -1,14 +1,21 @@
 <template>
 	<main>
-		<tera-simulate-chart
-			v-if="!inProgressCalibrationId && runResults && csvAsset"
-			:run-results="runResults"
-			:chartConfig="props.node.state.chartConfigs[0]"
-			:mapping="props.node.state.mapping as any"
-			:initial-data="csvAsset"
-			:size="{ width: 190, height: 120 }"
-			has-mean-line
-		/>
+		<template v-if="!inProgressCalibrationId && runResults && csvAsset">
+			<tera-simulate-chart
+				v-for="(config, index) of props.node.state.chartConfigs"
+				:key="index"
+				:run-results="runResults"
+				:chartConfig="{
+					selectedRun: props.node.state.forecastId,
+					selectedVariable: config
+				}"
+				:mapping="props.node.state.mapping as any"
+				:initial-data="csvAsset"
+				:size="{ width: 190, height: 120 }"
+				has-mean-line
+				@configuration-change="chartProxy.configurationChange(index, $event)"
+			/>
+		</template>
 
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId"
@@ -44,9 +51,10 @@ import {
 	makeForecastJobCiemss
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { Poller, PollerState } from '@/api/api';
+import { chartActionsProxy } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 
+import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CsvAsset } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
@@ -55,6 +63,7 @@ import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
+const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 
@@ -64,7 +73,9 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
-const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
+const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateCiemss) => {
+	emit('update-state', state);
+});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -136,12 +147,7 @@ watch(
 		if (response.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
 
-			state.chartConfigs = [
-				{
-					selectedRun: id,
-					selectedVariable: []
-				}
-			];
+			state.chartConfigs = [[]];
 			state.inProgressForecastId = '';
 			state.forecastId = id;
 			emit('update-state', state);
