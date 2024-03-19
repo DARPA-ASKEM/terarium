@@ -28,6 +28,7 @@
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
+				:dataset-source="datasetSource"
 				@close-preview="closePreview"
 			/>
 			<tera-model
@@ -42,14 +43,16 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, computed, ref, watch } from 'vue';
-import { ResultType, ResourceType } from '@/types/common';
+import { computed, PropType, ref, watch } from 'vue';
+import { ResourceType, ResultType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
+import { DatasetSource } from '@/types/Dataset';
+import { Dataset } from '@/types/Types';
 
 const props = defineProps({
 	// slider props
@@ -80,6 +83,10 @@ const props = defineProps({
 	source: {
 		type: String,
 		default: 'xDD'
+	},
+	datasetSource: {
+		type: String as PropType<DatasetSource>,
+		default: DatasetSource.TERARIUM
 	}
 });
 
@@ -91,6 +98,13 @@ const previewItemId = computed(() => {
 	if (!previewItemState.value) return '';
 	if (isDocument(previewItemState.value)) {
 		return previewItemState.value.gddId;
+	}
+	if (
+		previewItemResourceType.value === ResourceType.DATASET &&
+		props.datasetSource === DatasetSource.ESGF
+	) {
+		const dataset: Dataset = previewItemState.value as Dataset;
+		return dataset.esgfId as string;
 	}
 	return previewItemState.value.id as string;
 });

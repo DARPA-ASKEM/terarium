@@ -65,23 +65,31 @@
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import { useProjects } from '@/composables/project';
+import {
+	AssetType,
+	Dataset,
+	Document,
+	DocumentAsset,
+	Model,
+	ProjectAsset,
+	XDDFacetsItemResponse
+} from '@/types/Types';
+import useQueryStore from '@/stores/query';
+import { ResourceType, ResultType, SearchResults } from '@/types/common';
+import Chip from 'primevue/chip';
+import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import {
 	getSearchByExampleOptionsString,
 	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
 import { createDocumentFromXDD } from '@/services/document-assets';
-import useQueryStore from '@/stores/query';
-import { ResourceType, ResultType, SearchResults } from '@/types/common';
-import { ClauseValue } from '@/types/Filter';
-import type { Document, DocumentAsset, ProjectAsset, XDDFacetsItemResponse } from '@/types/Types';
-import { AssetType } from '@/types/Types';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import Chip from 'primevue/chip';
-import { computed, PropType, ref } from 'vue';
+import { computed, PropType, Ref, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
+import { createDataset } from '@/services/dataset';
 import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
@@ -119,7 +127,7 @@ const props = defineProps({
 	}
 });
 
-const selectedAsset = ref();
+const selectedAsset: Ref<ResultType> = ref({} as ResultType);
 const isAdding = ref(false);
 
 const projectOptions = computed(() => [
@@ -130,21 +138,28 @@ const projectOptions = computed(() => [
 				label: project.name,
 				command: async () => {
 					let response: ProjectAsset['id'] | null = null;
-					let assetName = '';
+					let assetName: string = '';
 					isAdding.value = true;
 
 					if (isModel(selectedAsset.value)) {
-						const modelId = selectedAsset.value.id;
-						// then, link and store in the project assets
-						const assetType = AssetType.Model;
-						response = await useProjects().addAsset(assetType, modelId, project.id);
-						assetName = selectedAsset.value.header.name;
+						const modelAsset: Model = selectedAsset.value as Model;
+
+						const modelId = modelAsset.id;
+						response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
+						assetName = modelAsset.header.name;
 					} else if (isDataset(selectedAsset.value)) {
-						const datasetId = selectedAsset.value.id;
+						let datasetId = selectedAsset.value.id;
+
+						if (!datasetId && selectedAsset.value.esgfId) {
+							const dataset: Dataset | null = await createDataset(selectedAsset.value);
+							if (dataset) {
+								datasetId = dataset.id;
+							}
+						}
+
 						// then, link and store in the project assets
-						const assetType = AssetType.Dataset;
 						if (datasetId) {
-							response = await useProjects().addAsset(assetType, datasetId, project.id);
+							response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
 					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
@@ -155,7 +170,7 @@ const projectOptions = computed(() => [
 						const document = selectedAsset.value as DocumentAsset;
 						const assetType = AssetType.Document;
 						response = await useProjects().addAsset(assetType, document.id, project.id);
-						assetName = selectedAsset.value.name;
+						assetName = document.name ?? '';
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
@@ -165,16 +180,6 @@ const projectOptions = computed(() => [
 			})) ?? []
 	}
 ]);
-
-// onMounted(() => {
-// 	// To preview if the asset is already in a project we need to grab the assets of all projects...
-// 	const projs =
-// 		useProjects().allProjects.value?.forEach(async (project) => {
-// 			const assets = await useProjects().get(project.id);
-// 		    console.log(project, props.resourceType, assets);
-// 		}) ?? [];
-// 	console.log(projs);
-// });
 
 const previewedAsset = ref<ResultType | null>(null);
 

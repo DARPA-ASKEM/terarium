@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -31,6 +31,12 @@ public class Dataset extends TerariumAsset {
 	 **/
 	@TSOptional
 	private String userId;
+
+	/**
+	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
+	 **/
+	@TSOptional
+	private String esgfId;
 
 	/**
 	 * Name of the dataset
@@ -74,7 +80,8 @@ public class Dataset extends TerariumAsset {
 	 * (Optional) Unformatted metadata about the dataset
 	 **/
 	@TSOptional
-	private Map<String, Object> metadata;
+	private JsonNode metadata;
+
 
 	/**
 	 * (Optional) Source of dataset
