@@ -74,6 +74,7 @@ export const profileDataset = async (
 	return response.data.id;
 };
 
+/** Handle messages received from the extraction client-event */
 const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	if (event.data.error) {
 		logger.error(
