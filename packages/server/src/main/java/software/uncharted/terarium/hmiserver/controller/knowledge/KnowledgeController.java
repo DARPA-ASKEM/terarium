@@ -71,6 +71,7 @@ import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -104,6 +105,7 @@ public class KnowledgeController {
 	final CodeService codeService;
 
 	final ExtractionService extractionService;
+	private final CurrentUserService currentUserService;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
@@ -772,7 +774,8 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Void> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId) {
-		extractionService.extractPDF(documentId);
+		String currentUserId = currentUserService.get().getId();
+		extractionService.extractPDF(documentId, currentUserId);
 		return ResponseEntity.accepted().build();
 	}
 

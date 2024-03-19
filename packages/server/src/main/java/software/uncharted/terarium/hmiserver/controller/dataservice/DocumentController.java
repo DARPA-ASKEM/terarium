@@ -69,6 +69,7 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
@@ -97,6 +98,7 @@ public class DocumentController {
 
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
+	private final CurrentUserService currentUserService;
 
 	@Value("${xdd.api-key}")
 	String apikey;
@@ -640,6 +642,7 @@ public class DocumentController {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
+			String currentUserId = currentUserService.get().getId();
 
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
@@ -664,7 +667,7 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			extractionService.extractPDF(docId);
+			extractionService.extractPDF(docId, currentUserId);
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
 		}
