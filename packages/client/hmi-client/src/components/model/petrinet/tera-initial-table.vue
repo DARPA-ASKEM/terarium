@@ -4,24 +4,30 @@
 		v-model:expanded-rows="expandedRows"
 		dataKey="id"
 		:row-class="rowClass"
-		size="small"
-		:class="{ 'hide-header': hideHeader }"
+		:class="{ 'hide-header': hideHeader, 'edit-mode': editMode, 'not-edit-mode': !editMode }"
 		edit-mode="cell"
 		@cell-edit-complete="conceptSearchTerm = { curie: '', name: '' }"
 	>
-		<!-- Row expander, ID and Name columns -->
+		<!-- Row expander -->
 		<Column expander class="w-3rem" />
-		<Column header="Symbol">
+
+		<!-- Symbol -->
+		<Column header="Symbol" class="col-1">
 			<template #body="slotProps">
 				<span class="truncate-text">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
 		</Column>
-		<Column header="Name">
+
+		<!-- Name -->
+		<Column header="Name" class="col-1">
 			<template #body="{ data }">
+				<span v-if="!editMode" class="display-value truncate-text">{{
+					data?.name ? data.name : '-'
+				}}</span>
 				<InputText
-					size="small"
+					:class="editMode ? '' : 'hide-input'"
 					v-model.lazy="data.name"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
 					@update:model-value="updateMetadata(data.value.target, 'name', $event)"
@@ -29,10 +35,14 @@
 			</template>
 		</Column>
 
-		<Column header="Description" class="w-2">
+		<!-- Description -->
+		<Column header="Description" class="col-1">
 			<template #body="slotProps">
+				<span v-if="!editMode" class="display-value truncate-text">{{
+					data?.description ? data.description : '- '
+				}}</span>
 				<InputText
-					size="small"
+					:class="editMode ? '' : 'hide-input'"
 					v-model.lazy="slotProps.data.description"
 					:disabled="configView || readonly || slotProps.data.type === ParamType.MATRIX"
 					@update:model-value="updateMetadata(slotProps.data.value.target, 'description', $event)"
@@ -40,7 +50,8 @@
 			</template>
 		</Column>
 
-		<Column header="Concept" class="w-1">
+		<!-- Concept -->
+		<Column header="Concept" class="col-1">
 			<template #body="{ data }">
 				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
 					{{
@@ -79,12 +90,16 @@
 			</template>
 		</Column>
 
-		<Column header="Unit" class="w-1">
+		<!-- Unit -->
+		<Column header="Unit" class="col-1">
 			<template #body="slotProps">
+				<span v-if="!editMode" class="display-value truncate-text">{{
+					slotProps.data.unit ? slotProps.data.unit : '- '
+				}}</span>
 				<InputText
 					v-if="slotProps.data.type === ParamType.CONSTANT"
-					size="small"
 					class="w-full"
+					:class="editMode ? '' : 'hide-input'"
 					:disabled="readonly"
 					v-model.lazy="slotProps.data.unit"
 					@update:model-value="(val) => updateMetadata(slotProps.data.value.target, 'unit', val)"
@@ -94,7 +109,7 @@
 		</Column>
 
 		<!-- Value type: Matrix or Expression -->
-		<Column field="type" header="Value Type" class="w-2">
+		<Column field="type" header="Value type" class="pr-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -106,7 +121,7 @@
 				/>
 				<Dropdown
 					v-else
-					class="value-type-dropdown w-9"
+					class="value-type-dropdown"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
@@ -135,7 +150,7 @@
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Value" class="w-2 pr-2">
+		<Column field="value" header="Value" class="col-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
@@ -151,9 +166,14 @@
 						slotProps.data.type === ParamType.CONSTANT
 					"
 				>
+					<span
+						v-if="!editMode"
+						class="display-value flex align-items-end tabular-numbers truncate-text"
+						>{{ slotProps.data.value.expression ? slotProps.data.value.expression : '- ' }}</span
+					>
 					<InputText
-						size="small"
 						class="tabular-numbers w-full"
+						:class="editMode ? '' : 'hide-input'"
 						v-model.lazy="slotProps.data.value.expression"
 						:disabled="readonly"
 						@update:model-value="updateExpression(slotProps.data.value)"
@@ -163,12 +183,15 @@
 		</Column>
 
 		<!-- Source  -->
-		<Column field="source" header="Source" class="w-2">
+		<Column field="source" header="Source" class="col-2">
 			<template #body="{ data }">
+				<span v-if="!editMode" class="display-value tabular-numbers truncate-text">{{
+					data.source ? data.source : '- '
+				}}</span>
 				<InputText
 					v-if="data.type === ParamType.CONSTANT"
-					size="small"
 					class="w-full"
+					:class="editMode ? '' : 'hide-input'"
 					v-model.lazy="data.source"
 					:disabled="readonly"
 					@update:model-value="(val) => updateMetadata(data.value.target, 'source', val)"
@@ -251,6 +274,7 @@ const props = defineProps<{
 	hideHeader?: boolean;
 	readonly?: boolean;
 	configView?: boolean;
+	editMode?: boolean;
 }>();
 
 const emit = defineEmits(['update-value', 'update-model']);
@@ -420,22 +444,45 @@ const changeType = (initial: Initial, typeIndex: number) => {
 </script>
 
 <style scoped>
+.edit-mode {
+	border: 1px solid var(--primary-color);
+	border-radius: var(--border-radius);
+	overflow: hidden;
+}
+.not-edit-mode {
+	border: 1px solid transparent;
+}
 .truncate-text {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-
-.p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
+.hide-input {
+	visibility: hidden;
+	padding-top: 0;
+	padding-bottom: 0;
+	height: 0px;
+	overflow: hidden;
+}
+.display-value {
+	margin-bottom: -10px;
+	display: flex;
+	align-items: center;
+	padding-top: var(--gap-small);
+}
+.p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr) {
 	padding: 0;
 }
 
+.p-datatable :deep(.p-datatable-tbody > tr > td) {
+	height: 3rem;
+}
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
 	display: none;
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
-	background: var(--surface-highlight);
+	background: var(--surface-0);
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {

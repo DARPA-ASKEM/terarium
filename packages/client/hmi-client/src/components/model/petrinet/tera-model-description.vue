@@ -1,6 +1,7 @@
 <template>
 	<main>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
+			<!-- Description -->
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
 					<span class="flex flex-row align-items-center gap-2 mb-1">
@@ -51,6 +52,8 @@
 					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
 				</section>
 			</AccordionTab>
+
+			<!-- Diagram -->
 			<AccordionTab header="Diagram">
 				<tera-model-diagram
 					ref="teraModelDiagramRef"
@@ -61,6 +64,8 @@
 					@update-configuration="updateConfiguration"
 				/>
 			</AccordionTab>
+
+			<!-- Provenance -->
 			<AccordionTab header="Provenance">
 				<tera-related-documents
 					class="m-2"
@@ -70,6 +75,8 @@
 					@enriched="fetchAsset"
 				/>
 			</AccordionTab>
+
+			<!-- Model equations -->
 			<AccordionTab header="Model equations">
 				<tera-model-equation
 					:model="model"
@@ -77,6 +84,8 @@
 					@model-updated="emit('model-updated')"
 				/>
 			</AccordionTab>
+
+			<!-- Associated resources -->
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models" />
@@ -89,6 +98,8 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+
+		<!-- Semantic tables -->
 		<tera-model-semantic-tables
 			:model="model"
 			:model-configurations="modelConfigurations"

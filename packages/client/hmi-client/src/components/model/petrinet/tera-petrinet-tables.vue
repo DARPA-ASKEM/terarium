@@ -1,10 +1,25 @@
 <template>
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
+		<!-- Initial variables -->
 		<AccordionTab>
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ states.length }})</span>
-				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
-					>Save Changes</Button
+				<Button
+					v-if="!readonly && editModeVariables"
+					@click.stop="
+						emit('update-model', transientModel);
+						editModeVariables = false;
+					"
+					class="ml-auto"
+					>Save changes</Button
+				>
+				<Button
+					v-if="!readonly && !editModeVariables"
+					@click.stop="editModeVariables = true"
+					outlined
+					severity="secondary"
+					class="ml-auto"
+					>Edit</Button
 				>
 			</template>
 			<tera-initial-table
@@ -14,13 +29,30 @@
 				@update-value="updateInitial"
 				@update-model="(updateModel: Model) => (transientModel = updateModel)"
 				:readonly="readonly"
+				:editMode="editModeVariables"
 			/>
 		</AccordionTab>
+
+		<!-- Parameters -->
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
-				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
-					>Save Changes</Button
+				<Button
+					v-if="!readonly && editModeParameters"
+					@click.stop="
+						emit('update-model', transientModel);
+						editModeParameters = false;
+					"
+					class="ml-auto"
+					>Save changes</Button
+				>
+				<Button
+					v-if="!readonly && !editModeParameters"
+					@click.stop="editModeParameters = true"
+					severity="secondary"
+					outlined
+					class="ml-auto"
+					>Edit</Button
 				>
 			</template>
 			<tera-parameter-table
@@ -30,8 +62,11 @@
 				@update-value="updateParam"
 				@update-model="(updatedModel: Model) => (transientModel = updatedModel)"
 				:readonly="readonly"
+				:editMode="editModeParameters"
 			/>
 		</AccordionTab>
+
+		<!-- Observables -->
 		<AccordionTab>
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
@@ -51,6 +86,8 @@
 				</Column>
 			</DataTable>
 		</AccordionTab>
+
+		<!-- Transitions -->
 		<AccordionTab>
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
@@ -72,6 +109,8 @@
 				</Column>
 			</DataTable>
 		</AccordionTab>
+
+		<!-- Other concepts -->
 		<AccordionTab>
 			<template #header>
 				Other concepts
@@ -165,6 +204,9 @@ const props = defineProps<{
 	modelConfigurations?: ModelConfiguration[];
 	readonly?: boolean;
 }>();
+
+const editModeVariables = ref(false);
+const editModeParameters = ref(false);
 
 const emit = defineEmits(['update-model']);
 

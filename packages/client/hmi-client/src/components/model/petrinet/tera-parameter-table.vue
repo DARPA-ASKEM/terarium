@@ -5,23 +5,30 @@
 		dataKey="id"
 		:row-class="rowClass"
 		size="small"
-		:class="{ 'hide-header': hideHeader }"
+		:class="{ 'hide-header': hideHeader, 'edit-mode': editMode, 'not-edit-mode': !editMode }"
 		edit-mode="cell"
 		@cell-edit-complete="conceptSearchTerm = { curie: '', name: '' }"
 	>
-		<!-- Row expander, ID and Name columns -->
+		<!-- Row expander -->
 		<Column expander class="w-3rem" />
-		<Column header="Symbol">
+
+		<!-- Symbol -->
+		<Column header="Symbol" class="col-1">
 			<template #body="slotProps">
 				<span class="truncate-text">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
 		</Column>
-		<Column header="Name">
+
+		<!-- Name -->
+		<Column header="Name" class="col-1">
 			<template #body="{ data }">
+				<span v-if="!editMode" class="display-value truncate-text">{{
+					data?.name ? data.name : '-'
+				}}</span>
 				<InputText
-					size="small"
+					:class="editMode ? '' : 'hide-input'"
 					v-model.lazy="data.name"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
 					@update:model-value="updateParamValue(data.value, 'name', $event)"
@@ -29,10 +36,14 @@
 			</template>
 		</Column>
 
-		<Column header="Description" class="w-2">
+		<!-- Description -->
+		<Column header="Description" class="col-1">
 			<template #body="{ data }">
+				<span v-if="!editMode" class="display-value truncate-text">{{
+					data?.description ? data.description : '- '
+				}}</span>
 				<InputText
-					size="small"
+					:class="editMode ? '' : 'hide-input'"
 					v-model.lazy="data.description"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
 					@update:model-value="updateParamValue(data.value, 'description', $event)"
@@ -40,7 +51,8 @@
 			</template>
 		</Column>
 
-		<Column header="Concept" class="w-1">
+		<!-- Concept -->
+		<Column header="Concept" class="col-1">
 			<template #body="{ data }">
 				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
 					{{
@@ -79,12 +91,16 @@
 			</template>
 		</Column>
 
-		<Column header="Unit" class="w-1">
+		<!-- Unit -->
+		<Column header="Unit" class="col-1">
 			<template #body="slotProps">
+				<span v-if="!editMode" class="display-value truncate-text">{{
+					slotProps.data.unit ? slotProps.data.unit : '- '
+				}}</span>
 				<InputText
 					v-if="slotProps.data.type !== ParamType.MATRIX"
-					size="small"
 					class="w-full"
+					:class="editMode ? '' : 'hide-input'"
 					v-model.lazy="slotProps.data.unit"
 					:disabled="readonly"
 					@update:model-value="
@@ -99,7 +115,7 @@
 		</Column>
 
 		<!-- Value type: Matrix or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
-		<Column field="type" header="Value Type" class="w-2">
+		<Column field="type" header="Value type" class="pr-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -111,7 +127,7 @@
 				/>
 				<Dropdown
 					v-else
-					class="value-type-dropdown w-9"
+					class="value-type-dropdown"
 					:model-value="slotProps.data.type"
 					:options="typeOptions"
 					optionLabel="label"
@@ -140,7 +156,7 @@
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Value" class="w-2 pr-2">
+		<Column field="value" header="Value" class="col-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
@@ -154,9 +170,21 @@
 					v-else-if="slotProps.data.type === ParamType.DISTRIBUTION"
 					class="distribution-container"
 				>
+					<div v-if="!editMode" class="flex flex-column nudge-up">
+						<span class="display-value flex align-items-end tabular-numbers truncate-text">{{
+							slotProps.data.value.distribution.parameters.minimum
+								? `Min: ${slotProps.data.value.distribution.parameters.minimum}`
+								: '- '
+						}}</span>
+						<span class="display-value flex align-items-end tabular-numbers truncate-text">{{
+							slotProps.data.value.distribution.parameters.maximum
+								? `Max: ${slotProps.data.value.distribution.parameters.maximum}`
+								: '- '
+						}}</span>
+					</div>
 					<InputNumber
+						:class="editMode ? '' : 'hide-input'"
 						class="distribution-item min-value"
-						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -166,8 +194,8 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<InputNumber
+						:class="editMode ? '' : 'hide-input'"
 						class="distribution-item max-value"
-						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -183,9 +211,14 @@
 					v-else-if="slotProps.data.type === ParamType.CONSTANT"
 					class="flex align-items-center"
 				>
+					<span
+						v-if="!editMode"
+						class="display-value flex w-3 align-items-end tabular-numbers truncate-text"
+						>{{ slotProps.data.value.value ? slotProps.data.value.value : '- ' }}</span
+					>
 					<InputNumber
-						size="small"
-						class="constant-number"
+						:class="editMode ? '' : 'hide-input'"
+						class="constant-number w-6"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -197,7 +230,7 @@
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
 					<Button
 						v-if="!readonly"
-						class="ml-2 pt-0 pb-0 w-5"
+						class="ml-2 pt-0 pb-0 w-6"
 						text
 						@click="changeType(slotProps.data.value, 1)"
 						v-tooltip="'Convert to distribution'"
@@ -205,7 +238,6 @@
 						<span class="white-space-nowrap text-sm">Add ±</span>
 						<InputNumber
 							v-model="addPlusMinus"
-							size="small"
 							text
 							class="constant-number add-plus-minus w-full"
 							inputId="convert-to-distribution"
@@ -224,7 +256,6 @@
 					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
 				>
 					<InputText
-						size="small"
 						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
 						v-model.lazy="slotProps.data.timeseries"
 						:disabled="readonly"
@@ -236,12 +267,15 @@
 		</Column>
 
 		<!-- Source  -->
-		<Column field="source" header="Source" class="w-2">
+		<Column field="source" header="Source" class="col-2">
 			<template #body="{ data }">
+				<span v-if="!editMode" class="display-value tabular-numbers truncate-text">{{
+					data.source ? data.source : '- '
+				}}</span>
 				<InputText
 					v-if="data.type !== ParamType.MATRIX"
-					size="small"
 					class="w-full"
+					:class="editMode ? '' : 'hide-input'"
 					v-model.lazy="data.source"
 					:disabled="readonly"
 					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
@@ -319,6 +353,7 @@ const props = defineProps<{
 	hideHeader?: boolean;
 	readonly?: boolean;
 	configView?: boolean; // if the table is in the model config view we have limited functionality
+	editMode?: boolean;
 }>();
 
 const typeOptions = [
@@ -575,14 +610,40 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 </script>
 
 <style scoped>
+.edit-mode {
+	border: 1px solid var(--primary-color);
+	border-radius: var(--border-radius);
+	overflow: hidden;
+}
+.not-edit-mode {
+	border: 1px solid transparent;
+}
+
 .truncate-text {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+.hide-input {
+	visibility: hidden;
+	padding-top: 0;
+	padding-bottom: 0;
+	height: 0px;
+	overflow: hidden;
+}
+.display-value {
+	margin-top: -5px;
+	display: flex;
+	align-items: center;
+	padding-top: var(--gap-small);
+}
 
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
 	padding: 0;
+}
+
+.p-datatable :deep(.p-datatable-tbody > tr > td) {
+	height: 3rem;
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
@@ -590,7 +651,7 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
-	background: var(--surface-highlight);
+	background: var(--surface-0);
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {
@@ -613,7 +674,9 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 	font-size: var(--font-caption);
 	text-align: right;
 }
-
+.nudge-up {
+	margin-top: -3px;
+}
 .constant-number > :deep(input) {
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
