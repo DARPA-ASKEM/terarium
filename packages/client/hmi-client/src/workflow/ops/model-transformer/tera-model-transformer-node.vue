@@ -1,7 +1,7 @@
 <template>
 	<section>
 		<!--FIXME: See fetchModel()-->
-		<template v-if="model">
+		<template v-if="node.inputs[0].value && model">
 			<tera-model-diagram :model="model" :is-editable="false" is-preview />
 			<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 		</template>

@@ -1,15 +1,19 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				@click.stop
-				style="margin-left: auto"
 				:output="selectedOutputId"
 				is-selectable
 				:options="outputs"
 				@update:selection="onSelection"
 			/>
 		</template>
+
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="box-container" v-if="model">
@@ -26,12 +30,11 @@
 									severity="secondary"
 									@click.stop="extractConfigurationsFromInputs"
 									style="margin-left: auto"
-									:loading="isExtracting"
+									:loading="isLoading"
 								/>
 							</template>
 
 							<DataTable
-								v-if="suggestedConfirgurationContext.tableData.length > 0"
 								:value="suggestedConfirgurationContext.tableData"
 								size="small"
 								data-key="id"
@@ -39,7 +42,7 @@
 								:rows="5"
 								sort-field="createdOn"
 								:sort-order="-1"
-								:loading="isExtracting"
+								:loading="isLoading"
 							>
 								<Column field="name" header="Name" style="width: 15%">
 									<template #body="{ data }">
@@ -78,12 +81,9 @@
 									</div>
 								</template>
 								<template #empty>
-									<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
+									<p class="empty-section m-3">No configurations found.</p>
 								</template>
 							</DataTable>
-							<section v-else>
-								<p class="empty-section m-3">No configurations found.</p>
-							</section>
 						</AccordionTab>
 					</Accordion>
 				</div>
@@ -110,18 +110,18 @@
 					>
 						<AccordionTab>
 							<template #header>
-								Initial variable values<span class="artifact-amount"
-									>({{ tableFormattedInitials.length }})</span
-								>
+								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
-							<tera-model-config-table
+							<tera-initial-table
 								v-if="modelConfiguration"
-								:model-configuration="modelConfiguration"
-								:data="tableFormattedInitials"
+								:model="modelConfiguration.configuration"
+								:mmt="mmt"
+								:mmt-params="mmtParams"
+								config-view
 								@update-value="updateConfigInitial"
-								@update-configuration="
-									(configToUpdate: ModelConfiguration) => {
-										updateFromConfig(configToUpdate);
+								@update-model="
+									(modelToUpdate: Model) => {
+										updateConfigFromModel(modelToUpdate);
 									}
 								"
 							/>
@@ -152,16 +152,18 @@
 					</template>
 					<AccordionTab>
 						<template #header>
-							Parameters<span class="artifact-amount">({{ tableFormattedParams.length }})</span>
+							Parameters<span class="artifact-amount">({{ numParameters }})</span>
 						</template>
-						<tera-model-config-table
-							v-if="modelConfiguration && tableFormattedParams.length > 0"
-							:model-configuration="modelConfiguration"
-							:data="tableFormattedParams"
+						<tera-parameter-table
+							v-if="modelConfiguration"
+							:model="modelConfiguration.configuration"
+							:mmt="mmt"
+							:mmt-params="mmtParams"
+							config-view
 							@update-value="updateConfigParam"
-							@update-configuration="
-								(configToUpdate: ModelConfiguration) => {
-									updateFromConfig(configToUpdate);
+							@update-model="
+								(modelToUpdate: Model) => {
+									updateConfigFromModel(modelToUpdate);
 								}
 							"
 						/>
@@ -198,6 +200,7 @@
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
 						:defaultOptions="sampleAgentQuestions"
+						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
 					/>
 				</Suspense>
@@ -244,48 +247,52 @@
 			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
+	<!-- Matrix effect easter egg  -->
+	<canvas id="matrix-canvas"></canvas>
 </template>
 
 <script setup lang="ts">
 import { cloneDeep, isEmpty } from 'lodash';
-import { computed, ref, watch, onUnmounted, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Vue3Lottie } from 'vue3-lottie';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
-import { WorkflowNode } from '@/types/workflow';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { getModel, getModelConfigurations, getModelType } from '@/services/model';
-import { createModelConfiguration } from '@/services/model-configurations';
-import type { Model, ModelConfiguration, Initial, ModelParameter } from '@/types/Types';
-import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
-import { getStratificationType } from '@/model-representation/petrinet/petrinet-service';
-import {
-	getUnstratifiedInitials,
-	getUnstratifiedParameters
-} from '@/model-representation/petrinet/mira-petri';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { useToastService } from '@/services/toast';
-import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-import { logger } from '@/utils/logger';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { VAceEditor } from 'vue3-ace-editor';
+
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { KernelSessionManager } from '@/services/jupyter';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import '@/ace-config';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import { Vue3Lottie } from 'vue3-lottie';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
+import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
+import { createModelConfiguration } from '@/services/model-configurations';
+import { TaskStatus } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
+import { useToastService } from '@/services/toast';
+import { logger } from '@/utils/logger';
+import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
+import { KernelSessionManager } from '@/services/jupyter';
+import { FatalError } from '@/api/api';
 import { formatTimestamp } from '@/utils/date';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type { WorkflowNode } from '@/types/workflow';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import TeraModelConfigTable from './tera-model-config-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -316,7 +323,8 @@ interface BasicKnobs {
 	initials: Initial[];
 	parameters: ModelParameter[];
 	timeseries: { [index: string]: any };
-	sources: { [index: string]: any };
+	initialsMetadata: { [index: string]: any };
+	parametersMetadata: { [index: string]: any };
 	tempConfigId: string;
 }
 
@@ -326,7 +334,8 @@ const knobs = ref<BasicKnobs>({
 	initials: [],
 	parameters: [],
 	timeseries: {},
-	sources: {},
+	initialsMetadata: {},
+	parametersMetadata: {},
 	tempConfigId: ''
 });
 
@@ -359,6 +368,7 @@ const sampleAgentQuestions = [
 	'What are the current parameters values?',
 	'update the parameters {gamma: 0.13}'
 ];
+const contextLanguage = ref<string>('python3');
 
 const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
@@ -423,20 +433,52 @@ const initializeEditor = (editorInstance: any) => {
 
 const extractConfigurationsFromInputs = async () => {
 	if (!model.value?.id) return;
-	isExtracting.value = true;
-
-	const promises: Promise<void>[] = [];
 	if (documentId.value) {
-		promises.push(configureModelFromDocument(documentId.value, model.value.id));
+		modelFromDocumentHandler.value = await configureModelFromDocument(
+			documentId.value,
+			model.value.id,
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
+						throw new FatalError('Configs from document - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from document');
+						closeConnection();
+					}
+				},
+				onclose() {
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
+				}
+			}
+		);
 	}
 	if (datasetId.value) {
-		promises.push(configureModelFromDatasets(model.value.id, [datasetId.value]));
+		modelFromDatasetHandler.value = await configureModelFromDatasets(
+			model.value.id,
+			[datasetId.value],
+			{
+				ondata(data, closeConnection) {
+					if (data?.status === TaskStatus.Failed) {
+						closeConnection();
+						throw new FatalError('Configs from datasets - Task failed');
+					}
+					if (data.status === TaskStatus.Success) {
+						logger.success('Model configured from dataset(s)');
+						closeConnection();
+					}
+				},
+				onclose() {
+					if (model.value?.id) {
+						fetchConfigurations(model.value.id);
+					}
+				}
+			}
+		);
 	}
-
-	await Promise.all(promises);
-	await fetchConfigurations(model.value.id);
-
-	isExtracting.value = false;
 };
 
 const handleModelPreview = (data: any) => {
@@ -448,11 +490,13 @@ const handleModelPreview = (data: any) => {
 	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 	knobs.value.timeseries =
 		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
-	knobs.value.sources =
-		model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
+	knobs.value.initialsMetadata =
+		model.value?.metadata?.initials !== undefined ? model.value?.metadata?.initials : {};
+	knobs.value.parametersMetadata =
+		model.value?.metadata?.parameters !== undefined ? model.value?.metadata?.parameters : {};
 };
 
-const selectedOutputId = ref<string>(props.node.active ?? '');
+const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
@@ -469,8 +513,19 @@ const suggestedConfirgurationContext = ref<{
 	tableData: [],
 	modelConfiguration: null
 });
-const isExtracting = ref(false);
+const isFetching = ref(false);
+const modelFromDocumentHandler = ref();
+const modelFromDatasetHandler = ref();
+const isLoading = computed(
+	() =>
+		modelFromDocumentHandler.value?.isRunning ||
+		modelFromDatasetHandler.value?.isRunning ||
+		isFetching.value
+);
+
 const model = ref<Model | null>(null);
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
 const modelConfiguration = computed<ModelConfiguration | null>(() => {
 	if (!model.value) return null;
@@ -493,171 +548,32 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 			cloneModel.semantics.ode.initials = knobs.value.initials;
 			cloneModel.semantics.ode.parameters = knobs.value.parameters;
 			cloneModel.metadata.timeseries = knobs.value.timeseries;
-			cloneModel.metadata.sources = knobs.value.sources;
+			cloneModel.metadata.initials = knobs.value.initialsMetadata;
+			cloneModel.metadata.parameters = knobs.value.parametersMetadata;
 		}
 		modelConfig.configuration = cloneModel;
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
 		cloneModel.model.parameters = knobs.value.parameters;
 		cloneModel.metadata.timeseries = knobs.value.timeseries;
-		cloneModel.metadata.sources = knobs.value.sources;
+		cloneModel.metadata.initials = knobs.value.initialsMetadata;
+		cloneModel.metadata.parameters = knobs.value.parametersMetadata;
 		modelConfig.configuration = cloneModel;
 	}
 
 	return modelConfig;
 });
 
-const stratifiedModelType = computed(() => {
-	if (!model.value) return null;
-
-	// FIXME: dull out regnet/stockflow Feb 29, 2024
-	if (model.value.header.schema_name !== 'petrinet') return null;
-
-	return getStratificationType(model.value);
+const numParameters = computed(() => {
+	if (!mmt.value) return 0;
+	return Object.keys(mmt.value.parameters).length;
 });
 
-const parameters = computed<Map<string, string[]>>(() => {
-	if (!model.value) return new Map();
-	if (stratifiedModelType.value) {
-		return getUnstratifiedParameters(model.value);
-	}
-	const result = new Map<string, string[]>();
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		model.value.semantics?.ode.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		model.value.model.parameters?.forEach((p) => {
-			result.set(p.id, [p.id]);
-		});
-	}
-	return result;
-});
-
-const initials = computed<Map<string, string[]>>(() => {
-	if (!model.value) return new Map();
-	if (stratifiedModelType.value) {
-		return getUnstratifiedInitials(model.value);
-	}
-	const result = new Map<string, string[]>();
-	model.value.semantics?.ode.initials?.forEach((initial) => {
-		result.set(initial.target, [initial.target]);
-	});
-	return result;
-});
-
-const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
-	const formattedInitials: ModelConfigTableData[] = [];
-
-	if (stratifiedModelType.value) {
-		initials.value.forEach((vals, init) => {
-			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = knobs.value.initials.find((i) => i.target === v);
-				const sourceValue = knobs.value.sources[initial!.target];
-				return {
-					id: v,
-					name: v,
-					type: ParamType.EXPRESSION,
-					value: initial,
-					source: sourceValue,
-					visibility: false
-				};
-			});
-			formattedInitials.push({
-				id: init,
-				name: init,
-				type: ParamType.MATRIX,
-				value: 'matrix',
-				source: '',
-				visibility: false,
-				tableFormattedMatrix
-			});
-		});
-	} else {
-		initials.value.forEach((vals, init) => {
-			const initial = knobs.value.initials.find((i) => i.target === vals[0]);
-			const sourceValue = knobs.value.sources[initial!.target];
-
-			formattedInitials.push({
-				id: init,
-				name: init,
-				type: ParamType.EXPRESSION,
-				value: initial,
-				source: sourceValue,
-				visibility: false
-			});
-		});
-	}
-
-	return formattedInitials;
-});
-
-const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
-	const formattedParams: ModelConfigTableData[] = [];
-
-	if (stratifiedModelType.value) {
-		parameters.value.forEach((vals, init) => {
-			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const param = knobs.value.parameters.find((i) => i.id === v);
-				const paramType = getParamType(param);
-				const timeseriesValue = knobs.value.timeseries[param!.id];
-				const sourceValue = knobs.value.sources[param!.id];
-				return {
-					id: v,
-					name: v,
-					type: paramType,
-					value: param,
-					source: sourceValue,
-					visibility: false,
-					timeseries: timeseriesValue
-				};
-			});
-			formattedParams.push({
-				id: init,
-				name: init,
-				type: ParamType.MATRIX,
-				value: 'matrix',
-				source: '',
-				visibility: false,
-				tableFormattedMatrix
-			});
-		});
-	} else {
-		parameters.value.forEach((vals, init) => {
-			const param = knobs.value.parameters.find((i) => i.id === vals[0]);
-			const paramType = getParamType(param);
-
-			const timeseriesValue = knobs.value.timeseries[param!.id];
-			const sourceValue = knobs.value.sources[param!.id];
-			formattedParams.push({
-				id: init,
-				name: init,
-				type: paramType,
-				value: param,
-				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
-			});
-		});
-	}
-
-	return formattedParams;
+const numInitials = computed(() => {
+	if (!mmt.value) return 0;
+	return Object.keys(mmt.value.initials).length;
 });
 
 const modelType = computed(() => getModelType(model.value));
-
-const getParamType = (param: ModelParameter | undefined) => {
-	let type = ParamType.CONSTANT;
-	if (!param) return type;
-	if (
-		modelConfiguration.value?.configuration.metadata?.timeseries?.[param.id] ||
-		modelConfiguration.value?.configuration.metadata.timeseries?.[param.id] === ''
-	) {
-		type = ParamType.TIME_SERIES;
-	} else if (param?.distribution) {
-		type = ParamType.DISTRIBUTION;
-	}
-	return type;
-};
 
 const updateConfigParam = (params: ModelParameter[]) => {
 	for (let i = 0; i < knobs.value.parameters.length; i++) {
@@ -677,15 +593,16 @@ const updateConfigInitial = (inits: Initial[]) => {
 	}
 };
 
-const updateFromConfig = (config: ModelConfiguration) => {
+const updateConfigFromModel = (inputModel: Model) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		knobs.value.initials = config.configuration.semantics?.ode.initials ?? [];
-		knobs.value.parameters = config.configuration.semantics?.ode.parameters ?? [];
+		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
+		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		knobs.value.parameters = config.configuration.model?.parameters ?? [];
+		knobs.value.parameters = inputModel.model?.parameters ?? [];
 	}
-	knobs.value.timeseries = config.configuration?.metadata?.timeseries ?? {};
-	knobs.value.sources = config.configuration?.metadata?.sources ?? {};
+	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
+	knobs.value.initialsMetadata = inputModel.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = inputModel.metadata?.parameters ?? {};
 };
 
 const createConfiguration = async () => {
@@ -720,10 +637,9 @@ const onSelection = (id: string) => {
 
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
-		// FIXME: since configurations are made on the backend on the fly, we need to wait for the db to update before fetching, here's an artificaial delay
-		setTimeout(async () => {
-			suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
-		}, 800);
+		isFetching.value = true;
+		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		isFetching.value = false;
 	}
 };
 
@@ -771,8 +687,10 @@ const initialize = async () => {
 		}
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
-		knobs.value.sources =
-			model.value?.metadata?.sources !== undefined ? model.value?.metadata?.sources : {};
+		knobs.value.initialsMetadata =
+			model.value?.metadata?.initials !== undefined ? model.value?.metadata?.initials : {};
+		knobs.value.parametersMetadata =
+			model.value?.metadata?.parameters !== undefined ? model.value?.metadata?.parameters : {};
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
@@ -780,7 +698,8 @@ const initialize = async () => {
 		knobs.value.initials = state.initials;
 		knobs.value.parameters = state.parameters;
 		knobs.value.timeseries = state.timeseries;
-		knobs.value.sources = state.sources;
+		knobs.value.initialsMetadata = state.initialsMetadata;
+		knobs.value.parametersMetadata = state.parametersMetadata;
 	}
 
 	// Create a new session and context based on model
@@ -799,16 +718,19 @@ const initialize = async () => {
 };
 
 const useSuggestedConfig = (config: ModelConfiguration) => {
+	const amr = config.configuration;
+
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		knobs.value.initials = config.configuration.semantics.ode.initials;
-		knobs.value.parameters = config.configuration.semantics.ode.parameters;
+		knobs.value.initials = amr.semantics.ode.initials;
+		knobs.value.parameters = amr.semantics.ode.parameters;
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		knobs.value.parameters = config.configuration.model.parameters;
+		knobs.value.parameters = amr.model.parameters;
 	}
-	knobs.value.timeseries = config.configuration.metadata?.timeseries ?? {};
-	knobs.value.sources = config.configuration.metadata?.sources ?? {};
+	knobs.value.timeseries = amr.metadata?.timeseries ?? {};
+	knobs.value.initialsMetadata = amr.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = amr.metadata?.parameters ?? {};
 	logger.success(`Configuration applied ${config.name}`);
 };
 
@@ -827,6 +749,17 @@ onMounted(async () => {
 });
 
 watch(
+	() => modelConfiguration.value,
+	async (config) => {
+		if (!config) return;
+		const response: any = await getMMT(config.configuration);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	},
+	{ immediate: true }
+);
+
+watch(
 	() => knobs.value,
 	async () => {
 		const state = cloneDeep(props.node.state);
@@ -835,8 +768,10 @@ watch(
 		state.initials = knobs.value.initials;
 		state.parameters = knobs.value.parameters;
 		state.timeseries = knobs.value.timeseries;
-		state.sources = knobs.value.sources;
+		state.initialsMetadata = knobs.value.initialsMetadata;
+		state.parametersMetadata = knobs.value.parametersMetadata;
 		state.tempConfigId = knobs.value.tempConfigId;
+
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -850,7 +785,7 @@ watch(
 			await initialize();
 		}
 	},
-	{ deep: true }
+	{ immediate: true }
 );
 
 onUnmounted(() => {
@@ -919,18 +854,6 @@ onUnmounted(() => {
 	width: 100%;
 }
 
-.floating-footer {
-	display: flex;
-	justify-content: flex-end;
-	position: fixed;
-	padding-top: 0.75rem;
-	bottom: 16px;
-	left: 3rem;
-	width: calc(100% - 6rem);
-	background-color: var(--surface-glass);
-	backdrop-filter: blur(8px);
-	border-top: 1px solid var(--surface-border);
-}
 :deep(.p-button:disabled.p-button-outlined) {
 	background-color: var(--surface-0) !important;
 }
@@ -955,5 +878,18 @@ onUnmounted(() => {
 
 .use-button {
 	white-space: nowrap;
+}
+
+#matrix-canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+	pointer-events: none;
+	mix-blend-mode: darken;
+	opacity: 1;
+	transition: opacity 1s;
 }
 </style>

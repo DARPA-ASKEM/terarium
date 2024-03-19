@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,12 +13,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,11 +33,16 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.mira.Curies;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
+import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
@@ -49,6 +58,9 @@ public class MiraController {
 	final private ArtifactService artifactService;
 	final private TaskService taskService;
 
+	@Autowired
+	MIRAProxy proxy;
+
 	@Data
 	static public class ModelConversionRequest {
 		public UUID artifactId;
@@ -59,7 +71,7 @@ public class MiraController {
 		public Model response;
 	}
 
-	private boolean endsWith(final String filename, final List<String> suffixes) {
+	private static boolean endsWith(final String filename, final List<String> suffixes) {
 		for (final String suffix : suffixes) {
 			if (filename.endsWith(suffix)) {
 				return true;
@@ -72,11 +84,43 @@ public class MiraController {
 	final private MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	final private SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 
+	@Data
+	public static class ConversionAdditionalProperties {
+		String fileName;
+	}
+
 	@PostConstruct
 	void init() {
 		taskService.addResponseHandler(stellaToStockflowResponseHandler);
 		taskService.addResponseHandler(mdlToStockflowResponseHandler);
 		taskService.addResponseHandler(sbmlToPetrinetResponseHandler);
+	}
+
+	@PostMapping("/amr-to-mmt")
+	@Secured(Roles.USER)
+	@Operation(summary = "convert AMR to MIRA model template")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
+	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
+		try {
+			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.MIRA);
+			req.setInput(objectMapper.writeValueAsString(model).getBytes());
+			req.setScript(AMRToMMTResponseHandler.NAME);
+
+			// send the request
+			final TaskResponse resp = taskService.runTaskSync(req);
+			final JsonNode mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(mmtInfo);
+		} catch (final Exception e) {
+			final String error = "Unable to dispatch task request";
+			log.error("Unable to convert Model to MIRA model template. \n{}: {}", error, e.getMessage());
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to convert Model to MIRA model template.");
+		}
 	}
 
 	@PostMapping("/convert-and-create-model")
@@ -114,9 +158,13 @@ public class MiraController {
 						"Unable to fetch file contents");
 			}
 
+			final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+			additionalProperties.setFileName(filename);
+
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.MIRA);
 			req.setInput(fileContents.get().getBytes());
+			req.setAdditionalProperties(additionalProperties);
 
 			if (endsWith(filename, List.of(".mdl"))) {
 				req.setScript(MdlToStockflowResponseHandler.NAME);
@@ -139,8 +187,8 @@ public class MiraController {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				error);
 		}
 	}
 
@@ -163,5 +211,64 @@ public class MiraController {
 	@IgnoreRequestLogging
 	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
 		return taskService.subscribe(taskId);
+	}
+
+	@GetMapping("/currie/{curies}")
+	@Secured(Roles.USER)
+	public ResponseEntity<List<DKG>> searchConcept(
+			@PathVariable("curies") final String curies) {
+		try {
+			final ResponseEntity<List<DKG>> response = proxy.getEntities(curies);
+			if (response.getStatusCode().is2xxSuccessful()) {
+				return ResponseEntity.ok(response.getBody());
+			}
+			return ResponseEntity.internalServerError().build();
+		} catch (final FeignException.NotFound e) { // Handle 404 errors
+			log.info("Could not find resource in the DKG", e);
+			return ResponseEntity.noContent().build();
+		} catch (final Exception e) {
+			log.error("Unable to fetch DKG", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	@GetMapping("/search")
+	@Secured(Roles.USER)
+	public ResponseEntity<List<DKG>> search(
+			@RequestParam("q") final String q,
+			@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
+			@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset) {
+		try {
+			final ResponseEntity<List<DKG>> response = proxy.search(q, limit, offset);
+			if (response.getStatusCode().is2xxSuccessful()) {
+				return ResponseEntity.ok(response.getBody());
+			}
+			return ResponseEntity.internalServerError().build();
+		} catch (final FeignException.NotFound e) { // Handle 404 errors
+			log.info("Could not find resource in the DKG", e);
+			return ResponseEntity.notFound().build();
+		} catch (final Exception e) {
+			log.error("Unable to fetch DKG", e);
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	// This rebuilds the semantics ODE via MIRA
+	// 1. Send AMR to MIRA => MIRANet
+	// 2. Send MIRANet to MIRA to convert back to AMR Petrinet
+	// 3. Send AMR back
+	@PostMapping("/reconstruct-ode-semantics")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> reconstructODESemantics(
+			final Object amr) {
+		return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
+
+	}
+
+	@PostMapping("/entity-similarity")
+	@Secured(Roles.USER)
+	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(
+			@RequestBody final Curies obj) {
+		return ResponseEntity.ok(proxy.entitySimilarity(obj).getBody());
 	}
 }

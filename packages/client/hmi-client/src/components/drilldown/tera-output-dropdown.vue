@@ -42,6 +42,10 @@ const emit = defineEmits(['update:selection']);
 </script>
 
 <style scoped>
+.p-dropdown {
+	align-self: end;
+}
+
 .output-dropdown:deep(.p-inputtext) {
 	padding: 0.75rem 1rem;
 	font-size: var(--font-body-small);

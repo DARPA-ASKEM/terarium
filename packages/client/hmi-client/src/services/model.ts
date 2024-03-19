@@ -28,7 +28,7 @@ export async function getModel(modelId: string): Promise<Model | null> {
 //
 // Retrieve multiple datasets by their IDs
 // FIXME: the backend does not support bulk fetch
-//        so for now we are fetching by issueing multiple API calls
+//        so for now we are fetching by issuing multiple API calls
 export async function getBulkModels(modelIDs: string[]) {
 	const result: Model[] = [];
 	const promiseList = [] as Promise<Model | null>[];
@@ -42,6 +42,16 @@ export async function getBulkModels(modelIDs: string[]) {
 		}
 	});
 	return result;
+}
+
+// Note: will not work with decapodes
+export async function getMMT(model: Model) {
+	const response = await API.post('/mira/amr-to-mmt', model);
+
+	const miraModel = response?.data?.response;
+	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
+
+	return response?.data?.response ?? null;
 }
 
 /**
@@ -70,16 +80,6 @@ export async function getModelConfigurations(modelId: Model['id']): Promise<Mode
 	return response?.data ?? ([] as ModelConfiguration[]);
 }
 
-/**
- * Reconstruct an petrinet AMR's ode semantics
- *
- * @deprecated moving to mira-stratify
- */
-export async function reconstructAMR(amr: any) {
-	const response = await API.post('/mira/reconstruct_ode_semantics', amr);
-	return response?.data;
-}
-
 // function adds model to project, returns modelId if successful otherwise null
 export async function addNewPetrinetModelToProject(modelName: string): Promise<string | null> {
 	// 1. Load an empty AMR
@@ -102,7 +102,7 @@ export async function processAndAddModelToProject(artifact: Artifact): Promise<s
 
 // A helper function to check if a model is empty.
 export function isModelEmpty(model: Model) {
-	if (model.header.schema_name === 'petrinet') {
+	if (getModelType(model) === AMRSchemaNames.PETRINET) {
 		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
 	}
 	// TODO: support different frameworks' version of empty
@@ -181,7 +181,7 @@ export async function generateModelCard(
 	}
 }
 
-// helper fucntion to get the model type, will always default to petrinet if the model is not found
+// helper function to get the model type, will always default to petrinet if the model is not found
 export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	const schemaName = model?.header?.schema_name?.toLowerCase();
 	if (schemaName === 'regnet') {
@@ -190,21 +190,26 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	if (schemaName === 'stockflow') {
 		return AMRSchemaNames.STOCKFLOW;
 	}
+	if (schemaName === 'decapodes' || schemaName === 'decapode') {
+		return AMRSchemaNames.DECAPODES;
+	}
 	return AMRSchemaNames.PETRINET;
 }
 
 // Converts a model into latex equation, either one of petrinet, stocknflow, or regnet;
-export async function getModelEquation(model: Model) {
+export async function getModelEquation(model: Model): Promise<string> {
 	const unSupportedFormats = ['decapodes'];
 	if (unSupportedFormats.includes(model.header.schema_name as string)) {
-		console.log(`getModelEquation: ${model.header.schema_name} not suported `);
+		console.warn(`getModelEquation: ${model.header.schema_name} not supported `);
 		return '';
 	}
 
-	const id = model.id;
-	const response = await API.get(`/transforms/model-to-latex/${id}`);
+	/* TODO - Replace the GET with the POST when the backend is ready,
+	 *        see PR https://github.com/DARPA-ASKEM/sciml-service/pull/167
+	 */
+	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
+	// const response = await API.post(`/transforms/model-to-latex/`, model);
 	const latex = response.data.latex;
 	if (!latex) return '';
-
 	return latex;
 }
