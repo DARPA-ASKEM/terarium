@@ -217,7 +217,9 @@ const updateInitial = (inits: Initial[]) => {
 };
 
 const updateParam = (params: ModelParameter[]) => {
-	const modelParameters = transientModel.value.semantics?.ode.parameters ?? [];
+	const modelParameters = (transientModel.value.semantics?.ode?.parameters ?? []).push(
+		transientModel.value.model?.auxiliaries ?? []
+	);
 	for (let i = 0; i < modelParameters.length; i++) {
 		const foundParam = params.find((p) => p.id === modelParameters![i].id);
 		if (foundParam) {
