@@ -48,7 +48,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.controller.knowledge.KnowledgeController;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -69,6 +68,8 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -89,14 +90,14 @@ public class DocumentController {
 
 	final DownloadService downloadService;
 
-	final KnowledgeController knowledgeController;
-
 	private final ProjectService projectService;
 	private final ProjectAssetService projectAssetService;
 
 	final DocumentAssetService documentAssetService;
 
 	final ObjectMapper objectMapper;
+	final ExtractionService extractionService;
+	private final CurrentUserService currentUserService;
 
 	@Value("${xdd.api-key}")
 	String apikey;
@@ -436,14 +437,14 @@ public class DocumentController {
 
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
-			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+			final DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
 					extractionResponse.getSuccess().getData());
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
 			}
 
 			// Upload the PDF from unpaywall
-			documentAsset = uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
 
 			// add asset to project
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
@@ -635,11 +636,12 @@ public class DocumentController {
 	 * @param docId    document id
 	 * @return extraction job id
 	 */
-	private DocumentAsset uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
+	private void uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
 			final UUID docId) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
+			final String currentUserId = currentUserService.get().getId();
 
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
@@ -664,17 +666,9 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			final ResponseEntity<DocumentAsset> res = knowledgeController.postPDFToCosmos(docId);
-			if (res.getStatusCode().is2xxSuccessful()) {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						"Unable to extract pdf");
-			}
-			return res.getBody();
-
+			extractionService.extractPDF(docId, currentUserId);
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
-			return null;
 		}
 	}
 }

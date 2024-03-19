@@ -1,15 +1,19 @@
 <template>
 	<main>
-		<tera-simulate-chart
-			v-if="selectedRunId && runResults[selectedRunId]"
-			:run-results="runResults[selectedRunId]"
-			:chartConfig="{
-				selectedRun: selectedRunId,
-				selectedVariable: props.node.state.chartConfigs[0]
-			}"
-			:size="{ width: 180, height: 120 }"
-			has-mean-line
-		/>
+		<template v-if="selectedRunId && runResults[selectedRunId]">
+			<tera-simulate-chart
+				v-for="(config, idx) of props.node.state.chartConfigs"
+				:key="idx"
+				:run-results="runResults[selectedRunId]"
+				:chartConfig="{
+					selectedRun: selectedRunId,
+					selectedVariable: config
+				}"
+				:size="{ width: 180, height: 120 }"
+				has-mean-line
+				@configuration-change="chartProxy.configurationChange(idx, $event)"
+			/>
+		</template>
 
 		<tera-progress-spinner
 			v-if="inProgressSimulationId"
@@ -41,6 +45,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+import { chartActionsProxy } from '@/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type { RunResults } from '@/types/SimulateConfig';
@@ -80,17 +85,14 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
+const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
-};
+});
 
 const processResult = (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
-		addChart();
+		chartProxy.addChart();
 	}
 
 	emit('append-output', {
@@ -100,8 +102,7 @@ const processResult = (runId: string) => {
 		state: {
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
-			method: state.method,
-			inProgressSimulationId: state.inProgressSimulationId
+			method: state.method
 		},
 		isSelected: false
 	});
