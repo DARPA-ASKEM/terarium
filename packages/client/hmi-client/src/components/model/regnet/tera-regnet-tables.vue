@@ -64,10 +64,7 @@
 		</AccordionTab>
 		<AccordionTab header="Parameters">
 			<template #header>
-				<Button
-					v-if="!readonly"
-					@click.stop="emit('update-model', transientModel)"
-					style="margin-left: auto"
+				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
 			</template>

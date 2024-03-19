@@ -3,10 +3,7 @@
 		<AccordionTab>
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ states.length }})</span>
-				<Button
-					v-if="!readonly"
-					@click.stop="emit('update-model', transientModel)"
-					style="margin-left: auto"
+				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
 			</template>
@@ -22,10 +19,7 @@
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
-				<Button
-					v-if="!readonly"
-					@click.stop="emit('update-model', transientModel)"
-					style="margin-left: auto"
+				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
 			</template>
