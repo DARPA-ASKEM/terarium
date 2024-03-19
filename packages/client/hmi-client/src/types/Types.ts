@@ -616,7 +616,7 @@ export interface ExtractionResponseResult {
     job_result: any;
 }
 
-export interface ExtrationStatusUpdate {
+export interface ExtractionStatusUpdate {
     documentId: string;
     step: number;
     totalSteps: number;

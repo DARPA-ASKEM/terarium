@@ -1,7 +1,9 @@
 import API, { Poller, PollerResult, PollerState, PollResponse } from '@/api/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import type { Code, Dataset, Model } from '@/types/Types';
+import type { ClientEvent, Code, Dataset, ExtractionStatusUpdate, Model } from '@/types/Types';
+import { ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
 /**
  * Fetch information from the extraction service via the Poller utility
@@ -104,11 +106,34 @@ export const profileDataset = async (
 	return response.data.id;
 };
 
+const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
+	if (event.data.error) {
+		console.log(
+			`Extraction client-event: ERROR [${event.data.step}/${event.data.totalSteps}]: ${event.data.error}`
+		);
+		await unsubscribe(ClientEventType.Extraction, messageHandler);
+		return;
+	}
+	if (event.data.message) {
+		console.log(
+			`Extraction client-event: [${event.data.step}/${event.data.totalSteps}]: ${event.data.message}`
+		);
+	} else {
+		console.log(`Extraction client-event: [${event.data.step}/${event.data.totalSteps}]`);
+	}
+	if (event.data.step === event.data.totalSteps) {
+		await unsubscribe(ClientEventType.Extraction, messageHandler);
+	}
+};
+
 export const extractPDF = async (documentId: string) => {
 	if (documentId) {
 		try {
-			const response = await API.post(`/knowledge/pdf-to-cosmos?document_id=${documentId}`);
-			if (response?.status === 202) return;
+			const response = await API.post(`/knowledge/pdf-to-cosmos?document-id=${documentId}`);
+			if (response?.status === 202) {
+				await subscribe(ClientEventType.Extraction, messageHandler);
+				return;
+			}
 			logger.error('pdf text extraction request failed', {
 				showToast: false,
 				toastTitle: 'Error - pdfExtractions'

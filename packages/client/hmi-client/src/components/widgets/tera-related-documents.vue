@@ -82,23 +82,6 @@
 					</div>
 				</div>
 			</div>
-			<aside v-if="dialogType === DialogType.EXTRACT && assetType === AssetType.Model">
-				<p>Which extraction service would you like to use?</p>
-				<RadioButton
-					v-model="extractionService"
-					inputId="extractionServiceSkema"
-					name="skema"
-					:value="Extractor.SKEMA"
-				/>
-				<label for="extractionServiceSkema">SKEMA</label>
-				<RadioButton
-					v-model="extractionService"
-					inputId="extractionServiceMit"
-					name="mit"
-					:value="Extractor.MIT"
-				/>
-				<label for="extractionServiceMit">MIT</label>
-			</aside>
 			<template #footer>
 				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
 				<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
@@ -113,12 +96,10 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import RadioButton from 'primevue/radiobutton';
 import {
 	alignModel,
-	Extractor,
+	extractPDF,
 	fetchExtraction,
-	pdfExtractions,
 	profileDataset,
 	profileModel
 } from '@/services/knowledge';
@@ -151,7 +132,6 @@ const emit = defineEmits(['enriched']);
 const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
-const extractionService = ref<Extractor>(Extractor.SKEMA);
 const isLoading = ref(false);
 const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
 
@@ -245,8 +225,9 @@ const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
 	isLoading.value = true;
 
-	const pdfExtractionsJobId = await pdfExtractions(selectedResourceId, extractionService.value);
-	if (!pdfExtractionsJobId || !props.assetId) return;
+	await extractPDF(selectedResourceId);
+	// TODO: subscribe to EXTRACTION events
+	if (!props.assetId) return;
 	await createProvenance({
 		relation_type: RelationshipType.EXTRACTED_FROM,
 		left: props.assetId,
@@ -254,7 +235,7 @@ const sendForExtractions = async () => {
 		right: selectedResourceId,
 		right_type: ProvenanceType.Document
 	});
-	await fetchExtraction(pdfExtractionsJobId);
+	// await fetchExtraction(pdfExtractionsJobId);
 
 	isLoading.value = false;
 	emit('enriched');

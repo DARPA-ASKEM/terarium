@@ -7,14 +7,14 @@ import java.util.UUID;
 
 @Data
 @TSModel
-public class ExtrationStatusUpdate {
+public class ExtractionStatusUpdate {
     private UUID documentId;
     private Integer step;
     private Integer totalSteps;
     private String message;
     private String error;
 
-    public ExtrationStatusUpdate(UUID documentId, Integer step, Integer totalSteps, String message, String error) {
+    public ExtractionStatusUpdate(UUID documentId, Integer step, Integer totalSteps, String message, String error) {
         this.documentId = documentId;
         this.step = step;
         this.totalSteps = totalSteps;
