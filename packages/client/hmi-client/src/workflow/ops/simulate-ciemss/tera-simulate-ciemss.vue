@@ -10,12 +10,12 @@
 			<tera-drilldown-section>
 				<div class="form-section">
 					<h4>Set simulation parameters</h4>
+					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="2">Start time</label>
 							<InputNumber
 								id="2"
-								class="p-inputtext-sm"
 								v-model="timespan.start"
 								inputId="integeronly"
 								@update:model-value="updateState"
@@ -25,17 +25,19 @@
 							<label for="3">End time</label>
 							<InputNumber
 								id="3"
-								class="p-inputtext-sm"
 								v-model="timespan.end"
 								inputId="integeronly"
 								@update:model-value="updateState"
 							/>
 						</div>
+					</div>
+
+					<!-- Number of Samples & Method -->
+					<div class="input-row mt-3">
 						<div class="label-and-input">
 							<label for="4">Number of samples</label>
 							<InputNumber
 								id="4"
-								class="p-inputtext-sm"
 								v-model="numSamples"
 								inputId="integeronly"
 								:min="1"
@@ -46,7 +48,6 @@
 							<label for="5">Method</label>
 							<Dropdown
 								id="5"
-								class="p-inputtext-sm"
 								v-model="method"
 								:options="ciemssMethodOptions"
 								@update:model-value="updateState"
@@ -71,30 +72,37 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
-				<SelectButton
-					:model-value="view"
-					@change="if ($event.value) view = $event.value;"
-					:options="viewOptions"
-					option-value="value"
-				>
-					<template #option="{ option }">
-						<i :class="`${option.icon} p-button-icon-left`" />
-						<span class="p-button-label">{{ option.value }}</span>
-					</template>
-				</SelectButton>
+				<div class="flex flex-row align-items-center gap-2">
+					What do you want to see?
+					<SelectButton
+						class=""
+						:model-value="view"
+						@change="if ($event.value) view = $event.value;"
+						:options="viewOptions"
+						option-value="value"
+					>
+						<template #option="{ option }">
+							<i :class="`${option.icon} p-button-icon-left`" />
+							<span class="p-button-label">{{ option.value }}</span>
+						</template>
+					</SelectButton>
+				</div>
+
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts">
+					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="runResults[selectedRunId]"
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							has-mean-line
-							@configuration-change="configurationChange(idx, $event)"
+							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							:size="chartSize"
+							class="mb-2"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
@@ -131,14 +139,16 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import type { RunResults } from '@/types/SimulateConfig';
+import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCiemss,
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
-import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
+import { chartActionsProxy } from '@/workflow/util';
+
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -156,6 +166,7 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
@@ -197,6 +208,18 @@ const selectedOutputId = ref<string>();
 const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
+
+const outputPanel = ref(null);
+const chartSize = computed(() => {
+	if (!outputPanel.value) return { width: 100, height: 270 };
+
+	const parentContainerWidth = (outputPanel.value as HTMLElement).clientWidth - 48;
+	return { width: parentContainerWidth, height: 270 };
+});
+
+const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
+	emit('update-state', state);
+});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -252,20 +275,6 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
-	emit('update-state', state);
-};
-
 watch(
 	() => props.node.state.inProgressSimulationId,
 	(id) => {
@@ -292,10 +301,6 @@ watch(
 </script>
 
 <style scoped>
-.simulate-chart {
-	margin: 2em 1.5em;
-}
-
 .form-section {
 	display: flex;
 	flex-direction: column;

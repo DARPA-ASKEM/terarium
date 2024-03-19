@@ -94,6 +94,7 @@
 			:model-configurations="modelConfigurations"
 			@update-model="(modelClone) => emit('update-model', modelClone)"
 			class="mt-0"
+			:readonly="featureConfig?.isPreview"
 		/>
 	</main>
 </template>
