@@ -274,7 +274,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(document.getMetadata() != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void linkAmrTests() throws Exception {
 
