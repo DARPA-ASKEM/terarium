@@ -35,8 +35,8 @@ export const getGraphDataFromDatasetCSV = (
 	runType?: RunType
 ): DataseriesConfig | null => {
 	// TA3 quirks, adjust variable names - FIXME
-	const selectedVariableLookup =
-		runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar.slice(0, -6);
+	const selectedVariableLookup = runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar;
+	// runType === RunType.Julia ? columnVar.slice(0, -3) : columnVar.slice(0, -6);
 	const timeVariableLookup = 'timestamp';
 
 	// Default

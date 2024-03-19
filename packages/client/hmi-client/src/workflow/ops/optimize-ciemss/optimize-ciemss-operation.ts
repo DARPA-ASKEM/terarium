@@ -45,8 +45,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 
 export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
-	description: 'Optimize a model configuration using funman',
-	displayName: 'Optimize model configuration',
+	displayName: 'Optimize with PyCIEMSS',
+	description: 'Optimize with PyCIEMSS',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'modelConfigId' }],
 	isRunnable: true,
@@ -59,8 +59,8 @@ export const OptimizeCiemssOperation: Operation = {
 			solverMethod: 'euler',
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
-			riskTolerance: 95,
-			threshold: 0,
+			riskTolerance: 5,
+			threshold: 1,
 			isMinimized: true,
 			chartConfigs: [],
 			simulationsInProgress: [],
