@@ -494,6 +494,14 @@ const runOptimize = async () => {
 
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
 	getStatus(simulationResponse.id);
+	const state = _.cloneDeep(props.node.state);
+	emit('append-output', {
+		type: OptimizeCiemssOperation.outputs[0].type,
+		label: `Output - ${props.node.outputs.length + 1}`,
+		value: simulationResponse.id,
+		isSelected: false,
+		state
+	});
 };
 
 const getStatus = async (runId: string) => {
@@ -554,7 +562,6 @@ const getOptimizeStatus = async (runId: string) => {
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
-	const state = _.cloneDeep(props.node.state);
 	// TODO: This should be taking some values from our output result but its TBD
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
@@ -569,13 +576,6 @@ const saveModelConfiguration = async () => {
 	}
 
 	logger.success('Created model configuration');
-	emit('append-output', {
-		type: OptimizeCiemssOperation.outputs[0].type,
-		label: state.modelConfigName,
-		value: data.id,
-		isSelected: false,
-		state
-	});
 };
 
 const setOutputValues = async () => {
