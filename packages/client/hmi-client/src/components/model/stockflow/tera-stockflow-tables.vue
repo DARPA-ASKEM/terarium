@@ -60,11 +60,11 @@
 				<Column field="name" header="Name" />
 				<Column field="upstream_stock" header="Upstream stock" />
 				<Column field="downstream_stock" header="Downstream stock" />
-				<Column field="rate_expression_mathml" header="Expression">
+				<Column field="rate_expression" header="Rate expression">
 					<template #body="{ data }">
 						<katex-element
-							v-if="data.expression"
-							:expression="data.expression"
+							v-if="data.rate_expression"
+							:expression="data.rate_expression"
 							:throw-on-error="false"
 						/>
 						<template v-else>--</template>
