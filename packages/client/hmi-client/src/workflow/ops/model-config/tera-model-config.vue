@@ -114,13 +114,14 @@
 							</template>
 							<tera-initial-table
 								v-if="modelConfiguration"
-								:model-configuration="modelConfiguration"
+								:model="modelConfiguration.configuration"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
+								config-view
 								@update-value="updateConfigInitial"
-								@update-configuration="
-									(configToUpdate: ModelConfiguration) => {
-										updateFromConfig(configToUpdate);
+								@update-model="
+									(modelToUpdate: Model) => {
+										updateConfigFromModel(modelToUpdate);
 									}
 								"
 							/>
@@ -155,13 +156,14 @@
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
-							:model-configuration="modelConfiguration"
+							:model="modelConfiguration.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
+							config-view
 							@update-value="updateConfigParam"
-							@update-configuration="
-								(configToUpdate: ModelConfiguration) => {
-									updateFromConfig(configToUpdate);
+							@update-model="
+								(modelToUpdate: Model) => {
+									updateConfigFromModel(modelToUpdate);
 								}
 							"
 						/>
@@ -288,9 +290,9 @@ import { emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import type { WorkflowNode } from '@/types/workflow';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import TeraInitialTable from './tera-initial-table.vue';
-import TeraParameterTable from './tera-parameter-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -591,18 +593,16 @@ const updateConfigInitial = (inits: Initial[]) => {
 	}
 };
 
-const updateFromConfig = (config: ModelConfiguration) => {
-	const amr = config.configuration;
-
+const updateConfigFromModel = (inputModel: Model) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		knobs.value.initials = amr.semantics?.ode.initials ?? [];
-		knobs.value.parameters = amr.semantics?.ode.parameters ?? [];
+		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
+		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		knobs.value.parameters = amr.model?.parameters ?? [];
+		knobs.value.parameters = inputModel.model?.parameters ?? [];
 	}
-	knobs.value.timeseries = amr?.metadata?.timeseries ?? {};
-	knobs.value.initialsMetadata = amr?.metadata?.initials ?? {};
-	knobs.value.parametersMetadata = amr?.metadata?.parameters ?? {};
+	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
+	knobs.value.initialsMetadata = inputModel.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = inputModel.metadata?.parameters ?? {};
 };
 
 const createConfiguration = async () => {
