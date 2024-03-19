@@ -131,7 +131,7 @@ public class ModelService extends TerariumAssetService<Model> {
 		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null && asset.getSemantics().getOde().getParameters() != null) {
 			asset.getSemantics().getOde().getParameters().forEach(param -> {
 				if (param.getValue() == null) {
-					param.setValue(0.0);
+					param.setValue(1.0);
 				}
 			});
 		}
