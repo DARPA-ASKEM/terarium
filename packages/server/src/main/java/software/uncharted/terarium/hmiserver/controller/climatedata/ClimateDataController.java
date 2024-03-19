@@ -46,6 +46,10 @@ public class ClimateDataController {
 		try {
 			final ResponseEntity<JsonNode> response = climateDataProxy.searchEsgf(query);
 			if(response == null || response.getBody() == null){
+				if(response != null && response.getStatusCode().value() >= 400){
+					log.error("Search ESGF failed. Response: {}", response);
+					throw new ResponseStatusException(HttpStatus.valueOf(response.getStatusCode().value()), "Search ESGF failed.");
+				}
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Search ESGF failed.");
 			}
 
@@ -68,6 +72,9 @@ public class ClimateDataController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 
 		} catch(final Exception e) {
+			if(e instanceof ResponseStatusException){
+				throw e;
+			}
 			final String error = "Unable to search ESGF";
 			log.error(error, e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
