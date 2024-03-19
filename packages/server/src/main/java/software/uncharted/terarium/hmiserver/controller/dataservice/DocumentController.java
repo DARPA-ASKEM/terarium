@@ -91,12 +91,16 @@ public class DocumentController {
 	final DownloadService downloadService;
 
 	private final ProjectService projectService;
+	private final ProjectAssetService projectAssetService;
 
 	final DocumentAssetService documentAssetService;
 
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
 	private final CurrentUserService currentUserService;
+
+	@Value("${xdd.api-key}")
+	String apikey;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -410,17 +414,51 @@ public class DocumentController {
 	})
 	public ResponseEntity<Void> createDocumentFromXDD(
 			@RequestBody final AddDocumentAssetFromXDDRequest body) {
-		// get preliminary info to build document asset
-		final Document document = body.getDocument();
-		final UUID projectId = body.getProjectId();
-		final Optional<Project> project = projectService.getProject(projectId);
-		if (project.isEmpty()) {
-			return ResponseEntity.notFound().build();
+
+		try {
+			// get preliminary info to build document asset
+			final Document document = body.getDocument();
+			final UUID projectId = body.getProjectId();
+			final String doi = DocumentAsset.getDocumentDoi(document);
+			final Optional<Project> project = projectService.getProject(projectId);
+			if (project.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final String userId = project.get().getUserId();
+
+
+			// get pdf url and filename
+			final String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
+			final String filename = DownloadService.pdfNameFromUrl(fileUrl);
+
+			final XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(doi, null,
+					null,
+					null,
+					null, apikey);
+
+			// create a new document asset from the metadata in the xdd document and write
+			// it to the db
+			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+					extractionResponse.getSuccess().getData());
+			if (filename != null) {
+				documentAsset.getFileNames().add(filename);
+				documentAsset = documentAssetService.updateAsset(documentAsset).get();
+			}
+
+			// add asset to project
+			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
+
+			// Upload the PDF from unpaywall
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
+
+			return ResponseEntity.accepted().build();
+		} catch (final IOException | URISyntaxException e) {
+			final String error = "Unable to upload document from xdd";
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
-
-		extractionService.createDocumentFromXDD(document, project);
-
-		return ResponseEntity.accepted().build();
 	}
 
 	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -542,4 +580,96 @@ public class DocumentController {
 		}
 	}
 
+	/**
+	 * Creates a document asset from an XDD document
+	 *
+	 * @param document    xdd document
+	 * @param userId      current user name
+	 * @param extractions list of extractions associated with the document
+	 * @return document asset
+	 */
+	private DocumentAsset createDocumentAssetFromXDDDocument(
+			final Document document,
+			final String userId,
+			final List<Extraction> extractions) throws IOException {
+		final String name = document.getTitle();
+
+		// create document asset
+		final DocumentAsset documentAsset = new DocumentAsset();
+		documentAsset.setName(name);
+		documentAsset.setDescription(name);
+		documentAsset.setUserId(userId);
+		documentAsset.setFileNames(new ArrayList<>());
+
+		if (extractions != null) {
+			documentAsset.setAssets(new ArrayList<>());
+			for (int i = 0; i < extractions.size(); i++) {
+				final Extraction extraction = extractions.get(i);
+				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
+						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
+						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
+					final DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
+					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
+					documentExtraction.setFileName("extraction_" + i + ".png");
+					documentExtraction.getMetadata().put("title", extraction.getProperties().getTitle());
+					documentExtraction.getMetadata().put("description", extraction.getProperties().getCaption());
+					documentAsset.getAssets().add(documentExtraction);
+					documentAsset.getFileNames().add(documentExtraction.getFileName());
+				}
+			}
+
+		}
+
+		if (document.getGithubUrls() != null && !document.getGithubUrls().isEmpty()) {
+			documentAsset.setMetadata(new HashMap<>());
+			documentAsset.getMetadata().put("github_urls", document.getGithubUrls());
+		}
+
+		return documentAssetService.createAsset(documentAsset);
+	}
+
+	/**
+	 * Uploads a PDF file to a document asset and then fires and forgets the
+	 * extraction
+	 *
+	 * @param doi      DOI of the document
+	 * @param filename filename of the PDF
+	 * @param docId    document id
+	 * @return extraction job id
+	 */
+	private void uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
+			final UUID docId) {
+		try (final CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build()) {
+			final String currentUserId = currentUserService.get().getId();
+
+			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
+
+			// if this service fails, return ok with errors
+			if (fileAsBytes == null || fileAsBytes.length == 0) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						"Document has no data, empty bytes");
+			}
+
+			// upload pdf to document asset
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final PresignedURL presignedURL = documentAssetService.getUploadUrl(docId, filename);
+			final HttpPut put = new HttpPut(presignedURL.getUrl());
+			put.setEntity(fileEntity);
+			final HttpResponse pdfUploadResponse = httpclient.execute(put);
+
+			if (pdfUploadResponse.getStatusLine().getStatusCode() >= HttpStatus.BAD_REQUEST.value()) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						"Unable to upload document");
+			}
+
+			// fire and forgot pdf extractions
+			extractionService.extractPDF(docId, currentUserId);
+		} catch (final Exception e) {
+			log.error("Unable to upload PDF document then extract", e);
+		}
+	}
 }
