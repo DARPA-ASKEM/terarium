@@ -18,7 +18,7 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
+				Parameters<span class="artifact-amount">({{ parametersLength }})</span>
 				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
@@ -173,7 +173,11 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const transientModel = ref(cloneDeep(props.model));
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
-const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
+const parametersLength = computed(
+	() =>
+		(props.model?.semantics?.ode.parameters?.length ?? 0) +
+		(props.model?.model?.auxiliaries?.length ?? 0)
+);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []

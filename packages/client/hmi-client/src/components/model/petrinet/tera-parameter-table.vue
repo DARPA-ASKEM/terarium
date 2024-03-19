@@ -434,7 +434,32 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				timeseries: timeseriesValue
 			});
 		});
+
+		if (modelType.value === AMRSchemaNames.STOCKFLOW) {
+			const auxiliaries = model.model?.auxiliaries ?? [];
+			auxiliaries.forEach((aux) => {
+				const paramType = getParamType(aux);
+				const timeseriesValue = model.metadata?.timeseries?.[aux.id];
+				const parametersMetadata = model.metadata?.parameters?.[aux.id];
+				const sourceValue = parametersMetadata?.source;
+				formattedParams.push({
+					id: aux.id,
+					name: aux.name,
+					type: paramType,
+					description: aux.description,
+					concept: aux.grounding,
+					unit: aux.unit?.expression,
+					value: aux,
+					source: sourceValue,
+					visibility: false,
+					timeseries: timeseriesValue
+				});
+			});
+		}
 	}
+
+	console.log(props.model);
+	console.log(formattedParams);
 
 	return formattedParams;
 });
