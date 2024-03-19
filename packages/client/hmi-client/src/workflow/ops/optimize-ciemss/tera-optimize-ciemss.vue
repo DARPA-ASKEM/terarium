@@ -497,7 +497,7 @@ const runOptimize = async () => {
 	const state = _.cloneDeep(props.node.state);
 	emit('append-output', {
 		type: OptimizeCiemssOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
+		label: `Simulation output - ${props.node.outputs.length + 1}`,
 		value: simulationResponse.id,
 		isSelected: false,
 		state
