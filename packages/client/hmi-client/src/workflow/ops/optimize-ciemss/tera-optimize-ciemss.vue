@@ -498,7 +498,7 @@ const runOptimize = async () => {
 	emit('append-output', {
 		type: OptimizeCiemssOperation.outputs[0].type,
 		label: `Simulation output - ${props.node.outputs.length + 1}`,
-		value: simulationResponse.id,
+		value: [simulationResponse.id],
 		isSelected: false,
 		state
 	});
