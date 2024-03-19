@@ -11,8 +11,8 @@
 			<ul>
 				<li v-for="document in relatedDocuments" :key="document.id">
 					<tera-asset-link
-						:label="document.name!"
-						:asset-route="{ assetId: document.id!, pageType: AssetType.Document }"
+						:label="document.name"
+						:asset-route="{ assetId: document.id, pageType: AssetType.Document }"
 					/>
 				</li>
 			</ul>
@@ -52,20 +52,19 @@
 			</template>
 		</footer>
 		<Dialog
-			v-model:visible="visible"
 			modal
+			v-model:visible="visible"
 			:header="`Describe this ${assetType}`"
 			:style="{ width: '50vw' }"
 		>
-			<p class="constrain-width">
+			<p class="constrain-width mt-2 mb-4">
 				Terarium can extract information from documents to describe this
-				{{ assetType }}. Select a document you would like to use.
+				{{ assetType }}.<br />Select a document you would like to use.
 			</p>
 			<DataTable
-				v-if="documents && documents.length > 0"
+				v-if="!isEmpty(documents)"
 				:value="documents"
 				v-model:selection="selectedResources"
-				tableStyle="min-width: 50rem"
 				selection-mode="single"
 			>
 				<Column selectionMode="single" headerStyle="width: 3rem" />
@@ -126,7 +125,7 @@ const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
 const isLoading = ref(false);
-const relatedDocuments = ref<Array<{ name: string | undefined; id: string | undefined }>>([]);
+const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
 
 const dialogActionCopy = computed(() => {
 	let result: string = '';
