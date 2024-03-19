@@ -414,10 +414,6 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
 		})
-		.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
-		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;
 			handleModelPreview(data);

@@ -145,11 +145,6 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			console.log('stream', data.content);
 		})
-		.register('error', (data) => {
-			console.log('error', data.content.evalue);
-			logger.error(data.content.evalue);
-			isRunningCode.value = false;
-		})
 		// FIXME: There isnt really a proper response we receive for llm output for decapodes
 		.register('decapodes_preview', (data) => {
 			console.log('decapodes_preview', data.content);
@@ -157,6 +152,7 @@ const runFromCode = () => {
 			isRunningCode.value = false;
 		})
 		.register('any_execute_reply', (data) => {
+			isRunningCode.value = false;
 			let status = OperatorStatus.DEFAULT;
 			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
 			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;

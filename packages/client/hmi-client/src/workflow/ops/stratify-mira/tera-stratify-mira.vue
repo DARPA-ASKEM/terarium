@@ -415,9 +415,6 @@ const runCodeStratify = () => {
 			.register('stream', (data) => {
 				console.log('stream', data);
 			})
-			.register('error', (data) => {
-				logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			})
 			.register('model_preview', (data) => {
 				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
 				// currently no matter what kind of code is run we always get a `model_preview` response.
