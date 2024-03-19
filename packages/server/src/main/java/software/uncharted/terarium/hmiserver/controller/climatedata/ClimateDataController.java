@@ -94,9 +94,19 @@ public class ClimateDataController {
 											  @RequestParam(value = "timestamps", required = false) final String timestamps,
 											  @RequestParam(value = "time-index", required = false) final String timeIndex
 	) {
-		final ResponseEntity<String> previewResponse = climateDataService.getPreview(esgfId, variableId, timestamps, timeIndex);
-		if (previewResponse != null) {
-			return previewResponse;
+		try {
+			final String previewResponse = climateDataService.getPreview(esgfId, variableId, timestamps, timeIndex);
+			if (previewResponse != null) {
+				return ResponseEntity.ok(previewResponse);
+			}
+			final boolean successfulFetch = climateDataService.fetchPreview(esgfId, variableId, timestamps, timeIndex);
+			if (successfulFetch) {
+				return ResponseEntity.accepted().build();
+			}
+
+		} catch (final Exception e) {
+			log.error("Error getting preview", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error getting preview");
 		}
 
 		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(esgfId, variableId, timestamps, timeIndex);

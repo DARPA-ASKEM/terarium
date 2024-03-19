@@ -53,7 +53,7 @@ import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 
 const props = defineProps<{
 	dataset: Dataset | null;
-	image?: string | undefined;
+	image?: string;
 	highlight?: string;
 	featureConfig?: FeatureConfig;
 	rawContent: CsvAsset | null;

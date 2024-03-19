@@ -67,7 +67,7 @@ import { computed, PropType, Ref, ref } from 'vue';
 import {
 	AddDocumentAssetFromXDDResponse,
 	AssetType,
-	type Dataset,
+	Dataset,
 	Document,
 	DocumentAsset,
 	Model,

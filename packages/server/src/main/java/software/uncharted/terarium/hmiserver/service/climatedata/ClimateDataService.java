@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.service.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jodd.cli.Cli;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -62,7 +61,7 @@ public class ClimateDataService {
 
                             climateDataPreviewRepository.save(preview);
                         }
-                    } catch(Exception e) {
+                    } catch(final Exception e) {
                         log.error("Failed to extract png", e);
                         final ClimateDataPreview preview = new ClimateDataPreview(previewTask, "Failed to extract PNG from Result: " + e.getMessage());
                         climateDataPreviewRepository.save(preview);
@@ -104,7 +103,7 @@ public class ClimateDataService {
                     climateDataSubsetRepository.save(subset);
 
                     climateDataSubsetTaskRepository.delete(subsetTask);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     log.error("Failed to extract subset");
                     final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, "Failed to extract subset from Result: " + climateDataResponse.getResult().getJobResult());
                     climateDataSubsetRepository.save(subset);
@@ -121,7 +120,7 @@ public class ClimateDataService {
         }
     }
 
-    private String getPreviewFilename(String esgfId, String variableId) {
+    private static String getPreviewFilename(final String esgfId, final String variableId) {
         return String.join("/preview", esgfId, variableId);
     }
 
@@ -130,32 +129,34 @@ public class ClimateDataService {
         climateDataPreviewTaskRepository.save(task);
     }
 
-    public ResponseEntity<String> getPreview(final String esgfId, final String variableId, final String timestamps, final String timeIndex) {
+    public String getPreview(final String esgfId, final String variableId, final String timestamps, final String timeIndex) throws Exception {
         final List<ClimateDataPreview> previews = climateDataPreviewRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
-        if (previews != null && previews.size() > 0) {
+        if (previews != null && !previews.isEmpty()) {
             ClimateDataPreview preview = previews.get(0);
             // find successful preview
-            for (ClimateDataPreview p : previews) {
+            for (final ClimateDataPreview p : previews) {
                 if (p.getError() == null) {
                     preview = p;
                 }
             }
             if (preview.getError() != null) {
-                return ResponseEntity.internalServerError().body(preview.getError());
+							throw new Exception(preview.getError());
             }
             final String filename = getPreviewFilename(preview.getEsgfId(), preview.getVariableId());
             final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
             if (url.isPresent()) {
-                return ResponseEntity.ok(url.get());
+                return url.get();
             }
-            return ResponseEntity.internalServerError().body("Failed to generate presigned s3 url");
+            throw new Exception("Failed to generate presigned s3 url");
         }
-        final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
-        if (task != null) {
-            return ResponseEntity.accepted().build();
-        }
+
         return null;
     }
+
+		public boolean fetchPreview(final String esgfId, final String variableId, final String timestamps, final String timeIndex) {
+			final ClimateDataPreviewTask task = climateDataPreviewTaskRepository.findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(esgfId, variableId, timestamps, timeIndex);
+			return task != null;
+		}
 
     public void addSubsetJob(final String esgfId, final String envelope, final String timestamps, final String thinFactor, final String statusId) {
         final ClimateDataSubsetTask task = new ClimateDataSubsetTask(statusId, esgfId, envelope, timestamps, thinFactor);
@@ -167,7 +168,7 @@ public class ClimateDataService {
         if (subsets != null && subsets.size() > 0) {
             ClimateDataSubset subset = subsets.get(0);
             // find successful subset
-            for (ClimateDataSubset s : subsets) {
+            for (final ClimateDataSubset s : subsets) {
                 if (s.getError() == null) {
                     subset = s;
                 }
