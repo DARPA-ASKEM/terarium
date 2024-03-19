@@ -1,7 +1,8 @@
 <template>
 	<main>
 		<p v-if="isEmpty(relatedDocuments)">
-			Terarium can extract information from documents to add relevant information to this resource.
+			Terarium can extract information from documents to add relevant information to this
+			resource.
 		</p>
 		<template v-else>
 			<p>
@@ -78,42 +79,40 @@
 						You don't have any resources that can be used. Try adding some documents.
 					</div>
 					<div class="no-documents-text">
-						Would you like to generate descriptions without attaching additional context?
+						Would you like to generate descriptions without attaching additional
+						context?
 					</div>
 				</div>
 			</div>
 			<template #footer>
 				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
-				<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
+				<Button
+					:label="dialogActionCopy"
+					:disabled="isDialogDisabled"
+					@click="acceptDialog"
+				/>
 			</template>
 		</Dialog>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import Button from 'primevue/button';
-import Dialog from 'primevue/dialog';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
+import { alignModel, extractPDF, profileDataset, profileModel } from '@/services/knowledge';
 import {
-	alignModel,
-	extractPDF,
-	fetchExtraction,
-	profileDataset,
-	profileModel
-} from '@/services/knowledge';
-import { PollerResult } from '@/api/api';
-import { isEmpty } from 'lodash';
-import type { DocumentAsset, TerariumAsset } from '@/types/Types';
-import { AssetType, ProvenanceType } from '@/types/Types';
-import {
+	RelationshipType,
 	createProvenance,
 	getRelatedArtifacts,
-	mapAssetTypeToProvenanceType,
-	RelationshipType
+	mapAssetTypeToProvenanceType
 } from '@/services/provenance';
+import type { DocumentAsset, TerariumAsset } from '@/types/Types';
+import { AssetType, ProvenanceType } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/data-util';
+import { isEmpty } from 'lodash';
+import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import Dialog from 'primevue/dialog';
+import { computed, onMounted, ref, watch } from 'vue';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
@@ -138,7 +137,8 @@ const relatedDocuments = ref<Array<{ name: string | undefined; id: string | unde
 const dialogActionCopy = computed(() => {
 	let result: string = '';
 	if (dialogType.value === DialogType.ENRICH) {
-		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
+		result =
+			props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
 	} else if (dialogType.value === DialogType.EXTRACT) {
 		result = 'Extract variables';
 	} else if (dialogType.value === DialogType.ALIGN) {
@@ -190,31 +190,15 @@ const isDialogDisabled = computed(() => {
 });
 
 const sendForEnrichment = async () => {
-	const jobIds: (string | null)[] = [];
 	const selectedResourceId = selectedResources.value?.id ?? null;
-	const extractionList: Promise<PollerResult<any>>[] = [];
 
 	isLoading.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === AssetType.Model) {
-		const profileModelJobId = await profileModel(props.assetId, selectedResourceId);
-		jobIds.push(profileModelJobId);
+		await profileModel(props.assetId, selectedResourceId);
 	} else if (props.assetType === AssetType.Dataset) {
-		const profileDatasetJobId = await profileDataset(props.assetId, selectedResourceId);
-		jobIds.push(profileDatasetJobId);
+		await profileDataset(props.assetId, selectedResourceId);
 	}
-
-	// Create extractions list from job ids
-	jobIds.forEach((jobId) => {
-		if (jobId) {
-			extractionList.push(fetchExtraction(jobId));
-		}
-	});
-
-	if (isEmpty(extractionList)) return;
-
-	// Poll all extractions
-	await Promise.all(extractionList);
 
 	isLoading.value = false;
 	emit('enriched');
@@ -244,9 +228,8 @@ const sendToAlignModel = async () => {
 	if (props.assetType === AssetType.Model && selectedResourceId) {
 		isLoading.value = true;
 
-		const linkAmrJobId = await alignModel(props.assetId, selectedResourceId);
-		if (!linkAmrJobId) return;
-		await fetchExtraction(linkAmrJobId);
+		const linkedAmr = await alignModel(props.assetId, selectedResourceId);
+		if (!linkedAmr) return;
 
 		isLoading.value = false;
 		emit('enriched');

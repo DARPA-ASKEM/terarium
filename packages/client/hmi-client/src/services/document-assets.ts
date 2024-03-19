@@ -2,12 +2,10 @@
  * Documents Asset
  */
 
-import API, { PollerState } from '@/api/api';
-import type { AddDocumentAssetFromXDDResponse, Document, DocumentAsset } from '@/types/Types';
+import API from '@/api/api';
+import type { Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { fetchExtraction } from './knowledge';
-import { modelCard } from './goLLM';
 
 /**
  * Get all documents
@@ -206,37 +204,23 @@ async function getBulkDocumentAssets(docIDs: string[]) {
 async function createDocumentFromXDD(
 	document: Document,
 	projectId: string
-): Promise<AddDocumentAssetFromXDDResponse | null> {
+): Promise<DocumentAsset | null> {
 	if (!document || !projectId) return null;
-	const response = await API.post<AddDocumentAssetFromXDDResponse>(
-		`/document-asset/create-document-from-xdd`,
-		{
-			document,
-			projectId
-		}
-	);
-
-	if (!response) {
-		return null;
-	}
-
-	if (response.data.extractionJobId) {
-		const result = await fetchExtraction(response.data.extractionJobId);
-		if (result.state === PollerState.Done) {
-			modelCard(response.data.documentAssetId);
-		}
-	}
-	return response.data;
+	const response = await API.post<DocumentAsset>(`/document-asset/create-document-from-xdd`, {
+		document,
+		projectId
+	});
+	return response.data ?? null;
 }
 export {
-	getAll,
-	getDocumentAsset,
-	uploadDocumentAssetToProject,
-	downloadDocumentAsset,
-	createNewDocumentFromGithubFile,
-	getDocumentFileAsText,
-	getBulkDocumentAssets,
 	createDocumentFromXDD,
 	createNewDocumentAsset,
-	getEquationFromImageUrl
+	createNewDocumentFromGithubFile,
+	downloadDocumentAsset,
+	getAll,
+	getBulkDocumentAssets,
+	getDocumentAsset,
+	getDocumentFileAsText,
+	getEquationFromImageUrl,
+	uploadDocumentAssetToProject
 };

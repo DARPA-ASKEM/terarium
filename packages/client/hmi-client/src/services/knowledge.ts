@@ -1,42 +1,9 @@
-import API, { Poller, PollerResult, PollerState, PollResponse } from '@/api/api';
-import { AxiosError, AxiosResponse } from 'axios';
+import API from '@/api/api';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import type { ClientEvent, Code, Dataset, ExtractionStatusUpdate, Model } from '@/types/Types';
 import { ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { subscribe, unsubscribe } from '@/services/ClientEventService';
-
-/**
- * Fetch information from the extraction service via the Poller utility
- * @param id
- * @return {Promise<PollerResult>}
- */
-export async function fetchExtraction(id: string): Promise<PollerResult<any>> {
-	const pollerResult: PollResponse<any> = { data: null, progress: null, error: null };
-	const poller = new Poller<object>()
-		.setPollAction(async () => {
-			const response = await API.get(`/knowledge/status/${id}`);
-
-			// Finished
-			if (response?.status === 200 && response?.data?.status === 'finished') {
-				pollerResult.data = response.data.result;
-				return pollerResult;
-			}
-
-			// Failed
-			if (response?.status === 200 && response?.data?.status === 'failed') {
-				pollerResult.error = true;
-				logger.error(`Extraction failed, Service not responding`, {
-					toastTitle: 'Error - knowledge-middleware'
-				});
-				return pollerResult;
-			}
-
-			// Queued
-			return pollerResult;
-		})
-		.setThreshold(3000);
-	return poller.start();
-}
+import { AxiosError, AxiosResponse } from 'axios';
 
 /**
  * Transform a list of LaTeX or mathml strings to an AMR
@@ -71,7 +38,7 @@ export const equationsToAMR = async (
 export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
 	let response: any = null;
 	if (documentId && modelId) {
-		response = await API.post(`/knowledge/profile-model/${modelId}?document_id=${documentId}`);
+		response = await API.post(`/knowledge/profile-model/${modelId}?document-id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-model/${modelId}`);
 	}
@@ -82,11 +49,11 @@ export const profileModel = async (modelId: Model['id'], documentId: string | nu
 export const alignModel = async (
 	modelId: Model['id'],
 	documentId: string
-): Promise<string | null> => {
+): Promise<Model | null> => {
 	const response = await API.post(
-		`/knowledge/link-amr?document_id=${documentId}&model_id=${modelId}`
+		`/knowledge/link-amr?document-id=${documentId}&model-id=${modelId}`
 	);
-	return response.data?.id ?? null;
+	return response.data ?? null;
 };
 /**
  * Given a dataset, enrich its metadata
@@ -98,7 +65,9 @@ export const profileDataset = async (
 ) => {
 	let response: any = null;
 	if (documentId && datasetId) {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document_id=${documentId}`);
+		response = await API.post(
+			`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`
+		);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
@@ -146,7 +115,10 @@ export const extractPDF = async (documentId: string) => {
 					toastTitle: 'Error - pdf text extraction'
 				});
 			} else {
-				logger.error(error, { showToast: false, toastTitle: 'Error - pdf text extraction' });
+				logger.error(error, {
+					showToast: false,
+					toastTitle: 'Error - pdf text extraction'
+				});
 			}
 		}
 	}
@@ -158,28 +130,18 @@ export async function codeToAMR(
 	description: string = '',
 	dynamicsOnly: boolean = false,
 	llmAssisted: boolean = false
-) {
+): Promise<Model | null> {
 	const response = await API.post(
 		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}&llm_assisted=${llmAssisted}`
 	);
 	if (response?.status === 200) {
-		const { id, status } = response.data;
-		if (status === 'queued') {
-			const extraction = await fetchExtraction(id);
-			if (extraction?.state === PollerState.Done) {
-				const data = extraction.data as any; // fix linting
-				return data?.job_result.tds_model_id;
-			}
-		}
-		if (status === 'finished') {
-			return response.data.result?.job_result.tds_model.id;
-		}
+		return response.data;
 	}
 	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
 	return null;
 }
 
-export async function codeBlocksToAmr(code: Code, file: File): Promise<string | null> {
+export async function codeBlocksToAmr(code: Code, file: File): Promise<Model | null> {
 	const formData = new FormData();
 	const blob = new Blob([JSON.stringify(code)], {
 		type: 'application/json'
@@ -193,17 +155,7 @@ export async function codeBlocksToAmr(code: Code, file: File): Promise<string | 
 		}
 	});
 	if (response?.status === 200) {
-		const { id, status } = response.data;
-		if (status === 'queued') {
-			const extraction = await fetchExtraction(id);
-			if (extraction?.state === PollerState.Done) {
-				const data = extraction.data as any; // fix linting
-				return data?.job_result.tds_model_id;
-			}
-		}
-		if (status === 'finished') {
-			return response.data.result?.job_result.tds_model.id;
-		}
+		return response.data;
 	}
 	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
 	return null;

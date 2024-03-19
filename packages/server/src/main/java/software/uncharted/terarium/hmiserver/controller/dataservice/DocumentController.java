@@ -48,7 +48,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.controller.knowledge.KnowledgeController;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -438,7 +437,7 @@ public class DocumentController {
 
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
-			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+			final DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
 					extractionResponse.getSuccess().getData());
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
@@ -642,7 +641,7 @@ public class DocumentController {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
-			String currentUserId = currentUserService.get().getId();
+			final String currentUserId = currentUserService.get().getId();
 
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
