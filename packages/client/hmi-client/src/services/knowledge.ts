@@ -132,7 +132,7 @@ export async function codeToAMR(
 	llmAssisted: boolean = false
 ): Promise<Model | null> {
 	const response = await API.post(
-		`/knowledge/code-to-amr?code_id=${codeId}&name=${name}&description=${description}&dynamics_only=${dynamicsOnly}&llm_assisted=${llmAssisted}`
+		`/knowledge/code-to-amr?code-id=${codeId}&name=${name}&description=${description}&dynamics-only=${dynamicsOnly}&llm-assisted=${llmAssisted}`
 	);
 	if (response?.status === 200) {
 		return response.data;
