@@ -4,6 +4,7 @@
 			<tera-drilldown-section>
 				<!-- <InputText placeholder="What do you want to do?" /> -->
 				<h3>Select geo-boundaries</h3>
+				<img :src="preview" alt="Preview" />
 				<span>
 					<label>Latitude</label>
 					<InputText v-model="latitudeStart" placeholder="Start" />
@@ -76,11 +77,13 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
+import { getDataset, getClimateDatasetPreview } from '@/services/dataset';
+import type { Dataset } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
@@ -100,6 +103,9 @@ enum SubsetDataTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }
+
+const dataset = ref<Dataset | null>(null);
+const preview = ref<string | null>(null);
 
 const latitudeStart = ref('');
 const latitudeEnd = ref('');
@@ -132,6 +138,16 @@ const outputs = computed(() => {
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
+
+async function loadDataset(id: string) {
+	dataset.value = await getDataset(id);
+	preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
+	console.log(dataset.value);
+}
+
+onMounted(() => {
+	loadDataset(props.node.inputs[0].value[0]);
+});
 </script>
 
 <style scoped>
