@@ -226,6 +226,8 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	ResponseEntity<Model> postCodeToAMR(
 			@RequestParam("code-id") final UUID codeId,
+			@RequestParam(name = "name", required = false, defaultValue = "") final String name,
+			@RequestParam(name = "description", required = false, defaultValue = "") final String description,
 			@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
 			@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted) {
 
@@ -314,10 +316,20 @@ public class KnowledgeController {
 			}
 
 			// create the model
+			if (!name.isEmpty()) {
+				model.setName(name);
+			}
 			if (model.getMetadata() == null) {
 				model.setMetadata(new ModelMetadata());
 			}
 			model.getMetadata().setCodeId(codeId.toString());
+
+			if (!description.isEmpty()) {
+				if (model.getHeader() == null) {
+					model.setHeader(new ModelHeader());
+				}
+				model.getHeader().setDescription(description);
+			}
 			model = modelService.createAsset(model);
 
 			// update the code
