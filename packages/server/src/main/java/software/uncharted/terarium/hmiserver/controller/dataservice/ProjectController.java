@@ -245,11 +245,6 @@ public class ProjectController {
 				if (deleted)
 					return ResponseEntity.ok(new ResponseDeleted("project", id));
 			}
-
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.NOT_MODIFIED,
-				"Failed to delete project");
-
 		} catch (final Exception e) {
 			log.error("Error deleting project", e);
 			throw new ResponseStatusException(
@@ -257,6 +252,9 @@ public class ProjectController {
 				"Failed to delete project");
 		}
 
+		throw new ResponseStatusException(
+			HttpStatus.NOT_MODIFIED,
+			"Unable to delete project, please try again later.");
 	}
 
 	@Operation(summary = "Creates a new project")
@@ -281,16 +279,15 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR,
 				"Error setting user's permissions for project");
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR,
 				"Error the user is already the creator of this project");
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
-
 	}
 
 	@Operation(summary = "Updates a project by ID")
@@ -340,7 +337,7 @@ public class ProjectController {
 		@PathVariable("asset-type") final String assetTypeName,
 		@PathVariable("asset-id") final UUID assetId) {
 
-		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		try {
 			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
@@ -350,10 +347,10 @@ public class ProjectController {
 
 				if (project.isPresent()) {
 
-					//double check that this asset is not already a part of this project, and if it does exist throw an error to the front end
+					//double check that this asset is not already a part of this project, and if it does exist return a 409 to the front end
 					final Optional<ProjectAsset> existingAsset = projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
 					if (existingAsset.isPresent()) {
-						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset already exists in this project");
+						return ResponseEntity.status(HttpStatus.CONFLICT).body(existingAsset.get());
 					}
 
 					final TerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices.getServiceByType(assetType);
@@ -364,9 +361,7 @@ public class ProjectController {
 					} else {
 						return ResponseEntity.notFound().build();
 					}
-
 				}
-
 			}
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		} catch (final Exception e) {
@@ -390,7 +385,7 @@ public class ProjectController {
 		@PathVariable("asset-type") final String assetTypeName,
 		@PathVariable("asset-id") final UUID assetId) {
 
-		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		try {
 			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);

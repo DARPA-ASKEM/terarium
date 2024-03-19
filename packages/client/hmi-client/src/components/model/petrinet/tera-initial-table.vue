@@ -19,40 +19,41 @@
 			</template>
 		</Column>
 		<Column header="Name">
-			<template #body="slotProps">
-				<span class="truncate-text">
-					{{ slotProps.data.name }}
-				</span>
+			<template #body="{ data }">
+				<InputText
+					size="small"
+					v-model.lazy="data.name"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateMetadata(data.value.target, 'name', $event)"
+				/>
 			</template>
 		</Column>
 
 		<Column header="Description" class="w-2">
 			<template #body="slotProps">
-				<span v-if="slotProps.data.description" class="truncate-text">
-					{{ slotProps.data.description }}</span
-				>
-				<template v-else>--</template>
+				<InputText
+					size="small"
+					v-model.lazy="slotProps.data.description"
+					:disabled="configView || readonly || slotProps.data.type === ParamType.MATRIX"
+					@update:model-value="updateMetadata(slotProps.data.value.target, 'description', $event)"
+				/>
 			</template>
 		</Column>
 
 		<Column header="Concept" class="w-1">
 			<template #body="{ data }">
-				<template
-					v-if="
-						data.concept?.grounding?.identifiers && !isEmpty(data.concept.grounding.identifiers)
-					"
-				>
+				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
+							getCurieFromGroudingIdentifier(data.concept.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -60,6 +61,21 @@
 					</a>
 				</template>
 				<template v-else>--</template>
+			</template>
+			<template v-if="!configView && !readonly" #editor="{ data }">
+				<AutoComplete
+					v-model="conceptSearchTerm.name"
+					:suggestions="curies"
+					@complete="onSearch"
+					@item-select="
+						updateMetadata(data.value.target, 'concept', {
+							grounding: { identifiers: parseCurie($event.value.curie) }
+						})
+					"
+					optionLabel="name"
+					:forceSelection="true"
+					:inputStyle="{ width: '100%' }"
+				/>
 			</template>
 		</Column>
 
@@ -69,6 +85,7 @@
 					v-if="slotProps.data.type === ParamType.CONSTANT"
 					size="small"
 					class="w-full"
+					:disabled="readonly"
 					v-model.lazy="slotProps.data.unit"
 					@update:model-value="(val) => updateMetadata(slotProps.data.value.target, 'unit', val)"
 				/>
@@ -95,6 +112,7 @@
 					optionLabel="label"
 					optionValue="value"
 					placeholder="Select a parameter type"
+					:disabled="readonly"
 					@update:model-value="(val) => changeType(slotProps.data.value, val)"
 				>
 					<template #value="slotProps">
@@ -137,6 +155,7 @@
 						size="small"
 						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
+						:disabled="readonly"
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
 				</span>
@@ -147,10 +166,11 @@
 		<Column field="source" header="Source" class="w-2">
 			<template #body="{ data }">
 				<InputText
-					v-if="data.type === ParamType.CONSTANT || data.type === ParamType.MATRIX"
+					v-if="data.type === ParamType.CONSTANT"
 					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
+					:disabled="readonly"
 					@update:model-value="(val) => updateMetadata(data.value.target, 'source', val)"
 				/>
 			</template>
@@ -165,12 +185,14 @@
 			<tera-initial-table
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
-				:model-configuration="modelConfiguration"
+				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
+				:config-view="configView"
+				:readonly="readonly"
 				@update-value="(val: Initial) => emit('update-value', [val])"
-				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
+				@update-model="(model: Model) => emit('update-model', model)"
 			/>
 		</template>
 	</Datatable>
@@ -192,26 +214,29 @@
 import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import Column from 'primevue/column';
+import type { Model, Initial, DKG } from '@/types/Types';
 import Datatable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import type { ModelConfiguration, Initial } from '@/types/Types';
 import { StratifiedMatrix } from '@/types/Model';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import { pythonInstance } from '@/python/PyodideController';
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
-	getNameOfCurieCached
+	getNameOfCurieCached,
+	searchCuriesEntities,
+	parseCurie
 } from '@/services/concept';
 import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-petri';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel } from '@/model-representation/mira/mira';
 import { matrixEffect } from '@/utils/easter-eggs';
 import { updateVariable } from '@/model-representation/service';
+import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -219,20 +244,23 @@ const typeOptions = [
 ];
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[];
 	hideHeader?: boolean;
+	readonly?: boolean;
+	configView?: boolean;
 }>();
 
-const emit = defineEmits(['update-value', 'update-configuration']);
+const emit = defineEmits(['update-value', 'update-model']);
 
 const matrixModalContext = ref({
 	isOpen: false,
 	matrixId: ''
 });
 
+const curies = ref<DKG[]>([]);
 const conceptSearchTerm = ref({
 	curie: '',
 	name: ''
@@ -245,7 +273,7 @@ const initials = computed<Map<string, string[]>>(() => {
 	const result = new Map<string, string[]>();
 	if (!props.mmt) return result;
 
-	const model = props.modelConfiguration.configuration;
+	const model = props.model;
 	if (isStratified.value) {
 		return getUnstratifiedInitials(model);
 	}
@@ -256,25 +284,26 @@ const initials = computed<Map<string, string[]>>(() => {
 });
 
 const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
-	const configuration = props.modelConfiguration.configuration;
+	const model = props.model;
 	const formattedInitials: ModelConfigTableData[] = [];
 
 	if (isStratified.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = configuration.semantics.ode.initials.find((i) => i.target === v);
+				const initial = model.semantics?.ode.initials?.find((i) => i.target === v);
 
-				const initialsMetadata = configuration.metadata.initials?.[initial!.target];
+				const initialsMetadata = model.metadata?.initials?.[initial!.target];
 				const sourceValue = initialsMetadata?.source;
 				const unitValue = initialsMetadata?.unit;
+				const nameValue = initialsMetadata?.name;
 				const descriptionValue = initialsMetadata?.description;
 				const conceptValue = initialsMetadata?.concept;
 				const expressionValue = initialsMetadata?.expression;
 				return {
 					id: v,
-					name: v,
+					name: nameValue,
 					description: descriptionValue,
-					concept: conceptValue,
+					concept: conceptValue?.grounding,
 					type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
 					unit: unitValue,
 					value: initial,
@@ -296,18 +325,19 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		initials.value.forEach((vals, init) => {
-			const initial = configuration.semantics.ode.initials.find((i) => i.target === vals[0]);
-			const initialsMetadata = configuration.metadata.initials?.[initial!.target];
+			const initial = model.semantics?.ode.initials?.find((i) => i.target === vals[0]);
+			const initialsMetadata = model.metadata?.initials?.[initial!.target];
 			const sourceValue = initialsMetadata?.source;
 			const unitValue = initialsMetadata?.unit;
+			const nameValue = initialsMetadata?.name;
 			const descriptionValue = initialsMetadata?.description;
 			const conceptValue = initialsMetadata?.concept;
 			const expressionValue = initialsMetadata?.expression;
 			formattedInitials.push({
 				id: init,
-				name: init,
+				name: nameValue,
 				description: descriptionValue,
-				concept: conceptValue,
+				concept: conceptValue?.grounding,
 				type: expressionValue ? ParamType.EXPRESSION : ParamType.CONSTANT,
 				unit: unitValue,
 				value: initial,
@@ -334,18 +364,20 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
 const updateCellValue = (v: any) => {
-	const clone = cloneDeep(props.modelConfiguration);
-	updateVariable(clone.configuration, 'initials', v.variableName, v.newValue, v.mathml);
-	emit('update-configuration', clone);
+	const clone = cloneDeep(props.model);
+	updateVariable(clone, 'initials', v.variableName, v.newValue, v.mathml);
+	emit('update-model', clone);
 };
 
-const updateMetadata = (id: string, key: string, value: string) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	if (!clonedConfig.configuration.metadata.initials?.[id]) {
-		clonedConfig.configuration.metadata.initials[id] = {};
+const updateMetadata = (id: string, key: string, value: any) => {
+	const clonedModel = cloneDeep(props.model);
+	if (!clonedModel.metadata?.initials?.[id]) {
+		clonedModel.metadata ??= {};
+		clonedModel.metadata.initials ??= {};
+		clonedModel.metadata.initials[id] ??= {};
 	}
-	clonedConfig.configuration.metadata.initials[id][key] = value;
-	emit('update-configuration', clonedConfig);
+	clonedModel.metadata.initials[id][key] = value;
+	emit('update-model', clonedModel);
 };
 
 const isStratified = computed(() => {
@@ -358,16 +390,24 @@ const updateExpression = async (value: Initial) => {
 	value.expression_mathml = mathml;
 	emit('update-value', [value]);
 };
+async function onSearch(event: AutoCompleteCompleteEvent) {
+	const query = event.query;
+	if (query.length > 2) {
+		const response = await searchCuriesEntities(query);
+		curies.value = response;
+	}
+}
 
 const changeType = (initial: Initial, typeIndex: number) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	const metadata = clonedConfig.configuration.metadata.initials;
+	const clonedModel = cloneDeep(props.model);
+	const metadata = clonedModel.metadata?.initials;
+	if (!metadata) return;
 	if (!metadata[initial.target]) {
 		metadata[initial.target] = {};
 	}
 	switch (typeIndex) {
 		case ParamType.EXPRESSION:
-			metadata[initial.target].expression = true;
+			if (metadata) metadata[initial.target].expression = true;
 			break;
 		case ParamType.CONSTANT:
 		default:
@@ -375,7 +415,7 @@ const changeType = (initial: Initial, typeIndex: number) => {
 			break;
 	}
 
-	emit('update-configuration', clonedConfig);
+	emit('update-model', clonedModel);
 };
 </script>
 
