@@ -117,6 +117,15 @@ export interface WorkflowNode<S> {
 	status: OperatorStatus;
 }
 
+export interface WorkflowAnnotation {
+	id: string;
+	text: string;
+
+	x: number;
+	y: number;
+	references: string[];
+}
+
 export interface WorkflowEdge {
 	id: string;
 	workflowId: string;
@@ -142,6 +151,8 @@ export interface Workflow {
 	id: string;
 	name: string;
 	description: string;
+
+	annotations?: WorkflowAnnotation[];
 
 	// zoom x-y translate and zoom
 	transform: {
