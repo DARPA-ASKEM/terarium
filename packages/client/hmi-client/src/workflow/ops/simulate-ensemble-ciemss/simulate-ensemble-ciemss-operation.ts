@@ -8,14 +8,14 @@ export interface SimulateEnsembleCiemssOperationState {
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	numSamples: number;
-	simulationsInProgress: string[];
+	inProgressSimulationId: string;
 }
 
 export const SimulateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS,
-	displayName: 'Simulate ensemble (probabilistic)',
+	displayName: 'Simulate ensemble',
 	description: '',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
@@ -32,7 +32,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
 			numSamples: 40,
-			simulationsInProgress: []
+			inProgressSimulationId: ''
 		};
 		return init;
 	}

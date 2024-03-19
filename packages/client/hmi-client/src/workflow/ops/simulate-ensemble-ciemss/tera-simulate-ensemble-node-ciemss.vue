@@ -1,52 +1,47 @@
 <template>
-	<section v-if="!showSpinner">
-		<template v-if="node.inputs[0].value">
-			<template v-if="simulationIds">
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:chartConfig="cfg"
-					has-mean-line
-					@configuration-change="chartConfigurationChange(index, $event)"
-					:size="{ width: 190, height: 120 }"
-				/>
-			</template>
-			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
-		</template>
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
-			Connect a model configuration
-		</tera-operator-placeholder>
-		<!--TODO: Consider adding status as another attribute to the placeholder
-			A different image/message would appear depending on the node status. Currently it just depends on the type of operator.
+	<section v-if="!inProgressSimulationId && runResults[selectedRunId]">
+		<tera-simulate-chart
+			v-for="(cfg, index) of node.state.chartConfigs"
+			:key="index"
+			:run-results="runResults[selectedRunId]"
+			:chartConfig="cfg"
+			has-mean-line
+			@configuration-change="chartConfigurationChange(index, $event)"
+			:size="{ width: 190, height: 120 }"
+		/>
+	</section>
 
-			<div class="invalid-block" v-if="node.status === OperatorStatus.INVALID">
-				<img class="image" src="@assets/svg/plants.svg" alt="" />
-				<p class="helpMessage">Configure in side panel</p>
-			</div> -->
-	</section>
-	<section v-else>
-		<tera-progress-bar :value="progress.value" :status="progress.status" />
-	</section>
+	<Button
+		v-if="node.inputs[0].value"
+		label="Edit"
+		@click="emit('open-drilldown')"
+		severity="secondary"
+		outlined
+	/>
+	<tera-operator-placeholder v-else :operation-type="node.operationType">
+		Connect a model configuration
+	</tera-operator-placeholder>
+
+	<tera-progress-spinner
+		v-if="inProgressSimulationId"
+		:font-size="2"
+		is-centered
+		style="height: 100%"
+	/>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ComputedRef, onMounted, onUnmounted, ref, watch } from 'vue';
-import { WorkflowNode } from '@/types/workflow';
-import { ProgressState } from '@/types/Types';
-import {
-	getRunResultCiemss,
-	querySimulationInProgress,
-	simulationPollAction
-} from '@/services/models/simulation-service';
+import { ref, computed, watch } from 'vue';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
 import { logger } from '@/utils/logger';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
@@ -55,15 +50,12 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown', 'append-input-port']);
 
-const showSpinner = ref(false);
-const completedRunId = ref<string>();
-const runResults = ref<RunResults>({});
-const simulationIds: ComputedRef<any | undefined> = computed(
-	<any | undefined>(() => props.node.outputs[0]?.value)
-);
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
+// const runResults = ref<RunResults>({});
+const runResults = ref<{ [runId: string]: RunResults }>({});
+const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
+const selectedRunId = ref<string>('');
 
 const poller = new Poller();
 
@@ -76,57 +68,80 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const getStatus = async (simulationId: string) => {
-	showSpinner.value = true;
-	if (!simulationId) return;
-
-	const runIds = [simulationId];
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
+		.setPollAction(async () => pollAction(simulationId));
 	const pollerResults = await poller.start();
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		return pollerResults;
+	}
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
-		showSpinner.value = false;
 		logger.error(`Simulate Ensemble: ${simulationId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
 		throw Error('Failed Runs');
 	}
-	completedRunId.value = simulationId;
-	updateOutputPorts(completedRunId);
-	showSpinner.value = false;
+	return pollerResults;
 };
 
-const updateOutputPorts = async (runId) => {
+const processResult = async (simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
+	const state = _.cloneDeep(props.node.state);
+
 	emit('append-output', {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
-		value: { runId }
+		value: [simulationId],
+		state: {
+			mapping: state.mapping,
+			timeSpan: state.timeSpan,
+			numSamples: state.numSamples
+		},
+		isSelected: false
 	});
 };
 
-onMounted(() => {
-	// FIXME: clean up to use just the active
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
-});
+watch(
+	() => props.node.inputs,
+	() => {
+		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
+			emit('append-input-port', { type: 'modelConfigId', label: 'Model configuration' });
+		}
+	},
+	{ deep: true }
+);
 
 watch(
-	() => simulationIds.value,
-	async () => {
-		if (!simulationIds.value) return;
+	() => props.node.state.inProgressSimulationId,
+	async (id) => {
+		if (!id || id === '') return;
 
-		const output = await getRunResultCiemss(simulationIds.value[0], 'result.csv');
-		runResults.value = output.runResults;
+		const response = await getStatus(id);
+		if (response?.state === PollerState.Done) {
+			processResult(id);
+		}
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressSimulationId = '';
+		emit('update-state', state);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
+	async () => {
+		const active = props.node.active;
+		if (!active) return;
+
+		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
+		if (!selectedRunId.value) return;
+
+		const output = await getRunResultCiemss(selectedRunId.value, 'result.csv');
+		runResults.value[selectedRunId.value] = output.runResults;
 	},
 	{ immediate: true }
 );
@@ -139,23 +154,6 @@ section {
 	width: 100%;
 	padding: 10px;
 	background: var(--surface-overlay);
-}
-
-.helpMessage {
-	color: var(--text-color-subdued);
-	font-size: var(--font-caption);
-}
-
-.image {
-	height: 8.75rem;
-	margin-bottom: 0.5rem;
-	background-color: var(--surface-ground);
-	border-radius: 1rem;
-	background-color: rgb(0, 0, 0, 0);
-}
-
-.invalid-block {
-	display: contents;
 }
 
 .simulate-chart {

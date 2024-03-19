@@ -1,110 +1,54 @@
 <template>
 	<main>
-		<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
+		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
-					<tera-show-more-text :text="description" :lines="5" />
-					<p v-if="modelType">
-						<label class="p-text-secondary mr-2">Model type</label>{{ modelType }}
-					</p>
-					<template v-if="fundedBy">
-						<div class="label-value-pair">
-							<p><label class="p-text-secondary mr-2">Funded by</label>{{ fundedBy }}</p>
-						</div>
-					</template>
-					<template v-if="authors">
-						<div class="label-value-pair">
-							<p><label class="p-text-secondary mr-2">Authors</label>{{ authors }}</p>
-						</div>
-					</template>
-					<template v-if="uses">
-						<div class="label-value-pair mt-2">
-							<h6>Uses</h6>
-							<p><label class="p-text-secondary mr-2">Direct use</label>{{ uses.DirectUse }}</p>
-						</div>
-						<div class="label-value-pair">
-							<p>
-								<label class="p-text-secondary mr-2">Out of scope use</label>
-								{{ uses.OutOfScopeUse }}
-							</p>
-						</div>
-					</template>
-					<template v-if="biasAndRiskLimitations">
-						<div class="label-value-pair mt-2">
-							<h6>Bias and Risk Limitations</h6>
-							<p>{{ biasAndRiskLimitations }}</p>
-						</div>
-					</template>
-					<template v-if="evaluation">
-						<div class="label-value-pair mt-2">
-							<h6>Evaluation</h6>
-							<p>{{ evaluation }}</p>
-						</div>
-					</template>
-					<template v-if="technicalSpecifications">
-						<div class="label-value-pair mt-2">
-							<h6>Technical Specifications</h6>
-							<p>{{ technicalSpecifications }}</p>
-						</div>
-					</template>
-					<template v-if="!isEmpty(glossary)">
-						<div class="label-value-pair mt-2">
-							<h6>Glossary</h6>
-							<p>{{ glossary.join(', ') }}</p>
-						</div>
-					</template>
-					<template v-if="!isEmpty(moreInformation)">
-						<div class="label-value-pair mt-2">
-							<h6>More Information</h6>
+					<span class="flex flex-row align-items-center gap-2 mb-1">
+						Model card
+						<SelectButton
+							v-model="descriptionType"
+							class="p-button-xsm"
+							:options="descriptionOptions"
+						/>
+					</span>
+					<div class="model-card">
+						<tera-show-more-text :text="description" :lines="5" />
+						<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
+						<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
+						<p v-if="authors"><label>Authors</label>{{ authors }}</p>
+						<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
+						<p v-if="uses?.OutOfScopeUse">
+							<label>Out of scope use</label>{{ uses.OutOfScopeUse }}
+						</p>
+						<p v-if="biasAndRiskLimitations">
+							<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
+						</p>
+						<p v-if="evaluation"><label>Evaluation</label>{{ evaluation }}</p>
+						<p v-if="technicalSpecifications">
+							<label>Technical Specifications</label>{{ technicalSpecifications }}
+						</p>
+						<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
+						<p v-if="!isEmpty(moreInformation)">
+							<label>More Information</label>
 							<a
 								v-for="(link, index) in moreInformation"
-								:href="link"
-								target="_blank"
-								rel="noopener noreferrer"
 								:key="index"
-								>{{ link }}</a
+								:href="link"
+								rel="noopener noreferrer"
 							>
-						</div>
-					</template>
-					<template v-if="!isEmpty(provenance)">
-						<div class="label-value-pair mt-2">
-							<h6>Provenance</h6>
-							<p v-html="provenance" />
-						</div>
-					</template>
-					<template v-if="!isEmpty(schema)">
-						<div class="label-value-pair mt-2">
-							<h6>Schema</h6>
-							<p v-html="schema" />
-						</div>
-					</template>
-					<template v-if="!isEmpty(sourceDataset)">
-						<div class="label-value-pair mt-2">
-							<h6>Source dataset</h6>
-							<p v-html="sourceDataset" />
-						</div>
-					</template>
-					<template v-if="!isEmpty(usage)">
-						<div class="label-value-pair mt-2">
-							<h6>Usage</h6>
-							<p v-html="usage" />
-						</div>
-					</template>
-					<template v-if="!isEmpty(strengths)">
-						<div class="label-value-pair mt-2">
-							<h6>Strengths</h6>
-							<p v-html="strengths" />
-						</div>
-					</template>
-					<template v-if="!isEmpty(assumptions)">
-						<div class="label-value-pair mt-2">
-							<h6>Assumptions</h6>
-							<p v-html="assumptions" />
-						</div>
-					</template>
+								{{ link }}
+							</a>
+						</p>
+						<p v-if="!isEmpty(provenance)"><label>Provenance</label>{{ provenance }}</p>
+						<p v-if="!isEmpty(schema)"><label>Schema</label>{{ schema }}</p>
+						<p v-if="!isEmpty(sourceDataset)"><label>Source dataset</label>{{ sourceDataset }}</p>
+						<p v-if="!isEmpty(usage)"><label>Usage</label>{{ usage }}</p>
+						<p v-if="!isEmpty(strengths)"><label>Strengths</label>{{ strengths }}</p>
+						<p v-if="!isEmpty(assumptions)"><label>Assumptions</label>{{ assumptions }}</p>
+					</div>
 				</section>
 				<section v-else>
-					<tera-progress-spinner is-centered> Generating card... </tera-progress-spinner>
+					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
 				</section>
 			</AccordionTab>
 			<AccordionTab header="Diagram">
@@ -129,15 +73,8 @@
 			<AccordionTab header="Model equations">
 				<tera-model-equation
 					:model="model"
-					:is-editable="!featureConfig?.isPreview"
+					:is-editable="false"
 					@model-updated="emit('model-updated')"
-				/>
-			</AccordionTab>
-			<AccordionTab header="Model observables">
-				<tera-model-observable
-					:model="model"
-					:is-editable="!featureConfig?.isPreview"
-					@update-model="updateModelContent"
 				/>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
@@ -156,6 +93,8 @@
 			:model="model"
 			:model-configurations="modelConfigurations"
 			@update-model="(modelClone) => emit('update-model', modelClone)"
+			class="mt-0"
+			:readonly="featureConfig?.isPreview"
 		/>
 	</main>
 </template>
@@ -165,26 +104,24 @@ import { isEmpty } from 'lodash';
 import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
 import { FeatureConfig, ResultType } from '@/types/common';
 import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import * as textUtil from '@/utils/text';
+import SelectButton from 'primevue/selectbutton';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;
 	modelConfigurations?: ModelConfiguration[];
-	highlight?: string;
 	featureConfig?: FeatureConfig;
 	isGeneratingCard?: boolean;
 }>();
@@ -192,13 +129,15 @@ const props = defineProps<{
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
 
 const teraModelDiagramRef = ref();
+const descriptionType = ref('TA1');
+const descriptionOptions = ref(['TA1', 'TA4']);
 
 // FIXME: expand Card typing definition?
 const card = computed<any>(() => {
-	// prioritize gollm_card over skema card
-	// if (props.model.metadata?.gollmCard) {
-	// 	return props.model.metadata.gollmCard;
-	// }
+	// Display the GoLLM card if the description is set to TA4 (true).
+	if (descriptionType.value === 'TA4' && props.model.metadata?.gollmCard) {
+		return props.model.metadata?.gollmCard;
+	}
 
 	if (props.model.metadata?.card) {
 		const cardWithUnknowns = props.model.metadata?.card;
@@ -214,13 +153,12 @@ const card = computed<any>(() => {
 	}
 	return null;
 });
-const description = computed(() =>
-	highlightSearchTerms(
+const description = computed(
+	() =>
 		card.value?.ModelDetails?.model_description ??
-			card.value?.description ??
-			props.model?.header?.description ??
-			''
-	)
+		card.value?.description ??
+		props.model?.header?.description ??
+		''
 );
 
 const biasAndRiskLimitations = computed(
@@ -246,10 +184,8 @@ const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');
 const authors = computed(() => {
 	const authorsArray = props.model?.metadata?.annotations?.authors ?? [];
-
 	if (card.value?.ModelCardAuthors) authorsArray.unshift(card.value?.ModelCardAuthors);
 	else if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
-
 	return authorsArray.join(', ');
 });
 
@@ -262,14 +198,6 @@ const documents = computed<{ name: string; id: string }[]>(
 				id: projectAsset.assetId
 			})) ?? []
 );
-
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const relatedTerariumModels = computed(
@@ -296,30 +224,32 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 </script>
 
 <style scoped>
-.overview {
-	display: flex;
-	width: 100%;
-	gap: 2rem;
+.description {
+	display: grid;
+	gap: var(--gap-small) var(--gap);
+	grid-template-columns: max-content 1fr;
 
 	& > * {
-		flex: 1;
+		grid-column: 1/3;
+	}
+
+	p {
+		display: grid;
+		grid-template-columns: subgrid;
+
+		label {
+			color: var(--text-color-secondary);
+			grid-column: 1/2;
+		}
 	}
 }
 
-.description,
-.additional-information {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-left: 1.5rem;
-}
-.details-column {
+.model-card {
+	padding: var(--gap);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
-}
-
-.framework {
-	text-transform: capitalize;
 }
 </style>

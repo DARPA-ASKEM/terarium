@@ -1,21 +1,21 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import lombok.RequiredArgsConstructor;
-import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 /**
  * Base class for services that manage TerariumAssets
@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public abstract class TerariumAssetService<T extends TerariumAsset> {
 
 	/** The configuration for the Elasticsearch service */
@@ -32,8 +33,9 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	/** The configuration for the application */
 	protected final Config config;
 
-	/** The Elasticsearch service */
+	/** Services */
 	protected final ElasticsearchService elasticService;
+	protected final ProjectAssetService projectAssetService;
 
 	/** The class of the asset this service manages */
 	private final Class<T> assetClass;
@@ -160,7 +162,22 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		}
 
 		asset.setUpdatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
+		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
+
+		// Update the related ProjectAsset
+		projectAssetService.updateByAsset(asset);
+
 		return Optional.of(asset);
+	}
+
+	/**
+	 * Clone asset on ES, retrieve and save document with a different id
+	 */
+	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
+		final Optional<T> targetAsset = getAsset(id);
+		if (targetAsset.isEmpty()) {
+			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
+		}
+		return createAsset(targetAsset.get());
 	}
 }

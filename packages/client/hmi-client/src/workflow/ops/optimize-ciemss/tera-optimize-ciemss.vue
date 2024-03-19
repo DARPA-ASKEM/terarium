@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<section :tabName="OptimizeTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -42,7 +48,6 @@
 						<div class="label-and-input">
 							<label>Solver method</label>
 							<Dropdown
-								disabled
 								class="p-inputtext-sm"
 								:options="['dopri5', 'euler']"
 								v-model="knobs.solverMethod"
@@ -94,7 +99,7 @@
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label>Risk tolerance</label>
+							<label>Acceptable risk of failure</label>
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
@@ -107,10 +112,10 @@
 						<div class="label-and-input">
 							<label>Threshold</label>
 							<InputNumber
-								disabled
 								class="p-inputtext-sm"
-								inputId="integeronly"
 								v-model="knobs.threshold"
+								:min-fraction-digits="1"
+								:max-fraction-digits="10"
 							/>
 						</div>
 					</div>
@@ -129,6 +134,9 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
+				<div v-if="optimizationResult">
+					{{ optimizationResult }}
+				</div>
 				<SelectButton
 					:model-value="outputViewSelection"
 					@change="if ($event.value) outputViewSelection = $event.value;"
@@ -140,13 +148,13 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
-				<template v-if="simulationRunResults[knobs.simulationRunId]">
+				<template v-if="simulationRunResults[knobs.forecastRunId]">
 					<div v-if="outputViewSelection === OutputView.Charts">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
-							:run-results="simulationRunResults[knobs.simulationRunId]"
-							:chartConfig="{ selectedRun: knobs.simulationRunId, selectedVariable: cfg }"
+							:run-results="simulationRunResults[knobs.forecastRunId]"
+							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="configurationChange(idx, $event)"
 						/>
@@ -156,12 +164,20 @@
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
+						<tera-optimize-chart
+							:risk-results="riskResults[knobs.forecastRunId]"
+							:chartConfig="{
+								selectedRun: knobs.forecastRunId,
+								selectedVariable: knobs.targetVariables
+							}"
+							:target-variable="knobs.targetVariables[0]"
+						/>
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
-							v-if="simulationRawContent[knobs.simulationRunId]"
+							v-if="simulationRawContent[knobs.forecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.simulationRunId]"
+							:raw-content="simulationRawContent[knobs.forecastRunId]"
 						/>
 					</div>
 				</template>
@@ -190,7 +206,7 @@
 				label="Save as a new model configuration"
 				@click="saveModelConfiguration"
 			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="knobs.simulationRunId" />
+			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -207,6 +223,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
+import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -243,6 +260,7 @@ import {
 import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -275,7 +293,8 @@ interface BasicKnobs {
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
-	simulationRunId: string;
+	forecastRunId: string;
+	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
 }
@@ -289,7 +308,8 @@ const knobs = ref<BasicKnobs>({
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
-	simulationRunId: props.node.state.simulationRunId ?? '',
+	forecastRunId: props.node.state.forecastRunId ?? '',
+	optimzationRunId: props.node.state.optimzationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
 	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
 });
@@ -328,7 +348,9 @@ const outputViewOptions = ref([
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
+const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateOptions = ref<State[]>([]);
@@ -398,15 +420,23 @@ const runOptimize = async () => {
 		return;
 	}
 
-	const optimizeInterventions: OptimizedIntervention[] = [];
+	const paramNames: string[] = [];
+	const startTime: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		optimizeInterventions.push({ name: ele.parameter, timestep: ele.startTime });
+		paramNames.push(ele.parameter);
+		startTime.push(ele.startTime);
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);
 		listBoundsInterventions.push([ele.upperBound]);
 	});
+
+	const optimizeInterventions: OptimizedIntervention = {
+		selection: 'param_value',
+		paramNames,
+		startTime
+	};
 
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
@@ -418,29 +448,30 @@ const runOptimize = async () => {
 		},
 		interventions: optimizeInterventions,
 		qoi: knobs.value.targetVariables,
-		riskBound: knobs.value.riskTolerance,
+		riskBound: knobs.value.threshold,
 		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: knobs.value.isMinimized,
 			numSamples: knobs.value.numStochasticSamples,
 			maxiter: 5,
-			maxfeval: 5
+			maxfeval: 5,
+			alpha: (100 - knobs.value.riskTolerance) / 100,
+			solverMethod: knobs.value.solverMethod
 		}
 	};
 
-	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
-	console.log(optResult.simulationId);
 	await getOptimizeStatus(optResult.simulationId);
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
 
-	for (let i = 0; i < optimizeInterventions.length; i++) {
-		if (policyResult.value?.at(i)) {
+	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
+	for (let i = 0; i < optimizeInterventions.paramNames.length; i++) {
+		if (policyResult.value?.at(i) && optimizeInterventions.startTime?.[i]) {
 			simulationIntervetions.push({
-				name: optimizeInterventions[i].name,
-				timestep: optimizeInterventions[i].timestep,
+				name: optimizeInterventions.paramNames[i],
+				timestep: optimizeInterventions.startTime[i],
 				value: policyResult.value[i]
 			});
 		}
@@ -462,8 +493,6 @@ const runOptimize = async () => {
 	};
 
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
-	console.log('Simulation Response:');
-	console.log(simulationResponse);
 	getStatus(simulationResponse.id);
 };
 
@@ -480,7 +509,6 @@ const getStatus = async (runId: string) => {
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		console.log(pollerResults.state);
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
 		logger.error(`Simulate: ${runId} has failed`, {
@@ -494,7 +522,7 @@ const getStatus = async (runId: string) => {
 		addChart();
 	}
 
-	knobs.value.simulationRunId = runId;
+	knobs.value.forecastRunId = runId;
 	showSpinner.value = false;
 };
 
@@ -511,7 +539,6 @@ const getOptimizeStatus = async (runId: string) => {
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		console.log(pollerResults.state);
 		// throw if there are any failed runs for now
 		showSpinner.value = false;
 		logger.error(`Optimize Run: ${runId} has failed`, {
@@ -519,11 +546,12 @@ const getOptimizeStatus = async (runId: string) => {
 		});
 		throw Error('Failed Runs');
 	}
+
+	knobs.value.optimzationRunId = runId;
 	showSpinner.value = false;
 };
 
 const saveModelConfiguration = async () => {
-	console.log('save model Configuration');
 	if (!modelConfiguration.value) return;
 
 	const state = _.cloneDeep(props.node.state);
@@ -550,6 +578,25 @@ const saveModelConfiguration = async () => {
 	});
 };
 
+const setOutputValues = async () => {
+	const output = await getRunResultCiemss(knobs.value.forecastRunId);
+	simulationRunResults.value[knobs.value.forecastRunId] = output.runResults;
+	riskResults.value[knobs.value.forecastRunId] = await getRunResult(
+		knobs.value.forecastRunId,
+		'risk.json'
+	);
+
+	simulationRawContent.value[knobs.value.forecastRunId] = createCsvAssetFromRunResults(
+		simulationRunResults.value[knobs.value.forecastRunId]
+	);
+
+	const optimzationResult = await getRunResult(
+		knobs.value.optimzationRunId,
+		'optimize_results.json'
+	);
+	optimizationResult.value = optimzationResult;
+};
+
 onMounted(async () => {
 	initialize();
 });
@@ -565,7 +612,8 @@ watch(
 		state.targetVariables = knobs.value.targetVariables;
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
-		state.simulationRunId = knobs.value.simulationRunId;
+		state.forecastRunId = knobs.value.forecastRunId;
+		state.optimzationRunId = knobs.value.optimzationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		emit('update-state', state);
@@ -590,14 +638,10 @@ watch(
 );
 
 watch(
-	() => knobs.value.simulationRunId,
+	() => knobs.value.forecastRunId,
 	async () => {
-		if (knobs.value.simulationRunId !== '') {
-			const output = await getRunResultCiemss(knobs.value.simulationRunId);
-			simulationRunResults.value[knobs.value.simulationRunId] = output.runResults;
-			simulationRawContent.value[knobs.value.simulationRunId] = createCsvAssetFromRunResults(
-				simulationRunResults.value[knobs.value.simulationRunId]
-			);
+		if (knobs.value.forecastRunId !== '') {
+			setOutputValues();
 		}
 	},
 	{ immediate: true }

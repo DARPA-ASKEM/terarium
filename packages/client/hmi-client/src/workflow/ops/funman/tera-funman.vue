@@ -1,5 +1,11 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
+		</template>
 		<div :tabName="FunmanTabs.Wizard">
 			<tera-drilldown-section>
 				<main>
@@ -147,6 +153,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -425,14 +432,20 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
+	const renameReserved = (v: string) => {
+		const reserved = ['lambda'];
+		if (reserved.includes(v)) return `${v}_`;
+		return v;
+	};
+
 	// Calculate mass
 	const semantics = model.value.semantics;
 	const modelInitials = semantics?.ode.initials;
-	const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
+	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
 
 	const parametersMap = {};
 	semantics?.ode.parameters?.forEach((d) => {
-		parametersMap[d.id] = d.value;
+		parametersMap[renameReserved(d.id)] = d.value;
 	});
 
 	const massValue = await pythonInstance.evaluateExpression(

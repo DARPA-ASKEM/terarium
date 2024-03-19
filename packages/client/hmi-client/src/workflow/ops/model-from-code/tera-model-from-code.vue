@@ -1,7 +1,10 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
-			<label>Output</label>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -13,22 +16,40 @@
 		<div tabName="Wizard">
 			<tera-drilldown-section :isLoading="fetchingInputBlocks">
 				<header>
-					<h5>Code</h5>
-					<Dropdown
-						class="w-full md:w-14rem"
-						v-model="clonedState.codeLanguage"
-						:options="programmingLanguages"
-						@change="setKernelContext"
-					/>
-					<Button
-						label="Add code block"
-						icon="pi pi-plus"
-						text
-						@click="addCodeBlock"
-						:disabled="
-							clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
-						"
-					/>
+					<section class="flex items-center gap-3">
+						<Dropdown
+							class="w-full md:w-14rem"
+							v-model="clonedState.codeLanguage"
+							:options="programmingLanguages"
+							@change="setKernelContext"
+						/>
+						<span
+							><label>Model framework</label
+							><Dropdown
+								size="small"
+								v-model="clonedState.modelFramework"
+								:options="modelFrameworks"
+								@change="setKernelContext"
+						/></span>
+						<span class="mr-auto">
+							<label>Service</label>
+							<Dropdown
+								size="small"
+								v-model="clonedState.modelService"
+								:options="modelServices"
+								@change="emit('update-state', clonedState)"
+							/>
+						</span>
+						<Button
+							label="Add code block"
+							icon="pi pi-plus"
+							text
+							@click="addCodeBlock"
+							:disabled="
+								clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
+							"
+						/>
+					</section>
 				</header>
 				<tera-operator-placeholder
 					v-if="allCodeBlocks.length === 0"
@@ -58,30 +79,12 @@
 							@update:value="emit('update-state', clonedState)"
 							:lang="asset.codeLanguage"
 							theme="chrome"
-							style="height: 10rem; width: 100%"
+							style="height: calc(100vh - 25rem); width: 100%"
 							class="ace-editor"
 							:readonly="asset.type === CodeBlockType.INPUT"
+							:options="{ showPrintMargin: false }"
 						/>
 					</tera-asset-block>
-				</template>
-				<template #footer>
-					<span
-						><label>Model framework</label
-						><Dropdown
-							size="small"
-							v-model="clonedState.modelFramework"
-							:options="modelFrameworks"
-							@change="setKernelContext"
-					/></span>
-					<span class="mr-auto">
-						<label>Service</label>
-						<Dropdown
-							size="small"
-							v-model="clonedState.modelService"
-							:options="modelServices"
-							@change="emit('update-state', clonedState)"
-						/>
-					</span>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -166,6 +169,7 @@ import { ModelServiceType } from '@/types/common';
 import { extensionFromProgrammingLanguage } from '@/utils/data-util';
 import { getDocumentAsset } from '@/services/document-assets';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -452,7 +456,7 @@ async function getInputCodeBlocks() {
 function addCodeBlock() {
 	const codeBlock: AssetBlock<CodeBlock> = {
 		includeInProcess: false,
-		name: 'Code Block',
+		name: 'Code block',
 		asset: {
 			codeContent: '',
 			codeLanguage: clonedState.value.codeLanguage

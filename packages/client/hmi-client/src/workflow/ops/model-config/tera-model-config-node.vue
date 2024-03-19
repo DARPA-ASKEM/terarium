@@ -1,18 +1,13 @@
 <template>
 	<section>
-		<template v-if="!isEmpty(node.state)">
-			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
-		</template>
-		<template v-else>
-			<tera-operator-placeholder :operation-type="node.operationType">
-				Attach a model
-			</tera-operator-placeholder>
-		</template>
+		<tera-operator-placeholder v-if="!node.inputs[0].value" :operation-type="node.operationType">
+			Attach a model
+		</tera-operator-placeholder>
+		<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';

@@ -27,6 +27,7 @@ export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) =>
 		const newInputs: string[] = [];
 		const newOutputs: string[] = [];
 		const newControllers: string[] = [];
+
 		for (let j = 0; j < input.length; j++) {
 			if (input[j] !== output[j]) {
 				newInputs.push(input[j]);
@@ -99,47 +100,6 @@ export function createTransitionMatrix(amr: Model, transitionMatrixData: any[]) 
 				const colIdx = colIndexMap.get(output[j]);
 				rows[rowIdx][colIdx].content.value = rate.expression;
 				rows[rowIdx][colIdx].content.id = rate.target;
-			}
-		}
-	}
-	return { matrix: rows };
-}
-
-export function createParameterMatrix(
-	amr: Model,
-	transitionMatrixData: any[],
-	childParameterIds: string[]
-) {
-	const { transitions, rowIndexMap, colIndexMap, rows } = prepareMatrixMapping(
-		amr,
-		transitionMatrixData
-	);
-
-	// For every transition id grab its input/output and row/column index to fill its place in the matrix
-	for (let i = 0; i < transitions.length; i++) {
-		const { input, output, id } = transitions[i];
-		const rate = amr.semantics?.ode?.rates?.find((r) => r.target === id);
-
-		if (rate) {
-			// Go through inputs and outputs of the current transition id
-			for (let j = 0; j < input.length; j++) {
-				const rowIdx = rowIndexMap.get(input[j]);
-				const colIdx = colIndexMap.get(output[j]);
-				if (childParameterIds) {
-					for (let k = 0; k < childParameterIds.length; k++) {
-						// Fill cell content with parameter content
-						if (rate.expression.includes(childParameterIds[k])) {
-							const parameter = amr.semantics?.ode.parameters?.find(
-								(p) => p.id === childParameterIds[k]
-							);
-							if (parameter) {
-								rows[rowIdx][colIdx].content.value = parameter.value;
-								rows[rowIdx][colIdx].content.id = parameter.id;
-							}
-							break;
-						}
-					}
-				}
 			}
 		}
 	}

@@ -141,11 +141,14 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 		transitions.each((d, idx, g) => {
 			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
-			const transitionMatrixLen = transitionMatrix.length;
+
+			const matrixRowLen = transitionMatrix.length;
+			const matrixColLen = transitionMatrix[0].length;
+
 			const transitionNode = select(g[idx]);
 
-			for (let i = 1; i < transitionMatrixLen; i++) {
-				const position = (d.width / transitionMatrixLen) * i;
+			for (let i = 1; i < matrixRowLen; i++) {
+				const position = (d.width / matrixColLen) * i;
 
 				transitionNode
 					.append('line')
@@ -165,15 +168,17 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					.attr('stroke', '#ffffffcf');
 			}
 
-			transitionMatrix.forEach((row) => {
-				row.forEach((col) => {
-					if (col.content) {
+			transitionMatrix.forEach((row, ridx) => {
+				const rowIdx = ridx;
+				row.forEach((col, cidx) => {
+					const colIdx = cidx;
+					if (col.content && col.content.value) {
 						transitionNode
 							.append('rect')
-							.attr('width', d.width / transitionMatrixLen)
-							.attr('height', d.width / transitionMatrixLen)
-							.attr('x', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.col)
-							.attr('y', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.row)
+							.attr('width', d.width / matrixColLen)
+							.attr('height', d.width / matrixRowLen)
+							.attr('x', -d.width * 0.5 + (d.width / matrixColLen) * colIdx)
+							.attr('y', -d.width * 0.5 + (d.width / matrixRowLen) * rowIdx)
 							.attr('rx', 2)
 							.attr('ry', 2)
 							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#8692a4')
@@ -211,6 +216,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
+				if (!this.graph.amr) return '';
 				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
 				if (rate) {
 					return rate.expression;
