@@ -2,6 +2,11 @@ import _ from 'lodash';
 import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 
+/**
+ * Function generator for common TA3-operator operations, such add, update, and delete charts
+ * The idea is to have a single place to do data manipulations but let the caller retain control
+ * via the callback function
+ * */
 export const chartActionsProxy = (state: any, updateStateCallback: Function) => {
 	if (!state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
 
