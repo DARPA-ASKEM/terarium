@@ -26,9 +26,7 @@
 				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
 			>
-				{{ facet.field.charAt(0).toUpperCase() + facet.field.slice(1) }}:<span>{{
-					value
-				}}</span>
+				{{ facet.field.charAt(0).toUpperCase() + facet.field.slice(1) }}:<span>{{ value }}</span>
 			</Chip>
 		</template>
 	</div>
@@ -146,11 +144,7 @@ const projectOptions = computed(() => [
 						// then, link and store in the project assets
 						const assetType = AssetType.Dataset;
 						if (datasetId) {
-							response = await useProjects().addAsset(
-								assetType,
-								datasetId,
-								project.id
-							);
+							response = await useProjects().addAsset(assetType, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
 					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
@@ -161,11 +155,7 @@ const projectOptions = computed(() => [
 						);
 						// finally add asset to project
 						response = xddDoc
-							? await useProjects().addAsset(
-									AssetType.Document,
-									xddDoc.id,
-									project.id
-								)
+							? await useProjects().addAsset(AssetType.Document, xddDoc.id, project.id)
 							: null;
 						assetName = selectedAsset.value.title;
 					} else if (props.source === 'Terarium') {
@@ -234,10 +224,7 @@ const filteredAssets = computed(() => {
 				return [...documentSearchResults];
 			}
 		}
-		if (
-			props.resourceType === ResourceType.MODEL ||
-			props.resourceType === ResourceType.DATASET
-		) {
+		if (props.resourceType === ResourceType.MODEL || props.resourceType === ResourceType.DATASET) {
 			return searchResults.results;
 		}
 	}
