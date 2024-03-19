@@ -132,7 +132,7 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
-					:chartConfig="cfg"
+					:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 					has-mean-line
 					@configuration-change="chartProxy.configurationChange(index, $event)"
 				/>
@@ -235,6 +235,7 @@ const outputs = computed(() => {
 	return [];
 });
 const selectedOutputId = ref<string>();
+const selectedRunId = ref<string>('');
 
 const chartProxy = chartActionsProxy(
 	props.node.state,
@@ -381,7 +382,7 @@ onMounted(async () => {
 	}
 
 	if (state.chartConfigs.length === 0) {
-		state.chartConfigs.push({ selectedVariable: [], selectedRun: '' });
+		state.chartConfigs.push([]);
 	}
 	emit('update-state', state);
 });
@@ -401,6 +402,7 @@ watch(
 		if (!output || !output.value) return;
 
 		selectedOutputId.value = output.id;
+		selectedRunId.value = output.value[0];
 
 		const response = await getRunResultCiemss(output.value[0], 'result.csv');
 		runResults.value = response.runResults;
