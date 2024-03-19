@@ -2,9 +2,9 @@
 	<main>
 		<!-- Top banner -->
 		<div class="scrollable">
-			<header class="grid">
+			<header>
 				<!-- Welcome text -->
-				<section class="lg:col-9 md:col-6">
+				<section class="w-full">
 					<h3>From data to discovery</h3>
 					<p>
 						Accelerate scientific modeling and simulation using AI. Search available knowledge,
@@ -20,14 +20,29 @@
 					/>
 				</section>
 
+				<!-- Video thumbnail image -->
+				<section
+					v-if="!showVideo"
+					class="z-1 col-3 flex justify-content-end"
+					@click="showVideo = true"
+					@keypress.enter="showVideo = true"
+					@keypress.space="showVideo = true"
+				>
+					<div class="video-thumbnail flex flex-column align-items-center">
+						<span class="play-symbol mt-4 mb-4">▶</span>
+						<span class="header mb-1">Terarium overview</span>
+						<span class="sub-header"> A demonstration of basic features </span>
+					</div>
+				</section>
+
 				<!-- Video container -->
-				<div class="col-3">
+				<section v-else class="col-3 flex justify-content-end">
 					<video controls ref="introVideo" class="video-container" height="200px">
-						<source src="@/assets/video/Terarium_overview.mp4" type="video/mp4" />
+						<source src="http://videos.terarium.ai/terarium.mp4" type="video/mp4" />
 						<track src="" kind="captions" srclang="en" label="English" />
 						Your browser does not support the video tag.
 					</video>
-				</div>
+				</section>
 			</header>
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
@@ -154,6 +169,8 @@ import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
+
+const showVideo = ref(false);
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -287,7 +304,7 @@ header {
 	background-repeat: no-repeat;
 	background-size: 25%, 100%;
 	background-position:
-		right 100px top -60px,
+		right 240px top -60px,
 		100%;
 }
 
@@ -303,11 +320,6 @@ header p {
 
 header > section > button {
 	margin-top: 2rem;
-}
-
-.video-container {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
 }
 
 .menu {
@@ -426,5 +438,64 @@ a {
 
 .close-button:hover {
 	opacity: 100%;
+}
+
+/* Video & Thumbnail */
+.video-container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+}
+
+.video-thumbnail {
+	background-image: radial-gradient(circle, var(--primary-color), #004f3c),
+		url('@/assets/images/video-thumbnail.png');
+	background-blend-mode: multiply;
+	background-size: cover;
+	background-position: center;
+	padding: 2rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	text-align: center;
+	position: relative;
+	cursor: pointer;
+	border-radius: 6px;
+	aspect-ratio: 16 / 9;
+	height: 200px;
+}
+
+.video-thumbnail .header {
+	font-size: 1.5rem;
+	font-weight: bold;
+	color: var(--surface-0);
+}
+.video-thumbnail .play-symbol {
+	display: flex;
+	padding-left: 5px;
+	padding-top: 3px;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	flex: 1;
+	font-size: 2rem;
+	border-radius: 50%;
+	background-color: var(--surface-0);
+	color: var(--primary-color);
+	aspect-ratio: 1 / 1;
+	transition: all 0.2s;
+}
+
+.video-thumbnail .play-symbol:hover {
+	background-color: var(--primary-color-lighter);
+}
+
+.video-thumbnail .sub-header {
+	color: var(--surface-50);
+}
+
+.video-player {
+	border-radius: 6px;
+	padding: 0;
 }
 </style>
