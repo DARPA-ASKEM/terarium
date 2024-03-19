@@ -249,6 +249,19 @@
 			</template>
 		</Column>
 
+		<!-- Suggested Configurations Button -->
+		<Column v-if="configView && !readonly">
+			<template #body="{ data }">
+				<Button
+					v-if="data.type !== ParamType.MATRIX"
+					text
+					size="small"
+					:label="`Suggested Configurations (${countSuggestions(data.id)})`"
+					@click="openSuggestedValuesModal(data.id)"
+				/>
+			</template>
+		</Column>
+
 		<!-- Hiding for now until functionality is available
 		<Column field="visibility" header="Visibility" style="width: 10%">
 			<template #body="slotProps">
@@ -260,10 +273,12 @@
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
 				:model="model"
+				:model-configurations="modelConfigurations"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
 				:readonly="readonly"
+				config-view
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
 				@update-model="(model: Model) => emit('update-model', model)"
 			/>
@@ -280,6 +295,87 @@
 			@close-modal="matrixModalContext.isOpen = false"
 			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>
+
+		<tera-modal
+			v-if="suggestedValuesModalContext.isOpen"
+			@modal-mask-clicked="onCloseSuggestedValuesModal"
+		>
+			<template #header
+				><h5>Suggested configurations for {{ suggestedValuesModalContext.id }}</h5></template
+			>
+			<Datatable
+				:value="suggestedValues"
+				dataKey="index"
+				v-model:selection="selectedValue"
+				tableStyle="min-width: 50rem"
+			>
+				<Column selectionMode="single" class="w-3rem"></Column>
+				<Column header="Symbol">
+					<template #body="{ data }">
+						<span class="truncate-text">
+							{{ data.parameter.id }}
+						</span>
+					</template>
+				</Column>
+				<Column header="Name">
+					<template #body="{ data }">
+						<span class="truncate-text">
+							{{ data.parameter.name }}
+						</span>
+					</template>
+				</Column>
+				<Column header="Value Type">
+					<template #body="{ data }">
+						{{ typeOptions[getParamType(data.parameter, data.configuration.configuration)].label }}
+					</template>
+				</Column>
+				<Column header="Value">
+					<template #body="{ data }">
+						<span
+							v-if="
+								getParamType(data.parameter, data.configuration.configuration) ===
+								ParamType.CONSTANT
+							"
+						>
+							{{ data.parameter.value }}
+						</span>
+						<div
+							class="distribution-container"
+							v-else-if="
+								getParamType(data.parameter, data.configuration.configuration) ===
+								ParamType.DISTRIBUTION
+							"
+						>
+							<span>Min: {{ data.parameter.distribution.parameters.minimum }}</span>
+							<span>Max: {{ data.parameter.distribution.parameters.maximum }}</span>
+						</div>
+						<span
+							v-else-if="
+								getParamType(data.parameter, data.configuration.configuration) ===
+								ParamType.TIME_SERIES
+							"
+						>
+							{{ data.configuration?.configuration?.metadata?.timeseries?.[data.parameter.id] }}
+						</span>
+					</template>
+				</Column>
+				<Column header="Source">
+					<template #body="{ data }">
+						<span>{{
+							data.configuration.configuration.metadata?.parameters?.[data.parameter.id]?.source
+						}}</span>
+					</template>
+				</Column>
+			</Datatable>
+			<template #footer>
+				<Button
+					label="Apply selected configuration"
+					:disabled="isEmpty(selectedValue)"
+					@click="applySelectedValue"
+				/>
+				<Button outlined label="Close" @click="onCloseSuggestedValuesModal" />
+			</template>
+		</tera-modal>
 	</Teleport>
 </template>
 
@@ -288,7 +384,7 @@ import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import type { DKG, Model, ModelParameter } from '@/types/Types';
+import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
@@ -310,9 +406,11 @@ import { matrixEffect } from '@/utils/easter-eggs';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import { updateVariable } from '@/model-representation/service';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 const props = defineProps<{
 	model: Model;
+	modelConfigurations?: ModelConfiguration[];
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
@@ -331,11 +429,50 @@ const emit = defineEmits(['update-value', 'update-model']);
 
 const isStratified = computed(() => isStratifiedModel(props.mmt));
 
+interface SuggestedValue {
+	parameter: ModelParameter;
+	configuration: ModelConfiguration;
+	index: number;
+}
+const selectedValue = ref<SuggestedValue | null>(null);
+const suggestedValues = computed(() => {
+	const matchingParameters: SuggestedValue[] = [];
+	props.modelConfigurations?.forEach((configuration, i) => {
+		if (modelType.value !== AMRSchemaNames.REGNET) {
+			configuration.configuration?.semantics?.ode.parameters?.forEach((parameter) => {
+				if (parameter.id === suggestedValuesModalContext.value.id) {
+					matchingParameters.push({
+						parameter,
+						configuration,
+						index: i
+					});
+				}
+			});
+		} else {
+			configuration.configuration?.model?.parameters?.forEach((parameter) => {
+				if (parameter.id === suggestedValuesModalContext.value.id) {
+					matchingParameters.push({
+						parameter,
+						configuration,
+						index: i
+					});
+				}
+			});
+		}
+	});
+
+	return matchingParameters;
+});
+
 const matrixModalContext = ref({
 	isOpen: false,
 	matrixId: ''
 });
 
+const suggestedValuesModalContext = ref({
+	isOpen: false,
+	id: ''
+});
 const parameters = computed<Map<string, string[]>>(() => {
 	if (isStratified.value) {
 		const collapsedParams = collapseParameters(props.mmt, props.mmtParams);
@@ -351,13 +488,10 @@ const parameters = computed<Map<string, string[]>>(() => {
 	return result;
 });
 
-const getParamType = (param: ModelParameter | undefined) => {
+const getParamType = (param: ModelParameter | undefined, model: Model = props.model) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
-	if (
-		props.model.metadata?.timeseries?.[param.id] ||
-		props.model.metadata?.timeseries?.[param.id] === ''
-	) {
+	if (model.metadata?.timeseries?.[param.id] || model.metadata?.timeseries?.[param.id] === '') {
 		type = ParamType.TIME_SERIES;
 	} else if (param?.distribution) {
 		type = ParamType.DISTRIBUTION;
@@ -572,6 +706,63 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 		curies.value = response;
 	}
 }
+
+const openSuggestedValuesModal = (id: string) => {
+	suggestedValuesModalContext.value.isOpen = true;
+	suggestedValuesModalContext.value.id = id;
+};
+
+const onCloseSuggestedValuesModal = () => {
+	suggestedValuesModalContext.value.isOpen = false;
+	suggestedValuesModalContext.value.id = '';
+	selectedValue.value = null;
+};
+
+const applySelectedValue = () => {
+	if (!selectedValue.value) return;
+
+	const clonedModel = cloneDeep(props.model);
+	const timeseries =
+		selectedValue.value.configuration.configuration.metadata?.timeseries?.[
+			selectedValue.value.parameter.id
+		];
+	const metadata =
+		selectedValue.value.configuration.configuration.metadata?.parameters?.[
+			selectedValue.value.parameter.id
+		];
+
+	clonedModel.metadata ??= {};
+	clonedModel.metadata.parameters ??= {};
+	clonedModel.metadata.timeseries ??= {};
+	clonedModel.metadata.parameters[selectedValue.value.parameter.id] = metadata;
+	clonedModel.metadata.timeseries[selectedValue.value.parameter.id] = timeseries;
+
+	let parameterIdx;
+	if (modelType.value === AMRSchemaNames.REGNET) {
+		parameterIdx = clonedModel.model.parameters.findIndex(
+			(p) => p.id === selectedValue.value?.parameter.id
+		);
+		clonedModel.model.parameters[parameterIdx] = selectedValue.value.parameter;
+	} else {
+		parameterIdx = clonedModel.semantics?.ode.parameters?.findIndex(
+			(p) => p.id === selectedValue.value?.parameter.id
+		);
+		if (clonedModel.semantics?.ode.parameters)
+			clonedModel.semantics.ode.parameters[parameterIdx] = selectedValue.value.parameter;
+	}
+
+	emit('update-model', clonedModel);
+	onCloseSuggestedValuesModal();
+};
+
+const countSuggestions = (id) =>
+	props.modelConfigurations?.filter((configuration) => {
+		if (modelType.value !== AMRSchemaNames.REGNET) {
+			return configuration.configuration?.semantics?.ode.parameters?.find((p) => p.id === id);
+		}
+
+		return configuration.configuration?.model?.parameters?.find((p) => p.id === id);
+	}).length;
 </script>
 
 <style scoped>
