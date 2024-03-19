@@ -156,6 +156,7 @@
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
+							:model-configurations="suggestedConfirgurationContext.tableData"
 							:model="modelConfiguration.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
