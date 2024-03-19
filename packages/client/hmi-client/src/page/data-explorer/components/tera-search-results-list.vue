@@ -149,14 +149,7 @@ const projectOptions = computed(() => [
 						}
 					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
 						const document = selectedAsset.value as Document;
-						const xddDoc: DocumentAsset | null = await createDocumentFromXDD(
-							document,
-							project.id as string
-						);
-						// finally add asset to project
-						response = xddDoc
-							? await useProjects().addAsset(AssetType.Document, xddDoc.id, project.id)
-							: null;
+						await createDocumentFromXDD(document, project.id as string);
 						assetName = selectedAsset.value.title;
 					} else if (props.source === 'Terarium') {
 						const document = selectedAsset.value as DocumentAsset;

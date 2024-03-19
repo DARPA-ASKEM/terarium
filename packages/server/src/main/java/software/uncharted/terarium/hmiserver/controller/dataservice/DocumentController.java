@@ -437,22 +437,23 @@ public class DocumentController {
 
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
-			final DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
 					extractionResponse.getSuccess().getData());
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
+				documentAsset = documentAssetService.updateAsset(documentAsset).get();
 			}
-
-			// Upload the PDF from unpaywall
-			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
 
 			// add asset to project
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
 
+			// Upload the PDF from unpaywall
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
+
 			return ResponseEntity.status(HttpStatus.CREATED).body(documentAsset);
 
 		} catch (final IOException | URISyntaxException e) {
-			final String error = "Unable to upload document from github";
+			final String error = "Unable to upload document from xdd";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,

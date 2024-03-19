@@ -210,6 +210,7 @@ async function createDocumentFromXDD(
 		document,
 		projectId
 	});
+	// TODO : subscribe to EXTRACTION messages
 	return response.data ?? null;
 }
 export {
