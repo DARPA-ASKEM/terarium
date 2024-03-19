@@ -139,7 +139,7 @@ const projectOptions = computed(() => [
 				label: project.name,
 				command: async () => {
 					let response: ProjectAsset['id'] | null = null;
-					let assetName: string | undefined = '';
+					let assetName: string = '';
 					isAdding.value = true;
 
 					if (isModel(selectedAsset.value)) {
@@ -178,7 +178,7 @@ const projectOptions = computed(() => [
 						const document = selectedAsset.value as DocumentAsset;
 						const assetType = AssetType.Document;
 						response = await useProjects().addAsset(assetType, document.id, project.id);
-						assetName = document.name;
+						assetName = document.name ?? '';
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
