@@ -257,7 +257,7 @@ export class KernelSessionManager {
 			const sessionKernel = kernelInfo.newValue as IKernelConnection;
 			if (sessionKernel.name === kernelName) {
 				sessionKernel.anyMessage.connect(anyMessageHandler);
-				session.iopubMessage.connect(iopubMessageHandler);
+				session.iopubMessage.connect(iopubMessageHandler); // TODO: May want to replace iopubMessageHandler with anyMessageHandler
 				const messageBody = {
 					session: session.name || '',
 					channel: 'shell',
