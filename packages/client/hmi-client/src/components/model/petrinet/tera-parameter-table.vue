@@ -457,9 +457,6 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 		});
 	}
 
-	console.log(props.model);
-	console.log(formattedParams);
-
 	return formattedParams;
 });
 
