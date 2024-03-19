@@ -132,9 +132,9 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
-					:chartConfig="cfg"
+					:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 					has-mean-line
-					@configuration-change="chartConfigurationChange(index, $event)"
+					@configuration-change="chartProxy.configurationChange(index, $event)"
 				/>
 			</tera-drilldown-preview>
 		</template>
@@ -172,6 +172,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { chartActionsProxy } from '@/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type {
@@ -179,7 +180,7 @@ import type {
 	EnsembleModelConfigs,
 	EnsembleSimulationCiemssRequest
 } from '@/types/Types';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { RunResults } from '@/types/SimulateConfig';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
@@ -234,13 +235,14 @@ const outputs = computed(() => {
 	return [];
 });
 const selectedOutputId = ref<string>();
+const selectedRunId = ref<string>('');
 
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
-	emit('update-state', state);
-};
+const chartProxy = chartActionsProxy(
+	props.node.state,
+	(state: SimulateEnsembleCiemssOperationState) => {
+		emit('update-state', state);
+	}
+);
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -380,7 +382,7 @@ onMounted(async () => {
 	}
 
 	if (state.chartConfigs.length === 0) {
-		state.chartConfigs.push({ selectedVariable: [], selectedRun: '' });
+		state.chartConfigs.push([]);
 	}
 	emit('update-state', state);
 });
@@ -400,6 +402,7 @@ watch(
 		if (!output || !output.value) return;
 
 		selectedOutputId.value = output.id;
+		selectedRunId.value = output.value[0];
 
 		const response = await getRunResultCiemss(output.value[0], 'result.csv');
 		runResults.value = response.runResults;
