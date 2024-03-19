@@ -226,7 +226,6 @@ const sendForExtractions = async () => {
 	isLoading.value = true;
 
 	await extractPDF(selectedResourceId);
-	// TODO: subscribe to EXTRACTION events
 	if (!props.assetId) return;
 	await createProvenance({
 		relation_type: RelationshipType.EXTRACTED_FROM,
@@ -235,9 +234,7 @@ const sendForExtractions = async () => {
 		right: selectedResourceId,
 		right_type: ProvenanceType.Document
 	});
-	// await fetchExtraction(pdfExtractionsJobId);
 
-	isLoading.value = false;
 	emit('enriched');
 	await getRelatedDocuments();
 };

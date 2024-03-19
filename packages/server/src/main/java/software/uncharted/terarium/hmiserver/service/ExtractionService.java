@@ -71,9 +71,9 @@ public class ExtractionService {
                             "application/pdf");
 
                     final boolean compressImages = false;
-                    final boolean forceRun = false;
+                    final boolean useCache = false;
                     final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
-                            !forceRun,
+                            useCache,
                             documentFile);
 
                     final JsonNode body = extractionResp.getBody();

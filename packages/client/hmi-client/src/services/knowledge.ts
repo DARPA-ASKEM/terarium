@@ -108,18 +108,18 @@ export const profileDataset = async (
 
 const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	if (event.data.error) {
-		console.log(
+		logger.error(
 			`Extraction client-event: ERROR [${event.data.step}/${event.data.totalSteps}]: ${event.data.error}`
 		);
 		await unsubscribe(ClientEventType.Extraction, messageHandler);
 		return;
 	}
 	if (event.data.message) {
-		console.log(
+		console.debug(
 			`Extraction client-event: [${event.data.step}/${event.data.totalSteps}]: ${event.data.message}`
 		);
 	} else {
-		console.log(`Extraction client-event: [${event.data.step}/${event.data.totalSteps}]`);
+		logger.success(`Extraction client-event: [${event.data.step}/${event.data.totalSteps}]`);
 	}
 	if (event.data.step === event.data.totalSteps) {
 		await unsubscribe(ClientEventType.Extraction, messageHandler);
