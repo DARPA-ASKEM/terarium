@@ -10,7 +10,7 @@
 			<tera-drilldown-section>
 				<div class="form-section">
 					<h4>Set simulation parameters</h4>
-					<!-- Start, End, Number of samples -->
+					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="2">Start time</label>
@@ -30,6 +30,10 @@
 								@update:model-value="updateState"
 							/>
 						</div>
+					</div>
+
+					<!-- Number of Samples & Method -->
+					<div class="input-row mt-3">
 						<div class="label-and-input">
 							<label for="4">Number of samples</label>
 							<InputNumber
@@ -40,17 +44,6 @@
 								@update:model-value="updateState"
 							/>
 						</div>
-					</div>
-
-					<!-- This is the time slice preview -->
-					<div class="input-row">
-						<div class="example-string">
-							{{ exampleString }}
-						</div>
-					</div>
-
-					<!-- Method -->
-					<div class="input-row mt-3">
 						<div class="label-and-input">
 							<label for="5">Method</label>
 							<Dropdown
