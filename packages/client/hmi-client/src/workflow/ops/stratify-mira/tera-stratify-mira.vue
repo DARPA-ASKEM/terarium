@@ -68,7 +68,7 @@
 				is-selectable
 			>
 				<div class="h-full">
-					<tera-drilldown-error-preview
+					<tera-notebook-error
 						v-if="executeResponse.status === OperatorStatus.ERROR"
 						:name="executeResponse.name"
 						:value="executeResponse.value"
@@ -145,7 +145,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useToastService } from '@/services/toast';
 import '@/ace-config';
-import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';

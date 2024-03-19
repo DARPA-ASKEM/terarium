@@ -56,7 +56,7 @@
 					is-selectable
 					class="h-full"
 				>
-					<tera-drilldown-error-preview
+					<tera-notebook-error
 						v-if="executeResponse.status === OperatorStatus.ERROR"
 						:name="executeResponse.name"
 						:value="executeResponse.value"
@@ -111,7 +111,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -227,9 +227,6 @@ const runFromCode = (code: string) => {
 		})
 		.register('stream', (data) => {
 			console.log('stream', data);
-		})
-		.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
 		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;

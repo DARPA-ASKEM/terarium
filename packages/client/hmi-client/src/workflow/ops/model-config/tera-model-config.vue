@@ -227,7 +227,7 @@
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
-				<tera-drilldown-error-preview
+				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
 					:value="executeResponse.value"
@@ -279,7 +279,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 
 import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';

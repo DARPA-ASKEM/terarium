@@ -40,7 +40,7 @@
 			</tera-drilldown-section>
 
 			<tera-drilldown-preview title="Output Preview">
-				<tera-drilldown-error-preview
+				<tera-notebook-error
 					v-if="executeResponse.status === OperatorStatus.ERROR"
 					:name="executeResponse.name"
 					:value="executeResponse.value"
@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import teraDrilldownErrorPreview from '@/components/drilldown/tera-drilldown-error-preview.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
