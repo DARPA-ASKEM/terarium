@@ -26,7 +26,9 @@
 				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
 			>
-				{{ facet.field.charAt(0).toUpperCase() + facet.field.slice(1) }}:<span>{{ value }}</span>
+				{{ facet.field.charAt(0).toUpperCase() + facet.field.slice(1) }}:<span>{{
+					value
+				}}</span>
 			</Chip>
 		</template>
 	</div>
@@ -62,32 +64,26 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
-import { computed, PropType, ref } from 'vue';
-import type {
-	AddDocumentAssetFromXDDResponse,
-	Document,
-	DocumentAsset,
-	ProjectAsset,
-	XDDFacetsItemResponse
-} from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import useQueryStore from '@/stores/query';
-import { ResourceType, ResultType, SearchResults } from '@/types/common';
-import Chip from 'primevue/chip';
-import { ClauseValue } from '@/types/Filter';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import { useProjects } from '@/composables/project';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import {
 	getSearchByExampleOptionsString,
 	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
-import { useProjects } from '@/composables/project';
 import { createDocumentFromXDD } from '@/services/document-assets';
+import useQueryStore from '@/stores/query';
+import { ResourceType, ResultType, SearchResults } from '@/types/common';
+import { ClauseValue } from '@/types/Filter';
+import type { Document, DocumentAsset, ProjectAsset, XDDFacetsItemResponse } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
+import Chip from 'primevue/chip';
+import { computed, PropType, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
@@ -150,18 +146,26 @@ const projectOptions = computed(() => [
 						// then, link and store in the project assets
 						const assetType = AssetType.Dataset;
 						if (datasetId) {
-							response = await useProjects().addAsset(assetType, datasetId, project.id);
+							response = await useProjects().addAsset(
+								assetType,
+								datasetId,
+								project.id
+							);
 							assetName = selectedAsset.value.name;
 						}
 					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
 						const document = selectedAsset.value as Document;
-						const xddDoc: AddDocumentAssetFromXDDResponse | null = await createDocumentFromXDD(
+						const xddDoc: DocumentAsset | null = await createDocumentFromXDD(
 							document,
 							project.id as string
 						);
 						// finally add asset to project
 						response = xddDoc
-							? await useProjects().addAsset(AssetType.Document, xddDoc.documentAssetId, project.id)
+							? await useProjects().addAsset(
+									AssetType.Document,
+									xddDoc.id,
+									project.id
+								)
 							: null;
 						assetName = selectedAsset.value.title;
 					} else if (props.source === 'Terarium') {
@@ -230,7 +234,10 @@ const filteredAssets = computed(() => {
 				return [...documentSearchResults];
 			}
 		}
-		if (props.resourceType === ResourceType.MODEL || props.resourceType === ResourceType.DATASET) {
+		if (
+			props.resourceType === ResourceType.MODEL ||
+			props.resourceType === ResourceType.DATASET
+		) {
 			return searchResults.results;
 		}
 	}
