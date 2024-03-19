@@ -2,7 +2,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import { Model, Document, Dataset, DocumentAsset, ProgrammingLanguage } from '@/types/Types';
+import { Dataset, Document, DocumentAsset, Model, ProgrammingLanguage } from '@/types/Types';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
@@ -64,7 +64,7 @@ export function isModel(item: ResultType): item is Model {
 }
 
 export function isDataset(item: ResultType): item is Dataset {
-	return (<Dataset>item).columns !== undefined;
+	return (<Dataset>item).columns !== undefined || (<Dataset>item).esgfId !== undefined;
 }
 
 export function isDocument(item: ResultType): item is Document {
