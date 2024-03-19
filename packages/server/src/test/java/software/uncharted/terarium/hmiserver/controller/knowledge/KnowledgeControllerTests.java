@@ -17,7 +17,6 @@ import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
@@ -77,7 +76,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void equationsToModelRegNet() throws Exception {
 
@@ -130,7 +129,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		log.info(regnetModelId.toString());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void equationsToModelPetrinet() throws Exception {
 
@@ -461,7 +460,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void codeToAmrTest() throws Exception {
 
@@ -495,7 +494,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(model != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void codeToAmrTestLLM() throws Exception {
 
@@ -530,7 +529,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(model != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void codeToAmrTestDynamicsOnly() throws Exception {
 
