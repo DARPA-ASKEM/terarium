@@ -230,7 +230,13 @@
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
-				<div>{{ notebookResponse }}</div>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</section>
 	</tera-drilldown>
@@ -276,6 +282,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
 import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 
 import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
@@ -293,6 +300,7 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import type { WorkflowNode } from '@/types/workflow';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import { OperatorStatus } from '@/types/workflow';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -365,6 +373,12 @@ const codeText = ref(
 	'# This environment contains the variable "model_config" to be read and updated'
 );
 const notebookResponse = ref();
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 const sampleAgentQuestions = [
 	'What are the current parameters values?',
 	'update the parameters {gamma: 0.13}'
@@ -396,10 +410,6 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
 		})
-		.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
-		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;
 			handleModelPreview(data);
@@ -407,6 +417,17 @@ const runFromCode = () => {
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
 			}
+		})
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+			executeResponse.value = {
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+			};
 		});
 };
 const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);
