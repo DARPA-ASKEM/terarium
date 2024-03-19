@@ -54,16 +54,6 @@
 				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
 		</section>
-		<tera-slider-panel
-			v-model:is-open="isNotesSliderOpen"
-			content-width="240px"
-			direction="right"
-			header="Notes"
-		>
-			<template v-slot:content>
-				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
-			</template>
-		</tera-slider-panel>
 		<!-- New model modal -->
 		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
 	</main>
@@ -75,7 +65,6 @@ import { isEqual } from 'lodash';
 import { useRoute, useRouter } from 'vue-router';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
-import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
 import { RouteName } from '@/router/routes';
 import { AssetRoute } from '@/types/common';
 import { isProjectAssetTypes, ProjectPages } from '@/types/Project';
@@ -100,7 +89,6 @@ const router = useRouter();
 
 const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
-const isNotesSliderOpen = ref(false);
 const isNewModelModalVisible = ref(false);
 const isUploadResourcesModalVisible = ref(false);
 
