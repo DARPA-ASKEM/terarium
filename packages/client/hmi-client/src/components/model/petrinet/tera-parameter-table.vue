@@ -310,6 +310,13 @@
 				tableStyle="min-width: 50rem"
 			>
 				<Column selectionMode="single" class="w-3rem"></Column>
+				<Column header="Symbol">
+					<template #body="{ data }">
+						<span class="truncate-text">
+							{{ data.parameter.id }}
+						</span>
+					</template>
+				</Column>
 				<Column header="Name">
 					<template #body="{ data }">
 						<span class="truncate-text">
