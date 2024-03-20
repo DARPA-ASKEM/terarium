@@ -12,7 +12,13 @@
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span class="custom-chip" :style="{ backgroundColor: getVariableColorByVar(variable) }">
+					<span
+						class="custom-chip"
+						:style="{
+							color: getVariableColorByVar(variable),
+							borderColor: getVariableColorByVar(variable)
+						}"
+					>
 						{{ variable }}
 					</span>
 				</template>
@@ -300,10 +306,8 @@ onMounted(() => {
 
 <style scoped>
 .custom-chip {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius-bigger);
-	padding: var(--gap-xsmall) var(--gap);
-	color: var(--surface-0);
+	border-bottom: 3px solid;
+	padding-bottom: 1px;
 }
 .simulate-chart {
 	background-color: var(--surface-0);
