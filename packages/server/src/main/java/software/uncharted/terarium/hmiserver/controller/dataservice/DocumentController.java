@@ -412,7 +412,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "201", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AddDocumentAssetFromXDDResponse.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
-	public ResponseEntity<DocumentAsset> createDocumentFromXDD(
+	public ResponseEntity<Void> createDocumentFromXDD(
 			@RequestBody final AddDocumentAssetFromXDDRequest body) {
 
 		try {
@@ -426,6 +426,7 @@ public class DocumentController {
 			}
 			final String userId = project.get().getUserId();
 
+
 			// get pdf url and filename
 			final String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
 			final String filename = DownloadService.pdfNameFromUrl(fileUrl);
@@ -437,22 +438,22 @@ public class DocumentController {
 
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
-			final DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
 					extractionResponse.getSuccess().getData());
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
+				documentAsset = documentAssetService.updateAsset(documentAsset).get();
 			}
-
-			// Upload the PDF from unpaywall
-			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
 
 			// add asset to project
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
 
-			return ResponseEntity.status(HttpStatus.CREATED).body(documentAsset);
+			// Upload the PDF from unpaywall
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
 
+			return ResponseEntity.accepted().build();
 		} catch (final IOException | URISyntaxException e) {
-			final String error = "Unable to upload document from github";
+			final String error = "Unable to upload document from xdd";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -667,8 +668,14 @@ public class DocumentController {
 
 			// fire and forgot pdf extractions
 			extractionService.extractPDF(docId, currentUserId);
+		} catch (final ResponseStatusException e) {
+			log.error("Unable to upload PDF document then extract", e);
+			throw e;
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to upload document");
 		}
 	}
 }
