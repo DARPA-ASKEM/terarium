@@ -12,7 +12,7 @@
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span class="custom-chip" :style="{ backgroundColor: getVariableColorByVar(variable) }">
+					<span class="custom-chip" :style="{ color: getVariableColorByVar(variable) }">
 						{{ variable }}
 					</span>
 				</template>
