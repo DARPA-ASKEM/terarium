@@ -56,24 +56,24 @@
 									<label>
 										<input
 											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.EQUALWEIGHTS"
+											v-model="ensembleWeightMode"
+											:value="EnsembleWeightMode.EQUALWEIGHTS"
 										/>
-										{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
+										{{ EnsembleWeightMode.EQUALWEIGHTS }}
 									</label>
 									<label>
 										<input
 											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.CUSTOM"
+											v-model="ensembleWeightMode"
+											:value="EnsembleWeightMode.CUSTOM"
 										/>
-										{{ EnsembleCalibrationMode.CUSTOM }}
+										{{ EnsembleWeightMode.CUSTOM }}
 									</label>
 								</section>
 								<!-- Turn this into a horizontal bar chart -->
 								<section class="ensemble-calibration-graph">
 									<Chart
-										v-if="ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS"
+										v-if="ensembleWeightMode === EnsembleWeightMode.EQUALWEIGHTS"
 										type="bar"
 										:height="200"
 										:data="setBarChartData()"
@@ -216,7 +216,7 @@ enum CalibrateView {
 	Input = 'Input',
 	Output = 'Output'
 }
-enum EnsembleCalibrationMode {
+enum EnsembleWeightMode {
 	EQUALWEIGHTS = 'equalWeights',
 	CUSTOM = 'custom'
 }
@@ -238,7 +238,7 @@ const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
 const listModelLabels = ref<string[]>([]);
-const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
+const ensembleWeightMode = ref<string>(EnsembleWeightMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<string[][]>([]);
@@ -265,7 +265,7 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
+	if (ensembleWeightMode.value === EnsembleWeightMode.EQUALWEIGHTS) {
 		const percent = 1 / ensembleConfigs.value.length;
 		for (let i = 0; i < ensembleConfigs.value.length; i++) {
 			ensembleConfigs.value[i].weight = percent;
@@ -371,7 +371,7 @@ watch(
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
 watch(
-	[() => ensembleCalibrationMode.value, listModelIds.value],
+	[() => ensembleWeightMode.value, listModelIds.value],
 	async () => {
 		calculateWeights();
 	},
