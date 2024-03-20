@@ -68,7 +68,13 @@
 				is-selectable
 			>
 				<div class="h-full">
-					<template v-if="stratifiedAmr">
+					<tera-notebook-error
+						v-if="executeResponse.status === OperatorStatus.ERROR"
+						:name="executeResponse.name"
+						:value="executeResponse.value"
+						:traceback="executeResponse.traceback"
+					/>
+					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
 						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
@@ -128,7 +134,7 @@ import teraStratificationGroupForm from '@/components/stratification/tera-strati
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import _ from 'lodash';
 import Button from 'primevue/button';
@@ -139,6 +145,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useToastService } from '@/services/toast';
 import '@/ace-config';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -166,7 +173,12 @@ enum StratifyTabs {
 
 const amr = ref<Model | null>(null);
 const stratifiedAmr = ref<Model | null>(null);
-
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 const modelNodeOptions = ref<string[]>([]);
 
 const isNewModelModalVisible = ref(false);
@@ -401,9 +413,6 @@ const runCodeStratify = () => {
 			.register('stream', (data) => {
 				console.log('stream', data);
 			})
-			.register('error', (data) => {
-				logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			})
 			.register('model_preview', (data) => {
 				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
 				// currently no matter what kind of code is run we always get a `model_preview` response.
@@ -414,6 +423,17 @@ const runCodeStratify = () => {
 				if (executedCode) {
 					saveCodeToState(executedCode, true);
 				}
+			})
+			.register('any_execute_reply', (data) => {
+				let status = OperatorStatus.DEFAULT;
+				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+				executeResponse.value = {
+					status,
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
 			});
 	});
 };

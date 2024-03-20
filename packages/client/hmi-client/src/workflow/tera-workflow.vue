@@ -183,6 +183,7 @@
 			:node="currentActiveNode"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
@@ -202,7 +203,8 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowOutput,
-	WorkflowPort
+	WorkflowPort,
+	OperatorStatus
 } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
 // Operation imports
@@ -378,6 +380,12 @@ function appendOutput(
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
+	workflowDirty = true;
+}
+
+function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
+	if (!node) return;
+	workflowService.updateNodeStatus(wf.value, node.id, status);
 	workflowDirty = true;
 }
 

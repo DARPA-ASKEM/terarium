@@ -40,15 +40,22 @@
 			</tera-drilldown-section>
 
 			<tera-drilldown-preview title="Output Preview">
-				<div>{{ notebookResponse }}</div>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</main>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -74,6 +81,13 @@ let editor: VAceEditorInstance['_editor'] | null;
 
 const modelId = computed(() => props.node.inputs?.[0]?.value?.[0]);
 const notebookResponse = ref();
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
+
 const sampleAgentQuestions = ['Convert the model to equations please'];
 const contextLanguage = 'julia-1.10';
 const isRunningCode = ref<boolean>(false);
@@ -130,16 +144,23 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			console.log('stream', data.content);
 		})
-		.register('error', (data) => {
-			console.log('error', data.content.evalue);
-			logger.error(data.content.evalue);
-			isRunningCode.value = false;
-		})
 		// FIXME: There isnt really a proper response we receive for llm output for decapodes
 		.register('decapodes_preview', (data) => {
 			console.log('decapodes_preview', data.content);
 			notebookResponse.value = data.content['application/json'];
 			isRunningCode.value = false;
+		})
+		.register('any_execute_reply', (data) => {
+			isRunningCode.value = false;
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+			executeResponse.value = {
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+			};
 		});
 };
 
