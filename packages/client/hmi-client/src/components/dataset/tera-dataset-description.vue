@@ -33,7 +33,7 @@
 			/>
 		</AccordionTab>
 		<AccordionTab header="Preview" v-if="dataset?.esgfId">
-			<img :src="image ?? ''" alt="" />
+			<img :src="image" alt="" />
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -53,7 +53,7 @@ import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 
 const props = defineProps<{
 	dataset: Dataset | null;
-	image?: string | null;
+	image?: string;
 	highlight?: string;
 	featureConfig?: FeatureConfig;
 	rawContent: CsvAsset | null;

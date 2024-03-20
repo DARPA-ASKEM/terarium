@@ -4,7 +4,7 @@
 			<tera-drilldown-section>
 				<!-- <InputText placeholder="What do you want to do?" /> -->
 				<h3>Select geo-boundaries</h3>
-				<img :src="preview ?? ''" alt="Preview" />
+				<img :src="preview" alt="Preview" />
 				<span>
 					<label>Latitude</label>
 					<InputNumber v-model="latitudeStart" placeholder="Start" />
@@ -74,7 +74,7 @@
 				<TabView>
 					<TabPanel header="Map view">
 						<tera-progress-spinner v-if="isSubsetLoading" />
-						<img :src="subsetPreview ?? ''" alt="Subset preview" />
+						<img :src="subsetPreview" alt="Subset preview" />
 					</TabPanel>
 					<TabPanel header="Description"> </TabPanel>
 					<TabPanel header="Data"> </TabPanel>
@@ -120,10 +120,10 @@ enum SubsetDataTabs {
 }
 
 const dataset = ref<Dataset | null>(null);
-const preview = ref<string | null>(null);
+const preview = ref<string | undefined>(undefined);
 
 const subset = ref<Dataset | null>(null);
-const subsetPreview = ref<string | null>(null);
+const subsetPreview = ref<string | undefined>(undefined);
 const isSubsetLoading = ref(false);
 
 const latitudeStart = ref(props.node.state.latitudeStart);
@@ -160,7 +160,7 @@ const onSelection = (id: string) => {
 
 function updateState() {
 	const state = cloneDeep(props.node.state);
-	state.datasetId = dataset.value?.id;
+	state.datasetId = dataset.value?.id ?? null;
 	state.latitudeStart = latitudeStart.value;
 	state.latitudeEnd = latitudeEnd.value;
 	state.longitudeStart = longitudeStart.value;
@@ -175,7 +175,7 @@ function updateState() {
 }
 
 async function run() {
-	if ((dataset.value?.esgfId, dataset.value?.id)) {
+	if (dataset.value?.esgfId && dataset.value?.id) {
 		updateState();
 		isSubsetLoading.value = true;
 
@@ -198,13 +198,7 @@ async function run() {
 	}
 }
 
-async function loadDataset() {
-	const id = props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0];
-	if (!id) {
-		logger.error('No dataset id found');
-		return;
-	}
-
+async function loadDataset(id: string) {
 	dataset.value = await getDataset(id);
 	if (!dataset.value?.esgfId) {
 		logger.error('No esgfId found');
@@ -220,7 +214,11 @@ async function loadDataset() {
 }
 
 onMounted(() => {
-	loadDataset();
+	if (!props.node.state.datasetId || props.node.inputs?.[0]?.value?.[0]) {
+		logger.error('No dataset id found');
+		return;
+	}
+	loadDataset(props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0]);
 });
 </script>
 
