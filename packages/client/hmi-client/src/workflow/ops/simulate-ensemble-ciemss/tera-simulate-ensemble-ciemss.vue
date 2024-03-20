@@ -207,7 +207,7 @@ const MINBARLENGTH = 1;
 const showSpinner = ref(false);
 
 const listModelLabels = ref<string[]>([]);
-const ensembleWeightsMode = ref<string>(EnsembleWeightsMode.EQUALWEIGHTS);
+const ensembleWeightsMode = ref(EnsembleWeightsMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
