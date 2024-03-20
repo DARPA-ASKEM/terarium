@@ -267,7 +267,7 @@ public class ProjectController {
 	public ResponseEntity<Project> createProject(
 		@RequestBody Project project) {
 		if (project.getOverviewContent() == null) {
-			project.setOverviewContent("""
+			final String welcomeMessage = """
 				<div>
 					<h2>Hey there!</h2>
 					<p>This is your project overview page. Use this space however you like. Not sure where to start? Here are some things you can try:</p>
@@ -281,7 +281,8 @@ public class ProjectController {
 					<br>
 					<p>Feel free to erase this text and make it your own.</p>
 				</div>
-				""");
+				""";
+			project.setOverviewContent(welcomeMessage.getBytes());
 		}
 		project = projectService.createProject(project);
 

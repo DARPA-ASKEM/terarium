@@ -425,7 +425,7 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     description?: string;
-    overviewContent?: string;
+    overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -620,8 +620,7 @@ export interface ExtractionResponseResult {
 
 export interface ExtractionStatusUpdate {
     documentId: string;
-    step: number;
-    totalSteps: number;
+    t: number;
     message: string;
     error: string;
 }
