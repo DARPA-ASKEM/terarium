@@ -73,6 +73,7 @@
 				<!--FIXME: Should universally define css rules for tabs so that the styles used in the drilldowns are sharable here-->
 				<TabView>
 					<TabPanel header="Map view">
+						<tera-progress-spinner v-if="isSubsetLoading" />
 						<img :src="subsetPreview ?? ''" alt="Subset preview" />
 					</TabPanel>
 					<TabPanel header="Description"> </TabPanel>
@@ -93,6 +94,7 @@ import { ref, computed, onMounted } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { getDataset, getClimateDatasetPreview, getClimateSubset } from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
@@ -121,6 +123,7 @@ const preview = ref<string | null>(null);
 
 const subset = ref<Dataset | null>(null);
 const subsetPreview = ref<string | null>(null);
+const isSubsetLoading = ref(false);
 
 const latitudeStart = ref(props.node.state.latitudeStart);
 const latitudeEnd = ref(props.node.state.latitudeEnd);
@@ -172,6 +175,7 @@ function updateState() {
 async function run() {
 	if ((dataset.value?.esgfId, dataset.value?.id)) {
 		updateState();
+		isSubsetLoading.value = true;
 
 		console.log(
 			`${latitudeStart.value},${latitudeEnd.value},${longitudeStart.value},${longitudeEnd.value}`
@@ -179,10 +183,12 @@ async function run() {
 		subset.value = await getClimateSubset(
 			dataset.value.esgfId,
 			dataset.value.id,
-			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
-			`${fromDate.value.toISOString()},${toDate.value.toISOString()}`,
-			isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
+			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`
+			// `${fromDate.value.toISOString()},${toDate.value.toISOString()}`,
+			// isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
 		);
+		isSubsetLoading.value = false;
+		console.log('subset', subset.value);
 		if (subset.value) {
 			console.log('dataset', dataset.value);
 			console.log('subset', subset.value);

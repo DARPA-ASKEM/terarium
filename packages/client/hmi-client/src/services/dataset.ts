@@ -57,9 +57,11 @@ async function getClimateSubset(
 	timestamps?: string,
 	thinFactor?: string
 ): Promise<Dataset | null> {
-	const response = await API.get(
-		`/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}?envelope=${envelope}?timestamps=${timestamps}?thin-factor=${thinFactor}`
-	).catch((error) => {
+	const url = `/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}&envelope=${envelope}`;
+	if (timestamps) url.concat(`&timestamps=${timestamps}`);
+	if (thinFactor) url.concat(`&thin-factor=${thinFactor}`);
+
+	const response = await API.get(url).catch((error) => {
 		logger.error(
 			`Error: climate data service was not able to retrieve the subset of the dataset ${esgfId} ${error}`
 		);
