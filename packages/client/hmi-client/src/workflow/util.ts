@@ -3,6 +3,16 @@ import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 
+// export const previewChartSize= (element: HTMLElement) => {
+// }
+
+export const drilldownChartSize = (element: HTMLElement | null) => {
+	if (!element) return { width: 100, height: 270 };
+
+	const parentContainerWidth = (element as HTMLElement).clientWidth - 48;
+	return { width: parentContainerWidth, height: 270 };
+};
+
 /**
  * Function generator for common TA3-operator operations, such add, update, and delete charts
  * The idea is to have a single place to do data manipulations but let the caller retain control
