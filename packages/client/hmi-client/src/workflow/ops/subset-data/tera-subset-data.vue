@@ -4,7 +4,7 @@
 			<tera-drilldown-section>
 				<!-- <InputText placeholder="What do you want to do?" /> -->
 				<h3>Select geo-boundaries</h3>
-				<img :src="preview" alt="Preview" />
+				<img :src="preview ?? ''" alt="Preview" />
 				<span>
 					<label>Latitude</label>
 					<InputText v-model="latitudeStart" placeholder="Start" />
@@ -141,12 +141,14 @@ const onSelection = (id: string) => {
 
 async function loadDataset(id: string) {
 	dataset.value = await getDataset(id);
-	preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
-	console.log(dataset.value);
+	if (dataset.value?.esgfId) {
+		preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
+		console.log(dataset.value);
+	}
 }
 
 onMounted(() => {
-	loadDataset(props.node.inputs[0].value[0]);
+	if (props.node.inputs?.[0]?.value?.[0]) loadDataset(props.node.inputs[0].value[0]);
 });
 </script>
 

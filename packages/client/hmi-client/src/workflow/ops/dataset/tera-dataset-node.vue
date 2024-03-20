@@ -102,7 +102,7 @@ async function getDatasetById(id: string) {
 	}
 
 	// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
-	if (dataset.value.id && isEmpty(props.node.outputs)) {
+	if (dataset?.value?.id && isEmpty(props.node.outputs)) {
 		emit('update-state', {
 			datasetId: dataset.value.id
 		});

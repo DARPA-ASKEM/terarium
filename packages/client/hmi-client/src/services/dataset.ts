@@ -50,13 +50,13 @@ async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
 	return response?.data ?? null;
 }
 
-async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
+async function getClimateDatasetPreview(esgfId: string): Promise<string | null> {
 	const response = await API.get(`/climatedata/queries/preview-esgf/${esgfId}`).catch((error) => {
 		logger.error(
 			`Error: climate data service was not able to preview the dataset ${esgfId} ${error}`
 		);
 	});
-	return response?.data ?? undefined;
+	return response?.data ?? null;
 }
 
 /**

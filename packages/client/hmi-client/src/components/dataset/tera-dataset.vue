@@ -102,7 +102,7 @@ const rawContent: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 const view = ref(DatasetView.DESCRIPTION);
-const image: Ref<string | undefined> = ref(undefined);
+const image = ref<string | null>(null);
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -183,7 +183,7 @@ const fetchDataset = async () => {
 					rawContent.value = null;
 				} else {
 					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-					image.value = undefined;
+					image.value = null;
 					rawContent.value = await downloadRawFile(
 						props.assetId,
 						datasetTemp?.fileNames?.[0] ?? ''
