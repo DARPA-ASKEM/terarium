@@ -228,7 +228,6 @@ watch(
 			}
 
 			const state = _.cloneDeep(props.node.state);
-			state.modelConfigIds = modelConfigIds.value;
 			state.mapping = mapping;
 			emit('update-state', state);
 		}

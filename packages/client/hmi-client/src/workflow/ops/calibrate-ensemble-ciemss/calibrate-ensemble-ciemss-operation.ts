@@ -11,7 +11,6 @@ export interface EnsembleCalibrateExtraCiemss {
 }
 
 export interface CalibrateEnsembleCiemssOperationState {
-	modelConfigIds: string[];
 	chartConfigs: ChartConfig[];
 	mapping: EnsembleModelConfigs[];
 	extra: EnsembleCalibrateExtraCiemss;
@@ -37,7 +36,6 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
-			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: [],
 			extra: {

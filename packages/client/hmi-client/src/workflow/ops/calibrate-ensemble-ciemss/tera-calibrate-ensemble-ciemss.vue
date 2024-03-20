@@ -248,7 +248,7 @@ const viewOptions = ref([
 	{ value: CalibrateView.Input, icon: 'pi pi-sign-in' },
 	{ value: CalibrateView.Output, icon: 'pi pi-sign-out' }
 ]);
-const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
+const listModelIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
