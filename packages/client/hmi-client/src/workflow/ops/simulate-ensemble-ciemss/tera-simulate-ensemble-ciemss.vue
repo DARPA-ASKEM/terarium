@@ -325,16 +325,6 @@ watch(
 </script>
 
 <style scoped>
-.ensemble-calibration-mode {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	margin-left: 1rem;
-	min-width: fit-content;
-	padding-right: 3rem;
-}
-
 .ensemble-calibration-graph {
 	height: 100px;
 }
