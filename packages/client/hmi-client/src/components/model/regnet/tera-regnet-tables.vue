@@ -108,7 +108,7 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-const transientModel = ref<Model | null>(null);
+const transientModel = ref(cloneDeep(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const vertices = computed(() => props.model?.model?.vertices ?? []);

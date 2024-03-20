@@ -171,7 +171,7 @@ const emit = defineEmits(['update-model']);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
-const transientModel = ref<Model | null>(null);
+const transientModel = ref(cloneDeep(props.model));
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parametersLength = computed(
 	() =>
@@ -234,16 +234,21 @@ const updateParam = (params: ModelParameter[]) => {
 	}
 };
 
+async function updateMMT() {
+	const response: any = await getMMT(props.model);
+	mmt.value = response.mmt;
+	mmtParams.value = response.template_params;
+}
+
 watch(
 	() => props.model,
-	async (model) => {
+	(model) => {
 		transientModel.value = cloneDeep(model);
-		const response: any = await getMMT(model);
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	},
-	{ immediate: true }
+		updateMMT();
+	}
 );
+
+onMounted(() => updateMMT());
 </script>
 
 <style scoped>
