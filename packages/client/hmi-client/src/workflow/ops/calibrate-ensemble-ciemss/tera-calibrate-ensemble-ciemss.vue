@@ -50,37 +50,11 @@
 
 				<div v-else-if="view === CalibrateView.Input && node" class="simulate-container">
 					<Accordion :multiple="true" :active-index="[0, 1, 2]">
-						<AccordionTab header="Model Weights">
+						<AccordionTab header="Model weights">
 							<div class="model-weights">
-								<section class="ensemble-calibration-mode">
-									<label>
-										<input
-											type="radio"
-											v-model="ensembleWeightMode"
-											:value="EnsembleWeightMode.EQUALWEIGHTS"
-										/>
-										{{ EnsembleWeightMode.EQUALWEIGHTS }}
-									</label>
-									<label>
-										<input
-											type="radio"
-											v-model="ensembleWeightMode"
-											:value="EnsembleWeightMode.CUSTOM"
-										/>
-										{{ EnsembleWeightMode.CUSTOM }}
-									</label>
-								</section>
 								<!-- Turn this into a horizontal bar chart -->
 								<section class="ensemble-calibration-graph">
-									<Chart
-										v-if="ensembleWeightMode === EnsembleWeightMode.EQUALWEIGHTS"
-										type="bar"
-										:height="200"
-										:data="setBarChartData()"
-										:options="setChartOptions()"
-										:plugins="dataLabelPlugin"
-									/>
-									<table v-else class="p-datatable-table">
+									<table class="p-datatable-table">
 										<thead class="p-datatable-thead">
 											<th>Model Config ID</th>
 											<th>Weight</th>
@@ -102,6 +76,13 @@
 											</tr>
 										</tbody>
 									</table>
+									<Button
+										label="Set weights to be equal"
+										class="p-button-sm p-button-outlined ml-2 mt-2"
+										outlined
+										severity="secondary"
+										@click="calculateEvenWeights()"
+									/>
 								</section>
 							</div>
 						</AccordionTab>
@@ -152,7 +133,7 @@
 								@click="addMapping"
 							/>
 						</AccordionTab>
-						<AccordionTab header="Time Span">
+						<AccordionTab header="Time span">
 							<table>
 								<thead class="p-datatable-thead">
 									<th>Units</th>
@@ -193,8 +174,6 @@ import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, ModelConfiguration, EnsembleModelConfigs } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
-import Chart from 'primevue/chart';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
@@ -207,8 +186,6 @@ import {
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 
-const dataLabelPlugin = [ChartDataLabels];
-
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
@@ -218,14 +195,6 @@ enum CalibrateView {
 	Input = 'Input',
 	Output = 'Output'
 }
-enum EnsembleWeightMode {
-	EQUALWEIGHTS = 'equalWeights',
-	CUSTOM = 'custom'
-}
-
-const CATEGORYPERCENTAGE = 0.9;
-const BARPERCENTAGE = 0.6;
-const MINBARLENGTH = 1;
 
 const showSaveInput = ref(<boolean>false);
 
@@ -239,7 +208,6 @@ const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
 const listModelLabels = ref<string[]>([]);
-const ensembleWeightMode = ref(EnsembleWeightMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<string[][]>([]);
@@ -263,15 +231,11 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	emit('update-state', state);
 };
 
-const calculateWeights = () => {
-	console.log('Calc weights:');
+const calculateEvenWeights = () => {
 	if (!ensembleConfigs.value) return;
-	if (ensembleWeightMode.value === EnsembleWeightMode.EQUALWEIGHTS) {
-		console.log('Equal weights:');
-		const percent = 1 / ensembleConfigs.value.length;
-		for (let i = 0; i < ensembleConfigs.value.length; i++) {
-			ensembleConfigs.value[i].weight = percent;
-		}
+	const percent = 1 / ensembleConfigs.value.length;
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		ensembleConfigs.value[i].weight = percent;
 	}
 };
 
@@ -285,64 +249,6 @@ function addMapping() {
 
 	emit('update-state', state);
 }
-
-const setBarChartData = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	const weights = ensembleConfigs.value.map((element) => element.weight);
-	return {
-		labels: listModelLabels.value,
-		datasets: [
-			{
-				backgroundColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				borderColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				data: weights,
-				categoryPercentage: CATEGORYPERCENTAGE,
-				barPercentage: BARPERCENTAGE,
-				minBarLength: MINBARLENGTH
-			}
-		]
-	};
-};
-
-const setChartOptions = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	return {
-		indexAxis: 'y',
-		maintainAspectRatio: false,
-		aspectRatio: 0.8,
-		plugins: {
-			legend: {
-				display: false
-			},
-			datalabels: {
-				anchor: 'end',
-				align: 'right',
-				formatter: (n: number) => `${Math.round(n * 100)}%`,
-				labels: {
-					value: {
-						font: {
-							size: 12
-						}
-					}
-				}
-			}
-		},
-		scales: {
-			x: {
-				display: false
-			},
-			y: {
-				ticks: {
-					color: documentStyle.getPropertyValue('--text-color-primary')
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
-			}
-		}
-	};
-};
 
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -371,13 +277,6 @@ watch(
 );
 
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
-
-watch(
-	() => ensembleWeightMode.value,
-	() => {
-		calculateWeights();
-	}
-);
 
 onMounted(async () => {
 	allModelConfigurations.value = [];
@@ -420,7 +319,9 @@ onMounted(async () => {
 		}
 	}
 	state.mapping = ensembleConfigs.value;
-	calculateWeights();
+	if (ensembleConfigs.value.some((ele) => ele.weight === 0)) {
+		calculateEvenWeights();
+	}
 
 	emit('update-state', state);
 });
