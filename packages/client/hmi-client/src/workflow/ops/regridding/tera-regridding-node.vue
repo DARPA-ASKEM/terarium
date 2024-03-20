@@ -12,12 +12,12 @@ import { watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { DatasetTransformerState } from './regridding-operation';
+import { RegridddingState } from './regridding-operation';
 
 const emit = defineEmits(['append-input-port', 'open-drilldown']);
 
 const props = defineProps<{
-	node: WorkflowNode<DatasetTransformerState>;
+	node: WorkflowNode<RegridddingState>;
 }>();
 
 watch(

@@ -1,6 +1,6 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
-export interface DatasetTransformerState {
+export interface RegridddingState {
 	datasetId: string | null;
 	notebookSessionId?: string;
 }
@@ -15,7 +15,7 @@ export const RegriddingOperation: Operation = {
 	action: () => {},
 
 	initState: () => {
-		const init: DatasetTransformerState = {
+		const init: RegridddingState = {
 			datasetId: null
 		};
 		return init;
