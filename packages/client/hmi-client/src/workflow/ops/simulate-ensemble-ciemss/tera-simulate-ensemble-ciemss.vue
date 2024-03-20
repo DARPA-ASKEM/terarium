@@ -402,7 +402,7 @@ watch(
 	{ immediate: true }
 );
 
-watch([() => ensembleCalibrationMode.value, listModelIds.value], async () => {
+watch([() => ensembleCalibrationMode.value, listModelIds.value], () => {
 	calculateWeights();
 });
 
