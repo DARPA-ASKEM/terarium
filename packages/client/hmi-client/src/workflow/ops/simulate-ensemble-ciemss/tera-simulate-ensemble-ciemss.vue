@@ -359,7 +359,6 @@ onMounted(async () => {
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
 
 	const state = _.cloneDeep(props.node.state);
-	state.modelConfigIds = modelConfigurationIds;
 
 	if (state.mapping && state.mapping.length === 0) {
 		for (let i = 0; i < allModelConfigurations.length; i++) {
