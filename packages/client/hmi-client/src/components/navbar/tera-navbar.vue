@@ -600,7 +600,7 @@ nav {
 
 .evaluation-scenario-widget {
 	border-radius: var(--border-radius-bigger);
-	background-color: var(--surface-highlight-hover);
+	background-color: var(--surface-200);
 	display: flex;
 	padding-left: var(--gap);
 	margin-left: auto;
