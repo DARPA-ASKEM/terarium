@@ -85,6 +85,7 @@
 
 					<InputText v-model="newSolutionMappingKey" placeholder="Variable Name" />
 					<Button
+						:disabled="!newSolutionMappingKey"
 						class="p-button-sm p-button-outlined"
 						icon="pi pi-plus"
 						label="Add mapping"
