@@ -50,13 +50,13 @@ async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
 	return response?.data ?? null;
 }
 
-async function getClimateSubset(
+async function getClimateSubsetId(
 	esgfId: string,
 	parentDatasetId: string,
 	envelope: string,
 	timestamps?: string,
 	thinFactor?: string
-): Promise<Dataset | null> {
+): Promise<string | null> {
 	const url = `/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}&envelope=${envelope}`;
 	if (timestamps) url.concat(`&timestamps=${timestamps}`);
 	if (thinFactor) url.concat(`&thin-factor=${thinFactor}`);
@@ -367,7 +367,7 @@ export {
 	searchClimateDatasets,
 	getDataset,
 	getClimateDataset,
-	getClimateSubset,
+	getClimateSubsetId,
 	getClimateDatasetPreview,
 	updateDataset,
 	getBulkDatasets,

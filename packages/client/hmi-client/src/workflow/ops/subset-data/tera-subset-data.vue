@@ -78,6 +78,7 @@
 						<img :src="subset?.metadata?.preview" alt="Subset preview" />
 					</TabPanel>
 					<TabPanel header="Data">
+						<!--FIXME: Make this look nicer-->
 						<table>
 							<thead>
 								<tr>
@@ -145,7 +146,7 @@ import { WorkflowNode } from '@/types/workflow';
 import {
 	getDataset,
 	getClimateDatasetPreview,
-	getClimateSubset,
+	getClimateSubsetId,
 	createDataset
 } from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
@@ -247,7 +248,7 @@ async function run() {
 		updateState();
 		isSubsetLoading.value = true;
 
-		const subsetDatasetId = await getClimateSubset(
+		const subsetDatasetId = await getClimateSubsetId(
 			dataset.value.esgfId,
 			dataset.value.id,
 			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`
