@@ -17,7 +17,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
 
-@FeignClient(name = "extractionService", url = "${xdd-dev-service.url}")
+@FeignClient(name = "extractionService", url = "${xdd-prod-service.url}")
 public interface ExtractionProxy {
 	@GetMapping("/askem/object")
 	XDDResponse<XDDExtractionsResponseOK> getExtractions(

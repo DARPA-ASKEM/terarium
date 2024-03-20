@@ -74,7 +74,6 @@ export const extractSubjectOutcomeMatrix = (
 	if (rowNames.length === 0 || colNames.length === 0) {
 		return { rowNames, colNames, matrix: [] };
 	}
-
 	const matrix = emptyMatrix(rowNames, colNames);
 
 	for (let i = 0; i < paramNames.length; i++) {
@@ -86,6 +85,8 @@ export const extractSubjectOutcomeMatrix = (
 		paramLocations.forEach((location) => {
 			const rowIdx = rowNames.indexOf(location.subject);
 			const colIdx = colNames.indexOf(location.outcome);
+
+			if (rowIdx === -1 || colIdx === -1) return;
 
 			matrix[rowIdx][colIdx].rowCriteria = location.subject;
 			matrix[rowIdx][colIdx].colCriteria = location.outcome;
@@ -123,6 +124,8 @@ export const extractSubjectControllersMatrix = (
 			const rowIdx = rowNames.indexOf(location.subject);
 			const colIdx = colNames.indexOf(location.controllers.join('-'));
 
+			if (rowIdx === -1 || colIdx === -1) return;
+
 			matrix[rowIdx][colIdx].rowCriteria = location.subject;
 			matrix[rowIdx][colIdx].colCriteria = location.controllers.join('-');
 			matrix[rowIdx][colIdx].content = {
@@ -158,6 +161,8 @@ export const extractOutcomeControllersMatrix = (
 		paramLocations.forEach((location) => {
 			const rowIdx = rowNames.indexOf(location.outcome);
 			const colIdx = colNames.indexOf(location.controllers.join('-'));
+
+			if (rowIdx === -1 || colIdx === -1) return;
 
 			matrix[rowIdx][colIdx].rowCriteria = location.outcome;
 			matrix[rowIdx][colIdx].colCriteria = location.controllers.join('-');
