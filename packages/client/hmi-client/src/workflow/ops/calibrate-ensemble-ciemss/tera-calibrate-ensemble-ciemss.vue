@@ -86,7 +86,8 @@
 											<th>Weight</th>
 										</thead>
 										<tbody class="p-datatable-tbody">
-											<tr v-for="(id, i) in listModelIds" :key="i">
+											<!-- Index matching listModelLabels and ensembleConfigs-->
+											<tr v-for="(id, i) in listModelLabels" :key="i">
 												<td>
 													{{ id }}
 												</td>
@@ -109,8 +110,9 @@
 								<table>
 									<tr>
 										<th>Ensemble Variables</th>
-										<th v-for="(element, i) in ensembleConfigs" :key="i">
-											{{ element.id }}
+										<!-- Index matching listModelLabels and ensembleConfigs-->
+										<th v-for="(element, i) in listModelLabels" :key="i">
+											{{ element }}
 										</th>
 									</tr>
 									<tr>
@@ -255,7 +257,6 @@ const runResults = ref<RunResults>({});
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-// Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
