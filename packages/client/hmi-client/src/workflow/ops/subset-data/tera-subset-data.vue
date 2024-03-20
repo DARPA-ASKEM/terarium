@@ -7,13 +7,13 @@
 				<img :src="preview ?? ''" alt="Preview" />
 				<span>
 					<label>Latitude</label>
-					<InputText v-model="latitudeStart" placeholder="Start" />
-					<InputText v-model="latitudeEnd" placeholder="End" />
+					<InputNumber v-model="latitudeStart" placeholder="Start" />
+					<InputNumber v-model="latitudeEnd" placeholder="End" />
 				</span>
 				<span>
 					<label>Longitude</label>
-					<InputText v-model="latitudeStart" placeholder="Start" />
-					<InputText v-model="latitudeEnd" placeholder="End" />
+					<InputNumber v-model="longitudeStart" placeholder="Start" />
+					<InputNumber v-model="longitudeEnd" placeholder="End" />
 				</span>
 				<code>
 					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
@@ -72,8 +72,10 @@
 			>
 				<!--FIXME: Should universally define css rules for tabs so that the styles used in the drilldowns are sharable here-->
 				<TabView>
+					<TabPanel header="Map view">
+						<img :src="subsetPreview ?? ''" alt="Subset preview" />
+					</TabPanel>
 					<TabPanel header="Description"> </TabPanel>
-					<TabPanel header="Map view"> </TabPanel>
 					<TabPanel header="Data"> </TabPanel>
 				</TabView>
 				<template #footer>
@@ -86,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { ref, computed, onMounted } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -96,7 +98,7 @@ import { getDataset, getClimateDatasetPreview, getClimateSubset } from '@/servic
 import type { Dataset } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import InputText from 'primevue/inputtext';
+// import InputText from 'primevue/InputText';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
@@ -118,22 +120,23 @@ const dataset = ref<Dataset | null>(null);
 const preview = ref<string | null>(null);
 
 const subset = ref<Dataset | null>(null);
+const subsetPreview = ref<string | null>(null);
 
-const latitudeStart = ref('');
-const latitudeEnd = ref('');
-const longitudeStart = ref('');
-const longitudeEnd = ref('');
+const latitudeStart = ref(props.node.state.latitudeStart);
+const latitudeEnd = ref(props.node.state.latitudeEnd);
+const longitudeStart = ref(props.node.state.longitudeStart);
+const longitudeEnd = ref(props.node.state.longitudeEnd);
 
-const isSpatialSkipping = ref(true);
-const spatialSkipping = ref();
+const isSpatialSkipping = ref(props.node.state.isSpatialSkipping);
+const spatialSkipping = ref(props.node.state.spatialSkipping);
 
-const isTimeSkipping = ref(true);
-const timeSkipping = ref();
+const isTimeSkipping = ref(props.node.state.isTimeSkipping);
+const timeSkipping = ref(props.node.state.timeSkipping);
 
-const fromDate = ref(new Date());
-const toDate = ref(new Date());
+const fromDate = ref(props.node.state.fromDate);
+const toDate = ref(props.node.state.toDate);
 
-const selectedOutputId = ref<string>(props.node.active ?? '');
+const selectedOutputId = ref(props.node.active ?? '');
 
 const outputs = computed(() => {
 	if (isEmpty(props.node.outputs)) {
@@ -151,8 +154,25 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+function updateState() {
+	const state = cloneDeep(props.node.state);
+	state.latitudeStart = latitudeStart.value;
+	state.latitudeEnd = latitudeEnd.value;
+	state.longitudeStart = longitudeStart.value;
+	state.longitudeEnd = longitudeEnd.value;
+	state.isSpatialSkipping = isSpatialSkipping.value;
+	state.spatialSkipping = spatialSkipping.value;
+	state.isTimeSkipping = isTimeSkipping.value;
+	state.timeSkipping = timeSkipping.value;
+	state.fromDate = fromDate.value;
+	state.toDate = toDate.value;
+	emit('update-state', state);
+}
+
 async function run() {
 	if ((dataset.value?.esgfId, dataset.value?.id)) {
+		updateState();
+
 		console.log(
 			`${latitudeStart.value},${latitudeEnd.value},${longitudeStart.value},${longitudeEnd.value}`
 		);
@@ -161,9 +181,10 @@ async function run() {
 			dataset.value.id,
 			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
 			`${fromDate.value.toISOString()},${toDate.value.toISOString()}`,
-			spatialSkipping.value ?? undefined // Not sure if its this or timeSkipping
+			isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
 		);
 		if (subset.value) {
+			console.log('dataset', dataset.value);
 			console.log('subset', subset.value);
 		}
 	}
@@ -175,7 +196,6 @@ async function loadDataset(id: string) {
 		preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
 		fromDate.value = new Date(dataset.value.metadata.datetime_start);
 		toDate.value = new Date(dataset.value.metadata.datetime_end);
-		console.log(dataset.value);
 	}
 }
 
