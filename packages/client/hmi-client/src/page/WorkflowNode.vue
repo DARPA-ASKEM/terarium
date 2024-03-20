@@ -7,7 +7,7 @@
 			:node="node"
 		/>
 		<tera-dataset-drilldown v-else-if="isNodeType(OperationType.DATASET)" :node="node" />
-		<tera-rgridding-drilldown v-else-if="isNodeType(OperationType.REGRIDDING)" :node="node" />
+		<tera-regridding-drilldown v-else-if="isNodeType(OperationType.REGRIDDING)" :node="node" />
 		<tera-calibrate-julia v-else-if="isNodeType(OperationType.CALIBRATION_JULIA)" :node="node" />
 		<tera-simulate-julia v-else-if="isNodeType(OperationType.SIMULATE_JULIA)" :node="node" />
 		<tera-calibrate-ciemss v-else-if="isNodeType(OperationType.CALIBRATION_CIEMSS)" :node="node" />
@@ -33,6 +33,7 @@ import * as workflowService from '@/services/workflow';
 
 import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
 import TeraDatasetDrilldown from '@/workflow/ops/dataset/tera-dataset-drilldown.vue';
+import TeraRegriddingDrilldown from '@/workflow/ops/regridding/tera-regridding.vue';
 import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
 import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
 import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';

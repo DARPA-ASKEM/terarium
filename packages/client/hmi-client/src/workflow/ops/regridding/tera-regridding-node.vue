@@ -12,12 +12,12 @@ import { watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { RegridddingState } from './regridding-operation';
+import { RegriddingState } from './regridding-operation';
 
 const emit = defineEmits(['append-input-port', 'open-drilldown']);
 
 const props = defineProps<{
-	node: WorkflowNode<RegridddingState>;
+	node: WorkflowNode<RegriddingState>;
 }>();
 
 watch(

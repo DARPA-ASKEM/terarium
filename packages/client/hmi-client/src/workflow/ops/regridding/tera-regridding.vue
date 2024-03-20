@@ -32,10 +32,10 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { RegridddingState } from './regridding-operation';
+import { RegriddingState } from './regridding-operation';
 
 const props = defineProps<{
-	node: WorkflowNode<RegridddingState>;
+	node: WorkflowNode<RegriddingState>;
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'close']);
 
