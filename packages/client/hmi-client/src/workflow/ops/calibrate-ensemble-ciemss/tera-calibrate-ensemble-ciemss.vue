@@ -240,7 +240,7 @@ const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
 const listModelLabels = ref<string[]>([]);
-const ensembleWeightMode = ref<string>(EnsembleWeightMode.EQUALWEIGHTS);
+const ensembleWeightMode = ref(EnsembleWeightMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<string[][]>([]);
