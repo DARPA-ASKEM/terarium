@@ -514,11 +514,6 @@ const contextMenuItems: MenuItem[] = [
 				label: DecapodesOp.operation.displayName,
 				disabled: true,
 				command: addOperatorToWorkflow(DecapodesOp)
-			},
-			{
-				label: RegriddingOp.operation.displayName,
-				disabled: true,
-				command: addOperatorToWorkflow(RegriddingOp)
 			}
 		]
 	},
@@ -552,7 +547,11 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(DatasetTransformerOp)
 			},
 			{ label: 'Subset dataset', disabled: true },
-			{ label: 'Transform gridded dataset', disabled: true }
+			{ label: 'Transform gridded dataset', disabled: true },
+			{
+				label: RegriddingOp.operation.displayName,
+				command: addOperatorToWorkflow(RegriddingOp)
+			}
 		]
 	},
 	{

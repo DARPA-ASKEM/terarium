@@ -26,7 +26,7 @@ watch(
 	() => {
 		const inputs = props.node.inputs;
 		if (inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
-			emit('append-input-port', { type: 'datasetId|simulationId', label: 'Dataset or Simulation' });
+			emit('append-input-port', { type: 'datasetId', labe: 'Dataset' });
 		}
 	},
 	{ deep: true }
