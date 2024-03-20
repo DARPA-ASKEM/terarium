@@ -43,7 +43,7 @@
 									<th>Weight</th>
 								</thead>
 								<tbody class="p-datatable-tbody">
-									<tr v-for="(id, i) in ensembleConfigs.map((ele) => ele.id)" :key="i">
+									<tr v-for="(id, i) in listModelLabels" :key="i">
 										<td>
 											{{ id }}
 										</td>
@@ -66,8 +66,8 @@
 						<table>
 							<tr>
 								<th>Ensemble Variables</th>
-								<th v-for="(element, i) in ensembleConfigs" :key="i">
-									{{ element.id }}
+								<th v-for="(element, i) in listModelLabels" :key="i">
+									{{ element }}
 								</th>
 							</tr>
 
