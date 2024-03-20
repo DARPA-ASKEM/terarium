@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.IntNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,17 @@ public class ClimateDataService {
 
         for (final ClimateDataPreviewTask previewTask : previewTasks) {
             final ResponseEntity<JsonNode> response = climateDataProxy.status(previewTask.getStatusId());
+
+            if(response.getBody() != null && response.getBody() instanceof final IntNode intNode){
+                if(intNode.intValue() >= 400){
+                    log.error("Failed to extract png");
+                    final ClimateDataPreview preview = new ClimateDataPreview(previewTask, "Failed to extract PNG");
+                    climateDataPreviewRepository.save(preview);
+                    climateDataPreviewTaskRepository.delete(previewTask);
+                    continue;
+                }
+            }
+
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (!climateDataResponse.getResult().getJobResult().isNull()) {
                 final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);

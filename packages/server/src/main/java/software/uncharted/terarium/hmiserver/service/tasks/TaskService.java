@@ -132,7 +132,7 @@ public class TaskService {
 
 	// TTL = Time to live, the maximum time a key will be in the cache before it is
 	// evicted, regardless of activity.
-	@Value("${terarium.taskrunner.response-cache-ttl-seconds:86400}") // 24 hours
+	@Value("${terarium.taskrunner.response-cache-ttl-seconds:43200}") // 12 hours
 	private long CACHE_TTL_SECONDS;
 
 	// Max idle = The maximum time a key can be idle in the cache before it is
@@ -143,7 +143,7 @@ public class TaskService {
 	// Always use a lease time for distributed locks to prevent application wide
 	// deadlocks. If for whatever reason the lock has not been released within a
 	// N seconds, it will automatically free itself.
-	@Value("${terarium.taskrunner.redis-lock-lease-seconds:30}") // 30 seconds
+	@Value("${terarium.taskrunner.redis-lock-lease-seconds:10}") // 10 seconds
 	private long REDIS_LOCK_LEASE_SECONDS;
 
 	private final RabbitTemplate rabbitTemplate;
@@ -463,15 +463,15 @@ public class TaskService {
 					// future already exists on this instance
 					return futures.get(existingId);
 				}
-				// otherwise dispatch it again
-				log.info("No viable cached response found for task id: {} for SHA: {}, creating new task", existingId,
-						hash);
-			}
 
-			// no cached request, create the response cache entry
-			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
-			responseCache.put(req.getId(), queuedResponse, CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
-					TimeUnit.SECONDS);
+				// otherwise dispatch it again, and overwrite the id
+				log.info(
+						"No viable cached response found for task id: {} for SHA: {}, creating new task with id {}", existingId,
+						hash, req.getId());
+
+				taskIdCache.put(hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS);
+			}
 
 			// now send request
 			final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
@@ -494,6 +494,13 @@ public class TaskService {
 				log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
 				final String jsonStr = objectMapper.writeValueAsString(req);
 				rabbitTemplate.convertAndSend(requestQueue, jsonStr);
+
+				// put the response in redis after it is queued in the case the id is reserved
+				// but the server is shutdown before it dispatches the request, which would
+				// cause servers to wait on requests that were never sent.
+				final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
+				responseCache.put(req.getId(), queuedResponse, CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS);
 
 				// create and return the future
 				final CompletableTaskFuture future = new CompletableTaskFuture(req.getId(), queuedResponse);
