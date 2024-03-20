@@ -14,23 +14,23 @@
 							<label>
 								<input
 									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.EQUALWEIGHTS"
+									v-model="ensembleWeightsMode"
+									:value="EnsembleWeightsMode.EQUALWEIGHTS"
 								/>
-								{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
+								{{ EnsembleWeightsMode.EQUALWEIGHTS }}
 							</label>
 							<label>
 								<input
 									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.CUSTOM"
+									v-model="ensembleWeightsMode"
+									:value="EnsembleWeightsMode.CUSTOM"
 								/>
-								{{ EnsembleCalibrationMode.CUSTOM }}
+								{{ EnsembleWeightsMode.CUSTOM }}
 							</label>
 						</section>
 						<section class="ensemble-calibration-graph">
 							<Chart
-								v-if="ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS"
+								v-if="ensembleWeightsMode === EnsembleWeightsMode.EQUALWEIGHTS"
 								type="bar"
 								:height="100"
 								:data="setBarChartData()"
@@ -193,7 +193,7 @@ enum Tabs {
 	Notebook = 'Notebook'
 }
 
-enum EnsembleCalibrationMode {
+enum EnsembleWeightsMode {
 	EQUALWEIGHTS = 'equalWeights',
 	CUSTOM = 'custom'
 }
@@ -205,7 +205,7 @@ const MINBARLENGTH = 1;
 const showSpinner = ref(false);
 
 const listModelLabels = ref<string[]>([]);
-const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
+const ensembleWeightsMode = ref<string>(EnsembleWeightsMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
@@ -245,7 +245,7 @@ const onSelection = (id: string) => {
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
+	if (ensembleWeightsMode.value === EnsembleWeightsMode.EQUALWEIGHTS) {
 		const percent = 1 / ensembleConfigs.value.length;
 		for (let i = 0; i < ensembleConfigs.value.length; i++) {
 			ensembleConfigs.value[i].weight = percent;
@@ -401,7 +401,7 @@ watch(
 );
 
 watch(
-	() => ensembleCalibrationMode.value,
+	() => ensembleWeightsMode.value,
 	() => {
 		calculateWeights();
 	}
