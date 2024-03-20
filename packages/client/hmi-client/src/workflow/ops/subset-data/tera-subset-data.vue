@@ -179,9 +179,6 @@ async function run() {
 		updateState();
 		isSubsetLoading.value = true;
 
-		console.log(
-			`${latitudeStart.value},${latitudeEnd.value},${longitudeStart.value},${longitudeEnd.value}`
-		);
 		subset.value = await getClimateSubset(
 			dataset.value.esgfId,
 			dataset.value.id,
@@ -207,7 +204,7 @@ async function loadDataset(id: string) {
 
 	preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
 
-	if (props.node.state.datasetId === null) {
+	if (!props.node.state.datasetId) {
 		fromDate.value = new Date(dataset.value.metadata.datetime_start);
 		toDate.value = new Date(dataset.value.metadata.datetime_end);
 	}
