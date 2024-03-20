@@ -84,16 +84,17 @@ export const profileDataset = async (
 /** Handle messages received from the extraction client-event */
 const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	const { data } = event;
-
 	if (data.error) {
-		console.error(`[${data.step}/${data.totalSteps}]: ${data.error}`);
+		logger.error(`Extraction client-event: ERROR [${data.t}]: ${data.error}`);
 		await unsubscribe(ClientEventType.Extraction, messageHandler);
 		return;
 	}
-
-	console.debug(`[${data.step}/${data.totalSteps}] ${data.message ?? ''}`.trim());
-
-	if (data.step === data.totalSteps) {
+	if (event.data.message) {
+		console.debug(`Extraction client-event: [${data.t}]: ${data.message}`);
+	} else {
+		logger.success(`Extraction client-event: [${data.t}]`);
+	}
+	if (data.t >= 1.0) {
 		await unsubscribe(ClientEventType.Extraction, messageHandler);
 	}
 };
