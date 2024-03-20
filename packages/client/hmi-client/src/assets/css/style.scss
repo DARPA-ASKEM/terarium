@@ -74,8 +74,10 @@ a {
 	}
 }
 
-/* SplitButton menu width fix */
+/* SplitButton menu height and width fix */
 .p-tieredmenu {
 	width: auto;
-	min-width: 3em; 
+	min-width: 3em;
+	max-height: 400px;
+	overflow-y: auto;
 }
