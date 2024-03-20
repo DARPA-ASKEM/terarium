@@ -47,7 +47,17 @@
 					<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
 				</div>
 				<template #footer>
-					<Button label="Run" icon="pi pi-play" outlined severity="secondary" />
+					<!--FIXME: A lot of these drilldowns have this margin auto for the left footer's button.
+						We should make it so the left footer is aligned left and the right
+						footer is aligned right-->
+					<Button
+						:style="{ marginRight: 'auto' }"
+						@click="run"
+						label="Run"
+						icon="pi pi-play"
+						outlined
+						severity="secondary"
+					/>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -82,7 +92,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { WorkflowNode } from '@/types/workflow';
-import { getDataset, getClimateDatasetPreview } from '@/services/dataset';
+import { getDataset, getClimateDatasetPreview, getClimateSubset } from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -107,19 +117,21 @@ enum SubsetDataTabs {
 const dataset = ref<Dataset | null>(null);
 const preview = ref<string | null>(null);
 
+const subset = ref<Dataset | null>(null);
+
 const latitudeStart = ref('');
 const latitudeEnd = ref('');
 const longitudeStart = ref('');
 const longitudeEnd = ref('');
 
 const isSpatialSkipping = ref(true);
-const spatialSkipping = ref(0);
+const spatialSkipping = ref();
 
 const isTimeSkipping = ref(true);
-const timeSkipping = ref(0);
+const timeSkipping = ref();
 
-const fromDate = ref('');
-const toDate = ref('');
+const fromDate = ref(new Date());
+const toDate = ref(new Date());
 
 const selectedOutputId = ref<string>(props.node.active ?? '');
 
@@ -139,10 +151,30 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+async function run() {
+	if ((dataset.value?.esgfId, dataset.value?.id)) {
+		console.log(
+			`${latitudeStart.value},${latitudeEnd.value},${longitudeStart.value},${longitudeEnd.value}`
+		);
+		subset.value = await getClimateSubset(
+			dataset.value.esgfId,
+			dataset.value.id,
+			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
+			`${fromDate.value.toISOString()},${toDate.value.toISOString()}`,
+			spatialSkipping.value ?? undefined // Not sure if its this or timeSkipping
+		);
+		if (subset.value) {
+			console.log('subset', subset.value);
+		}
+	}
+}
+
 async function loadDataset(id: string) {
 	dataset.value = await getDataset(id);
 	if (dataset.value?.esgfId) {
 		preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
+		fromDate.value = new Date(dataset.value.metadata.datetime_start);
+		toDate.value = new Date(dataset.value.metadata.datetime_end);
 		console.log(dataset.value);
 	}
 }

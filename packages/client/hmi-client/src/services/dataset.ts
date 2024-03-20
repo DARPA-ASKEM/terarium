@@ -50,6 +50,23 @@ async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
 	return response?.data ?? null;
 }
 
+async function getClimateSubset(
+	esgfId: string,
+	parentDatasetId: string,
+	envelope: string,
+	timestamps?: string,
+	thinFactor?: string
+): Promise<Dataset | null> {
+	const response = await API.get(
+		`/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}?envelope=${envelope}?timestamps=${timestamps}?thin-factor=${thinFactor}`
+	).catch((error) => {
+		logger.error(
+			`Error: climate data service was not able to retrieve the subset of the dataset ${esgfId} ${error}`
+		);
+	});
+	return response?.data ?? null;
+}
+
 async function getClimateDatasetPreview(esgfId: string): Promise<string | null> {
 	const response = await API.get(`/climatedata/queries/preview-esgf/${esgfId}`).catch((error) => {
 		logger.error(
@@ -348,6 +365,7 @@ export {
 	searchClimateDatasets,
 	getDataset,
 	getClimateDataset,
+	getClimateSubset,
 	getClimateDatasetPreview,
 	updateDataset,
 	getBulkDatasets,

@@ -128,8 +128,8 @@ public class ClimateDataController {
 	 *
 	 * @param esgfId The id of the ESGF (in the form `CMIP6.CMIP.NCAR.CESM2.historical.r11i1p1f1.CFday.ua.gn.v20190514`)
 	 * @param parentDatasetId Dataset id of an existing dataset which this would be a child
-	 * @param timestamps String of two ISO-8601 timestamps or the terms start or end separated by commas, example `start,2010-01-01T00:00:00`. Leave blank to generate for all times
 	 * @param envelope Geographical envelope provided as a comma-separated series of 4 degrees: lon, lon, lat, lat. example `40,45,-80,-75`.
+	 * @param timestamps String of two ISO-8601 timestamps or the terms start or end separated by commas, example `start,2010-01-01T00:00:00`. Leave blank to generate for all times
 	 * @param thinFactor Take every nth datapoint along specified fields given by thin_fields. Leave blank for all data
 	 * @return
 	 */
@@ -143,8 +143,8 @@ public class ClimateDataController {
 	})
 	public ResponseEntity<String> subsetEsgf(@PathVariable final String esgfId,
 											 @RequestParam(value = "parent-dataset-id") final String parentDatasetId,
-											 @RequestParam(value = "timestamps", required = false) final String timestamps,
 											 @RequestParam(value = "envelope") final String envelope,
+											 @RequestParam(value = "timestamps", required = false) final String timestamps,
 											 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
 		final ResponseEntity<String> subsetResponse = climateDataService.getSubset(esgfId, envelope, timestamps, thinFactor);
