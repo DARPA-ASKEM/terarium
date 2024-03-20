@@ -46,7 +46,7 @@ public class ExtractionService {
 
 	private ExecutorService executor = Executors.newFixedThreadPool(1);
 
-	private static final Integer TOTAL_EXTRACTION_STEPS = 14;
+	private static final Integer TOTAL_EXTRACTION_STEPS = 13;
 
 	public void extractPDF(UUID documentId, String userId) {
 		final BiConsumer<Integer, String> messageClient = createMessageClient(documentId, userId);
@@ -244,11 +244,11 @@ public class ExtractionService {
 					final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 					props.setDocumentId(documentId);
 					req.setAdditionalProperties(props);
-					messageClient.accept(14, "Model Card task created");
+					messageClient.accept(13, "Model Card task created");
 				} catch (final Exception e) {
 					final String error = "Unable to extract pdf";
 					log.error(error, e);
-					errorClient.accept(14, "Extraction failed, unexpected error.");
+					errorClient.accept(13, "Extraction failed, unexpected error.");
 					throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 						error);
