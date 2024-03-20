@@ -1,29 +1,30 @@
 import _ from 'lodash';
 import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
+import type { WorkflowNode } from '@/types/workflow';
 
 /**
  * Function generator for common TA3-operator operations, such add, update, and delete charts
  * The idea is to have a single place to do data manipulations but let the caller retain control
  * via the callback function
  * */
-export const chartActionsProxy = (state: any, updateStateCallback: Function) => {
-	if (!state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
+export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: Function) => {
+	if (!node.state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
 
 	const addChart = () => {
-		const copy = _.cloneDeep(state);
+		const copy = _.cloneDeep(node.state);
 		copy.chartConfigs.push([]);
 		updateStateCallback(copy);
 	};
 
 	const removeChart = (index: number) => {
-		const copy = _.cloneDeep(state);
+		const copy = _.cloneDeep(node.state);
 		copy.chartConfigs.splice(index, 1);
 		updateStateCallback(copy);
 	};
 
 	const configurationChange = (index: number, config: ChartConfig) => {
-		const copy = _.cloneDeep(state);
+		const copy = _.cloneDeep(node.state);
 		copy.chartConfigs[index] = config.selectedVariable;
 		updateStateCallback(copy);
 	};

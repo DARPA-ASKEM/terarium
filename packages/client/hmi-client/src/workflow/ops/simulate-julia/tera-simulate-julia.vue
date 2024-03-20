@@ -59,7 +59,7 @@
 					</template>
 				</SelectButton>
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts">
+					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
@@ -169,7 +169,7 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateJuliaOperationState) => {
+const chartProxy = chartActionsProxy(props.node, (state: SimulateJuliaOperationState) => {
 	emit('update-state', state);
 });
 

@@ -260,7 +260,7 @@ const outputs = computed(() => {
 	return [];
 });
 
-const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateCiemss) => {
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
 	emit('update-state', state);
 });
 

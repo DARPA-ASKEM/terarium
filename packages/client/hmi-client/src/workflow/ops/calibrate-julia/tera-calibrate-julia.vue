@@ -284,7 +284,7 @@ const parameterResult = ref<{ [index: string]: any }>();
 const runResults = ref<RunResults>({});
 const runResultParams = ref<Record<string, Record<string, number>>>({});
 
-const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateJulia) => {
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateJulia) => {
 	emit('update-state', state);
 });
 
