@@ -218,6 +218,12 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	node.state = state;
 };
 
+export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorStatus) => {
+	const node = wf.nodes.find((d) => d.id === nodeId);
+	if (!node) return;
+	node.status = status;
+};
+
 // Get port label for frontend
 const defaultPortLabels = {
 	modelId: 'Model',
