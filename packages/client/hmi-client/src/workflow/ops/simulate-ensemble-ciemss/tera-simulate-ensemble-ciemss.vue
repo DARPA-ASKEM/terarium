@@ -43,6 +43,7 @@
 									<th>Weight</th>
 								</thead>
 								<tbody class="p-datatable-tbody">
+									<!-- Index matching listModelLabels and ensembleConfigs-->
 									<tr v-for="(id, i) in listModelLabels" :key="i">
 										<td>
 											{{ id }}
