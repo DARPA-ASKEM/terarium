@@ -100,7 +100,7 @@ public class SimulationController {
 
 				// If the simulation failed, then set an error message for the front end to display nicely.  We want to save this to the simulaiton object
 				// so that its available for the front end to display forever.
-				if((sim.getStatus().equals(ProgressState.FAILED) || sim.getStatus().equals(ProgressState.ERROR)) && (sim.getStatusMessage() == null || sim.getStatusMessage().isEmpty())){
+				if(sim.getStatus() != null && (sim.getStatus().equals(ProgressState.FAILED) || sim.getStatus().equals(ProgressState.ERROR)) && (sim.getStatusMessage() == null || sim.getStatusMessage().isEmpty())){
 					if(sim.getEngine().equals(SimulationEngine.CIEMSS)){
 						// Pyciemss can give us a nice error message. Attempt to get it.
 						final ResponseEntity<SimulationStatusMessage> statusResponse = simulationCiemssServiceProxy.getRunStatus(sim.getId().toString());
