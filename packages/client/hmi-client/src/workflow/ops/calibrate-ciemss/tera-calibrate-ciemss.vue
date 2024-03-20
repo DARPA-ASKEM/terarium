@@ -111,7 +111,10 @@
 				<div ref="drilldownLossPlot"></div>
 				<div v-if="!showSpinner" class="form-section">
 					<h4>Variables</h4>
-					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset">
+					<section
+						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
+						ref="outputPanel"
+					>
 						<tera-simulate-chart
 							v-for="(config, index) of node.state.chartConfigs"
 							:key="index"
@@ -124,7 +127,7 @@
 							:mapping="mapping"
 							has-mean-line
 							@configuration-change="chartProxy.configurationChange(index, $event)"
-							:size="{ width: previewChartWidth, height: 140 }"
+							:size="chartSize"
 						/>
 						<Button
 							class="add-chart"
@@ -188,7 +191,7 @@ import {
 	ModelConfiguration,
 	State
 } from '@/types/Types';
-import { getTimespan, chartActionsProxy } from '@/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -259,6 +262,9 @@ const outputs = computed(() => {
 	}
 	return [];
 });
+
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
 	emit('update-state', state);

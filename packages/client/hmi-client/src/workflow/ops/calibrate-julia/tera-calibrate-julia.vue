@@ -150,7 +150,7 @@
 				<div class="form-section">
 					<h4>Variables</h4>
 					<div>
-						<template v-if="selectedRunId && runResults[selectedRunId]">
+						<section v-if="selectedRunId && runResults[selectedRunId]" ref="outputPanel">
 							<tera-simulate-chart
 								v-for="(cfg, index) of node.state.chartConfigs"
 								:key="index"
@@ -160,8 +160,9 @@
 								:run-type="RunType.Julia"
 								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
+								:size="chartSize"
 							/>
-						</template>
+						</section>
 						<Button
 							class="p-button-sm p-button-text"
 							@click="chartProxy.addChart"
@@ -227,7 +228,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { getTimespan, chartActionsProxy } from '@/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
@@ -283,6 +284,9 @@ const parameterResult = ref<{ [index: string]: any }>();
 
 const runResults = ref<RunResults>({});
 const runResultParams = ref<Record<string, Record<string, number>>>({});
+
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateJulia) => {
 	emit('update-state', state);
