@@ -275,6 +275,7 @@ registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
 registry.registerOp(DecapodesOp);
+registry.registerOp(RegriddingOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
