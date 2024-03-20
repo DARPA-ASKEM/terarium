@@ -299,12 +299,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/*
 .custom-chip {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-bigger);
 	padding: var(--gap-xsmall) var(--gap);
 	color: var(--surface-0);
 }
+*/
 .simulate-chart {
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);

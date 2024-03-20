@@ -201,12 +201,9 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = ref<string>('');
 
-const chartProxy = chartActionsProxy(
-	props.node.state,
-	(state: SimulateEnsembleCiemssOperationState) => {
-		emit('update-state', state);
-	}
-);
+const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
+	emit('update-state', state);
+});
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
