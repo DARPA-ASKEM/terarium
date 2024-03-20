@@ -78,7 +78,7 @@
 						<img :src="subset?.metadata?.preview" alt="Subset preview" />
 					</TabPanel>
 					<TabPanel header="Data">
-						<!--FIXME: Make this look nicer-->
+						<!--FIXME: Make this look nicer - lazily made with copilot-->
 						<table>
 							<thead>
 								<tr>
@@ -122,7 +122,7 @@
 				</TabView>
 				<template #footer>
 					<Button
-						@click="saveSubsetAsNewDataset"
+						@click="showSaveDatasetModal = true"
 						label="Save as new dataset"
 						:disabled="!subset"
 						outlined
@@ -133,6 +133,29 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
+	<!--FIXME: Consider moving this to the modal composable for other dataset drilldowns to use-->
+	<Teleport to="body">
+		<tera-modal
+			v-if="showSaveDatasetModal"
+			@modal-mask-clicked="showSaveDatasetModal = false"
+			@modal-enter-press="showSaveDatasetModal = false"
+		>
+			<template #header>
+				<h4>Save dataset as</h4>
+			</template>
+			<label>Name</label>
+			<InputText v-model="newDatasetName" size="large" />
+			<template #footer>
+				<Button label="Save" @click="saveSubsetAsNewDataset" :disabled="isEmpty(newDatasetName)" />
+				<Button
+					label="Cancel"
+					severity="secondary"
+					outlined
+					@click="showSaveDatasetModal = false"
+				/>
+			</template>
+		</tera-modal>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -142,6 +165,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { WorkflowNode } from '@/types/workflow';
 import {
 	getDataset,
@@ -153,7 +177,7 @@ import type { Dataset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-// import InputText from 'primevue/InputText';
+import InputText from 'primevue/InputText';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
@@ -195,6 +219,9 @@ const toDate = ref(new Date(props.node.state.toDate));
 
 const selectedOutputId = ref(props.node.active ?? '');
 
+const showSaveDatasetModal = ref(false);
+const newDatasetName = ref('');
+
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
 		return [
@@ -230,11 +257,15 @@ function updateState() {
 async function saveSubsetAsNewDataset() {
 	const projectId = useProjects().activeProject.value?.id;
 	if (subset.value && projectId) {
-		const newDataset = await createDataset(subset.value);
+		const subsetToSave = cloneDeep(subset.value);
+		subsetToSave.name = newDatasetName.value;
+		const newDataset = await createDataset(subsetToSave);
 
 		if (newDataset) {
 			await useProjects().addAsset(AssetType.Dataset, newDataset.id, projectId);
 			logger.info(`New dataset saved as ${newDataset.name}`);
+			showSaveDatasetModal.value = false;
+			newDatasetName.value = subset.value?.name ?? '';
 		} else {
 			logger.error('Failed to save subset as new dataset');
 		}
@@ -275,7 +306,9 @@ async function loadSubset(subsetId?: string | null) {
 	subset.value = await getDataset(subsetId);
 	if (!subset.value) {
 		logger.error('Subset not found');
+		return;
 	}
+	newDatasetName.value = subset.value?.name ?? '';
 }
 
 async function loadDataset(id: string) {
