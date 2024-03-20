@@ -620,8 +620,7 @@ export interface ExtractionResponseResult {
 
 export interface ExtractionStatusUpdate {
     documentId: string;
-    step: number;
-    totalSteps: number;
+    t: number;
     message: string;
     error: string;
 }
