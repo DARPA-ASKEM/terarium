@@ -134,6 +134,8 @@
 		</template>
 	</tera-drilldown>
 	<!--FIXME: Consider moving this to the modal composable for other dataset drilldowns to use-->
+	<!--This modal also causes warnings to popup since the entire component isn't
+		 wrapped by something, something to do with emit passing-->
 	<Teleport to="body">
 		<tera-modal
 			v-if="showSaveDatasetModal"
@@ -177,7 +179,7 @@ import type { Dataset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import InputText from 'primevue/InputText';
+import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
@@ -282,12 +284,11 @@ async function run() {
 		const subsetId = await getClimateSubsetId(
 			dataset.value.esgfId,
 			dataset.value.id,
-			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
-			`${fromDate.value.toISOString()},${toDate.value.toISOString()}`
+			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`
+			// `${fromDate.value.toISOString()},${toDate.value.toISOString()}`
 			// isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
 		);
 		isSubsetLoading.value = false;
-
 		await loadSubset(subsetId);
 		if (!subset.value) return;
 		emit('append-output', {
@@ -341,7 +342,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)
 				?.value?.[0];
-			if (subsetId) loadSubset(subsetId);
+			if (!isEmpty(subsetId) && subsetId) loadSubset(subsetId);
 		}
 	},
 	{ immediate: true }
