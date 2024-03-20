@@ -514,6 +514,11 @@ const contextMenuItems: MenuItem[] = [
 				label: DecapodesOp.operation.displayName,
 				disabled: true,
 				command: addOperatorToWorkflow(DecapodesOp)
+			},
+			{
+				label: RegriddingOp.operation.displayName,
+				disabled: true,
+				command: addOperatorToWorkflow(RegriddingOp)
 			}
 		]
 	},

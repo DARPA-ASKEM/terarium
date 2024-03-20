@@ -7,6 +7,7 @@
 			:node="node"
 		/>
 		<tera-dataset-drilldown v-else-if="isNodeType(OperationType.DATASET)" :node="node" />
+		<tera-rgridding-drilldown v-else-if="isNodeType(OperationType.REGRIDDING)" :node="node" />
 		<tera-calibrate-julia v-else-if="isNodeType(OperationType.CALIBRATION_JULIA)" :node="node" />
 		<tera-simulate-julia v-else-if="isNodeType(OperationType.SIMULATE_JULIA)" :node="node" />
 		<tera-calibrate-ciemss v-else-if="isNodeType(OperationType.CALIBRATION_CIEMSS)" :node="node" />
