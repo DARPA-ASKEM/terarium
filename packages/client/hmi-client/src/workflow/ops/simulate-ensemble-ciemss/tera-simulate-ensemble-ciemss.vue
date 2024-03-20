@@ -357,7 +357,6 @@ onMounted(async () => {
 		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
-	calculateWeights();
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
 
 	const state = _.cloneDeep(props.node.state);
@@ -372,6 +371,7 @@ onMounted(async () => {
 			});
 		}
 	}
+	calculateWeights();
 
 	if (state.chartConfigs.length === 0) {
 		state.chartConfigs.push([]);
@@ -402,13 +402,9 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	[() => ensembleCalibrationMode.value, listModelIds.value],
-	async () => {
-		calculateWeights();
-	},
-	{ immediate: true }
-);
+watch([() => ensembleCalibrationMode.value, listModelIds.value], async () => {
+	calculateWeights();
+});
 
 watch(
 	() => [timeSpan.value, numSamples.value],
