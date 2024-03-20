@@ -15,8 +15,7 @@
 					<span
 						class="custom-chip"
 						:style="{
-							color: getVariableColorByVar(variable),
-							borderColor: getVariableColorByVar(variable)
+							color: getVariableColorByVar(variable)
 						}"
 					>
 						{{ variable }}
@@ -305,10 +304,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.custom-chip {
-	border-bottom: 3px solid;
-	padding-bottom: 1px;
-}
 .simulate-chart {
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
