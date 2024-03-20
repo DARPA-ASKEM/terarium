@@ -244,6 +244,27 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendAmrToMmtRequest() throws Exception {
+
+		final UUID taskId = UUID.randomUUID();
+
+		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
+		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+		req.setScript("mira_task:amr_to_mmt");
+		req.setInput(content.getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		Assertions.assertEquals(taskId, resp.getId());
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheSuccess() throws Exception {
 		final int TIMEOUT_SECONDS = 20;
 
