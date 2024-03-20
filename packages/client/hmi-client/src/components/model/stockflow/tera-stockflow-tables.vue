@@ -148,7 +148,7 @@ import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types
 import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
