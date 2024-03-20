@@ -184,7 +184,8 @@ const fetchDataset = async () => {
 				} else {
 					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
 					image.value = undefined;
-					if (datasetTemp.fileNames) {
+					// Tmep solution to avoid downloading raw file for netcdf files
+					if (datasetTemp.metadata.format !== 'netcdf') {
 						rawContent.value = await downloadRawFile(
 							props.assetId,
 							datasetTemp?.fileNames?.[0] ?? ''

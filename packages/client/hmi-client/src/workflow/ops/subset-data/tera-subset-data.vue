@@ -4,6 +4,7 @@
 			<tera-drilldown-section>
 				<!-- <InputText placeholder="What do you want to do?" /> -->
 				<h3>Select geo-boundaries</h3>
+				<code>{{ node.outputs }}</code>
 				<img :src="preview" alt="Preview" />
 				<span>
 					<label>Latitude</label>
@@ -137,7 +138,7 @@
 
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -166,7 +167,7 @@ const props = defineProps<{
 	node: WorkflowNode<SubsetDataOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'select-output', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 enum SubsetDataTabs {
 	Wizard = 'Wizard',
@@ -196,7 +197,7 @@ const toDate = ref(new Date(props.node.state.toDate));
 const selectedOutputId = ref(props.node.active ?? '');
 
 const outputs = computed(() => {
-	if (isEmpty(props.node.outputs)) {
+	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
 				label: 'Select outputs to display in operator',
@@ -207,7 +208,7 @@ const outputs = computed(() => {
 	return [];
 });
 
-const onSelection = (id: string) => {
+const onSelection = async (id: string) => {
 	emit('select-output', id);
 };
 
@@ -251,20 +252,30 @@ async function run() {
 		const subsetDatasetId = await getClimateSubsetId(
 			dataset.value.esgfId,
 			dataset.value.id,
-			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`
-			// `${fromDate.value.toISOString()},${toDate.value.toISOString()}`,
+			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
+			`${fromDate.value.toISOString()},${toDate.value.toISOString()}`
 			// isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
 		);
 		isSubsetLoading.value = false;
 
-		if (!subsetDatasetId) {
-			logger.error('No subset dataset id found');
-			return;
-		}
-		subset.value = await getDataset(subsetDatasetId);
-		if (!subset.value) {
-			logger.error('Subset not found');
-		}
+		await loadSubset(subsetDatasetId);
+		if (!subset.value) return;
+		emit('append-output', {
+			type: 'datasetId',
+			label: subset.value.name,
+			value: subset.value.id
+		});
+	}
+}
+
+async function loadSubset(subsetDatasetId?: string) {
+	if (!subsetDatasetId) {
+		logger.error('No subset dataset id found');
+		return;
+	}
+	subset.value = await getDataset(subsetDatasetId);
+	if (!subset.value) {
+		logger.error('Subset not found');
 	}
 }
 
@@ -289,7 +300,19 @@ onMounted(async () => {
 		return;
 	}
 	await loadDataset(props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0]);
+	if (!isEmpty(selectedOutputId.value))
+		loadSubset(props.node.outputs?.find((output) => output.id === selectedOutputId.value)?.value);
 });
+
+watch(
+	() => props.node.active,
+	() => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+			loadSubset(props.node.outputs?.find((output) => output.id === selectedOutputId.value)?.value);
+		}
+	}
+);
 </script>
 
 <style scoped>

@@ -43,6 +43,7 @@ const emit = defineEmits(['update:selection']);
 
 <style scoped>
 .p-dropdown {
+	max-width: 20rem;
 	align-self: end;
 }
 
