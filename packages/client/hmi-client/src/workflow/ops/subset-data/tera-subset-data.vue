@@ -120,7 +120,13 @@
 					</TabPanel>
 				</TabView>
 				<template #footer>
-					<Button label="Save as new dataset" outlined severity="secondary" />
+					<Button
+						@click="saveSubsetAsNewDataset"
+						label="Save as new dataset"
+						:disabled="!subset"
+						outlined
+						severity="secondary"
+					/>
 					<Button label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
@@ -136,8 +142,14 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
-import { getDataset, getClimateDatasetPreview, getClimateSubset } from '@/services/dataset';
+import {
+	getDataset,
+	getClimateDatasetPreview,
+	getClimateSubset,
+	createDataset
+} from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 // import InputText from 'primevue/InputText';
@@ -146,6 +158,7 @@ import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
 import { logger } from '@/utils/logger';
+import { useProjects } from '@/composables/project';
 import { SubsetDataOperationState } from './subset-data-operation';
 
 const props = defineProps<{
@@ -213,6 +226,22 @@ function updateState() {
 	emit('update-state', state);
 }
 
+async function saveSubsetAsNewDataset() {
+	const projectId = useProjects().activeProject.value?.id;
+	if (subset.value && projectId) {
+		const newDataset = await createDataset(subset.value);
+
+		if (newDataset) {
+			await useProjects().addAsset(AssetType.Dataset, newDataset.id, projectId);
+			logger.info(`New dataset saved as ${newDataset.name}`);
+		} else {
+			logger.error('Failed to save subset as new dataset');
+		}
+	} else {
+		logger.error('Subset not found');
+	}
+}
+
 async function run() {
 	if (dataset.value?.esgfId && dataset.value?.id) {
 		updateState();
@@ -231,7 +260,6 @@ async function run() {
 			logger.error('No subset dataset id found');
 			return;
 		}
-
 		subset.value = await getDataset(subsetDatasetId);
 		if (!subset.value) {
 			logger.error('Subset not found');
