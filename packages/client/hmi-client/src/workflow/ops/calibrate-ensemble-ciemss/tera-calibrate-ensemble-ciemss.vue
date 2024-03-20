@@ -56,36 +56,24 @@
 									<label>
 										<input
 											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.EQUALWEIGHTS"
+											v-model="ensembleWeightMode"
+											:value="EnsembleWeightMode.EQUALWEIGHTS"
 										/>
-										{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
+										{{ EnsembleWeightMode.EQUALWEIGHTS }}
 									</label>
 									<label>
 										<input
 											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.CALIBRATIONWEIGHTS"
-											:disabled="disabledCalibrationWeights"
+											v-model="ensembleWeightMode"
+											:value="EnsembleWeightMode.CUSTOM"
 										/>
-										{{ EnsembleCalibrationMode.CALIBRATIONWEIGHTS }}
-									</label>
-									<label>
-										<input
-											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.CUSTOM"
-										/>
-										{{ EnsembleCalibrationMode.CUSTOM }}
+										{{ EnsembleWeightMode.CUSTOM }}
 									</label>
 								</section>
 								<!-- Turn this into a horizontal bar chart -->
 								<section class="ensemble-calibration-graph">
 									<Chart
-										v-if="
-											ensembleCalibrationMode === EnsembleCalibrationMode.CALIBRATIONWEIGHTS ||
-											ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS
-										"
+										v-if="ensembleWeightMode === EnsembleWeightMode.EQUALWEIGHTS"
 										type="bar"
 										:height="200"
 										:data="setBarChartData()"
@@ -98,14 +86,12 @@
 											<th>Weight</th>
 										</thead>
 										<tbody class="p-datatable-tbody">
-											<tr v-for="(id, i) in listModelIds" :key="i">
+											<!-- Index matching listModelLabels and ensembleConfigs-->
+											<tr v-for="(id, i) in listModelLabels" :key="i">
 												<td>
 													{{ id }}
 												</td>
-												<td v-if="customWeights === false">
-													{{ ensembleConfigs[i].weight }}
-												</td>
-												<td v-else>
+												<td>
 													<InputNumber
 														mode="decimal"
 														:min-fraction-digits="0"
@@ -124,8 +110,9 @@
 								<table>
 									<tr>
 										<th>Ensemble Variables</th>
-										<th v-for="(element, i) in ensembleConfigs" :key="i">
-											{{ element.id }}
+										<!-- Index matching listModelLabels and ensembleConfigs-->
+										<th v-for="(element, i) in listModelLabels" :key="i">
+											{{ element }}
 										</th>
 									</tr>
 									<tr>
@@ -196,7 +183,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, shallowRef, computed, watch } from 'vue';
+import { ref, shallowRef, computed, watch, onMounted } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
@@ -231,9 +218,8 @@ enum CalibrateView {
 	Input = 'Input',
 	Output = 'Output'
 }
-enum EnsembleCalibrationMode {
+enum EnsembleWeightMode {
 	EQUALWEIGHTS = 'equalWeights',
-	CALIBRATIONWEIGHTS = 'calibrationWeights',
 	CUSTOM = 'custom'
 }
 
@@ -248,13 +234,12 @@ const viewOptions = ref([
 	{ value: CalibrateView.Input, icon: 'pi pi-sign-in' },
 	{ value: CalibrateView.Output, icon: 'pi pi-sign-out' }
 ]);
-const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
-const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
+const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
 const listModelLabels = ref<string[]>([]);
-const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
+const ensembleWeightMode = ref(EnsembleWeightMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<string[][]>([]);
@@ -266,15 +251,11 @@ const completedRunId = computed<string>(
 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 );
 
-const customWeights = ref<boolean>(false);
-// TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
-const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-// Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -283,19 +264,14 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const calculateWeights = () => {
+	console.log('Calc weights:');
 	if (!ensembleConfigs.value) return;
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
-		customWeights.value = false;
+	if (ensembleWeightMode.value === EnsembleWeightMode.EQUALWEIGHTS) {
+		console.log('Equal weights:');
 		const percent = 1 / ensembleConfigs.value.length;
 		for (let i = 0; i < ensembleConfigs.value.length; i++) {
 			ensembleConfigs.value[i].weight = percent;
 		}
-	}
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
-		customWeights.value = true;
-	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
-		customWeights.value = false;
-		// TODO: Get weights from AMR
 	}
 };
 
@@ -397,45 +373,57 @@ watch(
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
 watch(
-	[() => ensembleCalibrationMode.value, listModelIds.value],
-	async () => {
+	() => ensembleWeightMode.value,
+	() => {
 		calculateWeights();
-	},
-	{ immediate: true }
+	}
 );
 
-watch(
-	() => listModelIds,
-	async () => {
-		allModelConfigurations.value = [];
-		// Fetch Model Configurations
-		await Promise.all(
-			listModelIds.value.map(async (id) => {
-				const result = await getModelConfigurationById(id);
-				allModelConfigurations.value.push(result);
-			})
+onMounted(async () => {
+	allModelConfigurations.value = [];
+	const modelConfigurationIds: string[] = [];
+	props.node.inputs.forEach((ele) => {
+		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
+	});
+	if (!modelConfigurationIds) return;
+	// Fetch Model Configurations
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const result = await getModelConfigurationById(id);
+			allModelConfigurations.value.push(result);
+		})
+	);
+
+	allModelOptions.value = [];
+	for (let i = 0; i < allModelConfigurations.value.length; i++) {
+		const tempList: string[] = [];
+		allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
+			tempList.push(element.id);
+		});
+		allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
+			tempList.push(element.id)
 		);
-		allModelOptions.value = [];
+		allModelOptions.value.push(tempList);
+	}
+
+	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+
+	const state = _.cloneDeep(props.node.state);
+	if (state.mapping && state.mapping.length === 0) {
+		// TOM Fix this. This should check that the length of ensemble is = port length - 1
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
-			const tempList: string[] = [];
-			allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
-				tempList.push(element.id);
+			ensembleConfigs.value.push({
+				id: allModelConfigurations.value[i].id as string,
+				solutionMappings: {},
+				weight: 0
 			});
-			allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
-				tempList.push(element.id)
-			);
-			allModelOptions.value.push(tempList);
 		}
-		calculateWeights();
-		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+	}
+	state.mapping = ensembleConfigs.value;
+	calculateWeights();
 
-		const state = _.cloneDeep(props.node.state);
-		state.mapping = ensembleConfigs.value;
-
-		emit('update-state', state);
-	},
-	{ immediate: true }
-);
+	emit('update-state', state);
+});
 
 watch(
 	() => extra.value,
