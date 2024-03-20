@@ -108,7 +108,7 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-const transientModel = ref(cloneDeep(props.model));
+const transientModel = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const vertices = computed(() => props.model?.model?.vertices ?? []);
@@ -150,7 +150,6 @@ function onCellEditComplete() {
 watch(
 	() => props.model,
 	async (model) => {
-		if (!model) return;
 		transientModel.value = cloneDeep(model);
 		const response: any = await getMMT(model);
 		mmt.value = response.mmt;
