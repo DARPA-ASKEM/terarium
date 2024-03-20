@@ -249,6 +249,7 @@ import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
 import * as DecapodesOp from './ops/decapodes/mod';
+import * as RegriddingOp from './ops/regridding/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
