@@ -214,7 +214,7 @@ async function loadDataset(id: string) {
 }
 
 onMounted(() => {
-	if (!props.node.state.datasetId || props.node.inputs?.[0]?.value?.[0]) {
+	if (!props.node.state.datasetId && !props.node.inputs?.[0]?.value?.[0]) {
 		logger.error('No dataset id found');
 		return;
 	}
