@@ -1,21 +1,38 @@
 <template>
 	<div class="row">
-		<Chart
-			type="bar"
-			:width="chartSize.width"
-			:height="chartSize.height"
-			:data="chartData"
-			:options="chartOptions"
-			s
-		/>
+		<canvas ref="chartCanvas"></canvas>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import Chart from 'primevue/chart';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import ChartAnnotation from 'chartjs-plugin-annotation';
 import { ChartConfig } from '@/types/SimulateConfig';
-// import annotationPlugin from 'chartjs-plugin-annotation';
+import { Chart } from 'chart.js';
+
+// Note: There's seems to be a problem with vueprime/chart, chart.js and chartjs-plugin-annotation where the annotation plugin is not working properly throwing errors unexpectedly.
+// In order to work around this issue, we are using the chart.js directly and importing the annotation plugin from chartjs-plugin-annotation instead of using the vueprime/chart component.
+// Also there's weird issue with eslint complaining about the import of ChartAnnotation from 'chartjs-plugin-annotation' even though it's in the package.json and being used in the code.
+// To workaround this, we are disabling the eslint rule for this line.
+
+Chart.register(ChartAnnotation);
+
+const chartCanvas = ref(null);
+const chart = ref<any>(null);
+
+const renderChart = () => {
+	if (chart.value !== null) {
+		chart.value.destroy();
+	}
+	// eslint-disable-next-line no-new
+	chart.value = new Chart(chartCanvas.value, {
+		type: 'bar',
+		data: chartData.value,
+		options: chartOptions.value
+	});
+	chart.value.resize(chartSize.value.width, chartSize.value.height);
+};
 
 const props = defineProps<{
 	riskResults: any;
@@ -34,101 +51,111 @@ const chartOptions = ref();
 const chartData = ref();
 const binCount = 6;
 
-const setChartOptions = () => ({
-	indexAxis: 'y',
-	responsive: false,
-	devicePixelRatio: 4,
-	maintainAspectRatio: false,
-	pointStyle: false,
-	animation: {
-		duration: 0
-	},
-	showLine: true,
-	plugins: {
-		legend: {
-			display: false
-		}
-		// annotation: {
-		// 	annotations: {
-		// 		line1: {
-		// 			type: 'line',
-		// 			yMin: threshold,
-		// 			yMax: threshold,
-		// 			borderColor: 'rgb(255, 99, 132)',
-		// 			borderWidth: 2
-		// 		}
-		// 	}
-		// }
-	},
-	scales: {
-		x: {
-			title: {
-				display: true,
-				text: 'Number of Samples'
+const setChartOptions = () => {
+	if (!props.riskResults) return {};
+	const { toBinIndex } = getBinData(qoiData.value);
+	return {
+		indexAxis: 'y',
+		responsive: false,
+		devicePixelRatio: 4,
+		maintainAspectRatio: false,
+		pointStyle: false,
+		animation: {
+			duration: 0
+		},
+		showLine: true,
+		plugins: {
+			legend: {
+				display: false
 			},
-			ticks: {
-				color: '#aaa',
-				maxTicksLimit: 5,
-				includeBounds: true,
-				// this rounds the tick label to nearest int
-				callback: (num) => num
-			},
-			grid: {
-				color: '#fff',
-				borderColor: '#fff'
+			annotation: {
+				annotations: {
+					line1: {
+						type: 'line',
+						yMin: toBinIndex(props.threshold),
+						yMax: toBinIndex(props.threshold),
+						borderColor: 'rgb(255, 99, 132)',
+						borderWidth: 2
+					}
+				}
 			}
 		},
-		y: {
-			title: {
-				display: true,
-				text: props.targetVariable
+		scales: {
+			x: {
+				title: {
+					display: true,
+					text: 'Number of Samples'
+				},
+				ticks: {
+					color: '#aaa',
+					maxTicksLimit: 5,
+					includeBounds: true,
+					// this rounds the tick label to nearest int
+					callback: (num) => num
+				},
+				grid: {
+					color: '#fff',
+					borderColor: '#fff'
+				}
 			},
-			ticks: {
-				color: '#aaa',
-				includeBounds: true,
-				precision: 4
-			},
-			grid: {
-				color: '#fff',
-				borderColor: '#fff'
+			y: {
+				title: {
+					display: true,
+					text: props.targetVariable
+				},
+				ticks: {
+					color: '#aaa',
+					includeBounds: true,
+					precision: 4
+				},
+				grid: {
+					color: '#fff',
+					borderColor: '#fff'
+				}
 			}
 		}
-	}
-});
+	};
+};
 
 const getBinData = (data: number[]) => {
 	const minValue = Math.min(...data);
 	const maxValue = Math.max(...data);
-	const stepSize = (maxValue - minValue) / (binCount - 1);
+	const stepSize = (maxValue - minValue) / binCount;
 	const bins: number[] = Array<number>(binCount).fill(0);
 	const binLabels: string[] = [];
-	for (let i = binCount - 1; i >= 0; i--) {
+	for (let i = binCount; i > 0; i--) {
 		binLabels.push(
-			`${(minValue + stepSize * i).toFixed(4)} - ${(minValue + stepSize * (i + 1)).toFixed(4)}`
+			`${(minValue + stepSize * (i - 1)).toFixed(4)} - ${(minValue + stepSize * i).toFixed(4)}`
 		);
 	}
+
+	const toBinIndex = (value: number) => {
+		if (value < minValue || value > maxValue) return -1;
+		const index = binCount - 1 - Math.abs(Math.floor((value - minValue) / stepSize));
+		return index;
+	};
+
 	// Fill bins:
 	data.forEach((ele) => {
-		const index = Math.abs(Math.floor((ele - minValue) / stepSize));
-		bins[index] += 1;
+		bins[toBinIndex(ele)] += 1;
 	});
 
-	return { binValues: bins, binLabes: binLabels };
+	return { binValues: bins, binLabels, toBinIndex };
 };
+
+const targetState = computed(() => `${props.targetVariable}_state`);
+// TODO: risk.json has _state appended to all states. This is an ugly but fast fix.
+const riskValue = computed(() => props.riskResults?.[targetState.value]?.risk[0] || 0);
+const qoiData = computed(() => props.riskResults?.[targetState.value]?.qoi || []);
 
 const setChartData = () => {
 	if (!props.riskResults) return {};
-
-	// TODO: risk.json has _state appended to all states. This is an ugly but fast fix.
-	const targetState = `${props.targetVariable}_state`;
-	const riskValue = props.riskResults[targetState].risk[0];
-	const qoiData = props.riskResults[targetState].qoi;
-	const binData = getBinData(qoiData);
-	const binLabels = binData.binLabes;
+	const binData = getBinData(qoiData.value);
+	const binLabels = binData.binLabels;
 	const binValues = binData.binValues.map((ele, index) => ({ x: ele, y: index }));
 	const riskLine: any[] = [];
 	for (let i = 0; i < binCount; i++) {
-		riskLine.push({ x: riskValue, y: i });
+		riskLine.push({ x: riskValue.value, y: i });
 	}
 	return {
 		labels: binLabels,
@@ -145,10 +172,11 @@ const setChartData = () => {
 };
 
 watch(
-	() => props.riskResults,
+	[() => props.riskResults, () => props.threshold],
 	async () => {
 		chartOptions.value = setChartOptions();
 		chartData.value = setChartData();
+		renderChart();
 	},
 	{ immediate: true }
 );
