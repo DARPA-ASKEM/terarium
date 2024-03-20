@@ -1,24 +1,22 @@
 package software.uncharted.terarium.hmiserver.models.extractionservice;
 
+import java.util.UUID;
+
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
-import java.util.UUID;
 
 @Data
 @TSModel
 public class ExtractionStatusUpdate {
-    private UUID documentId;
-    private Integer step;
-    private Integer totalSteps;
-    private String message;
-    private String error;
+	private UUID documentId;
+	private Double t;
+	private String message;
+	private String error;
 
-    public ExtractionStatusUpdate(UUID documentId, Integer step, Integer totalSteps, String message, String error) {
-        this.documentId = documentId;
-        this.step = step;
-        this.totalSteps = totalSteps;
-        this.message = message;
-        this.error = error;
-    }
+	public ExtractionStatusUpdate(final UUID documentId, final Double t, final String message, final String error) {
+		this.documentId = documentId;
+		this.t = t;
+		this.message = message;
+		this.error = error;
+	}
 }

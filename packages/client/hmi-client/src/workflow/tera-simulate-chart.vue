@@ -12,7 +12,7 @@
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span :style="{ color: getVariableColorByVar(variable) }">
+					<span class="custom-chip" :style="{ color: getVariableColorByVar(variable) }">
 						{{ variable }}
 					</span>
 				</template>
@@ -114,6 +114,19 @@ const CHART_OPTIONS = {
 	plugins: {
 		legend: {
 			display: false
+		},
+		tooltip: {
+			/* This ensures the tooltip shows the full line color, not just the semi-transparent version of it */
+			callbacks: {
+				labelColor(context) {
+					const variableName = context.dataset.label.split(' - ')[1];
+					const color = getVariableColorByVar(variableName);
+					return {
+						borderColor: color,
+						backgroundColor: color
+					};
+				}
+			}
 		}
 	},
 	scales: {
@@ -190,7 +203,7 @@ const getLineColor = (variableName: string, runIdx: number) => {
 		const lastRun = runIdList.length - 1;
 		return runIdx === lastRun
 			? getVariableColorByVar(variableName)
-			: `${getVariableColorByVar(variableName)}10`;
+			: `${getVariableColorByVar(variableName)}30`;
 	}
 
 	return hasMultiRuns.value
@@ -286,6 +299,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.custom-chip {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-bigger);
+	padding: var(--gap-xsmall) var(--gap);
+	color: var(--surface-0);
+}
 .simulate-chart {
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
