@@ -74,7 +74,7 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateJuliaOperationState) => {
+const chartProxy = chartActionsProxy(props.node, (state: SimulateJuliaOperationState) => {
 	emit('update-state', state);
 });
 

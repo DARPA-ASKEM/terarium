@@ -8,49 +8,21 @@
 		</template>
 		<section :tabName="Tabs.Wizard">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
-				<AccordionTab header="Model Weights">
+				<AccordionTab header="Model weights">
 					<div class="model-weights">
-						<section class="ensemble-calibration-mode">
-							<label>
-								<input
-									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.EQUALWEIGHTS"
-								/>
-								{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
-							</label>
-							<label>
-								<input
-									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.CUSTOM"
-								/>
-								{{ EnsembleCalibrationMode.CUSTOM }}
-							</label>
-						</section>
 						<section class="ensemble-calibration-graph">
-							<Chart
-								v-if="ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS"
-								type="bar"
-								:height="100"
-								:data="setBarChartData()"
-								:options="setChartOptions()"
-								:plugins="dataLabelPlugin"
-							/>
-							<table v-else class="p-datatable-table">
+							<table class="p-datatable-table">
 								<thead class="p-datatable-thead">
 									<th>Model Config ID</th>
 									<th>Weight</th>
 								</thead>
 								<tbody class="p-datatable-tbody">
-									<tr v-for="(id, i) in listModelIds" :key="i">
+									<!-- Index matching listModelLabels and ensembleConfigs-->
+									<tr v-for="(id, i) in listModelLabels" :key="i">
 										<td>
 											{{ id }}
 										</td>
-										<td v-if="customWeights === false">
-											{{ ensembleConfigs[i].weight }}
-										</td>
-										<td v-else>
+										<td>
 											<InputNumber
 												mode="decimal"
 												:min-fraction-digits="0"
@@ -61,6 +33,13 @@
 									</tr>
 								</tbody>
 							</table>
+							<Button
+								label="Set weights to be equal"
+								class="p-button-sm p-button-outlined ml-2 mt-2"
+								outlined
+								severity="secondary"
+								@click="calculateEvenWeights()"
+							/>
 						</section>
 					</div>
 				</AccordionTab>
@@ -69,8 +48,8 @@
 						<table>
 							<tr>
 								<th>Ensemble Variables</th>
-								<th v-for="(element, i) in ensembleConfigs" :key="i">
-									{{ element.id }}
+								<th v-for="(element, i) in listModelLabels" :key="i">
+									{{ element }}
 								</th>
 							</tr>
 
@@ -88,13 +67,14 @@
 
 					<InputText v-model="newSolutionMappingKey" placeholder="Variable Name" />
 					<Button
+						:disabled="!newSolutionMappingKey"
 						class="p-button-sm p-button-outlined"
 						icon="pi pi-plus"
 						label="Add mapping"
 						@click="addMapping"
 					/>
 				</AccordionTab>
-				<AccordionTab header="Time Span">
+				<AccordionTab header="Time span">
 					<table>
 						<thead class="p-datatable-thead">
 							<th>Units</th>
@@ -160,8 +140,6 @@ import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
-import Chart from 'primevue/chart';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -189,27 +167,14 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['select-output', 'update-state', 'close']);
 
-const dataLabelPlugin = [ChartDataLabels];
-
 enum Tabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }
 
-enum EnsembleCalibrationMode {
-	EQUALWEIGHTS = 'equalWeights',
-	CUSTOM = 'custom'
-}
-
-const CATEGORYPERCENTAGE = 0.9;
-const BARPERCENTAGE = 0.6;
-const MINBARLENGTH = 1;
-
 const showSpinner = ref(false);
 
-const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const listModelLabels = ref<string[]>([]);
-const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
@@ -218,7 +183,6 @@ const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
 
-const customWeights = ref<boolean>(false);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
@@ -237,28 +201,19 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = ref<string>('');
 
-const chartProxy = chartActionsProxy(
-	props.node.state,
-	(state: SimulateEnsembleCiemssOperationState) => {
-		emit('update-state', state);
-	}
-);
+const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
+	emit('update-state', state);
+});
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const calculateWeights = () => {
+const calculateEvenWeights = () => {
 	if (!ensembleConfigs.value) return;
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
-		customWeights.value = false;
-		const percent = 1 / ensembleConfigs.value.length;
-		for (let i = 0; i < ensembleConfigs.value.length; i++) {
-			ensembleConfigs.value[i].weight = percent;
-		}
-	}
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
-		customWeights.value = true;
+	const percent = 1 / ensembleConfigs.value.length;
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		ensembleConfigs.value[i].weight = percent;
 	}
 };
 
@@ -270,64 +225,6 @@ const addMapping = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = ensembleConfigs.value;
 	emit('update-state', state);
-};
-
-const setBarChartData = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	const weights = ensembleConfigs.value.map((element) => element.weight);
-	return {
-		labels: listModelLabels.value,
-		datasets: [
-			{
-				backgroundColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				borderColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				data: weights,
-				categoryPercentage: CATEGORYPERCENTAGE,
-				barPercentage: BARPERCENTAGE,
-				minBarLength: MINBARLENGTH
-			}
-		]
-	};
-};
-
-const setChartOptions = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	return {
-		indexAxis: 'y',
-		maintainAspectRatio: false,
-		aspectRatio: 0.8,
-		plugins: {
-			legend: {
-				display: false
-			},
-			datalabels: {
-				anchor: 'end',
-				align: 'right',
-				formatter: (n: number) => `${Math.round(n * 100)}%`,
-				labels: {
-					value: {
-						font: {
-							size: 12
-						}
-					}
-				}
-			}
-		},
-		scales: {
-			x: {
-				display: false
-			},
-			y: {
-				ticks: {
-					color: documentStyle.getPropertyValue('--text-color-primary')
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
-			}
-		}
-	};
 };
 
 const runEnsemble = async () => {
@@ -365,11 +262,9 @@ onMounted(async () => {
 		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
-	calculateWeights();
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
 
 	const state = _.cloneDeep(props.node.state);
-	state.modelConfigIds = modelConfigurationIds;
 
 	if (state.mapping && state.mapping.length === 0) {
 		for (let i = 0; i < allModelConfigurations.length; i++) {
@@ -379,6 +274,10 @@ onMounted(async () => {
 				weight: 0
 			});
 		}
+	}
+
+	if (ensembleConfigs.value.some((ele) => ele.weight === 0)) {
+		calculateEvenWeights();
 	}
 
 	if (state.chartConfigs.length === 0) {
@@ -411,14 +310,6 @@ watch(
 );
 
 watch(
-	[() => ensembleCalibrationMode.value, listModelIds.value],
-	async () => {
-		calculateWeights();
-	},
-	{ immediate: true }
-);
-
-watch(
 	() => [timeSpan.value, numSamples.value],
 	async () => {
 		const state = _.cloneDeep(props.node.state);
@@ -431,16 +322,6 @@ watch(
 </script>
 
 <style scoped>
-.ensemble-calibration-mode {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	margin-left: 1rem;
-	min-width: fit-content;
-	padding-right: 3rem;
-}
-
 .ensemble-calibration-graph {
 	height: 100px;
 }

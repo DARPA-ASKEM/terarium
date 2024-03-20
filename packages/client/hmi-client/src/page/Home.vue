@@ -38,7 +38,7 @@
 				<!-- Video container -->
 				<section v-else class="col-3 flex justify-content-end">
 					<video controls ref="introVideo" class="video-container" height="200px">
-						<source src="http://videos.terarium.ai/terarium.mp4" type="video/mp4" />
+						<source src="https://videos.terarium.ai/terarium.mp4" type="video/mp4" />
 						<track src="" kind="captions" srclang="en" label="English" />
 						Your browser does not support the video tag.
 					</video>

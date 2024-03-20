@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
@@ -144,7 +144,11 @@ function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) 
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string) {
-	const expressionBase = getVariable(props.mmt, variableName).value;
+	let expressionBase = getVariable(props.mmt, variableName).value;
+
+	if (isNumber(expressionBase) && +expressionBase === 0) {
+		expressionBase = '0.0'; // just to ensure we don't trigger falsy checks
+	}
 
 	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
