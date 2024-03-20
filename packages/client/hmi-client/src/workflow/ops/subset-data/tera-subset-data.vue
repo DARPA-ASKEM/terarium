@@ -70,14 +70,54 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
+				<tera-progress-spinner v-if="isSubsetLoading" />
 				<!--FIXME: Should universally define css rules for tabs so that the styles used in the drilldowns are sharable here-->
-				<TabView>
+				<TabView
+					><TabPanel header="Description">{{ subset?.description }}</TabPanel>
 					<TabPanel header="Map view">
-						<tera-progress-spinner v-if="isSubsetLoading" />
-						<img :src="subsetPreview" alt="Subset preview" />
+						<img :src="subset?.metadata?.preview" alt="Subset preview" />
 					</TabPanel>
-					<TabPanel header="Description"> </TabPanel>
-					<TabPanel header="Data"> </TabPanel>
+					<TabPanel header="Data">
+						<table>
+							<thead>
+								<tr>
+									<th>Key</th>
+									<th>Attributes</th>
+									<th>Indexes</th>
+									<th>Coordinates</th>
+								</tr>
+							</thead>
+							<tbody v-if="subset?.metadata?.dataStructure">
+								<tr v-for="(value, key) in subset.metadata.dataStructure" :key="key">
+									<td>{{ key }}</td>
+									<td>
+										<ul v-for="(attrValue, attrKey) in value.attrs" :key="attrKey">
+											<li>
+												<strong>{{ attrKey }}:</strong> {{ attrValue }}
+											</li>
+										</ul>
+									</td>
+									<td>
+										<ul>
+											<li v-for="(index, indexKey) in value.indexes" :key="indexKey">
+												{{ index }}
+											</li>
+										</ul>
+									</td>
+									<td>
+										<ul>
+											<li
+												v-for="(coordinate, coordinateKey) in value.coordinates"
+												:key="coordinateKey"
+											>
+												{{ coordinate }}
+											</li>
+										</ul>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</TabPanel>
 				</TabView>
 				<template #footer>
 					<Button label="Save as new dataset" outlined severity="secondary" />
@@ -123,7 +163,6 @@ const dataset = ref<Dataset | null>(null);
 const preview = ref<string | undefined>(undefined);
 
 const subset = ref<Dataset | null>(null);
-const subsetPreview = ref<string | undefined>(undefined);
 const isSubsetLoading = ref(false);
 
 const latitudeStart = ref(props.node.state.latitudeStart);
@@ -137,8 +176,8 @@ const spatialSkipping = ref(props.node.state.spatialSkipping);
 const isTimeSkipping = ref(props.node.state.isTimeSkipping);
 const timeSkipping = ref(props.node.state.timeSkipping);
 
-const fromDate = ref(props.node.state.fromDate);
-const toDate = ref(props.node.state.toDate);
+const fromDate = ref(new Date(props.node.state.fromDate));
+const toDate = ref(new Date(props.node.state.toDate));
 
 const selectedOutputId = ref(props.node.active ?? '');
 
@@ -179,7 +218,7 @@ async function run() {
 		updateState();
 		isSubsetLoading.value = true;
 
-		subset.value = await getClimateSubset(
+		const subsetDatasetId = await getClimateSubset(
 			dataset.value.esgfId,
 			dataset.value.id,
 			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`
@@ -187,10 +226,15 @@ async function run() {
 			// isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
 		);
 		isSubsetLoading.value = false;
-		console.log('subset', subset.value);
-		if (subset.value) {
-			console.log('dataset', dataset.value);
-			console.log('subset', subset.value);
+
+		if (!subsetDatasetId) {
+			logger.error('No subset dataset id found');
+			return;
+		}
+
+		subset.value = await getDataset(subsetDatasetId);
+		if (!subset.value) {
+			logger.error('Subset not found');
 		}
 	}
 }
@@ -198,7 +242,7 @@ async function run() {
 async function loadDataset(id: string) {
 	dataset.value = await getDataset(id);
 	if (!dataset.value?.esgfId) {
-		logger.error('No esgfId found');
+		logger.error('No esgfId found for dataset');
 		return;
 	}
 
@@ -210,12 +254,12 @@ async function loadDataset(id: string) {
 	}
 }
 
-onMounted(() => {
+onMounted(async () => {
 	if (!props.node.state.datasetId && !props.node.inputs?.[0]?.value?.[0]) {
 		logger.error('No dataset id found');
 		return;
 	}
-	loadDataset(props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0]);
+	await loadDataset(props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0]);
 });
 </script>
 
