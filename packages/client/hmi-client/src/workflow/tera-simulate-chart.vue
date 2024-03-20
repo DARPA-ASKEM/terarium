@@ -114,6 +114,19 @@ const CHART_OPTIONS = {
 	plugins: {
 		legend: {
 			display: false
+		},
+		tooltip: {
+			/* This ensures the tooltip shows the full line color, not just the semi-transparent version of it */
+			callbacks: {
+				labelColor(context) {
+					const variableName = context.dataset.label.split(' - ')[1];
+					const color = getVariableColorByVar(variableName);
+					return {
+						borderColor: color,
+						backgroundColor: color
+					};
+				}
+			}
 		}
 	},
 	scales: {
@@ -190,7 +203,7 @@ const getLineColor = (variableName: string, runIdx: number) => {
 		const lastRun = runIdList.length - 1;
 		return runIdx === lastRun
 			? getVariableColorByVar(variableName)
-			: `${getVariableColorByVar(variableName)}10`;
+			: `${getVariableColorByVar(variableName)}30`;
 	}
 
 	return hasMultiRuns.value
