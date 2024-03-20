@@ -48,7 +48,7 @@ export const OptimizeCiemssOperation: Operation = {
 	displayName: 'Optimize with PyCIEMSS',
 	description: 'Optimize with PyCIEMSS',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
-	outputs: [{ type: 'modelConfigId' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {
