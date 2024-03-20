@@ -345,7 +345,7 @@ public class TaskService {
 	// This is a shared queue, messages will round robin between every instance of
 	// the hmi-server. Any operation that must occur once and only once should be
 	// triggered here.
-	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(value = "${terarium.taskrunner.response-queue}", autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
+	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(value = "${terarium.taskrunner.response-queue}", autoDelete = "false", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -466,7 +466,8 @@ public class TaskService {
 
 				// otherwise dispatch it again, and overwrite the id
 				log.info(
-						"No viable cached response found for task id: {} for SHA: {}, creating new task with id {}", existingId,
+						"No viable cached response found for task id: {} for SHA: {}, creating new task with id {}",
+						existingId,
 						hash, req.getId());
 
 				taskIdCache.put(hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
@@ -499,7 +500,8 @@ public class TaskService {
 				// but the server is shutdown before it dispatches the request, which would
 				// cause servers to wait on requests that were never sent.
 				final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
-				responseCache.put(req.getId(), queuedResponse, CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
+				responseCache.put(req.getId(), queuedResponse, CACHE_TTL_SECONDS, TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
 						TimeUnit.SECONDS);
 
 				// create and return the future
