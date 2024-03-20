@@ -512,6 +512,7 @@ export interface Simulation {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;

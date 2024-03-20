@@ -24,7 +24,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationStatusMessage;
+import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.SimulationEventService;
@@ -53,6 +57,8 @@ public class SimulationController {
 	private final ProjectAssetService projectAssetService;
 
 	private final SimulationEventService simulationEventService;
+
+	private final SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
 	@PostMapping
 	@Secured(Roles.USER)
@@ -87,7 +93,32 @@ public class SimulationController {
 	public ResponseEntity<Simulation> getSimulation(
 			@PathVariable("id") final UUID id) {
 		try {
-			final Optional<Simulation> simulation = simulationService.getSimulation(id);
+			Optional<Simulation> simulation = simulationService.getSimulation(id);
+
+			if(simulation.isPresent()){
+				final Simulation sim = simulation.get();
+
+				// If the simulation failed, then set an error message for the front end to display nicely.  We want to save this to the simulaiton object
+				// so that its available for the front end to display forever.
+				if((sim.getStatus().equals(ProgressState.FAILED) || sim.getStatus().equals(ProgressState.ERROR)) && (sim.getStatusMessage() == null || sim.getStatusMessage().isEmpty())){
+					if(sim.getEngine().equals(SimulationEngine.CIEMSS)){
+						// Pyciemss can give us a nice error message. Attempt to get it.
+						final ResponseEntity<SimulationStatusMessage> statusResponse = simulationCiemssServiceProxy.getRunStatus(sim.getId().toString());
+						if(statusResponse == null || statusResponse.getBody() == null || statusResponse.getBody().getErrorMsg() == null || statusResponse.getBody().getErrorMsg().isEmpty()){
+							log.error("Failed to get status for simulation {}.  Error code was {}", sim.getId(), statusResponse == null ? "null" : statusResponse.getStatusCode());
+							sim.setStatusMessage("Failed running simulation " + sim.getId());
+						} else {
+							sim.setStatusMessage(statusResponse.getBody().getErrorMsg());
+						}
+					} else {
+						sim.setStatusMessage("Failed running simulation " + sim.getId());
+					}
+
+					simulation = simulationService.updateSimulation(sim);
+
+				}
+			}
+
 			return simulation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get simulation %s", id);
