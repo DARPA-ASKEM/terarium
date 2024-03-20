@@ -43,7 +43,7 @@
 									<th>Weight</th>
 								</thead>
 								<tbody class="p-datatable-tbody">
-									<tr v-for="(id, i) in listModelIds" :key="i">
+									<tr v-for="(id, i) in ensembleConfigs.map((ele) => ele.id)" :key="i">
 										<td>
 											{{ id }}
 										</td>
@@ -204,7 +204,6 @@ const MINBARLENGTH = 1;
 
 const showSpinner = ref(false);
 
-const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 
@@ -402,9 +401,12 @@ watch(
 	{ immediate: true }
 );
 
-watch([() => ensembleCalibrationMode.value, listModelIds.value], () => {
-	calculateWeights();
-});
+watch(
+	() => ensembleCalibrationMode.value,
+	() => {
+		calculateWeights();
+	}
+);
 
 watch(
 	() => [timeSpan.value, numSamples.value],
