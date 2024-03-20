@@ -83,33 +83,36 @@ export const profileDataset = async (
 
 /** Handle messages received from the extraction client-event */
 const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
-	if (event.data.error) {
-		logger.error(`Extraction client-event: ERROR [${event.data.t}]: ${event.data.error}`);
+	const { data } = event;
+	if (data.error) {
+		logger.error(`Extraction client-event: ERROR [${data.t}]: ${data.error}`);
 		await unsubscribe(ClientEventType.Extraction, messageHandler);
 		return;
 	}
 	if (event.data.message) {
-		console.debug(`Extraction client-event: [${event.data.t}]: ${event.data.message}`);
+		console.debug(`Extraction client-event: [${data.t}]: ${data.message}`);
 	} else {
-		logger.success(`Extraction client-event: [${event.data.t}]`);
+		logger.success(`Extraction client-event: [${data.t}]`);
 	}
-	if (event.data.t >= 1.0) {
+	if (data.t >= 1.0) {
 		await unsubscribe(ClientEventType.Extraction, messageHandler);
 	}
 };
 
 /** Extract text and artifacts from a PDF document */
 export const extractPDF = async (documentId: DocumentAsset['id']) => {
+	console.group('PDF COSMOS Extraction');
 	if (documentId) {
 		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}`);
 		if (response?.status === 202) {
 			await subscribe(ClientEventType.Extraction, messageHandler);
 		} else {
-			console.debug('PDF extraction failed', response);
+			console.debug('Failed — ', response);
 		}
 	} else {
-		console.debug('PDF extraction failed', 'No documentId provided for pdf extraction.');
+		console.debug('Failed — No documentId provided for pdf extraction.');
 	}
+	console.groupEnd();
 };
 
 export async function codeToAMR(

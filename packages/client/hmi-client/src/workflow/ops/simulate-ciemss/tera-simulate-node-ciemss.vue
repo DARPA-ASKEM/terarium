@@ -98,7 +98,7 @@ const processResult = (runId: string) => {
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
-		value: runId,
+		value: [runId],
 		state: {
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
