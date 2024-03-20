@@ -43,14 +43,11 @@
 									<th>Weight</th>
 								</thead>
 								<tbody class="p-datatable-tbody">
-									<tr v-for="(id, i) in listModelIds" :key="i">
+									<tr v-for="(id, i) in ensembleConfigs.map((ele) => ele.id)" :key="i">
 										<td>
 											{{ id }}
 										</td>
-										<td v-if="customWeights === false">
-											{{ ensembleConfigs[i].weight }}
-										</td>
-										<td v-else>
+										<td>
 											<InputNumber
 												mode="decimal"
 												:min-fraction-digits="0"
@@ -207,7 +204,6 @@ const MINBARLENGTH = 1;
 
 const showSpinner = ref(false);
 
-const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
 const listModelLabels = ref<string[]>([]);
 const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 
@@ -218,7 +214,6 @@ const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
 
-const customWeights = ref<boolean>(false);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
@@ -251,14 +246,10 @@ const onSelection = (id: string) => {
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
 	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
-		customWeights.value = false;
 		const percent = 1 / ensembleConfigs.value.length;
 		for (let i = 0; i < ensembleConfigs.value.length; i++) {
 			ensembleConfigs.value[i].weight = percent;
 		}
-	}
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
-		customWeights.value = true;
 	}
 };
 
@@ -365,11 +356,9 @@ onMounted(async () => {
 		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
-	calculateWeights();
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
 
 	const state = _.cloneDeep(props.node.state);
-	state.modelConfigIds = modelConfigurationIds;
 
 	if (state.mapping && state.mapping.length === 0) {
 		for (let i = 0; i < allModelConfigurations.length; i++) {
@@ -380,6 +369,7 @@ onMounted(async () => {
 			});
 		}
 	}
+	calculateWeights();
 
 	if (state.chartConfigs.length === 0) {
 		state.chartConfigs.push([]);
@@ -411,11 +401,10 @@ watch(
 );
 
 watch(
-	[() => ensembleCalibrationMode.value, listModelIds.value],
-	async () => {
+	() => ensembleCalibrationMode.value,
+	() => {
 		calculateWeights();
-	},
-	{ immediate: true }
+	}
 );
 
 watch(
