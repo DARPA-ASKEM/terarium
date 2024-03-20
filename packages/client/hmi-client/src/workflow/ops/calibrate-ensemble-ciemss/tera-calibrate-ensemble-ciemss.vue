@@ -410,7 +410,7 @@ onMounted(async () => {
 
 	const state = _.cloneDeep(props.node.state);
 	if (state.mapping && state.mapping.length === 0) {
-		// TOM Fix this so checks lengths of this is length of input - 1?
+		// TOM Fix this. This should check that the length of ensemble is = port length - 1
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
 			ensembleConfigs.value.push({
 				id: allModelConfigurations.value[i].id as string,
