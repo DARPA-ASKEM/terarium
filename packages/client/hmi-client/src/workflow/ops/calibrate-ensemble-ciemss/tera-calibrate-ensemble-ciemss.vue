@@ -65,15 +65,6 @@
 										<input
 											type="radio"
 											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.CALIBRATIONWEIGHTS"
-											:disabled="disabledCalibrationWeights"
-										/>
-										{{ EnsembleCalibrationMode.CALIBRATIONWEIGHTS }}
-									</label>
-									<label>
-										<input
-											type="radio"
-											v-model="ensembleCalibrationMode"
 											:value="EnsembleCalibrationMode.CUSTOM"
 										/>
 										{{ EnsembleCalibrationMode.CUSTOM }}
@@ -82,10 +73,7 @@
 								<!-- Turn this into a horizontal bar chart -->
 								<section class="ensemble-calibration-graph">
 									<Chart
-										v-if="
-											ensembleCalibrationMode === EnsembleCalibrationMode.CALIBRATIONWEIGHTS ||
-											ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS
-										"
+										v-if="ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS"
 										type="bar"
 										:height="200"
 										:data="setBarChartData()"
@@ -102,10 +90,7 @@
 												<td>
 													{{ id }}
 												</td>
-												<td v-if="customWeights === false">
-													{{ ensembleConfigs[i].weight }}
-												</td>
-												<td v-else>
+												<td>
 													<InputNumber
 														mode="decimal"
 														:min-fraction-digits="0"
@@ -233,7 +218,6 @@ enum CalibrateView {
 }
 enum EnsembleCalibrationMode {
 	EQUALWEIGHTS = 'equalWeights',
-	CALIBRATIONWEIGHTS = 'calibrationWeights',
 	CUSTOM = 'custom'
 }
 
@@ -266,9 +250,6 @@ const completedRunId = computed<string>(
 	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
 );
 
-const customWeights = ref<boolean>(false);
-// TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
-const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
@@ -285,17 +266,10 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
 	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
-		customWeights.value = false;
 		const percent = 1 / ensembleConfigs.value.length;
 		for (let i = 0; i < ensembleConfigs.value.length; i++) {
 			ensembleConfigs.value[i].weight = percent;
 		}
-	}
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
-		customWeights.value = true;
-	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
-		customWeights.value = false;
-		// TODO: Get weights from AMR
 	}
 };
 
