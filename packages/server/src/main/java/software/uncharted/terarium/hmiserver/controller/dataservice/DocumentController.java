@@ -48,6 +48,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.documentservice.XDDDocumentController;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -61,8 +62,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Extract
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
+import software.uncharted.terarium.hmiserver.models.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
@@ -87,6 +90,7 @@ public class DocumentController {
 	final SkemaRustProxy skemaRustProxy;
 
 	final JsDelivrProxy gitHubProxy;
+	final DocumentProxy documentProxy;
 
 	final DownloadService downloadService;
 
@@ -98,9 +102,13 @@ public class DocumentController {
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
 	private final CurrentUserService currentUserService;
+	private final XDDDocumentController xDDDocumentController;
 
 	@Value("${xdd.api-key}")
 	String apikey;
+
+	@Value("${xdd.api-es-key}")
+	String api_es_key;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -436,10 +444,12 @@ public class DocumentController {
 					null,
 					null, apikey);
 
+			String summaries = getSummaries(doi);
+
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
 			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
-					extractionResponse.getSuccess().getData());
+					extractionResponse.getSuccess().getData(), summaries);
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
 				documentAsset = documentAssetService.updateAsset(documentAsset).get();
@@ -459,6 +469,30 @@ public class DocumentController {
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
+	}
+
+	private String getSummaries(String doi) {
+		String known_entities = "askem_object,url_extractions,summaries";
+		XDDResponse<DocumentsResponseOK> xddSummaries = documentProxy.getDocuments(api_es_key,
+				null, doi, null, null, null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null, known_entities, null, null, null);
+
+
+		if (xddSummaries.getErrorMessage() != null) {
+			return null;
+
+		}
+
+		if (xddSummaries.getSuccess() == null || xddSummaries.getSuccess().getData().isEmpty()) {
+			return null;
+		}
+
+		if (xddSummaries.getSuccess().getData().size() > 0) {
+			if (xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().size() > 0) {
+				return xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().get(0).toString();
+			}
+		}
+		return null;
 	}
 
 	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -591,13 +625,14 @@ public class DocumentController {
 	private DocumentAsset createDocumentAssetFromXDDDocument(
 			final Document document,
 			final String userId,
-			final List<Extraction> extractions) throws IOException {
+			final List<Extraction> extractions,
+			final String summary) throws IOException {
 		final String name = document.getTitle();
 
 		// create document asset
 		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName(name);
-		documentAsset.setDescription(name);
+		documentAsset.setDescription(summary);
 		documentAsset.setUserId(userId);
 		documentAsset.setFileNames(new ArrayList<>());
 
@@ -648,9 +683,8 @@ public class DocumentController {
 
 			// if this service fails, return ok with errors
 			if (fileAsBytes == null || fileAsBytes.length == 0) {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						"Document has no data, empty bytes");
+				log.debug("Document has not data, empty bytes, exit early.");
+				return;
 			}
 
 			// upload pdf to document asset
