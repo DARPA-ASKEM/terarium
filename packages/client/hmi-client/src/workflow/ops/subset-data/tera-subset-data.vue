@@ -105,6 +105,7 @@ import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
+import { logger } from '@/utils/logger';
 import { SubsetDataOperationState } from './subset-data-operation';
 
 const props = defineProps<{
@@ -159,6 +160,7 @@ const onSelection = (id: string) => {
 
 function updateState() {
 	const state = cloneDeep(props.node.state);
+	state.datasetId = dataset.value?.id;
 	state.latitudeStart = latitudeStart.value;
 	state.latitudeEnd = latitudeEnd.value;
 	state.longitudeStart = longitudeStart.value;
@@ -196,17 +198,29 @@ async function run() {
 	}
 }
 
-async function loadDataset(id: string) {
+async function loadDataset() {
+	const id = props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0];
+	if (!id) {
+		logger.error('No dataset id found');
+		return;
+	}
+
 	dataset.value = await getDataset(id);
-	if (dataset.value?.esgfId) {
-		preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
+	if (!dataset.value?.esgfId) {
+		logger.error('No esgfId found');
+		return;
+	}
+
+	preview.value = await getClimateDatasetPreview(dataset.value.esgfId);
+
+	if (props.node.state.datasetId === null) {
 		fromDate.value = new Date(dataset.value.metadata.datetime_start);
 		toDate.value = new Date(dataset.value.metadata.datetime_end);
 	}
 }
 
 onMounted(() => {
-	if (props.node.inputs?.[0]?.value?.[0]) loadDataset(props.node.inputs[0].value[0]);
+	loadDataset();
 });
 </script>
 
