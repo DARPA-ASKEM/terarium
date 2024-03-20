@@ -21,7 +21,7 @@ async function getAll(): Promise<Dataset[] | null> {
 	return response?.data ?? null;
 }
 
-async function getAllClimate(query: string): Promise<Dataset[] | null> {
+async function searchClimateDatasets(query: string): Promise<Dataset[] | null> {
 	const response = await API.get(`/climatedata/queries/search-esgf?query=${query}`).catch(
 		(error) => {
 			logger.error(`Error: ${error}`);
@@ -345,7 +345,7 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 
 export {
 	getAll,
-	getAllClimate,
+	searchClimateDatasets,
 	getDataset,
 	getClimateDataset,
 	getClimateDatasetPreview,
