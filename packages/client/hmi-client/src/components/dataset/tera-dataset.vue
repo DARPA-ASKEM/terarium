@@ -184,10 +184,12 @@ const fetchDataset = async () => {
 				} else {
 					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
 					image.value = undefined;
-					rawContent.value = await downloadRawFile(
-						props.assetId,
-						datasetTemp?.fileNames?.[0] ?? ''
-					);
+					if (datasetTemp.fileNames) {
+						rawContent.value = await downloadRawFile(
+							props.assetId,
+							datasetTemp?.fileNames?.[0] ?? ''
+						);
+					}
 					Object.entries(datasetTemp).forEach(([key, value]) => {
 						if (isString(value)) {
 							datasetTemp[key] = highlightSearchTerms(value);
