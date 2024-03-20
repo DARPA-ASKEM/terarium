@@ -4,7 +4,6 @@
 			<tera-drilldown-section>
 				<!-- <InputText placeholder="What do you want to do?" /> -->
 				<h3>Select geo-boundaries</h3>
-				<code>{{ node.outputs }}</code>
 				<img :src="preview" alt="Preview" />
 				<span>
 					<label>Latitude</label>
@@ -200,7 +199,7 @@ const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
-				label: 'Select outputs to display in operator',
+				label: 'Select output to display in operator',
 				items: props.node.outputs
 			}
 		];
@@ -249,7 +248,7 @@ async function run() {
 		updateState();
 		isSubsetLoading.value = true;
 
-		const subsetDatasetId = await getClimateSubsetId(
+		const subsetId = await getClimateSubsetId(
 			dataset.value.esgfId,
 			dataset.value.id,
 			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
@@ -258,22 +257,22 @@ async function run() {
 		);
 		isSubsetLoading.value = false;
 
-		await loadSubset(subsetDatasetId);
+		await loadSubset(subsetId);
 		if (!subset.value) return;
 		emit('append-output', {
 			type: 'datasetId',
 			label: subset.value.name,
-			value: subset.value.id
+			value: [subset.value.id]
 		});
 	}
 }
 
-async function loadSubset(subsetDatasetId?: string) {
-	if (!subsetDatasetId) {
+async function loadSubset(subsetId?: string | null) {
+	if (!subsetId) {
 		logger.error('No subset dataset id found');
 		return;
 	}
-	subset.value = await getDataset(subsetDatasetId);
+	subset.value = await getDataset(subsetId);
 	if (!subset.value) {
 		logger.error('Subset not found');
 	}
@@ -300,8 +299,6 @@ onMounted(async () => {
 		return;
 	}
 	await loadDataset(props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0]);
-	if (!isEmpty(selectedOutputId.value))
-		loadSubset(props.node.outputs?.find((output) => output.id === selectedOutputId.value)?.value);
 });
 
 watch(
@@ -309,9 +306,12 @@ watch(
 	() => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			loadSubset(props.node.outputs?.find((output) => output.id === selectedOutputId.value)?.value);
+			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)
+				?.value?.[0];
+			if (subsetId) loadSubset(subsetId);
 		}
-	}
+	},
+	{ immediate: true }
 );
 </script>
 
