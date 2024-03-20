@@ -278,7 +278,7 @@
 				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
 				:readonly="readonly"
-				config-view
+				:config-view="configView"
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
 				@update-model="(model: Model) => emit('update-model', model)"
 			/>
@@ -776,14 +776,14 @@ const applySelectedValue = () => {
 	onCloseSuggestedValuesModal();
 };
 
-const countSuggestions = (id) =>
+const countSuggestions = (id): number =>
 	props.modelConfigurations?.filter((configuration) => {
 		if (modelType.value !== AMRSchemaNames.REGNET) {
 			return configuration.configuration?.semantics?.ode.parameters?.find((p) => p.id === id);
 		}
 
 		return configuration.configuration?.model?.parameters?.find((p) => p.id === id);
-	}).length;
+	}).length ?? 0;
 </script>
 
 <style scoped>
