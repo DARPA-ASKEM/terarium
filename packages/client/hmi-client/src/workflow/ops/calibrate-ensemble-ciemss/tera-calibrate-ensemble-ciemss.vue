@@ -183,7 +183,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, shallowRef, computed, watch } from 'vue';
+import { ref, shallowRef, computed, watch, onMounted } from 'vue';
 import { getRunResultCiemss } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
@@ -234,8 +234,7 @@ const viewOptions = ref([
 	{ value: CalibrateView.Input, icon: 'pi pi-sign-in' },
 	{ value: CalibrateView.Output, icon: 'pi pi-sign-out' }
 ]);
-const listModelIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
-const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
+const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
@@ -265,8 +264,10 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 };
 
 const calculateWeights = () => {
+	console.log('Calc weights:');
 	if (!ensembleConfigs.value) return;
 	if (ensembleWeightMode.value === EnsembleWeightMode.EQUALWEIGHTS) {
+		console.log('Equal weights:');
 		const percent = 1 / ensembleConfigs.value.length;
 		for (let i = 0; i < ensembleConfigs.value.length; i++) {
 			ensembleConfigs.value[i].weight = percent;
@@ -372,45 +373,57 @@ watch(
 watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
 watch(
-	[() => ensembleWeightMode.value, listModelIds.value],
-	async () => {
+	() => ensembleWeightMode.value,
+	() => {
 		calculateWeights();
-	},
-	{ immediate: true }
+	}
 );
 
-watch(
-	() => listModelIds,
-	async () => {
-		allModelConfigurations.value = [];
-		// Fetch Model Configurations
-		await Promise.all(
-			listModelIds.value.map(async (id) => {
-				const result = await getModelConfigurationById(id);
-				allModelConfigurations.value.push(result);
-			})
+onMounted(async () => {
+	allModelConfigurations.value = [];
+	const modelConfigurationIds: string[] = [];
+	props.node.inputs.forEach((ele) => {
+		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
+	});
+	if (!modelConfigurationIds) return;
+	// Fetch Model Configurations
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const result = await getModelConfigurationById(id);
+			allModelConfigurations.value.push(result);
+		})
+	);
+
+	allModelOptions.value = [];
+	for (let i = 0; i < allModelConfigurations.value.length; i++) {
+		const tempList: string[] = [];
+		allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
+			tempList.push(element.id);
+		});
+		allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
+			tempList.push(element.id)
 		);
-		allModelOptions.value = [];
+		allModelOptions.value.push(tempList);
+	}
+
+	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+
+	const state = _.cloneDeep(props.node.state);
+	if (state.mapping && state.mapping.length === 0) {
+		// TOM Fix this so checks lengths of this is length of input - 1?
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
-			const tempList: string[] = [];
-			allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
-				tempList.push(element.id);
+			ensembleConfigs.value.push({
+				id: allModelConfigurations.value[i].id as string,
+				solutionMappings: {},
+				weight: 0
 			});
-			allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
-				tempList.push(element.id)
-			);
-			allModelOptions.value.push(tempList);
 		}
-		calculateWeights();
-		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+	}
+	state.mapping = ensembleConfigs.value;
+	calculateWeights();
 
-		const state = _.cloneDeep(props.node.state);
-		state.mapping = ensembleConfigs.value;
-
-		emit('update-state', state);
-	},
-	{ immediate: true }
-);
+	emit('update-state', state);
+});
 
 watch(
 	() => extra.value,

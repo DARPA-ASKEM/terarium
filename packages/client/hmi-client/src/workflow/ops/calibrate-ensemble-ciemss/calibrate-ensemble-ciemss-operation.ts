@@ -22,17 +22,11 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	displayName: 'Calibrate ensemble',
 	description: '',
 	inputs: [
-		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true },
-		{ type: 'datasetId', label: 'Dataset' }
+		{ type: 'datasetId', label: 'Dataset' },
+		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
-
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (): Promise<void> => {
-		console.log('test');
-	},
 
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {

@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { OperatorStatus, WorkflowNode } from '@/types/workflow';
+import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ProgressState } from '@/types/Types';
 // import { csvParse } from 'd3';
 // import type { ModelConfiguration } from '@/types/Types';
@@ -91,11 +91,21 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown', 'append-input-port']);
 
 const showSpinner = ref(false);
-const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
-const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
+const modelConfigIds = computed(() => getModelConfigIds);
+
+const getModelConfigIds = () => {
+	const aList: string[] = [];
+	props.node.inputs.forEach((ele) => {
+		if (ele.value && ele.type === 'modelConfigId') {
+			aList.push(ele.value[0]);
+		}
+	});
+	return aList;
+};
+const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 
 const completedRunId = ref<string>();
@@ -176,7 +186,7 @@ const getStatus = async (simulationId: string) => {
 };
 
 const updateOutputPorts = async (runId) => {
-	const portLabel = props.node.inputs[0].label;
+	const portLabel = props.node.inputs[1].label;
 	emit('append-output', {
 		type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
@@ -184,7 +194,6 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-// Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -192,7 +201,6 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	emit('update-state', state);
 };
 
-// TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
 const addChart = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
@@ -214,28 +222,6 @@ watch(
 );
 
 watch(
-	() => modelConfigIds.value,
-	async () => {
-		if (modelConfigIds.value) {
-			const mapping: EnsembleModelConfigs[] = [];
-			// Init ensemble Configs:
-			for (let i = 0; i < modelConfigIds.value.length; i++) {
-				mapping[i] = {
-					id: modelConfigIds.value[i],
-					solutionMappings: {},
-					weight: 0
-				};
-			}
-
-			const state = _.cloneDeep(props.node.state);
-			state.mapping = mapping;
-			emit('update-state', state);
-		}
-	},
-	{ immediate: true }
-);
-
-watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
@@ -244,6 +230,20 @@ watch(
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => props.node.inputs,
+	() => {
+		if (
+			props.node.inputs.every(
+				(input) => input.status === WorkflowPortStatus.CONNECTED || input.type !== 'modelConfigId'
+			)
+		) {
+			emit('append-input-port', { type: 'modelConfigId', label: 'Model configuration' });
+		}
+	},
+	{ deep: true }
 );
 </script>
 
