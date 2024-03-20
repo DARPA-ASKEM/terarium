@@ -14,23 +14,23 @@
 							<label>
 								<input
 									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.EQUALWEIGHTS"
+									v-model="ensembleWeightsMode"
+									:value="EnsembleWeightsMode.EQUALWEIGHTS"
 								/>
-								{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
+								{{ EnsembleWeightsMode.EQUALWEIGHTS }}
 							</label>
 							<label>
 								<input
 									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.CUSTOM"
+									v-model="ensembleWeightsMode"
+									:value="EnsembleWeightsMode.CUSTOM"
 								/>
-								{{ EnsembleCalibrationMode.CUSTOM }}
+								{{ EnsembleWeightsMode.CUSTOM }}
 							</label>
 						</section>
 						<section class="ensemble-calibration-graph">
 							<Chart
-								v-if="ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS"
+								v-if="ensembleWeightsMode === EnsembleWeightsMode.EQUALWEIGHTS"
 								type="bar"
 								:height="100"
 								:data="setBarChartData()"
@@ -43,7 +43,8 @@
 									<th>Weight</th>
 								</thead>
 								<tbody class="p-datatable-tbody">
-									<tr v-for="(id, i) in ensembleConfigs.map((ele) => ele.id)" :key="i">
+									<!-- Index matching listModelLabels and ensembleConfigs-->
+									<tr v-for="(id, i) in listModelLabels" :key="i">
 										<td>
 											{{ id }}
 										</td>
@@ -66,8 +67,8 @@
 						<table>
 							<tr>
 								<th>Ensemble Variables</th>
-								<th v-for="(element, i) in ensembleConfigs" :key="i">
-									{{ element.id }}
+								<th v-for="(element, i) in listModelLabels" :key="i">
+									{{ element }}
 								</th>
 							</tr>
 
@@ -85,6 +86,7 @@
 
 					<InputText v-model="newSolutionMappingKey" placeholder="Variable Name" />
 					<Button
+						:disabled="!newSolutionMappingKey"
 						class="p-button-sm p-button-outlined"
 						icon="pi pi-plus"
 						label="Add mapping"
@@ -193,7 +195,7 @@ enum Tabs {
 	Notebook = 'Notebook'
 }
 
-enum EnsembleCalibrationMode {
+enum EnsembleWeightsMode {
 	EQUALWEIGHTS = 'equalWeights',
 	CUSTOM = 'custom'
 }
@@ -205,7 +207,7 @@ const MINBARLENGTH = 1;
 const showSpinner = ref(false);
 
 const listModelLabels = ref<string[]>([]);
-const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
+const ensembleWeightsMode = ref(EnsembleWeightsMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
@@ -245,7 +247,7 @@ const onSelection = (id: string) => {
 
 const calculateWeights = () => {
 	if (!ensembleConfigs.value) return;
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
+	if (ensembleWeightsMode.value === EnsembleWeightsMode.EQUALWEIGHTS) {
 		const percent = 1 / ensembleConfigs.value.length;
 		for (let i = 0; i < ensembleConfigs.value.length; i++) {
 			ensembleConfigs.value[i].weight = percent;
@@ -401,7 +403,7 @@ watch(
 );
 
 watch(
-	() => ensembleCalibrationMode.value,
+	() => ensembleWeightsMode.value,
 	() => {
 		calculateWeights();
 	}
