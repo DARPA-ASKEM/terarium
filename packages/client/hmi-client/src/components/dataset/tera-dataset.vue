@@ -185,7 +185,7 @@ const fetchDataset = async () => {
 					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
 					image.value = undefined;
 					// TODO = Temporary solution to avoid downloading raw NetCDF files, which can be massive
-					// A better solution would be to check the size of an asset before downloading it, and/or 
+					// A better solution would be to check the size of an asset before downloading it, and/or
 					// downloading a small subset of it for presentation purposes.
 					if (datasetTemp.metadata.format !== 'netcdf') {
 						rawContent.value = await downloadRawFile(
