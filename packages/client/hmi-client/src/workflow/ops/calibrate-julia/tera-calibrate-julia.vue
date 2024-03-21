@@ -150,18 +150,7 @@
 				<div class="form-section">
 					<h4>Variables</h4>
 					<div>
-						<template v-if="inProgressSimulationId">
-							<tera-calibrate-chart
-								v-for="(cfg, index) of node.state.chartConfigs"
-								:key="index"
-								:initial-data="csvAsset"
-								:intermediate-data="currentIntermediateVals"
-								:mapping="mapping"
-								:chartConfig="{ selectedRun: inProgressSimulationId, selectedVariable: cfg }"
-								@configuration-change="chartConfigurationChange(index, $event)"
-							/>
-						</template>
-						<template v-else-if="selectedRunId && runResults[selectedRunId]">
+						<section v-if="selectedRunId && runResults[selectedRunId]" ref="outputPanel">
 							<tera-simulate-chart
 								v-for="(cfg, index) of node.state.chartConfigs"
 								:key="index"
@@ -170,12 +159,13 @@
 								:mapping="mapping"
 								:run-type="RunType.Julia"
 								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								@configuration-change="chartConfigurationChange(index, $event)"
+								@configuration-change="chartProxy.configurationChange(index, $event)"
+								:size="chartSize"
 							/>
-						</template>
+						</section>
 						<Button
 							class="p-button-sm p-button-text"
-							@click="addChart"
+							@click="chartProxy.addChart"
 							label="Add chart"
 							icon="pi pi-plus"
 						></Button>
@@ -223,10 +213,10 @@ import {
 	CalibrateMap
 } from '@/services/calibrate-workflow';
 import { autoCalibrationMapping } from '@/services/concept';
-import { ChartConfig, RunResults, RunType } from '@/types/SimulateConfig';
+import { RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import TeraCalibrateChart from '@/workflow/tera-calibrate-chart.vue';
+
 import {
 	getRunResultJulia,
 	makeCalibrateJobJulia,
@@ -237,9 +227,9 @@ import { csvParse } from 'd3';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { getTimespan } from '@/workflow/util';
-import { useToastService } from '@/services/toast';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
+import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
 	CalibrateMethodOptions,
@@ -290,11 +280,17 @@ const lossPlot = ref<HTMLElement>();
 let lossValues: { [key: string]: number }[] = [];
 
 // refs to keep track of intermediate states and parameters
-const currentIntermediateVals = ref<{ [key: string]: any }>({ timesteps: [], solData: {} });
 const parameterResult = ref<{ [index: string]: any }>();
 
 const runResults = ref<RunResults>({});
 const runResultParams = ref<Record<string, Record<string, number>>>({});
+
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateJulia) => {
+	emit('update-state', state);
+});
 
 const disableRunButton = computed(
 	() =>
@@ -368,7 +364,7 @@ const makeCalibrateRequest = async () => {
 const messageHandler = (event: ClientEvent<ScimlStatusUpdate>) => {
 	// if (runIds.includes(event.data.id)) {
 	if (props.node.state.inProgressSimulationId === event.data.id) {
-		const { iter, loss, params, solData, timesteps } = event.data;
+		const { iter, loss, params } = event.data;
 
 		parameterResult.value = filterStateVars(params);
 
@@ -377,29 +373,11 @@ const messageHandler = (event: ClientEvent<ScimlStatusUpdate>) => {
 			const width = lossPlot.value.offsetWidth;
 			renderLossGraph(lossPlot.value, lossValues, { width, height: 150 });
 		}
-
-		if (iter % 100 === 0) {
-			currentIntermediateVals.value = { timesteps, solData };
-		}
 	}
 };
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
-	emit('update-state', state);
 };
 
 // Used from button to add new entry to the mapping object

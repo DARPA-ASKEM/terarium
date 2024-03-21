@@ -132,19 +132,19 @@ public class TaskService {
 
 	// TTL = Time to live, the maximum time a key will be in the cache before it is
 	// evicted, regardless of activity.
-	@Value("${terarium.taskrunner.response-cache-ttl-seconds: 86400}") // 24 hours
-	static private long CACHE_TTL_SECONDS;
+	@Value("${terarium.taskrunner.response-cache-ttl-seconds:43200}") // 12 hours
+	private long CACHE_TTL_SECONDS;
 
 	// Max idle = The maximum time a key can be idle in the cache before it is
 	// evicted.
 	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
-	static private long CACHE_MAX_IDLE_SECONDS;
+	private long CACHE_MAX_IDLE_SECONDS;
 
 	// Always use a lease time for distributed locks to prevent application wide
 	// deadlocks. If for whatever reason the lock has not been released within a
 	// N seconds, it will automatically free itself.
-	@Value("${terarium.taskrunner.redis-lock-lease-seconds:30}") // 30 seconds
-	static private long REDIS_LOCK_LEASE_SECONDS;
+	@Value("${terarium.taskrunner.redis-lock-lease-seconds:10}") // 10 seconds
+	private long REDIS_LOCK_LEASE_SECONDS;
 
 	private final RabbitTemplate rabbitTemplate;
 	private final RabbitAdmin rabbitAdmin;
@@ -306,11 +306,10 @@ public class TaskService {
 							resp.getStatus() == TaskStatus.CANCELLED ||
 							resp.getStatus() == TaskStatus.FAILED) {
 						// complete the future
-						log.debug("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
+						log.info("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
 						future.complete(resp);
 
 						// remove the future from the map
-						log.debug("Removing future for task id {}", resp.getId());
 						futures.remove(resp.getId());
 					} else {
 						// update the future with the latest response
@@ -346,7 +345,7 @@ public class TaskService {
 	// This is a shared queue, messages will round robin between every instance of
 	// the hmi-server. Any operation that must occur once and only once should be
 	// triggered here.
-	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(value = "${terarium.taskrunner.response-queue}", autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
+	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(value = "${terarium.taskrunner.response-queue}", autoDelete = "false", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -372,7 +371,7 @@ public class TaskService {
 			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
 			try {
 				// add to the response cache
-				log.debug("Writing response for task id {} for status {} to cache", resp.getId(),
+				log.info("Writing response for task id {} for status {} to cache", resp.getId(),
 						resp.getStatus());
 				responseCache.put(resp.getId(), resp, CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
 						TimeUnit.SECONDS);
@@ -441,7 +440,7 @@ public class TaskService {
 			if (existingId != null) {
 				// a task id already exits for the SHA256, this means the request has already
 				// been dispatched.
-				log.debug("Task id: {} already exists for SHA: {}", existingId, hash);
+				log.info("Task id: {} found in cache for SHA: {}", existingId, hash);
 				final TaskResponse resp = responseCache.get(existingId);
 
 				// only return responese if they have not failed or been cancelled
@@ -451,7 +450,7 @@ public class TaskService {
 						resp.getStatus() != TaskStatus.FAILED) {
 
 					// if the response is in the cache, return it
-					log.debug("Response for task id: {} with status: {} already exists", existingId,
+					log.info("Response for task id: {} with status: {} found in cache", existingId,
 							resp.getStatus());
 
 					if (!futures.containsKey(existingId)) {
@@ -464,20 +463,21 @@ public class TaskService {
 					// future already exists on this instance
 					return futures.get(existingId);
 				}
-				// otherwise dispatch it again
-				log.debug("No cached task response found for task id: {} for SHA: {}, creating new task", existingId,
-						hash);
-			}
 
-			// no cached request, create the response cache entry
-			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
-			responseCache.put(req.getId(), queuedResponse, CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
-					TimeUnit.SECONDS);
+				// otherwise dispatch it again, and overwrite the id
+				log.info(
+						"No viable cached response found for task id: {} for SHA: {}, creating new task with id {}",
+						existingId,
+						hash, req.getId());
+
+				taskIdCache.put(hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS);
+			}
 
 			// now send request
 			final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
-			log.debug("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash,
+			log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash,
 					req.getType().toString());
 
 			// ensure the request queue exists
@@ -495,6 +495,14 @@ public class TaskService {
 				log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
 				final String jsonStr = objectMapper.writeValueAsString(req);
 				rabbitTemplate.convertAndSend(requestQueue, jsonStr);
+
+				// put the response in redis after it is queued in the case the id is reserved
+				// but the server is shutdown before it dispatches the request, which would
+				// cause servers to wait on requests that were never sent.
+				final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
+				responseCache.put(req.getId(), queuedResponse, CACHE_TTL_SECONDS, TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS);
 
 				// create and return the future
 				final CompletableTaskFuture future = new CompletableTaskFuture(req.getId(), queuedResponse);
@@ -520,7 +528,7 @@ public class TaskService {
 
 		try {
 			// wait for the response
-			log.debug("Waiting for response for task id: {}", future.getId());
+			log.info("Waiting for response for task id: {}", future.getId());
 			final TaskResponse resp = future.get(timeoutSeconds, TimeUnit.SECONDS);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
@@ -531,7 +539,7 @@ public class TaskService {
 			if (resp.getStatus() != TaskStatus.SUCCESS) {
 				throw new RuntimeException("Task did not complete successfully");
 			}
-			log.debug("Future completed for task: {}", future.getId());
+			log.info("Future completed for task: {}", future.getId());
 			return resp;
 		} catch (final TimeoutException e) {
 			throw new TimeoutException(

@@ -150,12 +150,13 @@ export interface OntologyConcept {
 export interface Dataset extends TerariumAsset {
     name: string;
     userId?: string;
+    esgfId?: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
     datasetUrl?: string;
     columns?: DatasetColumn[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     source?: string;
     grounding?: Grounding;
 }
@@ -424,7 +425,7 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     description?: string;
-    overviewContent?: string;
+    overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -511,6 +512,7 @@ export interface Simulation {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
@@ -615,6 +617,13 @@ export interface ExtractionResponseResult {
     started_at: Date;
     job_error: string;
     job_result: any;
+}
+
+export interface ExtractionStatusUpdate {
+    documentId: string;
+    t: number;
+    message: string;
+    error: string;
 }
 
 export interface FunmanPostQueriesRequest {
@@ -1303,6 +1312,7 @@ export enum ClientEventType {
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Extraction = "EXTRACTION",
 }
 
 export enum FileType {

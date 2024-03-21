@@ -1,10 +1,8 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { ChartConfig } from '@/types/SimulateConfig';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
 export interface SimulateEnsembleCiemssOperationState {
-	modelConfigIds: string[];
-	chartConfigs: ChartConfig[];
+	chartConfigs: string[][];
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	numSamples: number;
@@ -27,7 +25,6 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: SimulateEnsembleCiemssOperationState = {
-			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },

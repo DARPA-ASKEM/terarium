@@ -16,7 +16,9 @@
 			v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
 			class="evaluation-scenario-widget"
 		>
-			{{ evaluationScenario.name }} &ndash; {{ evaluationScenarioTask.task }}
+			{{ evaluationScenario.name }} &ndash; {{ evaluationScenarioTask.task }} ({{
+				evaluationScenarioMultipleUsers ? 'Multiple Users' : 'Single User'
+			}})
 			<span class="evaluation-scenario-widget-timer">{{ evaluationScenarioRuntimeString }}</span>
 			<Button
 				v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
@@ -598,7 +600,7 @@ nav {
 
 .evaluation-scenario-widget {
 	border-radius: var(--border-radius-bigger);
-	background-color: var(--surface-highlight-hover);
+	background-color: var(--surface-200);
 	display: flex;
 	padding-left: var(--gap);
 	margin-left: auto;

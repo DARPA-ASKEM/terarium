@@ -59,18 +59,19 @@
 					</template>
 				</SelectButton>
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts">
+					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-							@configuration-change="configurationChange(idx, $event)"
+							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							:size="chartSize"
 							color-by-run
 						/>
 						<Button
 							class="p-button-sm p-button-text"
-							@click="addChart"
+							@click="chartProxy.addChart"
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
@@ -106,11 +107,14 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import type { RunResults } from '@/types/SimulateConfig';
+import type { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResult, makeForecastJob } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
+import { useProjects } from '@/composables/project';
 
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
@@ -119,8 +123,6 @@ import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { useProjects } from '@/composables/project';
-import type { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
@@ -167,6 +169,13 @@ const selectedOutputId = ref<string>();
 const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
+
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: SimulateJuliaOperationState) => {
+	emit('update-state', state);
+});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -226,18 +235,6 @@ const lazyLoadSimulationData = async (runId: string) => {
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
-};
-
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config.selectedVariable;
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-	emit('update-state', state);
 };
 
 watch(
