@@ -34,8 +34,8 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			mapping: [],
 			extra: {
 				solverMethod: 'dopri5',
-				numParticles: 1000,
-				numIterations: 1000
+				numParticles: 10,
+				numIterations: 100
 			},
 			simulationsInProgress: []
 		};
