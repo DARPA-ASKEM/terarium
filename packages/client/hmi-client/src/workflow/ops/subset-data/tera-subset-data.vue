@@ -69,7 +69,9 @@
 				v-model:output="selectedOutputId"
 				is-selectable
 			>
-				<tera-progress-spinner v-if="isSubsetLoading" />
+				<tera-progress-spinner v-if="isSubsetLoading" is-inline>
+					Please wait for the subset to generate. This usually takes a few minutes...
+				</tera-progress-spinner>
 				<!--FIXME: Should universally define css rules for tabs so that the styles used in the drilldowns are sharable here-->
 				<TabView
 					><TabPanel header="Description">{{ subset?.description }}</TabPanel>
@@ -288,6 +290,7 @@ async function run() {
 				// spatialSkipping: isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined
 			}
 		);
+		console.log(subsetId);
 		isSubsetLoading.value = false;
 		const newSubset = await loadSubset(subsetId);
 		if (!newSubset) return;

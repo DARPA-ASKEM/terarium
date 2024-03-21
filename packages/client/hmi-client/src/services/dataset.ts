@@ -64,12 +64,25 @@ async function getClimateSubsetId(
 	if (timestamps) url.concat(`&timestamps=${timestamps}`);
 	if (thinFactor) url.concat(`&thin-factor=${thinFactor}`);
 
-	const response = await API.get(url).catch((error) => {
-		logger.error(
-			`Error: climate data service was not able to retrieve the subset of the dataset ${esgfId} ${error}`
-		);
-	});
-	return response?.data ?? null;
+	let response = await API.get(url);
+
+	// FIXME: Temporary polling solution
+	if (response.status === 202) {
+		return new Promise((resolve) => {
+			const poller = setInterval(async () => {
+				response = await API.get(url);
+				if (response.status === 200) {
+					clearInterval(poller);
+					resolve(response?.data ?? null);
+				}
+			}, 30000);
+		});
+	}
+	if (response.status === 200) {
+		return response.data;
+	}
+	logger.error(`Climate-data service was not able to retrieve the subset of the dataset ${esgfId}`);
+	return null;
 }
 
 async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
