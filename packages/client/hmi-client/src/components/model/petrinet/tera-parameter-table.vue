@@ -362,7 +362,9 @@
 				<Column header="Source">
 					<template #body="{ data }">
 						<span>{{
-							data.configuration.configuration.metadata?.parameters?.[data.parameter.id]?.source
+							data.configuration.configuration.metadata?.parameters?.[data.parameter.id]?.source ??
+							data.configuration.metadata.source ??
+							'YOHANN IS GREAT'
 						}}</span>
 					</template>
 				</Column>
@@ -730,6 +732,8 @@ const applySelectedValue = () => {
 		selectedValue.value.configuration.configuration.metadata?.parameters?.[
 			selectedValue.value.parameter.id
 		];
+	// Add the model configuration source to the metadata of the parameter
+	metadata.source = selectedValue.value.configuration.configuration.metadata?.source ?? '';
 
 	clonedModel.metadata ??= {};
 	clonedModel.metadata.parameters ??= {};
