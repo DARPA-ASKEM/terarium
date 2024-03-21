@@ -95,6 +95,7 @@ const columnSelectTooltip = 'Select columns to display';
 
 async function getDatasetById(id: string) {
 	dataset.value = await getDataset(id);
+
 	if (dataset.value && dataset.value?.id) {
 		// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
 		if (isEmpty(props.node.outputs)) {
@@ -113,7 +114,7 @@ async function getDatasetById(id: string) {
 		if (dataset.value?.fileNames) {
 			const filenames = dataset.value.fileNames;
 			if (filenames.length > 0 && filenames[0].endsWith('.csv')) {
-				downloadRawFile(dataset.value.id, dataset.value.fileNames[0]).then((res) => {
+				downloadRawFile(id, filenames[0]).then((res) => {
 					rawContent.value = res;
 					selectedColumns = ref(csvHeaders?.value);
 				});
