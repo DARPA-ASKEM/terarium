@@ -5,8 +5,8 @@ import { ChartConfig } from '@/types/SimulateConfig';
 import type { EnsembleModelConfigs } from '@/types/Types';
 
 export interface EnsembleCalibrateExtraCiemss {
-	numSamples: number;
-	totalPopulation: number;
+	solverMethod: string;
+	numParticles: number;
 	numIterations: number;
 }
 
@@ -33,9 +33,9 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			chartConfigs: [],
 			mapping: [],
 			extra: {
-				numSamples: 50,
-				totalPopulation: 1000,
-				numIterations: 10
+				solverMethod: 'dopri5',
+				numParticles: 1000,
+				numIterations: 1000
 			},
 			simulationsInProgress: []
 		};

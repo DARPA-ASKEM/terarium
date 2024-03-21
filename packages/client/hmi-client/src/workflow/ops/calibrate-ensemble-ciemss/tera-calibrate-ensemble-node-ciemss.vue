@@ -149,9 +149,9 @@ const runEnsemble = async () => {
 		},
 		engine: 'ciemss',
 		extra: {
-			num_samples: extra.value.numSamples,
+			num_particles: extra.value.numParticles,
 			num_iterations: extra.value.numIterations,
-			total_population: extra.value.totalPopulation
+			solver_method: extra.value.solverMethod
 		}
 	};
 	const response = await makeEnsembleCiemssCalibration(params);

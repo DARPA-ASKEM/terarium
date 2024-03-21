@@ -133,24 +133,29 @@
 								@click="addMapping"
 							/>
 						</AccordionTab>
-						<AccordionTab header="Time span">
+						<AccordionTab header="Additional fields">
 							<table>
 								<thead class="p-datatable-thead">
 									<th>Units</th>
-									<th>Number of Samples</th>
+									<th>Number of particles</th>
 									<th>Number of iterations</th>
-									<th>Total Population</th>
+									<th>Solver Method</th>
 								</thead>
 								<tbody class="p-datatable-tbody">
 									<td>Steps</td>
 									<td>
-										<InputNumber v-model="extra.numSamples" />
+										<InputNumber v-model="extra.numParticles" />
 									</td>
 									<td>
 										<InputNumber v-model="extra.numIterations" />
 									</td>
 									<td>
-										<InputNumber v-model="extra.totalPopulation" />
+										<Dropdown
+											class="p-inputtext-sm"
+											:options="['dopri5', 'euler']"
+											v-model="extra.solverMethod"
+											placeholder="Select"
+										/>
 									</td>
 								</tbody>
 							</table>
