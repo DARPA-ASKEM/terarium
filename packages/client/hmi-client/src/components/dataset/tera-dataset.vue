@@ -35,7 +35,6 @@
 					tabName="Description"
 					:dataset="dataset"
 					:image="image"
-					:raw-content="rawContent"
 					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
@@ -205,8 +204,9 @@ const fetchDataset = async () => {
 		}
 		case DatasetSource.ESGF: {
 			dataset.value = await getClimateDataset(props.assetId);
-			if (dataset.value?.esgfId)
+			if (dataset.value?.esgfId) {
 				image.value = await getClimateDatasetPreview(dataset.value?.esgfId);
+			}
 			break;
 		}
 		default:

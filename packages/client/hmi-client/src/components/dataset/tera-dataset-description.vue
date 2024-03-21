@@ -1,9 +1,8 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2]">
+	<Accordion multiple :active-index="[0, 1, 2, 3]">
 		<AccordionTab header="Description">
 			<section class="description">
 				<tera-show-more-text :text="description" :lines="5" />
-
 				<template v-if="datasetType">
 					<label class="p-text-secondary">Dataset type</label>
 					<p>{{ datasetType }}</p>
@@ -32,16 +31,45 @@
 				@update-dataset="(dataset: Dataset) => emit('update-dataset', dataset)"
 			/>
 		</AccordionTab>
-		<AccordionTab header="Preview" v-if="dataset?.esgfId">
-			<img :src="image" alt="" />
-		</AccordionTab>
+		<template v-if="dataset?.esgfId">
+			<AccordionTab header="Preview">
+				<img :src="image" alt="" />
+			</AccordionTab>
+			<AccordionTab header="Metadata">
+				<div v-for="(value, key) in dataset.metadata" :key="key" class="row">
+					<div class="col key">
+						{{ snakeToCapitalized(key) }}
+					</div>
+					<div class="col">
+						<template v-if="typeof value === 'object'">
+							<ul>
+								<li v-for="(item, index) in Object.values(value)" :key="index">
+									{{ item }}
+								</li>
+							</ul>
+						</template>
+						<template v-else-if="Array.isArray(value)">
+							<ul>
+								<li v-for="(item, index) in value" :key="index">
+									{{ item }}
+								</li>
+							</ul>
+						</template>
+						<template v-else>
+							{{ value }}
+						</template>
+					</div>
+				</div>
+			</AccordionTab>
+		</template>
 	</Accordion>
 </template>
 
 <script setup lang="ts">
+import { upperFirst, lowerCase } from 'lodash';
 import { computed } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import type { CsvAsset, Dataset, ProjectAsset } from '@/types/Types';
+import type { Dataset, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { FeatureConfig } from '@/types/common';
 import Accordion from 'primevue/accordion';
@@ -56,7 +84,6 @@ const props = defineProps<{
 	image?: string;
 	highlight?: string;
 	featureConfig?: FeatureConfig;
-	rawContent: CsvAsset | null;
 }>();
 
 const emit = defineEmits(['fetch-dataset', 'update-dataset']);
@@ -99,6 +126,11 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
+function snakeToCapitalized(snakeCaseString) {
+	const words = snakeCaseString.split('_');
+	return upperFirst(lowerCase(words.join(' ')));
+}
+
 function fetchAsset() {
 	emit('fetch-dataset');
 }
@@ -110,5 +142,20 @@ function fetchAsset() {
 	flex-direction: column;
 	gap: var(--gap-small);
 	margin-left: 1.5rem;
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid var(--surface-border);
+	padding: var(--gap-small) 0;
+}
+
+.key {
+	font-weight: bold;
+}
+
+.col {
+	flex: 1;
 }
 </style>
