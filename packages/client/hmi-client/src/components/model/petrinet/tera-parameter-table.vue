@@ -363,8 +363,7 @@
 					<template #body="{ data }">
 						<span>{{
 							data.configuration.configuration.metadata?.parameters?.[data.parameter.id]?.source ??
-							data.configuration.metadata.source ??
-							'YOHANN IS GREAT'
+							data.configuration.configuration.metadata?.source?.join(', ')
 						}}</span>
 					</template>
 				</Column>
@@ -731,15 +730,18 @@ const applySelectedValue = () => {
 	const metadata =
 		selectedValue.value.configuration.configuration.metadata?.parameters?.[
 			selectedValue.value.parameter.id
-		];
-	// Add the model configuration source to the metadata of the parameter
-	metadata.source = selectedValue.value.configuration.configuration.metadata?.source ?? '';
+		] ?? {};
 
 	clonedModel.metadata ??= {};
 	clonedModel.metadata.parameters ??= {};
 	clonedModel.metadata.timeseries ??= {};
 	clonedModel.metadata.parameters[selectedValue.value.parameter.id] = metadata;
 	clonedModel.metadata.timeseries[selectedValue.value.parameter.id] = timeseries;
+
+	// default source to use confirguration's source if there is no source
+	clonedModel.metadata.parameters[selectedValue.value.parameter.id].source =
+		metadata?.source ??
+		selectedValue.value.configuration.configuration.metadata?.source?.join(', ');
 
 	let parameterIdx;
 	if (modelType.value === AMRSchemaNames.REGNET) {
