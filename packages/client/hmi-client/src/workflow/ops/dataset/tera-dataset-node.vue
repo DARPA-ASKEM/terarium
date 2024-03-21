@@ -95,31 +95,32 @@ const columnSelectTooltip = 'Select columns to display';
 
 async function getDatasetById(id: string) {
 	dataset.value = await getDataset(id);
-	if (!dataset.value || dataset.value?.id) return;
 
-	// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
-	if (isEmpty(props.node.outputs)) {
-		emit('update-state', {
-			datasetId: dataset.value.id
-		});
-
-		emit('append-output', {
-			type: 'datasetId',
-			label: dataset.value.name,
-			value: [dataset.value.id]
-		});
-	}
-
-	// Fetch the CSV file from the dataset for preview purposes
-	if (dataset.value?.fileNames) {
-		const filenames = dataset.value.fileNames;
-		if (filenames.length > 0 && filenames[0].endsWith('.csv')) {
-			downloadRawFile(id, filenames[0]).then((res) => {
-				rawContent.value = res;
-				selectedColumns = ref(csvHeaders?.value);
+	if (dataset.value && dataset.value?.id) {
+		// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
+		if (isEmpty(props.node.outputs)) {
+			emit('update-state', {
+				datasetId: dataset.value.id
 			});
-		} else {
-			console.debug('No CSV file found in dataset: ', dataset.value.name);
+
+			emit('append-output', {
+				type: 'datasetId',
+				label: dataset.value.name,
+				value: [dataset.value.id]
+			});
+		}
+
+		// Fetch the CSV file from the dataset for preview purposes
+		if (dataset.value?.fileNames) {
+			const filenames = dataset.value.fileNames;
+			if (filenames.length > 0 && filenames[0].endsWith('.csv')) {
+				downloadRawFile(id, filenames[0]).then((res) => {
+					rawContent.value = res;
+					selectedColumns = ref(csvHeaders?.value);
+				});
+			} else {
+				console.debug('No CSV file found in dataset: ', dataset.value.name);
+			}
 		}
 	}
 }
