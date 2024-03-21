@@ -23,6 +23,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
@@ -80,6 +81,8 @@ public class KnowledgeController {
 
 	final ExtractionService extractionService;
 	private final CurrentUserService currentUserService;
+
+	private final Config config;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
@@ -401,7 +404,7 @@ public class KnowledgeController {
 
 			final Set<String> codeIds = provenanceSearchService.modelsFromCode(payload);
 
-			String codeContentString = "No available code associated with model";
+			String codeContentString = "";
 			if (codeIds.size() > 0) {
 				final UUID codeId = UUID.fromString(codeIds.iterator().next());
 
@@ -420,7 +423,7 @@ public class KnowledgeController {
 			}
 
 			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
-			String documentText = "There is no documentation for this model";
+			String documentText = "";
 			if (documentOptional.isPresent()) {
 				final int MAX_CHAR_LIMIT = 9000;
 
@@ -612,7 +615,7 @@ public class KnowledgeController {
 			final JsonNode modelJson = mapper.valueToTree(model);
 
 			// ovewrite all updated fields
-			JsonUtil.recursiveSetAll((ObjectNode) modelJson, (ObjectNode) res.getBody());
+			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
 
 			// update the model
 			modelService.updateAsset(model);
