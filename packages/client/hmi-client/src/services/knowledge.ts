@@ -66,7 +66,9 @@ export const profileDataset = async (
 ) => {
 	let response: any = null;
 	if (documentId && datasetId) {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
+		response = await API.post(
+			`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`
+		);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
@@ -86,6 +88,22 @@ export const extractPDF = async (documentId: DocumentAsset['id']) => {
 		}
 	} else {
 		console.debug('Failed — No documentId provided for pdf extraction.');
+	}
+	console.groupEnd();
+};
+
+/** Extract variables from a text document */
+export const extractVariables = async (
+	documentId: DocumentAsset['id'],
+	modelIds: Array<Model['id']>
+) => {
+	console.group('SKEMA Variable extraction');
+	if (documentId) {
+		await API.post(
+			`/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`
+		);
+	} else {
+		console.debug('Failed — No documentId provided for variable extraction.');
 	}
 	console.groupEnd();
 };
