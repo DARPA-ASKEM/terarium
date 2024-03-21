@@ -369,7 +369,7 @@ public class KnowledgeController {
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 			final String filename = input.getOriginalFilename();
 
-			codeService.uploadFile(code.getId(), filename, fileEntity);
+			codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();

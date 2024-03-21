@@ -15,6 +15,7 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -197,7 +198,8 @@ public class ExtractionService {
 
 					clientInterface.sendMessage("Uploading COSMOS extraction results...");
 					final String zipFileName = documentId + "_cosmos.zip";
-					documentService.uploadFile(documentId, zipFileName, new ByteArrayEntity(zipFileResp.getBody()));
+					documentService.uploadFile(documentId, zipFileName, new ByteArrayEntity(zipFileResp.getBody()),
+							ContentType.APPLICATION_OCTET_STREAM);
 
 					document.getFileNames().add(zipFileName);
 
@@ -257,7 +259,7 @@ public class ExtractionService {
 									log.warn("Unable to find file {} in zipfile", assetFileName);
 								}
 								final HttpEntity file = fileMap.get(assetFileName);
-								documentService.uploadFile(documentId, assetFileName, file);
+								documentService.uploadFile(documentId, assetFileName, file, ContentType.IMAGE_PNG);
 								totalUploads++;
 
 							} else {
@@ -463,6 +465,11 @@ public class ExtractionService {
 			byteArrayOutputStream.write(buffer, 0, len);
 		}
 
-		return new ByteArrayEntity(byteArrayOutputStream.toByteArray());
+		final byte[] bytes = byteArrayOutputStream.toByteArray();
+		if (bytes.length == 0) {
+			throw new IOException("Empty file found in zip");
+		}
+
+		return new ByteArrayEntity(bytes);
 	}
 }
