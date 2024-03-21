@@ -284,17 +284,17 @@ async function run() {
 		const subsetId = await getClimateSubsetId(
 			dataset.value.esgfId,
 			dataset.value.id,
-			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`
-			// `${fromDate.value.toISOString()},${toDate.value.toISOString()}`
+			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
+			`${fromDate.value.toISOString()},${toDate.value.toISOString()}`
 			// isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
 		);
 		isSubsetLoading.value = false;
-		await loadSubset(subsetId);
-		if (!subset.value) return;
+		const newSubset = await loadSubset(subsetId);
+		if (!newSubset) return;
 		emit('append-output', {
 			type: 'datasetId',
-			label: subset.value.name,
-			value: [subset.value.id]
+			label: newSubset.name,
+			value: [newSubset.id]
 		});
 	}
 }
@@ -302,14 +302,14 @@ async function run() {
 async function loadSubset(subsetId?: string | null) {
 	if (!subsetId) {
 		logger.error('No subset dataset id found');
-		return;
+		return null;
 	}
-	subset.value = await getDataset(subsetId);
-	if (!subset.value) {
+	const newSubset = await getDataset(subsetId);
+	if (!newSubset) {
 		logger.error('Subset not found');
-		return;
+		return null;
 	}
-	newDatasetName.value = subset.value?.name ?? '';
+	return newSubset;
 }
 
 async function loadDataset(id: string) {
@@ -337,12 +337,14 @@ onMounted(async () => {
 
 watch(
 	() => props.node.active,
-	() => {
+	async () => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)
 				?.value?.[0];
-			if (!isEmpty(subsetId) && subsetId) loadSubset(subsetId);
+			if (!isEmpty(subsetId) && subsetId) {
+				subset.value = await loadSubset(subsetId);
+			}
 		}
 	},
 	{ immediate: true }
