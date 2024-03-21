@@ -8,7 +8,7 @@
 		</template>
 		<div class="background">
 			<Suspense>
-				<tera-dataset-jupyter-panel
+				<tera-dataset-jupyter-regridding-panel
 					:assets="assets"
 					:show-kernels="showKernels"
 					:show-chat-thoughts="showChatThoughts"
@@ -24,7 +24,7 @@
 // Proxy to use tera-dataset via a workflow context
 
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
-import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
+import TeraDatasetJupyterRegriddingPanel from '@/components/dataset/tera-dataset-jupyter-regridding-panel.vue';
 import { computed, onMounted, ref } from 'vue';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
 import type { NotebookSession } from '@/types/Types';
