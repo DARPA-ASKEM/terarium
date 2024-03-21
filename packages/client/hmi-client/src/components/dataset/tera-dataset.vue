@@ -187,7 +187,7 @@ const fetchDataset = async () => {
 					// TODO = Temporary solution to avoid downloading raw NetCDF files, which can be massive
 					// A better solution would be to check the size of an asset before downloading it, and/or
 					// downloading a small subset of it for presentation purposes.
-					if (datasetTemp.metadata.format !== 'netcdf') {
+					if (datasetTemp.metadata.format !== 'netcdf' || !datasetTemp.esgfId) {
 						rawContent.value = await downloadRawFile(
 							props.assetId,
 							datasetTemp?.fileNames?.[0] ?? ''
