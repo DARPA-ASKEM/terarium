@@ -290,7 +290,6 @@ async function run() {
 				// spatialSkipping: isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined
 			}
 		);
-		console.log(subsetId);
 		isSubsetLoading.value = false;
 		const newSubset = await loadSubset(subsetId);
 		if (!newSubset) return;
