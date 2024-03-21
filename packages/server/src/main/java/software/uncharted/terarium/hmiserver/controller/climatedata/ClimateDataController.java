@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.controller.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -170,10 +171,21 @@ public class ClimateDataController {
 		try{
 			final ResponseEntity<JsonNode> response = climateDataProxy.fetchEsgf(esgfId);
 
+			if(response.getBody() == null)
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to fetch ESGF. Response body was null");
+
+			String name = esgfId;
+			if(response.getBody().get("dataset") != null){
+				name = response.getBody().get("dataset").asText();
+			}
+
+
 			final Dataset dataset = new Dataset();
 			dataset.setEsgfId(esgfId);
-			dataset.setMetadata(response.getBody());
-			dataset.setName(esgfId);
+			dataset.setName(name);
+			dataset.setMetadata(response.getBody().get("metadata"));
+			((ObjectNode) dataset.getMetadata()).set("urls", response.getBody().get("urls"));
+
 
 			return ResponseEntity.ok(dataset);
 		} catch(final FeignException.FeignClientException e) {
