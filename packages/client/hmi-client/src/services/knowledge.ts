@@ -1,13 +1,6 @@
 import API from '@/api/api';
-import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import type {
-	ClientEvent,
-	Code,
-	Dataset,
-	DocumentAsset,
-	ExtractionStatusUpdate,
-	Model
-} from '@/types/Types';
+import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
+import type { Code, Dataset, DocumentAsset, Model } from '@/types/Types';
 import { ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { AxiosResponse } from 'axios';
@@ -81,28 +74,13 @@ export const profileDataset = async (
 	return response.data.id;
 };
 
-/** Handle messages received from the extraction client-event */
-const messageHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
-	const { data } = event;
-	if (data.error) {
-		console.error(`[${data.t}]: ${data.error}`);
-		await unsubscribe(ClientEventType.Extraction, messageHandler);
-		return;
-	}
-
-	console.debug(`[${data.t}]: ${data.message}`);
-	if (data.t >= 1.0) {
-		await unsubscribe(ClientEventType.Extraction, messageHandler);
-	}
-};
-
 /** Extract text and artifacts from a PDF document */
 export const extractPDF = async (documentId: DocumentAsset['id']) => {
 	console.group('PDF COSMOS Extraction');
 	if (documentId) {
 		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}`);
 		if (response?.status === 202) {
-			await subscribe(ClientEventType.Extraction, messageHandler);
+			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 		} else {
 			console.debug('Failed — ', response);
 		}
