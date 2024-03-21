@@ -66,7 +66,7 @@ const inProgressSimulationId = computed(() => props.node.state.inProgressSimulat
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateJulia) => {
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateJulia) => {
 	emit('update-state', state);
 });
 

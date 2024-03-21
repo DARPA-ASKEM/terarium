@@ -203,6 +203,6 @@ public class DownloadService {
 			return matcher.group(1);
 		}
 
-		return null;
+		return "missingname.pdf";
 	}
 }

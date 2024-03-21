@@ -85,7 +85,7 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
+const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
 

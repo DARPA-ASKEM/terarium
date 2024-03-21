@@ -2,23 +2,24 @@
 	<section>
 		<template v-if="!showSpinner">
 			<section v-if="simulationIds">
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:initial-data="csvAsset"
-					:chartConfig="cfg"
-					has-mean-line
-					@configuration-change="chartConfigurationChange(index, $event)"
-				/>
-				<Button
-					class="add-chart"
-					text
-					:outlined="true"
-					@click="addChart"
-					label="Add chart"
-					icon="pi pi-plus"
-				/>
+				<div ref="outputPanel">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.chartConfigs"
+						:key="index"
+						:run-results="runResults"
+						:initial-data="csvAsset"
+						:chartConfig="cfg"
+						has-mean-line
+						:size="chartSize"
+						@configuration-change="chartProxy.configurationChange(index, $event)"
+					/>
+					<Button
+						class="p-button-sm p-button-text"
+						@click="chartProxy.addChart()"
+						label="Add chart"
+						icon="pi pi-plus"
+					/>
+				</div>
 			</section>
 			<template v-if="modelConfigIds && datasetId">
 				<div class="flex gap-2">
@@ -54,9 +55,8 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
 import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { OperatorStatus, WorkflowNode } from '@/types/workflow';
+import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ProgressState } from '@/types/Types';
 // import { csvParse } from 'd3';
 // import type { ModelConfiguration } from '@/types/Types';
@@ -74,12 +74,12 @@ import {
 	simulationPollAction
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
-import { getTimespan } from '@/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
@@ -91,11 +91,21 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'update-state', 'open-drilldown', 'append-input-port']);
 
 const showSpinner = ref(false);
-const modelConfigIds = computed<string[]>(() => props.node.inputs[0].value as string[]);
-const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
+const modelConfigIds = computed(() => getModelConfigIds);
+
+const getModelConfigIds = () => {
+	const aList: string[] = [];
+	props.node.inputs.forEach((ele) => {
+		if (ele.value && ele.type === 'modelConfigId') {
+			aList.push(ele.value[0]);
+		}
+	});
+	return aList;
+};
+const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 
 const completedRunId = ref<string>();
@@ -116,15 +126,10 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const poller = new Poller();
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
+	emit('update-state', state);
 });
 
 const runEnsemble = async () => {
@@ -139,9 +144,9 @@ const runEnsemble = async () => {
 		},
 		engine: 'ciemss',
 		extra: {
-			num_samples: extra.value.numSamples,
+			num_particles: extra.value.numParticles,
 			num_iterations: extra.value.numIterations,
-			total_population: extra.value.totalPopulation
+			solver_method: extra.value.solverMethod
 		}
 	};
 	const response = await makeEnsembleCiemssCalibration(params);
@@ -171,12 +176,12 @@ const getStatus = async (simulationId: string) => {
 	}
 	completedRunId.value = simulationId;
 	updateOutputPorts(completedRunId);
-	addChart();
+	chartProxy.addChart();
 	showSpinner.value = false;
 };
 
 const updateOutputPorts = async (runId) => {
-	const portLabel = props.node.inputs[0].label;
+	const portLabel = props.node.inputs[1].label;
 	emit('append-output', {
 		type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 		label: `${portLabel} Result`,
@@ -184,21 +189,16 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-// Tom TODO: Make this generic, its copy paste from drilldown
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
 
-	emit('update-state', state);
-};
-
-// TODO: This is repeated every single node that uses a chart. Hope to refactor if the state manip allows for it easily
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
-
-	emit('update-state', state);
-};
+onUnmounted(() => {
+	poller.stop();
+});
 
 // Set up csv + dropdown names
 // Note: Same as calibrate side panel
@@ -214,29 +214,6 @@ watch(
 );
 
 watch(
-	() => modelConfigIds.value,
-	async () => {
-		if (modelConfigIds.value) {
-			const mapping: EnsembleModelConfigs[] = [];
-			// Init ensemble Configs:
-			for (let i = 0; i < modelConfigIds.value.length; i++) {
-				mapping[i] = {
-					id: modelConfigIds.value[i],
-					solutionMappings: {},
-					weight: 0
-				};
-			}
-
-			const state = _.cloneDeep(props.node.state);
-			state.modelConfigIds = modelConfigIds.value;
-			state.mapping = mapping;
-			emit('update-state', state);
-		}
-	},
-	{ immediate: true }
-);
-
-watch(
 	() => simulationIds.value,
 	async () => {
 		if (!simulationIds.value) return;
@@ -245,6 +222,20 @@ watch(
 		runResults.value = output.runResults;
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => props.node.inputs,
+	() => {
+		if (
+			props.node.inputs.every(
+				(input) => input.status === WorkflowPortStatus.CONNECTED || input.type !== 'modelConfigId'
+			)
+		) {
+			emit('append-input-port', { type: 'modelConfigId', label: 'Model configuration' });
+		}
+	},
+	{ deep: true }
 );
 </script>
 
