@@ -51,7 +51,7 @@
 						We should make it so the left footer is aligned left and the right
 						footer is aligned right-->
 					<Button
-						:style="{ marginRight: 'auto' }"
+						class="mr-auto"
 						@click="run"
 						label="Run"
 						icon="pi pi-play"
