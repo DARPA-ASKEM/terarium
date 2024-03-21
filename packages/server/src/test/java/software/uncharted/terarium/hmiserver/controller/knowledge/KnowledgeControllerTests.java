@@ -329,7 +329,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.APPLICATION_PDF);
+		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity,
+				ContentType.create("application/pdf"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
 				.contentType(MediaType.APPLICATION_JSON)
