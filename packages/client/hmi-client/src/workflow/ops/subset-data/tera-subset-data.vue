@@ -2,7 +2,12 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="SubsetDataTabs.Wizard">
 			<tera-drilldown-section>
-				<h3>Select geo-boundaries</h3>
+				<!-- Geo boundaries -->
+				<h5>Select geo-boundaries</h5>
+				<p class="subheader">
+					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
+					skipping to retain every nth data point for a coarser subset.
+				</p>
 				<img :src="preview" alt="Preview" />
 				<span>
 					<label>Latitude</label>
@@ -18,32 +23,43 @@
 					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
 					'{{ longitudeEnd }}'])
 				</code>
-				<span>
-					<Checkbox v-model="isSpatialSkipping" binary />
-					<label>Spatial skipping</label>
-				</span>
-				<div class="number-entry">
-					<label class="float-label">Keep every nth datapoint</label>
-					<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
+				<div class="flex flex-row align-items-center">
+					<span>
+						<Checkbox v-model="isSpatialSkipping" binary />
+						<label>Spatial skipping</label>
+					</span>
+
+					<span class="ml-3">
+						<p :class="!isSpatialSkipping ? 'disabled' : ''">Keep every nth datapoint</p>
+						<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
+					</span>
 				</div>
-				<h3>Select temporal slice</h3>
-				<span>
-					<div>
+
+				<!-- Temporal slice -->
+				<h5 class="mt-3">Select temporal slice</h5>
+				<p class="subheader">
+					Set your desired time range to define the temporal boundaries. Apply time skipping to
+					retain every nth time slice for a coarser subset.
+				</p>
+				<div class="flex flex-row">
+					<div class="col">
 						<label class="float-label">From</label>
 						<Calender v-model="fromDate" showIcon />
 					</div>
-					<div>
+					<div class="col">
 						<label class="float-label">To</label>
-						<Calender v-model="toDate" showIcon />
+						<Calender v-model="toDate" showIcon showTime hourFormat="24" />
 					</div>
-				</span>
-				<span>
-					<Checkbox v-model="isTimeSkipping" binary />
-					<label>Time skipping</label>
-				</span>
-				<div class="number-entry">
-					<label class="float-label">Keep every nth time slice</label>
-					<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
+				</div>
+				<div class="flex flex-row align-items-center">
+					<span>
+						<Checkbox v-model="isTimeSkipping" binary />
+						<label>Time skipping</label>
+					</span>
+					<span class="ml-3">
+						<p :class="!isTimeSkipping ? 'disabled' : ''">Keep every nth time slice</p>
+						<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
+					</span>
 				</div>
 				<template #footer>
 					<!--FIXME: A lot of these drilldowns have this margin auto for the left footer's button.
@@ -372,7 +388,13 @@ span {
 		width: 8rem;
 	}
 }
-
+.disabled {
+	color: var(--text-color-subdued);
+}
+.subheader {
+	color: var(--text-color-subdued);
+	margin-bottom: var(--gap-small);
+}
 :deep(main) {
 	gap: var(--gap);
 }
