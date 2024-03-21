@@ -102,7 +102,7 @@ const rawContent: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 const view = ref(DatasetView.DESCRIPTION);
-const image: Ref<string | undefined> = ref(undefined);
+const image = ref<string | undefined>(undefined);
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -184,10 +184,15 @@ const fetchDataset = async () => {
 				} else {
 					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
 					image.value = undefined;
-					rawContent.value = await downloadRawFile(
-						props.assetId,
-						datasetTemp?.fileNames?.[0] ?? ''
-					);
+					// TODO = Temporary solution to avoid downloading raw NetCDF files, which can be massive
+					// A better solution would be to check the size of an asset before downloading it, and/or
+					// downloading a small subset of it for presentation purposes.
+					if (datasetTemp.metadata.format !== 'netcdf') {
+						rawContent.value = await downloadRawFile(
+							props.assetId,
+							datasetTemp?.fileNames?.[0] ?? ''
+						);
+					}
 					Object.entries(datasetTemp).forEach(([key, value]) => {
 						if (isString(value)) {
 							datasetTemp[key] = highlightSearchTerms(value);
