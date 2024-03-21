@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,9 +58,16 @@ public interface SkemaUnifiedProxy {
 
 		public IntegratedTextExtractionsBody(final String text) {
 			this.texts = Arrays.asList(text);
+			this.amrs = new ArrayList<>();
+		}
+
+		public IntegratedTextExtractionsBody(final String text, final List<Model> amrs) {
+			this.texts = Arrays.asList(text);
+			this.amrs = amrs;
 		}
 
 		final List<String> texts;
+		final List<Model> amrs;
 	}
 
 	@PostMapping("/text-reading/integrated-text-extractions")
