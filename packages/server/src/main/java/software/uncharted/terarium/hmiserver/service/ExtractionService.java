@@ -111,6 +111,14 @@ public class ExtractionService {
 
 	}
 
+	public String removeFileExtension(final String filename) {
+		final int lastIndexOfDot = filename.lastIndexOf(".");
+		if (lastIndexOfDot != -1) {
+			return filename.substring(0, lastIndexOfDot);
+		}
+		return filename;
+	}
+
 	public void extractPDF(final UUID documentId, final String userId, final String domain) {
 
 		// time the progress takes to reach each subsequent half
@@ -213,7 +221,9 @@ public class ExtractionService {
 
 						ZipEntry entry = zipInputStream.getNextEntry();
 						while (entry != null) {
-							fileMap.put(entry.getName(), zipEntryToHttpEntity(zipInputStream));
+							log.info("Adding {} to filemap", entry.getName());
+							final String filenameNoExt = removeFileExtension(entry.getName());
+							fileMap.put(filenameNoExt, zipEntryToHttpEntity(zipInputStream));
 							entry = zipInputStream.getNextEntry();
 						}
 
@@ -254,12 +264,15 @@ public class ExtractionService {
 
 								final String path = record.get("img_pth").asText();
 								assetFileName = path.substring(path.lastIndexOf("/") + 1);
-
-								if (fileMap.containsKey(assetFileName)) {
+								final String assetFilenameNoExt = removeFileExtension(assetFileName);
+								if (!fileMap.containsKey(assetFilenameNoExt)) {
 									log.warn("Unable to find file {} in zipfile", assetFileName);
 								}
-								final HttpEntity file = fileMap.get(assetFileName);
-								documentService.uploadFile(documentId, assetFileName, file, ContentType.IMAGE_PNG);
+								final HttpEntity file = fileMap.get(assetFilenameNoExt);
+								if (file == null) {
+									throw new RuntimeException("Unable to find file " + assetFileName + " in zipfile");
+								}
+								documentService.uploadFile(documentId, assetFileName, file, ContentType.IMAGE_JPEG);
 								totalUploads++;
 
 							} else {
