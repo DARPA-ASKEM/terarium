@@ -96,7 +96,12 @@ const columnSelectTooltip = 'Select columns to display';
 async function getDatasetById(id: string) {
 	dataset.value = await getDataset(id);
 
-	if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
+	if (
+		dataset?.value?.id &&
+		dataset?.value?.fileNames &&
+		dataset?.value?.fileNames?.length > 0 &&
+		!dataset?.value?.esgfId
+	) {
 		rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
 		selectedColumns = ref(csvHeaders?.value);
 	}
