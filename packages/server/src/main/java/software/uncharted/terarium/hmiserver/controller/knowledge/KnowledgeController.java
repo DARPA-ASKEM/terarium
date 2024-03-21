@@ -1,20 +1,15 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import feign.FeignException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -25,27 +20,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import feign.FeignException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
@@ -64,19 +41,21 @@ import software.uncharted.terarium.hmiserver.models.extractionservice.Extraction
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
-import software.uncharted.terarium.hmiserver.service.data.CodeService;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.data.*;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -301,7 +280,9 @@ public class KnowledgeController {
 			}
 
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get code to amr: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get code to amr from SKEMA");
 			}
 
 			Model model = mapper.treeToValue(resp.getBody(), Model.class);
@@ -370,7 +351,7 @@ public class KnowledgeController {
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 			final String filename = input.getOriginalFilename();
 
-			codeService.uploadFile(code.getId(), filename, fileEntity);
+			codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();
@@ -457,7 +438,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get model card: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get model card");
 			}
 
 			final Card card = mapper.treeToValue(resp.getBody(), Card.class);
@@ -517,13 +500,13 @@ public class KnowledgeController {
 				}
 			} else {
 				documentFile = new StringMultipartFile("There is no documentation for this dataset",
-						documentId.get() + ".txt", "application/text");
+						"", "application/text");
 			}
 
 			final Dataset dataset = datasetService.getAsset(datasetId).orElseThrow();
 
-			if (dataset.getFileNames().isEmpty()) {
-				throw new RuntimeException("No files found on dataset");
+			if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No files found on dataset");
 			}
 			final String filename = dataset.getFileNames().get(0);
 
@@ -533,7 +516,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get data card: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get data card");
 			}
 
 			final JsonNode card = resp.getBody();
@@ -622,7 +607,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
 			if (!res.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to link AMR file: " + res.getBody().asText());
+				throw new ResponseStatusException(
+						res.getStatusCode(),
+						"Unable to link AMR file");
 			}
 
 			final JsonNode modelJson = mapper.valueToTree(model);
@@ -651,123 +638,15 @@ public class KnowledgeController {
 	}
 
 	@PostMapping("/variable-extractions")
-	ResponseEntity<DocumentAsset> postPdfExtractions(
+	public ResponseEntity<DocumentAsset> postPdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
 			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
+
 		try {
-
-			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
-
-			if (document.getText() == null || document.getText().isEmpty()) {
-				throw new RuntimeException(
-						"No text found in paper document, please ensure to submit to /variable-extractions endpoint.");
-			}
-
-			final List<JsonNode> collections = new ArrayList<>();
-			JsonNode skemaCollection = null;
-			JsonNode mitCollection = null;
-
-			// Send document to SKEMA
-			try {
-				final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText());
-
-				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
-						annotateSkema, body);
-
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode output : resp.getBody().get("outputs")) {
-						if (!output.has("errors") || output.get("errors").size() == 0) {
-							skemaCollection = output.get("data");
-							break;
-						}
-					}
-
-					if (skemaCollection != null) {
-						collections.add(skemaCollection);
-					}
-				} else {
-					log.error("Unable to extract variables from document: " + document.getId());
-				}
-
-			} catch (final Exception e) {
-				log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
-			}
-
-			// Send document to MIT
-			try {
-				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
-						"application/text");
-
-				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
-
-				if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-					mitCollection = resp.getBody();
-					collections.add(mitCollection);
-				} else {
-					log.error("Unable to extract variables from document: " + document.getId());
-				}
-
-			} catch (final Exception e) {
-				log.error("MIT variable extraction for document {} failed", documentId, e);
-			}
-
-			if (skemaCollection == null && mitCollection == null) {
-				throw new RuntimeException("Unable to extract variables from document: " + document.getId());
-			}
-
-			final List<JsonNode> attributes = new ArrayList<>();
-
-			if (skemaCollection == null || mitCollection == null) {
-				log.info("Falling back on single variable extraction since one system failed");
-				for (final JsonNode collection : collections) {
-					for (final JsonNode attribute : collection.get("attributes")) {
-						attributes.add(attribute);
-					}
-				}
-			} else {
-				// Merge both with some de de-duplications
-
-				final StringMultipartFile arizonaFile = new StringMultipartFile(
-						mapper.writeValueAsString(skemaCollection),
-						"text.json",
-						"application/json");
-
-				final StringMultipartFile mitFile = new StringMultipartFile(
-						mapper.writeValueAsString(mitCollection),
-						"text.json",
-						"application/json");
-
-				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
-						arizonaFile);
-
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode attribute : resp.getBody().get("attributes")) {
-						attributes.add(attribute);
-					}
-				} else {
-					// fallback to collection
-					log.info("MIT merge failed: {}", resp.getBody().asText());
-					for (final JsonNode collection : collections) {
-						for (final JsonNode attribute : collection.get("attributes")) {
-							attributes.add(attribute);
-						}
-					}
-				}
-			}
-
-			// add the attributes to the metadata
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-			document.getMetadata().put("attributes", attributes);
-
-			// update the document
-			document = documentService.updateAsset(document).orElseThrow();
-
-			return ResponseEntity.ok(document);
-
+			return ResponseEntity
+					.ok(extractionService.extractVariables(documentId, annotateSkema, annotateMIT, domain));
 		} catch (final IOException e) {
 			final String error = "Unable to get required assets";
 			log.error(error, e);
@@ -781,14 +660,15 @@ public class KnowledgeController {
 	 * Document Extractions
 	 *
 	 * @param documentId (String): The ID of the document to profile
-	 * @return the profiled dataset
+	 * @return
 	 */
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<Void> postPDFToCosmos(
-			@RequestParam("document-id") final UUID documentId) {
+			@RequestParam("document-id") final UUID documentId,
+			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
 		final String currentUserId = currentUserService.get().getId();
-		extractionService.extractPDF(documentId, currentUserId);
+		extractionService.extractPDF(documentId, currentUserId, domain);
 		return ResponseEntity.accepted().build();
 	}
 

@@ -174,6 +174,7 @@ export interface DatasetColumn {
 export interface AddDocumentAssetFromXDDRequest {
     document: Document;
     projectId: string;
+    domain: string;
 }
 
 export interface AddDocumentAssetFromXDDResponse {
