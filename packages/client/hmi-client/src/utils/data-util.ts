@@ -2,7 +2,15 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import { Dataset, Document, DocumentAsset, Model, ProgrammingLanguage } from '@/types/Types';
+import {
+	Dataset,
+	Document,
+	DocumentAsset,
+	Initial,
+	Model,
+	ModelParameter,
+	ProgrammingLanguage
+} from '@/types/Types';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
@@ -130,4 +138,12 @@ export function extensionFromProgrammingLanguage(lang: ProgrammingLanguage): str
 		default:
 			return null;
 	}
+}
+
+export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
+	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
+}
+
+export function isModelParameter(obj: Initial | ModelParameter | null): obj is ModelParameter {
+	return obj !== null && 'id' in obj;
 }
