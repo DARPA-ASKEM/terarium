@@ -17,7 +17,7 @@ export interface SubsetDataOperationState {
 
 export const SubsetDataOperation: Operation = {
 	name: WorkflowOperationTypes.SUBSET_DATA,
-	displayName: 'Subset data',
+	displayName: 'Subset dataset',
 	description: '',
 	inputs: [{ type: 'datasetId', label: 'Dataset' }],
 	outputs: [{ type: 'datasetId' }],

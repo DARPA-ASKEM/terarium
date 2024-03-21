@@ -2,7 +2,6 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="SubsetDataTabs.Wizard">
 			<tera-drilldown-section>
-				<!-- <InputText placeholder="What do you want to do?" /> -->
 				<h3>Select geo-boundaries</h3>
 				<img :src="preview" alt="Preview" />
 				<span>
