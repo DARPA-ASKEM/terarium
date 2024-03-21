@@ -384,6 +384,7 @@ public class ExtractionService {
 
 			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
 
+			log.info("Sending variable extraction request to SKEMA");
 			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
 					annotateSkema, body);
 
@@ -411,6 +412,7 @@ public class ExtractionService {
 			final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
 					"application/text");
 
+			log.info("Sending variable extraction request to MIT");
 			final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
 
 			if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
