@@ -35,7 +35,6 @@
 					tabName="Description"
 					:dataset="dataset"
 					:image="image"
-					:raw-content="rawContent"
 					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
@@ -187,7 +186,7 @@ const fetchDataset = async () => {
 					// TODO = Temporary solution to avoid downloading raw NetCDF files, which can be massive
 					// A better solution would be to check the size of an asset before downloading it, and/or
 					// downloading a small subset of it for presentation purposes.
-					if (datasetTemp.metadata.format !== 'netcdf') {
+					if (datasetTemp.metadata.format !== 'netcdf' || !datasetTemp.esgfId) {
 						rawContent.value = await downloadRawFile(
 							props.assetId,
 							datasetTemp?.fileNames?.[0] ?? ''
@@ -205,8 +204,9 @@ const fetchDataset = async () => {
 		}
 		case DatasetSource.ESGF: {
 			dataset.value = await getClimateDataset(props.assetId);
-			if (dataset.value?.esgfId)
+			if (dataset.value?.esgfId) {
 				image.value = await getClimateDatasetPreview(dataset.value?.esgfId);
+			}
 			break;
 		}
 		default:
