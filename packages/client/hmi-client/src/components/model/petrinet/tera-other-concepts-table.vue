@@ -141,7 +141,7 @@ import AutoComplete, {
 	AutoCompleteCompleteEvent,
 	AutoCompleteItemSelectEvent
 } from 'primevue/autocomplete';
-import { isInitial, isModelParameter } from '@/utils/data-util';
+import { isInitial, isModelParameter } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;
