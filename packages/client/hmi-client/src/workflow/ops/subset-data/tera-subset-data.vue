@@ -284,8 +284,10 @@ async function run() {
 			dataset.value.esgfId,
 			dataset.value.id,
 			`${longitudeStart.value},${longitudeEnd.value},${latitudeStart.value},${latitudeEnd.value}`,
-			`${fromDate.value.toISOString()},${toDate.value.toISOString()}`
-			// isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined // Not sure if its this or timeSkipping
+			{
+				timestamps: `${fromDate.value.toISOString()},${toDate.value.toISOString()}`
+				// spatialSkipping: isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined
+			}
 		);
 		isSubsetLoading.value = false;
 		const newSubset = await loadSubset(subsetId);

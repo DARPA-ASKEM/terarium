@@ -54,9 +54,12 @@ async function getClimateSubsetId(
 	esgfId: string,
 	parentDatasetId: string,
 	envelope: string,
-	timestamps?: string,
-	thinFactor?: string
+	options: {
+		timestamps?: string;
+		thinFactor?: string;
+	}
 ): Promise<string | null> {
+	const { timestamps, thinFactor } = options;
 	const url = `/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}&envelope=${envelope}`;
 	if (timestamps) url.concat(`&timestamps=${timestamps}`);
 	if (thinFactor) url.concat(`&thin-factor=${thinFactor}`);
