@@ -12,6 +12,7 @@ export interface SubsetDataOperationState {
 	spatialSkipping: number | null;
 	isTimeSkipping: boolean;
 	timeSkipping: number | null;
+	isSubsetLoading: boolean;
 	notebookSessionId?: string;
 }
 
@@ -35,7 +36,8 @@ export const SubsetDataOperation: Operation = {
 			isSpatialSkipping: false,
 			spatialSkipping: null,
 			isTimeSkipping: false,
-			timeSkipping: null
+			timeSkipping: null,
+			isSubsetLoading: false
 		};
 		return init;
 	}

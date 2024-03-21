@@ -203,7 +203,7 @@ const dataset = ref<Dataset | null>(null);
 const preview = ref<string | undefined>(undefined);
 
 const subset = ref<Dataset | null>(null);
-const isSubsetLoading = ref(false);
+const isSubsetLoading = ref(props.node.state.isSubsetLoading);
 
 const latitudeStart = ref(props.node.state.latitudeStart);
 const latitudeEnd = ref(props.node.state.latitudeEnd);
@@ -239,6 +239,14 @@ const outputs = computed(() => {
 const onSelection = async (id: string) => {
 	emit('select-output', id);
 };
+
+// FIXME: The loading state is just noticeable in the drilldown - not in the node
+function mutateLoadingState(isLoading: boolean) {
+	isSubsetLoading.value = isLoading;
+	const state = cloneDeep(props.node.state);
+	state.isSubsetLoading = isLoading;
+	emit('update-state', state);
+}
 
 function updateState() {
 	const state = cloneDeep(props.node.state);
@@ -278,8 +286,8 @@ async function saveSubsetAsNewDataset() {
 
 async function run() {
 	if (dataset.value?.esgfId && dataset.value?.id) {
-		updateState();
-		isSubsetLoading.value = true;
+		await updateState();
+		mutateLoadingState(true);
 
 		const subsetId = await getClimateSubsetId(
 			dataset.value.esgfId,
@@ -290,7 +298,7 @@ async function run() {
 				// spatialSkipping: isSpatialSkipping.value ? spatialSkipping.value ?? undefined : undefined
 			}
 		);
-		isSubsetLoading.value = false;
+		mutateLoadingState(false);
 		const newSubset = await loadSubset(subsetId);
 		if (!newSubset) return;
 		emit('append-output', {
@@ -335,6 +343,7 @@ onMounted(async () => {
 		return;
 	}
 	await loadDataset(props.node.state.datasetId ?? props.node.inputs?.[0]?.value?.[0]);
+	if (props.node.state.isSubsetLoading) run();
 });
 
 watch(
