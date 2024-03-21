@@ -1,36 +1,34 @@
 ---
-version: "3.9"
-
 services:
-    gollm-taskrunner:
-        container_name: gollm-taskrunner
-        image: ghcr.io/darpa-askem/gollm-taskrunner:latest
-        networks:
-            - terarium
-        environment:
-            TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
-            TERARIUM_MQ-PASSWORD: "terarium123"
-            TERARIUM_MQ-USERNAME: "terarium"
-            TERARIUM_TASKRUNNER_REQUEST-TYPE: "gollm"
-            OPENAI_API_KEY: "${secret_gollm_openai_key}"
-        depends_on:
-            rabbitmq:
-                condition: service_healthy
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
+  gollm-taskrunner:
+    container_name: gollm-taskrunner
+    image: ghcr.io/darpa-askem/gollm-taskrunner:latest
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ-PASSWORD: "terarium123"
+      TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST-TYPE: "gollm"
+      OPENAI_API_KEY: "${secret_gollm_openai_key}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-    mira-taskrunner:
-        container_name: mira-taskrunner
-        image: ghcr.io/darpa-askem/mira-taskrunner:latest
-        networks:
-            - terarium
-        environment:
-            TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
-            TERARIUM_MQ-PASSWORD: "terarium123"
-            TERARIUM_MQ-USERNAME: "terarium"
-            TERARIUM_TASKRUNNER_REQUEST-TYPE: "mira"
-        depends_on:
-            rabbitmq:
-                condition: service_healthy
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
+  mira-taskrunner:
+    container_name: mira-taskrunner
+    image: ghcr.io/darpa-askem/mira-taskrunner:latest
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ-PASSWORD: "terarium123"
+      TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST-TYPE: "mira"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
