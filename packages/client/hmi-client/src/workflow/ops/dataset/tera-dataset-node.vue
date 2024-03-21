@@ -114,7 +114,7 @@ async function getDatasetById(id: string) {
 	if (dataset.value?.fileNames) {
 		const filenames = dataset.value.fileNames;
 		if (filenames.length > 0 && filenames[0].endsWith('.csv')) {
-			downloadRawFile(id, filename).then((res) => {
+			downloadRawFile(id, filenames[0]).then((res) => {
 				rawContent.value = res;
 				selectedColumns = ref(csvHeaders?.value);
 			});
