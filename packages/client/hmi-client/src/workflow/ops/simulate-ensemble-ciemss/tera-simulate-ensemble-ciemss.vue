@@ -66,6 +66,15 @@
 										placeholder="Select a variable"
 									/>
 								</td>
+								<td>
+									<Button
+										class="p-button-sm"
+										icon="pi pi-times"
+										rounded
+										text
+										@click="deleteMapping(key)"
+									/>
+								</td>
 							</tr>
 						</table>
 					</template>
@@ -89,6 +98,10 @@
 								v-focus
 								class="w-full"
 								placeholder="Add a name"
+								@keypress.enter="
+									addMapping();
+									showAddMappingInput = false;
+								"
 							/>
 							<Button
 								class="p-button-sm p-button-outlined w-2 ml-2"
@@ -280,6 +293,16 @@ const addMapping = () => {
 	state.mapping = ensembleConfigs.value;
 	emit('update-state', state);
 };
+
+function deleteMapping(key) {
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		delete ensembleConfigs.value[i].solutionMappings[key];
+	}
+
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = ensembleConfigs.value;
+	emit('update-state', state);
+}
 
 const runEnsemble = async () => {
 	const params: EnsembleSimulationCiemssRequest = {
