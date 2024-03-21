@@ -134,8 +134,7 @@
 		</template>
 	</tera-drilldown>
 	<!--FIXME: Consider moving this to the modal composable for other dataset drilldowns to use-->
-	<!--This modal also causes warnings to popup since the entire component isn't
-		 wrapped by something, something to do with emit passing-->
+	<!--This modal also causes warnings to popup since the entire component isn't wrapped by something, something to do with emit passing-->
 	<Teleport to="body">
 		<tera-modal
 			v-if="showSaveDatasetModal"
