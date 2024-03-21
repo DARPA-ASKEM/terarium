@@ -138,16 +138,17 @@
 					v-for="(cfg, index) of node.state.chartConfigs"
 					:key="index"
 					:run-results="runResults"
-					:initial-data="csvAsset"
 					:chartConfig="cfg"
 					has-mean-line
-					@configuration-change="chartConfigurationChange(index, $event)"
+					@configuration-change="chartProxy.configurationChange(index, $event)"
+					:size="chartSize"
+					class="mb-2"
 				/>
 				<Button
 					class="add-chart"
 					text
 					:outlined="true"
-					@click="addChart"
+					@click="chartProxy.addChart()"
 					label="Add chart"
 					icon="pi pi-plus"
 				/>
@@ -203,7 +204,7 @@ import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, ModelConfiguration, EnsembleModelConfigs } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -211,6 +212,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -270,12 +272,11 @@ const runResults = ref<RunResults>({});
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
 	emit('update-state', state);
-};
+});
 
 const calculateEvenWeights = () => {
 	if (!knobs.value.ensembleConfigs) return;
@@ -299,13 +300,6 @@ function addMapping() {
 
 	emit('update-state', state);
 }
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
-
-	emit('update-state', state);
-};
 
 // assume only one run for now
 const watchCompletedRunList = async () => {
