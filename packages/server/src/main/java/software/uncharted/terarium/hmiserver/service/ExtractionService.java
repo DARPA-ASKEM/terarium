@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -14,7 +15,7 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,10 +32,17 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
+import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
+import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
+import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +50,14 @@ import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 public class ExtractionService {
 	final DocumentAssetService documentService;
 	final ExtractionProxy extractionProxy;
+	final SkemaUnifiedProxy skemaUnifiedProxy;
+	final MitProxy mitProxy;
 	final ObjectMapper objectMapper;
 	final ClientEventService clientEventService;
+	final TaskService taskService;
+
+	@Value("${mit-openai-api-key:}")
+	String MIT_OPENAI_API_KEY;
 
 	private final ExecutorService executor = Executors.newFixedThreadPool(1);
 
@@ -74,6 +88,8 @@ public class ExtractionService {
 
 		private void updateClient(final UUID documentId, final Double t, final String message, final String error,
 				final String userId) {
+
+			log.info("t: {}, {}", t, message);
 			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
 			final ClientEvent<ExtractionStatusUpdate> status = ClientEvent.<ExtractionStatusUpdate>builder()
 					.type(ClientEventType.EXTRACTION).data(update).build();
@@ -94,7 +110,7 @@ public class ExtractionService {
 
 	}
 
-	public void extractPDF(final UUID documentId, final String userId) {
+	public void extractPDF(final UUID documentId, final String userId, final String domain) {
 
 		// time the progress takes to reach each subsequent half
 		final Double HALFTIME_SECONDS = 2.0;
@@ -189,7 +205,8 @@ public class ExtractionService {
 					clientInterface.sendMessage("Extracting COSMOS extraction results...");
 					final Map<String, HttpEntity> fileMap = new HashMap<>();
 					try {
-						final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
+						final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
+								zipFileResp.getBody());
 						final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
 
 						ZipEntry entry = zipInputStream.getNextEntry();
@@ -217,10 +234,12 @@ public class ExtractionService {
 					document.setAssets(new ArrayList<>());
 					clientInterface.sendMessage("Uploading COSMOS extraction assets...");
 
+					int totalUploads = 0;
+
 					for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
 						final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
 								extractionType.toStringPlural());
-						log.info(" {} response status: {}", extractionType, response.getStatusCode());
+						log.info("Extraction type {} response status: {}", extractionType, response.getStatusCode());
 						if (!response.getStatusCode().is2xxSuccessful()) {
 							log.warn("Unable to fetch the {} extractions", extractionType);
 							continue;
@@ -228,74 +247,89 @@ public class ExtractionService {
 
 						for (final JsonNode record : response.getBody()) {
 
-							String fileName = "";
+							String assetFileName = "";
 							if (record.has("img_pth")) {
 
 								final String path = record.get("img_pth").asText();
-								fileName = path.substring(path.lastIndexOf("/") + 1);
+								assetFileName = path.substring(path.lastIndexOf("/") + 1);
 
-								if (fileMap.containsKey(fileName)) {
-									log.warn("Unable to find file {} in zipfile", fileName);
+								if (fileMap.containsKey(assetFileName)) {
+									log.warn("Unable to find file {} in zipfile", assetFileName);
 								}
-
-								final HttpEntity file = fileMap.get(fileName);
-								documentService.uploadFile(documentId, fileName, file);
+								final HttpEntity file = fileMap.get(assetFileName);
+								documentService.uploadFile(documentId, assetFileName, file);
+								totalUploads++;
 
 							} else {
 								log.warn("No img_pth found in record: {}", record);
 							}
 
 							final DocumentExtraction extraction = new DocumentExtraction();
-							extraction.setFileName(fileName);
+							extraction.setFileName(assetFileName);
 							extraction.setAssetType(extractionType);
 							extraction.setMetadata(objectMapper.convertValue(record, Map.class));
 
 							document.getAssets().add(extraction);
-							clientInterface.sendMessage(String.format("Add COSMOS extraction %s to Document...", filename));
+							clientInterface
+									.sendMessage(
+											String.format("Add COSMOS extraction %s to Document...", assetFileName));
 						}
 					}
+
+					log.info("Uploaded a total of {} files", totalUploads);
 
 					String responseText = "";
 					for (final JsonNode record : textResp.getBody()) {
 						if (record.has("content")) {
 							responseText += record.get("content").asText() + "\n";
+							document.setText(responseText);
 						} else {
 							log.warn("No content found in record: {}", record);
 						}
 					}
 
-					document.setText(responseText);
-
 					// update the document
 					document = documentService.updateAsset(document).get();
-					clientInterface.sendMessage("Document updated");
 
-					if (document.getText() == null || document.getText().isEmpty()) {
-						log.warn("Document {} has no text to send", documentId);
-						clientInterface.sendError("Model Card not created: document has no text");
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
+					// if there is text, run variable extraction
+					if (!responseText.isEmpty()) {
+
+						// run variable extraction (disabled currently due to timeouts...)
+						// clientInterface.sendMessage("Dispatching variable extraction request...");
+						// document = extractVariables(documentId, true, true, domain);
+						// clientInterface.sendMessage("Variable extraction completed");
+
+						// check for input length
+						if (document.getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
+							log.warn("Document {} text too long for GoLLM model card task, not sendingh request",
+									documentId);
+						} else {
+							// dispatch GoLLM model card request
+							final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
+							input.setResearchPaper(document.getText());
+
+							// Create the task
+							final TaskRequest req = new TaskRequest();
+							req.setType(TaskRequest.TaskType.GOLLM);
+							req.setScript(ModelCardResponseHandler.NAME);
+							req.setInput(objectMapper.writeValueAsBytes(input));
+
+							final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+							props.setDocumentId(documentId);
+							req.setAdditionalProperties(props);
+
+							clientInterface.sendMessage("Sending GoLLM model card request");
+							final TaskResponse resp = taskService.runTaskSync(req);
+							if (resp.getStatus() != TaskStatus.SUCCESS) {
+								final String errorMsg = "GoLLM model card task failed";
+								clientInterface.sendError(errorMsg);
+								throw new RuntimeException(errorMsg);
+							}
+							clientInterface.sendMessage("Model Card created");
+						}
 					}
 
-					// check for input length
-					if (document.getText().length() > 600000) {
-						log.warn("Document {} text too long for GoLLM model card task", documentId);
-						clientInterface.sendError("Model Card not created: document text is too long");
-						throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
-					}
-
-					final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-					input.setResearchPaper(document.getText());
-
-					// Create the task
-					final TaskRequest req = new TaskRequest();
-					req.setType(TaskRequest.TaskType.GOLLM);
-					req.setScript(ModelCardResponseHandler.NAME);
-					req.setInput(objectMapper.writeValueAsBytes(input));
-
-					final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
-					props.setDocumentId(documentId);
-					req.setAdditionalProperties(props);
-					clientInterface.sendFinalMessage("Model Card task created");
+					clientInterface.sendFinalMessage("Extraction complete");
 				} catch (final Exception e) {
 					final String error = "Unable to extract pdf";
 					log.error(error, e);
@@ -306,6 +340,119 @@ public class ExtractionService {
 				}
 			}
 		});
+	}
+
+	public DocumentAsset extractVariables(final UUID documentId, final Boolean annotateSkema, final Boolean annotateMIT,
+			final String domain) throws IOException {
+
+		DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+
+		if (document.getText() == null || document.getText().isEmpty()) {
+			throw new RuntimeException("No text found in paper document");
+		}
+
+		final List<JsonNode> collections = new ArrayList<>();
+		JsonNode skemaCollection = null;
+		JsonNode mitCollection = null;
+
+		// Send document to SKEMA
+		try {
+			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText());
+
+			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
+					annotateSkema, body);
+
+			if (resp.getStatusCode().is2xxSuccessful()) {
+				for (final JsonNode output : resp.getBody().get("outputs")) {
+					if (!output.has("errors") || output.get("errors").size() == 0) {
+						skemaCollection = output.get("data");
+						break;
+					}
+				}
+
+				if (skemaCollection != null) {
+					collections.add(skemaCollection);
+				}
+			} else {
+				log.error("Unable to extract variables from document: " + document.getId());
+			}
+
+		} catch (final Exception e) {
+			log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
+		}
+
+		// Send document to MIT
+		try {
+			final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
+					"application/text");
+
+			final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
+
+			if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+				mitCollection = resp.getBody();
+				collections.add(mitCollection);
+			} else {
+				log.error("Unable to extract variables from document: " + document.getId());
+			}
+
+		} catch (final Exception e) {
+			log.error("MIT variable extraction for document {} failed", documentId, e);
+		}
+
+		if (skemaCollection == null && mitCollection == null) {
+			throw new RuntimeException("Unable to extract variables from document: " + document.getId());
+		}
+
+		final List<JsonNode> attributes = new ArrayList<>();
+
+		if (skemaCollection == null || mitCollection == null) {
+			log.info("Falling back on single variable extraction since one system failed");
+			for (final JsonNode collection : collections) {
+				for (final JsonNode attribute : collection.get("attributes")) {
+					attributes.add(attribute);
+				}
+			}
+		} else {
+			// Merge both with some de de-duplications
+
+			final StringMultipartFile arizonaFile = new StringMultipartFile(
+					objectMapper.writeValueAsString(skemaCollection),
+					"text.json",
+					"application/json");
+
+			final StringMultipartFile mitFile = new StringMultipartFile(
+					objectMapper.writeValueAsString(mitCollection),
+					"text.json",
+					"application/json");
+
+			final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
+					arizonaFile);
+
+			if (resp.getStatusCode().is2xxSuccessful()) {
+				for (final JsonNode attribute : resp.getBody().get("attributes")) {
+					attributes.add(attribute);
+				}
+			} else {
+				// fallback to collection
+				log.info("MIT merge failed: {}", resp.getBody().asText());
+				for (final JsonNode collection : collections) {
+					for (final JsonNode attribute : collection.get("attributes")) {
+						attributes.add(attribute);
+					}
+				}
+			}
+		}
+
+		// add the attributes to the metadata
+		if (document.getMetadata() == null) {
+			document.setMetadata(new HashMap<>());
+		}
+		document.getMetadata().put("attributes", attributes);
+
+		// update the document
+		document = documentService.updateAsset(document).orElseThrow();
+
+		return document;
 	}
 
 	public HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {

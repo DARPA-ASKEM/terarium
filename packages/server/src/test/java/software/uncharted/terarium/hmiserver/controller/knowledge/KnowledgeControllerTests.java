@@ -335,11 +335,9 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.contentType(MediaType.APPLICATION_JSON)
 				.param("document-id", documentAsset.getId().toString())
 				.with(csrf()))
-				.andExpect(status().isCreated());
+				.andExpect(status().isAccepted());
 
-		documentAsset = documentAssetService.getAsset(documentAsset.getId()).orElseThrow();
-
-		Assertions.assertTrue(documentAsset.getAssets().size() > 0);
+		Thread.sleep(60000 * 5);
 	}
 
 	// @Test

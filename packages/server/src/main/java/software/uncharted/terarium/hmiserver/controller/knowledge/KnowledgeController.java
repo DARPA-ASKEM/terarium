@@ -64,7 +64,6 @@ import software.uncharted.terarium.hmiserver.models.extractionservice.Extraction
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
@@ -651,123 +650,15 @@ public class KnowledgeController {
 	}
 
 	@PostMapping("/variable-extractions")
-	ResponseEntity<DocumentAsset> postPdfExtractions(
+	public ResponseEntity<DocumentAsset> postPdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
 			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
+
 		try {
-
-			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
-
-			if (document.getText() == null || document.getText().isEmpty()) {
-				throw new RuntimeException(
-						"No text found in paper document, please ensure to submit to /variable-extractions endpoint.");
-			}
-
-			final List<JsonNode> collections = new ArrayList<>();
-			JsonNode skemaCollection = null;
-			JsonNode mitCollection = null;
-
-			// Send document to SKEMA
-			try {
-				final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText());
-
-				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
-						annotateSkema, body);
-
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode output : resp.getBody().get("outputs")) {
-						if (!output.has("errors") || output.get("errors").size() == 0) {
-							skemaCollection = output.get("data");
-							break;
-						}
-					}
-
-					if (skemaCollection != null) {
-						collections.add(skemaCollection);
-					}
-				} else {
-					log.error("Unable to extract variables from document: " + document.getId());
-				}
-
-			} catch (final Exception e) {
-				log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
-			}
-
-			// Send document to MIT
-			try {
-				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
-						"application/text");
-
-				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
-
-				if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-					mitCollection = resp.getBody();
-					collections.add(mitCollection);
-				} else {
-					log.error("Unable to extract variables from document: " + document.getId());
-				}
-
-			} catch (final Exception e) {
-				log.error("MIT variable extraction for document {} failed", documentId, e);
-			}
-
-			if (skemaCollection == null && mitCollection == null) {
-				throw new RuntimeException("Unable to extract variables from document: " + document.getId());
-			}
-
-			final List<JsonNode> attributes = new ArrayList<>();
-
-			if (skemaCollection == null || mitCollection == null) {
-				log.info("Falling back on single variable extraction since one system failed");
-				for (final JsonNode collection : collections) {
-					for (final JsonNode attribute : collection.get("attributes")) {
-						attributes.add(attribute);
-					}
-				}
-			} else {
-				// Merge both with some de de-duplications
-
-				final StringMultipartFile arizonaFile = new StringMultipartFile(
-						mapper.writeValueAsString(skemaCollection),
-						"text.json",
-						"application/json");
-
-				final StringMultipartFile mitFile = new StringMultipartFile(
-						mapper.writeValueAsString(mitCollection),
-						"text.json",
-						"application/json");
-
-				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
-						arizonaFile);
-
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode attribute : resp.getBody().get("attributes")) {
-						attributes.add(attribute);
-					}
-				} else {
-					// fallback to collection
-					log.info("MIT merge failed: {}", resp.getBody().asText());
-					for (final JsonNode collection : collections) {
-						for (final JsonNode attribute : collection.get("attributes")) {
-							attributes.add(attribute);
-						}
-					}
-				}
-			}
-
-			// add the attributes to the metadata
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-			document.getMetadata().put("attributes", attributes);
-
-			// update the document
-			document = documentService.updateAsset(document).orElseThrow();
-
-			return ResponseEntity.ok(document);
-
+			return ResponseEntity
+					.ok(extractionService.extractVariables(documentId, annotateSkema, annotateMIT, domain));
 		} catch (final IOException e) {
 			final String error = "Unable to get required assets";
 			log.error(error, e);
@@ -781,14 +672,15 @@ public class KnowledgeController {
 	 * Document Extractions
 	 *
 	 * @param documentId (String): The ID of the document to profile
-	 * @return the profiled dataset
+	 * @return
 	 */
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<Void> postPDFToCosmos(
-			@RequestParam("document-id") final UUID documentId) {
+			@RequestParam("document-id") final UUID documentId,
+			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
 		final String currentUserId = currentUserService.get().getId();
-		extractionService.extractPDF(documentId, currentUserId);
+		extractionService.extractPDF(documentId, currentUserId, domain);
 		return ResponseEntity.accepted().build();
 	}
 
