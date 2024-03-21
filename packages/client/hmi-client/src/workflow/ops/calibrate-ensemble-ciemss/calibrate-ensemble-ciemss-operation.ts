@@ -5,8 +5,8 @@ import { ChartConfig } from '@/types/SimulateConfig';
 import type { EnsembleModelConfigs } from '@/types/Types';
 
 export interface EnsembleCalibrateExtraCiemss {
-	numSamples: number;
-	totalPopulation: number;
+	solverMethod: string;
+	numParticles: number; // The number of particles to use for the inference algorithm. https://github.com/ciemss/pyciemss/blob/1fc62b0d4b0870ca992514ad7a9b7a09a175ce44/pyciemss/interfaces.py#L225
 	numIterations: number;
 }
 
@@ -33,9 +33,9 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			chartConfigs: [],
 			mapping: [],
 			extra: {
-				numSamples: 50,
-				totalPopulation: 1000,
-				numIterations: 10
+				solverMethod: 'dopri5',
+				numParticles: 10,
+				numIterations: 100
 			},
 			simulationsInProgress: []
 		};

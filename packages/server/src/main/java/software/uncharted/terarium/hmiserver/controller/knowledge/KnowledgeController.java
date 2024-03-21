@@ -421,7 +421,7 @@ public class KnowledgeController {
 
 			final Set<String> codeIds = provenanceSearchService.modelsFromCode(payload);
 
-			String codeContentString = "No available code associated with model";
+			String codeContentString = "";
 			if (codeIds.size() > 0) {
 				final UUID codeId = UUID.fromString(codeIds.iterator().next());
 
@@ -440,7 +440,7 @@ public class KnowledgeController {
 			}
 
 			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
-			String documentText = "There is no documentation for this model";
+			String documentText = "";
 			if (documentOptional.isPresent()) {
 				final int MAX_CHAR_LIMIT = 9000;
 
@@ -628,7 +628,7 @@ public class KnowledgeController {
 			final JsonNode modelJson = mapper.valueToTree(model);
 
 			// ovewrite all updated fields
-			JsonUtil.recursiveSetAll((ObjectNode) modelJson, (ObjectNode) res.getBody());
+			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
 
 			// update the model
 			modelService.updateAsset(model);
