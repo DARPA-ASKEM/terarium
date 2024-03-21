@@ -177,12 +177,12 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 						transitionNode
 							.append('rect')
 							.attr('width', (d.width / matrixColLen) * d.aspectRatio)
-							.attr('height', d.width / matrixRowLen)
+							.attr('height', d.height / matrixRowLen)
 							.attr(
 								'x',
 								-d.width * 0.5 * d.aspectRatio + (d.width / matrixColLen) * d.aspectRatio * colIdx
 							)
-							.attr('y', -d.width * 0.5 + (d.width / matrixRowLen) * rowIdx)
+							.attr('y', -d.height * 0.5 + (d.height / matrixRowLen) * rowIdx)
 							.attr('rx', 2)
 							.attr('ry', 2)
 							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#8692a4')
@@ -190,6 +190,25 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 							.attr('stroke', '#ffffff')
 							.attr('stroke-width', 1);
 					}
+					// Draw label for number of columns
+					transitionNode
+						.append('text')
+						.attr('x', 0)
+						.attr('y', -d.height * 0.6)
+						.attr('text-anchor', 'middle') // This will center-align the text horizontally
+						.text(matrixColLen)
+						.style('fill', '#cccccc')
+						.style('font-size', '7px');
+
+					// Draw label for number of rows
+					transitionNode
+						.append('text')
+						.attr('x', (-d.width * d.aspectRatio) / 2 - 8)
+						.attr('y', (-d.height * d.aspectRatio) / 2 + 12)
+						.attr('text-anchor', 'right') // This will center-align the text horizontally
+						.text(matrixRowLen)
+						.style('fill', '#cccccc')
+						.style('font-size', '7px');
 				});
 			});
 		});
