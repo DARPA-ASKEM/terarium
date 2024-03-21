@@ -214,6 +214,7 @@ const requestConstraints = computed(
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
 			if (ele.constraintType === 'monotonicityConstraint') {
+				const weights = ele.weights ? ele.weights : [1.0];
 				const constraint = {
 					soft: true,
 					name: ele.name,
@@ -225,12 +226,12 @@ const requestConstraints = computed(
 						original_width: MAX
 					},
 					variables: ele.variables,
-					weights: [1.0],
+					weights: weights.map((d) => Math.abs(d)), // should be all positive
 					derivative: true
 				};
 
 				if (ele.derivativeType === 'increasing') {
-					constraint.weights = [-1.0];
+					constraint.weights = weights.map((d) => -Math.abs(d)); // should be all negative
 				}
 				return constraint;
 			}
