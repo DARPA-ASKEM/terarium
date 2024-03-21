@@ -80,7 +80,10 @@
 							:suggestions="filteredSemantics"
 							@complete="onSearch"
 							@item-select="onItemSelect"
-							option-label="name"
+							optionLabel="id"
+							optionGroupLabel="label"
+							optionGroupChildren="items"
+							dropdown
 						/>
 					</template>
 					<template #body="{ data }">
@@ -217,9 +220,10 @@ const assignmentTableData = computed<ComparisonData[]>(() => {
 	];
 });
 const semantics = computed(() => {
-	const semanticsArray: any[] = [];
+	const initialsArray: any[] = [];
+	const parametersArray: any[] = [];
 	props.model.semantics?.ode.initials?.forEach((initial) => {
-		semanticsArray.push({
+		initialsArray.push({
 			id: initial.target,
 			name: initial.target,
 			value: initial
@@ -227,14 +231,23 @@ const semantics = computed(() => {
 	});
 
 	props.model.semantics?.ode.parameters?.forEach((parameter) => {
-		semanticsArray.push({
+		parametersArray.push({
 			id: parameter.id,
 			name: parameter.name,
 			value: parameter
 		});
 	});
 
-	return semanticsArray;
+	return [
+		{
+			label: 'Initials',
+			items: initialsArray
+		},
+		{
+			label: 'Parameters',
+			items: parametersArray
+		}
+	];
 });
 
 const filteredSemantics = ref<any[]>([]);
@@ -297,7 +310,10 @@ const onCloseAssignemntModal = () => {
 
 const onSearch = (event: AutoCompleteCompleteEvent) => {
 	const query = event.query.toLowerCase();
-	filteredSemantics.value = semantics.value.filter((s) => s.name.toLowerCase().includes(query));
+	filteredSemantics.value = semantics.value.map((group) => ({
+		...group,
+		items: group.items.filter((item) => item.name && item.name.toLowerCase().includes(query))
+	}));
 };
 
 const onItemSelect = (event: AutoCompleteItemSelectEvent) => {
@@ -334,6 +350,13 @@ const updateModel = () => {
 			(i) => i.target === (selectedCurrentSemantic.value as Initial).target
 		);
 		if (!initial) return;
+
+		if (!clonedModel.metadata?.initials?.[selectedCurrentSemantic.value.target]) {
+			clonedModel.metadata ??= {};
+			clonedModel.metadata.initials ??= {};
+			clonedModel.metadata.initials[selectedCurrentSemantic.value.target] ??= {};
+		}
+
 		const metadata = clonedModel.metadata?.initials?.[selectedCurrentSemantic.value.target];
 
 		if (nameRow) {
@@ -376,7 +399,7 @@ const updateModel = () => {
 			};
 		}
 
-		if (valueRow && !Number.isNaN(valueRow.suggestedValue)) {
+		if (valueRow && !Number.isNaN(Number(valueRow.suggestedValue))) {
 			parameter.value = valueRow.suggestedValue;
 		}
 	}
