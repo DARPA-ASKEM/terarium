@@ -171,8 +171,8 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 		session: jupyterSession.session?.name || '',
 		channel: 'shell',
 		content: context_info,
-		msgType: 'climate_data_utility',
-		msgId: 'tgpt-climate_data_utility'
+		msgType: 'context_setup_request',
+		msgId: 'tgpt-context_setup_request'
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
@@ -200,7 +200,7 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	});
 	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
-			context: 'dataset',
+			context: 'climate_data_utility',
 			context_info: contextInfo
 		});
 	}
