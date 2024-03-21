@@ -300,7 +300,9 @@ public class KnowledgeController {
 			}
 
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get code to amr: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get code to amr from SKEMA");
 			}
 
 			Model model = mapper.treeToValue(resp.getBody(), Model.class);
@@ -456,7 +458,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get model card: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get model card");
 			}
 
 			final Card card = mapper.treeToValue(resp.getBody(), Card.class);
@@ -522,7 +526,7 @@ public class KnowledgeController {
 			final Dataset dataset = datasetService.getAsset(datasetId).orElseThrow();
 
 			if (dataset.getFileNames().isEmpty()) {
-				throw new RuntimeException("No files found on dataset");
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No files found on dataset");
 			}
 			final String filename = dataset.getFileNames().get(0);
 
@@ -532,7 +536,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get data card: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get data card");
 			}
 
 			final JsonNode card = resp.getBody();
@@ -621,7 +627,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
 			if (!res.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to link AMR file: " + res.getBody().asText());
+				throw new ResponseStatusException(
+						res.getStatusCode(),
+						"Unable to link AMR file");
 			}
 
 			final JsonNode modelJson = mapper.valueToTree(model);
