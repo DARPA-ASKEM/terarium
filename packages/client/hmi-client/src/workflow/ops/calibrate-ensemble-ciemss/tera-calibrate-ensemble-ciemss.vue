@@ -134,26 +134,26 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:chartConfig="cfg"
-					has-mean-line
-					@configuration-change="chartProxy.configurationChange(index, $event)"
-					:size="chartSize"
-					class="mb-2"
-				/>
+				<div ref="outputPanel">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.chartConfigs"
+						:key="index"
+						:run-results="runResults"
+						:chartConfig="cfg"
+						has-mean-line
+						@configuration-change="chartProxy.configurationChange(index, $event)"
+						:size="chartSize"
+						class="mb-2"
+					/>
+					<Button
+						class="p-button-sm p-button-text"
+						@click="chartProxy.addChart()"
+						label="Add chart"
+						icon="pi pi-plus"
+					/>
+				</div>
 				<Button
-					class="add-chart"
-					text
-					:outlined="true"
-					@click="chartProxy.addChart()"
-					label="Add chart"
-					icon="pi pi-plus"
-				/>
-				<Button
-					class="add-chart"
+					class="p-button-sm p-button-text"
 					title="Saves the current version of the model as a new Terarium asset"
 					@click="showSaveInput = !showSaveInput"
 				>
@@ -383,12 +383,6 @@ watch(
 </script>
 
 <style scoped>
-.add-chart {
-	width: 9em;
-	margin: 0em 1em;
-	margin-bottom: 1em;
-}
-
 .row-header {
 	display: flex;
 	flex-direction: column;
@@ -433,26 +427,6 @@ td {
 	margin: 0 1em;
 	font-weight: 700;
 	font-size: 1.75em;
-}
-
-.simulate-container {
-	overflow-y: scroll;
-}
-
-.simulate-chart {
-	margin: 2em 1em;
-}
-
-.sim-tspan-container {
-	display: flex;
-	gap: 1em;
-}
-
-.sim-tspan-group {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	flex-basis: 0;
 }
 
 :deep(.p-inputnumber-input, .p-inputwrapper) {

@@ -2,23 +2,24 @@
 	<section>
 		<template v-if="!showSpinner">
 			<section v-if="simulationIds">
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:initial-data="csvAsset"
-					:chartConfig="cfg"
-					has-mean-line
-					@configuration-change="chartConfigurationChange(index, $event)"
-				/>
-				<Button
-					class="add-chart"
-					text
-					:outlined="true"
-					@click="addChart"
-					label="Add chart"
-					icon="pi pi-plus"
-				/>
+				<div ref="outputPanel">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.chartConfigs"
+						:key="index"
+						:run-results="runResults"
+						:initial-data="csvAsset"
+						:chartConfig="cfg"
+						has-mean-line
+						:size="chartSize"
+						@configuration-change="chartProxy.configurationChange(index, $event)"
+					/>
+					<Button
+						class="p-button-sm p-button-text"
+						@click="chartProxy.addChart()"
+						label="Add chart"
+						icon="pi pi-plus"
+					/>
+				</div>
 			</section>
 			<template v-if="modelConfigIds && datasetId">
 				<div class="flex gap-2">
@@ -54,7 +55,6 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
 import { computed, ComputedRef, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ProgressState } from '@/types/Types';
@@ -74,12 +74,12 @@ import {
 	simulationPollAction
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import { RunResults } from '@/types/SimulateConfig';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { Poller, PollerState } from '@/api/api';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
-import { getTimespan } from '@/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
@@ -126,15 +126,10 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const poller = new Poller();
 
-onMounted(() => {
-	const runIds = querySimulationInProgress(props.node);
-	if (runIds.length > 0) {
-		getStatus(runIds[0]);
-	}
-});
-
-onUnmounted(() => {
-	poller.stop();
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
+	emit('update-state', state);
 });
 
 const runEnsemble = async () => {
@@ -181,7 +176,7 @@ const getStatus = async (simulationId: string) => {
 	}
 	completedRunId.value = simulationId;
 	updateOutputPorts(completedRunId);
-	addChart();
+	chartProxy.addChart();
 	showSpinner.value = false;
 };
 
@@ -194,19 +189,16 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
+onMounted(() => {
+	const runIds = querySimulationInProgress(props.node);
+	if (runIds.length > 0) {
+		getStatus(runIds[0]);
+	}
+});
 
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push({ selectedRun: '', selectedVariable: [] } as ChartConfig);
-
-	emit('update-state', state);
-};
+onUnmounted(() => {
+	poller.stop();
+});
 
 // Set up csv + dropdown names
 // Note: Same as calibrate side panel
