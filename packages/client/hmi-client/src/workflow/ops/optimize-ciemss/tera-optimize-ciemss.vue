@@ -156,11 +156,12 @@
 							:run-results="simulationRunResults[knobs.forecastRunId]"
 							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
 							has-mean-line
-							@configuration-change="configurationChange(idx, $event)"
+							:size="chartSize"
+							@configuration-change="chartProxy.configurationChange(idx, $event)"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
@@ -258,7 +259,8 @@ import {
 	Intervention as SimulationIntervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
+import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import {
@@ -312,6 +314,12 @@ const knobs = ref<BasicKnobs>({
 	optimzationRunId: props.node.state.optimzationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
 	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
+});
+
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
+	emit('update-state', state);
 });
 
 const showSpinner = ref(false);
@@ -383,20 +391,6 @@ const addInterventionPolicyGroupForm = () => {
 	if (!state.interventionPolicyGroups) return;
 
 	state.interventionPolicyGroups.push(blankInterventionPolicyGroup);
-	emit('update-state', state);
-};
-
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
 	emit('update-state', state);
 };
 
@@ -527,7 +521,7 @@ const getStatus = async (runId: string) => {
 
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
-		addChart();
+		chartProxy.addChart();
 	}
 
 	knobs.value.forecastRunId = runId;
