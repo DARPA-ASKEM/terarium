@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { upperFirst, lowerCase } from 'lodash';
+import { snakeToCapitalized } from '@/utils/text';
 import { computed } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import type { Dataset, ProjectAsset } from '@/types/Types';
@@ -124,11 +124,6 @@ function highlightSearchTerms(text: string | undefined): string {
 		return textUtil.highlight(text, props.highlight);
 	}
 	return text ?? '';
-}
-
-function snakeToCapitalized(snakeCaseString) {
-	const words = snakeCaseString.split('_');
-	return upperFirst(lowerCase(words.join(' ')));
 }
 
 function fetchAsset() {
