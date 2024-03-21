@@ -1,20 +1,16 @@
 <template>
 	<div class="data-transform-container">
 		<!-- Confirm Dialogs -->
-		<ConfirmDialog class="w-4" @accept="onAccept"> </ConfirmDialog>
+		<ConfirmDialog class="w-4" />
 
 		<!-- Toolbar -->
 		<div class="toolbar flex">
 			<!-- Kernel Status -->
 			<div class="toolbar-section">
 				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
-				<span
-					><header id="GPT">
-						{{
-							kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable'
-						}}
-					</header></span
-				>
+				<header id="GPT">
+					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable' }}
+				</header>
 			</div>
 			<span class="flex-auto"></span>
 
