@@ -2,48 +2,81 @@
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
 		<div :tabName="SubsetDataTabs.Wizard">
 			<tera-drilldown-section>
-				<h3>Select geo-boundaries</h3>
-				<img :src="preview" alt="Preview" />
+				<!-- Geo boundaries -->
+				<h5>Select geo-boundaries</h5>
+				<p class="subheader">
+					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
+					skipping to retain every nth data point for a coarser subset.
+				</p>
+
+				<!-- Preview image -->
+				<img v-if="preview" :src="preview" alt="Preview" />
+				<div v-else class="map-container">
+					<div class="geo-box" :style="geoBoxStyle"></div>
+					<p>No preview available</p>
+				</div>
+
+				<!-- Lat/Long inputs & range sliders -->
 				<span>
 					<label>Latitude</label>
 					<InputNumber v-model="latitudeStart" placeholder="Start" />
+					<Slider v-model="latitudeRange" range class="w-full" :min="-90" :max="90" :step="0.001" />
 					<InputNumber v-model="latitudeEnd" placeholder="End" />
 				</span>
 				<span>
 					<label>Longitude</label>
 					<InputNumber v-model="longitudeStart" placeholder="Start" />
+					<Slider
+						v-model="longitudeRange"
+						range
+						class="w-full"
+						:min="-180"
+						:max="180"
+						:step="0.001"
+					/>
 					<InputNumber v-model="longitudeEnd" placeholder="End" />
 				</span>
 				<code>
 					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
 					'{{ longitudeEnd }}'])
 				</code>
-				<span>
-					<Checkbox v-model="isSpatialSkipping" binary />
-					<label>Spatial skipping</label>
-				</span>
-				<div class="number-entry">
-					<label class="float-label">Keep every nth datapoint</label>
-					<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
+				<div class="flex flex-row align-items-center">
+					<span>
+						<Checkbox v-model="isSpatialSkipping" binary />
+						<label>Spatial skipping</label>
+					</span>
+
+					<span class="ml-3">
+						<p :class="!isSpatialSkipping ? 'disabled' : ''">Keep every nth datapoint</p>
+						<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
+					</span>
 				</div>
-				<h3>Select temporal slice</h3>
-				<span>
-					<div>
+
+				<!-- Temporal slice -->
+				<h5 class="mt-3">Select temporal slice</h5>
+				<p class="subheader">
+					Set your desired time range to define the temporal boundaries. Apply time skipping to
+					retain every nth time slice for a coarser subset.
+				</p>
+				<div class="flex flex-row">
+					<div class="col">
 						<label class="float-label">From</label>
-						<Calender v-model="fromDate" showIcon />
+						<Calender v-model="fromDate" showIcon showTime hourFormat="24" />
 					</div>
-					<div>
+					<div class="col">
 						<label class="float-label">To</label>
-						<Calender v-model="toDate" showIcon />
+						<Calender v-model="toDate" showIcon showTime hourFormat="24" />
 					</div>
-				</span>
-				<span>
-					<Checkbox v-model="isTimeSkipping" binary />
-					<label>Time skipping</label>
-				</span>
-				<div class="number-entry">
-					<label class="float-label">Keep every nth time slice</label>
-					<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
+				</div>
+				<div class="flex flex-row align-items-center">
+					<span>
+						<Checkbox v-model="isTimeSkipping" binary />
+						<label>Time skipping</label>
+					</span>
+					<span class="ml-3">
+						<p :class="!isTimeSkipping ? 'disabled' : ''">Keep every nth time slice</p>
+						<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
+					</span>
 				</div>
 				<template #footer>
 					<!--FIXME: A lot of these drilldowns have this margin auto for the left footer's button.
@@ -52,8 +85,9 @@
 					<Button
 						class="mr-auto"
 						@click="run"
-						label="Run"
-						icon="pi pi-play"
+						:label="isSubsetLoading ? 'Processing' : 'Run'"
+						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
+						:disabled="isSubsetLoading"
 						outlined
 						severity="secondary"
 					/>
@@ -184,6 +218,7 @@ import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
+import Slider from 'primevue/slider';
 import { logger } from '@/utils/logger';
 import { useProjects } from '@/composables/project';
 import { SubsetDataOperationState } from './subset-data-operation';
@@ -207,8 +242,82 @@ const isSubsetLoading = ref(props.node.state.isSubsetLoading);
 
 const latitudeStart = ref(props.node.state.latitudeStart);
 const latitudeEnd = ref(props.node.state.latitudeEnd);
+const latitudeRange = ref([latitudeStart.value, latitudeEnd.value]);
+// Watch for changes on latitudeStart and latitudeEnd to update the range
+watch(latitudeStart, (newValue) => {
+	latitudeRange.value = [newValue, latitudeRange.value[1]];
+});
+
+watch(latitudeEnd, (newValue) => {
+	latitudeRange.value = [latitudeRange.value[0], newValue];
+});
+
+// Watch for changes on latitudeRange to update the start and end values while preventing overlap
+watch(latitudeRange, (newRange) => {
+	if (newRange[0] <= newRange[1]) {
+		// Ensure the start is not greater than the end
+		latitudeStart.value = newRange[0];
+		latitudeEnd.value = newRange[1];
+	} else {
+		// Optionally, swap the values or reset to previous values to prevent the overlap
+		latitudeRange.value = [latitudeRange.value[0], latitudeRange.value[0]]; // Reset to avoid overlap
+	}
+});
+
 const longitudeStart = ref(props.node.state.longitudeStart);
 const longitudeEnd = ref(props.node.state.longitudeEnd);
+const longitudeRange = ref([longitudeStart.value, longitudeEnd.value]);
+
+// Watch for changes on latitudeRange to update the start and end values and allow handles to swap
+watch(latitudeRange, (newRange) => {
+	const [newStart, newEnd] = newRange;
+	if (newStart <= newEnd) {
+		latitudeStart.value = newStart;
+		latitudeEnd.value = newEnd;
+	} else {
+		// Swap values when the lower handle is dragged over the upper handle
+		latitudeStart.value = newEnd;
+		latitudeEnd.value = newStart;
+		// Update the range to reflect the swap
+		latitudeRange.value = [newEnd, newStart];
+	}
+});
+
+// Watch for changes on longitudeRange to update the start and end values and allow handles to swap
+watch(longitudeRange, (newRange) => {
+	const [newStart, newEnd] = newRange;
+	if (newStart <= newEnd) {
+		longitudeStart.value = newStart;
+		longitudeEnd.value = newEnd;
+	} else {
+		// Swap values when the lower handle is dragged over the upper handle
+		longitudeStart.value = newEnd;
+		longitudeEnd.value = newStart;
+		// Update the range to reflect the swap
+		longitudeRange.value = [newEnd, newStart];
+	}
+});
+
+const geoBoxStyle = computed(() => {
+	// Convert latitude and longitude to a percentage of the container
+	const latPercentStart = ((latitudeStart.value + 90) / 180) * 100;
+	const latPercentEnd = ((latitudeEnd.value + 90) / 180) * 100;
+	const longPercentStart = ((longitudeStart.value + 180) / 360) * 100;
+	const longPercentEnd = ((longitudeEnd.value + 180) / 360) * 100;
+
+	// Calculate the top, left, width, and height of the box
+	const top = `${100 - latPercentEnd}%`;
+	const left = `${longPercentStart}%`;
+	const width = `${longPercentEnd - longPercentStart}%`;
+	const height = `${latPercentEnd - latPercentStart}%`;
+
+	return {
+		top,
+		left,
+		width,
+		height
+	};
+});
 
 const isSpatialSkipping = ref(props.node.state.isSpatialSkipping);
 const spatialSkipping = ref(props.node.state.spatialSkipping);
@@ -285,6 +394,7 @@ async function saveSubsetAsNewDataset() {
 }
 
 async function run() {
+	console.log('running');
 	if (dataset.value?.esgfId && dataset.value?.id) {
 		await updateState();
 		mutateLoadingState(true);
@@ -363,6 +473,30 @@ watch(
 </script>
 
 <style scoped>
+.map-container {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 20%;
+	width: 100%;
+	background-color: var(--surface-ground);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	color: var(--text-color-subdued);
+}
+
+.geo-box {
+	position: absolute;
+	background-color: var(--surface-highlight);
+	border: 1px dashed var(--primary-color);
+	border-radius: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.8;
+}
+
 span {
 	display: flex;
 	align-items: center;
@@ -372,7 +506,13 @@ span {
 		width: 8rem;
 	}
 }
-
+.disabled {
+	color: var(--text-color-subdued);
+}
+.subheader {
+	color: var(--text-color-subdued);
+	margin-bottom: var(--gap-small);
+}
 :deep(main) {
 	gap: var(--gap);
 }
