@@ -66,9 +66,7 @@ export const profileDataset = async (
 ) => {
 	let response: any = null;
 	if (documentId && datasetId) {
-		response = await API.post(
-			`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`
-		);
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}

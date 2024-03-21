@@ -1,8 +1,7 @@
 <template>
 	<main>
 		<p v-if="isEmpty(relatedDocuments)">
-			Terarium can extract information from documents to add relevant information to this
-			resource.
+			Terarium can extract information from documents to add relevant information to this resource.
 		</p>
 		<template v-else>
 			<p>
@@ -71,18 +70,13 @@
 						You don't have any resources that can be used. Try adding some documents.
 					</div>
 					<div class="no-documents-text">
-						Would you like to generate descriptions without attaching additional
-						context?
+						Would you like to generate descriptions without attaching additional context?
 					</div>
 				</div>
 			</div>
 			<template #footer>
 				<Button severity="secondary" outlined label="Cancel" @click="closeDialog" />
-				<Button
-					:label="dialogActionCopy"
-					:disabled="isDialogDisabled"
-					@click="acceptDialog"
-				/>
+				<Button :label="dialogActionCopy" :disabled="isDialogDisabled" @click="acceptDialog" />
 			</template>
 		</Dialog>
 	</main>
@@ -141,8 +135,7 @@ const isDialogDisabled = computed(() => {
 const dialogActionCopy = computed(() => {
 	let result: string = '';
 	if (dialogType.value === DialogType.ENRICH) {
-		result =
-			props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
+		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
 	} else if (dialogType.value === DialogType.EXTRACT) {
 		result = 'Extract variables';
 	}
