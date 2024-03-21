@@ -1,27 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.ByteArrayEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.ClientEvent;
-import software.uncharted.terarium.hmiserver.models.ClientEventType;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
-import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
-import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,255 +12,310 @@ import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ByteArrayEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
+import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
+import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ExtractionService {
-    final DocumentAssetService documentService;
-    final ExtractionProxy extractionProxy;
-    final ObjectMapper objectMapper;
-    final ClientEventService clientEventService;
+	final DocumentAssetService documentService;
+	final ExtractionProxy extractionProxy;
+	final ObjectMapper objectMapper;
+	final ClientEventService clientEventService;
 
-    private ExecutorService executor = Executors.newFixedThreadPool(1);
+	private final ExecutorService executor = Executors.newFixedThreadPool(1);
 
-    private static final Integer TOTAL_EXTRACTION_STEPS = 14;
+	private static class ClientEventInterface {
 
-    public void extractPDF(UUID documentId, String userId) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    updateClient(documentId, 0, TOTAL_EXTRACTION_STEPS, userId);
-                    DocumentAsset document = documentService.getAsset(documentId).get();
-                    updateClient(documentId, 1, TOTAL_EXTRACTION_STEPS, userId);
+		private Double halfTimeSeconds = 2.0;
+		private Double startSeconds = 0.0;
+		private final UUID documentId;
+		private final String userId;
+		final ClientEventService clientEventService;
 
-                    if (document.getFileNames().isEmpty()) {
-                        String errorMsg = "No files found on document";
-                        updateClientError(documentId, 1, TOTAL_EXTRACTION_STEPS, errorMsg, userId);
-                        throw new RuntimeException(errorMsg);
-                    }
+		ClientEventInterface(final ClientEventService clientEventService, final UUID documentId, final String userId,
+				final Double halfTimeSeconds) {
+			this.clientEventService = clientEventService;
+			this.documentId = documentId;
+			this.userId = userId;
+			this.halfTimeSeconds = halfTimeSeconds;
+			this.startSeconds = System.currentTimeMillis() / 1000.0;
+		}
 
-                    final String filename = document.getFileNames().get(0);
+		private Double estimateT() {
+			return 1.0f - Math.pow(0.5, (getElapsedSeconds() / halfTimeSeconds));
+		}
 
-                    final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
-                    updateClient(documentId, 2, TOTAL_EXTRACTION_STEPS, userId);
+		private Double getElapsedSeconds() {
+			return (System.currentTimeMillis() / 1000.0) - startSeconds;
+		}
 
-                    final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, filename,
-                            "application/pdf");
+		private void updateClient(final UUID documentId, final Double t, final String message, final String error,
+				final String userId) {
+			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
+			final ClientEvent<ExtractionStatusUpdate> status = ClientEvent.<ExtractionStatusUpdate>builder()
+					.type(ClientEventType.EXTRACTION).data(update).build();
+			clientEventService.sendToUser(status, userId);
+		}
 
-                    final boolean compressImages = false;
-                    final boolean useCache = false;
-                    final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
-                            useCache,
-                            documentFile);
+		public void sendMessage(final String msg) {
+			updateClient(documentId, estimateT(), msg, null, userId);
+		}
 
-                    final JsonNode body = extractionResp.getBody();
-                    final UUID jobId = UUID.fromString(body.get("job_id").asText());
+		public void sendFinalMessage(final String msg) {
+			updateClient(documentId, 1.0, msg, null, userId);
+		}
 
-                    final int POLLING_INTERVAL_SECONDS = 5;
-                    final int MAX_EXECUTION_TIME_SECONDS = 600;
-                    final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
+		public void sendError(final String msg) {
+			updateClient(documentId, estimateT(), null, msg, userId);
+		}
 
-                    boolean jobDone = false;
-                    updateClient(documentId, 3, TOTAL_EXTRACTION_STEPS, userId);
-                    for (int i = 0; i < MAX_ITERATIONS; i++) {
+	}
 
-                        final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
-                        if (!statusResp.getStatusCode().is2xxSuccessful()) {
-                            String errorMsg = "Unable to poll status endpoint";
-                            updateClientError(documentId, 3, TOTAL_EXTRACTION_STEPS, errorMsg, userId);
-                            throw new RuntimeException(errorMsg);
-                        }
+	public void extractPDF(final UUID documentId, final String userId) {
 
-                        final JsonNode statusData = statusResp.getBody();
-                        if (!statusData.get("error").isNull()) {
-                            String errorMsg = "Extraction job failed: " + statusData.has("error");
-                            updateClientError(documentId, 3, TOTAL_EXTRACTION_STEPS, errorMsg, userId);
-                            throw new RuntimeException(errorMsg);
-                        }
+		// time the progress takes to reach each subsequent half
+		final Double HALFTIME_SECONDS = 2.0;
 
-                        log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
-                        jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
-                        if (jobDone) {
-                            updateClient(documentId, 4, TOTAL_EXTRACTION_STEPS, "PDF extraction complete; processing results...", userId);
-                            break;
-                        }
-                        Thread.sleep(POLLING_INTERVAL_SECONDS * 1000);
-                    }
+		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
+				HALFTIME_SECONDS);
 
-                    if (!jobDone) {
-                        String errorMsg = "Extraction job did not complete within the expected time";
-                        updateClientError(documentId, 5, TOTAL_EXTRACTION_STEPS, errorMsg, userId);
-                        throw new RuntimeException(errorMsg);
-                    }
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					clientInterface.sendMessage("Starting extraction...");
 
-                    final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
-                    if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
-                        String errorMsg = "Unable to fetch the extraction result";
-                        updateClientError(documentId, 6, TOTAL_EXTRACTION_STEPS, errorMsg, userId);
-                        throw new RuntimeException(errorMsg);
-                    }
+					DocumentAsset document = documentService.getAsset(documentId).get();
+					clientInterface.sendMessage("Document found, fetching file...");
 
-                    updateClient(documentId, 7, TOTAL_EXTRACTION_STEPS, userId);
-                    final String zipFileName = documentId + "_cosmos.zip";
-                    documentService.uploadFile(documentId, zipFileName, new ByteArrayEntity(zipFileResp.getBody()));
+					if (document.getFileNames().isEmpty()) {
+						final String errorMsg = "No files found on document";
+						clientInterface.sendError(errorMsg);
+						throw new RuntimeException(errorMsg);
+					}
 
-                    document.getFileNames().add(zipFileName);
+					final String filename = document.getFileNames().get(0);
 
-                    // Open the zipfile and extract the contents
+					final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
+					clientInterface.sendMessage("File fetched, processing PDF extraction...");
 
-                    updateClient(documentId, 8, TOTAL_EXTRACTION_STEPS, userId);
-                    final Map<String, HttpEntity> fileMap = new HashMap<>();
-                    try {
-                        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
-                        final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
+					final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, filename,
+							"application/pdf");
 
-                        ZipEntry entry = zipInputStream.getNextEntry();
-                        while (entry != null) {
+					final boolean compressImages = false;
+					final boolean useCache = false;
+					final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
+							useCache,
+							documentFile);
 
-                            fileMap.put(entry.getName(), zipEntryToHttpEntity(zipInputStream));
+					final JsonNode body = extractionResp.getBody();
+					final UUID jobId = UUID.fromString(body.get("job_id").asText());
 
-                            entry = zipInputStream.getNextEntry();
-                        }
+					final int POLLING_INTERVAL_SECONDS = 5;
+					final int MAX_EXECUTION_TIME_SECONDS = 600;
+					final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
 
-                        zipInputStream.closeEntry();
-                        zipInputStream.close();
-                    } catch (final IOException e) {
-                        String errorMsg = "Unable to extract the contents of the zip file";
-                        updateClientError(documentId, 8, TOTAL_EXTRACTION_STEPS, errorMsg, userId);
-                        throw new RuntimeException(errorMsg, e);
-                    }
+					boolean jobDone = false;
+					clientInterface.sendMessage("COSMOS extraction in progress...");
 
-                    final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
-                    if (!textResp.getStatusCode().is2xxSuccessful()) {
-                        String errorMsg = "Unable to fetch the text extractions";
-                        updateClientError(documentId, 9, TOTAL_EXTRACTION_STEPS, errorMsg, userId);
-                        throw new RuntimeException(errorMsg);
-                    }
+					for (int i = 0; i < MAX_ITERATIONS; i++) {
 
-                    // clear existing assets
-                    document.setAssets(new ArrayList<>());
-                    updateClient(documentId, 10, TOTAL_EXTRACTION_STEPS, userId);
+						final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
+						if (!statusResp.getStatusCode().is2xxSuccessful()) {
+							final String errorMsg = "Unable to poll status endpoint";
+							clientInterface.sendError(errorMsg);
+							throw new RuntimeException(errorMsg);
+						}
 
-                    for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
-                        final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
-                                extractionType.toStringPlural());
-                        log.info(" {} response status: {}", extractionType, response.getStatusCode());
-                        if (!response.getStatusCode().is2xxSuccessful()) {
-                            log.warn("Unable to fetch the {} extractions", extractionType);
-                            continue;
-                        }
+						final JsonNode statusData = statusResp.getBody();
+						if (!statusData.get("error").isNull()) {
+							final String errorMsg = "Extraction job failed: " + statusData.has("error");
+							clientInterface.sendError(errorMsg);
+							throw new RuntimeException(errorMsg);
+						}
 
-                        for (final JsonNode record : response.getBody()) {
+						log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
+						jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
+						if (jobDone) {
+							clientInterface.sendMessage("COSMOS extraction complete; processing results...");
+							break;
+						}
+						Thread.sleep(POLLING_INTERVAL_SECONDS * 1000);
+					}
 
-                            String fileName = "";
-                            if (record.has("img_pth")) {
+					if (!jobDone) {
+						final String errorMsg = "Extraction job did not complete within the expected time";
+						clientInterface.sendError(errorMsg);
+						throw new RuntimeException(errorMsg);
+					}
 
-                                final String path = record.get("img_pth").asText();
-                                fileName = path.substring(path.lastIndexOf("/") + 1);
+					final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
+					if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
+						final String errorMsg = "Unable to fetch the extraction result";
+						clientInterface.sendError(errorMsg);
+						throw new RuntimeException(errorMsg);
+					}
 
-                                if (fileMap.containsKey(fileName)) {
-                                    log.warn("Unable to find file {} in zipfile", fileName);
-                                }
+					clientInterface.sendMessage("Uploading COSMOS extraction results...");
+					final String zipFileName = documentId + "_cosmos.zip";
+					documentService.uploadFile(documentId, zipFileName, new ByteArrayEntity(zipFileResp.getBody()));
 
-                                final HttpEntity file = fileMap.get(fileName);
+					document.getFileNames().add(zipFileName);
 
-                                documentService.uploadFile(documentId, fileName, file);
+					// Open the zipfile and extract the contents
+					clientInterface.sendMessage("Extracting COSMOS extraction results...");
+					final Map<String, HttpEntity> fileMap = new HashMap<>();
+					try {
+						final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
+						final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
 
-                            } else {
-                                log.warn("No img_pth found in record: {}", record);
-                            }
+						ZipEntry entry = zipInputStream.getNextEntry();
+						while (entry != null) {
+							fileMap.put(entry.getName(), zipEntryToHttpEntity(zipInputStream));
+							entry = zipInputStream.getNextEntry();
+						}
 
-                            final DocumentExtraction extraction = new DocumentExtraction();
-                            extraction.setFileName(fileName);
-                            extraction.setAssetType(extractionType);
-                            extraction.setMetadata(objectMapper.convertValue(record, Map.class));
+						zipInputStream.closeEntry();
+						zipInputStream.close();
+					} catch (final IOException e) {
+						final String errorMsg = "Unable to extract the contents of the zip file";
+						clientInterface.sendError(errorMsg);
+						throw new RuntimeException(errorMsg, e);
+					}
 
-                            document.getAssets().add(extraction);
-                            updateClient(documentId, 11, TOTAL_EXTRACTION_STEPS, userId);
-                        }
-                    }
+					final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
+					if (!textResp.getStatusCode().is2xxSuccessful()) {
+						final String errorMsg = "Unable to fetch the text extractions";
+						clientInterface.sendError(errorMsg);
+						throw new RuntimeException(errorMsg);
+					}
 
-                    String responseText = "";
-                    for (final JsonNode record : textResp.getBody()) {
-                        if (record.has("content")) {
-                            responseText += record.get("content").asText() + "\n";
-                        } else {
-                            log.warn("No content found in record: {}", record);
-                        }
-                    }
+					// clear existing assets
+					document.setAssets(new ArrayList<>());
+					clientInterface.sendMessage("Uploading COSMOS extraction assets...");
 
-                    document.setText(responseText);
+					for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
+						final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
+								extractionType.toStringPlural());
+						log.info(" {} response status: {}", extractionType, response.getStatusCode());
+						if (!response.getStatusCode().is2xxSuccessful()) {
+							log.warn("Unable to fetch the {} extractions", extractionType);
+							continue;
+						}
 
-                    // update the document
-                    document = documentService.updateAsset(document).get();
-                    updateClient(documentId, 12, TOTAL_EXTRACTION_STEPS, "Document assets completed", userId);
+						for (final JsonNode record : response.getBody()) {
 
-                    if (document.getText() == null || document.getText().isEmpty()) {
-                        log.warn("Document {} has no text to send", documentId);
-                        updateClientError(documentId, 13, TOTAL_EXTRACTION_STEPS, "Model Card not created: document has no text", userId);
-                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
-                    }
+							String fileName = "";
+							if (record.has("img_pth")) {
 
-                    // check for input length
-                    if (document.getText().length() > 600000) {
-                        log.warn("Document {} text too long for GoLLM model card task", documentId);
-                        updateClientError(documentId, 13, TOTAL_EXTRACTION_STEPS, "Model Card not created: document text is too long", userId);
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
-                    }
+								final String path = record.get("img_pth").asText();
+								fileName = path.substring(path.lastIndexOf("/") + 1);
 
-                    final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-                    input.setResearchPaper(document.getText());
+								if (fileMap.containsKey(fileName)) {
+									log.warn("Unable to find file {} in zipfile", fileName);
+								}
 
-                    // Create the task
-                    final TaskRequest req = new TaskRequest();
-                    req.setType(TaskRequest.TaskType.GOLLM);
-                    req.setScript(ModelCardResponseHandler.NAME);
-                    req.setInput(objectMapper.writeValueAsBytes(input));
+								final HttpEntity file = fileMap.get(fileName);
+								documentService.uploadFile(documentId, fileName, file);
 
-                    final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
-                    props.setDocumentId(documentId);
-                    req.setAdditionalProperties(props);
-                    updateClient(documentId, 14, TOTAL_EXTRACTION_STEPS, "Extraction complete.", userId);
-                } catch (final Exception e) {
-                    final String error = "Unable to extract pdf";
-                    log.error(error, e);
-                    updateClientError(documentId, 14, TOTAL_EXTRACTION_STEPS, "Extraction failed, unexpected error.", userId);
-                    throw new ResponseStatusException(
-                            org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-                            error);
-                }
-            }
-        });
-    }
+							} else {
+								log.warn("No img_pth found in record: {}", record);
+							}
 
-    private void updateClient(UUID documentId, Integer step, Integer totalSteps, String userId) {
-        updateClient(documentId, step, totalSteps, null, null, userId);
-    }
+							final DocumentExtraction extraction = new DocumentExtraction();
+							extraction.setFileName(fileName);
+							extraction.setAssetType(extractionType);
+							extraction.setMetadata(objectMapper.convertValue(record, Map.class));
 
-    private void updateClient(UUID documentId, Integer step, Integer totalSteps, String message, String userId) {
-        updateClient(documentId, step, totalSteps, message, null, userId);
-    }
+							document.getAssets().add(extraction);
+							clientInterface.sendMessage(String.format("Add COSMOS extraction %s to Document...", filename));
+						}
+					}
 
-    private void updateClientError(UUID documentId, Integer step, Integer totalSteps, String error, String userId) {
-        updateClient(documentId, step, totalSteps, null, error, userId);
-    }
+					String responseText = "";
+					for (final JsonNode record : textResp.getBody()) {
+						if (record.has("content")) {
+							responseText += record.get("content").asText() + "\n";
+						} else {
+							log.warn("No content found in record: {}", record);
+						}
+					}
 
-    private void updateClient(UUID documentId, Integer step, Integer totalSteps, String message, String error, String userId) {
-        ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, step, totalSteps, message, error);
-        ClientEvent<ExtractionStatusUpdate> status =
-                ClientEvent.<ExtractionStatusUpdate>builder().type(ClientEventType.EXTRACTION).data(update).build();
-        clientEventService.sendToUser(status, userId);
-    }
+					document.setText(responseText);
 
-    public HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final byte[] buffer = new byte[1024];
-        int len;
-        while ((len = zipInputStream.read(buffer)) > 0) {
-            byteArrayOutputStream.write(buffer, 0, len);
-        }
+					// update the document
+					document = documentService.updateAsset(document).get();
+					clientInterface.sendMessage("Document updated");
 
-        return new ByteArrayEntity(byteArrayOutputStream.toByteArray());
-    }
+					if (document.getText() == null || document.getText().isEmpty()) {
+						log.warn("Document {} has no text to send", documentId);
+						clientInterface.sendError("Model Card not created: document has no text");
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
+					}
+
+					// check for input length
+					if (document.getText().length() > 600000) {
+						log.warn("Document {} text too long for GoLLM model card task", documentId);
+						clientInterface.sendError("Model Card not created: document text is too long");
+						throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
+					}
+
+					final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
+					input.setResearchPaper(document.getText());
+
+					// Create the task
+					final TaskRequest req = new TaskRequest();
+					req.setType(TaskRequest.TaskType.GOLLM);
+					req.setScript(ModelCardResponseHandler.NAME);
+					req.setInput(objectMapper.writeValueAsBytes(input));
+
+					final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+					props.setDocumentId(documentId);
+					req.setAdditionalProperties(props);
+					clientInterface.sendFinalMessage("Model Card task created");
+				} catch (final Exception e) {
+					final String error = "Unable to extract pdf";
+					log.error(error, e);
+					clientInterface.sendError("Extraction failed, unexpected error.");
+					throw new ResponseStatusException(
+							org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+							error);
+				}
+			}
+		});
+	}
+
+	public HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
+		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		final byte[] buffer = new byte[1024];
+		int len;
+		while ((len = zipInputStream.read(buffer)) > 0) {
+			byteArrayOutputStream.write(buffer, 0, len);
+		}
+
+		return new ByteArrayEntity(byteArrayOutputStream.toByteArray());
+	}
 }
