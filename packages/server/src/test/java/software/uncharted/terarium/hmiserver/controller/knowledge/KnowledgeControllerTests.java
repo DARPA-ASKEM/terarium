@@ -331,11 +331,11 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-to-cosmos")
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.param("document-id", documentAsset.getId().toString())
 				.with(csrf()))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 
 		documentAsset = documentAssetService.getAsset(documentAsset.getId()).orElseThrow();
 
