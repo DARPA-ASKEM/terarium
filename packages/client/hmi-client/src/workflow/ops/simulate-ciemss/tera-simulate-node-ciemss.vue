@@ -96,6 +96,7 @@ const pollResult = async (runId: string) => {
 			state.inProgressSimulationId = '';
 			state.errorMessage = errorMessage;
 			emit('update-state', state);
+			console.log('Simulation Error:', props.node.state.errorMessage);
 		}
 		throw Error('Failed Runs');
 	}

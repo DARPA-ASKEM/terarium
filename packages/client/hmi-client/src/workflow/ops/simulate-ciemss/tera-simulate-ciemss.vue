@@ -88,7 +88,7 @@
 					</SelectButton>
 				</div>
 				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
+					v-if="!_.isEmpty(node.state.errorMessage?.traceback)"
 					v-bind="node.state.errorMessage"
 				/>
 				<template v-if="runResults[selectedRunId]">
