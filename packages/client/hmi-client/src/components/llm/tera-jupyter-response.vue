@@ -67,7 +67,15 @@ import Menu from 'primevue/menu';
 import { defineEmits, ref, computed, onMounted, watch } from 'vue';
 import type { CsvAsset } from '@/types/Types';
 
-const emit = defineEmits(['cell-updated', 'preview-selected', 'update-kernel-state']);
+const emit = defineEmits([
+	'cell-updated',
+	'preview-selected',
+	'update-kernel-state',
+	'edit-prompt',
+	're-run-prompt',
+	'delete-prompt',
+	'delete-message'
+]);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
@@ -100,8 +108,8 @@ const showHideIcon = computed(() =>
 // Reference for the chat window menu and its items
 const chatWindowMenu = ref();
 const chatWindowMenuItems = ref([
-	{ label: 'Edit prompt', command: () => console.log('Edit prompt') },
-	{ label: 'Re-run answer', command: () => console.log('Re-run prompt') },
+	{ label: 'Edit prompt', command: () => emit('edit-prompt', props.msg.query_id) },
+	{ label: 'Re-run answer', command: () => emit('re-run-prompt', props.msg.query_id) },
 	{
 		label: showThoughtLabel,
 		icon: showHideIcon,
@@ -109,7 +117,11 @@ const chatWindowMenuItems = ref([
 			showThought.value = !showThought.value;
 		}
 	},
-	{ label: 'Delete', icon: 'pi pi-fw pi-trash', command: () => console.log('Delete prompt') }
+	{
+		label: 'Delete',
+		icon: 'pi pi-fw pi-trash',
+		command: () => emit('delete-prompt', props.msg.query_id)
+	}
 ]);
 
 // show the chat window menu
@@ -158,7 +170,7 @@ defineExpose({
 
 function onDeleteRequested(msgId) {
 	// Emit an event to request the deletion of a message with the specified msgId
-	emit('deleteMessage', msgId);
+	emit('delete-message', msgId);
 }
 
 // // This computed value filters the messages to only include the ones we want to display
