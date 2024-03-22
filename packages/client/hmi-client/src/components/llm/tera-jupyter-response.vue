@@ -43,7 +43,7 @@
 					<div v-if="m.header.msg_type === 'llm_thought'">
 						<tera-jupyter-response-thought
 							class="llm-thought"
-							:thought="formattedLlmThought(m.content.trim())"
+							:thought="formattedLlmThought(m.content)"
 							:show-thought="showThought || props.showChatThoughts"
 						/>
 					</div>
