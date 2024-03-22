@@ -118,6 +118,24 @@
 								:max-fraction-digits="10"
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Maxiter</label>
+							<InputNumber
+								class="p-inputtext-sm"
+								v-model="knobs.maxiter"
+								:min-fraction-digits="5"
+								:max-fraction-digits="1"
+							/>
+						</div>
+						<div class="label-and-input">
+							<label>Maxfeval</label>
+							<InputNumber
+								class="p-inputtext-sm"
+								v-model="knobs.maxfeval"
+								:min-fraction-digits="5"
+								:max-fraction-digits="1"
+							/>
+						</div>
 					</div>
 				</div>
 			</tera-drilldown-section>
@@ -291,6 +309,8 @@ interface BasicKnobs {
 	endTime: number;
 	numStochasticSamples: number;
 	solverMethod: string;
+	maxiter: number;
+	maxfeval: number;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
@@ -306,6 +326,8 @@ const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 1,
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
+	maxiter: props.node.state.maxiter ?? 5,
+	maxfeval: props.node.state.maxfeval ?? 25,
 	targetVariables: props.node.state.targetVariables ?? [],
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
@@ -448,8 +470,8 @@ const runOptimize = async () => {
 		extra: {
 			isMinimized: knobs.value.isMinimized,
 			numSamples: knobs.value.numStochasticSamples,
-			maxiter: 5,
-			maxfeval: 5,
+			maxiter: knobs.value.maxiter,
+			maxfeval: knobs.value.maxfeval,
 			alpha: (100 - knobs.value.riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
 		}
@@ -603,6 +625,8 @@ watch(
 		state.endTime = knobs.value.endTime;
 		state.numStochasticSamples = knobs.value.numStochasticSamples;
 		state.solverMethod = knobs.value.solverMethod;
+		state.maxiter = knobs.value.maxiter;
+		state.maxfeval = knobs.value.maxfeval;
 		state.targetVariables = knobs.value.targetVariables;
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
