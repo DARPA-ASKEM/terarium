@@ -566,11 +566,13 @@ const getStatus = async (runId: string) => {
 			toastTitle: 'Error - Ciemss'
 		});
 		const simulation = await getSimulation(runId);
-		errorMessage.value = {
-			name: simulation.id,
-			value: simulation.status,
-			traceback: simulation.statusMessage
-		};
+		if (simulation?.status && simulation?.statusMessage) {
+			errorMessage.value = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+		}
 		throw Error('Failed Runs');
 	}
 
@@ -603,11 +605,13 @@ const getOptimizeStatus = async (runId: string) => {
 			toastTitle: 'Error - Ciemss'
 		});
 		const simulation = await getSimulation(runId);
-		errorMessage.value = {
-			name: simulation.id,
-			value: simulation.status,
-			traceback: simulation.statusMessage
-		};
+		if (simulation?.status && simulation?.statusMessage) {
+			errorMessage.value = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+		}
 		throw Error('Failed Runs');
 	}
 
