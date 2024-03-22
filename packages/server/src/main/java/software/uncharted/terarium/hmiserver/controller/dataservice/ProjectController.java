@@ -380,7 +380,7 @@ public class ProjectController {
 					}
 				}
 			}
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		} catch (final Exception e) {
 			log.error("Error creating project assets", e);
 			throw new ResponseStatusException(
