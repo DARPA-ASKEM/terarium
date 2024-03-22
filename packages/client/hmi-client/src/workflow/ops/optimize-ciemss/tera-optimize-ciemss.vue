@@ -9,7 +9,7 @@
 		<section :tabName="OptimizeTabs.Wizard">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Settings</h4>
+					<h5>Settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
@@ -21,12 +21,6 @@
 						</div>
 					</div>
 					<div>
-						<Button
-							v-if="showAdditionalOptions"
-							class="p-button-sm p-button-text"
-							label="Hide additional options"
-							@click="toggleAdditonalOptions"
-						/>
 						<Button
 							v-if="!showAdditionalOptions"
 							class="p-button-sm p-button-text"
@@ -64,9 +58,15 @@
 							/>
 						</div>
 					</div>
+					<Button
+						v-if="showAdditionalOptions"
+						class="p-button-sm p-button-text w-3"
+						label="Hide additional options"
+						@click="toggleAdditonalOptions"
+					/>
 				</div>
 				<div class="form-section">
-					<h4>Intervention policy</h4>
+					<h5>Intervention policy</h5>
 					<tera-intervention-policy-group-form
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
@@ -85,7 +85,7 @@
 					</div>
 				</div>
 				<div class="form-section">
-					<h4>Constraint</h4>
+					<h5>Constraint</h5>
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Target-variable(s)</label>
@@ -94,6 +94,7 @@
 								:options="modelStateOptions.map((ele) => ele.id)"
 								v-model="knobs.targetVariables"
 								placeholder="Select"
+								filter
 							/>
 						</div>
 					</div>
@@ -123,7 +124,7 @@
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="OptimizeTabs.Notebook">
-			<h4>Notebook</h4>
+			<h5>Notebook</h5>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -133,9 +134,28 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
-				<div v-if="optimizationResult">
-					{{ optimizationResult }}
+				<!-- Optimize result.json display: -->
+				<div
+					v-if="optimizationResult && displayOptimizationResultMessage"
+					class="result-message-grid"
+				>
+					<span class="flex flex-row">
+						<h6>Response</h6>
+						<Button
+							icon="pi pi-times"
+							text
+							rounded
+							size="small"
+							class="ml-auto p-button-text"
+							@click="displayOptimizationResultMessage = !displayOptimizationResultMessage"
+						/>
+					</span>
+					<div v-for="(value, key) in optimizationResult" :key="key" class="result-message-row">
+						<div class="label">{{ key }}:</div>
+						<div class="value">{{ formatJsonValue(value) }}</div>
+					</div>
 				</div>
 				<SelectButton
 					:model-value="outputViewSelection"
@@ -172,6 +192,8 @@
 								selectedVariable: knobs.targetVariables
 							}"
 							:target-variable="knobs.targetVariables[0]"
+							:size="chartSize"
+							:threshold="knobs.threshold"
 						/>
 					</div>
 					<div v-else-if="outputViewSelection === OutputView.Data">
@@ -188,29 +210,43 @@
 			<Button
 				:disabled="isRunDisabled"
 				outlined
+				severity="secondary"
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
 				@click="runOptimize"
 			/>
-			<div class="label-and-input">
-				<label> Model Config Name</label>
-				<InputText v-model="knobs.modelConfigName" />
-			</div>
-			<div class="label-and-input">
-				<label> Model Config Description</label>
-				<InputText v-model="knobs.modelConfigDesc" />
-			</div>
 			<Button
-				:disabled="knobs.modelConfigName === ''"
 				outlined
+				severity="secondary"
 				label="Save as a new model configuration"
-				@click="saveModelConfiguration"
+				@click="showModelModal = true"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
+	<Dialog
+		v-model:visible="showModelModal"
+		modal
+		header="Save as new model configuration"
+		class="save-dialog w-4"
+	>
+		<div class="label-and-input">
+			<label> Model Config Name</label>
+			<InputText v-model="knobs.modelConfigName" />
+		</div>
+		<div class="label-and-input">
+			<label> Model Config Description</label>
+			<InputText v-model="knobs.modelConfigDesc" />
+		</div>
+		<Button
+			:disabled="knobs.modelConfigName === ''"
+			outlined
+			label="Save as a new model configuration"
+			@click="saveModelConfiguration"
+		/>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
@@ -224,6 +260,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
+import Dialog from 'primevue/dialog';
 import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -324,8 +361,8 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 
 const showSpinner = ref(false);
 const poller = new Poller();
-// const progress = ref({ status: ProgressState.Retrieving, value: 0 });
-// const completedRunId = ref<string>('');
+const showModelModal = ref(false);
+const displayOptimizationResultMessage = ref(true);
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -396,6 +433,13 @@ const addInterventionPolicyGroupForm = () => {
 
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
+};
+
+const formatJsonValue = (value) => {
+	if (typeof value === 'object' && value !== null) {
+		return JSON.stringify(value);
+	}
+	return value;
 };
 
 const initialize = async () => {
@@ -570,6 +614,7 @@ const saveModelConfiguration = async () => {
 	}
 
 	logger.success('Created model configuration');
+	showModelModal.value = false;
 };
 
 const setOutputValues = async () => {
@@ -643,6 +688,37 @@ watch(
 </script>
 
 <style scoped>
+.result-message-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 2px; /* Adjust the gap between rows as needed */
+	font-size: var(--font-caption);
+	background-color: var(--surface-glass);
+	border: solid 1px var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-small);
+}
+
+.result-message-row {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-small);
+}
+
+.label {
+	font-weight: bold;
+	width: 150px; /* Adjust the width of the label column as needed */
+}
+.value {
+	flex-grow: 1;
+}
+
+.failed-run {
+	border: 2px solid var(--error-color);
+	border-radius: var(--border-radius-big);
+	color: var(--error-color-text);
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;
