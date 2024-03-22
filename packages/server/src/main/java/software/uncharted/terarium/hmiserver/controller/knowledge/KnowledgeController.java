@@ -662,13 +662,14 @@ public class KnowledgeController {
 	@PostMapping("/variable-extractions")
 	public ResponseEntity<DocumentAsset> postPdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
+			@RequestParam(name = "model-ids", defaultValue = "[]") final List<UUID> modelIds,
 			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
 			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
 
 		try {
 			return ResponseEntity
-					.ok(extractionService.extractVariables(documentId, annotateSkema, annotateMIT, domain));
+					.ok(extractionService.extractVariables(documentId, modelIds, annotateSkema, annotateMIT, domain));
 		} catch (final IOException e) {
 			final String error = "Unable to get required assets";
 			log.error(error, e);

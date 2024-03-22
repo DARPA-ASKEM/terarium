@@ -33,6 +33,7 @@ import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -42,6 +43,7 @@ import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -52,6 +54,7 @@ import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 @Slf4j
 public class ExtractionService {
 	final DocumentAssetService documentService;
+	final ModelService modelService;
 	final ExtractionProxy extractionProxy;
 	final SkemaUnifiedProxy skemaUnifiedProxy;
 	final MitProxy mitProxy;
@@ -364,7 +367,8 @@ public class ExtractionService {
 		});
 	}
 
-	public DocumentAsset extractVariables(final UUID documentId, final Boolean annotateSkema, final Boolean annotateMIT,
+	public DocumentAsset extractVariables(final UUID documentId, final List<UUID> modelIds, final Boolean annotateSkema,
+			final Boolean annotateMIT,
 			final String domain) throws IOException {
 
 		DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
@@ -377,10 +381,17 @@ public class ExtractionService {
 		JsonNode skemaCollection = null;
 		JsonNode mitCollection = null;
 
-		// Send document to SKEMA
 		try {
-			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText());
 
+			// add optional models
+			final List<Model> models = new ArrayList<>();
+			for (final UUID modelId : modelIds) {
+				models.add(modelService.getAsset(modelId).orElseThrow());
+			}
+
+			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
+
+			log.info("Sending variable extraction request to SKEMA");
 			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
 					annotateSkema, body);
 
@@ -413,6 +424,7 @@ public class ExtractionService {
 			final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
 					"application/text");
 
+			log.info("Sending variable extraction request to MIT");
 			final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
 
 			if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
