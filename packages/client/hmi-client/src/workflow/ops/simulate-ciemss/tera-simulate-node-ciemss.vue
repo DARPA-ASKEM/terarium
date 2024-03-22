@@ -21,7 +21,7 @@
 			is-centered
 			style="height: 100%"
 		/>
-
+		<code v-if="!_.isEmpty(node.state?.errorMessage?.traceback)">Error</code>
 		<Button
 			v-if="areInputsFilled"
 			label="Edit"
@@ -42,7 +42,11 @@ import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
+import {
+	getRunResultCiemss,
+	pollAction,
+	getSimulation
+} from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/workflow/util';
@@ -71,6 +75,9 @@ const pollResult = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	const state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		return pollerResults;
@@ -80,6 +87,17 @@ const pollResult = async (runId: string) => {
 		logger.error(`Simulation: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			const errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			state.inProgressSimulationId = '';
+			state.errorMessage = errorMessage;
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 	return pollerResults;
