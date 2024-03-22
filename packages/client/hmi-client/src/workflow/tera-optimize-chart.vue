@@ -1,6 +1,6 @@
 <template>
 	<div class="row">
-		<canvas ref="chartCanvas"></canvas>
+		<canvas ref="chartCanvas" />
 	</div>
 </template>
 
