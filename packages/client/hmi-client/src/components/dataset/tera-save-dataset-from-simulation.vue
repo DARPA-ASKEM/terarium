@@ -2,32 +2,38 @@
 	<Button
 		:disabled="isSaveDisabled"
 		outlined
+		severity="secondary"
 		title="Saves the current version of the model as a new Terarium asset"
-		@click="showSaveInput = !showSaveInput"
+		@click="showSaveInput = true"
+		label="Save as new dataset"
+		icon="pi pi-save"
+	></Button>
+	<Dialog
+		v-model:visible="showSaveInput"
+		modal
+		header="Save as new dataset"
+		class="save-dialog w-4"
 	>
-		<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-		<span class="p-button-text">Save as new dataset</span>
-	</Button>
-	<span v-if="showSaveInput" class="show-save-input">
-		<InputText v-model="saveAsName" placeholder="New dataset name" />
-		<i
-			class="pi pi-times i"
-			:class="{ clear: hasValidDatasetName }"
-			@click="(saveAsName = ''), (showSaveInput = false)"
-		></i>
-		<i
-			v-if="useProjects().activeProject.value?.id"
-			class="pi pi-check i"
-			:class="{ save: hasValidDatasetName }"
-			@click="saveDatasetToProject"
-		></i>
-	</span>
+		<div class="dialog-content">
+			<div class="flex flex-column mt-2 gap-2">
+				<label for="saveNameInput">What do you want to call it?</label>
+				<InputText v-model="saveAsName" id="saveNameInput" placeholder="Enter name" />
+			</div>
+		</div>
+		<template #footer>
+			<div class="p-dialog-footer p-0 mb-2">
+				<Button label="Cancel" outlined severity="secondary" @click="showSaveInput = false" />
+				<Button label="Save" :disabled="!hasValidDatasetName" @click="saveDatasetToProject" />
+			</div>
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { saveDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
+import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
@@ -56,6 +62,7 @@ const saveDatasetToProject = async () => {
 			refresh();
 		}
 	}
+	showSaveInput.value = false;
 };
 </script>
 
