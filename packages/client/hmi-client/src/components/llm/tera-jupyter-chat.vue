@@ -16,7 +16,10 @@
 				:default-preview="defaultPreview"
 				@cell-updated="scrollToLastCell"
 				@preview-selected="previewSelected"
-				@deleteMessage="handleDeleteMessage"
+				@delete-message="handleDeleteMessage"
+				@delete-prompt="handleDeletePrompt"
+				@re-run-prompt="handleRerunPrompt"
+				@edit-prompt="reRunPrompt"
 			/>
 			<!-- spacer to prevent the floating input panel at the bottom of the screen from covering the bottom item -->
 			<div style="height: 8rem"></div>
@@ -92,19 +95,6 @@ const props = defineProps<{
 	notebookSession?: NotebookSession;
 }>();
 
-const handleDeleteMessage = (msgId) => {
-	// Iterate over notebookItems to find and remove the message with msgId
-	notebookItems.value.forEach((item) => {
-		const messageIndex = item.messages.findIndex((m) => m.header.msg_id === msgId);
-		if (messageIndex > -1) {
-			item.messages.splice(messageIndex, 1);
-		}
-	});
-
-	// Optionally, you might want to handle the case where a notebookItem
-	// has no more messages and whether it should be removed or kept
-};
-
 onMounted(async () => {
 	if (props.notebookSession) {
 		notebookItems.value = props.notebookSession.data?.history;
@@ -117,7 +107,6 @@ onMounted(async () => {
 	}
 });
 
-const queryString = ref('');
 const defaultPreview = ref('d1');
 
 const iopubMessageHandler = (_session, message) => {
@@ -153,8 +142,47 @@ const submitQuery = (inputStr: string | undefined) => {
 		kernel?.sendJupyterMessage(message);
 		newJupyterMessage(message);
 		isExecutingCode.value = true;
-		queryString.value = '';
 	}
+};
+
+const handleDeleteMessage = (msgId: string) => {
+	const beforeNumItems = notebookItems.value.length;
+	// if msgId is a id of top level code cell, remove the entire cell
+	notebookItems.value = notebookItems.value.filter((item) => item.query_id !== msgId);
+	if (beforeNumItems === notebookItems.value.length) {
+		// Iterate over notebookItems to find and remove the message with msgId
+		notebookItems.value.forEach((item) => {
+			const messageIndex = item.messages.findIndex((m) => m.header.msg_id === msgId);
+			if (messageIndex > -1) {
+				item.messages.splice(messageIndex, 1);
+			}
+		});
+	}
+};
+
+const handleDeletePrompt = (queryId: string) => {
+	notebookItems.value = notebookItems.value.filter((item) => item.query_id !== queryId);
+};
+
+const handleRerunPrompt = (queryId: string) => {
+	reRunPrompt(queryId);
+};
+
+const reRunPrompt = (queryId: string, query?: string) => {
+	const kernel = props.jupyterSession.session?.kernel as IKernelConnection;
+	if (!kernel) return;
+	updateKernelStatus(KernelState.busy);
+	const notebookItem = notebookItems.value.find((item) => item.query_id === queryId);
+	if (!notebookItem) return;
+	const llmRequestMsg = notebookItem.messages.find((m) => m.header.msg_type === 'llm_request');
+	if (!llmRequestMsg) return;
+	notebookItem.executions = [];
+	notebookItem.messages = [llmRequestMsg];
+	if (query) {
+		llmRequestMsg.content.request = query;
+	}
+	kernel.sendJupyterMessage(llmRequestMsg);
+	isExecutingCode.value = true;
 };
 
 const addCodeCell = () => {
@@ -244,9 +272,15 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'llm_response', 'beaker_response', 'dataset'].indexOf(
-			msgType
-		) > -1
+		[
+			'stream',
+			'code_cell',
+			'llm_request',
+			'llm_thought',
+			'llm_response',
+			'beaker_response',
+			'dataset'
+		].indexOf(msgType) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);

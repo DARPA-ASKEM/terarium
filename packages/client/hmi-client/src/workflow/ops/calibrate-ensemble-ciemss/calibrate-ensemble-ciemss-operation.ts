@@ -1,7 +1,4 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-// import type { EnsembleRequest } from '@/types/Types';
-// import { makeEnsembleJob } from '@/services/models/simulation-service';
-import { ChartConfig } from '@/types/SimulateConfig';
 import type { EnsembleModelConfigs } from '@/types/Types';
 
 export interface EnsembleCalibrateExtraCiemss {
@@ -11,10 +8,14 @@ export interface EnsembleCalibrateExtraCiemss {
 }
 
 export interface CalibrateEnsembleCiemssOperationState {
-	chartConfigs: ChartConfig[];
-	mapping: EnsembleModelConfigs[];
+	chartConfigs: string[][];
+	ensembleConfigs: EnsembleModelConfigs[];
+	timestampColName: string;
 	extra: EnsembleCalibrateExtraCiemss;
-	simulationsInProgress: string[];
+	inProgressCalibrationId: string;
+	inProgressForecastId: string;
+	calibrationId: string;
+	forecastRunId: string;
 }
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
@@ -31,13 +32,17 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
 			chartConfigs: [],
-			mapping: [],
+			ensembleConfigs: [],
+			timestampColName: '',
 			extra: {
 				solverMethod: 'dopri5',
 				numParticles: 10,
 				numIterations: 100
 			},
-			simulationsInProgress: []
+			inProgressCalibrationId: '',
+			inProgressForecastId: '',
+			calibrationId: '',
+			forecastRunId: ''
 		};
 		return init;
 	}

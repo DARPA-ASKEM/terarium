@@ -49,6 +49,7 @@ export type JupyterMessageType =
 	| 'dataset'
 	| 'model_preview'
 	| 'visualization'
+	| 'llm_thought'
 	| 'llm_request'
 	| 'llm_response'
 	| 'compile_expr_request'
