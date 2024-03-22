@@ -94,10 +94,6 @@ const pollResult = async (runId: string) => {
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		logger.error(`Calibration: ${runId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
 			const errorMessage = {
@@ -107,6 +103,9 @@ const pollResult = async (runId: string) => {
 			};
 			state.inProgressSimulationId = '';
 			state.errorMessage = errorMessage;
+			logger.error(errorMessage.traceback, {
+				toastTitle: 'Error - Pyciemss'
+			});
 			emit('update-state', state);
 		}
 		throw Error('Failed Runs');

@@ -580,19 +580,17 @@ const getStatus = async (runId: string) => {
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Simulate: ${runId} has failed`, {
-			toastTitle: 'Error - Ciemss'
-		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
-			const errorMessage = {
+			state.simulateErrorMessage = {
 				name: runId,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
-			state.simulateErrorMessage = errorMessage;
+			logger.error(state.simulateErrorMessage, {
+				toastTitle: 'Error - Ciemss'
+			});
 			emit('update-state', state);
 		}
 		throw Error('Failed Runs');
@@ -622,11 +620,7 @@ const getOptimizeStatus = async (runId: string) => {
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Optimize Run: ${runId} has failed`, {
-			toastTitle: 'Error - Ciemss'
-		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
 			const errorMessage = {
@@ -635,7 +629,10 @@ const getOptimizeStatus = async (runId: string) => {
 				traceback: simulation.statusMessage
 			};
 			state.optimizeErrorMessage = errorMessage;
-			console.log(errorMessage);
+			// throw if there are any failed runs for now
+			logger.error(state.optimizeErrorMessage, {
+				toastTitle: 'Error - Ciemss'
+			});
 			emit('update-state', state);
 		}
 		throw Error('Failed Runs');
