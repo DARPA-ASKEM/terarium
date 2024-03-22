@@ -434,7 +434,6 @@ public class DocumentController {
 			}
 			final String userId = project.get().getUserId();
 
-
 			// get pdf url and filename
 			final String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
 			final String filename = DownloadService.pdfNameFromUrl(fileUrl);
@@ -444,7 +443,7 @@ public class DocumentController {
 					null,
 					null, apikey);
 
-			String summaries = getSummaries(doi);
+			final String summaries = getSummaries(doi);
 
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
@@ -459,7 +458,7 @@ public class DocumentController {
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
 
 			// Upload the PDF from unpaywall
-			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId(), body.getDomain());
 
 			return ResponseEntity.accepted().build();
 		} catch (final IOException | URISyntaxException e) {
@@ -471,12 +470,11 @@ public class DocumentController {
 		}
 	}
 
-	private String getSummaries(String doi) {
-		String known_entities = "askem_object,url_extractions,summaries";
-		XDDResponse<DocumentsResponseOK> xddSummaries = documentProxy.getDocuments(api_es_key,
+	private String getSummaries(final String doi) {
+		final String known_entities = "askem_object,url_extractions,summaries";
+		final XDDResponse<DocumentsResponseOK> xddSummaries = documentProxy.getDocuments(api_es_key,
 				null, doi, null, null, null, null, null, null, null, null, null, null, null,
 				null, null, null, null, null, null, known_entities, null, null, null);
-
 
 		if (xddSummaries.getErrorMessage() != null) {
 			return null;
@@ -673,7 +671,7 @@ public class DocumentController {
 	 * @return extraction job id
 	 */
 	private void uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
-			final UUID docId) {
+			final UUID docId, final String domain) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
@@ -701,7 +699,7 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			extractionService.extractPDF(docId, currentUserId);
+			extractionService.extractPDF(docId, currentUserId, domain);
 		} catch (final ResponseStatusException e) {
 			log.error("Unable to upload PDF document then extract", e);
 			throw e;
