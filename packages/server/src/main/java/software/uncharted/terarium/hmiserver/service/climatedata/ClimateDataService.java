@@ -133,8 +133,12 @@ public class ClimateDataService {
         }
     }
 
-    private static String getPreviewFilename(final String esgfId, final String variableId) {
-        return String.join("/preview", esgfId, variableId);
+    private String getPreviewFilename(final String esgfId, final String variableId) {
+        return String.join("/", config.getImagePath(), String.join("-", "preview", esgfId, variableId));
+    }
+
+    public ClimateDataPreviewRepository getClimateDataPreviewRepository() {
+        return climateDataPreviewRepository;
     }
 
     public void addPreviewJob(final String esgfId, final String variableId, final String timestamps, final String timeIndex, final String statusId) {
@@ -159,8 +163,10 @@ public class ClimateDataService {
             final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
             if (url.isPresent()) {
                 return url.get();
+            } else {
+                log.debug("Image claims to be present and yet isn't - re-requesting preview generation");
+                climateDataPreviewRepository.delete(preview);
             }
-            throw new Exception("Failed to generate presigned s3 url");
         }
 
         return null;
