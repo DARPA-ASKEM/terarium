@@ -363,8 +363,7 @@ onMounted(async () => {
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-	const state = _.cloneDeep(props.node.state);
-	if (state.ensembleConfigs && state.ensembleConfigs.length === 0) {
+	if (knobs.value.ensembleConfigs && knobs.value.ensembleConfigs.length === 0) {
 		// TOM Fix this. This should check that the length of ensemble is = port length - 1
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
 			knobs.value.ensembleConfigs.push({
@@ -374,12 +373,10 @@ onMounted(async () => {
 			});
 		}
 	}
-	state.ensembleConfigs = knobs.value.ensembleConfigs;
+
 	if (knobs.value.ensembleConfigs.some((ele) => ele.weight === 0)) {
 		calculateEvenWeights();
 	}
-
-	emit('update-state', state);
 });
 
 watch(
@@ -401,7 +398,7 @@ watch(
 	() => knobs.value,
 	async () => {
 		const state = _.cloneDeep(props.node.state);
-		state.timestampColName = knobs.value.forecastRunId;
+		state.timestampColName = knobs.value.timestampColName;
 		state.extra = knobs.value.extra;
 		state.ensembleConfigs = knobs.value.ensembleConfigs;
 		emit('update-state', state);
