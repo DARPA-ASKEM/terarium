@@ -56,12 +56,13 @@ public class ClimateDataService {
 
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (!climateDataResponse.getResult().getJobResult().isNull()) {
-                final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
-                if (png != null && png.getPng() != null) {
+                final ClimateDataResultPreviews previews = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPreviews.class);
+                if (previews != null && previews.getPreviews() != null && previews.getPreviews().size() > 0) {
                     try {
-                        final int index = png.getPng().indexOf(',');
-                        if (index > -1 && index + 1 < png.getPng().length()) {
-                            final String pngBase64 = png.getPng().substring(index + 1);
+                        final ClimateDataResultPreviews.Preview preview = previews.getPreviews().get(0);
+                        final int index = preview.getImage().indexOf(',');
+                        if (index > -1 && index + 1 < preview.getImage().length()) {
+                            final String pngBase64 = preview.getImage().substring(index + 1);
                             final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
 
                             final String bucket = config.getFileStorageS3BucketName();
@@ -69,9 +70,9 @@ public class ClimateDataService {
 
                             s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
 
-                            final ClimateDataPreview preview = new ClimateDataPreview(previewTask);
+                            final ClimateDataPreview climateDataPreview = new ClimateDataPreview(previewTask);
 
-                            climateDataPreviewRepository.save(preview);
+                            climateDataPreviewRepository.save(climateDataPreview);
                         }
                     } catch(final Exception e) {
                         log.error("Failed to extract png", e);
