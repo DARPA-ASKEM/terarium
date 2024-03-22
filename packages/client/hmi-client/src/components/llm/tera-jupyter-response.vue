@@ -67,7 +67,12 @@ import Menu from 'primevue/menu';
 import { defineEmits, ref, computed, onMounted, watch } from 'vue';
 import type { CsvAsset } from '@/types/Types';
 
-const emit = defineEmits(['cell-updated', 'preview-selected', 'update-kernel-state']);
+const emit = defineEmits([
+	'cell-updated',
+	'deleteMessage',
+	'preview-selected',
+	'update-kernel-state'
+]);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
