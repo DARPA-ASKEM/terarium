@@ -120,21 +120,11 @@
 						</div>
 						<div class="label-and-input">
 							<label>Maxiter</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								v-model="knobs.maxiter"
-								:min-fraction-digits="5"
-								:max-fraction-digits="1"
-							/>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
 						</div>
 						<div class="label-and-input">
 							<label>Maxfeval</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								v-model="knobs.maxfeval"
-								:min-fraction-digits="5"
-								:max-fraction-digits="1"
-							/>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
 						</div>
 					</div>
 				</div>
