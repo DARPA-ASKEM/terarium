@@ -250,6 +250,7 @@ import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
 import * as DecapodesOp from './ops/decapodes/mod';
+import * as RegriddingOp from './ops/regridding/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -277,6 +278,7 @@ registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
 registry.registerOp(DecapodesOp);
+registry.registerOp(RegriddingOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -550,7 +552,10 @@ const contextMenuItems: MenuItem[] = [
 				label: SubsetDataOp.operation.displayName,
 				command: addOperatorToWorkflow(SubsetDataOp)
 			},
-			{ label: 'Transform gridded dataset', disabled: true }
+			{
+				label: RegriddingOp.operation.displayName,
+				command: addOperatorToWorkflow(RegriddingOp)
+			}
 		]
 	},
 	{
