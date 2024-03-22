@@ -168,7 +168,14 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
-				<tera-notebook-error v-if="!_.isEmpty(errorMessage.traceback)" v-bind="errorMessage" />
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.optimizeErrorMessage?.traceback)"
+					v-bind="node.state.optimizeErrorMessage"
+				/>
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.simulateErrorMessage?.traceback)"
+					v-bind="node.state.simulateErrorMessage"
+				/>
 				<template v-if="simulationRunResults[knobs.forecastRunId]">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
@@ -405,7 +412,6 @@ const modelStateOptions = ref<State[]>([]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
-const errorMessage = ref({ name: '', value: '', traceback: '' });
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -553,7 +559,9 @@ const getStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
-	errorMessage.value = { name: '', value: '', traceback: '' };
+	const state = _.cloneDeep(props.node.state);
+	state.simulateErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
@@ -567,16 +575,17 @@ const getStatus = async (runId: string) => {
 		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
-			errorMessage.value = {
+			const errorMessage = {
 				name: runId,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
+			state.simulateErrorMessage = errorMessage;
+			emit('update-state', state);
 		}
 		throw Error('Failed Runs');
 	}
 
-	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
 		chartProxy.addChart();
 	}
@@ -592,7 +601,9 @@ const getOptimizeStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
-	errorMessage.value = { name: '', value: '', traceback: '' };
+	const state = _.cloneDeep(props.node.state);
+	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
@@ -606,11 +617,14 @@ const getOptimizeStatus = async (runId: string) => {
 		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
-			errorMessage.value = {
+			const errorMessage = {
 				name: runId,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
+			state.optimizeErrorMessage = errorMessage;
+			console.log(errorMessage);
+			emit('update-state', state);
 		}
 		throw Error('Failed Runs');
 	}

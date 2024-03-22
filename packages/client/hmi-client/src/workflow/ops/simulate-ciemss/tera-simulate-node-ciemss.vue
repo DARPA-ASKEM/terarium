@@ -14,14 +14,13 @@
 				@configuration-change="chartProxy.configurationChange(idx, $event)"
 			/>
 		</template>
-
+		<code v-if="!_.isEmpty(node.state?.errorMessage?.traceback)">Error</code>
 		<tera-progress-spinner
 			v-if="inProgressSimulationId"
 			:font-size="2"
 			is-centered
 			style="height: 100%"
 		/>
-		<code v-if="!_.isEmpty(node.state?.errorMessage?.traceback)">Error</code>
 		<Button
 			v-if="areInputsFilled"
 			label="Edit"

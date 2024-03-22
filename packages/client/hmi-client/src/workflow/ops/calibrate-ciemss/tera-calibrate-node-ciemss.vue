@@ -16,6 +16,7 @@
 				@configuration-change="chartProxy.configurationChange(index, $event)"
 			/>
 		</template>
+		<code v-if="!_.isEmpty(node.state?.errorMessage?.traceback)">Error</code>
 
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId"
@@ -48,7 +49,8 @@ import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
-	makeForecastJobCiemss
+	makeForecastJobCiemss,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { chartActionsProxy } from '@/workflow/util';
@@ -84,6 +86,9 @@ const pollResult = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	const state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		return pollerResults;
@@ -93,6 +98,17 @@ const pollResult = async (runId: string) => {
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			const errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			state.inProgressSimulationId = '';
+			state.errorMessage = errorMessage;
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 	return pollerResults;
