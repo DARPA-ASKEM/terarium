@@ -86,8 +86,9 @@
 					<Button
 						:disabled="!amr"
 						outlined
+						severity="secondary"
 						size="large"
-						label="Save as new Model"
+						label="Save as new model"
 						@click="isNewModelModalVisible = true"
 					/>
 					<Button label="Close" size="large" @click="emit('close')" />
