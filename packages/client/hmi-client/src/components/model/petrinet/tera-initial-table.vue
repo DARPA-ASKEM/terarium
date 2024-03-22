@@ -11,17 +11,20 @@
 	>
 		<!-- Row expander, ID and Name columns -->
 		<Column expander class="w-3rem" />
-		<Column header="Symbol">
+
+		<!-- Symbol -->
+		<Column header="Symbol" class="w-2">
 			<template #body="slotProps">
 				<span class="truncate-text">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
 		</Column>
+
+		<!-- Name -->
 		<Column header="Name">
 			<template #body="{ data }">
 				<InputText
-					size="small"
 					v-model.lazy="data.name"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
 					@update:model-value="updateMetadata(data.value.target, 'name', $event)"
@@ -32,7 +35,6 @@
 		<Column header="Description" class="w-2">
 			<template #body="slotProps">
 				<InputText
-					size="small"
 					v-model.lazy="slotProps.data.description"
 					:disabled="configView || readonly || slotProps.data.type === ParamType.MATRIX"
 					@update:model-value="updateMetadata(slotProps.data.value.target, 'description', $event)"
@@ -83,7 +85,6 @@
 			<template #body="slotProps">
 				<InputText
 					v-if="slotProps.data.type === ParamType.CONSTANT"
-					size="small"
 					class="w-full"
 					:disabled="readonly"
 					v-model.lazy="slotProps.data.unit"
@@ -142,7 +143,7 @@
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
 					class="cursor-pointer secondary-text"
-					>Click to open</span
+					>Open matrix</span
 				>
 				<!-- Expression -->
 				<span
@@ -152,7 +153,6 @@
 					"
 				>
 					<InputText
-						size="small"
 						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
 						:disabled="readonly"
@@ -167,7 +167,6 @@
 			<template #body="{ data }">
 				<InputText
 					v-if="data.type === ParamType.CONSTANT"
-					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
 					:disabled="readonly"
@@ -421,9 +420,8 @@ const changeType = (initial: Initial, typeIndex: number) => {
 
 <style scoped>
 .truncate-text {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	display: flex;
+	width: 10rem;
 }
 
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
@@ -431,11 +429,11 @@ const changeType = (initial: Initial, typeIndex: number) => {
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
-	display: none;
+	visibility: hidden;
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
-	background: var(--surface-highlight);
+	background: var(--surface-0);
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {

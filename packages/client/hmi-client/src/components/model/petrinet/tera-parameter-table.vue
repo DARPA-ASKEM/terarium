@@ -11,17 +11,20 @@
 	>
 		<!-- Row expander, ID and Name columns -->
 		<Column expander class="w-3rem" />
-		<Column header="Symbol">
+
+		<!-- Symbol -->
+		<Column header="Symbol" class="w-2">
 			<template #body="slotProps">
 				<span class="truncate-text">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
 		</Column>
+
+		<!-- Name -->
 		<Column header="Name">
 			<template #body="{ data }">
 				<InputText
-					size="small"
 					v-model.lazy="data.name"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
 					@update:model-value="updateParamValue(data.value, 'name', $event)"
@@ -32,7 +35,6 @@
 		<Column header="Description" class="w-2">
 			<template #body="{ data }">
 				<InputText
-					size="small"
 					v-model.lazy="data.description"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
 					@update:model-value="updateParamValue(data.value, 'description', $event)"
@@ -83,7 +85,6 @@
 			<template #body="slotProps">
 				<InputText
 					v-if="slotProps.data.type !== ParamType.MATRIX"
-					size="small"
 					class="w-full"
 					v-model.lazy="slotProps.data.unit"
 					:disabled="readonly"
@@ -147,7 +148,7 @@
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
 					class="cursor-pointer secondary-text"
-					>Click to open</span
+					>Open matrix</span
 				>
 				<!-- Distribution -->
 				<div
@@ -156,7 +157,6 @@
 				>
 					<InputNumber
 						class="distribution-item min-value"
-						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -167,7 +167,6 @@
 					/>
 					<InputNumber
 						class="distribution-item max-value"
-						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
@@ -184,7 +183,6 @@
 					class="flex align-items-center"
 				>
 					<InputNumber
-						size="small"
 						class="constant-number"
 						inputId="numericInput"
 						mode="decimal"
@@ -195,7 +193,7 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
-					<Button
+					<!-- <Button
 						v-if="!readonly"
 						class="ml-2 pt-0 pb-0 w-5"
 						text
@@ -205,7 +203,7 @@
 						<span class="white-space-nowrap text-sm">Add ±</span>
 						<InputNumber
 							v-model="addPlusMinus"
-							size="small"
+	
 							text
 							class="constant-number add-plus-minus w-full"
 							inputId="convert-to-distribution"
@@ -215,7 +213,7 @@
 							:disabled="readonly"
 							@click.stop
 						/>
-					</Button>
+					</Button> -->
 				</span>
 
 				<!-- Time series -->
@@ -224,7 +222,6 @@
 					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
 				>
 					<InputText
-						size="small"
 						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
 						v-model.lazy="slotProps.data.timeseries"
 						:disabled="readonly"
@@ -240,7 +237,6 @@
 			<template #body="{ data }">
 				<InputText
 					v-if="data.type !== ParamType.MATRIX"
-					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
 					:disabled="readonly"
@@ -255,7 +251,6 @@
 				<Button
 					v-if="data.type !== ParamType.MATRIX"
 					text
-					size="small"
 					:label="`Suggested Configurations (${countSuggestions(data.id)})`"
 					@click="openSuggestedValuesModal(data.id)"
 				/>
@@ -324,7 +319,7 @@
 						</span>
 					</template>
 				</Column>
-				<Column header="Value Type">
+				<Column header="Value type">
 					<template #body="{ data }">
 						{{ typeOptions[getParamType(data.parameter, data.configuration.configuration)].label }}
 					</template>
@@ -583,7 +578,7 @@ const curies = ref<DKG[]>([]);
 
 const modelType = computed(() => getModelType(props.model));
 
-const addPlusMinus = ref(10);
+// const addPlusMinus = ref(10);
 
 const errorMessage = ref('');
 
@@ -765,9 +760,8 @@ const countSuggestions = (id): number =>
 
 <style scoped>
 .truncate-text {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	display: flex;
+	width: 10rem;
 }
 
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
@@ -775,11 +769,11 @@ const countSuggestions = (id): number =>
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
-	display: none;
+	visibility: hidden;
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
-	background: var(--surface-highlight);
+	background: var(--surface-0);
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {
@@ -826,7 +820,7 @@ const countSuggestions = (id): number =>
 .min-value::before {
 	content: 'Min';
 	position: relative;
-	top: var(--gap-small);
+	top: 11px;
 	left: var(--gap-small);
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
@@ -835,7 +829,7 @@ const countSuggestions = (id): number =>
 .max-value::before {
 	content: 'Max';
 	position: relative;
-	top: var(--gap-small);
+	top: 11px;
 	left: var(--gap-small);
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
