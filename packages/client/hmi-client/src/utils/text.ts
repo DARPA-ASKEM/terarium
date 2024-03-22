@@ -1,3 +1,5 @@
+import { upperFirst, lowerCase } from 'lodash';
+
 // Highlight text by search terms
 function highlightText(text: string, searchTerms: string): string {
 	// Define how we're highlighting text
@@ -26,4 +28,9 @@ function pascalCaseToCapitalSentence(pascalCaseString) {
 	return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-export { highlightText as highlight, pascalCaseToCapitalSentence };
+function snakeToCapitalized(snakeCaseString) {
+	const words = snakeCaseString.split('_');
+	return upperFirst(lowerCase(words.join(' ')));
+}
+
+export { highlightText as highlight, pascalCaseToCapitalSentence, snakeToCapitalized };

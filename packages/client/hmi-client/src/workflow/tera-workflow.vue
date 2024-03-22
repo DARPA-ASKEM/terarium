@@ -241,6 +241,7 @@ import * as ModelConfigOp from './ops/model-config/mod';
 import * as CalibrateCiemssOp from './ops/calibrate-ciemss/mod';
 import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
+import * as SubsetDataOp from './ops/subset-data/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 import * as OptimizeCiemssOp from './ops/optimize-ciemss/mod';
@@ -269,6 +270,7 @@ registry.registerOp(ModelConfigOp);
 registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
+registry.registerOp(SubsetDataOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(ModelCouplingOp);
@@ -546,7 +548,10 @@ const contextMenuItems: MenuItem[] = [
 				label: DatasetTransformerOp.operation.displayName,
 				command: addOperatorToWorkflow(DatasetTransformerOp)
 			},
-			{ label: 'Subset dataset', disabled: true },
+			{
+				label: SubsetDataOp.operation.displayName,
+				command: addOperatorToWorkflow(SubsetDataOp)
+			},
 			{ label: 'Transform gridded dataset', disabled: true },
 			{
 				label: RegriddingOp.operation.displayName,

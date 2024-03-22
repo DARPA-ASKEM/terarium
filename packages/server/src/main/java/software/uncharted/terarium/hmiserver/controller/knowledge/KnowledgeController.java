@@ -64,7 +64,6 @@ import software.uncharted.terarium.hmiserver.models.extractionservice.Extraction
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
@@ -127,17 +126,13 @@ public class KnowledgeController {
 			}
 			// Catch every exception thrown by the Proxy
 		} catch (final FeignException e) {
-			// If the Skema Unified Service does not return a 2xx status code, we throw a
-			// 500 error
-			final int status = e.status() < 400 ? 500 : e.status();
-			throw new ResponseStatusException(
-					HttpStatus.valueOf(status),
-					"Skema Unified Service did not return any AMR based on the provided Equations. \n"
-							+ e.getMessage());
+			final String error = "Skema Unified Service did not return any AMR based on the provided Equations";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.valueOf(e.status()), error + ": " + e.getMessage());
 		} catch (final Exception e) {
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to reach Skema Unified Service. " + e.getMessage());
+			final String error = "Unable to reach Skema Unified Service";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + ": " + e.getMessage());
 		}
 
 		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations. ";
@@ -294,14 +289,22 @@ public class KnowledgeController {
 
 				}
 			} catch (final FeignException e) {
-				log.error("SKEMA was unable to create a model with the code provided", e);
+				final String error = "SKEMA was unable to create a model with the code provided";
+				log.error(error, e);
 				throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY,
-						"Unable to get code to amr");
+						error + ": " + e.getMessage());
+			} catch (final Exception e) {
+				log.error("Unable to get code to amr", e);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						"Unable to get code to amr: " + e.getMessage());
 			}
 
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get code to amr: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get code to amr from SKEMA");
 			}
 
 			Model model = mapper.treeToValue(resp.getBody(), Model.class);
@@ -341,7 +344,7 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.error("Unable to get code to amr", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -370,7 +373,7 @@ public class KnowledgeController {
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 			final String filename = input.getOriginalFilename();
 
-			codeService.uploadFile(code.getId(), filename, fileEntity);
+			codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();
@@ -384,11 +387,11 @@ public class KnowledgeController {
 
 			// 3. create model from code asset
 			return postCodeToAMR(createdCode.getId(), "temp model", "temp model description", false, false);
-		} catch (final Exception e) {
-			log.error("unable to upload file", e);
+		} catch (final IOException e) {
+			log.error("Unable to upload file", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Error creating running code to model");
+					"Error creating running code to model: " + e.getMessage());
 		}
 	}
 
@@ -457,7 +460,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get model card: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get model card");
 			}
 
 			final Card card = mapper.treeToValue(resp.getBody(), Card.class);
@@ -475,11 +480,11 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(modelService.updateAsset(model).orElseThrow());
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.error("Unable to get profile model", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to get profile model");
+					"Unable to get profile model: " + e.getMessage());
 		}
 	}
 
@@ -517,13 +522,13 @@ public class KnowledgeController {
 				}
 			} else {
 				documentFile = new StringMultipartFile("There is no documentation for this dataset",
-						documentId.get() + ".txt", "application/text");
+						"", "application/text");
 			}
 
 			final Dataset dataset = datasetService.getAsset(datasetId).orElseThrow();
 
-			if (dataset.getFileNames().isEmpty()) {
-				throw new RuntimeException("No files found on dataset");
+			if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No files found on dataset");
 			}
 			final String filename = dataset.getFileNames().get(0);
 
@@ -533,7 +538,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
 			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to get data card: " + resp.getBody().asText());
+				throw new ResponseStatusException(
+						resp.getStatusCode(),
+						"Unable to get data card");
 			}
 
 			final JsonNode card = resp.getBody();
@@ -595,7 +602,7 @@ public class KnowledgeController {
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
@@ -622,7 +629,9 @@ public class KnowledgeController {
 
 			final ResponseEntity<JsonNode> res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
 			if (!res.getStatusCode().is2xxSuccessful()) {
-				throw new RuntimeException("Unable to link AMR file: " + res.getBody().asText());
+				throw new ResponseStatusException(
+						res.getStatusCode(),
+						"Unable to link AMR file");
 			}
 
 			final JsonNode modelJson = mapper.valueToTree(model);
@@ -641,139 +650,31 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			final String error = "Unable to get link amr";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
 	@PostMapping("/variable-extractions")
-	ResponseEntity<DocumentAsset> postPdfExtractions(
+	public ResponseEntity<DocumentAsset> postPdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
 			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
+
 		try {
-
-			DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
-
-			if (document.getText() == null || document.getText().isEmpty()) {
-				throw new RuntimeException(
-						"No text found in paper document, please ensure to submit to /variable-extractions endpoint.");
-			}
-
-			final List<JsonNode> collections = new ArrayList<>();
-			JsonNode skemaCollection = null;
-			JsonNode mitCollection = null;
-
-			// Send document to SKEMA
-			try {
-				final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText());
-
-				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
-						annotateSkema, body);
-
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode output : resp.getBody().get("outputs")) {
-						if (!output.has("errors") || output.get("errors").size() == 0) {
-							skemaCollection = output.get("data");
-							break;
-						}
-					}
-
-					if (skemaCollection != null) {
-						collections.add(skemaCollection);
-					}
-				} else {
-					log.error("Unable to extract variables from document: " + document.getId());
-				}
-
-			} catch (final Exception e) {
-				log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
-			}
-
-			// Send document to MIT
-			try {
-				final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
-						"application/text");
-
-				final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
-
-				if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-					mitCollection = resp.getBody();
-					collections.add(mitCollection);
-				} else {
-					log.error("Unable to extract variables from document: " + document.getId());
-				}
-
-			} catch (final Exception e) {
-				log.error("MIT variable extraction for document {} failed", documentId, e);
-			}
-
-			if (skemaCollection == null && mitCollection == null) {
-				throw new RuntimeException("Unable to extract variables from document: " + document.getId());
-			}
-
-			final List<JsonNode> attributes = new ArrayList<>();
-
-			if (skemaCollection == null || mitCollection == null) {
-				log.info("Falling back on single variable extraction since one system failed");
-				for (final JsonNode collection : collections) {
-					for (final JsonNode attribute : collection.get("attributes")) {
-						attributes.add(attribute);
-					}
-				}
-			} else {
-				// Merge both with some de de-duplications
-
-				final StringMultipartFile arizonaFile = new StringMultipartFile(
-						mapper.writeValueAsString(skemaCollection),
-						"text.json",
-						"application/json");
-
-				final StringMultipartFile mitFile = new StringMultipartFile(
-						mapper.writeValueAsString(mitCollection),
-						"text.json",
-						"application/json");
-
-				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
-						arizonaFile);
-
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode attribute : resp.getBody().get("attributes")) {
-						attributes.add(attribute);
-					}
-				} else {
-					// fallback to collection
-					log.info("MIT merge failed: {}", resp.getBody().asText());
-					for (final JsonNode collection : collections) {
-						for (final JsonNode attribute : collection.get("attributes")) {
-							attributes.add(attribute);
-						}
-					}
-				}
-			}
-
-			// add the attributes to the metadata
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-			document.getMetadata().put("attributes", attributes);
-
-			// update the document
-			document = documentService.updateAsset(document).orElseThrow();
-
-			return ResponseEntity.ok(document);
-
+			return ResponseEntity
+					.ok(extractionService.extractVariables(documentId, annotateSkema, annotateMIT, domain));
 		} catch (final IOException e) {
 			final String error = "Unable to get required assets";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
@@ -781,14 +682,15 @@ public class KnowledgeController {
 	 * Document Extractions
 	 *
 	 * @param documentId (String): The ID of the document to profile
-	 * @return the profiled dataset
+	 * @return
 	 */
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	public ResponseEntity<Void> postPDFToCosmos(
-			@RequestParam("document-id") final UUID documentId) {
+			@RequestParam("document-id") final UUID documentId,
+			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
 		final String currentUserId = currentUserService.get().getId();
-		extractionService.extractPDF(documentId, currentUserId);
+		extractionService.extractPDF(documentId, currentUserId, domain);
 		return ResponseEntity.accepted().build();
 	}
 
