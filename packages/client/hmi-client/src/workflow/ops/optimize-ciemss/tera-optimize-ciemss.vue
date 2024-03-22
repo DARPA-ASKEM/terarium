@@ -168,6 +168,7 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
+				<tera-notebook-error v-if="!_.isEmpty(errorMessage.traceback)" v-bind="errorMessage" />
 				<template v-if="simulationRunResults[knobs.forecastRunId]">
 					<div v-if="outputViewSelection === OutputView.Charts">
 						<tera-simulate-chart
@@ -279,7 +280,8 @@ import {
 	makeForecastJobCiemss,
 	pollAction,
 	getRunResultCiemss,
-	getRunResult
+	getRunResult,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { Poller, PollerState } from '@/api/api';
@@ -300,6 +302,7 @@ import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -402,6 +405,7 @@ const modelStateOptions = ref<State[]>([]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
+const errorMessage = ref({ name: '', value: '', traceback: '' });
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -504,6 +508,8 @@ const runOptimize = async () => {
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
 
+	console.log(policyResult.value);
+
 	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
 	for (let i = 0; i < optimizeInterventions.paramNames.length; i++) {
 		if (policyResult.value?.at(i) && optimizeInterventions.startTime?.[i]) {
@@ -549,6 +555,7 @@ const getStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	errorMessage.value = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
@@ -560,6 +567,12 @@ const getStatus = async (runId: string) => {
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
+		const simulation = await getSimulation(runId);
+		errorMessage.value = {
+			name: simulation.id,
+			value: simulation.status,
+			traceback: simulation.statusMessage
+		};
 		throw Error('Failed Runs');
 	}
 
@@ -579,6 +592,7 @@ const getOptimizeStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	errorMessage.value = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
@@ -590,6 +604,12 @@ const getOptimizeStatus = async (runId: string) => {
 		logger.error(`Optimize Run: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
+		const simulation = await getSimulation(runId);
+		errorMessage.value = {
+			name: simulation.id,
+			value: simulation.status,
+			traceback: simulation.statusMessage
+		};
 		throw Error('Failed Runs');
 	}
 
@@ -634,6 +654,7 @@ const setOutputValues = async () => {
 		'optimize_results.json'
 	);
 	optimizationResult.value = optimzationResult;
+	console.log(optimizationResult.value);
 };
 
 onMounted(async () => {
