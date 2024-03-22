@@ -118,14 +118,13 @@ watch(
 					end: 100
 				},
 				engine: 'ciemss',
-				extra: { num_samples: props.node.state.extra.numIterations }
+				extra: {
+					num_samples: props.node.state.extra.numIterations,
+					inferred_parameters: id
+				}
 			};
-			console.log('Starting ensemble ciemss simulation with: ');
-			console.log(params);
 			const simulationResponse = await makeEnsembleCiemssSimulation(params);
 			const forecastId = simulationResponse.simulationId;
-			console.log('forecast id: ');
-			console.log(simulationResponse);
 
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressCalibrationId = '';

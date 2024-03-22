@@ -363,8 +363,8 @@ onMounted(async () => {
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-	// initalize ensembleConfigs when its length is less than the amount of models provided to node (- 1 due to dataset)
-	if (knobs.value.ensembleConfigs.length < props.node.inputs.length - 1) {
+	// initalize ensembleConfigs when its length is less than the amount of models provided to node (- 1 due to dataset, -1 due to last empty )
+	if (knobs.value.ensembleConfigs.length < props.node.inputs.length - 2) {
 		knobs.value.ensembleConfigs = [];
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
 			knobs.value.ensembleConfigs.push({
