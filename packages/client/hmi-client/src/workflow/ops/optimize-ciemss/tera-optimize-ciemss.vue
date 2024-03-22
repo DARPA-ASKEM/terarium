@@ -134,7 +134,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				:class="optimizationResult.success === 'False' ? 'failed-run' : ''"
+				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
 				<!-- Optimize result.json display: -->
 				<div
