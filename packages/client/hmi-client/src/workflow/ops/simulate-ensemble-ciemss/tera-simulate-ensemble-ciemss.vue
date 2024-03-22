@@ -124,14 +124,6 @@
 								"
 							/>
 						</div>
-						<!-- <InputText v-model="newSolutionMappingKey" class="w-4" placeholder="Ensemble variable name" />
-						<Button
-							:disabled="!newSolutionMappingKey"
-							class="p-button-sm p-button-outlined ml-2"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/> -->
 					</section>
 				</AccordionTab>
 
