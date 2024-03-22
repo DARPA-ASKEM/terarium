@@ -1464,6 +1464,7 @@ export enum WorkflowOperationTypes {
     OptimizeCiemss = "OPTIMIZE_CIEMSS",
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
+    Regridding = "REGRIDDING",
     Document = "DOCUMENT",
 }
 
