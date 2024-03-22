@@ -69,7 +69,7 @@ import type { CsvAsset } from '@/types/Types';
 
 const emit = defineEmits([
 	'cell-updated',
-	'deleteMessage',
+	'delete-message',
 	'preview-selected',
 	'update-kernel-state'
 ]);
@@ -163,7 +163,7 @@ defineExpose({
 
 function onDeleteRequested(msgId: string) {
 	// Emit an event to request the deletion of a message with the specified msgId
-	emit('deleteMessage', msgId);
+	emit('delete-message', msgId);
 }
 
 // // This computed value filters the messages to only include the ones we want to display
