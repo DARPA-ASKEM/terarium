@@ -662,7 +662,6 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 	}
 	switch (type.value) {
 		case ParamType.CONSTANT:
-			delete param.distribution;
 			delete clonedModel.metadata?.timeseries?.[param.id];
 			replaceParam(clonedModel, param, idx);
 			break;
@@ -678,7 +677,6 @@ const changeType = (param: ModelParameter, typeIndex: number) => {
 			replaceParam(clonedModel, param, idx);
 			break;
 		case ParamType.TIME_SERIES:
-			delete param.distribution;
 			if (!clonedModel.metadata?.timeseries) {
 				clonedModel.metadata ??= {};
 				clonedModel.metadata.timeseries = {};
