@@ -17,6 +17,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
@@ -345,6 +347,11 @@ public class ExtractionService {
 					}
 
 					clientInterface.sendFinalMessage("Extraction complete");
+				} catch (final FeignException e) {
+					final String error = "Transitive service failure";
+					throw new ResponseStatusException(
+							HttpStatus.valueOf(e.status()),
+							error + ": " + e.getMessage());
 				} catch (final Exception e) {
 					final String error = "Unable to extract pdf";
 					log.error(error, e);
@@ -392,6 +399,11 @@ public class ExtractionService {
 				log.error("Unable to extract variables from document: " + document.getId());
 			}
 
+		} catch (final FeignException e) {
+			final String error = "SKEMA integrated-text-extractions request failed";
+			throw new ResponseStatusException(
+					HttpStatus.valueOf(e.status()),
+					error + ": " + e.getMessage());
 		} catch (final Exception e) {
 			log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
 		}
@@ -410,6 +422,11 @@ public class ExtractionService {
 				log.error("Unable to extract variables from document: " + document.getId());
 			}
 
+		} catch (final FeignException e) {
+			final String error = "MIT upload_file_extract request failed";
+			throw new ResponseStatusException(
+					HttpStatus.valueOf(e.status()),
+					error + ": " + e.getMessage());
 		} catch (final Exception e) {
 			log.error("MIT variable extraction for document {} failed", documentId, e);
 		}
@@ -440,21 +457,30 @@ public class ExtractionService {
 					"text.json",
 					"application/json");
 
-			final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
-					arizonaFile);
+			try {
+				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
+						arizonaFile);
 
-			if (resp.getStatusCode().is2xxSuccessful()) {
-				for (final JsonNode attribute : resp.getBody().get("attributes")) {
-					attributes.add(attribute);
-				}
-			} else {
-				// fallback to collection
-				log.info("MIT merge failed: {}", resp.getBody().asText());
-				for (final JsonNode collection : collections) {
-					for (final JsonNode attribute : collection.get("attributes")) {
+				if (resp.getStatusCode().is2xxSuccessful()) {
+					for (final JsonNode attribute : resp.getBody().get("attributes")) {
 						attributes.add(attribute);
 					}
+				} else {
+					// fallback to collection
+					log.info("MIT merge failed: {}", resp.getBody().asText());
+					for (final JsonNode collection : collections) {
+						for (final JsonNode attribute : collection.get("attributes")) {
+							attributes.add(attribute);
+						}
+					}
 				}
+			} catch (final FeignException e) {
+				final String error = "MIT get_mapping request failed";
+				throw new ResponseStatusException(
+						HttpStatus.valueOf(e.status()),
+						error + ": " + e.getMessage());
+			} catch (final Exception e) {
+				log.error("MIT merge failed", e);
 			}
 		}
 
