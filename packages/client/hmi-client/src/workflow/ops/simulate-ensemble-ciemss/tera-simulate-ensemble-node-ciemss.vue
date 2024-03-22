@@ -21,7 +21,6 @@
 	<tera-operator-placeholder v-else :operation-type="node.operationType">
 		Connect a model configuration
 	</tera-operator-placeholder>
-	<code v-if="!_.isEmpty(node.state?.errorMessage?.traceback)">Error</code>
 	<tera-progress-spinner
 		v-if="inProgressSimulationId"
 		:font-size="2"

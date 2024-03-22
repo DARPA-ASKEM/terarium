@@ -16,7 +16,6 @@
 				@configuration-change="chartProxy.configurationChange(index, $event)"
 			/>
 		</template>
-		<code v-if="!_.isEmpty(node.state?.errorMessage?.traceback)">Error</code>
 
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId"
