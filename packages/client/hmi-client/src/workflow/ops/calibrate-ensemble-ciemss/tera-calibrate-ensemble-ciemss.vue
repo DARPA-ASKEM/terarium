@@ -398,14 +398,15 @@ watch(
 );
 
 watch(
-	() => knobs.value.extra,
+	() => knobs.value,
 	async () => {
 		const state = _.cloneDeep(props.node.state);
+		state.timestampColName = knobs.value.forecastRunId;
 		state.extra = knobs.value.extra;
-
+		state.ensembleConfigs = knobs.value.ensembleConfigs;
 		emit('update-state', state);
 	},
-	{ immediate: true }
+	{ deep: true }
 );
 </script>
 
