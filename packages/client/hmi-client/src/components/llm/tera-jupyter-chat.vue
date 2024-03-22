@@ -18,6 +18,7 @@
 				@delete-message="handleDeleteMessage"
 				@delete-prompt="handleDeletePrompt"
 				@re-run-prompt="handleRerunPrompt"
+				@edit-prompt="reRunPrompt"
 			/>
 			<!-- spacer to prevent the floating input panel at the bottom of the screen from covering the bottom item -->
 			<div style="height: 8rem"></div>
@@ -171,7 +172,9 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	if (!kernel) return;
 	updateKernelStatus(KernelState.busy);
 	const notebookItem = notebookItems.value.find((item) => item.query_id === queryId);
+	if (!notebookItem) return;
 	const llmRequestMsg = notebookItem.messages.find((m) => m.header.msg_type === 'llm_request');
+	if (!llmRequestMsg) return;
 	notebookItem.executions = [];
 	notebookItem.messages = [llmRequestMsg];
 	if (query) {
@@ -269,9 +272,15 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		['stream', 'code_cell', 'llm_request', 'llm_response', 'beaker_response', 'dataset'].indexOf(
-			msgType
-		) > -1
+		[
+			'stream',
+			'code_cell',
+			'llm_request',
+			'llm_thought',
+			'llm_response',
+			'beaker_response',
+			'dataset'
+		].indexOf(msgType) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);

@@ -4,7 +4,7 @@
 			<section class="menu-container">
 				<!-- Button to show chat window menu -->
 				<Button
-					v-if="msg.query"
+					v-if="query && !isEditingQuery"
 					icon="pi pi-ellipsis-v tool"
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click.stop="showChatWindowMenu"
@@ -13,7 +13,25 @@
 			</section>
 			<section ref="resp" class="resp">
 				<section>
-					<div v-if="msg.query" class="query">{{ msg.query }}</div>
+					<section>
+						<div class="query edit-query-box" v-if="isEditingQuery">
+							<Textarea
+								v-focus
+								v-model="query"
+								autoResize
+								rows="1"
+								@click.stop
+								@keydown.enter.prevent="saveEditingQuery"
+								@keydown.esc.prevent="cancelEditingQuery"
+							/>
+							<div class="btn-group">
+								<Button icon="pi pi-times" rounded text @click="cancelEditingQuery" />
+								<Button icon="pi pi-play" rounded text @click="saveEditingQuery" />
+							</div>
+						</div>
+						<div v-else-if="!isEmpty(query)" class="query">{{ query }}</div>
+					</section>
+					<!-- <div v-if="msg.query" class="query">{{ msg.query }}</div> -->
 					<!-- TODO: This processing notification was applied to all messages, not just the one that is processing. Need to add id check. -->
 					<!-- <div v-if="props.isExecutingCode" class="executing-message">
 						<span class="pi pi-spinner pi-spin"></span>Processing
@@ -22,8 +40,19 @@
 
 				<!-- Loop through the messages and display them -->
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
+					<div v-if="m.header.msg_type === 'llm_thought'">
+						<tera-jupyter-response-thought
+							class="llm-thought"
+							:thought="formattedLlmThought(m.content.trim())"
+							:show-thought="showThought || props.showChatThoughts"
+						/>
+					</div>
 					<!-- Handle llm_response type -->
-					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
+					<div
+						v-else-if="
+							m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'
+						"
+					>
 						<div class="llm-response">{{ m.content['text'] }}</div>
 					</div>
 					<!-- Handle stream type for stderr -->
@@ -58,11 +87,13 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
 import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
+import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
 import { defineEmits, ref, computed, onMounted, watch } from 'vue';
 import type { CsvAsset } from '@/types/Types';
@@ -99,6 +130,9 @@ const resp = ref(<HTMLElement | null>null);
 // Reference for showThought, initially set to false
 const showThought = ref(false);
 
+const query = ref('');
+const isEditingQuery = ref(false);
+
 // Computed values for the labels and icons
 const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show reasoning'));
 const showHideIcon = computed(() =>
@@ -108,7 +142,12 @@ const showHideIcon = computed(() =>
 // Reference for the chat window menu and its items
 const chatWindowMenu = ref();
 const chatWindowMenuItems = ref([
-	{ label: 'Edit prompt', command: () => emit('edit-prompt', props.msg.query_id) },
+	{
+		label: 'Edit prompt',
+		command: () => {
+			isEditingQuery.value = true;
+		}
+	},
 	{ label: 'Re-run answer', command: () => emit('re-run-prompt', props.msg.query_id) },
 	{
 		label: showThoughtLabel,
@@ -123,6 +162,16 @@ const chatWindowMenuItems = ref([
 		command: () => emit('delete-prompt', props.msg.query_id)
 	}
 ]);
+
+const saveEditingQuery = () => {
+	emit('edit-prompt', props.msg.query_id, query.value);
+	isEditingQuery.value = false;
+};
+
+const cancelEditingQuery = () => {
+	query.value = props.msg.query ?? '';
+	isEditingQuery.value = false;
+};
 
 // show the chat window menu
 const showChatWindowMenu = (event: Event) => chatWindowMenu.value.toggle(event);
@@ -143,6 +192,15 @@ const formattedThought = (input: string) => {
 	return formattedLines.join('\n\n'); // Combine the formatted lines into a single string with an extra newline between each
 };
 
+const formattedLlmThought = (input: { [key: string]: string }) => {
+	// make pretty text for the thought
+	const formattedLines = Object.keys(input).map((key) => {
+		const category = toTitleCase(key);
+		return `${category}\n${input[key]}`;
+	});
+	return formattedLines.join('\n\n');
+};
+
 // Function to convert a string to Title Case
 function toTitleCase(str: string): string {
 	return str
@@ -154,6 +212,7 @@ function toTitleCase(str: string): string {
 }
 
 onMounted(() => {
+	query.value = props.msg.query ?? '';
 	emit('cell-updated', resp.value, props.msg);
 });
 
@@ -193,6 +252,14 @@ function onDeleteRequested(msgId) {
 	background-image: url('@assets/svg/icons/message.svg');
 	background-repeat: no-repeat;
 	background-position: 4px 3px;
+}
+.edit-query-box {
+	display: flex;
+	flex-direction: row;
+	padding-bottom: 2px;
+	textarea {
+		flex-grow: 1;
+	}
 }
 .executing-message {
 	color: var(--text-color-subdued);
@@ -242,6 +309,14 @@ function onDeleteRequested(msgId) {
 	position: absolute;
 	top: 5px;
 	right: 10px;
+}
+
+.llm-thought {
+	padding-left: 60px;
+	padding-right: 2rem;
+	padding-bottom: var(--gap-small);
+	white-space: pre-wrap;
+	color: var(--text-color-subdued);
 }
 
 .llm-response {
