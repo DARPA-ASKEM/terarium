@@ -7,7 +7,7 @@
 		@click="showSaveInput = true"
 		label="Save as new dataset"
 		icon="pi pi-save"
-	></Button>
+	/>
 	<Dialog
 		v-model:visible="showSaveInput"
 		modal
