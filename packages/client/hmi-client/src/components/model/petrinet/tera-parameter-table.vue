@@ -118,7 +118,7 @@
 					optionValue="value"
 					placeholder="Select a parameter type"
 					:disabled="readonly"
-					@update:model-value="(val) => changeType(slotProps.data.value, val)"
+					@update:model-value="(val) => (slotProps.data.type = val)"
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
@@ -195,6 +195,7 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
+					<!--
 					<Button
 						v-if="!readonly"
 						class="ml-2 pt-0 pb-0 w-5"
@@ -216,6 +217,7 @@
 							@click.stop
 						/>
 					</Button>
+					-->
 				</span>
 
 				<!-- Time series -->
@@ -380,7 +382,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
@@ -488,10 +490,16 @@ const parameters = computed<Map<string, string[]>>(() => {
 	return result;
 });
 
+const tableFormattedParams = ref<ModelConfigTableData[]>([]);
+
+// FIXME: This method doee not really work in this context, the different types
+// of CONSTANT/TIME_SERIES/DISTRIBUTION are not mutually exclusive, a parameter
+// can have one or more types
 const getParamType = (param: ModelParameter | undefined, model: Model = props.model) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
-	if (model.metadata?.timeseries?.[param.id] || model.metadata?.timeseries?.[param.id] === '') {
+
+	if (model.metadata?.timeseries?.[param.id] && model.metadata?.timeseries?.[param.id] !== null) {
 		type = ParamType.TIME_SERIES;
 	} else if (param?.distribution) {
 		type = ParamType.DISTRIBUTION;
@@ -499,7 +507,7 @@ const getParamType = (param: ModelParameter | undefined, model: Model = props.mo
 	return type;
 };
 
-const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
+const buildParameterTable = () => {
 	const model = props.model;
 	const formattedParams: ModelConfigTableData[] = [];
 
@@ -569,9 +577,8 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			});
 		});
 	}
-
-	return formattedParams;
-});
+	tableFormattedParams.value = formattedParams;
+};
 
 const conceptSearchTerm = ref({
 	curie: '',
@@ -583,7 +590,7 @@ const curies = ref<DKG[]>([]);
 
 const modelType = computed(() => getModelType(props.model));
 
-const addPlusMinus = ref(10);
+// const addPlusMinus = ref(10);
 
 const errorMessage = ref('');
 
@@ -616,6 +623,16 @@ const updateParamValue = (param: ModelParameter, key: string, value: any) => {
 };
 
 const updateTimeseries = (id: string, value: string) => {
+	// Empty string => removal
+	if (value === '') {
+		const clonedModel = cloneDeep(props.model);
+		if (clonedModel.metadata && clonedModel.metadata.timeseries) {
+			clonedModel.metadata.timeseries[id] = null;
+		}
+		emit('update-model', clonedModel);
+		return;
+	}
+
 	if (!validateTimeSeries(value)) return;
 	const clonedModel = cloneDeep(props.model);
 	clonedModel.metadata ??= {};
@@ -646,55 +663,6 @@ const validateTimeSeries = (values: string) => {
 	const isValid = values.split(',').every(isPairValid);
 	errorMessage.value = isValid ? '' : message;
 	return isValid;
-};
-
-const changeType = (param: ModelParameter, typeIndex: number) => {
-	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
-	const type = typeOptions[typeIndex];
-	const clonedModel = cloneDeep(props.model);
-
-	let idx;
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		idx = clonedModel.semantics?.ode.parameters?.findIndex((p) => p.id === param.id);
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		idx = clonedModel.model.parameters.findIndex((p) => p.id === param.id);
-	}
-	switch (type.value) {
-		case ParamType.CONSTANT:
-			delete clonedModel.metadata?.timeseries?.[param.id];
-			replaceParam(clonedModel, param, idx);
-			break;
-		case ParamType.DISTRIBUTION:
-			delete clonedModel.metadata?.timeseries?.[param.id];
-			param.distribution = {
-				type: 'Uniform1',
-				parameters: {
-					minimum: 0,
-					maximum: 0
-				}
-			};
-			replaceParam(clonedModel, param, idx);
-			break;
-		case ParamType.TIME_SERIES:
-			if (!clonedModel.metadata?.timeseries) {
-				clonedModel.metadata ??= {};
-				clonedModel.metadata.timeseries = {};
-			}
-			replaceParam(clonedModel, param, idx);
-			clonedModel.metadata.timeseries[param.id] = '';
-			break;
-		default:
-			break;
-	}
-	emit('update-model', clonedModel);
-};
-
-const replaceParam = (model: Model, param: any, index: number) => {
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		if (model.semantics?.ode.parameters) model.semantics.ode.parameters[index] = param;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		model.model.parameters[index] = param;
-	}
 };
 
 async function onSearch(event: AutoCompleteCompleteEvent) {
@@ -761,6 +729,15 @@ const countSuggestions = (id): number =>
 
 		return configuration.configuration?.model?.parameters?.find((p) => p.id === id);
 	}).length ?? 0;
+
+watch(
+	() => parameters.value,
+	(params) => {
+		if (!params) return;
+		buildParameterTable();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
