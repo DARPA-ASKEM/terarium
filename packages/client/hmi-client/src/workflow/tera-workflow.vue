@@ -552,7 +552,6 @@ const contextMenuItems: MenuItem[] = [
 				label: SubsetDataOp.operation.displayName,
 				command: addOperatorToWorkflow(SubsetDataOp)
 			},
-			{ label: 'Transform gridded dataset', disabled: true },
 			{
 				label: RegriddingOp.operation.displayName,
 				command: addOperatorToWorkflow(RegriddingOp)

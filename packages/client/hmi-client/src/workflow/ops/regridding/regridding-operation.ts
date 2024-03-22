@@ -8,7 +8,7 @@ export interface RegriddingState {
 export const RegriddingOperation: Operation = {
 	name: WorkflowOperationTypes.REGRIDDING,
 	description: 'Select a dataset',
-	displayName: 'Regridding a dataset',
+	displayName: 'Transform gridded dataset',
 	isRunnable: true,
 	inputs: [{ type: 'datasetId', label: 'Dataset' }],
 	outputs: [],
