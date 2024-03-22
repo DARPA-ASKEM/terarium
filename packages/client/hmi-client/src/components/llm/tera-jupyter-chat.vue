@@ -389,23 +389,6 @@ section {
 	overflow: auto;
 }
 
-.jupyter-settings {
-	display: flex;
-	flex-direction: row;
-	width: 100%;
-}
-
-.kernel-dropdown {
-	flex-grow: 10;
-}
-
-.settings-title {
-	color: var(--gray-500);
-	font-size: 12px;
-	font-family: monospace;
-	padding-bottom: 5px;
-}
-
 .tera-jupyter-chat {
 	display: flex;
 	flex-direction: column;
