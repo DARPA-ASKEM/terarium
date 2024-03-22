@@ -299,8 +299,6 @@ function addMapping() {
 
 	const state = _.cloneDeep(props.node.state);
 	state.ensembleConfigs = knobs.value.ensembleConfigs;
-	console.log(newSolutionMappingKey.value);
-	console.log(knobs.value.ensembleConfigs);
 	emit('update-state', state);
 }
 
@@ -324,11 +322,7 @@ const runEnsemble = async () => {
 			solver_method: knobs.value.extra.solverMethod
 		}
 	};
-	console.log('Starting calibrate ensemble with ');
-	console.log(params);
 	const response = await makeEnsembleCiemssCalibration(params);
-	console.log('Response: ');
-	console.log(response);
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;

@@ -102,8 +102,6 @@ watch(
 	() => props.node.state.inProgressCalibrationId,
 	async (id) => {
 		if (!id || id === '') return;
-		console.log(props.node.state);
-
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
