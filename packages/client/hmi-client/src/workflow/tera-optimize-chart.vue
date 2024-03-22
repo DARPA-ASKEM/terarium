@@ -18,7 +18,7 @@ import { Chart } from 'chart.js';
 
 Chart.register(ChartAnnotation);
 
-const chartCanvas = ref(null);
+const chartCanvas = ref();
 const chart = ref<any>(null);
 
 const renderChart = () => {
