@@ -100,7 +100,7 @@ const pollResult = async (runId: string) => {
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
-			state.inProgressSimulationId = '';
+			state.inProgressCalibrationId = '';
 			state.errorMessage = errorMessage;
 			logger.error(errorMessage.traceback, {
 				toastTitle: 'Error - Pyciemss'
