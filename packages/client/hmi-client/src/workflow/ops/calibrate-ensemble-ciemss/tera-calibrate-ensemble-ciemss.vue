@@ -363,8 +363,9 @@ onMounted(async () => {
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-	if (knobs.value.ensembleConfigs && knobs.value.ensembleConfigs.length === 0) {
-		// TOM Fix this. This should check that the length of ensemble is = port length - 1
+	// initalize ensembleConfigs when its length is less than the amount of models provided to node (- 1 due to dataset)
+	if (knobs.value.ensembleConfigs.length < props.node.inputs.length - 1) {
+		knobs.value.ensembleConfigs = [];
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
 			knobs.value.ensembleConfigs.push({
 				id: allModelConfigurations.value[i].id as string,
