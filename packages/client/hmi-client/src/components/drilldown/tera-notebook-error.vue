@@ -1,5 +1,5 @@
 <template>
-	<div class="container" :class="{ hide: hide }">
+	<div class="container" :class="{ hide: hide || isEmpty(traceback) }">
 		<h6>
 			<span>{{ props.name }}</span>
 			<Button rounded text icon="pi pi-times" @click="hide = true" />
@@ -10,6 +10,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 

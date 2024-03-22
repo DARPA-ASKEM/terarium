@@ -176,14 +176,8 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
-				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.optimizeErrorMessage?.traceback)"
-					v-bind="node.state.optimizeErrorMessage"
-				/>
-				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.simulateErrorMessage?.traceback)"
-					v-bind="node.state.simulateErrorMessage"
-				/>
+				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
+				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
 				<template v-if="simulationRunResults[knobs.forecastRunId]">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
@@ -571,7 +565,7 @@ const getStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
-	const state = _.cloneDeep(props.node.state);
+	let state = _.cloneDeep(props.node.state);
 	state.simulateErrorMessage = { name: '', value: '', traceback: '' };
 	emit('update-state', state);
 
@@ -581,16 +575,17 @@ const getStatus = async (runId: string) => {
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		showSpinner.value = false;
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Ciemss'
+		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
 			state.simulateErrorMessage = {
 				name: runId,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
-			logger.error(state.simulateErrorMessage, {
-				toastTitle: 'Error - Ciemss'
-			});
 			emit('update-state', state);
 		}
 		throw Error('Failed Runs');
@@ -611,7 +606,7 @@ const getOptimizeStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
-	const state = _.cloneDeep(props.node.state);
+	let state = _.cloneDeep(props.node.state);
 	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
 	emit('update-state', state);
 
@@ -621,18 +616,18 @@ const getOptimizeStatus = async (runId: string) => {
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		showSpinner.value = false;
+		// throw if there are any failed runs for now
+		logger.error(`Optimize: ${runId} has failed`, {
+			toastTitle: 'Error - Ciemss'
+		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
-			const errorMessage = {
+			state = _.cloneDeep(props.node.state);
+			state.optimizeErrorMessage = {
 				name: runId,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
-			state.optimizeErrorMessage = errorMessage;
-			// throw if there are any failed runs for now
-			logger.error(state.optimizeErrorMessage, {
-				toastTitle: 'Error - Ciemss'
-			});
 			emit('update-state', state);
 		}
 		throw Error('Failed Runs');

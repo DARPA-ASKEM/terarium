@@ -73,7 +73,7 @@ const pollResult = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
-	const state = _.cloneDeep(props.node.state);
+	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
 	emit('update-state', state);
 
@@ -81,17 +81,19 @@ const pollResult = async (runId: string) => {
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`Simulation: ${runId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
 			state.inProgressSimulationId = '';
 			state.errorMessage = {
 				name: runId,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
-			logger.error(state.errorMessage.traceback, {
-				toastTitle: 'Error - Pyciemss'
-			});
 			emit('update-state', state);
 		}
 		throw Error('Failed Runs');

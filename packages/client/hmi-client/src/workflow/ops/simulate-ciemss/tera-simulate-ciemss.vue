@@ -87,10 +87,7 @@
 						</template>
 					</SelectButton>
 				</div>
-				<tera-notebook-error
-					v-if="!_.isEmpty(node.state.errorMessage?.traceback)"
-					v-bind="node.state.errorMessage"
-				/>
+				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
