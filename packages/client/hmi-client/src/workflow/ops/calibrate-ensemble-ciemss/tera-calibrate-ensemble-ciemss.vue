@@ -140,7 +140,7 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
-				<div v-if="!inProgressCalibrationId && !inProgressForecastId">
+				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.chartConfigs"
 						:key="index"
@@ -160,7 +160,7 @@
 						label="Add chart"
 						icon="pi pi-plus"
 					/>
-				</div>
+				</section>
 				<tera-progress-spinner
 					v-if="inProgressCalibrationId || inProgressForecastId"
 					:font-size="2"
@@ -269,10 +269,6 @@ const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<State[][]>([]);
 
-const completedRunId = computed<string>(
-	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
-);
-
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
@@ -307,14 +303,6 @@ function addMapping() {
 	console.log(knobs.value.ensembleConfigs);
 	emit('update-state', state);
 }
-
-// assume only one run for now
-const watchCompletedRunList = async () => {
-	if (!completedRunId.value) return;
-
-	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
-	runResults.value = output.runResults;
-};
 
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
@@ -394,7 +382,20 @@ onMounted(async () => {
 	emit('update-state', state);
 });
 
-watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
+watch(
+	() => props.node.active,
+	async () => {
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+
+			const state = props.node.state;
+			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
+			runResults.value = output.runResults;
+		}
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => knobs.value.extra,
