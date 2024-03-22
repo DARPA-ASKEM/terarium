@@ -6,6 +6,7 @@
 				v-for="(msg, index) in notebookItems"
 				ref="notebookCells"
 				:key="index"
+				:index="index"
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
 				:msg="msg"
@@ -100,10 +101,10 @@ onMounted(async () => {
 	}
 	activeSessions.value = getSessionManager().running();
 
-	// // Add a code cell if there are no cells present
-	// if (notebookItems.value.length === 0) {
-	// 	addCodeCell();
-	// }
+	// Add a code cell if there are no cells present
+	if (notebookItems.value.length === 0) {
+		addCodeCell();
+	}
 });
 
 const defaultPreview = ref('d1');
@@ -200,14 +201,13 @@ const addCodeCell = () => {
 		metadata: {},
 		content: {
 			language: 'python',
-			// code: defaultPreview.value
-			code: ''
+			code: defaultPreview.value
 		},
 		channel: 'iopub'
 	};
 	messagesHistory.value.push(emptyCell);
 	updateNotebookCells(emptyCell);
-	// defaultPreview.value = ''; // reset the default preview
+	defaultPreview.value = ''; // reset the default preview
 };
 
 // const nestedMessages = computed(() => {
@@ -422,23 +422,6 @@ section {
 	flex-direction: column;
 	flex: 1;
 	overflow: auto;
-}
-
-.jupyter-settings {
-	display: flex;
-	flex-direction: row;
-	width: 100%;
-}
-
-.kernel-dropdown {
-	flex-grow: 10;
-}
-
-.settings-title {
-	color: var(--gray-500);
-	font-size: 12px;
-	font-family: monospace;
-	padding-bottom: 5px;
 }
 
 .tera-jupyter-chat {

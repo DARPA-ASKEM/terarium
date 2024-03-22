@@ -4821,6 +4821,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chartjs-plugin-annotation@npm:3.0.1":
+  version: 3.0.1
+  resolution: "chartjs-plugin-annotation@npm:3.0.1"
+  peerDependencies:
+    chart.js: ">=4.0.0"
+  checksum: 638550f92c6cc948205822f8b8fcfde20769d923a9bff26edd07f58ccfc6f48a456d8307f8cb837f16a7fe86a9c3646914649c77144337ea12d70e99916c9248
+  languageName: node
+  linkType: hard
+
 "chartjs-plugin-datalabels@npm:2.2.0":
   version: 2.2.0
   resolution: "chartjs-plugin-datalabels@npm:2.2.0"
@@ -8417,6 +8426,7 @@ __metadata:
     ace-builds: "npm:1.32.7"
     axios: "npm:1.6.8"
     chart.js: "npm:4.4.2"
+    chartjs-plugin-annotation: "npm:3.0.1"
     chartjs-plugin-datalabels: "npm:2.2.0"
     chroma-js: "npm:2.4.2"
     d3: "npm:7.8.5"

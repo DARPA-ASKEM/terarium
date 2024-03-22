@@ -90,6 +90,22 @@ export const extractPDF = async (documentId: DocumentAsset['id']) => {
 	console.groupEnd();
 };
 
+/** Extract variables from a text document */
+export const extractVariables = async (
+	documentId: DocumentAsset['id'],
+	modelIds: Array<Model['id']>
+) => {
+	console.group('SKEMA Variable extraction');
+	if (documentId) {
+		await API.post(
+			`/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`
+		);
+	} else {
+		console.debug('Failed — No documentId provided for variable extraction.');
+	}
+	console.groupEnd();
+};
+
 export async function codeToAMR(
 	codeId: string,
 	name: string = '',

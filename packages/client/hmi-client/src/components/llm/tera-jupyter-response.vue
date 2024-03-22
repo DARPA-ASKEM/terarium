@@ -31,15 +31,15 @@
 						</div>
 						<div v-else-if="!isEmpty(query)" class="query">{{ query }}</div>
 					</section>
-					<!-- <div v-if="msg.query" class="query">{{ msg.query }}</div> -->
 					<!-- TODO: This processing notification was applied to all messages, not just the one that is processing. Need to add id check. -->
-					<!-- <div v-if="props.isExecutingCode" class="executing-message">
-						<span class="pi pi-spinner pi-spin"></span>Processing
-					</div> -->
+					<div v-if="props.isExecutingCode" class="executing-message">
+						<span class="pi pi-spinner pi-spin" />Processing
+					</div>
 				</section>
 
 				<!-- Loop through the messages and display them -->
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
+					<!-- Handle llm_thought type -->
 					<div v-if="m.header.msg_type === 'llm_thought'">
 						<tera-jupyter-response-thought
 							class="llm-thought"
@@ -227,7 +227,7 @@ defineExpose({
 	codeCell
 });
 
-function onDeleteRequested(msgId) {
+function onDeleteRequested(msgId: string) {
 	// Emit an event to request the deletion of a message with the specified msgId
 	emit('delete-message', msgId);
 }
@@ -261,7 +261,9 @@ function onDeleteRequested(msgId) {
 		flex-grow: 1;
 	}
 }
+
 .executing-message {
+	display: none;
 	color: var(--text-color-subdued);
 	font-size: var(--font-body-small);
 	display: flex;
@@ -329,18 +331,5 @@ function onDeleteRequested(msgId) {
 	background-image: url('@assets/svg/icons/magic.svg');
 	background-repeat: no-repeat;
 	background-position: 4px 2px;
-}
-
-.date {
-	font-family: var(--font-family);
-}
-
-.show-hide-thought {
-	font-size: small;
-	color: gray;
-}
-
-.thought-icon {
-	padding: 5px;
 }
 </style>
