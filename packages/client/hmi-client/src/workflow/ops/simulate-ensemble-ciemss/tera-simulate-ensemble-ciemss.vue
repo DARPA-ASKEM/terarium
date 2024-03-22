@@ -8,46 +8,49 @@
 		</template>
 		<section :tabName="Tabs.Wizard">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
+				<!-- Model weights -->
 				<AccordionTab header="Model weights">
+					<p class="subheader">
+						How do you want to distribute weights of the attached models? You can distribute them
+						equally or set custom weights using the input boxes.
+					</p>
 					<div class="model-weights">
-						<section class="ensemble-calibration-graph">
-							<table class="p-datatable-table">
-								<thead class="p-datatable-thead">
-									<th>Model Config ID</th>
-									<th>Weight</th>
-								</thead>
-								<tbody class="p-datatable-tbody">
-									<!-- Index matching listModelLabels and ensembleConfigs-->
-									<tr v-for="(id, i) in listModelLabels" :key="i">
-										<td>
-											{{ id }}
-										</td>
-										<td>
-											<InputNumber
-												mode="decimal"
-												:min-fraction-digits="0"
-												:max-fraction-digits="7"
-												v-model="ensembleConfigs[i].weight"
-											/>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-							<Button
-								label="Set weights to be equal"
-								class="p-button-sm p-button-outlined ml-2 mt-2"
-								outlined
-								severity="secondary"
-								@click="calculateEvenWeights()"
-							/>
-						</section>
+						<table class="p-datatable-table">
+							<tbody class="p-datatable-tbody">
+								<!-- Index matching listModelLabels and ensembleConfigs-->
+								<tr v-for="(id, i) in listModelLabels" :key="i">
+									<td>
+										{{ id }}
+									</td>
+									<td>
+										<InputNumber
+											class="ml-3"
+											mode="decimal"
+											:min-fraction-digits="0"
+											:max-fraction-digits="7"
+											v-model="ensembleConfigs[i].weight"
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
+					<Button
+						label="Set weights to be equal"
+						class="p-button-sm p-button-outlined mt-2"
+						outlined
+						severity="secondary"
+						@click="calculateEvenWeights()"
+					/>
 				</AccordionTab>
+
+				<!-- Mapping -->
 				<AccordionTab header="Mapping">
+					<p class="subheader">Map the variables from the models to the ensemble variables.</p>
 					<template v-if="ensembleConfigs.length > 0">
-						<table>
+						<table class="w-full mb-2">
 							<tr>
-								<th>Ensemble Variables</th>
+								<th>Ensemble variables</th>
 								<th v-for="(element, i) in listModelLabels" :key="i">
 									{{ element }}
 								</th>
@@ -57,25 +60,79 @@
 								<td>{{ key }}</td>
 								<td v-for="config in ensembleConfigs" :key="config.id">
 									<Dropdown
+										class="w-full"
 										:options="allModelOptions[config.id]"
 										v-model="config.solutionMappings[key]"
+										placeholder="Select a variable"
+									/>
+								</td>
+								<td>
+									<Button
+										class="p-button-sm"
+										icon="pi pi-times"
+										rounded
+										text
+										@click="deleteMapping(key)"
 									/>
 								</td>
 							</tr>
 						</table>
 					</template>
-
-					<InputText v-model="newSolutionMappingKey" placeholder="Variable Name" />
-					<Button
-						:disabled="!newSolutionMappingKey"
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-plus"
-						label="Add mapping"
-						@click="addMapping"
-					/>
+					<section class="add-mapping">
+						<Button
+							v-if="!showAddMappingInput"
+							outlined
+							:style="{ marginRight: 'auto' }"
+							label="Add mapping"
+							size="small"
+							severity="secondary"
+							icon="pi pi-plus"
+							@click="
+								newSolutionMappingKey = '';
+								showAddMappingInput = true;
+							"
+						/>
+						<div v-if="showAddMappingInput" class="flex items-center">
+							<InputText
+								v-model="newSolutionMappingKey"
+								v-focus
+								class="w-full"
+								placeholder="Add a name"
+								@keypress.enter="
+									addMapping();
+									showAddMappingInput = false;
+								"
+							/>
+							<Button
+								class="p-button-sm p-button-outlined w-2 ml-2"
+								severity="secondary"
+								icon="pi pi-times"
+								label="Cancel"
+								@click="
+									newSolutionMappingKey = '';
+									showAddMappingInput = false;
+								"
+							/>
+							<Button
+								:disabled="!newSolutionMappingKey"
+								class="p-button-sm p-button-outlined w-2 ml-2"
+								icon="pi pi-check"
+								label="Add"
+								@click="
+									addMapping();
+									showAddMappingInput = false;
+								"
+							/>
+						</div>
+					</section>
 				</AccordionTab>
+
+				<!-- Time span -->
 				<AccordionTab header="Time span">
-					<table>
+					<p class="subheader">
+						Set the time span and number of samples for the ensemble simulation.
+					</p>
+					<table class="w-full">
 						<thead class="p-datatable-thead">
 							<th>Units</th>
 							<th>Start Step</th>
@@ -83,15 +140,15 @@
 							<th>Number of Samples</th>
 						</thead>
 						<tbody class="p-datatable-tbody">
-							<td>Steps</td>
+							<td class="w-2">Steps</td>
 							<td>
-								<InputNumber v-model="timeSpan.start" />
+								<InputNumber class="w-full" v-model="timeSpan.start" />
 							</td>
 							<td>
-								<InputNumber v-model="timeSpan.end" />
+								<InputNumber class="w-full" v-model="timeSpan.end" />
 							</td>
 							<td>
-								<InputNumber v-model="numSamples" />
+								<InputNumber class="w-full" v-model="numSamples" />
 							</td>
 						</tbody>
 					</table>
@@ -177,6 +234,8 @@ enum Tabs {
 
 const showSpinner = ref(false);
 
+const showAddMappingInput = ref(false);
+
 const listModelLabels = ref<string[]>([]);
 
 // List of each observible + state for each model.
@@ -231,6 +290,16 @@ const addMapping = () => {
 	state.mapping = ensembleConfigs.value;
 	emit('update-state', state);
 };
+
+function deleteMapping(key) {
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		delete ensembleConfigs.value[i].solutionMappings[key];
+	}
+
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = ensembleConfigs.value;
+	emit('update-state', state);
+}
 
 const runEnsemble = async () => {
 	const params: EnsembleSimulationCiemssRequest = {
@@ -327,6 +396,11 @@ watch(
 </script>
 
 <style scoped>
+.subheader {
+	color: var(--text-color-subdued);
+	margin-bottom: var(--gap);
+}
+
 .ensemble-calibration-graph {
 	height: 100px;
 }
@@ -343,14 +417,5 @@ watch(
 
 th {
 	text-align: left;
-}
-
-th,
-td {
-	padding-left: 15px;
-}
-
-:deep(.p-inputnumber-input, .p-inputwrapper) {
-	width: 100%;
 }
 </style>
