@@ -25,6 +25,7 @@ public enum WorkflowOperationTypes {
 	MODEL_COUPLING = 'ModelCoupling',
 	MODEL_EDIT = 'ModelEdit',
 	DOCUMENT = 'Document'
+	REGRIDDING = 'Regridding'
 	 */
 
 	ADD("add"),
@@ -48,6 +49,7 @@ public enum WorkflowOperationTypes {
 	OPTIMIZE_CIEMSS("OptimizeCiemss"),
 	MODEL_COUPLING("ModelCoupling"),
 	MODEL_EDIT("ModelEdit"),
+	REGRIDDING("Regridding"),
 	DOCUMENT("Document");
 
 	private final String value;

@@ -58,12 +58,9 @@ const runResults = ref<{ [runId: string]: RunResults }>({});
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const selectedRunId = ref<string>('');
 
-const chartProxy = chartActionsProxy(
-	props.node.state,
-	(state: SimulateEnsembleCiemssOperationState) => {
-		emit('update-state', state);
-	}
-);
+const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
+	emit('update-state', state);
+});
 
 const poller = new Poller();
 

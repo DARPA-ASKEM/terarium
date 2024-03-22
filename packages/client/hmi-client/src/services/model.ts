@@ -2,7 +2,7 @@ import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, AssetType, EventType } from '@/types/Types';
 import { AMRSchemaNames, ModelServiceType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
@@ -210,4 +210,12 @@ export async function getModelEquation(model: Model): Promise<string> {
 	const latex = response.data.latex;
 	if (!latex) return '';
 	return latex;
+}
+
+export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
+	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
+}
+
+export function isModelParameter(obj: Initial | ModelParameter | null): obj is ModelParameter {
+	return obj !== null && 'id' in obj;
 }

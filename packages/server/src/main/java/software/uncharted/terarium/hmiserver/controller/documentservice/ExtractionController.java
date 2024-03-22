@@ -1,11 +1,15 @@
 package software.uncharted.terarium.hmiserver.controller.documentservice;
 
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
@@ -19,6 +23,7 @@ import java.util.regex.Pattern;
 @RequestMapping("/document/extractions")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class ExtractionController {
 
 
@@ -31,9 +36,7 @@ public class ExtractionController {
 
 	@Value("${xdd.api-es-key}")
 	String ESkey;
-
-	@Autowired
-	ExtractionProxy proxy;
+	final ExtractionProxy proxy;
 
 
 	@GetMapping
@@ -41,13 +44,13 @@ public class ExtractionController {
 	public ResponseEntity<XDDResponse<XDDExtractionsResponseOK>> searchExtractions(
 		@RequestParam(required = false, name = "term") final String term,
 		@RequestParam(required = false, name = "page") final Integer page,
-		@RequestParam(required = false, name = "ASKEM_CLASS") String askemClass,
-		@RequestParam(required = false, name = "include_highlights") String include_highlights) {
+		@RequestParam(required = false, name = "ASKEM_CLASS") final String askemClass,
+		@RequestParam(required = false, name = "include_highlights") final String include_highlights) {
 
 
-		Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
+		final Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
 
-		boolean isDoi = matcher.find();
+		final boolean isDoi = matcher.find();
 		String apiKey = "";
 		if (key != null)
 			apiKey = key;
@@ -55,7 +58,7 @@ public class ExtractionController {
 			log.info("XDD API key missing. Image assets will not return correctly.");
 
 		try {
-			XDDResponse<XDDExtractionsResponseOK> response;
+			final XDDResponse<XDDExtractionsResponseOK> response;
 			if (isDoi) {
 				response = proxy.getExtractions(term, null, page, askemClass, include_highlights, apiKey);
 			} else {
@@ -73,10 +76,12 @@ public class ExtractionController {
 			return ResponseEntity.ok(response);
 
 
-		} catch (RuntimeException e) {
-			log.error("Unable to search in extractions. An error occurred", e);
-			return ResponseEntity.internalServerError().build();
-
+		} catch (final FeignException e) {
+			log.error("xDD returned an exception for extraction search:", e);
+			throw new ResponseStatusException(HttpStatusCode.valueOf(e.status()), "There was an issue with the extraction search to xDD");
+		} catch (final Exception e) {
+			log.error("Unable to find extractions, an error occurred", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find extractions, an error occurred");
 		}
 
 
@@ -84,19 +89,22 @@ public class ExtractionController {
 
 	@GetMapping("/askem-autocomplete/{term}")
 	@Secured(Roles.USER)
-	public ResponseEntity<List<String>> getAutocomplete(@PathVariable("term") String term) {
+	public ResponseEntity<List<String>> getAutocomplete(@PathVariable("term") final String term) {
 		try {
 
-			AutoComplete autoComplete = proxy.getAutocomplete(term);
+			final AutoComplete autoComplete = proxy.getAutocomplete(term);
 			if (autoComplete.hasNoSuggestions())
 				return ResponseEntity.noContent().build();
 
 			return ResponseEntity.ok(autoComplete.getAutoCompletes());
 
 
-		} catch (RuntimeException e) {
-			log.error("Unable to autocomplete");
-			return ResponseEntity.internalServerError().build();
+		} catch (final FeignException e) {
+			log.error("xDD returned an exception for autocomplete:", e);
+			throw new ResponseStatusException(HttpStatusCode.valueOf(e.status()), "xDD returned an exception for autocomplete");
+		} catch (final Exception e) {
+			log.error("Unable to find xdd Autocompletes", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find xdd Autocompletes");
 		}
 	}
 }

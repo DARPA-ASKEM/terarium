@@ -11,6 +11,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +45,9 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	 * @param s3ClientService The S3 client service
 	 * @param assetClass      The class of the asset this service manages
 	 */
-	public S3BackedAssetService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService, final S3ClientService s3ClientService, final Class<T> assetClass) {
+	public S3BackedAssetService(final ElasticsearchConfiguration elasticConfig, final Config config,
+			final ElasticsearchService elasticService, final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService, final Class<T> assetClass) {
 		super(elasticConfig, config, elasticService, projectAssetService, assetClass);
 		this.s3ClientService = s3ClientService;
 	}
@@ -145,7 +148,8 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		}
 	}
 
-	public void uploadFile(final UUID uuid, final String filename, final HttpEntity fileEntity) throws IOException {
+	public void uploadFile(final UUID uuid, final String filename, final HttpEntity fileEntity,
+			final ContentType contentType) throws IOException {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
@@ -153,6 +157,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 			final PresignedURL presignedURL = getUploadUrl(uuid, filename);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
 			put.setEntity(fileEntity);
+			put.setHeader("Content-Type", contentType.toString());
 			final HttpResponse response = httpclient.execute(put);
 			if (response.getStatusLine().getStatusCode() >= 300) {
 				throw new IOException("Failed to upload file to S3: " + response.getStatusLine().getReasonPhrase());

@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Editor from 'primevue/editor';
 import { update } from '@/services/project';
 import { useProjects } from '@/composables/project';
@@ -16,7 +16,7 @@ import { useProjects } from '@/composables/project';
 const AUTO_SAVE_DELAY = 3000;
 
 const { activeProject, refresh } = useProjects();
-const lastSavedContent = computed(() => activeProject.value?.overviewContent ?? '');
+const lastSavedContent = computed(() => atob(activeProject.value?.overviewContent ?? ''));
 const hasEditPermission = computed(() =>
 	['creator', 'writer'].includes(activeProject.value?.userPermission ?? '')
 );

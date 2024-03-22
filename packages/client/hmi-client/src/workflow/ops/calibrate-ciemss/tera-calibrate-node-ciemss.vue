@@ -73,7 +73,7 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
-const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateCiemss) => {
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
 	emit('update-state', state);
 });
 

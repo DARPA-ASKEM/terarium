@@ -45,7 +45,7 @@ API.interceptors.response.use(
 				// If not, check the 'trace' property and extract the error from that.
 				// It will be the substring between the first set of quotations marks.
 				if (responseError.message) {
-					message = `${responseError.message} ${responseError?.path}`;
+					message = `${responseError.message}`;
 				} else if (responseError.trace) {
 					// extract the substring between the first set of quotation marks and use that
 					const start = responseError.trace.indexOf('"');

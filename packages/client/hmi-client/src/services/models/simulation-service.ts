@@ -287,7 +287,7 @@ export async function unsubscribeToUpdateMessages(
 }
 
 export async function pollAction(id: string) {
-	const simResponse = await getSimulation(id);
+	const simResponse: Simulation | null = await getSimulation(id);
 	if (!simResponse) {
 		console.error(`Error occured with simulation ${id}`);
 		return { data: null, progress: null, error: `Failed running simulation ${id}` };
@@ -299,7 +299,8 @@ export async function pollAction(id: string) {
 	}
 
 	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
-		return { data: null, progress: null, error: `Failed running simulation ${id}` };
+		const errorMessage: string = simResponse.statusMessage || `Failed running simulation ${id}`;
+		return { data: null, progress: null, error: errorMessage };
 	}
 	return { data: simResponse, progress: null, error: null };
 }

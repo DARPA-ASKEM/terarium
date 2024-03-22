@@ -6,6 +6,7 @@
 				v-for="(msg, index) in notebookItems"
 				ref="notebookCells"
 				:key="index"
+				:index="index"
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
 				:msg="msg"
@@ -15,7 +16,10 @@
 				:default-preview="defaultPreview"
 				@cell-updated="scrollToLastCell"
 				@preview-selected="previewSelected"
+				@deleteMessage="handleDeleteMessage"
 			/>
+			<!-- spacer to prevent the floating input panel at the bottom of the screen from covering the bottom item -->
+			<div style="height: 8rem"></div>
 
 			<!-- Beaker Input -->
 			<tera-beaker-input
@@ -88,11 +92,29 @@ const props = defineProps<{
 	notebookSession?: NotebookSession;
 }>();
 
+const handleDeleteMessage = (msgId) => {
+	// Iterate over notebookItems to find and remove the message with msgId
+	notebookItems.value.forEach((item) => {
+		const messageIndex = item.messages.findIndex((m) => m.header.msg_id === msgId);
+		if (messageIndex > -1) {
+			item.messages.splice(messageIndex, 1);
+		}
+	});
+
+	// Optionally, you might want to handle the case where a notebookItem
+	// has no more messages and whether it should be removed or kept
+};
+
 onMounted(async () => {
 	if (props.notebookSession) {
 		notebookItems.value = props.notebookSession.data?.history;
 	}
 	activeSessions.value = getSessionManager().running();
+
+	// Add a code cell if there are no cells present
+	if (notebookItems.value.length === 0) {
+		addCodeCell();
+	}
 });
 
 const queryString = ref('');
@@ -151,12 +173,13 @@ const addCodeCell = () => {
 		metadata: {},
 		content: {
 			language: 'python',
-			code: ''
+			code: defaultPreview.value
 		},
 		channel: 'iopub'
 	};
 	messagesHistory.value.push(emptyCell);
 	updateNotebookCells(emptyCell);
+	defaultPreview.value = ''; // reset the default preview
 };
 
 // const nestedMessages = computed(() => {
@@ -365,23 +388,6 @@ section {
 	flex-direction: column;
 	flex: 1;
 	overflow: auto;
-}
-
-.jupyter-settings {
-	display: flex;
-	flex-direction: row;
-	width: 100%;
-}
-
-.kernel-dropdown {
-	flex-grow: 10;
-}
-
-.settings-title {
-	color: var(--gray-500);
-	font-size: 12px;
-	font-family: monospace;
-	padding-bottom: 5px;
 }
 
 .tera-jupyter-chat {

@@ -1,6 +1,4 @@
 ---
-version: "3.9"
-
 services:
   beaker:
     container_name: beaker
@@ -19,50 +17,5 @@ services:
       AUTH_USERNAME: "${secret_service_account_username}"
       AUTH_PASSWORD: "${secret_service_account_password}"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  knowledge-middleware-api:
-    container_name: knowledge-middleware-api
-    image: ghcr.io/darpa-askem/knowledge-middleware-api:latest
-    networks:
-      - terarium
-    ports:
-      - "3060:8000"
-    environment:
-      MIT_TR_URL: "http://54.227.237.7"
-      OPENAI_API_KEY: "${secret_mit_openai_key}"
-      REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
-      SKEMA_RS_URL: "https://skema-rs.staging.terarium.ai"
-      SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
-      TA1_UNIFIED_URL: "https://api.askem.lum.ai"
-      TDS_URL: "http://${local_host_name}:3000"
-      TDS_USER: "${secret_service_account_username}"
-      TDS_PASSWORD: "${secret_service_account_password}"
-      LOG_LEVEL: "DEBUG"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  knowledge-middleware-worker:
-    container_name: knowledge-middleware-worker
-    image: ghcr.io/darpa-askem/knowledge-middleware-worker:latest
-    networks:
-      - terarium
-    environment:
-      MIT_TR_URL: "http://54.227.237.7"
-      OPENAI_API_KEY: "${secret_mit_openai_key}"
-      REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
-      SKEMA_RS_URL: "https://skema-rs.staging.terarium.ai"
-      SKEMA_TR_URL: "https://skema-tr.staging.terarium.ai"
-      TA1_UNIFIED_URL: "https://api.askem.lum.ai"
-      TDS_URL: "http://${local_host_name}:3000"
-      TDS_USER: "${secret_service_account_username}"
-      TDS_PASSWORD: "${secret_service_account_password}"
-      LOG_LEVEL: "DEBUG"
-    depends_on:
-      redis:
-        condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"

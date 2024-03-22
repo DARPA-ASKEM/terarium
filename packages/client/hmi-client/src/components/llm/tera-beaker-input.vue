@@ -1,34 +1,41 @@
 <template>
 	<div class="tera-beaker-container" ref="containerElement">
 		<div class="chat-input-container">
-			<span class="p-input-icon-right">
-				<div>
-					<span>
-						<InputText
-							:style="{ width: fixedDivWidth + 'px' }"
-							class="input"
-							ref="inputElement"
-							v-model="queryString"
-							type="text"
-							:disabled="props.kernelIsBusy"
-							:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
-							@keydown.enter="submitQuery"
-						></InputText>
-						<i class="pi pi-spin pi-spinner kernel-status" v-if="props.kernelIsBusy" />
-						<i class="pi pi-send kernel-status" v-else />
-					</span>
-					<Button
-						ref="addCodeCellButton"
-						class="p-button p-button-secondary p-button-sm"
-						title="Add a code cell to the notebook"
-						@click="addCodeCell"
-					>
-						<span class="pi pi-plus-circle p-button-icon p-button-icon-left"></span>
-						<span class="p-button-text">Add Code Cell</span>
-					</Button>
-				</div>
-			</span>
-			<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" style="height: 3px"></ProgressBar>
+			<div class="top-row">
+				<InputText
+					class="input"
+					ref="inputElement"
+					v-model="queryString"
+					type="text"
+					:disabled="props.kernelIsBusy"
+					:placeholder="props.kernelIsBusy ? 'Please wait...' : 'What do you want to do?'"
+					@keydown.enter="submitQuery"
+				/>
+				<Button
+					text
+					:icon="props.kernelIsBusy ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
+					rounded
+					size="large"
+					class="kernel-status"
+					:disabled="queryString.length === 0"
+					@click="submitQuery"
+				></Button>
+			</div>
+			<div class="bottom-row">
+				<Button
+					ref="addCodeCellButton"
+					severity="secondary"
+					outlined
+					:disabled="props.kernelIsBusy"
+					class="white-space-nowrap"
+					title="Add a code cell to the notebook"
+					@click="addCodeCell"
+				>
+					<span class="pi pi-plus p-button-icon p-button-icon-left"></span>
+					<span class="p-button-text">Add a cell</span>
+				</Button>
+				<ProgressBar v-if="props.kernelIsBusy" mode="indeterminate" class="busy-bar"></ProgressBar>
+			</div>
 		</div>
 	</div>
 </template>
@@ -37,6 +44,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -109,7 +117,7 @@ onMounted(() => {
 
 <style scoped>
 ::placeholder {
-	color: var(--gray-700);
+	color: var(--text-color-subdued);
 }
 .tera-beaker-container {
 	display: relative;
@@ -119,18 +127,44 @@ onMounted(() => {
 
 .chat-input-container {
 	position: fixed;
-	bottom: 50px;
-	height: fit-content;
-	z-index: 30000;
+	bottom: 0px;
+	height: 10rem;
+	padding: var(--gap);
+	padding-bottom: 1.5rem;
+	z-index: 200;
+	border-top: 1px solid var(--surface-border-light);
+	background-color: var(--surface-transparent);
+	backdrop-filter: blur(10px);
+	width: calc(100% - 6 * var(--gap-small));
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: start;
+	justify-content: space-between;
 }
 
+.top-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
 .input {
-	color: black;
-	background-color: var(--gray-300);
+	color: var(--text-color);
+	background-color: var(--surface-0);
+	border: 2px solid var(--primary-color);
+	padding: var(--gap);
+	padding-left: 3rem;
+	width: 100%;
+	/* Add ai-assistant icon */
+	background-image: url('@assets/svg/icons/message.svg');
+	background-repeat: no-repeat;
+	background-position: var(--gap) center; /* Adjust 10px according to your icon size and position */
 }
 
 .kernel-status {
-	position: relative;
+	position: absolute;
 	right: 2rem;
 }
 
@@ -138,5 +172,9 @@ onMounted(() => {
 	color: black;
 	opacity: 100;
 	background-color: var(--gray-300);
+}
+.busy-bar {
+	position: relative;
+	top: -4px;
 }
 </style>

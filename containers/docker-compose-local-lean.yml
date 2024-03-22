@@ -1,5 +1,3 @@
 ---
-version: '3.9'
-
 include:
   - scripts/docker-compose-common.yml

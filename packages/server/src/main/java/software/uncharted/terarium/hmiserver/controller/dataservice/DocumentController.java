@@ -48,6 +48,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.controller.documentservice.XDDDocumentController;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -61,8 +62,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Extract
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
+import software.uncharted.terarium.hmiserver.models.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
@@ -87,6 +90,7 @@ public class DocumentController {
 	final SkemaRustProxy skemaRustProxy;
 
 	final JsDelivrProxy gitHubProxy;
+	final DocumentProxy documentProxy;
 
 	final DownloadService downloadService;
 
@@ -98,9 +102,13 @@ public class DocumentController {
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
 	private final CurrentUserService currentUserService;
+	private final XDDDocumentController xDDDocumentController;
 
 	@Value("${xdd.api-key}")
 	String apikey;
+
+	@Value("${xdd.api-es-key}")
+	String api_es_key;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -412,7 +420,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "201", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AddDocumentAssetFromXDDResponse.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
-	public ResponseEntity<DocumentAsset> createDocumentFromXDD(
+	public ResponseEntity<Void> createDocumentFromXDD(
 			@RequestBody final AddDocumentAssetFromXDDRequest body) {
 
 		try {
@@ -435,29 +443,54 @@ public class DocumentController {
 					null,
 					null, apikey);
 
+			final String summaries = getSummaries(doi);
+
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
-			final DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
-					extractionResponse.getSuccess().getData());
+			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+					extractionResponse.getSuccess().getData(), summaries);
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
+				documentAsset = documentAssetService.updateAsset(documentAsset).get();
 			}
-
-			// Upload the PDF from unpaywall
-			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId());
 
 			// add asset to project
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
 
-			return ResponseEntity.status(HttpStatus.CREATED).body(documentAsset);
+			// Upload the PDF from unpaywall
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId(), body.getDomain());
 
+			return ResponseEntity.accepted().build();
 		} catch (final IOException | URISyntaxException e) {
-			final String error = "Unable to upload document from github";
+			final String error = "Unable to upload document from xdd";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
+	}
+
+	private String getSummaries(final String doi) {
+		final String known_entities = "askem_object,url_extractions,summaries";
+		final XDDResponse<DocumentsResponseOK> xddSummaries = documentProxy.getDocuments(api_es_key,
+				null, doi, null, null, null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null, known_entities, null, null, null);
+
+		if (xddSummaries.getErrorMessage() != null) {
+			return null;
+
+		}
+
+		if (xddSummaries.getSuccess() == null || xddSummaries.getSuccess().getData().isEmpty()) {
+			return null;
+		}
+
+		if (xddSummaries.getSuccess().getData().size() > 0) {
+			if (xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().size() > 0) {
+				return xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().get(0).toString();
+			}
+		}
+		return null;
 	}
 
 	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -590,13 +623,14 @@ public class DocumentController {
 	private DocumentAsset createDocumentAssetFromXDDDocument(
 			final Document document,
 			final String userId,
-			final List<Extraction> extractions) throws IOException {
+			final List<Extraction> extractions,
+			final String summary) throws IOException {
 		final String name = document.getTitle();
 
 		// create document asset
 		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName(name);
-		documentAsset.setDescription(name);
+		documentAsset.setDescription(summary);
 		documentAsset.setUserId(userId);
 		documentAsset.setFileNames(new ArrayList<>());
 
@@ -637,7 +671,7 @@ public class DocumentController {
 	 * @return extraction job id
 	 */
 	private void uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
-			final UUID docId) {
+			final UUID docId, final String domain) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
@@ -647,9 +681,8 @@ public class DocumentController {
 
 			// if this service fails, return ok with errors
 			if (fileAsBytes == null || fileAsBytes.length == 0) {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						"Document has no data, empty bytes");
+				log.debug("Document has not data, empty bytes, exit early.");
+				return;
 			}
 
 			// upload pdf to document asset
@@ -666,9 +699,15 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			extractionService.extractPDF(docId, currentUserId);
+			extractionService.extractPDF(docId, currentUserId, domain);
+		} catch (final ResponseStatusException e) {
+			log.error("Unable to upload PDF document then extract", e);
+			throw e;
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to upload document");
 		}
 	}
 }

@@ -23,6 +23,8 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 	final private ObjectMapper objectMapper;
 	final private DocumentAssetService documentAssetService;
 
+	final static public int MAX_TEXT_SIZE = 600000;
+
 	@Override
 	public String getName() {
 		return NAME;

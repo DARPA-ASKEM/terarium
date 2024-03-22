@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -17,6 +18,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +56,8 @@ public class Project extends TerariumAsset implements Serializable {
 	@TSOptional
 	@Schema(defaultValue = "My Project Overview")
 	@Lob
-	private String overviewContent;
+	@JdbcTypeCode(Types.BINARY)
+	private byte[] overviewContent;
 
 	@OneToMany(mappedBy = "project")
 	@Where(clause = "deleted_on IS NULL")

@@ -59,13 +59,14 @@
 					</template>
 				</SelectButton>
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts">
+					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							:size="chartSize"
 							color-by-run
 						/>
 						<Button
@@ -112,7 +113,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResult, makeForecastJob } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { chartActionsProxy } from '@/workflow/util';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useProjects } from '@/composables/project';
 
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -169,7 +170,10 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateJuliaOperationState) => {
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: SimulateJuliaOperationState) => {
 	emit('update-state', state);
 });
 

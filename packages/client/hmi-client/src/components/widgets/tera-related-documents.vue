@@ -42,13 +42,6 @@
 					:loading="isLoading"
 					@click="dialogForExtraction"
 				/>
-				<Button
-					severity="secondary"
-					size="small"
-					:label="`Align extractions to ${assetType}`"
-					:loading="isLoading"
-					@click="dialogForAlignment"
-				/>
 			</template>
 		</footer>
 		<Dialog
@@ -90,7 +83,13 @@
 </template>
 
 <script setup lang="ts">
-import { alignModel, extractPDF, profileDataset, profileModel } from '@/services/knowledge';
+import {
+	alignModel,
+	extractPDF,
+	extractVariables,
+	profileDataset,
+	profileModel
+} from '@/services/knowledge';
 import {
 	RelationshipType,
 	createProvenance,
@@ -116,11 +115,10 @@ const props = defineProps<{
 
 enum DialogType {
 	ENRICH,
-	EXTRACT,
-	ALIGN
+	EXTRACT
 }
 
-const emit = defineEmits(['enriched']);
+const emit = defineEmits(['enriched', 'extracted']);
 const visible = ref(false);
 const selectedResources = ref();
 const dialogType = ref<DialogType>(DialogType.ENRICH);
@@ -140,8 +138,6 @@ const dialogActionCopy = computed(() => {
 		result = props.assetType === AssetType.Model ? 'Enrich description' : 'Generate descriptions';
 	} else if (dialogType.value === DialogType.EXTRACT) {
 		result = 'Extract variables';
-	} else if (dialogType.value === DialogType.ALIGN) {
-		result = `Align extractions to ${props.assetType}`;
 	}
 	if (isEmpty(selectedResources.value)) {
 		return result;
@@ -165,18 +161,11 @@ function dialogForExtraction() {
 	openDialog();
 }
 
-function dialogForAlignment() {
-	dialogType.value = DialogType.ALIGN;
-	openDialog();
-}
-
 const acceptDialog = () => {
 	if (dialogType.value === DialogType.ENRICH) {
 		sendForEnrichment();
 	} else if (dialogType.value === DialogType.EXTRACT) {
 		sendForExtractions();
-	} else if (dialogType.value === DialogType.ALIGN) {
-		sendToAlignModel();
 	}
 	closeDialog();
 };
@@ -199,34 +188,29 @@ const sendForEnrichment = async () => {
 
 const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
-	isLoading.value = true;
-
-	await extractPDF(selectedResourceId);
-	if (!props.assetId) return;
-	await createProvenance({
-		relation_type: RelationshipType.EXTRACTED_FROM,
-		left: props.assetId,
-		left_type: mapAssetTypeToProvenanceType(props.assetType),
-		right: selectedResourceId,
-		right_type: ProvenanceType.Document
-	});
-
-	emit('enriched');
-	await getRelatedDocuments();
-};
-
-const sendToAlignModel = async () => {
-	const selectedResourceId = selectedResources.value?.id ?? null;
-	if (props.assetType === AssetType.Model && selectedResourceId) {
+	if (props.assetType === AssetType.Dataset) {
 		isLoading.value = true;
+
+		await extractPDF(selectedResourceId);
+
+		if (!props.assetId) return;
+		await createProvenance({
+			relation_type: RelationshipType.EXTRACTED_FROM,
+			left: props.assetId,
+			left_type: mapAssetTypeToProvenanceType(props.assetType),
+			right: selectedResourceId,
+			right_type: ProvenanceType.Document
+		});
+	} else if (props.assetType === AssetType.Model && selectedResourceId) {
+		await extractVariables(selectedResourceId, [props.assetId]);
 
 		const linkedAmr = await alignModel(props.assetId, selectedResourceId);
 		if (!linkedAmr) return;
-
-		isLoading.value = false;
-		emit('enriched');
-		await getRelatedDocuments();
 	}
+
+	isLoading.value = false;
+	emit('extracted');
+	await getRelatedDocuments();
 };
 
 onMounted(() => {
@@ -296,6 +280,7 @@ ul:empty {
 .p-dialog aside > * {
 	margin-top: var(--gap);
 }
+
 .p-dialog aside label {
 	margin: 0 var(--gap) 0 var(--gap-small);
 }

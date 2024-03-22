@@ -1,6 +1,26 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -8,12 +28,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -25,14 +39,12 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.tasks.*;
+import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
 
 @RequestMapping("/gollm")
 @RestController
@@ -86,7 +98,7 @@ public class GoLLMController {
 			}
 
 			// check for input length
-			if (document.get().getText().length() > 600000) {
+			if (document.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
 				log.warn("Document {} text too long for GoLLM model card task", documentId);
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
 			}
@@ -150,7 +162,8 @@ public class GoLLMController {
 
 			final ConfigureModelResponseHandler.Input input = new ConfigureModelResponseHandler.Input();
 			input.setResearchPaper(document.get().getText());
-			// stripping the metadata from the model before its sent since it can cause gollm to fail with massive inputs
+			// stripping the metadata from the model before its sent since it can cause
+			// gollm to fail with massive inputs
 			model.get().setMetadata(null);
 			input.setAmr(model.get());
 
@@ -232,7 +245,8 @@ public class GoLLMController {
 
 			final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
 			input.setDatasets(datasets);
-			// stripping the metadata from the model before its sent since it can cause gollm to fail with massive inputs
+			// stripping the metadata from the model before its sent since it can cause
+			// gollm to fail with massive inputs
 			model.get().setMetadata(null);
 			input.setAmr(model.get());
 

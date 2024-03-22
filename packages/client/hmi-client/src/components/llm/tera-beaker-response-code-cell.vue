@@ -1,26 +1,30 @@
 <template>
 	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
 		<template ref="codeCell" />
-		<div class="controls">
-			<i class="pi pi-play play" v-tooltip="`Run again`" @click="run" />
-			<div class="run">Run again</div>
-			<i class="pi pi-check-circle check" />
-			<div class="run">Success</div>
+		<div class="controls" :class="{ 'controls-with-query': isQuestion }">
+			<Button text rounded icon="pi pi-trash" class="danger-hover" @click="showDialog" />
+			<Button text rounded icon="pi pi-play" @click="run" />
 		</div>
-		<!--
-		<div class="save-file-container">
-			<div class="save-as">Save As:</div>
-			<div class="saved-name">{{ props.savedName }}</div>
-			<InputText v-model="savedFileName" class="post-fix" :style="`padding:3px;`" />
-			<i class="pi pi-times i" :class="{ clear: hasValidFileName }" @click="savedFileName = ''" />
-			<i class="pi pi-check i" :class="{ save: hasValidFileName }" @click="saveAsNewDataset()" />
-		</div>
-		 -->
 	</div>
+
+	<!-- Are you sure? dialog -->
+	<Dialog
+		v-model:visible="showConfirmDialog"
+		modal
+		:closable="false"
+		class="w-3"
+		header="Are you sure?"
+	>
+		<div class="mt-3">This cannot be undone.</div>
+		<template #footer>
+			<Button label="No" @click="cancelDelete" severity="secondary" outlined />
+			<Button label="Yes" @click="confirmDelete" class="p-button-danger" />
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
@@ -31,7 +35,8 @@ import {
 } from '@jupyterlab/completer';
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
-// import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 
 const props = defineProps({
 	jupyterSession: {
@@ -76,6 +81,8 @@ const props = defineProps({
 		default: null
 	}
 });
+
+const isQuestion = computed<boolean>(() => props.context_info?.query !== null);
 
 // const emit = defineEmits(['save-as-new-dataset']);
 // const savedFileName = ref<string>('');
@@ -176,6 +183,25 @@ defineExpose({
 	cellWidget,
 	clear
 });
+
+// Delete cell function
+const emit = defineEmits(['deleteRequested']);
+
+// Are you sure? dialog
+const showConfirmDialog = ref(false);
+
+function showDialog() {
+	showConfirmDialog.value = true;
+}
+
+function confirmDelete() {
+	emit('deleteRequested');
+	showConfirmDialog.value = false; // Close the dialog
+}
+
+function cancelDelete() {
+	showConfirmDialog.value = false; // Close the dialog
+}
 </script>
 
 <style lang="scss" global>
@@ -185,75 +211,23 @@ defineExpose({
 @import '@jupyterlab/completer/style/index.css';
 
 .jp-CodeCell {
-	background-color: var(--gray-50);
 	min-width: 300px;
 }
 
 .controls {
+	padding-top: var(--gap-small);
 	display: flex;
-	align-items: center;
-	padding-top: 15px;
-	padding-bottom: 10px;
+	align-items: end;
 	flex-direction: row;
-	font-size: 0.8rem;
+	justify-content: end;
+	gap: var(--gap-small);
+	position: absolute;
+	top: 3px;
+	right: 10px;
+	z-index: 2;
 }
 
-.run {
-	color: var(--gray-800);
-	font-family: var(--font-family);
-	padding-left: 5px;
-	padding-right: 10px;
-}
-// .save-file-container {
-// 	display: flex;
-// 	flex-direction: row;
-// 	align-items: center;
-// 	padding-bottom: 5px;
-// 	padding-top: 5px;
-// 	font-size: 1rem;
-// }
-
-// .saved-name {
-// 	display: flex;
-// 	flex-direction: row;
-// 	padding-left: 5px;
-// 	padding-right: 5px;
-// }
-.post-fix {
-	padding: 0px;
-	height: 20px;
-}
-
-.play {
-	color: var(--primary-color);
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.play:hover {
-	color: green;
-}
-
-.check {
-	color: var(--primary-color);
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.clear {
-	color: red;
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.save {
-	color: var(--primary-color);
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-.i {
-	padding-left: 5px;
-	padding-right: 5px;
+.controls-with-query {
+	top: 38px;
 }
 </style>

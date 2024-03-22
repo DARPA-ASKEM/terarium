@@ -21,7 +21,7 @@ async function getAll(): Promise<Dataset[] | null> {
 	return response?.data ?? null;
 }
 
-async function getAllClimate(query: string): Promise<Dataset[] | null> {
+async function searchClimateDatasets(query: string): Promise<Dataset[] | null> {
 	const response = await API.get(`/climatedata/queries/search-esgf?query=${query}`).catch(
 		(error) => {
 			logger.error(`Error: ${error}`);
@@ -48,6 +48,41 @@ async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
 		);
 	});
 	return response?.data ?? null;
+}
+
+async function getClimateSubsetId(
+	esgfId: string,
+	parentDatasetId: string,
+	envelope: string,
+	options: {
+		timestamps?: string;
+		thinFactor?: string;
+	}
+): Promise<string | null> {
+	const { timestamps, thinFactor } = options;
+	const url = `/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}&envelope=${envelope}`;
+	if (timestamps) url.concat(`&timestamps=${timestamps}`);
+	if (thinFactor) url.concat(`&thin-factor=${thinFactor}`);
+
+	let response = await API.get(url);
+
+	// FIXME: Temporary polling solution
+	if (response.status === 202) {
+		return new Promise((resolve) => {
+			const poller = setInterval(async () => {
+				response = await API.get(url);
+				if (response.status === 200) {
+					clearInterval(poller);
+					resolve(response?.data ?? null);
+				}
+			}, 30000);
+		});
+	}
+	if (response.status === 200) {
+		return response.data;
+	}
+	logger.error(`Climate-data service was not able to retrieve the subset of the dataset ${esgfId}`);
+	return null;
 }
 
 async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
@@ -345,9 +380,10 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 
 export {
 	getAll,
-	getAllClimate,
+	searchClimateDatasets,
 	getDataset,
 	getClimateDataset,
+	getClimateSubsetId,
 	getClimateDatasetPreview,
 	updateDataset,
 	getBulkDatasets,

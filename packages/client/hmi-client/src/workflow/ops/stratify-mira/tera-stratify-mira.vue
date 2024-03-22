@@ -86,8 +86,9 @@
 					<Button
 						:disabled="!amr"
 						outlined
+						severity="secondary"
 						size="large"
-						label="Save as new Model"
+						label="Save as new model"
 						@click="isNewModelModalVisible = true"
 					/>
 					<Button label="Close" size="large" @click="emit('close')" />
@@ -95,12 +96,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible">
+	<tera-modal v-if="isNewModelModalVisible" class="save-as-dialog">
 		<template #header>
 			<h4>Save as a new model</h4>
 		</template>
-		<form @submit.prevent>
-			<label for="new-model">Model name</label>
+		<form @submit.prevent class="mt-3">
+			<label for="new-model">What would you like to call it?</label>
 			<InputText
 				id="new-model"
 				type="text"
@@ -511,5 +512,9 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
+}
+
+.save-as-dialog:deep(section) {
+	width: 40rem;
 }
 </style>

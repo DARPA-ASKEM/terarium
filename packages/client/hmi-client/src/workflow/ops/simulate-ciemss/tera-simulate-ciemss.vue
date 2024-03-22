@@ -146,7 +146,7 @@ import {
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { chartActionsProxy } from '@/workflow/util';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -161,7 +161,7 @@ import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+const emit = defineEmits(['update-state', 'select-output', 'close']);
 
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
@@ -210,14 +210,9 @@ const selectedRunId = computed(
 );
 
 const outputPanel = ref(null);
-const chartSize = computed(() => {
-	if (!outputPanel.value) return { width: 100, height: 270 };
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
-	const parentContainerWidth = (outputPanel.value as HTMLElement).clientWidth - 48;
-	return { width: parentContainerWidth, height: 270 };
-});
-
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
+const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
 
