@@ -170,7 +170,7 @@
 				</SelectButton>
 				<tera-notebook-error v-if="!_.isEmpty(errorMessage.traceback)" v-bind="errorMessage" />
 				<template v-if="simulationRunResults[knobs.forecastRunId]">
-					<div v-if="outputViewSelection === OutputView.Charts">
+					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
@@ -196,7 +196,7 @@
 							:size="chartSize"
 							:threshold="knobs.threshold"
 						/>
-					</div>
+					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.forecastRunId]"
