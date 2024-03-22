@@ -1,15 +1,20 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import feign.FeignException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -20,9 +25,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import feign.FeignException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
@@ -44,18 +67,15 @@ import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
-import software.uncharted.terarium.hmiserver.service.data.*;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -106,17 +126,13 @@ public class KnowledgeController {
 			}
 			// Catch every exception thrown by the Proxy
 		} catch (final FeignException e) {
-			// If the Skema Unified Service does not return a 2xx status code, we throw a
-			// 500 error
-			final int status = e.status() < 400 ? 500 : e.status();
-			throw new ResponseStatusException(
-					HttpStatus.valueOf(status),
-					"Skema Unified Service did not return any AMR based on the provided Equations. \n"
-							+ e.getMessage());
+			final String error = "Skema Unified Service did not return any AMR based on the provided Equations";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.valueOf(e.status()), error + ": " + e.getMessage());
 		} catch (final Exception e) {
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to reach Skema Unified Service. " + e.getMessage());
+			final String error = "Unable to reach Skema Unified Service";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + ": " + e.getMessage());
 		}
 
 		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations. ";
@@ -273,10 +289,16 @@ public class KnowledgeController {
 
 				}
 			} catch (final FeignException e) {
-				log.error("SKEMA was unable to create a model with the code provided", e);
+				final String error = "SKEMA was unable to create a model with the code provided";
+				log.error(error, e);
 				throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY,
-						"Unable to get code to amr");
+						error + ": " + e.getMessage());
+			} catch (final Exception e) {
+				log.error("Unable to get code to amr", e);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						"Unable to get code to amr: " + e.getMessage());
 			}
 
 			if (!resp.getStatusCode().is2xxSuccessful()) {
@@ -322,7 +344,7 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.error("Unable to get code to amr", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -365,11 +387,11 @@ public class KnowledgeController {
 
 			// 3. create model from code asset
 			return postCodeToAMR(createdCode.getId(), "temp model", "temp model description", false, false);
-		} catch (final Exception e) {
-			log.error("unable to upload file", e);
+		} catch (final IOException e) {
+			log.error("Unable to upload file", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Error creating running code to model");
+					"Error creating running code to model: " + e.getMessage());
 		}
 	}
 
@@ -458,11 +480,11 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(modelService.updateAsset(model).orElseThrow());
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.error("Unable to get profile model", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to get profile model");
+					"Unable to get profile model: " + e.getMessage());
 		}
 	}
 
@@ -580,7 +602,7 @@ public class KnowledgeController {
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
@@ -628,12 +650,12 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			final String error = "Unable to get link amr";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
@@ -652,7 +674,7 @@ public class KnowledgeController {
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
