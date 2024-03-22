@@ -91,10 +91,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		transitions
 			.append('rect')
 			.classed('shape selectableNode', true)
-			.attr('width', (d) => d.width * d.aspectRatio)
+			.attr('width', (d) => d.width * d.aspectRatio!)
 			.attr('height', (d) => d.height)
 			.attr('y', (d) => -d.height * 0.5)
-			.attr('x', (d) => -d.width * 0.5 * d.aspectRatio)
+			.attr('x', (d) => -d.width * 0.5 * d.aspectRatio!)
 			.attr('rx', 6)
 			.attr('ry', 6)
 			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#ffffff'))
@@ -176,11 +176,11 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					if (col.content && col.content.value) {
 						transitionNode
 							.append('rect')
-							.attr('width', (d.width / matrixColLen) * d.aspectRatio)
+							.attr('width', (d.width / matrixColLen) * d.aspectRatio!)
 							.attr('height', d.height / matrixRowLen)
 							.attr(
 								'x',
-								-d.width * 0.5 * d.aspectRatio + (d.width / matrixColLen) * d.aspectRatio * colIdx
+								-d.width * 0.5 * d.aspectRatio! + (d.width / matrixColLen) * d.aspectRatio! * colIdx
 							)
 							.attr('y', -d.height * 0.5 + (d.height / matrixRowLen) * rowIdx)
 							.attr('rx', 2)
@@ -203,8 +203,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 					// Draw label for number of rows
 					transitionNode
 						.append('text')
-						.attr('x', (-d.width * d.aspectRatio) / 2 - 8)
-						.attr('y', (-d.height * d.aspectRatio) / 2 + 12)
+						.attr('x', (-d.width * d.aspectRatio!) / 2 - 8)
+						.attr('y', (-d.height * d.aspectRatio!) / 2 + 12)
 						.attr('text-anchor', 'right') // This will center-align the text horizontally
 						.text(matrixRowLen)
 						.style('fill', '#cccccc')

@@ -15,6 +15,7 @@ export interface IPoint {
 }
 
 export interface INode<T> {
+	aspectRatio?: number;
 	id: string;
 	label: string;
 	type?: string;
