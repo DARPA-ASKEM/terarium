@@ -108,14 +108,17 @@
 				:is-loading="showSpinner"
 				@update:selection="onSelection"
 			>
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-					has-mean-line
-					@configuration-change="chartProxy.configurationChange(index, $event)"
-				/>
+				<section ref="outputPanel">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.chartConfigs"
+						:key="index"
+						:run-results="runResults"
+						:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+						has-mean-line
+						:size="chartSize"
+						@configuration-change="chartProxy.configurationChange(index, $event)"
+					/>
+				</section>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -150,7 +153,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { chartActionsProxy } from '@/workflow/util';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type {
@@ -201,6 +204,8 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = ref<string>('');
 
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
 	emit('update-state', state);
 });
