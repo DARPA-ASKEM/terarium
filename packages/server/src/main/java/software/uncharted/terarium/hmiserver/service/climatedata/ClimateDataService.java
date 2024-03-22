@@ -56,12 +56,13 @@ public class ClimateDataService {
 
             final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
             if (!climateDataResponse.getResult().getJobResult().isNull()) {
-                final ClimateDataResultPng png = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPng.class);
-                if (png != null && png.getPng() != null) {
+                final ClimateDataResultPreviews previews = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultPreviews.class);
+                if (previews != null && previews.getPreviews() != null && previews.getPreviews().size() > 0) {
                     try {
-                        final int index = png.getPng().indexOf(',');
-                        if (index > -1 && index + 1 < png.getPng().length()) {
-                            final String pngBase64 = png.getPng().substring(index + 1);
+                        final ClimateDataResultPreviews.Preview preview = previews.getPreviews().get(0);
+                        final int index = preview.getImage().indexOf(',');
+                        if (index > -1 && index + 1 < preview.getImage().length()) {
+                            final String pngBase64 = preview.getImage().substring(index + 1);
                             final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
 
                             final String bucket = config.getFileStorageS3BucketName();
@@ -69,9 +70,9 @@ public class ClimateDataService {
 
                             s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
 
-                            final ClimateDataPreview preview = new ClimateDataPreview(previewTask);
+                            final ClimateDataPreview climateDataPreview = new ClimateDataPreview(previewTask);
 
-                            climateDataPreviewRepository.save(preview);
+                            climateDataPreviewRepository.save(climateDataPreview);
                         }
                     } catch(final Exception e) {
                         log.error("Failed to extract png", e);
@@ -132,8 +133,12 @@ public class ClimateDataService {
         }
     }
 
-    private static String getPreviewFilename(final String esgfId, final String variableId) {
-        return String.join("/preview", esgfId, variableId);
+    private String getPreviewFilename(final String esgfId, final String variableId) {
+        return String.join("/", config.getImagePath(), String.join("-", "preview", esgfId, variableId));
+    }
+
+    public ClimateDataPreviewRepository getClimateDataPreviewRepository() {
+        return climateDataPreviewRepository;
     }
 
     public void addPreviewJob(final String esgfId, final String variableId, final String timestamps, final String timeIndex, final String statusId) {
@@ -158,8 +163,10 @@ public class ClimateDataService {
             final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), filename, EXPIRATION);
             if (url.isPresent()) {
                 return url.get();
+            } else {
+                log.debug("Image claims to be present and yet isn't - re-requesting preview generation");
+                climateDataPreviewRepository.delete(preview);
             }
-            throw new Exception("Failed to generate presigned s3 url");
         }
 
         return null;

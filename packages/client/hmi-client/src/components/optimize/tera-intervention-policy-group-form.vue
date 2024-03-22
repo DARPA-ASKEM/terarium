@@ -8,7 +8,7 @@
 					placeholder="Policy bounds"
 					@focusout="emit('update-self', config)"
 				/>
-				<h4 v-else>{{ props.config.name }}</h4>
+				<h6 v-else>{{ props.config.name }}</h6>
 				<i
 					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
 					:style="'cursor: pointer'"
