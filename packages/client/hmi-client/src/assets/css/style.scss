@@ -81,3 +81,39 @@ a {
 	max-height: 400px;
 	overflow-y: auto;
 }
+
+
+/* JupyterLab Overrides */
+.jp-InputPrompt, .jp-OutputPrompt {
+	flex: 0 0 4rem;
+	padding: 0.5rem 0;
+	text-align: left;
+}  
+.jp-Collapser {
+	flex: 0 0 0;
+}
+
+.jp-Cell {
+	padding: 0;
+}
+.jp-InputPrompt {
+  color: var(--text-color-subdued);
+}
+.jp-OutputPrompt {
+  color: var(--primary-color-dark);
+}	
+.jp-InputArea-editor {
+	border-radius: 3px;
+}
+.jp-InputArea-editor.jp-mod-focused {
+	border: solid 1px var(--primary-color);
+}
+.CodeMirror.cm-s-jupyter {
+	min-height: 31px;
+}
+.jp-OutputArea-output {
+	background-color: var(--surface-0);
+	border: solid 1px var(--surface-border-light);
+	border-radius: 3px;
+	padding: var(--gap-small);
+}
