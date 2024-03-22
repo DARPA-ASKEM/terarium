@@ -147,7 +147,7 @@
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
-					class="cursor-pointer secondary-text"
+					class="cursor-pointer secondary-text text-sm"
 					>Open matrix</span
 				>
 				<!-- Distribution -->
@@ -801,6 +801,10 @@ const countSuggestions = (id): number =>
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
 	text-align: right;
+}
+
+.timeseries-container > :deep(input) {
+	font-size: var(--font-caption);
 }
 
 .add-plus-minus > :deep(input) {

@@ -142,7 +142,7 @@
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
-					class="cursor-pointer secondary-text"
+					class="cursor-pointer secondary-text text-sm"
 					>Open matrix</span
 				>
 				<!-- Expression -->
