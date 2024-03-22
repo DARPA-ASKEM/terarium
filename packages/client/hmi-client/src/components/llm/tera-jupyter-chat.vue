@@ -6,6 +6,7 @@
 				v-for="(msg, index) in notebookItems"
 				ref="notebookCells"
 				:key="index"
+				:index="index"
 				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
 				:msg="msg"
