@@ -58,7 +58,7 @@ export const OptimizeCiemssOperation: Operation = {
 			startTime: 0,
 			endTime: 90,
 			numStochasticSamples: 5,
-			solverMethod: 'euler',
+			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
