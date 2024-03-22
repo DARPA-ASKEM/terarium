@@ -124,9 +124,43 @@
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="OptimizeTabs.Notebook">
-			<h5>Notebook</h5>
+			<tera-drilldown-section class="notebook-section">
+				<div class="toolbar-right-side">
+					<Button
+						icon="pi pi-play"
+						label="Run"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="runFromCode"
+					/>
+				</div>
+				<Suspense>
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="sampleAgentQuestions"
+						:context-language="contextLanguage"
+						@llm-output="(data: any) => appendCode(data, 'code')"
+					/>
+				</Suspense>
+				<v-ace-editor
+					v-model:value="codeText"
+					@init="initializeAceEditor"
+					lang="python"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%"
+					class="ace-editor"
+					:options="{ showPrintMargin: false }"
+				/>
+			</tera-drilldown-section>
 		</section>
 		<template #preview>
+			<tera-notebook-error
+				v-if="executeResponse.status === OperatorStatus.ERROR"
+				:name="executeResponse.name"
+				:value="executeResponse.value"
+				:traceback="executeResponse.traceback"
+			/>
 			<tera-drilldown-preview
 				title="Simulation output"
 				:options="outputs"
@@ -269,6 +303,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
 import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 // Services:
 import {
 	getModelConfigurationById,
@@ -283,6 +319,7 @@ import {
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { Poller, PollerState } from '@/api/api';
+import { KernelSessionManager } from '@/services/jupyter';
 // Types:
 import {
 	ModelConfiguration,
@@ -298,8 +335,9 @@ import {
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -352,6 +390,20 @@ const knobs = ref<BasicKnobs>({
 	modelConfigName: props.node.state.modelConfigName ?? '',
 	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
 });
+
+const sampleAgentQuestions = [];
+const contextLanguage = ref<string>('python3');
+const defaultCodeText =
+	'# This environment contains the variable "model" \n# which is displayed on the right';
+const codeText = ref(defaultCodeText);
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
+let editor: VAceEditorInstance['_editor'] | null;
+const kernelManager = new KernelSessionManager();
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -407,6 +459,54 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+const initializeAceEditor = (editorInstance: any) => {
+	editor = editorInstance;
+};
+
+const appendCode = (data: any, property: string) => {
+	const code = data.content[property] as string;
+	if (code) {
+		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+	} else {
+		logger.error('No code to append');
+	}
+};
+
+const runFromCode = () => {
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code: editor?.getValue() as string
+	};
+
+	let executedCode = '';
+
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+			executeResponse.value = {
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+			};
+		});
+	console.log('Check for: ');
+	console.log(executedCode);
+	console.log('And save to state');
+};
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
@@ -688,6 +788,15 @@ watch(
 </script>
 
 <style scoped>
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
+}
+
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
@@ -729,6 +838,14 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+	/** TODO: Temporary solution, should be using the default overlay-container padding
+	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
+	margin-left: 1.5rem;
 }
 
 .input-row {
