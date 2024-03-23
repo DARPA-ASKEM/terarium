@@ -101,9 +101,9 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		transitions
 			.append('rect')
 			.classed('shape selectableNode', true)
-			.attr('width', (d) => (d.aspectRatio >= 1 ? d.width : d.width))
-			.attr('height', (d) => (d.aspectRatio >= 1 ? d.height : d.height))
-			.attr('x', (d) => (d.aspectRatio >= 1 ? -d.width * 0.5 : -d.width * 0.5))
+			.attr('width', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.width : d.width))
+			.attr('height', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.height : d.height))
+			.attr('x', (d) => ((d.aspectRatio ?? 1) >= 1 ? -d.width * 0.5 : -d.width * 0.5))
 			.attr('y', (d) => -d.height * 0.5)
 			// .attr('rx', 6)
 			// .attr('ry', 6)

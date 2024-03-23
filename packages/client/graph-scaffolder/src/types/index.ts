@@ -15,7 +15,6 @@ export interface IPoint {
 }
 
 export interface INode<T> {
-	aspectRatio?: number;
 	id: string;
 	label: string;
 	type?: string;
@@ -27,6 +26,9 @@ export interface INode<T> {
 	height: number;
 	data: T;
 	nodes: INode<T>[];
+	aspectRatio?: number;
+	matrixCols?: number;
+	matrixRows?: number;
 }
 
 export interface IEdge<T> {
