@@ -17,6 +17,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
@@ -31,6 +33,7 @@ import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -40,6 +43,7 @@ import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -50,6 +54,7 @@ import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 @Slf4j
 public class ExtractionService {
 	final DocumentAssetService documentService;
+	final ModelService modelService;
 	final ExtractionProxy extractionProxy;
 	final SkemaUnifiedProxy skemaUnifiedProxy;
 	final MitProxy mitProxy;
@@ -345,6 +350,11 @@ public class ExtractionService {
 					}
 
 					clientInterface.sendFinalMessage("Extraction complete");
+				} catch (final FeignException e) {
+					final String error = "Transitive service failure";
+					throw new ResponseStatusException(
+							HttpStatus.valueOf(e.status()),
+							error + ": " + e.getMessage());
 				} catch (final Exception e) {
 					final String error = "Unable to extract pdf";
 					log.error(error, e);
@@ -357,7 +367,8 @@ public class ExtractionService {
 		});
 	}
 
-	public DocumentAsset extractVariables(final UUID documentId, final Boolean annotateSkema, final Boolean annotateMIT,
+	public DocumentAsset extractVariables(final UUID documentId, final List<UUID> modelIds, final Boolean annotateSkema,
+			final Boolean annotateMIT,
 			final String domain) throws IOException {
 
 		DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
@@ -370,10 +381,17 @@ public class ExtractionService {
 		JsonNode skemaCollection = null;
 		JsonNode mitCollection = null;
 
-		// Send document to SKEMA
 		try {
-			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText());
 
+			// add optional models
+			final List<Model> models = new ArrayList<>();
+			for (final UUID modelId : modelIds) {
+				models.add(modelService.getAsset(modelId).orElseThrow());
+			}
+
+			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
+
+			log.info("Sending variable extraction request to SKEMA");
 			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
 					annotateSkema, body);
 
@@ -392,6 +410,11 @@ public class ExtractionService {
 				log.error("Unable to extract variables from document: " + document.getId());
 			}
 
+		} catch (final FeignException e) {
+			final String error = "SKEMA integrated-text-extractions request failed";
+			throw new ResponseStatusException(
+					HttpStatus.valueOf(e.status()),
+					error + ": " + e.getMessage());
 		} catch (final Exception e) {
 			log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
 		}
@@ -401,6 +424,7 @@ public class ExtractionService {
 			final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
 					"application/text");
 
+			log.info("Sending variable extraction request to MIT");
 			final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
 
 			if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
@@ -410,6 +434,11 @@ public class ExtractionService {
 				log.error("Unable to extract variables from document: " + document.getId());
 			}
 
+		} catch (final FeignException e) {
+			final String error = "MIT upload_file_extract request failed";
+			throw new ResponseStatusException(
+					HttpStatus.valueOf(e.status()),
+					error + ": " + e.getMessage());
 		} catch (final Exception e) {
 			log.error("MIT variable extraction for document {} failed", documentId, e);
 		}
@@ -440,21 +469,30 @@ public class ExtractionService {
 					"text.json",
 					"application/json");
 
-			final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
-					arizonaFile);
+			try {
+				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
+						arizonaFile);
 
-			if (resp.getStatusCode().is2xxSuccessful()) {
-				for (final JsonNode attribute : resp.getBody().get("attributes")) {
-					attributes.add(attribute);
-				}
-			} else {
-				// fallback to collection
-				log.info("MIT merge failed: {}", resp.getBody().asText());
-				for (final JsonNode collection : collections) {
-					for (final JsonNode attribute : collection.get("attributes")) {
+				if (resp.getStatusCode().is2xxSuccessful()) {
+					for (final JsonNode attribute : resp.getBody().get("attributes")) {
 						attributes.add(attribute);
 					}
+				} else {
+					// fallback to collection
+					log.info("MIT merge failed: {}", resp.getBody().asText());
+					for (final JsonNode collection : collections) {
+						for (final JsonNode attribute : collection.get("attributes")) {
+							attributes.add(attribute);
+						}
+					}
 				}
+			} catch (final FeignException e) {
+				final String error = "MIT get_mapping request failed";
+				throw new ResponseStatusException(
+						HttpStatus.valueOf(e.status()),
+						error + ": " + e.getMessage());
+			} catch (final Exception e) {
+				log.error("MIT merge failed", e);
 			}
 		}
 
