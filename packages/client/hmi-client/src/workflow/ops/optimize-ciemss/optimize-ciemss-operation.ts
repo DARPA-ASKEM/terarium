@@ -17,6 +17,8 @@ export interface OptimizeCiemssOperationState {
 	endTime: number;
 	numStochasticSamples: number;
 	solverMethod: string;
+	maxiter: number;
+	maxfeval: number;
 	// Intervention policies
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
@@ -30,6 +32,8 @@ export interface OptimizeCiemssOperationState {
 	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	optimizeErrorMessage: { name: string; value: string; traceback: string };
+	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -57,6 +61,8 @@ export const OptimizeCiemssOperation: Operation = {
 			endTime: 90,
 			numStochasticSamples: 5,
 			solverMethod: 'dopri5',
+			maxiter: 5,
+			maxfeval: 25,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
 			riskTolerance: 5,
@@ -67,7 +73,9 @@ export const OptimizeCiemssOperation: Operation = {
 			forecastRunId: '',
 			optimzationRunId: '',
 			modelConfigName: '',
-			modelConfigDesc: ''
+			modelConfigDesc: '',
+			optimizeErrorMessage: { name: '', value: '', traceback: '' },
+			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	}

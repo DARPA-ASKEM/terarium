@@ -119,6 +119,14 @@
 								:max-fraction-digits="10"
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Maxiter</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+						</div>
+						<div class="label-and-input">
+							<label>Maxfeval</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+						</div>
 					</div>
 				</div>
 			</tera-drilldown-section>
@@ -168,8 +176,10 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
+				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
+				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
 				<template v-if="simulationRunResults[knobs.forecastRunId]">
-					<div v-if="outputViewSelection === OutputView.Charts">
+					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
@@ -195,7 +205,7 @@
 							:size="chartSize"
 							:threshold="knobs.threshold"
 						/>
-					</div>
+					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.forecastRunId]"
@@ -279,7 +289,8 @@ import {
 	makeForecastJobCiemss,
 	pollAction,
 	getRunResultCiemss,
-	getRunResult
+	getRunResult,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { Poller, PollerState } from '@/api/api';
@@ -300,6 +311,7 @@ import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -328,6 +340,8 @@ interface BasicKnobs {
 	endTime: number;
 	numStochasticSamples: number;
 	solverMethod: string;
+	maxiter: number;
+	maxfeval: number;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
@@ -343,6 +357,8 @@ const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 1,
 	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
+	maxiter: props.node.state.maxiter ?? 5,
+	maxfeval: props.node.state.maxfeval ?? 25,
 	targetVariables: props.node.state.targetVariables ?? [],
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
@@ -492,8 +508,8 @@ const runOptimize = async () => {
 		extra: {
 			isMinimized: knobs.value.isMinimized,
 			numSamples: knobs.value.numStochasticSamples,
-			maxiter: 5,
-			maxfeval: 5,
+			maxiter: knobs.value.maxiter,
+			maxfeval: knobs.value.maxfeval,
 			alpha: (100 - knobs.value.riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
 		}
@@ -549,21 +565,32 @@ const getStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.simulateErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
 		showSpinner.value = false;
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.simulateErrorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 
-	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
 		chartProxy.addChart();
 	}
@@ -579,17 +606,30 @@ const getOptimizeStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Optimize Run: ${runId} has failed`, {
+		// throw if there are any failed runs for now
+		logger.error(`Optimize: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.optimizeErrorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 
@@ -648,6 +688,8 @@ watch(
 		state.endTime = knobs.value.endTime;
 		state.numStochasticSamples = knobs.value.numStochasticSamples;
 		state.solverMethod = knobs.value.solverMethod;
+		state.maxiter = knobs.value.maxiter;
+		state.maxfeval = knobs.value.maxfeval;
 		state.targetVariables = knobs.value.targetVariables;
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;

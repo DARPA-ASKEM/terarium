@@ -146,6 +146,10 @@
 				<section v-else>
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</section>
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
+					v-bind="node.state.errorMessage"
+				/>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -182,6 +186,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
