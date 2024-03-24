@@ -1,4 +1,7 @@
-<!-- This template is a copy of tera-external-publication with some elements stripped out.  TODO: merge the concept of external publication and document asset -->
+<!--
+  -- This template is a copy of tera-external-publication with some elements stripped out.
+  -- TODO: merge the concept of external publication and document asset.
+  -->
 <template>
 	<tera-asset
 		:feature-config="featureConfig"
@@ -127,7 +130,10 @@
 			</AccordionTab>
 		</Accordion>
 
-		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
+		<!--
+		  -- Adding this here for now...
+		  -- until we implement the process manager
+		  -->
 		<p
 			class="pl-3"
 			v-if="
@@ -197,13 +203,12 @@ const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disa
 
 const viewOptions = computed(() => {
 	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
-	const filename = document.value?.fileNames?.[0];
-	const isPdf = filename?.endsWith('.pdf');
+	const isPdf = document.value?.fileNames?.some((file) => file.endsWith('.pdf')) ?? false;
 
 	if (isPdf) {
-		options.push(pdfOption);
+		options.push({ ...pdfOption, disabled: documentLoading.value });
 	} else if (docText.value) {
-		options.push(txtOption);
+		options.push({ ...txtOption, disabled: documentLoading.value });
 	} else {
 		options.push(notFoundOption);
 	}
