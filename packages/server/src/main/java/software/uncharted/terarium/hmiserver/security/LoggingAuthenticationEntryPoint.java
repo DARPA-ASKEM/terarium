@@ -14,6 +14,10 @@ public class LoggingAuthenticationEntryPoint implements AuthenticationEntryPoint
 	@Override
 	public void commence(final HttpServletRequest request, final HttpServletResponse response, final AuthenticationException authException) throws IOException, ServletException {
 		log.warn("Unauthorized warning: {}", authException.getMessage());
+		log.warn("The Unauthorized request has the following headers:");
+		request.getHeaderNames().asIterator().forEachRemaining(headerName -> {
+			log.warn("\tHeader: {} = {}", headerName, request.getHeader(headerName));
+		});
 		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
 	}
 }
