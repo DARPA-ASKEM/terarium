@@ -207,9 +207,9 @@ export async function getModelEquation(model: Model): Promise<string> {
 	 */
 	const response = await API.get(`/transforms/model-to-latex/${model.id}`);
 	// const response = await API.post(`/transforms/model-to-latex/`, model);
-	const latex = response.data.latex;
+	const latex = response?.data?.latex;
 	if (!latex) return '';
-	return latex;
+	return latex ?? '';
 }
 
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
