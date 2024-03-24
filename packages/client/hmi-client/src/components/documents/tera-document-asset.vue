@@ -280,12 +280,22 @@ watch(
 			const filename = document.value?.fileNames?.[0];
 
 			if (filename?.endsWith('.pdf')) {
-				pdfLink.value = await downloadDocumentAsset(props.assetId, filename); // Generate PDF download link on (doi change)
+				// Generate PDF download link on assetId change
+				downloadDocumentAsset(props.assetId, filename).then((pdfLinkResponse) => {
+					if (pdfLinkResponse) {
+						pdfLink.value = pdfLinkResponse;
+					}
+				});
+			} else if (filename && document.value?.id) {
+				if (document.value?.text) {
+					docText.value = document.value.text;
+				} else {
+					getDocumentFileAsText(document.value.id, filename).then((text) => {
+						docText.value = text;
+					});
+				}
 			} else {
-				docText.value =
-					filename && document.value?.id
-						? document.value?.text ?? (await getDocumentFileAsText(document.value.id, filename))
-						: document.value?.text ?? null;
+				docText.value = document.value?.text ?? null;
 			}
 
 			documentLoading.value = false;
