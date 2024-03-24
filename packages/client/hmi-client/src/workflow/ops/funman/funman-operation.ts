@@ -45,7 +45,7 @@ export const FunmanOperation: Operation = {
 		const init: FunmanOperationState = {
 			currentTimespan: { start: 0, end: 100 },
 			numSteps: 10,
-			tolerance: 0.5,
+			tolerance: 0.2,
 			constraintGroups: [],
 			requestParameters: [],
 			useCompartmentalConstraint: true

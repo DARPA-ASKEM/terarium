@@ -113,10 +113,15 @@
 				:options="outputs"
 				is-selectable
 			>
-				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
-				<div v-else class="flex flex-column h-full justify-content-center">
-					<tera-operator-placeholder :operation-type="node.operationType" />
-				</div>
+				<template v-if="showSpinner">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+				</template>
+				<template v-else>
+					<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
+					<div v-else class="flex flex-column h-full justify-content-center">
+						<tera-operator-placeholder :operation-type="node.operationType" />
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</template>
 
@@ -154,6 +159,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -346,7 +352,7 @@ const getStatus = async (runId: string) => {
 	showSpinner.value = true;
 
 	poller
-		.setInterval(3000)
+		.setInterval(5000)
 		.setThreshold(100)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
