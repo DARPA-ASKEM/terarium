@@ -281,13 +281,11 @@ watch(
 
 			if (filename?.endsWith('.pdf')) {
 				pdfLink.value = await downloadDocumentAsset(props.assetId, filename); // Generate PDF download link on (doi change)
-				view.value = DocumentView.PDF;
 			} else {
 				docText.value =
 					filename && document.value?.id
 						? document.value?.text ?? (await getDocumentFileAsText(document.value.id, filename))
 						: document.value?.text ?? null;
-				if (docText.value !== null) view.value = DocumentView.TXT;
 			}
 
 			documentLoading.value = false;
@@ -307,11 +305,6 @@ onUpdated(() => {
 });
 </script>
 <style scoped>
-.container {
-	margin-left: 1rem;
-	margin-right: 1rem;
-}
-
 .extracted-item {
 	display: flex;
 	flex-direction: row;
