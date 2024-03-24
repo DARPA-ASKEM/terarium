@@ -2,8 +2,8 @@
 <template>
 	<tera-asset
 		:feature-config="featureConfig"
-		:name="highlightSearchTerms(document?.name)"
-		:overline="highlightSearchTerms(document?.source)"
+		:name="document?.name ?? ''"
+		:overline="document?.source ?? ''"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
@@ -62,7 +62,7 @@
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
-							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:text="ex.metadata?.content ?? ''"
 							:lines="previewLineLimit"
 						/>
 						<div v-else class="no-extracted-text">No extracted text</div>
@@ -89,7 +89,7 @@
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
-							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:text="ex.metadata?.content ?? ''"
 							:lines="previewLineLimit"
 						/>
 						<div v-else class="no-extracted-text">No extracted text</div>
@@ -116,7 +116,7 @@
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
-							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:text="ex.metadata?.content ?? ''"
 							:lines="previewLineLimit"
 						/>
 						<div v-else class="no-extracted-text">No extracted text</div>
@@ -154,7 +154,6 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { DocumentAsset } from '@/types/Types';
 import { AssetType, ExtractionAssetType } from '@/types/Types';
@@ -181,7 +180,6 @@ enum DocumentView {
 }
 const props = defineProps<{
 	assetId: string;
-	highlight?: string;
 	previewLineLimit: number;
 	featureConfig?: FeatureConfig;
 }>();
@@ -258,14 +256,6 @@ const optionsMenuItems = ref([
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
-
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
 
 /* TODO: When fetching a document by id, its id and fileNames don't get returned.
  Once they do see about adjusting the conditionals */
