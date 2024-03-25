@@ -1,6 +1,6 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<div :tabName="SubsetDataTabs.Wizard">
+		<div :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<!-- Geo boundaries -->
 				<h5>Select geo-boundaries</h5>
@@ -83,7 +83,7 @@
 						We should make it so the left footer is aligned left and the right
 						footer is aligned right-->
 					<Button
-						class="mr-auto"
+						class="mr-auto mb-2"
 						@click="run"
 						:label="isSubsetLoading ? 'Processing' : 'Run'"
 						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
@@ -102,6 +102,7 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-2"
 			>
 				<tera-progress-spinner v-if="isSubsetLoading" is-inline>
 					Please wait for the subset to generate. This usually takes a few minutes...

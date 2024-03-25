@@ -403,11 +403,12 @@ onUnmounted(() => {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
-	/** TODO: Temporary solution, should be using the default overlay-container padding
-	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
-	margin-left: 1.5rem;
 }
 
+.notebook-section:deep(main .notebook-toolbar),
+.notebook-section:deep(main .ai-assistant) {
+	padding-left: var(--gap-medium);
+}
 .toolbar-right-side {
 	position: absolute;
 	top: var(--gap);

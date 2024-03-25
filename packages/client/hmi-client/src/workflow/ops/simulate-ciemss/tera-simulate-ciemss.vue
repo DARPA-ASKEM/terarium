@@ -6,10 +6,10 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section :tabName="SimulateTabs.Wizard">
+		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Set simulation parameters</h4>
+					<h5>Set simulation parameters</h5>
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
@@ -60,8 +60,8 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="SimulateTabs.Notebook">
-			<h4>Notebook</h4>
+		<section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
+			<p>Under construction. Use the wizard for now.</p>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -71,6 +71,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				class="mr-4 ml-4 mt-3 mb-3"
 			>
 				<div class="flex flex-row align-items-center gap-2">
 					What do you want to see?

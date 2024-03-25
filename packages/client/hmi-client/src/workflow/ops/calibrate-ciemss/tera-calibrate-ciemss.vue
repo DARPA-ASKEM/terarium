@@ -6,14 +6,14 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section :tabName="CalibrateTabs.Wizard">
+		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Mapping</h4>
+					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
 						<Button
 							class="p-button-sm p-button-text"
-							label="Delete All Mapping"
+							label="Delete all mapping"
 							@click="deleteMapping"
 						/>
 						<Column field="modelVariable">
@@ -97,7 +97,7 @@
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="CalibrateTabs.Notebook">
-			<h4>Notebook</h4>
+			<h5>Notebook</h5>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -106,11 +106,12 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-3"
 			>
-				<h4>Loss</h4>
+				<h5>Loss</h5>
 				<div ref="drilldownLossPlot"></div>
 				<div v-if="!showSpinner" class="form-section">
-					<h4>Variables</h4>
+					<h5>Variables</h5>
 					<section
 						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
 						ref="outputPanel"
