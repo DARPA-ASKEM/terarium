@@ -244,7 +244,7 @@ const evalScenarios: Ref<EvalScenario> = ref(evalScenariosJson);
 const evaluationScenario: Ref<Scenario> = ref(evalScenarios.value.scenarios[0]);
 const evaluationScenarioTask: Ref<Question> = ref(evaluationScenario.value.questions[0]);
 const evaluationScenarioDescription: Ref<string> = ref(evaluationScenarioTask.value.description);
-const evaluationScenarioMultipleUsers: Ref<boolean> = ref(false);
+const evaluationScenarioMultipleUsers: Ref<boolean> = ref(true);
 const evaluationScenarioNotes = ref('');
 const evaluationScenarioCurrentStatus: Ref<EvaluationScenarioStatus> = ref(
 	EvaluationScenarioStatus.Stopped
@@ -362,7 +362,7 @@ const loadEvaluationScenario = async () => {
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
 
 	evaluationScenarioMultipleUsers.value =
-		window.localStorage.getItem('evaluationScenarioMultipleUsers') === 'true';
+		window.localStorage.getItem('evaluationScenarioMultipleUsers') !== 'false';
 
 	if (evaluationScenario.value) {
 		await refreshEvaluationScenario();
