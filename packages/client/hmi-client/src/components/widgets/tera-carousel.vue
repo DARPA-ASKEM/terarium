@@ -1,5 +1,5 @@
 <template>
-	<figure class="relative">
+	<figure>
 		<div ref="content" class="content" :style="{ height, width }">
 			<slot />
 			<div v-if="!hasSlot('default')" class="empty">
@@ -7,15 +7,15 @@
 			</div>
 		</div>
 		<nav v-if="itemCount > 0">
-			<ul :class="{ numeric: isNumeric }">
+			<ul :class="{ numeric: isNumeric || !isEmpty(labels) }">
 				<li
 					v-for="(_, index) in itemCount"
 					:class="{ selected: index === currentPage }"
 					:key="_"
 					@click.stop="move(index)"
 				>
-					<!--Displays when isNumeric is true-->
-					<span>{{ index + 1 }}</span>
+					<span v-if="isNumeric">{{ index + 1 }}</span>
+					<span v-else>{{ labels[index] }}</span>
 				</li>
 				<li v-if="isNumeric && itemCount > 5">(+{{ itemCount }})</li>
 			</ul>
@@ -40,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { ref, onMounted, useSlots } from 'vue';
 import Button from 'primevue/button';
 
@@ -55,6 +56,10 @@ defineProps({
 	isNumeric: {
 		type: Boolean,
 		default: false
+	},
+	labels: {
+		type: Array,
+		default: () => []
 	}
 });
 
@@ -90,8 +95,6 @@ figure {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 7.5rem;
-	max-height: 7.5rem;
 	overflow: hidden;
 	background-color: var(--surface-ground);
 	border-radius: var(--border-radius);
@@ -132,6 +135,8 @@ i {
 
 nav {
 	text-align: center;
+	display: flex;
+	overflow: auto;
 	color: var(--text-color-subdued);
 
 	& > ul {
