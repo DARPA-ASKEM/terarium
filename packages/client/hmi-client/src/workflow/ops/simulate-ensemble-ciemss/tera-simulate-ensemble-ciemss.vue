@@ -6,7 +6,7 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section :tabName="Tabs.Wizard">
+		<section :tabName="Tabs.Wizard" class="ml-3 mr-2 pt-3">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<!-- Model weights -->
 				<AccordionTab header="Model weights">
@@ -164,6 +164,7 @@
 				is-selectable
 				:is-loading="showSpinner"
 				@update:selection="onSelection"
+				class="mt-3 ml-2 mr-4 mb-2"
 			>
 				<tera-notebook-error
 					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"

@@ -7,7 +7,9 @@
 			/>
 		</template>
 		<div :tabName="ModelCouplingTabgs.Wizard">
-			<tera-drilldown-section> </tera-drilldown-section>
+			<tera-drilldown-section class="ml-4 mr-2 mt-3"
+				>Coming soon. Use the notebook tab for now.</tera-drilldown-section
+			>
 		</div>
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
@@ -51,7 +53,7 @@
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview class="mt-3 ml-2 mr-4 mb-2">
 				<div>
 					<div v-if="modelCouplingResult">
 						{{ modelCouplingResult }}
@@ -62,28 +64,30 @@
 					</div>
 				</div>
 				<template #footer>
-					<InputText
-						v-model="newModelName"
-						placeholder="model name"
-						type="text"
-						class="input-small white-space-nowrap"
-					/>
-					<div class="w-full flex gap-2 justify-content-end">
-						<Button
-							:disabled="!modelCouplingResult"
-							outlined
-							class="white-space-nowrap"
-							size="large"
-							label="Save as new model"
-							@click="
-								() =>
-									saveNewModel(newModelName, {
-										addToProject: true,
-										appendOutputPort: true
-									})
-							"
+					<div class="footer">
+						<InputText
+							v-model="newModelName"
+							placeholder="model name"
+							type="text"
+							class="input-small white-space-nowrap"
 						/>
-						<Button label="Close" size="large" @click="emit('close')" />
+						<div class="w-full flex gap-2 justify-content-end">
+							<Button
+								:disabled="!modelCouplingResult"
+								outlined
+								class="white-space-nowrap"
+								size="large"
+								label="Save as new model"
+								@click="
+									() =>
+										saveNewModel(newModelName, {
+											addToProject: true,
+											appendOutputPort: true
+										})
+								"
+							/>
+							<Button label="Close" size="large" @click="emit('close')" />
+						</div>
 					</div>
 				</template>
 			</tera-drilldown-preview>
@@ -316,6 +320,18 @@ const languages = ref([{ name: 'Julia' }, { name: 'Python' }]);
 	display: flex;
 	flex-direction: row;
 	gap: 1rem;
+	padding: var(--gap);
+	padding-bottom: 0;
 	justify-content: space-between;
+}
+
+.footer {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+	padding-bottom: var(--gap-small);
+	padding-top: 0;
+	justify-content: space-between;
+	width: 100%;
 }
 </style>
