@@ -295,8 +295,7 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			num_samples: 100,
-			num_iterations: 200
+			num_iterations: 1000
 			/*
 			num_samples: numSamples.value,
 			num_iterations: numIterations.value,
