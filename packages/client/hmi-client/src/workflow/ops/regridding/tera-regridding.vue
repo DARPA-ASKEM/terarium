@@ -42,7 +42,7 @@ const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
-const assets = ref([]);
+const assets = ref<{ id: string; filename: string }[]>([]);
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
