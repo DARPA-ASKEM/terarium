@@ -2,14 +2,10 @@ package software.uncharted.terarium.hmiserver.models.climateData;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -26,6 +22,7 @@ public class ClimateDataSubset {
     private String timestamps;
     private String thinFactor;
     private UUID datasetId;
+    @Column(length = 4096)
     private String error;
 
     public ClimateDataSubset(ClimateDataSubsetTask subsetTask) {

@@ -21,7 +21,6 @@
 	<tera-operator-placeholder v-else :operation-type="node.operationType">
 		Connect a model configuration
 	</tera-operator-placeholder>
-
 	<tera-progress-spinner
 		v-if="inProgressSimulationId"
 		:font-size="2"
@@ -33,7 +32,11 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
+import {
+	getRunResultCiemss,
+	pollAction,
+	getSimulation
+} from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
@@ -58,12 +61,9 @@ const runResults = ref<{ [runId: string]: RunResults }>({});
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const selectedRunId = ref<string>('');
 
-const chartProxy = chartActionsProxy(
-	props.node.state,
-	(state: SimulateEnsembleCiemssOperationState) => {
-		emit('update-state', state);
-	}
-);
+const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
+	emit('update-state', state);
+});
 
 const poller = new Poller();
 
@@ -73,16 +73,29 @@ const getStatus = async (simulationId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(simulationId));
 	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		return pollerResults;
 	}
 
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		logger.error(`Simulate Ensemble: ${simulationId} has failed`, {
+		logger.error(`Simulation: ${simulationId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+		const simulation = await getSimulation(simulationId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.inProgressSimulationId = '';
+			state.errorMessage = {
+				name: simulationId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 	return pollerResults;

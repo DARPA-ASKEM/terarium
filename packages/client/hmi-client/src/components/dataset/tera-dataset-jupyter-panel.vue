@@ -1,11 +1,23 @@
 <template>
 	<div class="data-transform-container">
-		<ConfirmDialog></ConfirmDialog>
-		<!-- Jupyter Kernel Settings -->
-		<div class="settings-title" v-if="showKernels">Kernel Settings</div>
-		<div class="jupyter-settings" v-if="showKernels">
-			<!-- Kernel Dropdown Selector -->
-			<div class="kernel-dropdown">
+		<!-- Confirm Dialogs -->
+		<ConfirmDialog class="w-4" />
+
+		<!-- Toolbar -->
+		<div class="toolbar flex">
+			<!-- Kernel Status -->
+			<div class="toolbar-section">
+				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
+				<header id="GPT">
+					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Unavailable' }}
+				</header>
+			</div>
+			<span class="flex-auto"></span>
+
+			<!-- Jupyter Kernel Settings -->
+			<div class="settings-title" v-if="showKernels">Kernel Settings</div>
+			<div class="jupyter-settings" v-if="showKernels">
+				<!-- Kernel Dropdown Selector -->
 				<Dropdown
 					v-model="selectedKernel"
 					:options="runningSessions"
@@ -13,95 +25,112 @@
 					optionLabel="kernelId"
 					optionsValue="value"
 					:disabled="runningSessions.length === 0"
-					style="min-width: 100%; height: 30px; margin-bottom: 10px"
+				/>
+				<!-- Kernel Control Buttons -->
+				<Button
+					severity="secondary"
+					outlined
+					class="p-button p-button-sm"
+					@click="confirmDelete"
+					:disabled="runningSessions.length <= 0"
+					label="Delete kernel"
+				/>
+				<Button
+					severity="secondary"
+					outlined
+					class="p-button p-button-sm"
+					@click="confirmDeleteAll"
+					:disabled="runningSessions.length <= 0"
+					label="Delete all"
+				/>
+				<Button
+					severity="secondary"
+					outlined
+					class="p-button p-button-sm"
+					@click="confirmReconnect"
+					:disabled="runningSessions.length <= 0"
+					label="Reconnect"
 				/>
 			</div>
 
-			<!-- Kernel Control Buttons -->
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmDelete"
-				:disabled="runningSessions.length <= 0"
-				>Delete Kernel</Button
-			>
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmDeleteAll"
-				:disabled="runningSessions.length <= 0"
-				>Delete ALL</Button
-			>
-			<Button
-				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
-				@click="confirmReconnect"
-				:disabled="runningSessions.length <= 0"
-				>Reconnect</Button
-			>
-		</div>
-		<div class="gpt-header flex">
-			<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
-			<span><header id="GPT">TGPT</header></span>
-			<span style="margin-left: 2rem">
-				<label>Auto expand previews:</label><input v-model="autoExpandPreview" type="checkbox" />
-			</span>
+			<!-- Reset kernel -->
 			<span class="flex-auto"></span>
-			<Button label="Reset" class="p-button p-button-sm" @click="confirmReset">
-				<span class="pi pi-replay p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Reset</span>
-			</Button>
+			<Button
+				label="Reset kernel"
+				severity="secondary"
+				outlined
+				icon="pi pi-replay"
+				class="p-button p-button-sm"
+				@click="confirmReset"
+			/>
 		</div>
+
+		<!-- Jupyter Chat -->
 		<tera-jupyter-chat
 			ref="chat"
 			:show-jupyter-settings="true"
 			:show-chat-thoughts="props.showChatThoughts"
 			:jupyter-session="jupyterSession"
 			:kernel-status="kernelStatus"
-			:auto-expand-preview="autoExpandPreview"
 			@update-kernel-state="updateKernelState"
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
 			:notebook-session="props.notebookSession"
 		/>
-		<div :style="{ 'padding-bottom': '100px' }" v-if="kernelState">
-			<Dropdown v-model="actionTarget" :options="Object.keys(kernelState || [])" />
-			<Button
-				class="save-button p-button p-button-secondary p-button-sm"
-				title="Saves the current version of df as a new Terarium asset"
-				@click="showSaveInput = !showSaveInput"
-			>
-				<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Save as</span>
-			</Button>
-			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
-				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
-				<i
-					class="pi pi-check i"
-					:class="{ save: hasValidDatasetName }"
-					@click="
-						saveAsNewDataset();
-						showSaveInput = false;
-					"
-				></i>
-			</span>
-			<Button
-				class="save-button p-button p-button-secondary p-button-sm"
-				title="Download the current version of df as a CSV file"
-				@click="downloadDataset"
-			>
-				<span class="pi pi-download p-button-icon p-button-icon-left"></span>
-				<span class="p-button-text">Download</span>
-			</Button>
+
+		<!-- Save, Download and Close buttons -->
+		<div class="bottom-right-button-group">
+			<div class="flex gap-2">
+				<Dropdown
+					v-model="actionTarget"
+					placeholder="Select a dataframe"
+					:options="Object.keys(kernelState || [])"
+					class="5"
+					:disabled="!kernelState"
+				/>
+
+				<Button
+					label="Save as"
+					icon="pi pi-save"
+					severity="secondary"
+					outlined
+					:disabled="!kernelState"
+					@click="showSaveInput = !showSaveInput"
+				/>
+				<Button
+					label="Download"
+					icon="pi pi-download"
+					severity="secondary"
+					outlined
+					:disabled="!kernelState"
+					@click="downloadDataset"
+				/>
+				<!-- <Button
+					label="Close"
+					@click="emit('close')"
+				/> -->
+			</div>
 		</div>
 	</div>
+
+	<!-- Save as dialog -->
+	<Dialog v-model:visible="showSaveInput" :modal="true" :style="{ width: '50vw' }" header="Save as">
+		<div class="p-fluid mt-4">
+			<div class="p-field">
+				<InputText id="name" v-model="saveAsName" placeholder="What do you want to call it?" />
+			</div>
+		</div>
+		<template #footer>
+			<Button label="Cancel" @click="showSaveInput = false" severity="secondary" outlined />
+			<Button label="Save" :disabled="!hasValidDatasetName" @click="saveAsNewDataset()" />
+		</template>
+	</Dialog>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, Ref, watch } from 'vue';
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import { useToastService } from '@/services/toast';
 import { IModel } from '@jupyterlab/services/lib/session/session';
@@ -136,12 +165,12 @@ const props = defineProps<{
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
 }>();
+
 const emit = defineEmits(['new-dataset-saved']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
-const autoExpandPreview = ref(<boolean>true);
 const actionTarget = ref('df');
 
 const newCsvContent: any = ref(null);
@@ -286,6 +315,9 @@ const saveAsNewDataset = async () => {
 	};
 	const message: JupyterMessage = createMessage(messageBody);
 	kernel?.sendJupyterMessage(message);
+
+	// Close the modal when the dataset is saved
+	showSaveInput.value = false;
 };
 
 const resetKernel = async () => {
@@ -314,7 +346,7 @@ const confirmReset = () => {
 
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
-		header: 'Confirmation',
+		header: 'Reset kernel',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			resetKernel();
@@ -325,7 +357,7 @@ The code cells will need to be rerun.`,
 // Kernel Confirmation dialogs
 const confirmReconnect = () => {
 	confirm.require({
-		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} ?`,
+		message: `Are you sure you want to terminate ${runningSessions.value.length} ?`,
 		header: 'Confirmation',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
@@ -336,8 +368,8 @@ const confirmReconnect = () => {
 
 const confirmDeleteAll = () => {
 	confirm.require({
-		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} sessions?`,
-		header: 'Terminate All Kernels',
+		message: `Are you sure you want to terminate ${runningSessions.value.length} sessions?`,
+		header: 'Terminate all kernels',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			deleteAllKernels();
@@ -348,7 +380,7 @@ const confirmDeleteAll = () => {
 const confirmDelete = () => {
 	confirm.require({
 		message: `Are you sure you want to terminate session ${runningSessions.value.length}?`,
-		header: 'Terminate Kernel',
+		header: 'Terminate kernel',
 		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			killKernel();
@@ -451,61 +483,6 @@ const onDownloadResponse = (payload) => {
 	flex: 1;
 }
 
-/* Datatable  */
-.data-row > section > header {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-}
-
-.data-row > section > section:last-child {
-	font-size: var(--font-body-small);
-}
-
-.feature-type {
-	color: var(--text-color-subdued);
-}
-
-.description {
-	padding: 1rem;
-	padding-bottom: 0.5rem;
-	max-width: var(--constrain-width);
-}
-
-main .annotation-group {
-	padding: 0.25rem;
-	border: solid 1px var(--surface-border-light);
-	background-color: var(--gray-50);
-	border-radius: var(--border-radius);
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-bottom: 1rem;
-	max-width: var(--constrain-width);
-}
-
-.annotation-subheader {
-	font-weight: var(--font-weight-semibold);
-}
-
-.annotation-row {
-	display: flex;
-	flex-direction: row;
-	gap: 3rem;
-}
-
-.tera-dataset-datatable {
-	width: 100%;
-}
-
-.data-transform-container {
-	display: flex;
-	flex-direction: column;
-	padding: 0.5rem;
-	padding-bottom: 5rem;
-	margin: 0.5rem;
-	max-height: 90%;
-}
-
 .kernel-status {
 	margin-right: 10px;
 }
@@ -514,9 +491,42 @@ main .annotation-group {
 	margin-left: 10px;
 }
 
-.gpt-header {
+.toolbar {
 	display: flex;
-	width: 90%;
+	flex-direction: row;
+	align-items: center;
+	background-color: var(--surface-100);
+	border-top: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border-light);
+	position: sticky;
+	top: 0;
+	left: 0;
+	z-index: 100;
+	width: 100%;
+	padding: var(--gap-xsmall) var(--gap) var(--gap-xsmall) 1.5rem;
+}
+
+.toolbar-section {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+}
+
+.bottom-right-button-group {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	position: absolute;
+	bottom: 21px;
+	right: 40px;
+	z-index: 200;
+}
+.bottom-right-button-group:deep(.p-dropdown .p-dropdown-label) {
+	padding: 9px;
 }
 
 .variables-table {

@@ -183,6 +183,10 @@ const appendCode = (data: any, property: string) => {
 	const code = data.content[property] as string;
 	if (code) {
 		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+
+		if (property === 'executed_code') {
+			saveCodeToState(code, true);
+		}
 	} else {
 		logger.error('No code to append');
 	}

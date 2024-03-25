@@ -8,69 +8,51 @@
 		</template>
 		<section :tabName="Tabs.Wizard">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
-				<AccordionTab header="Model Weights">
+				<!-- Model weights -->
+				<AccordionTab header="Model weights">
+					<p class="subheader">
+						How do you want to distribute weights of the attached models? You can distribute them
+						equally or set custom weights using the input boxes.
+					</p>
 					<div class="model-weights">
-						<section class="ensemble-calibration-mode">
-							<label>
-								<input
-									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.EQUALWEIGHTS"
-								/>
-								{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
-							</label>
-							<label>
-								<input
-									type="radio"
-									v-model="ensembleCalibrationMode"
-									:value="EnsembleCalibrationMode.CUSTOM"
-								/>
-								{{ EnsembleCalibrationMode.CUSTOM }}
-							</label>
-						</section>
-						<section class="ensemble-calibration-graph">
-							<Chart
-								v-if="ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS"
-								type="bar"
-								:height="100"
-								:data="setBarChartData()"
-								:options="setChartOptions()"
-								:plugins="dataLabelPlugin"
-							/>
-							<table v-else class="p-datatable-table">
-								<thead class="p-datatable-thead">
-									<th>Model Config ID</th>
-									<th>Weight</th>
-								</thead>
-								<tbody class="p-datatable-tbody">
-									<tr v-for="(id, i) in listModelIds" :key="i">
-										<td>
-											{{ id }}
-										</td>
-										<td v-if="customWeights === false">
-											{{ ensembleConfigs[i].weight }}
-										</td>
-										<td v-else>
-											<InputNumber
-												mode="decimal"
-												:min-fraction-digits="0"
-												:max-fraction-digits="7"
-												v-model="ensembleConfigs[i].weight"
-											/>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</section>
+						<table class="p-datatable-table">
+							<tbody class="p-datatable-tbody">
+								<!-- Index matching listModelLabels and ensembleConfigs-->
+								<tr v-for="(id, i) in listModelLabels" :key="i">
+									<td>
+										{{ id }}
+									</td>
+									<td>
+										<InputNumber
+											class="ml-3"
+											mode="decimal"
+											:min-fraction-digits="0"
+											:max-fraction-digits="7"
+											v-model="ensembleConfigs[i].weight"
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
+					<Button
+						label="Set weights to be equal"
+						class="p-button-sm p-button-outlined mt-2"
+						outlined
+						severity="secondary"
+						@click="calculateEvenWeights()"
+					/>
 				</AccordionTab>
+
+				<!-- Mapping -->
 				<AccordionTab header="Mapping">
+					<p class="subheader">Map the variables from the models to the ensemble variables.</p>
 					<template v-if="ensembleConfigs.length > 0">
-						<table>
+						<table class="w-full mb-2">
 							<tr>
-								<th>Ensemble Variables</th>
-								<th v-for="(element, i) in ensembleConfigs" :key="i">
-									{{ element.id }}
+								<th>Ensemble variables</th>
+								<th v-for="(element, i) in listModelLabels" :key="i">
+									{{ element }}
 								</th>
 							</tr>
 
@@ -78,24 +60,79 @@
 								<td>{{ key }}</td>
 								<td v-for="config in ensembleConfigs" :key="config.id">
 									<Dropdown
+										class="w-full"
 										:options="allModelOptions[config.id]"
 										v-model="config.solutionMappings[key]"
+										placeholder="Select a variable"
+									/>
+								</td>
+								<td>
+									<Button
+										class="p-button-sm"
+										icon="pi pi-times"
+										rounded
+										text
+										@click="deleteMapping(key)"
 									/>
 								</td>
 							</tr>
 						</table>
 					</template>
-
-					<InputText v-model="newSolutionMappingKey" placeholder="Variable Name" />
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-plus"
-						label="Add mapping"
-						@click="addMapping"
-					/>
+					<section class="add-mapping">
+						<Button
+							v-if="!showAddMappingInput"
+							outlined
+							:style="{ marginRight: 'auto' }"
+							label="Add mapping"
+							size="small"
+							severity="secondary"
+							icon="pi pi-plus"
+							@click="
+								newSolutionMappingKey = '';
+								showAddMappingInput = true;
+							"
+						/>
+						<div v-if="showAddMappingInput" class="flex items-center">
+							<InputText
+								v-model="newSolutionMappingKey"
+								v-focus
+								class="w-full"
+								placeholder="Add a name"
+								@keypress.enter="
+									addMapping();
+									showAddMappingInput = false;
+								"
+							/>
+							<Button
+								class="p-button-sm p-button-outlined w-2 ml-2"
+								severity="secondary"
+								icon="pi pi-times"
+								label="Cancel"
+								@click="
+									newSolutionMappingKey = '';
+									showAddMappingInput = false;
+								"
+							/>
+							<Button
+								:disabled="!newSolutionMappingKey"
+								class="p-button-sm p-button-outlined w-2 ml-2"
+								icon="pi pi-check"
+								label="Add"
+								@click="
+									addMapping();
+									showAddMappingInput = false;
+								"
+							/>
+						</div>
+					</section>
 				</AccordionTab>
-				<AccordionTab header="Time Span">
-					<table>
+
+				<!-- Time span -->
+				<AccordionTab header="Time span">
+					<p class="subheader">
+						Set the time span and number of samples for the ensemble simulation.
+					</p>
+					<table class="w-full">
 						<thead class="p-datatable-thead">
 							<th>Units</th>
 							<th>Start Step</th>
@@ -103,15 +140,15 @@
 							<th>Number of Samples</th>
 						</thead>
 						<tbody class="p-datatable-tbody">
-							<td>Steps</td>
+							<td class="w-2">Steps</td>
 							<td>
-								<InputNumber v-model="timeSpan.start" />
+								<InputNumber class="w-full" v-model="timeSpan.start" />
 							</td>
 							<td>
-								<InputNumber v-model="timeSpan.end" />
+								<InputNumber class="w-full" v-model="timeSpan.end" />
 							</td>
 							<td>
-								<InputNumber v-model="numSamples" />
+								<InputNumber class="w-full" v-model="numSamples" />
 							</td>
 						</tbody>
 					</table>
@@ -128,14 +165,21 @@
 				:is-loading="showSpinner"
 				@update:selection="onSelection"
 			>
-				<tera-simulate-chart
-					v-for="(cfg, index) of node.state.chartConfigs"
-					:key="index"
-					:run-results="runResults"
-					:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-					has-mean-line
-					@configuration-change="chartProxy.configurationChange(index, $event)"
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
+					v-bind="node.state.errorMessage"
 				/>
+				<section ref="outputPanel">
+					<tera-simulate-chart
+						v-for="(cfg, index) of node.state.chartConfigs"
+						:key="index"
+						:run-results="runResults"
+						:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+						has-mean-line
+						:size="chartSize"
+						@configuration-change="chartProxy.configurationChange(index, $event)"
+					/>
+				</section>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -160,8 +204,6 @@ import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
-import Chart from 'primevue/chart';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -172,7 +214,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { chartActionsProxy } from '@/workflow/util';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type {
@@ -182,6 +224,7 @@ import type {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{
@@ -189,27 +232,16 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['select-output', 'update-state', 'close']);
 
-const dataLabelPlugin = [ChartDataLabels];
-
 enum Tabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }
 
-enum EnsembleCalibrationMode {
-	EQUALWEIGHTS = 'equalWeights',
-	CUSTOM = 'custom'
-}
-
-const CATEGORYPERCENTAGE = 0.9;
-const BARPERCENTAGE = 0.6;
-const MINBARLENGTH = 1;
-
 const showSpinner = ref(false);
 
-const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
+const showAddMappingInput = ref(false);
+
 const listModelLabels = ref<string[]>([]);
-const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 
 // List of each observible + state for each model.
 const allModelOptions = ref<{ [key: string]: string[] }>({});
@@ -218,7 +250,6 @@ const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
 const timeSpan = ref<TimeSpan>(props.node.state.timeSpan);
 const numSamples = ref<number>(props.node.state.numSamples);
 
-const customWeights = ref<boolean>(false);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
@@ -237,28 +268,21 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>();
 const selectedRunId = ref<string>('');
 
-const chartProxy = chartActionsProxy(
-	props.node.state,
-	(state: SimulateEnsembleCiemssOperationState) => {
-		emit('update-state', state);
-	}
-);
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
+	emit('update-state', state);
+});
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const calculateWeights = () => {
+const calculateEvenWeights = () => {
 	if (!ensembleConfigs.value) return;
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
-		customWeights.value = false;
-		const percent = 1 / ensembleConfigs.value.length;
-		for (let i = 0; i < ensembleConfigs.value.length; i++) {
-			ensembleConfigs.value[i].weight = percent;
-		}
-	}
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
-		customWeights.value = true;
+	const percent = 1 / ensembleConfigs.value.length;
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		ensembleConfigs.value[i].weight = percent;
 	}
 };
 
@@ -272,63 +296,15 @@ const addMapping = () => {
 	emit('update-state', state);
 };
 
-const setBarChartData = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	const weights = ensembleConfigs.value.map((element) => element.weight);
-	return {
-		labels: listModelLabels.value,
-		datasets: [
-			{
-				backgroundColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				borderColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				data: weights,
-				categoryPercentage: CATEGORYPERCENTAGE,
-				barPercentage: BARPERCENTAGE,
-				minBarLength: MINBARLENGTH
-			}
-		]
-	};
-};
+function deleteMapping(key) {
+	for (let i = 0; i < ensembleConfigs.value.length; i++) {
+		delete ensembleConfigs.value[i].solutionMappings[key];
+	}
 
-const setChartOptions = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	return {
-		indexAxis: 'y',
-		maintainAspectRatio: false,
-		aspectRatio: 0.8,
-		plugins: {
-			legend: {
-				display: false
-			},
-			datalabels: {
-				anchor: 'end',
-				align: 'right',
-				formatter: (n: number) => `${Math.round(n * 100)}%`,
-				labels: {
-					value: {
-						font: {
-							size: 12
-						}
-					}
-				}
-			}
-		},
-		scales: {
-			x: {
-				display: false
-			},
-			y: {
-				ticks: {
-					color: documentStyle.getPropertyValue('--text-color-primary')
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
-			}
-		}
-	};
-};
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = ensembleConfigs.value;
+	emit('update-state', state);
+}
 
 const runEnsemble = async () => {
 	const params: EnsembleSimulationCiemssRequest = {
@@ -365,11 +341,9 @@ onMounted(async () => {
 		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
-	calculateWeights();
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
 
 	const state = _.cloneDeep(props.node.state);
-	state.modelConfigIds = modelConfigurationIds;
 
 	if (state.mapping && state.mapping.length === 0) {
 		for (let i = 0; i < allModelConfigurations.length; i++) {
@@ -379,6 +353,10 @@ onMounted(async () => {
 				weight: 0
 			});
 		}
+	}
+
+	if (ensembleConfigs.value.some((ele) => ele.weight === 0)) {
+		calculateEvenWeights();
 	}
 
 	if (state.chartConfigs.length === 0) {
@@ -411,14 +389,6 @@ watch(
 );
 
 watch(
-	[() => ensembleCalibrationMode.value, listModelIds.value],
-	async () => {
-		calculateWeights();
-	},
-	{ immediate: true }
-);
-
-watch(
 	() => [timeSpan.value, numSamples.value],
 	async () => {
 		const state = _.cloneDeep(props.node.state);
@@ -431,14 +401,9 @@ watch(
 </script>
 
 <style scoped>
-.ensemble-calibration-mode {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	margin-left: 1rem;
-	min-width: fit-content;
-	padding-right: 3rem;
+.subheader {
+	color: var(--text-color-subdued);
+	margin-bottom: var(--gap);
 }
 
 .ensemble-calibration-graph {
@@ -457,14 +422,5 @@ watch(
 
 th {
 	text-align: left;
-}
-
-th,
-td {
-	padding-left: 15px;
-}
-
-:deep(.p-inputnumber-input, .p-inputwrapper) {
-	width: 100%;
 }
 </style>

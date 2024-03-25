@@ -174,6 +174,7 @@ export interface DatasetColumn {
 export interface AddDocumentAssetFromXDDRequest {
     document: Document;
     projectId: string;
+    domain: string;
 }
 
 export interface AddDocumentAssetFromXDDResponse {
@@ -425,7 +426,7 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     description?: string;
-    overviewContent?: string;
+    overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -512,6 +513,7 @@ export interface Simulation {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
@@ -620,8 +622,7 @@ export interface ExtractionResponseResult {
 
 export interface ExtractionStatusUpdate {
     documentId: string;
-    step: number;
-    totalSteps: number;
+    t: number;
     message: string;
     error: string;
 }
@@ -1463,6 +1464,7 @@ export enum WorkflowOperationTypes {
     OptimizeCiemss = "OPTIMIZE_CIEMSS",
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
+    Regridding = "REGRIDDING",
     Document = "DOCUMENT",
 }
 

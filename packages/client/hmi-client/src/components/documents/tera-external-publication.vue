@@ -243,12 +243,12 @@ import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ResultType, FeatureConfig, CodeRequest } from '@/types/common';
-import { getRelatedArtifacts } from '@/services/provenance';
+// import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import type { Model, Extraction, Document, Dataset } from '@/types/Types';
-import { ProvenanceType } from '@/types/Types';
+// import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
@@ -395,12 +395,13 @@ const fetchDocumentArtifacts = async () => {
 };
 
 const fetchAssociatedResources = async () => {
-	if (doc.value) {
-		const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
-		associatedResources.value = results;
-	} else {
-		associatedResources.value = [];
-	}
+	// if (doc.value) {
+	// TODO: getRelatedArtifacts and down the chain are expecting a UUID not an xddUri as the first parameter, (how) do we fix this?
+	// const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
+	// associatedResources.value = results;
+	// } else {
+	associatedResources.value = [];
+	// }
 };
 
 /*
@@ -460,7 +461,10 @@ watch(
 			pdfLink.value = null;
 			pdfIsLoading.value = true;
 			pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
-			if (!pdfLink.value && !linkIsPDF()) viewOptions.value[1] = notFoundOption;
+			if (!pdfLink.value && !linkIsPDF()) {
+				// TODO: the document cannot be added to a project
+				viewOptions.value[1] = notFoundOption;
+			}
 			pdfIsLoading.value = false;
 		}
 	},

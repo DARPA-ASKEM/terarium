@@ -35,42 +35,39 @@
 				</div>
 			</div>
 
-			<!--
-			<label for="weights">Weights</label>
-			-->
-			<section v-if="constraintType !== 'monotonicityConstraint'">
-				<div v-for="(variable, index) of variables" :key="index">
-					<div class="button-row">
-						<label v-if="weights">
-							{{ variable + ' Weight' }}
-						</label>
-						<InputNumber
-							v-if="weights"
-							:key="index"
-							:placeholder="variable"
-							mode="decimal"
-							:min-fraction-digits="3"
-							:max-fraction-digits="3"
-							v-model="weights[index]"
-							@update:model-value="updateChanges()"
-						/>
-					</div>
+			<!-- Weights -->
+			<div v-for="(variable, index) of variables" :key="index">
+				<div class="button-row">
+					<label v-if="weights">
+						{{ variable + ' Weight' }}
+					</label>
+					<InputNumber
+						v-if="weights"
+						:key="index"
+						:placeholder="variable"
+						mode="decimal"
+						:min-fraction-digits="3"
+						:max-fraction-digits="3"
+						v-model="weights[index]"
+						@update:model-value="updateChanges()"
+					/>
 				</div>
-			</section>
+			</div>
+
 			<section v-if="constraintType === 'monotonicityConstraint'">
 				<RadioButton
 					v-model="derivativeType"
 					@update:model-value="updateChanges()"
 					value="increasing"
 				/>
-				<label>Increasing</label>
+				<label class="monoton-label">Increasing</label>
 				&nbsp;
 				<RadioButton
 					v-model="derivativeType"
 					@update:model-value="updateChanges()"
 					value="decreasing"
 				/>
-				<label>Decreasing</label>
+				<label class="monoton-label">Decreasing</label>
 			</section>
 		</div>
 		<div class="section-row" v-if="constraintType !== 'monotonicityConstraint'">
@@ -264,5 +261,9 @@ watch(
 
 .trash-button {
 	cursor: pointer;
+}
+
+.monoton-label {
+	margin-left: 0.25rem;
 }
 </style>

@@ -6,6 +6,8 @@ import API from '@/api/api';
 import type { Document, DocumentAsset } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
+import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
+import { ClientEventType } from '@/types/Types';
 
 /**
  * Get all documents
@@ -142,7 +144,7 @@ async function addFileToDocumentAsset(
 	return response && response.status < 400;
 }
 
-async function downloadDocumentAsset(documentId: string, fileName: string): Promise<any> {
+async function downloadDocumentAsset(documentId: string, fileName: string): Promise<string | null> {
 	try {
 		const response = await API.get(
 			`document-asset/${documentId}/download-document?filename=${fileName}`,
@@ -152,7 +154,7 @@ async function downloadDocumentAsset(documentId: string, fileName: string): Prom
 		const pdfLink = window.URL.createObjectURL(blob);
 		return pdfLink ?? null;
 	} catch (error) {
-		logger.error(`Error: Unable to download pdf for document asset ${documentId}: ${error}`);
+		logger.error(`Unable to download PDF file for document asset ${documentId}: ${error}`);
 		return null;
 	}
 }
@@ -201,17 +203,24 @@ async function getBulkDocumentAssets(docIDs: string[]) {
 	return result;
 }
 
-async function createDocumentFromXDD(
-	document: Document,
-	projectId: string
-): Promise<DocumentAsset | null> {
-	if (!document || !projectId) return null;
-	const response = await API.post<DocumentAsset>(`/document-asset/create-document-from-xdd`, {
-		document,
-		projectId
-	});
-	return response.data ?? null;
+async function createDocumentFromXDD(document: Document, projectId: string) {
+	console.group('Document Asset Service: createDocumentFromXDD');
+	if (!document || !projectId) {
+		console.debug('Failed — Document or projectId is null');
+	} else {
+		const response = await API.post<DocumentAsset>(`/document-asset/create-document-from-xdd`, {
+			document,
+			projectId
+		});
+		if (response?.status === 202) {
+			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
+		} else {
+			console.debug('Failed — ', response);
+		}
+	}
+	console.groupEnd();
 }
+
 export {
 	createDocumentFromXDD,
 	createNewDocumentAsset,

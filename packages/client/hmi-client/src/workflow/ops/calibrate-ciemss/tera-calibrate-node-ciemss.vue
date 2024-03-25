@@ -48,7 +48,8 @@ import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
-	makeForecastJobCiemss
+	makeForecastJobCiemss,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { chartActionsProxy } from '@/workflow/util';
@@ -73,7 +74,7 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
-const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateCiemss) => {
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
 	emit('update-state', state);
 });
 
@@ -84,6 +85,9 @@ const pollResult = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		return pollerResults;
@@ -93,6 +97,17 @@ const pollResult = async (runId: string) => {
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.inProgressCalibrationId = '';
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 	return pollerResults;

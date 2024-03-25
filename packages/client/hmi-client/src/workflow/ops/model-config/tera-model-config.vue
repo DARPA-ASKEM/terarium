@@ -259,48 +259,48 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Vue3Lottie } from 'vue3-lottie';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
+import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import DataTable from 'primevue/datatable';
+import Button from 'primevue/button';
 import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { Vue3Lottie } from 'vue3-lottie';
 
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 
-import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
-import { createModelConfiguration } from '@/services/model-configurations';
-import { TaskStatus } from '@/types/Types';
-import { AMRSchemaNames } from '@/types/common';
-import { useToastService } from '@/services/toast';
-import { logger } from '@/utils/logger';
+import { FatalError } from '@/api/api';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
-import { FatalError } from '@/api/api';
-import { formatTimestamp } from '@/utils/date';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
+import { createModelConfiguration } from '@/services/model-configurations';
+import { useToastService } from '@/services/toast';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { TaskStatus } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
-import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import { OperatorStatus } from '@/types/workflow';
+import { formatTimestamp } from '@/utils/date';
+import { logger } from '@/utils/logger';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -478,10 +478,10 @@ const extractConfigurationsFromInputs = async () => {
 			}
 		);
 	}
-	if (datasetId.value) {
+	if (datasetIds.value) {
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
-			[datasetId.value],
+			datasetIds.value,
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
@@ -524,7 +524,7 @@ const selectedConfigId = computed(
 );
 
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
-const datasetId = computed(() => props.node.inputs?.[2]?.value?.[0]);
+const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;

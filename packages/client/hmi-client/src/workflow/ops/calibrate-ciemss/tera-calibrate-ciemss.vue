@@ -111,7 +111,10 @@
 				<div ref="drilldownLossPlot"></div>
 				<div v-if="!showSpinner" class="form-section">
 					<h4>Variables</h4>
-					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset">
+					<section
+						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
+						ref="outputPanel"
+					>
 						<tera-simulate-chart
 							v-for="(config, index) of node.state.chartConfigs"
 							:key="index"
@@ -124,7 +127,7 @@
 							:mapping="mapping"
 							has-mean-line
 							@configuration-change="chartProxy.configurationChange(index, $event)"
-							:size="{ width: previewChartWidth, height: 140 }"
+							:size="chartSize"
 						/>
 						<Button
 							class="add-chart"
@@ -143,6 +146,10 @@
 				<section v-else>
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</section>
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
+					v-bind="node.state.errorMessage"
+				/>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -179,6 +186,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -188,7 +196,7 @@ import {
 	ModelConfiguration,
 	State
 } from '@/types/Types';
-import { getTimespan, chartActionsProxy } from '@/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -260,7 +268,10 @@ const outputs = computed(() => {
 	return [];
 });
 
-const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateCiemss) => {
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
 	emit('update-state', state);
 });
 
