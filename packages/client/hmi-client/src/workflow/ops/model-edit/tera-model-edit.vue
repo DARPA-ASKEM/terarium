@@ -183,6 +183,10 @@ const appendCode = (data: any, property: string) => {
 	const code = data.content[property] as string;
 	if (code) {
 		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+
+		if (property === 'executed_code') {
+			saveCodeToState(code, true);
+		}
 	} else {
 		logger.error('No code to append');
 	}
@@ -341,6 +345,8 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 
+	console.log(state?.modelEditCodeHistory);
+
 	// for now only save the last code executed, may want to save all code executed in the future
 	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
 	const timestamp = Date.now();
@@ -349,6 +355,8 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	} else {
 		state.modelEditCodeHistory.push({ code, timestamp });
 	}
+
+	console.log(state.modelEditCodeHistory);
 
 	emit('update-state', state);
 };
