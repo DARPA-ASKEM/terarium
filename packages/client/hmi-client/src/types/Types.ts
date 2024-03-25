@@ -174,6 +174,7 @@ export interface DatasetColumn {
 export interface AddDocumentAssetFromXDDRequest {
     document: Document;
     projectId: string;
+    domain: string;
 }
 
 export interface AddDocumentAssetFromXDDResponse {
@@ -1463,6 +1464,7 @@ export enum WorkflowOperationTypes {
     OptimizeCiemss = "OPTIMIZE_CIEMSS",
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
+    Regridding = "REGRIDDING",
     Document = "DOCUMENT",
 }
 

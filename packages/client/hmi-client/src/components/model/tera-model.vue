@@ -36,6 +36,7 @@
 			@update-model="updateModelContent"
 			@update-configuration="updateConfiguration"
 			@fetch-model="fetchModel"
+			class="pl-1 pr-1"
 		/>
 	</tera-asset>
 </template>

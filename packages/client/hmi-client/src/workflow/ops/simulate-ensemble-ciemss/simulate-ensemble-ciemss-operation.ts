@@ -7,6 +7,7 @@ export interface SimulateEnsembleCiemssOperationState {
 	timeSpan: TimeSpan;
 	numSamples: number;
 	inProgressSimulationId: string;
+	errorMessage: { name: string; value: string; traceback: string };
 }
 
 export const SimulateEnsembleCiemssOperation: Operation = {
@@ -29,7 +30,8 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
 			numSamples: 40,
-			inProgressSimulationId: ''
+			inProgressSimulationId: '',
+			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	}

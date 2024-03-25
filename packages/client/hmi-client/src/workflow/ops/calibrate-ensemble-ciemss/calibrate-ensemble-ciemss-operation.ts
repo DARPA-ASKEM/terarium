@@ -1,20 +1,21 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-// import type { EnsembleRequest } from '@/types/Types';
-// import { makeEnsembleJob } from '@/services/models/simulation-service';
-import { ChartConfig } from '@/types/SimulateConfig';
 import type { EnsembleModelConfigs } from '@/types/Types';
 
 export interface EnsembleCalibrateExtraCiemss {
-	numSamples: number;
-	totalPopulation: number;
+	solverMethod: string;
+	numParticles: number; // The number of particles to use for the inference algorithm. https://github.com/ciemss/pyciemss/blob/1fc62b0d4b0870ca992514ad7a9b7a09a175ce44/pyciemss/interfaces.py#L225
 	numIterations: number;
 }
 
 export interface CalibrateEnsembleCiemssOperationState {
-	chartConfigs: ChartConfig[];
-	mapping: EnsembleModelConfigs[];
+	chartConfigs: string[][];
+	ensembleConfigs: EnsembleModelConfigs[];
+	timestampColName: string;
 	extra: EnsembleCalibrateExtraCiemss;
-	simulationsInProgress: string[];
+	inProgressCalibrationId: string;
+	inProgressForecastId: string;
+	calibrationId: string;
+	forecastRunId: string;
 }
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
@@ -31,13 +32,17 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
 			chartConfigs: [],
-			mapping: [],
+			ensembleConfigs: [],
+			timestampColName: '',
 			extra: {
-				numSamples: 50,
-				totalPopulation: 1000,
-				numIterations: 10
+				solverMethod: 'dopri5',
+				numParticles: 10,
+				numIterations: 100
 			},
-			simulationsInProgress: []
+			inProgressCalibrationId: '',
+			inProgressForecastId: '',
+			calibrationId: '',
+			forecastRunId: ''
 		};
 		return init;
 	}

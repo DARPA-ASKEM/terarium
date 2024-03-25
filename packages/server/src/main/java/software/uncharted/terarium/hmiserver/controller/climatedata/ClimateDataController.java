@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.controller.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -128,8 +129,8 @@ public class ClimateDataController {
 	 *
 	 * @param esgfId The id of the ESGF (in the form `CMIP6.CMIP.NCAR.CESM2.historical.r11i1p1f1.CFday.ua.gn.v20190514`)
 	 * @param parentDatasetId Dataset id of an existing dataset which this would be a child
-	 * @param timestamps String of two ISO-8601 timestamps or the terms start or end separated by commas, example `start,2010-01-01T00:00:00`. Leave blank to generate for all times
 	 * @param envelope Geographical envelope provided as a comma-separated series of 4 degrees: lon, lon, lat, lat. example `40,45,-80,-75`.
+	 * @param timestamps String of two ISO-8601 timestamps or the terms start or end separated by commas, example `start,2010-01-01T00:00:00`. Leave blank to generate for all times
 	 * @param thinFactor Take every nth datapoint along specified fields given by thin_fields. Leave blank for all data
 	 * @return
 	 */
@@ -143,8 +144,8 @@ public class ClimateDataController {
 	})
 	public ResponseEntity<String> subsetEsgf(@PathVariable final String esgfId,
 											 @RequestParam(value = "parent-dataset-id") final String parentDatasetId,
-											 @RequestParam(value = "timestamps", required = false) final String timestamps,
 											 @RequestParam(value = "envelope") final String envelope,
+											 @RequestParam(value = "timestamps", required = false) final String timestamps,
 											 @RequestParam(value = "thin-factor", required = false) final String thinFactor
 	) {
 		final ResponseEntity<String> subsetResponse = climateDataService.getSubset(esgfId, envelope, timestamps, thinFactor);
@@ -170,10 +171,21 @@ public class ClimateDataController {
 		try{
 			final ResponseEntity<JsonNode> response = climateDataProxy.fetchEsgf(esgfId);
 
+			if(response.getBody() == null)
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to fetch ESGF. Response body was null");
+
+			String name = esgfId;
+			if(response.getBody().get("dataset") != null){
+				name = response.getBody().get("dataset").asText();
+			}
+
+
 			final Dataset dataset = new Dataset();
 			dataset.setEsgfId(esgfId);
-			dataset.setMetadata(response.getBody());
-			dataset.setName(esgfId);
+			dataset.setName(name);
+			dataset.setMetadata(response.getBody().get("metadata"));
+			((ObjectNode) dataset.getMetadata()).set("urls", response.getBody().get("urls"));
+
 
 			return ResponseEntity.ok(dataset);
 		} catch(final FeignException.FeignClientException e) {

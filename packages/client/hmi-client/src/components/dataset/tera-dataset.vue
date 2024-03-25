@@ -31,11 +31,19 @@
 
 		<template #tabs>
 			<section class="tab" tabName="Description">
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Id</span>
+					<code class="inline">{{ datasetInfo.id }}</code>
+				</p>
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
+					{{ datasetInfo.fileNames }}<br />
+				</p>
+
 				<tera-dataset-description
 					tabName="Description"
 					:dataset="dataset"
 					:image="image"
-					:raw-content="rawContent"
 					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
@@ -46,7 +54,7 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { onUpdated, PropType, Ref, ref, watch } from 'vue';
+import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import {
@@ -102,7 +110,7 @@ const rawContent: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 const view = ref(DatasetView.DESCRIPTION);
-const image: Ref<string | undefined> = ref(undefined);
+const image = ref<string | undefined>(undefined);
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -110,6 +118,18 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+
+const datasetInfo = computed(() => {
+	const information = {
+		id: '',
+		fileNames: ''
+	};
+	if (dataset.value) {
+		information.id = dataset.value.id ?? '';
+		information.fileNames = dataset.value.fileNames?.join(', ') ?? '';
+	}
+	return information;
+});
 
 const groundingValues = ref<string[][]>([]);
 // originaGroundingValues are displayed as the first suggested value for concepts
@@ -181,13 +201,20 @@ const fetchDataset = async () => {
 				if (datasetTemp.esgfId) {
 					image.value = await getClimateDatasetPreview(datasetTemp.esgfId);
 					rawContent.value = null;
+				} else if (datasetTemp.metadata?.format === 'netcdf') {
+					rawContent.value = null;
 				} else {
 					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
 					image.value = undefined;
-					rawContent.value = await downloadRawFile(
-						props.assetId,
-						datasetTemp?.fileNames?.[0] ?? ''
-					);
+					// TODO = Temporary solution to avoid downloading raw NetCDF files, which can be massive
+					// A better solution would be to check the size of an asset before downloading it, and/or
+					// downloading a small subset of it for presentation purposes.
+					if (datasetTemp.metadata?.format !== 'netcdf' || !datasetTemp.esgfId) {
+						rawContent.value = await downloadRawFile(
+							props.assetId,
+							datasetTemp?.fileNames?.[0] ?? ''
+						);
+					}
 					Object.entries(datasetTemp).forEach(([key, value]) => {
 						if (isString(value)) {
 							datasetTemp[key] = highlightSearchTerms(value);
@@ -200,8 +227,9 @@ const fetchDataset = async () => {
 		}
 		case DatasetSource.ESGF: {
 			dataset.value = await getClimateDataset(props.assetId);
-			if (dataset.value?.esgfId)
+			if (dataset.value?.esgfId) {
 				image.value = await getClimateDatasetPreview(dataset.value?.esgfId);
+			}
 			break;
 		}
 		default:

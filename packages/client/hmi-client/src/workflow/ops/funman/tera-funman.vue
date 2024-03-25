@@ -6,14 +6,14 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<div :tabName="FunmanTabs.Wizard">
+		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
 				<main>
-					<h4 class="primary-text">
+					<h5>
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
-					</h4>
-					<p class="secondary-text">
+					</h5>
+					<p class="secondary-text mt-1">
 						The validator will use these parameters to execute the sanity checks.
 					</p>
 					<div class="section-row timespan">
@@ -77,7 +77,7 @@
 						</div>
 					</div>
 					<div class="spacer">
-						<h4>Add sanity checks</h4>
+						<h5>Add sanity checks</h5>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
 
@@ -112,11 +112,17 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
+				class="pt-3 pb-3 pl-2 pr-4"
 			>
-				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
-				<div v-else class="flex flex-column h-full justify-content-center">
-					<tera-operator-placeholder :operation-type="node.operationType" />
-				</div>
+				<template v-if="showSpinner">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+				</template>
+				<template v-else>
+					<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
+					<div v-else class="flex flex-column h-full justify-content-center">
+						<tera-operator-placeholder :operation-type="node.operationType" />
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</template>
 
@@ -154,6 +160,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -214,6 +221,7 @@ const requestConstraints = computed(
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
 			if (ele.constraintType === 'monotonicityConstraint') {
+				const weights = ele.weights ? ele.weights : [1.0];
 				const constraint = {
 					soft: true,
 					name: ele.name,
@@ -225,12 +233,12 @@ const requestConstraints = computed(
 						original_width: MAX
 					},
 					variables: ele.variables,
-					weights: [1.0],
+					weights: weights.map((d) => Math.abs(d)), // should be all positive
 					derivative: true
 				};
 
 				if (ele.derivativeType === 'increasing') {
-					constraint.weights = [-1.0];
+					constraint.weights = weights.map((d) => -Math.abs(d)); // should be all negative
 				}
 				return constraint;
 			}
@@ -345,7 +353,7 @@ const getStatus = async (runId: string) => {
 	showSpinner.value = true;
 
 	poller
-		.setInterval(3000)
+		.setInterval(5000)
 		.setThreshold(100)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);

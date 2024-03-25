@@ -18,7 +18,6 @@
 			<tera-document-asset
 				v-else-if="previewItemResourceType === ResourceType.XDD && source === 'Terarium'"
 				:asset-id="previewItemId"
-				:highlight="searchTerm"
 				:previewLineLimit="10"
 				:feature-config="{ isPreview: true }"
 				@close-preview="closePreview"

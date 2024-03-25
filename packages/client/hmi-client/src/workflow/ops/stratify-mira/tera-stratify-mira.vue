@@ -7,9 +7,9 @@
 			/>
 		</template>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section class="pl-4 pt-3">
 				<div class="form-section">
-					<h4>Stratify model</h4>
+					<h5>Stratify model</h5>
 					<p>The model will be stratified with the following settings.</p>
 					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 						Note: Code has been executed which may not be reflected here.
@@ -22,21 +22,29 @@
 					/>
 				</div>
 				<template #footer>
-					<Button outlined label="Stratify" size="large" icon="pi pi-play" @click="stratifyModel" />
-					<Button
-						style="margin-right: auto"
-						size="large"
-						severity="secondary"
-						outlined
-						label="Reset"
-						@click="resetModel"
-					/>
+					<div class="flex flex-row gap-2 w-full mb-2">
+						<Button
+							outlined
+							label="Stratify"
+							size="large"
+							icon="pi pi-play"
+							@click="stratifyModel"
+						/>
+						<Button
+							style="margin-right: auto"
+							size="large"
+							severity="secondary"
+							outlined
+							label="Reset"
+							@click="resetModel"
+						/>
+					</div>
 				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section>
-				<p>Code Editor - Python</p>
+				<p class="mt-3 ml-4">Code Editor - Python</p>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -55,6 +63,7 @@
 						size="large"
 						icon="pi pi-play"
 						@click="runCodeStratify"
+						class="ml-4 mb-2"
 					/>
 				</template>
 			</tera-drilldown-section>
@@ -66,6 +75,7 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
+				class="mr-4 mt-3 mb-2"
 			>
 				<div class="h-full">
 					<tera-notebook-error
@@ -86,8 +96,9 @@
 					<Button
 						:disabled="!amr"
 						outlined
+						severity="secondary"
 						size="large"
-						label="Save as new Model"
+						label="Save as new model"
 						@click="isNewModelModalVisible = true"
 					/>
 					<Button label="Close" size="large" @click="emit('close')" />
@@ -95,12 +106,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible">
+	<tera-modal v-if="isNewModelModalVisible" class="save-as-dialog">
 		<template #header>
 			<h4>Save as a new model</h4>
 		</template>
-		<form @submit.prevent>
-			<label for="new-model">Model name</label>
+		<form @submit.prevent class="mt-3">
+			<label for="new-model">What would you like to call it?</label>
 			<InputText
 				id="new-model"
 				type="text"
@@ -511,5 +522,9 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
+}
+
+.save-as-dialog:deep(section) {
+	width: 40rem;
 }
 </style>

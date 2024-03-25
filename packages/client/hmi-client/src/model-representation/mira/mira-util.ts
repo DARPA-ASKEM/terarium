@@ -80,7 +80,7 @@ export const extractSubjectOutcomeMatrix = (
 		const paramName = paramNames[i];
 		const paramValue = paramValueMap.get(paramName);
 		const paramLocations = paramLocationMap.get(paramName);
-		if (!paramLocationMap) continue;
+		if (!paramLocations) continue;
 
 		paramLocations.forEach((location) => {
 			const rowIdx = rowNames.indexOf(location.subject);

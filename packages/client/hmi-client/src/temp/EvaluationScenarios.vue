@@ -8,7 +8,7 @@
 		<Column field="multipleUsers" header="Multiple Users" sortable></Column>
 		<Column field="timestampMillis" header="Timestamp" sortable>
 			<template #body="slotProps">
-				{{ humanizeDate(slotProps.data.timestampMillis) }}
+				{{ formatTimestamp(slotProps.data.timestampMillis) }}
 			</template>
 		</Column>
 		<Column field="download" header="Download">
@@ -23,23 +23,20 @@
 		</Column>
 	</DataTable>
 </template>
+
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import API from '@/api/api';
 import Button from 'primevue/button';
+import { formatTimestamp } from '@/utils/date';
 
 const summaries = ref(null);
 
 onMounted(async () => {
 	summaries.value = (await API.get('/evaluation/scenarios')).data;
 });
-
-const humanizeDate = (timestampMillis: number) => {
-	const date = new Date(timestampMillis);
-	return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-};
 
 const downloadCSV = async (data) => {
 	const userId = data.userId;
