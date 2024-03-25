@@ -285,6 +285,10 @@
       "name": "CLIMATE S1 - Aircraft Performance",
       "questions": [
         {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
           "task": "Q1: Search for Historical Data & Climate Model Output",
           "description": ""
         },
@@ -366,6 +370,10 @@
       "name": "CLIMATE S2 - Ice & Ocean",
       "questions": [
         {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
           "task": "Q1: Halfar Equations, Variables, and Parameters",
           "description": ""
         },
@@ -406,6 +414,10 @@
     {
       "name": "CLIMATE S3 - FUND",
       "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
         {
           "task": "Q1: Access the FUND model",
           "description": ""
@@ -463,6 +475,10 @@
     {
       "name": "CLIMATE S4 - Photosynthesis",
       "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
         {
           "task": "Q1: Extract Photosynthesis Model",
           "description": ""
