@@ -25,9 +25,19 @@
 				</div>
 				<div class="button-row">
 					<label>Target</label>
+
 					<MultiSelect
+						v-if="constraintType !== 'parameterConstraint'"
 						v-model="variables"
 						:options="props.modelStates"
+						placeholder="Model states"
+						display="chip"
+						@update:model-value="updateChanges()"
+					></MultiSelect>
+					<MultiSelect
+						v-else
+						v-model="variables"
+						:options="props.modelParameters"
 						placeholder="Model states"
 						display="chip"
 						@update:model-value="updateChanges()"
@@ -124,6 +134,7 @@ import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
 
 const props = defineProps<{
 	modelStates: string[];
+	modelParameters: string[];
 	config: ConstraintGroup;
 	index: number;
 }>();
