@@ -144,7 +144,7 @@ async function addFileToDocumentAsset(
 	return response && response.status < 400;
 }
 
-async function downloadDocumentAsset(documentId: string, fileName: string): Promise<any> {
+async function downloadDocumentAsset(documentId: string, fileName: string): Promise<string | null> {
 	try {
 		const response = await API.get(
 			`document-asset/${documentId}/download-document?filename=${fileName}`,
@@ -154,7 +154,7 @@ async function downloadDocumentAsset(documentId: string, fileName: string): Prom
 		const pdfLink = window.URL.createObjectURL(blob);
 		return pdfLink ?? null;
 	} catch (error) {
-		logger.error(`Error: Unable to download pdf for document asset ${documentId}: ${error}`);
+		logger.error(`Unable to download PDF file for document asset ${documentId}: ${error}`);
 		return null;
 	}
 }
