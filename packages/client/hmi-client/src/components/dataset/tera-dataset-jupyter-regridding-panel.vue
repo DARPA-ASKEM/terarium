@@ -49,8 +49,9 @@
 				<span class="p-button-text">Reset</span>
 			</Button>
 		</div>
-		<div>
-			{{ contextInfo }}
+		<div v-for="(ele, indx) in contextInfo" :key="indx" class="contextInfo">
+			<span>context variable: {{ indx }}</span>
+			<span>filename: {{ ele.filename }}</span>
 		</div>
 		<tera-jupyter-chat
 			ref="chat"
@@ -186,13 +187,11 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 
 	props.assets.forEach((asset, i) => {
 		const key = `d${i + 1}`;
-		console.log(asset);
 		contextInfo.value[key] = {
 			hmi_dataset_id: asset.id,
 			filename: asset.filename
 		};
 	});
-	console.log(contextInfo);
 	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'climate_data_utility',
@@ -411,6 +410,10 @@ const onDownloadResponse = (payload) => {
 </script>
 
 <style scoped>
+.contextInfo {
+	display: flex;
+	flex-direction: column;
+}
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;

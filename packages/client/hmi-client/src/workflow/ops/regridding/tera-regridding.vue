@@ -42,8 +42,7 @@ const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
-console.log(props.node.inputs);
-const assets = ref();
+const assets = ref([]);
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
@@ -71,17 +70,18 @@ onMounted(async () => {
 	const allDatasets: Dataset[] = [];
 	await Promise.all(
 		props.node.inputs.map(async (ele) => {
-			const dataset = await getDataset(ele.id);
-			allDatasets.push(dataset!);
+			const dataset = await getDataset(ele?.value?.[0]);
+			if (dataset) allDatasets.push(dataset);
 		})
 	);
 
 	allDatasets.forEach((dataset) => {
-		console.log(dataset);
-		assets.value.push({
-			id: dataset.id,
-			filename: dataset.fileNames?.[0]
-		});
+		if (dataset.id && dataset.fileNames?.[0]) {
+			assets.value.push({
+				id: dataset.id,
+				filename: dataset.fileNames[0]
+			});
+		}
 	});
 
 	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
