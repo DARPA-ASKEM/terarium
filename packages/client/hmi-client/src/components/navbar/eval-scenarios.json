@@ -216,7 +216,7 @@
       ]
     },
     {
-      "name": "EPI S4: Stock & Flow",
+      "name": "EPI S4: Stock and Flow",
       "questions": [
         {
           "task": "Q0: General Planning",
@@ -289,7 +289,7 @@
           "description": ""
         },
         {
-          "task": "Q1: Search for Historical Data & Climate Model Output",
+          "task": "Q1: Search for Historical Data and Climate Model Output",
           "description": ""
         },
         {
@@ -367,7 +367,7 @@
       ]
     },
     {
-      "name": "CLIMATE S2 - Ice & Ocean",
+      "name": "CLIMATE S2 - Ice and Ocean",
       "questions": [
         {
           "task": "Q0: General Planning",
@@ -423,7 +423,7 @@
           "description": ""
         },
         {
-          "task": "Q2: Climate & Emissions Model Info",
+          "task": "Q2: Climate and Emissions Model Info",
           "description": ""
         },
         {
