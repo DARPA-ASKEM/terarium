@@ -24,17 +24,20 @@
 				@enriched="fetchAsset"
 			/>
 		</AccordionTab>
-		<AccordionTab header="Column information" v-if="dataset?.metadata?.format !== 'netcdf'">
+		<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
 			<tera-dataset-overview-table
 				v-if="dataset"
 				:dataset="dataset"
 				@update-dataset="(dataset: Dataset) => emit('update-dataset', dataset)"
 			/>
 		</AccordionTab>
-		<template v-if="dataset?.metadata?.format === 'netcdf'">
+		<template v-else>
 			<AccordionTab header="Preview">
 				<img :src="image" alt="" />
-				<tera-carousel v-if="isSubset" :labels="dataset.metadata.preview.map(({ year }) => year)">
+				<tera-carousel
+					v-if="isClimateSubset"
+					:labels="dataset.metadata.preview.map(({ year }) => year)"
+				>
 					<div v-for="item in dataset.metadata.preview" :key="item">
 						<img :src="item.image" alt="Preview" />
 					</div>
@@ -70,6 +73,7 @@
 			</AccordionTab>
 		</template>
 	</Accordion>
+	{{ isClimateData }}{{ isClimateSubset }}
 </template>
 
 <script setup lang="ts">
@@ -114,9 +118,9 @@ const description = computed(() =>
 	highlightSearchTerms(props.dataset?.description?.concat('\n', card.value?.DESCRIPTION ?? ''))
 );
 const datasetType = computed(() => card.value?.DATASET_TYPE ?? '');
-const isSubset = computed(
-	() => props.dataset?.metadata?.format === 'netcdf' && !props.dataset.esgfId
-);
+
+const isClimateData = computed(() => props.dataset?.esgfId);
+const isClimateSubset = computed(() => props.dataset?.metadata?.format === 'netcdf');
 
 const documents = computed<{ name: string; id: string }[]>(
 	() =>
