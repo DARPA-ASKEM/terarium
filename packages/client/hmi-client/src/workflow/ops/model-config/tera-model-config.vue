@@ -173,6 +173,13 @@
 						</section>
 					</AccordionTab>
 				</Accordion>
+
+				<!-- For Nelson eval debug -->
+				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
+					<div>Model config id: {{ selectedConfigId }}</div>
+					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
+				</div>
+
 				<template #footer>
 					<Button
 						outlined
