@@ -20,7 +20,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
-import software.uncharted.terarium.hmiserver.models.extractionservice.PdfExtractionRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -152,9 +151,8 @@ public class ExtractionService {
 
 					final boolean compressImages = false;
 					final boolean useCache = false;
-					final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(new PdfExtractionRequest(compressImages,
-							useCache),
-							documentFile);
+					final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
+							useCache, documentFile);
 
 					final JsonNode body = extractionResp.getBody();
 					final UUID jobId = UUID.fromString(body.get("job_id").asText());

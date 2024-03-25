@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
-import software.uncharted.terarium.hmiserver.models.extractionservice.PdfExtractionRequest;
 
 import java.util.UUID;
 
@@ -29,7 +28,8 @@ public interface ExtractionProxy {
 
 	@PostMapping(value = "/cosmos_service/process/", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> processPdfExtraction(
-			@RequestPart final PdfExtractionRequest extractionRequest,
+			@RequestPart("compress_images") final Boolean compressImages,
+			@RequestPart("use_cache") final Boolean useCache,
 			@RequestPart("pdf") MultipartFile file);
 
 	@GetMapping(value = "/cosmos_service/process/{id}/result")
