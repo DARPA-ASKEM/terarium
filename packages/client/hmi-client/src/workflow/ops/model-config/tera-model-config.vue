@@ -15,8 +15,8 @@
 		</template>
 
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section>
-				<div class="box-container" v-if="model">
+			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
@@ -174,15 +174,17 @@
 					</AccordionTab>
 				</Accordion>
 				<template #footer>
-					<Button
-						outlined
-						size="large"
-						:disabled="isSaveDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="createConfiguration"
-					/>
-					<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					<div class="footer">
+						<Button
+							outlined
+							size="large"
+							:disabled="isSaveDisabled"
+							label="Run"
+							icon="pi pi-play"
+							@click="createConfiguration"
+						/>
+						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					</div>
 				</template>
 			</tera-drilldown-section>
 		</section>
@@ -913,5 +915,14 @@ onUnmounted(() => {
 	mix-blend-mode: darken;
 	opacity: 1;
 	transition: opacity 1s;
+}
+
+.footer {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	padding-top: var(--gap-small);
+	padding-bottom: var(--gap-small);
+	border-top: 1px solid var(--surface-border-light);
 }
 </style>
