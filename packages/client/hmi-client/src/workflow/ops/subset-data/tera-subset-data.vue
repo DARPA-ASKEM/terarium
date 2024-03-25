@@ -459,7 +459,6 @@ watch(
 				?.value?.[0];
 			if (!isEmpty(subsetId) && subsetId) {
 				subset.value = await loadSubset(subsetId);
-				console.log(subset.value);
 			}
 		}
 	},
