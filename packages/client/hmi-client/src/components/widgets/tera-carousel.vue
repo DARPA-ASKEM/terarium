@@ -141,6 +141,7 @@ nav {
 
 	& > ul {
 		display: flex;
+		flex-direction: row;
 		align-items: center;
 		list-style: none;
 		justify-content: center;
