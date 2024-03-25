@@ -156,12 +156,12 @@ const modelId = props.node.inputs[0].value?.[0];
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
-	'Add a new transition from S to R with the name vaccine with the rate of v.',
-	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u',
-	'Add a new transition (from nowhere) to S with a rate constant of f.',
-	'Add a new transition (from nowhere) to S with a rate constant of f. The rate depends on R.',
-	'Add a new transition from S (to nowhere) with a rate constant of v',
-	'Add a new transition from S (to nowhere) with a rate constant of v. The Rate depends on R',
+	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days.',
+	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u with unit Days',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days.',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days. The rate depends on R.',
+	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days',
+	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
 	'Add an observable titled sample with the expression A * B  * p.',
 	'Rename the state S to Susceptible in the infection transition.',
 	'Rename the transition infection to inf.'
@@ -403,11 +403,12 @@ onUnmounted(() => {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
-	/** TODO: Temporary solution, should be using the default overlay-container padding
-	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
-	margin-left: 1.5rem;
 }
 
+.notebook-section:deep(main .notebook-toolbar),
+.notebook-section:deep(main .ai-assistant) {
+	padding-left: var(--gap-medium);
+}
 .toolbar-right-side {
 	position: absolute;
 	top: var(--gap);

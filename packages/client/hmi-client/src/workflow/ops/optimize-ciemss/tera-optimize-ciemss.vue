@@ -6,7 +6,7 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section :tabName="OptimizeTabs.Wizard">
+		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
 					<h5>Settings</h5>
@@ -131,8 +131,8 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="OptimizeTabs.Notebook">
-			<h5>Notebook</h5>
+		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
+			<p>Under construction. Use the wizard for now.</p>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -142,6 +142,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-3"
 				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
 				<!-- Optimize result.json display: -->
@@ -243,11 +244,11 @@
 		class="save-dialog w-4"
 	>
 		<div class="label-and-input">
-			<label> Model Config Name</label>
+			<label> Model config name</label>
 			<InputText v-model="knobs.modelConfigName" />
 		</div>
 		<div class="label-and-input">
-			<label> Model Config Description</label>
+			<label> Model config description</label>
 			<InputText v-model="knobs.modelConfigDesc" />
 		</div>
 		<Button
