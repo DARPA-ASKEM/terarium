@@ -49,6 +49,9 @@
 				<span class="p-button-text">Reset</span>
 			</Button>
 		</div>
+		<div>
+			{{ contextInfo }}
+		</div>
 		<tera-jupyter-chat
 			ref="chat"
 			:show-jupyter-settings="true"
@@ -131,7 +134,7 @@ const runningSessions = ref<any[]>([]);
 const confirm = useConfirm();
 
 const props = defineProps<{
-	assets: { id: string; type: string }[];
+	assets: { id: string; filename: string }[];
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
@@ -143,7 +146,7 @@ const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
 const autoExpandPreview = ref(<boolean>true);
 const actionTarget = ref('df');
-
+const contextInfo: any = ref({});
 const showSaveInput = ref(<boolean>false);
 const saveAsName = ref(<string | null>'');
 const toast = useToastService();
@@ -178,30 +181,22 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 	kernel?.sendJupyterMessage(message);
 };
 
-// FIXME: this is a bit fragile, the output is meant to match the terms used in askem-beaker
-// and not necessarily asset type enums
-const toAssetType = (t: string) => {
-	if (t.endsWith('Id')) {
-		return t.substring(0, t.length - 2);
-	}
-	throw new Error(`Cannot convert type ${t}`);
-};
-
 jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
 
-	const contextInfo: any = {};
 	props.assets.forEach((asset, i) => {
 		const key = `d${i + 1}`;
-		contextInfo[key] = {
-			id: asset.id,
-			asset_type: toAssetType(asset.type)
+		console.log(asset);
+		contextInfo.value[key] = {
+			hmi_dataset_id: asset.id,
+			filename: asset.filename
 		};
 	});
+	console.log(contextInfo);
 	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'climate_data_utility',
-			context_info: contextInfo
+			context_info: contextInfo.value
 		});
 	}
 });
