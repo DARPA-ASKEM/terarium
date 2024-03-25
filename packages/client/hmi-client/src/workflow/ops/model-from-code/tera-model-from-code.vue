@@ -13,7 +13,7 @@
 				is-selectable
 			/>
 		</template>
-		<div tabName="Wizard">
+		<div tabName="Wizard" class="p-3">
 			<tera-drilldown-section :isLoading="fetchingInputBlocks">
 				<header>
 					<section class="flex items-center gap-3">
@@ -92,7 +92,7 @@
 			<!--Notebook section if we decide we need one-->
 		</div>
 		<template #preview>
-			<tera-drilldown-preview :is-loading="isProcessing">
+			<tera-drilldown-preview :is-loading="isProcessing" class="pt-3 pb-2 pl-2 pr-4">
 				<section v-if="selectedModel">
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
 						<tera-model-description
