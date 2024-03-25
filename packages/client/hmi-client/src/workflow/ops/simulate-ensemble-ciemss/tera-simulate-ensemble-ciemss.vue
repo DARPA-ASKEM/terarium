@@ -155,7 +155,9 @@
 				</AccordionTab>
 			</Accordion>
 		</section>
-		<section :tabName="Tabs.Notebook"></section>
+		<section :tabName="Tabs.Notebook">
+			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
+		</section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"
