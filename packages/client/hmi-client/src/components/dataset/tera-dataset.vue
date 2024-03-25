@@ -198,7 +198,6 @@ const fetchDataset = async () => {
 		case DatasetSource.TERARIUM: {
 			const datasetTemp = await getDataset(props.assetId);
 			if (datasetTemp) {
-				console.log(datasetTemp);
 				if (datasetTemp.esgfId) {
 					image.value = await getClimateDatasetPreview(datasetTemp.esgfId);
 					rawContent.value = null;
