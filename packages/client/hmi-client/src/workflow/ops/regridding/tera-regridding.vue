@@ -91,4 +91,8 @@ const addOutputPort = (data: any) => {
 	height: 100%;
 	overflow-y: auto;
 }
+
+:deep(.chat-input-container) {
+	left: 1.5rem;
+}
 </style>
