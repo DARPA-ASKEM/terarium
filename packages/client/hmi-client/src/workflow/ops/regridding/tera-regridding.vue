@@ -70,8 +70,10 @@ onMounted(async () => {
 	const allDatasets: Dataset[] = [];
 	await Promise.all(
 		props.node.inputs.map(async (ele) => {
-			const dataset = await getDataset(ele?.value?.[0]);
-			if (dataset) allDatasets.push(dataset);
+			if (ele?.value?.[0]) {
+				const dataset = await getDataset(ele?.value?.[0]);
+				if (dataset) allDatasets.push(dataset);
+			}
 		})
 	);
 
