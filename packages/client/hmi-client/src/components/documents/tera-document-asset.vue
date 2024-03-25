@@ -1,9 +1,12 @@
-<!-- This template is a copy of tera-external-publication with some elements stripped out.  TODO: merge the concept of external publication and document asset -->
+<!--
+  -- This template is a copy of tera-external-publication with some elements stripped out.
+  -- TODO: merge the concept of external publication and document asset.
+  -->
 <template>
 	<tera-asset
 		:feature-config="featureConfig"
-		:name="highlightSearchTerms(document?.name)"
-		:overline="highlightSearchTerms(document?.source)"
+		:name="document?.name ?? ''"
+		:overline="document?.source ?? ''"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
 		:stretch-content="view === DocumentView.PDF"
@@ -62,7 +65,7 @@
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
-							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:text="ex.metadata?.content ?? ''"
 							:lines="previewLineLimit"
 						/>
 						<div v-else class="no-extracted-text">No extracted text</div>
@@ -89,7 +92,7 @@
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
-							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:text="ex.metadata?.content ?? ''"
 							:lines="previewLineLimit"
 						/>
 						<div v-else class="no-extracted-text">No extracted text</div>
@@ -116,7 +119,7 @@
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
-							:text="highlightSearchTerms(ex.metadata?.content ?? '')"
+							:text="ex.metadata?.content ?? ''"
 							:lines="previewLineLimit"
 						/>
 						<div v-else class="no-extracted-text">No extracted text</div>
@@ -127,7 +130,10 @@
 			</AccordionTab>
 		</Accordion>
 
-		<!-- Adding this here for now...we will need a way to listen to the extraction job since this takes some time in the background when uploading a doucment-->
+		<!--
+		  -- Adding this here for now...
+		  -- until we implement the process manager
+		  -->
 		<p
 			class="pl-3"
 			v-if="
@@ -154,7 +160,6 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import * as textUtil from '@/utils/text';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { DocumentAsset } from '@/types/Types';
 import { AssetType, ExtractionAssetType } from '@/types/Types';
@@ -181,7 +186,6 @@ enum DocumentView {
 }
 const props = defineProps<{
 	assetId: string;
-	highlight?: string;
 	previewLineLimit: number;
 	featureConfig?: FeatureConfig;
 }>();
@@ -199,13 +203,12 @@ const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disa
 
 const viewOptions = computed(() => {
 	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
-	const filename = document.value?.fileNames?.[0];
-	const isPdf = filename?.endsWith('.pdf');
+	const isPdf = document.value?.fileNames?.some((file) => file.endsWith('.pdf')) ?? false;
 
 	if (isPdf) {
-		options.push(pdfOption);
+		options.push({ ...pdfOption, disabled: documentLoading.value });
 	} else if (docText.value) {
-		options.push(txtOption);
+		options.push({ ...txtOption, disabled: documentLoading.value });
 	} else {
 		options.push(notFoundOption);
 	}
@@ -259,14 +262,6 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
-
 /* TODO: When fetching a document by id, its id and fileNames don't get returned.
  Once they do see about adjusting the conditionals */
 watch(
@@ -280,14 +275,22 @@ watch(
 			const filename = document.value?.fileNames?.[0];
 
 			if (filename?.endsWith('.pdf')) {
-				pdfLink.value = await downloadDocumentAsset(props.assetId, filename); // Generate PDF download link on (doi change)
-				view.value = DocumentView.PDF;
+				// Generate PDF download link on assetId change
+				downloadDocumentAsset(props.assetId, filename).then((pdfLinkResponse) => {
+					if (pdfLinkResponse) {
+						pdfLink.value = pdfLinkResponse;
+					}
+				});
+			} else if (filename && document.value?.id) {
+				if (document.value?.text) {
+					docText.value = document.value.text;
+				} else {
+					getDocumentFileAsText(document.value.id, filename).then((text) => {
+						docText.value = text;
+					});
+				}
 			} else {
-				docText.value =
-					filename && document.value?.id
-						? document.value?.text ?? (await getDocumentFileAsText(document.value.id, filename))
-						: document.value?.text ?? null;
-				if (docText.value !== null) view.value = DocumentView.TXT;
+				docText.value = document.value?.text ?? null;
 			}
 
 			documentLoading.value = false;
@@ -307,11 +310,6 @@ onUpdated(() => {
 });
 </script>
 <style scoped>
-.container {
-	margin-left: 1rem;
-	margin-right: 1rem;
-}
-
 .extracted-item {
 	display: flex;
 	flex-direction: row;
