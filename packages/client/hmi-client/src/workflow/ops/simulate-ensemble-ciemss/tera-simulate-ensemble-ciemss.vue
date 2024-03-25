@@ -165,6 +165,10 @@
 				:is-loading="showSpinner"
 				@update:selection="onSelection"
 			>
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
+					v-bind="node.state.errorMessage"
+				/>
 				<section ref="outputPanel">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.chartConfigs"
@@ -220,6 +224,7 @@ import type {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{

@@ -12,6 +12,8 @@ export interface SimulateCiemssOperationState {
 
 	// In progress
 	inProgressSimulationId: string;
+
+	errorMessage: { name: string; value: string; traceback: string };
 }
 
 export const SimulateCiemssOperation: Operation = {
@@ -31,7 +33,8 @@ export const SimulateCiemssOperation: Operation = {
 			currentTimespan: { start: 1, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',
-			inProgressSimulationId: ''
+			inProgressSimulationId: '',
+			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	},

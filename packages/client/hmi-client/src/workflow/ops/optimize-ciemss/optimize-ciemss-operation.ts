@@ -32,6 +32,8 @@ export interface OptimizeCiemssOperationState {
 	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	optimizeErrorMessage: { name: string; value: string; traceback: string };
+	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -71,7 +73,9 @@ export const OptimizeCiemssOperation: Operation = {
 			forecastRunId: '',
 			optimzationRunId: '',
 			modelConfigName: '',
-			modelConfigDesc: ''
+			modelConfigDesc: '',
+			optimizeErrorMessage: { name: '', value: '', traceback: '' },
+			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	}
