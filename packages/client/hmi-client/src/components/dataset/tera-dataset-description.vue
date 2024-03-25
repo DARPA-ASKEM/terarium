@@ -31,11 +31,11 @@
 				@update-dataset="(dataset: Dataset) => emit('update-dataset', dataset)"
 			/>
 		</AccordionTab>
-		<template v-else>
+		<template v-else-if="dataset?.metadata">
 			<AccordionTab header="Preview">
 				<img :src="image" alt="" />
 				<tera-carousel
-					v-if="isClimateSubset"
+					v-if="isClimateSubset && dataset.metadata?.preview"
 					:labels="dataset.metadata.preview.map(({ year }) => year)"
 				>
 					<div v-for="item in dataset.metadata.preview" :key="item">
@@ -45,7 +45,7 @@
 			</AccordionTab>
 			<AccordionTab header="Metadata">
 				<div v-for="(value, key) in dataset.metadata" :key="key" class="row">
-					<template v-if="key !== 'preview'">
+					<template v-if="key.toString() !== 'preview'">
 						<div class="col key">
 							{{ snakeToCapitalized(key) }}
 						</div>
