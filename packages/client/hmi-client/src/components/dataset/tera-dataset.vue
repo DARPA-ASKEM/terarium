@@ -31,6 +31,15 @@
 
 		<template #tabs>
 			<section class="tab" tabName="Description">
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Id</span>
+					<code class="inline">{{ datasetInfo.id }}</code>
+				</p>
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
+					{{ datasetInfo.fileNames }}<br />
+				</p>
+
 				<tera-dataset-description
 					tabName="Description"
 					:dataset="dataset"
@@ -45,7 +54,7 @@
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { onUpdated, PropType, Ref, ref, watch } from 'vue';
+import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import {
@@ -109,6 +118,18 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+
+const datasetInfo = computed(() => {
+	const information = {
+		id: '',
+		fileNames: ''
+	};
+	if (dataset.value) {
+		information.id = dataset.value.id ?? '';
+		information.fileNames = dataset.value.fileNames?.join(', ') ?? '';
+	}
+	return information;
+});
 
 const groundingValues = ref<string[][]>([]);
 // originaGroundingValues are displayed as the first suggested value for concepts
