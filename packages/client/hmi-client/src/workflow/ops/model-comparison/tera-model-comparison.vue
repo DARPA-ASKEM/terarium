@@ -7,7 +7,7 @@
 			/>
 		</template>
 		<div :tabName="Tabs.Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section class="ml-4 mr-4 pt-3">
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
 					<Accordion :activeIndex="0">

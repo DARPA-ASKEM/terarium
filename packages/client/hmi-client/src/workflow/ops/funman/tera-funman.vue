@@ -6,14 +6,14 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<div :tabName="FunmanTabs.Wizard">
+		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
 				<main>
-					<h4 class="primary-text">
+					<h5>
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
-					</h4>
-					<p class="secondary-text">
+					</h5>
+					<p class="secondary-text mt-1">
 						The validator will use these parameters to execute the sanity checks.
 					</p>
 					<div class="section-row timespan">
@@ -77,7 +77,7 @@
 						</div>
 					</div>
 					<div class="spacer">
-						<h4>Add sanity checks</h4>
+						<h5>Add sanity checks</h5>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
 
@@ -112,6 +112,7 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
+				class="pt-3 pb-3 pl-2 pr-4"
 			>
 				<template v-if="showSpinner">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
