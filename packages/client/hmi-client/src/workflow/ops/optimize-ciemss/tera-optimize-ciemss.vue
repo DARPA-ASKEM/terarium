@@ -128,6 +128,14 @@
 				<div class="toolbar-right-side">
 					<Button
 						icon="pi pi-play"
+						label="Populate Code"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="populateCode"
+					/>
+					<Button
+						icon="pi pi-play"
 						label="Run"
 						outlined
 						severity="secondary"
@@ -515,6 +523,26 @@ const runFromCode = (code: string) => {
 	console.log('Check for: ');
 	console.log(executedCode);
 	console.log('And save to state');
+};
+
+const populateCode = () => {
+	console.log('Hitting get_optimize');
+	// kernelManager.sendMessage('get_optimize',{
+	// 	param_names: ,
+	// 	initial_guess_interventions: ,
+	// 	bounds_interventions: ,
+	// 	risk_bound: ,
+	// 	start_time: ,
+	// 	end_time: ,
+	// 	alpha: ,
+	// 	solver_method: ,
+	// 	n_samples_ouu: ,
+	// 	maxiter: knobs.value,
+	// 	maxfeval: ,
+	// })
+	// 	.register('any_execute_reply', (data) => {
+	// 	console.log(data);
+	// });
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
