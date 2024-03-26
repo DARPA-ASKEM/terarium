@@ -69,7 +69,7 @@
 				<div class="form-section">
 					<h5>Intervention policy</h5>
 					<tera-intervention-policy-group-form
-						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
+						v-for="(cfg, idx) in node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
 						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
@@ -597,6 +597,8 @@ const saveModelConfiguration = async () => {
 };
 
 const setOutputValues = async () => {
+	// if (!knobs.value.forecastRunId) return;
+	console.log(knobs.value.forecastRunId);
 	isFetchingRunResults.value = true;
 	const output = await getRunResultCiemss(knobs.value.forecastRunId);
 	simulationRunResults.value[knobs.value.forecastRunId] = output.runResults;

@@ -4,8 +4,8 @@
 			<tera-simulate-chart
 				v-for="(cfg, idx) in node.state.chartConfigs"
 				:key="idx"
-				:run-results="simulationRunResults[props.node.state.forecastRunId]"
-				:chartConfig="{ selectedRun: props.node.state.forecastRunId, selectedVariable: cfg }"
+				:run-results="simulationRunResults[node.state.forecastRunId]"
+				:chartConfig="{ selectedRun: node.state.forecastRunId, selectedVariable: cfg }"
 				has-mean-line
 				:size="{ width: 180, height: 120 }"
 				@configuration-change="configurationChange(idx, $event)"
@@ -17,14 +17,14 @@
 				icon="pi pi-plus"
 			/>
 			<tera-optimize-chart
-				:risk-results="riskResults[props.node.state.forecastRunId]"
+				:risk-results="riskResults[node.state.forecastRunId]"
 				:chartConfig="{
-					selectedRun: props.node.state.forecastRunId,
-					selectedVariable: props.node.state.targetVariables
+					selectedRun: node.state.forecastRunId,
+					selectedVariable: node.state.targetVariables
 				}"
 				:size="{ width: 180, height: 120 }"
-				:target-variable="props.node.state.targetVariables[0]"
-				:threshold="props.node.state.threshold"
+				:target-variable="node.state.targetVariables[0]"
+				:threshold="node.state.threshold"
 			/>
 		</div>
 		<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
@@ -157,6 +157,7 @@ const pollForecastResult = async (runId: string) => {
 };
 
 const setOutputValues = async () => {
+	if (!props.node.state.forecastRunId) return;
 	isFetchingRunResults.value = true;
 	const output = await getRunResultCiemss(props.node.state.forecastRunId);
 	simulationRunResults.value[props.node.state.forecastRunId] = output.runResults;
