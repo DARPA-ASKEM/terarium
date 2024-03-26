@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<div v-if="!isInProgress && simulationRunResults[props.node.state.forecastRunId]">
+		<div v-if="!showSpinner">
 			<tera-simulate-chart
 				v-for="(cfg, idx) in node.state.chartConfigs"
 				:key="idx"
@@ -27,7 +27,7 @@
 				:threshold="props.node.state.threshold"
 			/>
 		</div>
-		<tera-progress-spinner v-if="isInProgress" :font-size="2" is-centered style="height: 100%" />
+		<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 		<Button
 			v-if="areInputsFilled"
 			label="Edit"
@@ -55,13 +55,11 @@ import {
 	getSimulation,
 	pollAction
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import { Poller, PollerState } from '@/api/api';
 import { chartActionsProxy } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
-import { CsvAsset } from '@/types/Types';
 import { OptimizeCiemssOperationState } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
@@ -77,16 +75,17 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 });
 
 const areInputsFilled = computed(() => props.node.inputs[0].value);
-const isInProgress = computed(
+const showSpinner = computed(
 	() =>
 		props.node.state.inProgressOptimizeId !== '' ||
 		props.node.state.inProgressForecastId !== '' ||
-		isFetchingRunResults.value
+		isFetchingRunResults.value ||
+		!simulationRunResults.value[props.node.state.forecastRunId] ||
+		!riskResults.value[props.node.state.forecastRunId]
 );
 
 const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
-const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
 const poller = new Poller();
 const pollOptimizeResult = async (runId: string) => {
@@ -166,10 +165,6 @@ const setOutputValues = async () => {
 		'risk.json'
 	);
 	isFetchingRunResults.value = false;
-
-	simulationRawContent.value[props.node.state.forecastRunId] = createCsvAssetFromRunResults(
-		simulationRunResults.value[props.node.state.forecastRunId]
-	);
 };
 
 const addChart = () => {

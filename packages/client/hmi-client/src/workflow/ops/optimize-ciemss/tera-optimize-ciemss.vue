@@ -604,16 +604,14 @@ const setOutputValues = async () => {
 		knobs.value.forecastRunId,
 		'risk.json'
 	);
-
+	isFetchingRunResults.value = false;
 	simulationRawContent.value[knobs.value.forecastRunId] = createCsvAssetFromRunResults(
 		simulationRunResults.value[knobs.value.forecastRunId]
 	);
-
 	optimizationResult.value = await getRunResult(
 		knobs.value.optimzationRunId,
 		'optimize_results.json'
 	);
-	isFetchingRunResults.value = false;
 };
 
 onMounted(async () => {
