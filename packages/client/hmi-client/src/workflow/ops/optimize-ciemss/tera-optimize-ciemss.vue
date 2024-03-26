@@ -13,7 +13,7 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.startTime" />
+							<InputNumber disabled class="p-inputtext-sm" inputId="integeronly" value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
@@ -30,12 +30,12 @@
 					</div>
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
-							<label>Number of stochastic samples</label>
+							<label>Number of samples</label>
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
 									inputId="integeronly"
-									v-model="knobs.numStochasticSamples"
+									v-model="knobs.numSamples"
 								/>
 							</div>
 						</div>
@@ -43,6 +43,7 @@
 							<label>Solver method</label>
 							<Dropdown
 								class="p-inputtext-sm"
+								disabled
 								:options="['dopri5', 'euler']"
 								v-model="knobs.solverMethod"
 								placeholder="Select"
@@ -337,9 +338,8 @@ enum OutputView {
 }
 
 interface BasicKnobs {
-	startTime: number;
 	endTime: number;
-	numStochasticSamples: number;
+	numSamples: number;
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
@@ -354,9 +354,8 @@ interface BasicKnobs {
 }
 
 const knobs = ref<BasicKnobs>({
-	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
-	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
+	numSamples: props.node.state.numSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
@@ -372,6 +371,8 @@ const knobs = ref<BasicKnobs>({
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const inferredParameters = computed(() => props.node.inputs[1].value);
+
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);
 });
@@ -498,7 +499,7 @@ const runOptimize = async () => {
 		engine: 'ciemss',
 		modelConfigId: modelConfiguration.value.id,
 		timespan: {
-			start: knobs.value.startTime,
+			start: 0,
 			end: knobs.value.endTime
 		},
 		interventions: optimizeInterventions,
@@ -508,13 +509,17 @@ const runOptimize = async () => {
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: knobs.value.isMinimized,
-			numSamples: knobs.value.numStochasticSamples,
+			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
 			alpha: (100 - knobs.value.riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
 		}
 	};
+
+	if (inferredParameters.value) {
+		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
+	}
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	await getOptimizeStatus(optResult.simulationId);
@@ -536,12 +541,12 @@ const runOptimize = async () => {
 		projectId: '',
 		modelConfigId: modelConfiguration.value.id,
 		timespan: {
-			start: knobs.value.startTime,
+			start: 0,
 			end: knobs.value.endTime
 		},
 		interventions: simulationIntervetions,
 		extra: {
-			num_samples: knobs.value.numStochasticSamples,
+			num_samples: knobs.value.numSamples,
 			method: knobs.value.solverMethod
 		},
 		engine: 'ciemss'
@@ -685,9 +690,8 @@ watch(
 	() => knobs.value,
 	async () => {
 		const state = _.cloneDeep(props.node.state);
-		state.startTime = knobs.value.startTime;
 		state.endTime = knobs.value.endTime;
-		state.numStochasticSamples = knobs.value.numStochasticSamples;
+		state.numSamples = knobs.value.numSamples;
 		state.solverMethod = knobs.value.solverMethod;
 		state.maxiter = knobs.value.maxiter;
 		state.maxfeval = knobs.value.maxfeval;
