@@ -377,8 +377,12 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
+const isFetchingRunResults = ref(false);
 const showSpinner = computed(
-	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+	() =>
+		props.node.state.inProgressOptimizeId !== '' ||
+		props.node.state.inProgressForecastId !== '' ||
+		isFetchingRunResults.value
 );
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -593,6 +597,7 @@ const saveModelConfiguration = async () => {
 };
 
 const setOutputValues = async () => {
+	isFetchingRunResults.value = true;
 	const output = await getRunResultCiemss(knobs.value.forecastRunId);
 	simulationRunResults.value[knobs.value.forecastRunId] = output.runResults;
 	riskResults.value[knobs.value.forecastRunId] = await getRunResult(
@@ -604,11 +609,11 @@ const setOutputValues = async () => {
 		simulationRunResults.value[knobs.value.forecastRunId]
 	);
 
-	const optimzationResult = await getRunResult(
+	optimizationResult.value = await getRunResult(
 		knobs.value.optimzationRunId,
 		'optimize_results.json'
 	);
-	optimizationResult.value = optimzationResult;
+	isFetchingRunResults.value = false;
 };
 
 onMounted(async () => {
