@@ -57,13 +57,19 @@
 import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import {
-	downloadFile,
 	downloadRawFile,
 	getClimateDataset,
 	getDataset,
+	getDownloadURL,
 	updateDataset
 } from '@/services/dataset';
-import { AssetType, type CsvAsset, type Dataset, type DatasetColumn } from '@/types/Types';
+import {
+	AssetType,
+	type CsvAsset,
+	type Dataset,
+	type DatasetColumn,
+	PresignedURL
+} from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
@@ -140,14 +146,14 @@ const toggleOptionsMenu = (event) => {
  * Downloads the first file of the dataset from S3 directly
  * @param dataset
  */
-async function downloadFileFromDataset(): Promise<string> {
+async function downloadFileFromDataset(): Promise<PresignedURL | null> {
 	if (dataset.value) {
 		const { id, fileNames } = dataset.value;
 		if (id && fileNames && fileNames.length > 0 && !isEmpty(fileNames[0])) {
-			return (await downloadFile(id, fileNames[0])) ?? '';
+			return (await getDownloadURL(id, fileNames[0])) ?? null;
 		}
 	}
-	return '';
+	return null;
 }
 
 const optionsMenu = ref();
@@ -184,13 +190,9 @@ const optionsMenuItems = ref([
 		icon: 'pi pi-download',
 		label: 'Download',
 		command: async () => {
-			const url = await downloadFileFromDataset();
-			if (url && !isEmpty(url) && dataset.value?.fileNames) {
-				// create <a> tag dinamically
-				const fileLink = document.createElement('a');
-				fileLink.href = url;
-				fileLink.download = dataset.value.fileNames[0];
-				fileLink.click();
+			const presignedUrl: PresignedURL | null = await downloadFileFromDataset();
+			if (presignedUrl) {
+				window.open(presignedUrl.url, '_blank');
 			}
 			emit('close-preview');
 		}

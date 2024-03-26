@@ -4,7 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import type { CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
+import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
@@ -139,22 +139,18 @@ async function downloadRawFile(
 }
 
 /**
- * Download a file from a dataset
- * @param datasetId
- * @param filename
+ * Get the download URL for a given dataset asset
+ * @param datasetId the dataset ID
+ * @param filename the filename of the asset
  */
-async function downloadFile(datasetId: string, filename: string): Promise<string | null> {
-	try {
-		const response = await API.get(`/datasets/${datasetId}/download-file?filename=${filename}`, {
-			responseType: 'arraybuffer'
-		});
-		const blob: Blob = new Blob([response?.data], { type: 'application/octet-stream' });
-		const url: string = window.URL.createObjectURL(blob);
-		return url ?? null;
-	} catch (error) {
-		logger.error(`Unable to download file ${filename} for dataset asset ${datasetId}: ${error}`);
-		return null;
+async function getDownloadURL(datasetId: string, filename: string): Promise<PresignedURL | null> {
+	const response: AxiosResponse<PresignedURL> = await API.get(
+		`/datasets/${datasetId}/download-url?filename=${filename}`
+	);
+	if (response.data && response.status === 200) {
+		return response.data;
 	}
+	return null;
 }
 
 /**
@@ -407,7 +403,7 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
-	downloadFile,
+	getDownloadURL,
 	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
