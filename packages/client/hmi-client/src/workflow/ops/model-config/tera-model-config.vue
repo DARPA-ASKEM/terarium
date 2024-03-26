@@ -716,6 +716,7 @@ const initialize = async () => {
 			knobs.value.parameters =
 				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
 		}
+
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.initialsMetadata =
@@ -732,6 +733,19 @@ const initialize = async () => {
 		knobs.value.initialsMetadata = state.initialsMetadata;
 		knobs.value.parametersMetadata = state.parametersMetadata;
 	}
+
+	// Ensure the parameters have constant and distributions for editing in children components
+	knobs.value.parameters.forEach((param) => {
+		if (!param.distribution) {
+			param.distribution = {
+				type: 'StandardUniform1',
+				parameters: {
+					minimum: param.value || 1,
+					maximum: param.value || 1
+				}
+			};
+		}
+	});
 
 	// Create a new session and context based on model
 	try {
