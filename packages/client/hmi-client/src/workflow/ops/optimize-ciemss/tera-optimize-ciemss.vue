@@ -161,7 +161,7 @@
 					/>
 				</Suspense>
 				<v-ace-editor
-					v-model:value="codeText"
+					v-model:value="knobs.codeText"
 					@init="initializeAceEditor"
 					lang="python"
 					theme="chrome"
@@ -391,6 +391,7 @@ interface BasicKnobs {
 	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	codeText: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -406,14 +407,12 @@ const knobs = ref<BasicKnobs>({
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimzationRunId: props.node.state.optimzationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
+	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
+	codeText: props.node.state.codeText ?? ''
 });
 
 const sampleAgentQuestions = [];
 const contextLanguage = ref<string>('python3');
-const defaultCodeText =
-	'# This environment contains the variable "model" \n# which is displayed on the right';
-const codeText = ref(defaultCodeText);
 
 let editor: VAceEditorInstance['_editor'] | null;
 const kernelManager = new KernelSessionManager();
@@ -482,7 +481,7 @@ const initializeAceEditor = (editorInstance: any) => {
 const appendCode = (data: any, property: string) => {
 	const code = data.content[property] as string;
 	if (code) {
-		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+		knobs.value.codeText = (knobs.value.codeText ?? '').concat(' \n', code);
 	} else {
 		logger.error('No code to append');
 	}
@@ -560,7 +559,7 @@ const populateCode = () => {
 		})
 		.register('code_cell', (data) => {
 			console.log(data);
-			codeText.value += data.content.code;
+			knobs.value.codeText += data.content.code;
 		});
 };
 

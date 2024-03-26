@@ -33,6 +33,7 @@ export interface OptimizeCiemssOperationState {
 	modelConfigDesc: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
+	codeText: string;
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -76,7 +77,8 @@ export const OptimizeCiemssOperation: Operation = {
 			modelConfigName: '',
 			modelConfigDesc: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
-			simulateErrorMessage: { name: '', value: '', traceback: '' }
+			simulateErrorMessage: { name: '', value: '', traceback: '' },
+			codeText: ''
 		};
 		return init;
 	}
