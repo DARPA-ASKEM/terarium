@@ -213,32 +213,29 @@ const sendForExtractions = async () => {
 	await getRelatedDocuments();
 };
 
+function getRelatedDocuments() {
+	if (!props.assetType) return;
+
+	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
+	if (!provenanceType) return;
+
+	getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then((nodes) => {
+		const provenanceNodes = nodes ?? [];
+		relatedDocuments.value =
+			(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
+				({ id, name }) => ({ id: id ?? '', name: name ?? '' })
+			) ?? [];
+	});
+}
+
 onMounted(() => {
 	getRelatedDocuments();
 });
 
 watch(
 	() => props.assetId,
-	() => {
-		getRelatedDocuments();
-	}
+	() => getRelatedDocuments()
 );
-
-async function getRelatedDocuments() {
-	if (!props.assetType) return;
-
-	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
-	if (!provenanceType) return;
-
-	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
-		ProvenanceType.Document
-	]);
-
-	relatedDocuments.value =
-		(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
-			({ id, name }) => ({ id: id ?? '', name: name ?? '' })
-		) ?? [];
-}
 </script>
 
 <style scoped>
