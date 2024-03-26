@@ -502,9 +502,7 @@ const appendCode = (data: any, property: string) => {
 // Reset model, then execute the code
 const runFromCodeWrapper = () => {
 	// Reset model
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode(editor?.getValue() as string);
-	});
+	runFromCode(editor?.getValue() as string);
 };
 
 const runFromCode = (code: string) => {
@@ -545,22 +543,35 @@ const runFromCode = (code: string) => {
 
 const populateCode = () => {
 	console.log('Hitting get_optimize');
-	// kernelManager.sendMessage('get_optimize',{
-	// 	param_names: ,
-	// 	initial_guess_interventions: ,
-	// 	bounds_interventions: ,
-	// 	risk_bound: ,
-	// 	start_time: ,
-	// 	end_time: ,
-	// 	alpha: ,
-	// 	solver_method: ,
-	// 	n_samples_ouu: ,
-	// 	maxiter: knobs.value,
-	// 	maxfeval: ,
-	// })
-	// 	.register('any_execute_reply', (data) => {
-	// 	console.log(data);
-	// });
+	const paramNames: string[] = [];
+	const startTime: number[] = [];
+	const listInitialGuessInterventions: number[] = [];
+	const listBoundsInterventions: number[][] = [];
+	props.node.state.interventionPolicyGroups.forEach((ele) => {
+		paramNames.push(ele.parameter);
+		startTime.push(ele.startTime);
+		listInitialGuessInterventions.push(ele.initialGuess);
+		listBoundsInterventions.push([ele.lowerBound]);
+		listBoundsInterventions.push([ele.upperBound]);
+	});
+
+	kernelManager
+		.sendMessage('get_optimize_request', {
+			param_names: paramNames,
+			initial_guess_interventions: listInitialGuessInterventions,
+			bounds_interventions: listBoundsInterventions,
+			risk_bound: knobs.value.threshold,
+			end_time: knobs.value.endTime,
+			alpha: (100 - knobs.value.riskTolerance) / 100,
+			solver_method: knobs.value.solverMethod,
+			n_samples_ouu: knobs.value.numSamples,
+			maxiter: knobs.value.maxiter,
+			maxfeval: knobs.value.maxfeval
+		})
+		.register('code_cell', (data) => {
+			console.log(data);
+			codeText.value += data.content.code;
+		});
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
@@ -608,7 +619,7 @@ const buildJupyterContext = () => {
 		context: 'pyciemss',
 		language: 'python3',
 		context_info: {
-			id: modelConfiguration.value.id
+			model_config_id: modelConfiguration.value.id
 		}
 	};
 };
@@ -632,10 +643,6 @@ const initialize = async () => {
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
-		}
-
-		if (codeText.value && codeText.value.length > 0) {
-			runFromCodeWrapper();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
