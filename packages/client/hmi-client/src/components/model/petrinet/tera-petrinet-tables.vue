@@ -194,7 +194,7 @@ const updateParam = (params: ModelParameter[]) => {
 	}
 };
 
-async function updateMMT() {
+function updateMMT() {
 	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
