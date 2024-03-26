@@ -46,16 +46,16 @@
 					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
-			<section class="tab data-tab" tabName="Data" v-if="rawContent">
-				<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
+			<section class="tab data-tab" tabName="Data" v-if="!isEmpty(datasetInfo.fileNames)">
+				<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
+				<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
 			</section>
 		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
 import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
-import * as textUtil from '@/utils/text';
-import { cloneDeep, isEmpty, isString } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import {
 	downloadFile,
 	downloadRawFile,
@@ -73,6 +73,7 @@ import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
 import { DatasetSource } from '@/types/Dataset';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetDescription from './tera-dataset-description.vue';
 import { enrichDataset } from './utils';
 
@@ -110,14 +111,6 @@ const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 const view = ref(DatasetView.DESCRIPTION);
 
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
-
 const datasetInfo = computed(() => {
 	const information = {
 		id: '',
@@ -136,7 +129,7 @@ const originalGroundingValues = ref<string[]>([]);
 const suggestedValues = ref<string[]>([]);
 
 const rowEditList = ref<boolean[]>([]);
-// editableRows is are the dataset columns that can be edited by the user; transient data
+// editableRows are the dataset columns that can be edited by the user; transient data
 const editableRows = ref<DatasetColumn[]>([]);
 
 const toggleOptionsMenu = (event) => {
@@ -205,6 +198,7 @@ const optionsMenuItems = ref([
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
 
+// TODO - It's got to be a better way to do this
 async function updateDatasetName() {
 	if (dataset.value && newDatasetName.value !== '') {
 		const datasetClone = cloneDeep(dataset.value);
@@ -222,39 +216,13 @@ async function updateAndFetchDataset(ds: Dataset) {
 }
 
 const fetchDataset = async () => {
-	switch (props.datasetSource) {
-		case DatasetSource.TERARIUM: {
-			const datasetTemp = await getDataset(props.assetId);
-			if (datasetTemp) {
-				if (datasetTemp.esgfId || datasetTemp.metadata?.format === 'netcdf') {
-					rawContent.value = null;
-				} else {
-					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-					// TODO = Temporary solution to avoid downloading raw NetCDF files, which can be massive
-					// A better solution would be to check the size of an asset before downloading it, and/or
-					// downloading a small subset of it for presentation purposes.
-					if (datasetTemp.metadata?.format !== 'netcdf' || !datasetTemp.esgfId) {
-						rawContent.value = await downloadRawFile(
-							props.assetId,
-							datasetTemp?.fileNames?.[0] ?? ''
-						);
-					}
-					Object.entries(datasetTemp).forEach(([key, value]) => {
-						if (isString(value)) {
-							datasetTemp[key] = highlightSearchTerms(value);
-						}
-					});
-				}
-				dataset.value = enrichDataset(datasetTemp);
-			}
-			break;
+	if (props.datasetSource === DatasetSource.TERARIUM) {
+		const datasetTemp = await getDataset(props.assetId);
+		if (datasetTemp) {
+			dataset.value = enrichDataset(datasetTemp);
 		}
-		case DatasetSource.ESGF: {
-			dataset.value = await getClimateDataset(props.assetId);
-			break;
-		}
-		default:
-			break;
+	} else if (props.datasetSource === DatasetSource.ESGF) {
+		dataset.value = await getClimateDataset(props.assetId);
 	}
 };
 
@@ -287,14 +255,40 @@ watch(
 		isRenamingDataset.value = false;
 		if (props.assetId !== '') {
 			isDatasetLoading.value = true;
-			await fetchDataset();
-			isDatasetLoading.value = false;
+			fetchDataset().then(() => {
+				isDatasetLoading.value = false;
+			});
 		} else {
 			dataset.value = null;
 			rawContent.value = null;
 		}
 	},
 	{ immediate: true }
+);
+
+// Whenever we change Tab, we need to fetch the rawContent if not setup
+watch(
+	() => selectedTabIndex.value,
+	async () => {
+		if (selectedTabIndex.value === 1 && dataset.value && isEmpty(rawContent.value)) {
+			// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
+			if (dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') {
+				return;
+			}
+
+			// We are assuming here there is only a single csv file.
+			if (
+				dataset.value.fileNames &&
+				dataset.value.fileNames.length > 0 &&
+				!isEmpty(dataset.value.fileNames[0]) &&
+				dataset.value.fileNames[0].endsWith('.csv')
+			) {
+				downloadRawFile(props.assetId, dataset.value.fileNames[0]).then((res) => {
+					rawContent.value = res;
+				});
+			}
+		}
+	}
 );
 </script>
 
