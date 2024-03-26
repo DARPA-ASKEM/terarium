@@ -172,12 +172,6 @@
 			</tera-drilldown-section>
 		</section>
 		<template #preview>
-			<tera-notebook-error
-				v-if="executeResponse.status === OperatorStatus.ERROR"
-				:name="executeResponse.name"
-				:value="executeResponse.value"
-				:traceback="executeResponse.traceback"
-			/>
 			<tera-drilldown-preview
 				title="Simulation output"
 				:options="outputs"
@@ -356,7 +350,7 @@ import {
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
-import { WorkflowNode, OperatorStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -420,12 +414,7 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
-const executeResponse = ref({
-	status: OperatorStatus.DEFAULT,
-	name: '',
-	value: '',
-	traceback: ''
-});
+
 let editor: VAceEditorInstance['_editor'] | null;
 const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
@@ -526,15 +515,16 @@ const runFromCode = (code: string) => {
 			console.log('stream', data);
 		})
 		.register('any_execute_reply', (data) => {
-			let status = OperatorStatus.DEFAULT;
-			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
-			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
-			executeResponse.value = {
-				status,
-				name: data.msg.content.ename ? data.msg.content.ename : '',
-				value: data.msg.content.evalue ? data.msg.content.evalue : '',
-				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
-			};
+			console.log('execute reply');
+			if (data.msg.content.status === 'error') {
+				const state = _.cloneDeep(props.node.state);
+				state.optimizeErrorMessage = {
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
+				emit('update-state', state);
+			}
 		});
 	console.log('Check for: ');
 	console.log(executedCode);
