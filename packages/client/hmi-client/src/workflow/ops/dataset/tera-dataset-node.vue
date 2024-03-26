@@ -2,10 +2,12 @@
 	<main>
 		<template v-if="dataset">
 			<tera-operator-title>{{ dataset.name }}</tera-operator-title>
+			<tera-operator-placeholder :operation-type="node.operationType" />
+			<!--
+			  -- Hide the section for the moment as this is taking too much memory in the hmi-server
 			<section v-if="csvContent">
 				<div class="toolbar">
 					<span>{{ csvContent[0].length }} columns</span>
-					<!--TODO: May want to turn this feather icon button into its own component-->
 					<div class="multiselect-btn">
 						<Button
 							class="p-button-icon-only"
@@ -40,6 +42,7 @@
 				</DataTable>
 				<span>1 - 5 of {{ csvContent.length }} rows</span>
 			</section>
+			-->
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -56,18 +59,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { isEmpty } from 'lodash';
 import { AssetType } from '@/types/Types';
-import type { CsvAsset, Dataset, ProjectAsset } from '@/types/Types';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Dropdown from 'primevue/dropdown';
-import { downloadRawFile, getDataset } from '@/services/dataset';
-import { WorkflowNode } from '@/types/workflow';
-import MultiSelect from 'primevue/multiselect';
-import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
+import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import { getDataset } from '@/services/dataset';
+import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DatasetOperationState } from './dataset-operation';
@@ -79,25 +79,27 @@ const props = defineProps<{
 const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
 const datasets = useProjects().getActiveProjectAssets(AssetType.Dataset);
-
 const dataset = ref<Dataset | null>(null);
-const rawContent = ref<CsvAsset | null>(null);
-const csvContent = computed(() => rawContent.value?.csv);
-const csvHeaders = computed(() => rawContent.value?.headers);
 
-let selectedColumns = ref(csvHeaders?.value);
-
-const columnSelect = ref();
-const onToggle = (val) => {
-	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
-};
-const columnSelectTooltip = 'Select columns to display';
+/* Hide the CSV preview for now as it is taking too much memory in the hmi-server */
+/*
+	const rawContent = ref<CsvAsset | null>(null);
+	const csvHeaders = computed(() => rawContent.value?.headers);
+	let selectedColumns = ref(csvHeaders?.value);
+	const csvContent = computed(() => rawContent.value?.csv);
+	const columnSelect = ref();
+	const onToggle = (val) => {
+		selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
+	};
+	const columnSelectTooltip = 'Select columns to display';
+*/
 
 async function getDatasetById(id: string) {
 	dataset.value = await getDataset(id);
 
 	if (dataset.value && dataset.value?.id) {
-		// Once a dataset is selected the output is assigned here, if there is already an output do not reassign
+		// Once a dataset is selected the output is assigned here,
+		// if there is already an output do not reassign
 		if (isEmpty(props.node.outputs)) {
 			emit('update-state', {
 				datasetId: dataset.value.id
@@ -111,6 +113,7 @@ async function getDatasetById(id: string) {
 		}
 
 		// Fetch the CSV file from the dataset for preview purposes
+		/*
 		if (dataset.value?.fileNames) {
 			const filenames = dataset.value.fileNames;
 			if (filenames.length > 0 && filenames[0].endsWith('.csv')) {
@@ -122,15 +125,16 @@ async function getDatasetById(id: string) {
 				console.debug('No CSV file found in dataset: ', dataset.value.name);
 			}
 		}
+		*/
 	}
 }
 
-async function onDatasetChange(chosenProjectDataset: ProjectAsset) {
-	await getDatasetById(chosenProjectDataset.assetId);
+function onDatasetChange(chosenProjectDataset: ProjectAsset) {
+	getDatasetById(chosenProjectDataset.assetId).then();
 }
 
 onMounted(async () => {
-	if (props.node.state.datasetId) await getDatasetById(props.node.state.datasetId);
+	if (props.node.state.datasetId) getDatasetById(props.node.state.datasetId).then();
 });
 </script>
 
@@ -144,6 +148,8 @@ section {
 	color: var(--text-color-subdued);
 }
 
+/* Hide the CSV preview for now as it is taking too much memory in the hmi-server */
+/*
 .toolbar {
 	display: flex;
 	flex-direction: row;
@@ -207,4 +213,5 @@ section {
 .p-button:deep(span) {
 	margin-top: 0.25rem;
 }
+*/
 </style>
