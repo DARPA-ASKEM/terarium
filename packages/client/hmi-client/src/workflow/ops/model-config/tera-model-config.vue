@@ -290,7 +290,7 @@ import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 import { FatalError } from '@/api/api';
