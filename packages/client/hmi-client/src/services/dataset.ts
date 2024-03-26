@@ -138,6 +138,14 @@ async function downloadRawFile(
 	return response?.data ?? null;
 }
 
+async function downloadFile(datasetId: string, filename: string): Promise<string | null> {
+	const response = await API.get(`/datasets/${datasetId}/download-file?filename=${filename}`);
+	if (response.data && response.status === 200) {
+		return response.data;
+	}
+	return null;
+}
+
 /**
  * Creates a new dataset in TDS from the dataset given (required name, url, description).
  * @param dataset the dataset with updated storage ID from tds
@@ -388,6 +396,7 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
+	downloadFile,
 	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,

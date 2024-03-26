@@ -55,8 +55,14 @@
 <script setup lang="ts">
 import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import * as textUtil from '@/utils/text';
-import { cloneDeep, isString } from 'lodash';
-import { downloadRawFile, getClimateDataset, getDataset, updateDataset } from '@/services/dataset';
+import { cloneDeep, isEmpty, isString } from 'lodash';
+import {
+	downloadFile,
+	downloadRawFile,
+	getClimateDataset,
+	getDataset,
+	updateDataset
+} from '@/services/dataset';
 import { AssetType, type CsvAsset, type Dataset, type DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -137,6 +143,20 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
+/**
+ * Downloads the first file of the dataset from S3 directly
+ * @param dataset
+ */
+async function downloadFileFromDataset(): Promise<string> {
+	if (dataset.value) {
+		const { id, fileNames } = dataset.value;
+		if (id && fileNames && fileNames.length > 0 && !isEmpty(fileNames[0])) {
+			return (await downloadFile(id, fileNames[0])) ?? '';
+		}
+	}
+	return '';
+}
+
 const optionsMenu = ref();
 const optionsMenuItems = ref([
 	{
@@ -166,6 +186,17 @@ const optionsMenuItems = ref([
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
+	},
+	{
+		icon: 'pi pi-download',
+		label: 'Download',
+		command: async () => {
+			const url = await downloadFileFromDataset();
+			if (url && !isEmpty(url)) {
+				window.open(url, '_blank');
+			}
+			emit('close-preview');
+		}
 	}
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteDataset }
 ]);
