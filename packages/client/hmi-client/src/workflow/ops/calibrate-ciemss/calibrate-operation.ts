@@ -4,7 +4,6 @@ import { CalibrateMap } from '@/services/calibrate-workflow';
 export interface CalibrationOperationStateCiemss {
 	chartConfigs: string[][];
 	mapping: CalibrateMap[];
-	simulationsInProgress: string[];
 
 	inProgressCalibrationId: string;
 	inProgressForecastId: string;
@@ -32,7 +31,6 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
-			simulationsInProgress: [],
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
 			calibrationId: '',
