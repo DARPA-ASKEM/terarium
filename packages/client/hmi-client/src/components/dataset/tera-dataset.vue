@@ -192,8 +192,12 @@ const optionsMenuItems = ref([
 		label: 'Download',
 		command: async () => {
 			const url = await downloadFileFromDataset();
-			if (url && !isEmpty(url)) {
-				window.open(url, '_blank');
+			if (url && !isEmpty(url) && dataset.value?.fileNames) {
+				// create <a> tag dinamically
+				const fileLink = document.createElement('a');
+				fileLink.href = url;
+				fileLink.download = dataset.value.fileNames[0];
+				fileLink.click();
 			}
 			emit('close-preview');
 		}

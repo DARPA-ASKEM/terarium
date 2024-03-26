@@ -138,12 +138,23 @@ async function downloadRawFile(
 	return response?.data ?? null;
 }
 
+/**
+ * Download a file from a dataset
+ * @param datasetId
+ * @param filename
+ */
 async function downloadFile(datasetId: string, filename: string): Promise<string | null> {
-	const response = await API.get(`/datasets/${datasetId}/download-file?filename=${filename}`);
-	if (response.data && response.status === 200) {
-		return response.data;
+	try {
+		const response = await API.get(`/datasets/${datasetId}/download-file?filename=${filename}`, {
+			responseType: 'arraybuffer'
+		});
+		const blob: Blob = new Blob([response?.data], { type: 'application/octet-stream' });
+		const url: string = window.URL.createObjectURL(blob);
+		return url ?? null;
+	} catch (error) {
+		logger.error(`Unable to download file ${filename} for dataset asset ${datasetId}: ${error}`);
+		return null;
 	}
-	return null;
 }
 
 /**
