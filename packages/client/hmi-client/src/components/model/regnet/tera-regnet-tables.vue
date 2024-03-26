@@ -148,9 +148,10 @@ function onCellEditComplete() {
 }
 
 async function updateMMT() {
-	const response: any = await getMMT(props.model);
-	mmt.value = response.mmt;
-	mmtParams.value = response.template_params;
+	getMMT(props.model).then((response) => {
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	});
 }
 
 watch(
