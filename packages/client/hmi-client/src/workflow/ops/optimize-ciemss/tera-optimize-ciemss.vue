@@ -289,13 +289,10 @@ import {
 import {
 	makeOptimizeJobCiemss,
 	makeForecastJobCiemss,
-	pollAction,
 	getRunResultCiemss,
-	getRunResult,
-	getSimulation
+	getRunResult
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { Poller, PollerState } from '@/api/api';
 // Types:
 import {
 	ModelConfiguration,
@@ -377,11 +374,12 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 	emit('update-state', state);
 });
 
-const showSpinner = ref(false);
-const poller = new Poller();
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
+const showSpinner = computed(
+	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+);
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
 		return [
@@ -522,7 +520,12 @@ const runOptimize = async () => {
 	}
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
-	await getOptimizeStatus(optResult.simulationId);
+	knobs.value.optimzationRunId = optResult.simulationId;
+
+	let state = _.cloneDeep(props.node.state);
+	state.inProgressOptimizeId = optResult.simulationId;
+	emit('update-state', state);
+
 	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
 
@@ -553,8 +556,13 @@ const runOptimize = async () => {
 	};
 
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
-	getStatus(simulationResponse.id);
-	const state = _.cloneDeep(props.node.state);
+	knobs.value.forecastRunId = simulationResponse.id;
+
+	state = _.cloneDeep(props.node.state);
+	state.inProgressForecastId = simulationResponse.id;
+	emit('update-state', state);
+
+	state = _.cloneDeep(props.node.state);
 	emit('append-output', {
 		type: OptimizeCiemssOperation.outputs[0].type,
 		label: `Simulation output - ${props.node.outputs.length + 1}`,
@@ -562,85 +570,6 @@ const runOptimize = async () => {
 		isSelected: false,
 		state
 	});
-};
-
-const getStatus = async (runId: string) => {
-	showSpinner.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
-	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
-	state.simulateErrorMessage = { name: '', value: '', traceback: '' };
-	emit('update-state', state);
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		showSpinner.value = false;
-		logger.error(`Simulate: ${runId} has failed`, {
-			toastTitle: 'Error - Ciemss'
-		});
-		const simulation = await getSimulation(runId);
-		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.simulateErrorMessage = {
-				name: runId,
-				value: simulation.status,
-				traceback: simulation.statusMessage
-			};
-			emit('update-state', state);
-		}
-		throw Error('Failed Runs');
-	}
-
-	if (state.chartConfigs.length === 0) {
-		chartProxy.addChart();
-	}
-
-	knobs.value.forecastRunId = runId;
-	showSpinner.value = false;
-};
-
-const getOptimizeStatus = async (runId: string) => {
-	showSpinner.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
-	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
-	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
-	emit('update-state', state);
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		showSpinner.value = false;
-		// throw if there are any failed runs for now
-		logger.error(`Optimize: ${runId} has failed`, {
-			toastTitle: 'Error - Ciemss'
-		});
-		const simulation = await getSimulation(runId);
-		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.optimizeErrorMessage = {
-				name: runId,
-				value: simulation.status,
-				traceback: simulation.statusMessage
-			};
-			emit('update-state', state);
-		}
-		throw Error('Failed Runs');
-	}
-
-	knobs.value.optimzationRunId = runId;
-	showSpinner.value = false;
 };
 
 const saveModelConfiguration = async () => {

@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<div v-if="!inProgressOptimizeId && simulationRunResults[props.node.state.forecastRunId]">
+		<div v-if="!isInProgress && simulationRunResults[props.node.state.forecastRunId]">
 			<tera-simulate-chart
 				v-for="(cfg, idx) in node.state.chartConfigs"
 				:key="idx"
@@ -24,13 +24,7 @@
 				:target-variable="props.node.state.targetVariables[0]"
 			/>
 		</div>
-		<tera-progress-spinner
-			v-if="inProgressOptimizeId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
-
+		<tera-progress-spinner v-if="isInProgress" :font-size="2" is-centered style="height: 100%" />
 		<Button
 			v-if="areInputsFilled"
 			label="Edit"
@@ -54,14 +48,15 @@ import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResult,
-	getRunResultCiemss
-	// ,
-	// pollAction,
+	getRunResultCiemss,
+	getSimulation,
+	pollAction
 	// makeForecastJobCiemss
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
-// import { Poller, PollerState } from '@/api/api';
+import { Poller, PollerState } from '@/api/api';
+import { chartActionsProxy } from '@/workflow/util';
 // import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { CsvAsset } from '@/types/Types';
@@ -73,33 +68,88 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
+const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
+	emit('update-state', state);
+});
+
 const areInputsFilled = computed(() => props.node.inputs[0].value);
-const inProgressOptimizeId = computed(() => props.node.state.inProgressOptimizeId);
+const isInProgress = computed(
+	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+);
 
 const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
-// const poller = new Poller();
-// const pollResult = async (runId: string) => {
-// 	poller
-// 		.setInterval(3000)
-// 		.setThreshold(300)
-// 		.setPollAction(async () => pollAction(runId));
-// 	const pollerResults = await poller.start();
+const poller = new Poller();
+const pollOptimizeResult = async (runId: string) => {
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => pollAction(runId));
+	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
-// 	if (pollerResults.state === PollerState.Cancelled) {
-// 		return pollerResults;
-// 	}
-// 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-// 		// throw if there are any failed runs for now
-// 		logger.error(`Optimzation: ${runId} has failed`, {
-// 			toastTitle: 'Error - Pyciemss'
-// 		});
-// 		throw Error('Failed Runs');
-// 	}
-// 	return pollerResults;
-// };
+	if (pollerResults.state === PollerState.Cancelled) {
+		return pollerResults;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`Optimzation: ${runId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.optimizeErrorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
+		throw Error('Failed Runs');
+	}
+	return pollerResults;
+};
+
+const pollForecastResult = async (runId: string) => {
+	poller
+		.setInterval(3000)
+		.setThreshold(300)
+		.setPollAction(async () => pollAction(runId));
+	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.simulateErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		return pollerResults;
+	}
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Ciemss'
+		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.simulateErrorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
+		throw Error('Failed Runs');
+	}
+	console.log(state.chartConfigs);
+	if (state.chartConfigs.length === 0) {
+		chartProxy.addChart();
+	}
+	return pollerResults;
+};
 
 const setOutputValues = async () => {
 	const output = await getRunResultCiemss(props.node.state.forecastRunId);
@@ -127,6 +177,44 @@ const configurationChange = (index: number, config: ChartConfig) => {
 
 	emit('update-state', state);
 };
+
+function processResult(id: string) {
+	console.log(id);
+}
+
+watch(
+	() => props.node.state.inProgressForecastId,
+	async (id) => {
+		if (!id || id === '') return;
+
+		const response = await pollForecastResult(id);
+		if (response.state === PollerState.Done) {
+			processResult(id);
+		}
+
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressForecastId = '';
+		emit('update-state', state);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.state.inProgressOptimizeId,
+	async (id) => {
+		if (!id || id === '') return;
+
+		const response = await pollOptimizeResult(id);
+		if (response.state === PollerState.Done) {
+			processResult(id);
+		}
+
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressOptimizeId = '';
+		emit('update-state', state);
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.node.active,
