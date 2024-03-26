@@ -7,6 +7,7 @@
 				:run-results="simulationRunResults[props.node.state.forecastRunId]"
 				:chartConfig="{ selectedRun: props.node.state.forecastRunId, selectedVariable: cfg }"
 				has-mean-line
+				:size="{ width: 180, height: 120 }"
 				@configuration-change="configurationChange(idx, $event)"
 			/>
 			<Button
@@ -21,7 +22,9 @@
 					selectedRun: props.node.state.forecastRunId,
 					selectedVariable: props.node.state.targetVariables
 				}"
+				:size="{ width: 180, height: 120 }"
 				:target-variable="props.node.state.targetVariables[0]"
+				:threshold="props.node.state.threshold"
 			/>
 		</div>
 		<tera-progress-spinner v-if="isInProgress" :font-size="2" is-centered style="height: 100%" />
@@ -67,13 +70,18 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
+const isFetchingRunResults = ref(false);
+
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);
 });
 
 const areInputsFilled = computed(() => props.node.inputs[0].value);
 const isInProgress = computed(
-	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+	() =>
+		props.node.state.inProgressOptimizeId !== '' ||
+		props.node.state.inProgressForecastId !== '' ||
+		isFetchingRunResults.value
 );
 
 const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
@@ -143,7 +151,6 @@ const pollForecastResult = async (runId: string) => {
 		}
 		throw Error('Failed Runs');
 	}
-	console.log(state.chartConfigs);
 	if (state.chartConfigs.length === 0) {
 		chartProxy.addChart();
 	}
@@ -151,12 +158,14 @@ const pollForecastResult = async (runId: string) => {
 };
 
 const setOutputValues = async () => {
+	isFetchingRunResults.value = true;
 	const output = await getRunResultCiemss(props.node.state.forecastRunId);
 	simulationRunResults.value[props.node.state.forecastRunId] = output.runResults;
 	riskResults.value[props.node.state.forecastRunId] = await getRunResult(
 		props.node.state.forecastRunId,
 		'risk.json'
 	);
+	isFetchingRunResults.value = false;
 
 	simulationRawContent.value[props.node.state.forecastRunId] = createCsvAssetFromRunResults(
 		simulationRunResults.value[props.node.state.forecastRunId]
