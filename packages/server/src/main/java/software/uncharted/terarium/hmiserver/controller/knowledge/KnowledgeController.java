@@ -34,7 +34,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
@@ -398,30 +397,6 @@ public class KnowledgeController {
 		}
 
 		try {
-			final ProvenanceQueryParam payload = new ProvenanceQueryParam();
-			payload.setRootId(modelId);
-			payload.setRootType(ProvenanceType.MODEL);
-
-			final Set<String> codeIds = provenanceSearchService.modelsFromCode(payload);
-
-			String codeContentString = "";
-			if (codeIds.size() > 0) {
-				final UUID codeId = UUID.fromString(codeIds.iterator().next());
-
-				final Code code = codeService.getAsset(codeId).orElseThrow();
-
-				final Map<String, String> codeContent = new HashMap<>();
-
-				for (final Entry<String, CodeFile> file : code.getFiles().entrySet()) {
-
-					final String name = file.getKey();
-					final String content = codeService.fetchFileAsString(codeId, file.getKey()).orElseThrow();
-
-					codeContent.put(name, content);
-				}
-				codeContentString = mapper.writeValueAsString(codeContent);
-			}
-
 			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
 			String documentText = "";
 			if (documentOptional.isPresent()) {
@@ -435,7 +410,7 @@ public class KnowledgeController {
 
 			final StringMultipartFile textFile = new StringMultipartFile(documentText, "document.txt",
 					"application/text");
-			final StringMultipartFile codeFile = new StringMultipartFile(codeContentString, "code.txt",
+			final StringMultipartFile codeFile = new StringMultipartFile("", "code.txt",
 					"application/text");
 
 			final ResponseEntity<JsonNode> resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
