@@ -132,7 +132,7 @@
 						outlined
 						severity="secondary"
 						size="small"
-						@click="runFromCode"
+						@click="runFromCodeWrapper"
 					/>
 				</div>
 				<Suspense>
@@ -285,7 +285,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch, onUnmounted } from 'vue';
 // components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -404,6 +404,7 @@ const executeResponse = ref({
 });
 let editor: VAceEditorInstance['_editor'] | null;
 const kernelManager = new KernelSessionManager();
+const isKernelReady = ref(false);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -472,14 +473,22 @@ const appendCode = (data: any, property: string) => {
 	}
 };
 
-const runFromCode = () => {
+// Reset model, then execute the code
+const runFromCodeWrapper = () => {
+	// Reset model
+	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
+		runFromCode(editor?.getValue() as string);
+	});
+};
+
+const runFromCode = (code: string) => {
 	const messageContent = {
 		silent: false,
 		store_history: false,
 		user_expressions: {},
 		allow_stdin: true,
 		stop_on_error: false,
-		code: editor?.getValue() as string
+		code
 	};
 
 	let executedCode = '';
@@ -507,6 +516,7 @@ const runFromCode = () => {
 	console.log(executedCode);
 	console.log('And save to state');
 };
+
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
@@ -542,6 +552,21 @@ const formatJsonValue = (value) => {
 	return value;
 };
 
+const buildJupyterContext = () => {
+	if (!modelConfiguration.value) {
+		logger.warn('Cannot build Jupyter context without a model');
+		return null;
+	}
+
+	return {
+		context: 'pyciemss',
+		language: 'python3',
+		context_info: {
+			id: modelConfiguration.value.id
+		}
+	};
+};
+
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
@@ -550,6 +575,25 @@ const initialize = async () => {
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
 	modelStateOptions.value = model.model.states ?? ([] as State[]);
+
+	// Kernel setup:
+	try {
+		const jupyterContext = buildJupyterContext();
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+			isKernelReady.value = true;
+		}
+
+		if (codeText.value && codeText.value.length > 0) {
+			runFromCodeWrapper();
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
 };
 
 const runOptimize = async () => {
@@ -738,6 +782,10 @@ const setOutputValues = async () => {
 
 onMounted(async () => {
 	initialize();
+});
+
+onUnmounted(() => {
+	kernelManager.shutdown();
 });
 
 watch(
