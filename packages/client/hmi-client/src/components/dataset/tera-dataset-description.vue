@@ -73,13 +73,13 @@
 			</AccordionTab>
 		</template>
 	</Accordion>
-	{{ isClimateData }}{{ isClimateSubset }}
 </template>
 
 <script setup lang="ts">
 import { snakeToCapitalized } from '@/utils/text';
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
+import { getClimateDatasetPreview } from '@/services/dataset';
 import type { Dataset, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { FeatureConfig } from '@/types/common';
@@ -93,12 +93,14 @@ import TeraDatasetOverviewTable from './tera-dataset-overview-table.vue';
 
 const props = defineProps<{
 	dataset: Dataset | null;
-	image?: string;
 	highlight?: string;
 	featureConfig?: FeatureConfig;
 }>();
 
 const emit = defineEmits(['fetch-dataset', 'update-dataset']);
+
+const image = ref<string | undefined>(undefined);
+
 const card = computed(() => {
 	if (props.dataset?.metadata?.data_card) {
 		const cardWithUnknowns = props.dataset.metadata?.data_card;
@@ -144,6 +146,12 @@ function highlightSearchTerms(text: string | undefined): string {
 function fetchAsset() {
 	emit('fetch-dataset');
 }
+
+onMounted(async () => {
+	if (props.dataset?.esgfId) {
+		image.value = await getClimateDatasetPreview(props.dataset.esgfId);
+	}
+});
 </script>
 
 <style scoped>
