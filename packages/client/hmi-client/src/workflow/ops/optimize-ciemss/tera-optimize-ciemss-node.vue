@@ -51,13 +51,12 @@ import {
 	getRunResultCiemss,
 	getSimulation,
 	pollAction
-	// makeForecastJobCiemss
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import { Poller, PollerState } from '@/api/api';
 import { chartActionsProxy } from '@/workflow/util';
-// import { logger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { CsvAsset } from '@/types/Types';
 import { OptimizeCiemssOperationState } from './optimize-ciemss-operation';
@@ -182,37 +181,28 @@ function processResult(id: string) {
 	console.log(id);
 }
 
+async function handlePolling(id: string, pollResult: Function, inProgressId: string) {
+	if (!id || id === '') return;
+
+	const response = await pollResult(id);
+	if (response.state === PollerState.Done) {
+		processResult(id);
+	}
+
+	const state = _.cloneDeep(props.node.state);
+	state[inProgressId] = '';
+	emit('update-state', state);
+}
+
 watch(
 	() => props.node.state.inProgressForecastId,
-	async (id) => {
-		if (!id || id === '') return;
-
-		const response = await pollForecastResult(id);
-		if (response.state === PollerState.Done) {
-			processResult(id);
-		}
-
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressForecastId = '';
-		emit('update-state', state);
-	},
+	(id) => handlePolling(id, pollForecastResult, 'inProgressForecastId'),
 	{ immediate: true }
 );
 
 watch(
 	() => props.node.state.inProgressOptimizeId,
-	async (id) => {
-		if (!id || id === '') return;
-
-		const response = await pollOptimizeResult(id);
-		if (response.state === PollerState.Done) {
-			processResult(id);
-		}
-
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressOptimizeId = '';
-		emit('update-state', state);
-	},
+	(id) => handlePolling(id, pollOptimizeResult, 'inProgressOptimizeId'),
 	{ immediate: true }
 );
 
