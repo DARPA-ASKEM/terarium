@@ -11,48 +11,51 @@
 	>
 		<!-- Row expander, ID and Name columns -->
 		<Column expander class="w-3rem" />
-		<Column header="Symbol">
+
+		<!-- Symbol -->
+		<Column header="Symbol" class="w-2">
 			<template #body="slotProps">
 				<span class="truncate-text">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
 		</Column>
+
+		<!-- Name -->
 		<Column header="Name">
-			<template #body="slotProps">
-				<span class="truncate-text">
-					{{ slotProps.data.name }}
-				</span>
+			<template #body="{ data }">
+				<InputText
+					v-model.lazy="data.name"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateParamValue(data.value, 'name', $event)"
+				/>
 			</template>
 		</Column>
 
 		<Column header="Description" class="w-2">
-			<template #body="slotProps">
-				<span v-if="slotProps.data.description" class="truncate-text">
-					{{ slotProps.data.description }}</span
-				>
-				<template v-else>--</template>
+			<template #body="{ data }">
+				<InputText
+					v-model.lazy="data.description"
+					:disabled="configView || readonly || data.type === ParamType.MATRIX"
+					@update:model-value="updateParamValue(data.value, 'description', $event)"
+				/>
 			</template>
 		</Column>
 
 		<Column header="Concept" class="w-1">
 			<template #body="{ data }">
-				<template
-					v-if="
-						data.concept?.grounding?.identifiers && !isEmpty(data.concept.grounding.identifiers)
-					"
-				>
+				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.grounding.identifiers)
+							getCurieFromGroudingIdentifier(data.concept.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.grounding.identifiers))"
+						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -61,16 +64,36 @@
 				</template>
 				<template v-else>--</template>
 			</template>
+			<template v-if="!configView && !readonly" #editor="{ data }">
+				<AutoComplete
+					v-model="conceptSearchTerm.name"
+					:suggestions="curies"
+					@complete="onSearch"
+					@item-select="
+						updateParamValue(data.value, 'grounding', {
+							identifiers: parseCurie($event.value.curie)
+						})
+					"
+					optionLabel="name"
+					:forceSelection="true"
+					:inputStyle="{ width: '100%' }"
+				/>
+			</template>
 		</Column>
 
 		<Column header="Unit" class="w-1">
 			<template #body="slotProps">
 				<InputText
 					v-if="slotProps.data.type !== ParamType.MATRIX"
-					size="small"
 					class="w-full"
 					v-model.lazy="slotProps.data.unit"
-					@update:model-value="updateUnit(slotProps.data.value, $event)"
+					:disabled="readonly"
+					@update:model-value="
+						updateParamValue(slotProps.data.value, 'unit', {
+							...slotProps.data.value.unit,
+							expression: $event
+						})
+					"
 				/>
 				<template v-else>--</template>
 			</template>
@@ -95,7 +118,8 @@
 					optionLabel="label"
 					optionValue="value"
 					placeholder="Select a parameter type"
-					@update:model-value="(val) => changeType(slotProps.data.value, val)"
+					:disabled="readonly"
+					@update:model-value="(val) => (slotProps.data.type = val)"
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
@@ -123,8 +147,8 @@
 				<span
 					v-if="slotProps.data.type === ParamType.MATRIX"
 					@click="openMatrixModal(slotProps.data)"
-					class="cursor-pointer secondary-text"
-					>Click to open</span
+					class="cursor-pointer secondary-text text-sm"
+					>Open matrix</span
 				>
 				<!-- Distribution -->
 				<div
@@ -133,22 +157,22 @@
 				>
 					<InputNumber
 						class="distribution-item min-value"
-						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<InputNumber
 						class="distribution-item max-value"
-						size="small"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.maximum"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
@@ -159,17 +183,19 @@
 					class="flex align-items-center"
 				>
 					<InputNumber
-						size="small"
 						class="constant-number"
 						inputId="numericInput"
 						mode="decimal"
 						:min-fraction-digits="1"
 						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.value"
+						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<!-- This is a button with an input field inside it, weird huh?, but it works -->
+					<!--
 					<Button
+						v-if="!readonly"
 						class="ml-2 pt-0 pb-0 w-5"
 						text
 						@click="changeType(slotProps.data.value, 1)"
@@ -178,16 +204,17 @@
 						<span class="white-space-nowrap text-sm">Add ±</span>
 						<InputNumber
 							v-model="addPlusMinus"
-							size="small"
+	
 							text
 							class="constant-number add-plus-minus w-full"
 							inputId="convert-to-distribution"
 							suffix="%"
 							:min="0"
 							:max="100"
-							@click.stop=""
+							:disabled="readonly"
+							@click.stop
 						/>
-					</Button>
+					-->
 				</span>
 
 				<!-- Time series -->
@@ -196,9 +223,9 @@
 					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
 				>
 					<InputText
-						size="small"
 						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
 						v-model.lazy="slotProps.data.timeseries"
+						:disabled="readonly"
 						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
 					/>
 					<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
@@ -211,10 +238,22 @@
 			<template #body="{ data }">
 				<InputText
 					v-if="data.type !== ParamType.MATRIX"
-					size="small"
 					class="w-full"
 					v-model.lazy="data.source"
+					:disabled="readonly"
 					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
+				/>
+			</template>
+		</Column>
+
+		<!-- Suggested Configurations Button -->
+		<Column v-if="configView && !readonly">
+			<template #body="{ data }">
+				<Button
+					v-if="data.type !== ParamType.MATRIX"
+					text
+					:label="`Suggested Configurations (${countSuggestions(data.id)})`"
+					@click="openSuggestedValuesModal(data.id)"
 				/>
 			</template>
 		</Column>
@@ -229,12 +268,15 @@
 			<tera-parameter-table
 				hide-header
 				v-if="slotProps.data.type === ParamType.MATRIX"
-				:model-configuration="modelConfiguration"
+				:model="model"
+				:model-configurations="modelConfigurations"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:data="slotProps.data.tableFormattedMatrix"
+				:readonly="readonly"
+				:config-view="configView"
 				@update-value="(val: ModelParameter) => emit('update-value', val)"
-				@update-configuration="(config: ModelConfiguration) => emit('update-configuration', config)"
+				@update-model="(model: Model) => emit('update-model', model)"
 			/>
 		</template>
 	</Datatable>
@@ -249,14 +291,97 @@
 			@close-modal="matrixModalContext.isOpen = false"
 			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>
+
+		<tera-modal
+			v-if="suggestedValuesModalContext.isOpen"
+			@modal-mask-clicked="onCloseSuggestedValuesModal"
+		>
+			<template #header
+				><h5>Suggested configurations for {{ suggestedValuesModalContext.id }}</h5></template
+			>
+			<Datatable
+				:value="suggestedValues"
+				dataKey="index"
+				v-model:selection="selectedValue"
+				tableStyle="min-width: 50rem"
+			>
+				<Column selectionMode="single" class="w-3rem"></Column>
+				<Column header="Symbol">
+					<template #body="{ data }">
+						<span class="truncate-text">
+							{{ data.parameter.id }}
+						</span>
+					</template>
+				</Column>
+				<Column header="Name">
+					<template #body="{ data }">
+						<span class="truncate-text">
+							{{ data.parameter.name }}
+						</span>
+					</template>
+				</Column>
+				<Column header="Value type">
+					<template #body="{ data }">
+						{{ typeOptions[getParamType(data.parameter, data.configuration.configuration)].label }}
+					</template>
+				</Column>
+				<Column header="Value">
+					<template #body="{ data }">
+						<span
+							v-if="
+								getParamType(data.parameter, data.configuration.configuration) ===
+								ParamType.CONSTANT
+							"
+						>
+							{{ data.parameter.value }}
+						</span>
+						<div
+							class="distribution-container"
+							v-else-if="
+								getParamType(data.parameter, data.configuration.configuration) ===
+								ParamType.DISTRIBUTION
+							"
+						>
+							<span>Min: {{ data.parameter.distribution.parameters.minimum }}</span>
+							<span>Max: {{ data.parameter.distribution.parameters.maximum }}</span>
+						</div>
+						<span
+							v-else-if="
+								getParamType(data.parameter, data.configuration.configuration) ===
+								ParamType.TIME_SERIES
+							"
+						>
+							{{ data.configuration?.configuration?.metadata?.timeseries?.[data.parameter.id] }}
+						</span>
+					</template>
+				</Column>
+				<Column header="Source">
+					<template #body="{ data }">
+						<span>{{
+							data.configuration.configuration.metadata?.parameters?.[data.parameter.id]?.source ??
+							data.configuration.configuration.metadata?.source?.join(', ')
+						}}</span>
+					</template>
+				</Column>
+			</Datatable>
+			<template #footer>
+				<Button
+					label="Apply selected configuration"
+					:disabled="isEmpty(selectedValue)"
+					@click="applySelectedValue"
+				/>
+				<Button outlined label="Close" @click="onCloseSuggestedValuesModal" />
+			</template>
+		</tera-modal>
 	</Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
@@ -267,25 +392,29 @@ import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common'
 import {
 	getCurieFromGroudingIdentifier,
 	getCurieUrl,
-	getNameOfCurieCached
+	getNameOfCurieCached,
+	parseCurie,
+	searchCuriesEntities
 } from '@/services/concept';
+import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
-import type { ModelConfiguration, ModelParameter } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import { updateVariable } from '@/model-representation/service';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	model: Model;
+	modelConfigurations?: ModelConfiguration[];
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
 	hideHeader?: boolean;
+	readonly?: boolean;
+	configView?: boolean; // if the table is in the model config view we have limited functionality
 }>();
-
-const emit = defineEmits(['update-value', 'update-configuration']);
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -293,13 +422,54 @@ const typeOptions = [
 	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
 ];
 
+const emit = defineEmits(['update-value', 'update-model']);
+
 const isStratified = computed(() => isStratifiedModel(props.mmt));
+
+interface SuggestedValue {
+	parameter: ModelParameter;
+	configuration: ModelConfiguration;
+	index: number;
+}
+const selectedValue = ref<SuggestedValue | null>(null);
+const suggestedValues = computed(() => {
+	const matchingParameters: SuggestedValue[] = [];
+	props.modelConfigurations?.forEach((configuration, i) => {
+		if (modelType.value !== AMRSchemaNames.REGNET) {
+			configuration.configuration?.semantics?.ode.parameters?.forEach((parameter) => {
+				if (parameter.id === suggestedValuesModalContext.value.id) {
+					matchingParameters.push({
+						parameter,
+						configuration,
+						index: i
+					});
+				}
+			});
+		} else {
+			configuration.configuration?.model?.parameters?.forEach((parameter) => {
+				if (parameter.id === suggestedValuesModalContext.value.id) {
+					matchingParameters.push({
+						parameter,
+						configuration,
+						index: i
+					});
+				}
+			});
+		}
+	});
+
+	return matchingParameters;
+});
 
 const matrixModalContext = ref({
 	isOpen: false,
 	matrixId: ''
 });
 
+const suggestedValuesModalContext = ref({
+	isOpen: false,
+	id: ''
+});
 const parameters = computed<Map<string, string[]>>(() => {
 	if (isStratified.value) {
 		const collapsedParams = collapseParameters(props.mmt, props.mmtParams);
@@ -315,13 +485,16 @@ const parameters = computed<Map<string, string[]>>(() => {
 	return result;
 });
 
-const getParamType = (param: ModelParameter | undefined) => {
+const tableFormattedParams = ref<ModelConfigTableData[]>([]);
+
+// FIXME: This method doee not really work in this context, the different types
+// of CONSTANT/TIME_SERIES/DISTRIBUTION are not mutually exclusive, a parameter
+// can have one or more types
+const getParamType = (param: ModelParameter | undefined, model: Model = props.model) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
-	if (
-		props.modelConfiguration.configuration.metadata?.timeseries?.[param.id] ||
-		props.modelConfiguration.configuration.metadata.timeseries?.[param.id] === ''
-	) {
+
+	if (model.metadata?.timeseries?.[param.id] && model.metadata?.timeseries?.[param.id] !== null) {
 		type = ParamType.TIME_SERIES;
 	} else if (param?.distribution) {
 		type = ParamType.DISTRIBUTION;
@@ -329,8 +502,8 @@ const getParamType = (param: ModelParameter | undefined) => {
 	return type;
 };
 
-const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
-	const configuration = props.modelConfiguration.configuration;
+const buildParameterTable = () => {
+	const model = props.model;
 	const formattedParams: ModelConfigTableData[] = [];
 
 	if (isStratified.value) {
@@ -338,17 +511,17 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				let param;
 				if (modelType.value === AMRSchemaNames.REGNET) {
-					param = configuration.model.parameters.find((i) => i.id === v);
+					param = model.model.parameters.find((i) => i.id === v);
 				} else {
-					param = configuration.semantics.ode.parameters.find((i) => i.id === v);
+					param = model.semantics?.ode?.parameters?.find((i) => i.id === v);
 				}
 				const paramType = getParamType(param);
-				const timeseriesValue = configuration.metadata?.timeseries[param!.id];
-				const parametersMetadata = configuration.metadata?.parameters?.[param!.id];
+				const timeseriesValue = model.metadata?.timeseries?.[param!.id];
+				const parametersMetadata = model.metadata?.parameters?.[param!.id];
 				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
-					name: v,
+					name: param.name,
 					type: paramType,
 					description: param.description,
 					concept: param.grounding,
@@ -375,19 +548,19 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 		parameters.value.forEach((vals, init) => {
 			let param;
 			if (modelType.value === AMRSchemaNames.REGNET) {
-				param = configuration.model.parameters.find((i) => i.id === vals[0]);
+				param = model.model.parameters.find((i) => i.id === vals[0]);
 			} else {
-				param = configuration.semantics.ode.parameters.find((i) => i.id === vals[0]);
+				param = model.semantics?.ode.parameters?.find((i) => i.id === vals[0]);
 			}
 
 			const paramType = getParamType(param);
 
-			const timeseriesValue = configuration.metadata?.timeseries[param!.id];
-			const parametersMetadata = configuration.metadata?.parameters?.[param!.id];
+			const timeseriesValue = model.metadata?.timeseries?.[param!.id];
+			const parametersMetadata = model.metadata?.parameters?.[param!.id];
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
-				name: init,
+				name: param.name,
 				type: paramType,
 				description: param.description,
 				concept: param.grounding,
@@ -398,10 +571,30 @@ const tableFormattedParams = computed<ModelConfigTableData[]>(() => {
 				timeseries: timeseriesValue
 			});
 		});
-	}
 
-	return formattedParams;
-});
+		// Stockflow has auxiliaries
+		const auxiliaries = model.model?.auxiliaries ?? [];
+		auxiliaries.forEach((aux) => {
+			const paramType = getParamType(aux);
+			const timeseriesValue = model.metadata?.timeseries?.[aux.id];
+			const parametersMetadata = model.metadata?.parameters?.[aux.id];
+			const sourceValue = parametersMetadata?.source;
+			formattedParams.push({
+				id: aux.id,
+				name: aux.name,
+				type: paramType,
+				description: aux.description,
+				concept: aux.grounding,
+				unit: aux.unit?.expression,
+				value: aux,
+				source: sourceValue,
+				visibility: false,
+				timeseries: timeseriesValue
+			});
+		});
+	}
+	tableFormattedParams.value = formattedParams;
+};
 
 const conceptSearchTerm = ref({
 	curie: '',
@@ -409,9 +602,11 @@ const conceptSearchTerm = ref({
 });
 const nameOfCurieCache = ref(new Map<string, string>());
 
-const modelType = computed(() => getModelType(props.modelConfiguration.configuration));
+const curies = ref<DKG[]>([]);
 
-const addPlusMinus = ref(10);
+const modelType = computed(() => getModelType(props.model));
+
+// const addPlusMinus = ref(10);
 
 const errorMessage = ref('');
 
@@ -432,34 +627,45 @@ const openMatrixModal = (datum: ModelConfigTableData) => {
 const rowClass = (rowData) => (rowData.type === ParamType.MATRIX ? '' : 'no-expander');
 
 const updateCellValue = (v: any) => {
-	const clone = cloneDeep(props.modelConfiguration);
-	updateVariable(clone.configuration, 'parameters', v.variableName, v.newValue, v.mathml);
-	emit('update-configuration', clone);
+	const clone = cloneDeep(props.model);
+	updateVariable(clone, 'parameters', v.variableName, v.newValue, v.mathml);
+	emit('update-model', clone);
+};
+
+const updateParamValue = (param: ModelParameter, key: string, value: any) => {
+	const clonedParam = cloneDeep(param);
+	clonedParam[key] = value;
+	emit('update-value', [clonedParam]);
 };
 
 const updateTimeseries = (id: string, value: string) => {
+	// Empty string => removal
+	if (value === '') {
+		const clonedModel = cloneDeep(props.model);
+		if (clonedModel.metadata && clonedModel.metadata.timeseries) {
+			clonedModel.metadata.timeseries[id] = null;
+		}
+		emit('update-model', clonedModel);
+		return;
+	}
+
 	if (!validateTimeSeries(value)) return;
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	clonedConfig.configuration.metadata.timeseries[id] = value;
-	emit('update-configuration', clonedConfig);
+	const clonedModel = cloneDeep(props.model);
+	clonedModel.metadata ??= {};
+	clonedModel.metadata.timeseries ??= {};
+	clonedModel.metadata.timeseries[id] = value;
+	emit('update-model', clonedModel);
 };
 
 const updateSource = (id: string, value: string) => {
-	const clonedConfig = cloneDeep(props.modelConfiguration);
-	if (!clonedConfig.configuration.metadata.parameters?.[id]) {
-		clonedConfig.configuration.metadata.parameters[id] = {};
+	const clonedModel = cloneDeep(props.model);
+	if (!clonedModel.metadata?.parameters?.[id]) {
+		clonedModel.metadata ??= {};
+		clonedModel.metadata.parameters ??= {};
+		clonedModel.metadata.parameters[id] = {};
 	}
-	clonedConfig.configuration.metadata.parameters[id].source = value;
-	emit('update-configuration', clonedConfig);
-};
-
-const updateUnit = (param: ModelParameter, value: string) => {
-	const clonedParam = cloneDeep(param);
-	if (!clonedParam.unit) {
-		clonedParam.unit = { expression: '', expression_mathml: '' };
-	}
-	clonedParam.unit.expression = value;
-	emit('update-value', [clonedParam]);
+	clonedModel.metadata.parameters[id].source = value;
+	emit('update-model', clonedModel);
 };
 
 const validateTimeSeries = (values: string) => {
@@ -475,62 +681,90 @@ const validateTimeSeries = (values: string) => {
 	return isValid;
 };
 
-const changeType = (param: ModelParameter, typeIndex: number) => {
-	// FIXME: changing between parameter types will delete the previous values of distribution or timeseries, ideally we would want to keep these.
-	const type = typeOptions[typeIndex];
-	const clonedConfig = cloneDeep(props.modelConfiguration);
+async function onSearch(event: AutoCompleteCompleteEvent) {
+	const query = event.query;
+	if (query.length > 2) {
+		const response = await searchCuriesEntities(query);
+		curies.value = response;
+	}
+}
 
-	let idx;
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		idx = clonedConfig.configuration.semantics.ode.parameters.findIndex((p) => p.id === param.id);
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		idx = clonedConfig.configuration.model.parameters.findIndex((p) => p.id === param.id);
-	}
-	switch (type.value) {
-		case ParamType.CONSTANT:
-			delete param.distribution;
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			replaceParam(clonedConfig, param, idx);
-			break;
-		case ParamType.DISTRIBUTION:
-			delete clonedConfig.configuration.metadata?.timeseries?.[param.id];
-			param.distribution = {
-				type: 'Uniform1',
-				parameters: {
-					minimum: 0,
-					maximum: 0
-				}
-			};
-			replaceParam(clonedConfig, param, idx);
-			break;
-		case ParamType.TIME_SERIES:
-			delete param.distribution;
-			if (!clonedConfig.configuration.metadata?.timeseries) {
-				clonedConfig.configuration.metadata.timeseries = {};
-			}
-			replaceParam(clonedConfig, param, idx);
-			clonedConfig.configuration.metadata.timeseries[param.id] = '';
-			break;
-		default:
-			break;
-	}
-	emit('update-configuration', clonedConfig);
+const openSuggestedValuesModal = (id: string) => {
+	suggestedValuesModalContext.value.isOpen = true;
+	suggestedValuesModalContext.value.id = id;
 };
 
-const replaceParam = (config: ModelConfiguration, param: any, index: number) => {
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		config.configuration.semantics.ode.parameters[index] = param;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		config.configuration.model.parameters[index] = param;
-	}
+const onCloseSuggestedValuesModal = () => {
+	suggestedValuesModalContext.value.isOpen = false;
+	suggestedValuesModalContext.value.id = '';
+	selectedValue.value = null;
 };
+
+const applySelectedValue = () => {
+	if (!selectedValue.value) return;
+
+	const clonedModel = cloneDeep(props.model);
+	const timeseries =
+		selectedValue.value.configuration.configuration.metadata?.timeseries?.[
+			selectedValue.value.parameter.id
+		];
+	const metadata =
+		selectedValue.value.configuration.configuration.metadata?.parameters?.[
+			selectedValue.value.parameter.id
+		] ?? {};
+
+	clonedModel.metadata ??= {};
+	clonedModel.metadata.parameters ??= {};
+	clonedModel.metadata.timeseries ??= {};
+	clonedModel.metadata.parameters[selectedValue.value.parameter.id] = metadata;
+	clonedModel.metadata.timeseries[selectedValue.value.parameter.id] = timeseries;
+
+	// default source to use confirguration's source if there is no source
+	clonedModel.metadata.parameters[selectedValue.value.parameter.id].source =
+		metadata?.source ??
+		selectedValue.value.configuration.configuration.metadata?.source?.join(', ');
+
+	let parameterIdx;
+	if (modelType.value === AMRSchemaNames.REGNET) {
+		parameterIdx = clonedModel.model.parameters.findIndex(
+			(p) => p.id === selectedValue.value?.parameter.id
+		);
+		clonedModel.model.parameters[parameterIdx] = selectedValue.value.parameter;
+	} else {
+		parameterIdx = clonedModel.semantics?.ode.parameters?.findIndex(
+			(p) => p.id === selectedValue.value?.parameter.id
+		);
+		if (clonedModel.semantics?.ode.parameters)
+			clonedModel.semantics.ode.parameters[parameterIdx] = selectedValue.value.parameter;
+	}
+
+	emit('update-model', clonedModel);
+	onCloseSuggestedValuesModal();
+};
+
+const countSuggestions = (id): number =>
+	props.modelConfigurations?.filter((configuration) => {
+		if (modelType.value !== AMRSchemaNames.REGNET) {
+			return configuration.configuration?.semantics?.ode.parameters?.find((p) => p.id === id);
+		}
+
+		return configuration.configuration?.model?.parameters?.find((p) => p.id === id);
+	}).length ?? 0;
+
+watch(
+	() => parameters.value,
+	(params) => {
+		if (!params) return;
+		buildParameterTable();
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
 .truncate-text {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	display: flex;
+	width: 10rem;
 }
 
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
@@ -538,11 +772,11 @@ const replaceParam = (config: ModelConfiguration, param: any, index: number) => 
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td .p-row-toggler) {
-	display: none;
+	visibility: hidden;
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander) {
-	background: var(--surface-highlight);
+	background: var(--surface-0);
 }
 
 .p-datatable :deep(.p-datatable-tbody > tr.no-expander > td) {
@@ -572,6 +806,10 @@ const replaceParam = (config: ModelConfiguration, param: any, index: number) => 
 	text-align: right;
 }
 
+.timeseries-container > :deep(input) {
+	font-size: var(--font-caption);
+}
+
 .add-plus-minus > :deep(input) {
 	width: 3rem;
 	margin-left: var(--gap-xsmall);
@@ -589,7 +827,7 @@ const replaceParam = (config: ModelConfiguration, param: any, index: number) => 
 .min-value::before {
 	content: 'Min';
 	position: relative;
-	top: var(--gap-small);
+	top: 11px;
 	left: var(--gap-small);
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
@@ -598,7 +836,7 @@ const replaceParam = (config: ModelConfiguration, param: any, index: number) => 
 .max-value::before {
 	content: 'Max';
 	position: relative;
-	top: var(--gap-small);
+	top: 11px;
 	left: var(--gap-small);
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);

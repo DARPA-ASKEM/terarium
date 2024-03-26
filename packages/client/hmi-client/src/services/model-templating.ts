@@ -183,7 +183,7 @@ function appendNumberToModelVariables(model: Model, number: number) {
 			rate.target += number;
 			// Within the expression attributes update the targets to match the new ones
 			rate.expression = rate.expression.replace(/([a-zA-Z])/g, (match) => match + number);
-			if (rate.expression_mathml) {
+			if (rate.expression_mathml && !isEmpty(rate.expression_mathml)) {
 				rate.expression_mathml = rate.expression_mathml.replace(
 					/<ci>([a-zA-Z])<\/ci>/g,
 					(_, letter: string) => `<ci>${letter + number}</ci>`

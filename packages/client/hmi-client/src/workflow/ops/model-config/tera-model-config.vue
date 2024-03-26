@@ -15,8 +15,8 @@
 		</template>
 
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section>
-				<div class="box-container" v-if="model">
+			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
@@ -114,13 +114,14 @@
 							</template>
 							<tera-initial-table
 								v-if="modelConfiguration"
-								:model-configuration="modelConfiguration"
+								:model="modelConfiguration.configuration"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
+								config-view
 								@update-value="updateConfigInitial"
-								@update-configuration="
-									(configToUpdate: ModelConfiguration) => {
-										updateFromConfig(configToUpdate);
+								@update-model="
+									(modelToUpdate: Model) => {
+										updateConfigFromModel(modelToUpdate);
 									}
 								"
 							/>
@@ -155,13 +156,15 @@
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
-							:model-configuration="modelConfiguration"
+							:model-configurations="suggestedConfirgurationContext.tableData"
+							:model="modelConfiguration.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
+							config-view
 							@update-value="updateConfigParam"
-							@update-configuration="
-								(configToUpdate: ModelConfiguration) => {
-									updateFromConfig(configToUpdate);
+							@update-model="
+								(modelToUpdate: Model) => {
+									updateConfigFromModel(modelToUpdate);
 								}
 							"
 						/>
@@ -170,16 +173,25 @@
 						</section>
 					</AccordionTab>
 				</Accordion>
+
+				<!-- For Nelson eval debug -->
+				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
+					<div>Model config id: {{ selectedConfigId }}</div>
+					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
+				</div>
+
 				<template #footer>
-					<Button
-						outlined
-						size="large"
-						:disabled="isSaveDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="createConfiguration"
-					/>
-					<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					<div class="footer">
+						<Button
+							outlined
+							size="large"
+							:disabled="isSaveDisabled"
+							label="Run"
+							icon="pi pi-play"
+							@click="createConfiguration"
+						/>
+						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					</div>
 				</template>
 			</tera-drilldown-section>
 		</section>
@@ -227,7 +239,13 @@
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
-				<div>{{ notebookResponse }}</div>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</section>
 	</tera-drilldown>
@@ -250,47 +268,49 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Vue3Lottie } from 'vue3-lottie';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
+import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import DataTable from 'primevue/datatable';
+import Button from 'primevue/button';
 import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { Vue3Lottie } from 'vue3-lottie';
 
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
-import { getModel, getModelConfigurations, getModelType, getMMT } from '@/services/model';
-import { createModelConfiguration } from '@/services/model-configurations';
-import { TaskStatus } from '@/types/Types';
-import { AMRSchemaNames } from '@/types/common';
-import { useToastService } from '@/services/toast';
-import { logger } from '@/utils/logger';
+import { FatalError } from '@/api/api';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
-import { FatalError } from '@/api/api';
-import { formatTimestamp } from '@/utils/date';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
+import { createModelConfiguration } from '@/services/model-configurations';
+import { useToastService } from '@/services/toast';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { TaskStatus } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
+import { OperatorStatus } from '@/types/workflow';
+import { formatTimestamp } from '@/utils/date';
+import { logger } from '@/utils/logger';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
-import TeraInitialTable from './tera-initial-table.vue';
-import TeraParameterTable from './tera-parameter-table.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -362,6 +382,12 @@ const codeText = ref(
 	'# This environment contains the variable "model_config" to be read and updated'
 );
 const notebookResponse = ref();
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 const sampleAgentQuestions = [
 	'What are the current parameters values?',
 	'update the parameters {gamma: 0.13}'
@@ -393,10 +419,6 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
 		})
-		.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
-		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;
 			handleModelPreview(data);
@@ -404,6 +426,17 @@ const runFromCode = () => {
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
 			}
+		})
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+			executeResponse.value = {
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+			};
 		});
 };
 const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);
@@ -454,10 +487,10 @@ const extractConfigurationsFromInputs = async () => {
 			}
 		);
 	}
-	if (datasetId.value) {
+	if (datasetIds.value) {
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
-			[datasetId.value],
+			datasetIds.value,
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
@@ -500,7 +533,7 @@ const selectedConfigId = computed(
 );
 
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
-const datasetId = computed(() => props.node.inputs?.[2]?.value?.[0]);
+const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
 const suggestedConfirgurationContext = ref<{
 	isOpen: boolean;
@@ -591,18 +624,16 @@ const updateConfigInitial = (inits: Initial[]) => {
 	}
 };
 
-const updateFromConfig = (config: ModelConfiguration) => {
-	const amr = config.configuration;
-
+const updateConfigFromModel = (inputModel: Model) => {
 	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
-		knobs.value.initials = amr.semantics?.ode.initials ?? [];
-		knobs.value.parameters = amr.semantics?.ode.parameters ?? [];
+		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
+		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
 	} else if (modelType.value === AMRSchemaNames.REGNET) {
-		knobs.value.parameters = amr.model?.parameters ?? [];
+		knobs.value.parameters = inputModel.model?.parameters ?? [];
 	}
-	knobs.value.timeseries = amr?.metadata?.timeseries ?? {};
-	knobs.value.initialsMetadata = amr?.metadata?.initials ?? {};
-	knobs.value.parametersMetadata = amr?.metadata?.parameters ?? {};
+	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
+	knobs.value.initialsMetadata = inputModel.metadata?.initials ?? {};
+	knobs.value.parametersMetadata = inputModel.metadata?.parameters ?? {};
 };
 
 const createConfiguration = async () => {
@@ -685,6 +716,7 @@ const initialize = async () => {
 			knobs.value.parameters =
 				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
 		}
+
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.initialsMetadata =
@@ -701,6 +733,19 @@ const initialize = async () => {
 		knobs.value.initialsMetadata = state.initialsMetadata;
 		knobs.value.parametersMetadata = state.parametersMetadata;
 	}
+
+	// Ensure the parameters have constant and distributions for editing in children components
+	knobs.value.parameters.forEach((param) => {
+		if (!param.distribution) {
+			param.distribution = {
+				type: 'StandardUniform1',
+				parameters: {
+					minimum: param.value || 1,
+					maximum: param.value || 1
+				}
+			};
+		}
+	});
 
 	// Create a new session and context based on model
 	try {
@@ -891,5 +936,14 @@ onUnmounted(() => {
 	mix-blend-mode: darken;
 	opacity: 1;
 	transition: opacity 1s;
+}
+
+.footer {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	padding-top: var(--gap-small);
+	padding-bottom: var(--gap-small);
+	border-top: 1px solid var(--surface-border-light);
 }
 </style>

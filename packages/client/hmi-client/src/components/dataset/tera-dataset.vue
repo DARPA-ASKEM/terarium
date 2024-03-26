@@ -31,24 +31,32 @@
 
 		<template #tabs>
 			<section class="tab" tabName="Description">
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Id</span>
+					<code class="inline">{{ datasetInfo.id }}</code>
+				</p>
+				<p>
+					<span class="font-bold inline-block w-10rem">Dataset Filenames</span>
+					{{ datasetInfo.fileNames }}<br />
+				</p>
+
 				<tera-dataset-description
 					tabName="Description"
 					:dataset="dataset"
-					:raw-content="rawContent"
 					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
-			<section class="tab data-tab" tabName="Data">
+			<section class="tab data-tab" tabName="Data" v-if="rawContent">
 				<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
 			</section>
 		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { onUpdated, PropType, Ref, ref, watch } from 'vue';
+import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
-import { downloadRawFile, getDataset, updateDataset } from '@/services/dataset';
+import { downloadRawFile, getClimateDataset, getDataset, updateDataset } from '@/services/dataset';
 import { AssetType, type CsvAsset, type Dataset, type DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -58,6 +66,7 @@ import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
+import { DatasetSource } from '@/types/Dataset';
 import TeraDatasetDescription from './tera-dataset-description.vue';
 import { enrichDataset } from './utils';
 
@@ -79,6 +88,10 @@ const props = defineProps({
 	highlight: {
 		type: String,
 		default: null
+	},
+	datasetSource: {
+		type: String as PropType<DatasetSource>,
+		default: DatasetSource.TERARIUM
 	}
 });
 
@@ -89,7 +102,6 @@ const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
-
 const view = ref(DatasetView.DESCRIPTION);
 
 // Highlight strings based on props.highlight
@@ -99,6 +111,18 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+
+const datasetInfo = computed(() => {
+	const information = {
+		id: '',
+		fileNames: ''
+	};
+	if (dataset.value) {
+		information.id = dataset.value.id ?? '';
+		information.fileNames = dataset.value.fileNames?.join(', ') ?? '';
+	}
+	return information;
+});
 
 const groundingValues = ref<string[][]>([]);
 // originaGroundingValues are displayed as the first suggested value for concepts
@@ -163,17 +187,39 @@ async function updateAndFetchDataset(ds: Dataset) {
 }
 
 const fetchDataset = async () => {
-	const datasetTemp: Dataset | null = await getDataset(props.assetId);
-
-	if (datasetTemp) {
-		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-		rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
-		Object.entries(datasetTemp).forEach(([key, value]) => {
-			if (isString(value)) {
-				datasetTemp[key] = highlightSearchTerms(value);
+	switch (props.datasetSource) {
+		case DatasetSource.TERARIUM: {
+			const datasetTemp = await getDataset(props.assetId);
+			if (datasetTemp) {
+				if (datasetTemp.esgfId || datasetTemp.metadata?.format === 'netcdf') {
+					rawContent.value = null;
+				} else {
+					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+					// TODO = Temporary solution to avoid downloading raw NetCDF files, which can be massive
+					// A better solution would be to check the size of an asset before downloading it, and/or
+					// downloading a small subset of it for presentation purposes.
+					if (datasetTemp.metadata?.format !== 'netcdf' || !datasetTemp.esgfId) {
+						rawContent.value = await downloadRawFile(
+							props.assetId,
+							datasetTemp?.fileNames?.[0] ?? ''
+						);
+					}
+					Object.entries(datasetTemp).forEach(([key, value]) => {
+						if (isString(value)) {
+							datasetTemp[key] = highlightSearchTerms(value);
+						}
+					});
+				}
+				dataset.value = enrichDataset(datasetTemp);
 			}
-		});
-		dataset.value = enrichDataset(datasetTemp);
+			break;
+		}
+		case DatasetSource.ESGF: {
+			dataset.value = await getClimateDataset(props.assetId);
+			break;
+		}
+		default:
+			break;
 	}
 };
 

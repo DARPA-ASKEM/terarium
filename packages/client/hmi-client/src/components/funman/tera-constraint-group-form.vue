@@ -25,9 +25,19 @@
 				</div>
 				<div class="button-row">
 					<label>Target</label>
+
 					<MultiSelect
+						v-if="constraintType !== 'parameterConstraint'"
 						v-model="variables"
-						:options="props.modelNodeOptions"
+						:options="props.modelStates"
+						placeholder="Model states"
+						display="chip"
+						@update:model-value="updateChanges()"
+					></MultiSelect>
+					<MultiSelect
+						v-else
+						v-model="variables"
+						:options="props.modelParameters"
 						placeholder="Model states"
 						display="chip"
 						@update:model-value="updateChanges()"
@@ -35,42 +45,39 @@
 				</div>
 			</div>
 
-			<!--
-			<label for="weights">Weights</label>
-			-->
-			<section v-if="constraintType !== 'monotonicityConstraint'">
-				<div v-for="(variable, index) of variables" :key="index">
-					<div class="button-row">
-						<label v-if="weights">
-							{{ variable + ' Weight' }}
-						</label>
-						<InputNumber
-							v-if="weights"
-							:key="index"
-							:placeholder="variable"
-							mode="decimal"
-							:min-fraction-digits="3"
-							:max-fraction-digits="3"
-							v-model="weights[index]"
-							@update:model-value="updateChanges()"
-						/>
-					</div>
+			<!-- Weights -->
+			<div v-for="(variable, index) of variables" :key="index">
+				<div class="button-row">
+					<label v-if="weights">
+						{{ variable + ' Weight' }}
+					</label>
+					<InputNumber
+						v-if="weights"
+						:key="index"
+						:placeholder="variable"
+						mode="decimal"
+						:min-fraction-digits="3"
+						:max-fraction-digits="3"
+						v-model="weights[index]"
+						@update:model-value="updateChanges()"
+					/>
 				</div>
-			</section>
+			</div>
+
 			<section v-if="constraintType === 'monotonicityConstraint'">
 				<RadioButton
 					v-model="derivativeType"
 					@update:model-value="updateChanges()"
 					value="increasing"
 				/>
-				<label>Increasing</label>
+				<label class="monoton-label">Increasing</label>
 				&nbsp;
 				<RadioButton
 					v-model="derivativeType"
 					@update:model-value="updateChanges()"
 					value="decreasing"
 				/>
-				<label>Decreasing</label>
+				<label class="monoton-label">Decreasing</label>
 			</section>
 		</div>
 		<div class="section-row" v-if="constraintType !== 'monotonicityConstraint'">
@@ -96,7 +103,7 @@
 					class="p-inputtext-sm"
 					mode="decimal"
 					:min-fraction-digits="3"
-					:max-fraction-digits="3"
+					:max-fraction-digits="12"
 					v-model="lowerBound"
 					@update:model-value="updateChanges()"
 				/>
@@ -107,7 +114,7 @@
 					class="p-inputtext-sm"
 					mode="decimal"
 					:min-fraction-digits="3"
-					:max-fraction-digits="3"
+					:max-fraction-digits="12"
 					v-model="upperBound"
 					@update:model-value="updateChanges()"
 				/>
@@ -126,7 +133,8 @@ import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
 
 const props = defineProps<{
-	modelNodeOptions: string[];
+	modelStates: string[];
+	modelParameters: string[];
 	config: ConstraintGroup;
 	index: number;
 }>();
@@ -264,5 +272,9 @@ watch(
 
 .trash-button {
 	cursor: pointer;
+}
+
+.monoton-label {
+	margin-left: 0.25rem;
 }
 </style>

@@ -43,6 +43,8 @@ const emit = defineEmits(['update:selection']);
 
 <style scoped>
 .p-dropdown {
+	/*FIXME: We may want to truncate the text with ellipsis or something (up to designers) */
+	max-width: 20rem;
 	align-self: end;
 }
 

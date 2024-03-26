@@ -245,11 +245,6 @@ public class ProjectController {
 				if (deleted)
 					return ResponseEntity.ok(new ResponseDeleted("project", id));
 			}
-
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.NOT_MODIFIED,
-				"Failed to delete project");
-
 		} catch (final Exception e) {
 			log.error("Error deleting project", e);
 			throw new ResponseStatusException(
@@ -257,6 +252,9 @@ public class ProjectController {
 				"Failed to delete project");
 		}
 
+		throw new ResponseStatusException(
+			HttpStatus.NOT_MODIFIED,
+			"Unable to delete project, please try again later.");
 	}
 
 	@Operation(summary = "Creates a new project")
@@ -268,7 +266,24 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> createProject(
 		@RequestBody Project project) {
-
+		if (project.getOverviewContent() == null) {
+			final String welcomeMessage = """
+				<div>
+					<h2>Hey there!</h2>
+					<p>This is your project overview page. Use this space however you like. Not sure where to start? Here are some things you can try:</p>
+					<br>
+						<ul>
+							<li><strong>Upload stuff:</strong> Upload documents, models, code or datasets with the green button in the bottom left corner.</li>
+							<li><strong>Explore and add:</strong> Use the project selector in the top nav to switch to the Explorer where you can find documents, models and datasets that you can add to your project.</li>
+							<li><strong>Build a model:</strong> Create a model that fits just what you need.</li>
+							<li><strong>Create a workflow:</strong> Connect resources with operators so you can focus on the science and not the plumbing.</li>
+						</ul>
+					<br>
+					<p>Feel free to erase this text and make it your own.</p>
+				</div>
+				""";
+			project.setOverviewContent(welcomeMessage.getBytes());
+		}
 		project = projectService.createProject(project);
 
 		try {
@@ -281,16 +296,15 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR,
 				"Error setting user's permissions for project");
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR,
 				"Error the user is already the creator of this project");
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
-
 	}
 
 	@Operation(summary = "Updates a project by ID")
@@ -340,7 +354,7 @@ public class ProjectController {
 		@PathVariable("asset-type") final String assetTypeName,
 		@PathVariable("asset-id") final UUID assetId) {
 
-		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		try {
 			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
@@ -350,10 +364,10 @@ public class ProjectController {
 
 				if (project.isPresent()) {
 
-					//double check that this asset is not already a part of this project, and if it does exist throw an error to the front end
+					//double check that this asset is not already a part of this project, and if it does exist return a 409 to the front end
 					final Optional<ProjectAsset> existingAsset = projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
 					if (existingAsset.isPresent()) {
-						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset already exists in this project");
+						return ResponseEntity.status(HttpStatus.CONFLICT).body(existingAsset.get());
 					}
 
 					final TerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices.getServiceByType(assetType);
@@ -364,11 +378,9 @@ public class ProjectController {
 					} else {
 						return ResponseEntity.notFound().build();
 					}
-
 				}
-
 			}
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		} catch (final Exception e) {
 			log.error("Error creating project assets", e);
 			throw new ResponseStatusException(
@@ -390,7 +402,7 @@ public class ProjectController {
 		@PathVariable("asset-type") final String assetTypeName,
 		@PathVariable("asset-id") final UUID assetId) {
 
-		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		try {
 			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);

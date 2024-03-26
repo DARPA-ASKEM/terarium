@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -34,6 +38,19 @@ public interface SkemaUnifiedProxy {
 	@PostMapping("/workflows/images/base64/equations-to-latex")
 	ResponseEntity<String> base64EquationsToLatex(@RequestBody JsonNode request);
 
+	@PostMapping(value = "/workflows/code/llm-assisted-codebase-to-pn-amr", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> llmCodebaseToAMR(
+			@RequestPart("zip_file") MultipartFile file);
+
+	@PostMapping(value = "/workflows/code/codebase-to-pn-amr", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> codebaseToAMR(
+			@RequestPart("zip_file") MultipartFile file);
+
+	@PostMapping(value = "/workflows/code/snippets-to-amr", consumes = "multipart/form-data")
+	ResponseEntity<JsonNode> snippetsToAMR(
+			@RequestPart("files") List<String> files,
+			@RequestPart("blobs") List<String> blobs);
+
 	@PostMapping(value = "/metal/link_amr", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> linkAMRFile(
 			@RequestPart("amr_file") MultipartFile amrFile,
@@ -44,9 +61,26 @@ public interface SkemaUnifiedProxy {
 
 		public IntegratedTextExtractionsBody(final String text) {
 			this.texts = Arrays.asList(text);
+			this.amrs = new ArrayList<>();
+		}
+
+		public IntegratedTextExtractionsBody(final String text, final List<Model> amrs) {
+			this.texts = Arrays.asList(text);
+			this.amrs = amrs.stream()
+					.map(amr -> {
+						try {
+							final ObjectMapper mapper = new ObjectMapper();
+							return mapper.writeValueAsString(amr);
+						} catch (final JsonProcessingException e) {
+							e.printStackTrace();
+							return null;
+						}
+					})
+					.collect(Collectors.toList());
 		}
 
 		final List<String> texts;
+		final List<String> amrs;
 	}
 
 	@PostMapping("/text-reading/integrated-text-extractions")

@@ -6,14 +6,14 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section :tabName="OptimizeTabs.Wizard">
+		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Settings</h4>
+					<h5>Settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.startTime" />
+							<InputText disabled class="p-inputtext-sm" inputId="integeronly" value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
@@ -21,12 +21,6 @@
 						</div>
 					</div>
 					<div>
-						<Button
-							v-if="showAdditionalOptions"
-							class="p-button-sm p-button-text"
-							label="Hide additional options"
-							@click="toggleAdditonalOptions"
-						/>
 						<Button
 							v-if="!showAdditionalOptions"
 							class="p-button-sm p-button-text"
@@ -36,12 +30,12 @@
 					</div>
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
-							<label>Number of stochastic samples</label>
+							<label>Number of samples</label>
 							<div class="input-and-slider">
 								<InputNumber
 									class="p-inputtext-sm"
 									inputId="integeronly"
-									v-model="knobs.numStochasticSamples"
+									v-model="knobs.numSamples"
 								/>
 							</div>
 						</div>
@@ -49,6 +43,7 @@
 							<label>Solver method</label>
 							<Dropdown
 								class="p-inputtext-sm"
+								disabled
 								:options="['dopri5', 'euler']"
 								v-model="knobs.solverMethod"
 								placeholder="Select"
@@ -64,9 +59,15 @@
 							/>
 						</div>
 					</div>
+					<Button
+						v-if="showAdditionalOptions"
+						class="p-button-sm p-button-text w-3"
+						label="Hide additional options"
+						@click="toggleAdditonalOptions"
+					/>
 				</div>
 				<div class="form-section">
-					<h4>Intervention policy</h4>
+					<h5>Intervention policy</h5>
 					<tera-intervention-policy-group-form
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
@@ -85,7 +86,7 @@
 					</div>
 				</div>
 				<div class="form-section">
-					<h4>Constraint</h4>
+					<h5>Constraint</h5>
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Target-variable(s)</label>
@@ -94,6 +95,7 @@
 								:options="modelStateOptions.map((ele) => ele.id)"
 								v-model="knobs.targetVariables"
 								placeholder="Select"
+								filter
 							/>
 						</div>
 					</div>
@@ -118,12 +120,20 @@
 								:max-fraction-digits="10"
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Maxiter</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+						</div>
+						<div class="label-and-input">
+							<label>Maxfeval</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+						</div>
 					</div>
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="OptimizeTabs.Notebook">
-			<h4>Notebook</h4>
+		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
+			<p>Under construction. Use the wizard for now.</p>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -133,9 +143,29 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-3"
+				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
-				<div v-if="optimizationResult">
-					{{ optimizationResult }}
+				<!-- Optimize result.json display: -->
+				<div
+					v-if="optimizationResult && displayOptimizationResultMessage"
+					class="result-message-grid"
+				>
+					<span class="flex flex-row">
+						<h6>Response</h6>
+						<Button
+							icon="pi pi-times"
+							text
+							rounded
+							size="small"
+							class="ml-auto p-button-text"
+							@click="displayOptimizationResultMessage = !displayOptimizationResultMessage"
+						/>
+					</span>
+					<div v-for="(value, key) in optimizationResult" :key="key" class="result-message-row">
+						<div class="label">{{ key }}:</div>
+						<div class="value">{{ formatJsonValue(value) }}</div>
+					</div>
 				</div>
 				<SelectButton
 					:model-value="outputViewSelection"
@@ -148,19 +178,22 @@
 						<span class="p-button-label">{{ option.value }}</span>
 					</template>
 				</SelectButton>
+				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
+				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
 				<template v-if="simulationRunResults[knobs.forecastRunId]">
-					<div v-if="outputViewSelection === OutputView.Charts">
+					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="simulationRunResults[knobs.forecastRunId]"
 							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
 							has-mean-line
-							@configuration-change="configurationChange(idx, $event)"
+							:size="chartSize"
+							@configuration-change="chartProxy.configurationChange(idx, $event)"
 						/>
 						<Button
 							class="p-button-sm p-button-text"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
@@ -171,8 +204,10 @@
 								selectedVariable: knobs.targetVariables
 							}"
 							:target-variable="knobs.targetVariables[0]"
+							:size="chartSize"
+							:threshold="knobs.threshold"
 						/>
-					</div>
+					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
 							v-if="simulationRawContent[knobs.forecastRunId]"
@@ -187,29 +222,43 @@
 			<Button
 				:disabled="isRunDisabled"
 				outlined
+				severity="secondary"
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
 				@click="runOptimize"
 			/>
-			<div class="label-and-input">
-				<label> Model Config Name</label>
-				<InputText v-model="knobs.modelConfigName" />
-			</div>
-			<div class="label-and-input">
-				<label> Model Config Description</label>
-				<InputText v-model="knobs.modelConfigDesc" />
-			</div>
 			<Button
-				:disabled="knobs.modelConfigName === ''"
 				outlined
+				severity="secondary"
 				label="Save as a new model configuration"
-				@click="saveModelConfiguration"
+				@click="showModelModal = true"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
+	<Dialog
+		v-model:visible="showModelModal"
+		modal
+		header="Save as new model configuration"
+		class="save-dialog w-4"
+	>
+		<div class="label-and-input">
+			<label> Model config name</label>
+			<InputText v-model="knobs.modelConfigName" />
+		</div>
+		<div class="label-and-input">
+			<label> Model config description</label>
+			<InputText v-model="knobs.modelConfigDesc" />
+		</div>
+		<Button
+			:disabled="knobs.modelConfigName === ''"
+			outlined
+			label="Save as a new model configuration"
+			@click="saveModelConfiguration"
+		/>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
@@ -223,6 +272,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
+import Dialog from 'primevue/dialog';
 import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -241,7 +291,8 @@ import {
 	makeForecastJobCiemss,
 	pollAction,
 	getRunResultCiemss,
-	getRunResult
+	getRunResult,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { Poller, PollerState } from '@/api/api';
@@ -258,9 +309,11 @@ import {
 	Intervention as SimulationIntervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { ChartConfig, RunResults as SimulationRunResults } from '@/types/SimulateConfig';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
+import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -285,10 +338,11 @@ enum OutputView {
 }
 
 interface BasicKnobs {
-	startTime: number;
 	endTime: number;
-	numStochasticSamples: number;
+	numSamples: number;
 	solverMethod: string;
+	maxiter: number;
+	maxfeval: number;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
@@ -300,10 +354,11 @@ interface BasicKnobs {
 }
 
 const knobs = ref<BasicKnobs>({
-	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
-	numStochasticSamples: props.node.state.numStochasticSamples ?? 0,
+	numSamples: props.node.state.numSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
+	maxiter: props.node.state.maxiter ?? 5,
+	maxfeval: props.node.state.maxfeval ?? 25,
 	targetVariables: props.node.state.targetVariables ?? [],
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
@@ -314,10 +369,18 @@ const knobs = ref<BasicKnobs>({
 	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
 });
 
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const inferredParameters = computed(() => props.node.inputs[1].value);
+
+const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
+	emit('update-state', state);
+});
+
 const showSpinner = ref(false);
 const poller = new Poller();
-// const progress = ref({ status: ProgressState.Retrieving, value: 0 });
-// const completedRunId = ref<string>('');
+const showModelModal = ref(false);
+const displayOptimizationResultMessage = ref(true);
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -386,22 +449,15 @@ const addInterventionPolicyGroupForm = () => {
 	emit('update-state', state);
 };
 
-const configurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config.selectedVariable;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
-	emit('update-state', state);
-};
-
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
+};
+
+const formatJsonValue = (value) => {
+	if (typeof value === 'object' && value !== null) {
+		return JSON.stringify(value);
+	}
+	return value;
 };
 
 const initialize = async () => {
@@ -443,7 +499,7 @@ const runOptimize = async () => {
 		engine: 'ciemss',
 		modelConfigId: modelConfiguration.value.id,
 		timespan: {
-			start: knobs.value.startTime,
+			start: 0,
 			end: knobs.value.endTime
 		},
 		interventions: optimizeInterventions,
@@ -453,13 +509,17 @@ const runOptimize = async () => {
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: knobs.value.isMinimized,
-			numSamples: knobs.value.numStochasticSamples,
-			maxiter: 5,
-			maxfeval: 5,
+			numSamples: knobs.value.numSamples,
+			maxiter: knobs.value.maxiter,
+			maxfeval: knobs.value.maxfeval,
 			alpha: (100 - knobs.value.riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
 		}
 	};
+
+	if (inferredParameters.value) {
+		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
+	}
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	await getOptimizeStatus(optResult.simulationId);
@@ -481,12 +541,12 @@ const runOptimize = async () => {
 		projectId: '',
 		modelConfigId: modelConfiguration.value.id,
 		timespan: {
-			start: knobs.value.startTime,
+			start: 0,
 			end: knobs.value.endTime
 		},
 		interventions: simulationIntervetions,
 		extra: {
-			num_samples: knobs.value.numStochasticSamples,
+			num_samples: knobs.value.numSamples,
 			method: knobs.value.solverMethod
 		},
 		engine: 'ciemss'
@@ -494,6 +554,14 @@ const runOptimize = async () => {
 
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
 	getStatus(simulationResponse.id);
+	const state = _.cloneDeep(props.node.state);
+	emit('append-output', {
+		type: OptimizeCiemssOperation.outputs[0].type,
+		label: `Simulation output - ${props.node.outputs.length + 1}`,
+		value: [simulationResponse.id],
+		isSelected: false,
+		state
+	});
 };
 
 const getStatus = async (runId: string) => {
@@ -503,23 +571,34 @@ const getStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.simulateErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
 		showSpinner.value = false;
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.simulateErrorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 
-	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
-		addChart();
+		chartProxy.addChart();
 	}
 
 	knobs.value.forecastRunId = runId;
@@ -533,17 +612,30 @@ const getOptimizeStatus = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		showSpinner.value = false;
 		return;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
 		showSpinner.value = false;
-		logger.error(`Optimize Run: ${runId} has failed`, {
+		// throw if there are any failed runs for now
+		logger.error(`Optimize: ${runId} has failed`, {
 			toastTitle: 'Error - Ciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.optimizeErrorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 
@@ -554,7 +646,6 @@ const getOptimizeStatus = async (runId: string) => {
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
-	const state = _.cloneDeep(props.node.state);
 	// TODO: This should be taking some values from our output result but its TBD
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
@@ -569,13 +660,7 @@ const saveModelConfiguration = async () => {
 	}
 
 	logger.success('Created model configuration');
-	emit('append-output', {
-		type: OptimizeCiemssOperation.outputs[0].type,
-		label: state.modelConfigName,
-		value: data.id,
-		isSelected: false,
-		state
-	});
+	showModelModal.value = false;
 };
 
 const setOutputValues = async () => {
@@ -605,10 +690,11 @@ watch(
 	() => knobs.value,
 	async () => {
 		const state = _.cloneDeep(props.node.state);
-		state.startTime = knobs.value.startTime;
 		state.endTime = knobs.value.endTime;
-		state.numStochasticSamples = knobs.value.numStochasticSamples;
+		state.numSamples = knobs.value.numSamples;
 		state.solverMethod = knobs.value.solverMethod;
+		state.maxiter = knobs.value.maxiter;
+		state.maxfeval = knobs.value.maxfeval;
 		state.targetVariables = knobs.value.targetVariables;
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
@@ -649,6 +735,37 @@ watch(
 </script>
 
 <style scoped>
+.result-message-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 2px; /* Adjust the gap between rows as needed */
+	font-size: var(--font-caption);
+	background-color: var(--surface-glass);
+	border: solid 1px var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-small);
+}
+
+.result-message-row {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-small);
+}
+
+.label {
+	font-weight: bold;
+	width: 150px; /* Adjust the width of the label column as needed */
+}
+.value {
+	flex-grow: 1;
+}
+
+.failed-run {
+	border: 2px solid var(--error-color);
+	border-radius: var(--border-radius-big);
+	color: var(--error-color-text);
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;

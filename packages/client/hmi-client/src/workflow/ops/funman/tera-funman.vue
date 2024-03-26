@@ -6,14 +6,14 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<div :tabName="FunmanTabs.Wizard">
+		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
 				<main>
-					<h4 class="primary-text">
+					<h5>
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
-					</h4>
-					<p class="secondary-text">
+					</h5>
+					<p class="secondary-text mt-1">
 						The validator will use these parameters to execute the sanity checks.
 					</p>
 					<div class="section-row timespan">
@@ -77,17 +77,18 @@
 						</div>
 					</div>
 					<div class="spacer">
-						<h4>Add sanity checks</h4>
+						<h5>Add sanity checks</h5>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
 
-					<tera-compartment-constraint :variables="modelNodeOptions" :mass="mass" />
+					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
-						:model-node-options="modelNodeOptions"
+						:model-states="modelStates"
+						:model-parameters="modelParameters"
 						@delete-self="deleteConstraintGroupForm"
 						@update-self="updateConstraintGroupForm"
 					/>
@@ -112,11 +113,17 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
+				class="pt-3 pb-3 pl-2 pr-4"
 			>
-				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
-				<div v-else class="flex flex-column h-full justify-content-center">
-					<tera-operator-placeholder :operation-type="node.operationType" />
-				</div>
+				<template v-if="showSpinner">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+				</template>
+				<template v-else>
+					<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
+					<div v-else class="flex flex-column h-full justify-content-center">
+						<tera-operator-placeholder :operation-type="node.operationType" />
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</template>
 
@@ -154,6 +161,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -214,6 +222,7 @@ const requestConstraints = computed(
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
 			if (ele.constraintType === 'monotonicityConstraint') {
+				const weights = ele.weights ? ele.weights : [1.0];
 				const constraint = {
 					soft: true,
 					name: ele.name,
@@ -225,12 +234,12 @@ const requestConstraints = computed(
 						original_width: MAX
 					},
 					variables: ele.variables,
-					weights: [1.0],
+					weights: weights.map((d) => Math.abs(d)), // should be all positive
 					derivative: true
 				};
 
 				if (ele.derivativeType === 'increasing') {
-					constraint.weights = [-1.0];
+					constraint.weights = weights.map((d) => -Math.abs(d)); // should be all negative
 				}
 				return constraint;
 			}
@@ -263,7 +272,10 @@ const requestConstraints = computed(
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
-const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
+
+const modelStates = ref<string[]>([]); // Used for form's multiselect.
+const modelParameters = ref<string[]>([]);
+
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -345,7 +357,7 @@ const getStatus = async (runId: string) => {
 	showSpinner.value = true;
 
 	poller
-		.setInterval(3000)
+		.setInterval(5000)
 		.setThreshold(100)
 		.setPollAction(async () => {
 			const response = await getQueries(runId);
@@ -454,22 +466,22 @@ const setModelOptions = async () => {
 	);
 	mass.value = massValue;
 
-	// const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
-	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+	if (model.value.model.states) {
+		modelStates.value = model.value.model.states.map((s) => s.id);
+	}
+
+	if (model.value.semantics?.ode.parameters) {
+		modelParameters.value = model.value.semantics?.ode.parameters.map((d) => d.id);
+	}
 
 	// FIXME
-	// model.value.semantics?.ode.parameters?.forEach((param) => {
-	// 	if (initialVars?.includes(param.id)) return;
-	// 	modelColumnNameOptions.push(param.id);
-	// });
-
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
 	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
 	// 		modelColumnNameOptions.push(o.id);
 	// 	});
 	// }
-	modelNodeOptions.value = modelColumnNameOptions;
+	// modelStates.value = modelColumnNameOptions;
 
 	const state = _.cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;
@@ -491,6 +503,7 @@ const setModelOptions = async () => {
 	emit('update-state', state);
 };
 
+// eslint-disable-next-line
 const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	const previous = props.node.state.requestParameters;
 	if (previous && previous.length > 0) {
@@ -537,7 +550,7 @@ watch(
 watch(
 	() => props.node.inputs[0],
 	async () => {
-		// Set model, modelConfiguration, modelNodeOptions
+		// Set model, modelConfiguration, modelStates
 		await initialize();
 		setModelOptions();
 	},

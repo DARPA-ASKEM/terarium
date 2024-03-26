@@ -1,23 +1,25 @@
 <template>
 	<main>
-		<tera-simulate-chart
-			v-if="selectedRunId && runResults[selectedRunId]"
-			:run-results="runResults[selectedRunId]"
-			:chartConfig="{
-				selectedRun: selectedRunId,
-				selectedVariable: props.node.state.chartConfigs[0]
-			}"
-			:size="{ width: 180, height: 120 }"
-			has-mean-line
-		/>
-
+		<template v-if="selectedRunId && runResults[selectedRunId]">
+			<tera-simulate-chart
+				v-for="(config, idx) of props.node.state.chartConfigs"
+				:key="idx"
+				:run-results="runResults[selectedRunId]"
+				:chartConfig="{
+					selectedRun: selectedRunId,
+					selectedVariable: config
+				}"
+				:size="{ width: 180, height: 120 }"
+				has-mean-line
+				@configuration-change="chartProxy.configurationChange(idx, $event)"
+			/>
+		</template>
 		<tera-progress-spinner
 			v-if="inProgressSimulationId"
 			:font-size="2"
 			is-centered
 			style="height: 100%"
 		/>
-
 		<Button
 			v-if="areInputsFilled"
 			label="Edit"
@@ -38,9 +40,14 @@ import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getRunResultCiemss, pollAction } from '@/services/models/simulation-service';
+import {
+	getRunResultCiemss,
+	pollAction,
+	getSimulation
+} from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+import { chartActionsProxy } from '@/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type { RunResults } from '@/types/SimulateConfig';
@@ -66,6 +73,9 @@ const pollResult = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
+	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		return pollerResults;
@@ -75,33 +85,40 @@ const pollResult = async (runId: string) => {
 		logger.error(`Simulation: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.inProgressSimulationId = '';
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		throw Error('Failed Runs');
 	}
 	return pollerResults;
 };
 
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push([]);
-
+const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
-};
+});
 
 const processResult = (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
-		addChart();
+		chartProxy.addChart();
 	}
 
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: `Output - ${props.node.outputs.length + 1}`,
-		value: runId,
+		value: [runId],
 		state: {
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
-			method: state.method,
-			inProgressSimulationId: state.inProgressSimulationId
+			method: state.method
 		},
 		isSelected: false
 	});

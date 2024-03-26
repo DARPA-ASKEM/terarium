@@ -6,14 +6,14 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section :tabName="CalibrateTabs.Wizard">
+		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Mapping</h4>
+					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
 						<Button
 							class="p-button-sm p-button-text"
-							label="Delete All Mapping"
+							label="Delete all mapping"
 							@click="deleteMapping"
 						/>
 						<Column field="modelVariable">
@@ -97,7 +97,7 @@
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="CalibrateTabs.Notebook">
-			<h4>Notebook</h4>
+			<h5>Notebook</h5>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -106,28 +106,35 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-3"
 			>
-				<h4>Loss</h4>
+				<h5>Loss</h5>
 				<div ref="drilldownLossPlot"></div>
 				<div v-if="!showSpinner" class="form-section">
-					<h4>Variables</h4>
-					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset">
+					<h5>Variables</h5>
+					<section
+						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
+						ref="outputPanel"
+					>
 						<tera-simulate-chart
-							v-for="(cfg, index) of node.state.chartConfigs"
-							:key="cfg.selectedRun"
+							v-for="(config, index) of node.state.chartConfigs"
+							:key="index"
 							:run-results="runResults"
-							:chartConfig="cfg"
+							:chartConfig="{
+								selectedRun: props.node.state.forecastId,
+								selectedVariable: config
+							}"
 							:initial-data="csvAsset"
 							:mapping="mapping"
 							has-mean-line
-							@configuration-change="chartConfigurationChange(index, $event)"
-							:size="{ width: previewChartWidth, height: 140 }"
+							@configuration-change="chartProxy.configurationChange(index, $event)"
+							:size="chartSize"
 						/>
 						<Button
 							class="add-chart"
 							text
 							:outlined="true"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						></Button>
@@ -140,6 +147,10 @@
 				<section v-else>
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</section>
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
+					v-bind="node.state.errorMessage"
+				/>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -176,6 +187,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -185,7 +197,7 @@ import {
 	ModelConfiguration,
 	State
 } from '@/types/Types';
-import { getTimespan } from '@/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -195,7 +207,7 @@ import {
 	unsubscribeToUpdateMessages
 } from '@/services/models/simulation-service';
 
-import type { ChartConfig, RunResults } from '@/types/SimulateConfig';
+import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
@@ -257,6 +269,13 @@ const outputs = computed(() => {
 	return [];
 });
 
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
+	emit('update-state', state);
+});
+
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
@@ -276,8 +295,7 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			num_samples: 100,
-			num_iterations: 200
+			num_iterations: 10
 			/*
 			num_samples: numSamples.value,
 			num_iterations: numIterations.value,
@@ -308,20 +326,6 @@ const messageHandler = (event: ClientEvent<any>) => {
 			height: 120
 		});
 	}
-};
-
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
-
-	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {

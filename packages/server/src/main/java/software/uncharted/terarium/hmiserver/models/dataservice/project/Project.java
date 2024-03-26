@@ -3,12 +3,14 @@ package software.uncharted.terarium.hmiserver.models.dataservice.project;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -16,6 +18,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +52,12 @@ public class Project extends TerariumAsset implements Serializable {
 	@TSOptional
 	@Schema(defaultValue = "My Project Description")
 	private String description;
+
+	@TSOptional
+	@Schema(defaultValue = "My Project Overview")
+	@Lob
+	@JdbcTypeCode(Types.BINARY)
+	private byte[] overviewContent;
 
 	@OneToMany(mappedBy = "project")
 	@Where(clause = "deleted_on IS NULL")

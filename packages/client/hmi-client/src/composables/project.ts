@@ -95,6 +95,18 @@ export function useProjects() {
 	}
 
 	/**
+	 * Get the name of an asset from the active project.
+	 * @param {ProjectAsset['assetId]} assetId
+	 * @returns {ProjectAsset['assetName']}
+	 */
+	function getAssetName(assetId: ProjectAsset['assetId']): ProjectAsset['assetName'] {
+		const asset = activeProject.value?.projectAssets.find(
+			(projectAsset) => projectAsset.assetId === assetId
+		);
+		return asset?.assetName ?? '';
+	}
+
+	/**
 	 * If `projectId` is defined, delete an asset from that project.
 	 * Otherwise, delete an asset from the active project and refresh it.
 	 *
@@ -248,6 +260,7 @@ export function useProjects() {
 		getAll,
 		getActiveProjectAssets,
 		addAsset,
+		getAssetName,
 		deleteAsset,
 		create,
 		update,

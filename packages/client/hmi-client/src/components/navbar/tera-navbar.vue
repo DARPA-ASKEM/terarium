@@ -16,7 +16,9 @@
 			v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
 			class="evaluation-scenario-widget"
 		>
-			{{ evaluationScenario.name }} &ndash; {{ evaluationScenarioTask.task }}
+			{{ evaluationScenario.name }} &ndash; {{ evaluationScenarioTask.task }} ({{
+				evaluationScenarioMultipleUsers ? 'Multiple Users' : 'Single User'
+			}})
 			<span class="evaluation-scenario-widget-timer">{{ evaluationScenarioRuntimeString }}</span>
 			<Button
 				v-if="evaluationScenarioCurrentStatus === EvaluationScenarioStatus.Started"
@@ -242,7 +244,7 @@ const evalScenarios: Ref<EvalScenario> = ref(evalScenariosJson);
 const evaluationScenario: Ref<Scenario> = ref(evalScenarios.value.scenarios[0]);
 const evaluationScenarioTask: Ref<Question> = ref(evaluationScenario.value.questions[0]);
 const evaluationScenarioDescription: Ref<string> = ref(evaluationScenarioTask.value.description);
-const evaluationScenarioMultipleUsers: Ref<boolean> = ref(false);
+const evaluationScenarioMultipleUsers: Ref<boolean> = ref(true);
 const evaluationScenarioNotes = ref('');
 const evaluationScenarioCurrentStatus: Ref<EvaluationScenarioStatus> = ref(
 	EvaluationScenarioStatus.Stopped
@@ -360,7 +362,7 @@ const loadEvaluationScenario = async () => {
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
 
 	evaluationScenarioMultipleUsers.value =
-		window.localStorage.getItem('evaluationScenarioMultipleUsers') === 'true';
+		window.localStorage.getItem('evaluationScenarioMultipleUsers') !== 'false';
 
 	if (evaluationScenario.value) {
 		await refreshEvaluationScenario();
@@ -598,7 +600,7 @@ nav {
 
 .evaluation-scenario-widget {
 	border-radius: var(--border-radius-bigger);
-	background-color: var(--surface-highlight-hover);
+	background-color: var(--surface-200);
 	display: flex;
 	padding-left: var(--gap);
 	margin-left: auto;

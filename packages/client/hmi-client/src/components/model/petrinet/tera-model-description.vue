@@ -3,43 +3,49 @@
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
-					<tera-input-switch
-						class="mb-2"
-						v-model="isDescriptionTA4"
-						labelFalse="TA1"
-						labelRight="TA4"
-					/>
-					<tera-show-more-text :text="description" :lines="5" />
-					<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
-					<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
-					<p v-if="authors"><label>Authors</label>{{ authors }}</p>
-					<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
-					<p v-if="uses?.OutOfScopeUse"><label>Out of scope use</label>{{ uses.OutOfScopeUse }}</p>
-					<p v-if="biasAndRiskLimitations">
-						<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
-					</p>
-					<p v-if="evaluation"><label>Evaluation</label>{{ evaluation }}</p>
-					<p v-if="technicalSpecifications">
-						<label>Technical Specifications</label>{{ technicalSpecifications }}
-					</p>
-					<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
-					<p v-if="!isEmpty(moreInformation)">
-						<label>More Information</label>
-						<a
-							v-for="(link, index) in moreInformation"
-							:key="index"
-							:href="link"
-							rel="noopener noreferrer"
-						>
-							{{ link }}
-						</a>
-					</p>
-					<p v-if="!isEmpty(provenance)"><label>Provenance</label>{{ provenance }}</p>
-					<p v-if="!isEmpty(schema)"><label>Schema</label>{{ schema }}</p>
-					<p v-if="!isEmpty(sourceDataset)"><label>Source dataset</label>{{ sourceDataset }}</p>
-					<p v-if="!isEmpty(usage)"><label>Usage</label>{{ usage }}</p>
-					<p v-if="!isEmpty(strengths)"><label>Strengths</label>{{ strengths }}</p>
-					<p v-if="!isEmpty(assumptions)"><label>Assumptions</label>{{ assumptions }}</p>
+					<span class="flex flex-row align-items-center gap-2 mb-1">
+						Model card
+						<SelectButton
+							v-model="descriptionType"
+							class="p-button-xsm"
+							:options="descriptionOptions"
+						/>
+					</span>
+					<div class="model-card">
+						<tera-show-more-text :text="description" :lines="5" />
+						<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
+						<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
+						<p v-if="authors"><label>Authors</label>{{ authors }}</p>
+						<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
+						<p v-if="uses?.OutOfScopeUse">
+							<label>Out of scope use</label>{{ uses.OutOfScopeUse }}
+						</p>
+						<p v-if="biasAndRiskLimitations">
+							<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
+						</p>
+						<p v-if="evaluation"><label>Evaluation</label>{{ evaluation }}</p>
+						<p v-if="technicalSpecifications">
+							<label>Technical Specifications</label>{{ technicalSpecifications }}
+						</p>
+						<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
+						<p v-if="!isEmpty(moreInformation)">
+							<label>More Information</label>
+							<a
+								v-for="(link, index) in moreInformation"
+								:key="index"
+								:href="link"
+								rel="noopener noreferrer"
+							>
+								{{ link }}
+							</a>
+						</p>
+						<p v-if="!isEmpty(provenance)"><label>Provenance</label>{{ provenance }}</p>
+						<p v-if="!isEmpty(schema)"><label>Schema</label>{{ schema }}</p>
+						<p v-if="!isEmpty(sourceDataset)"><label>Source dataset</label>{{ sourceDataset }}</p>
+						<p v-if="!isEmpty(usage)"><label>Usage</label>{{ usage }}</p>
+						<p v-if="!isEmpty(strengths)"><label>Strengths</label>{{ strengths }}</p>
+						<p v-if="!isEmpty(assumptions)"><label>Assumptions</label>{{ assumptions }}</p>
+					</div>
 				</section>
 				<section v-else>
 					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
@@ -71,13 +77,6 @@
 					@model-updated="emit('model-updated')"
 				/>
 			</AccordionTab>
-			<AccordionTab header="Model observables">
-				<tera-model-observable
-					:model="model"
-					:is-editable="false"
-					@update-model="updateModelContent"
-				/>
-			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models" />
@@ -95,6 +94,7 @@
 			:model-configurations="modelConfigurations"
 			@update-model="(modelClone) => emit('update-model', modelClone)"
 			class="mt-0"
+			:readonly="featureConfig?.isPreview"
 		/>
 	</main>
 </template>
@@ -109,16 +109,15 @@ import DataTable from 'primevue/datatable';
 import { FeatureConfig, ResultType } from '@/types/common';
 import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
+import SelectButton from 'primevue/selectbutton';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
 import { useProjects } from '@/composables/project';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import TeraModelObservable from '@/components/model/petrinet/tera-model-observable.vue';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraInputSwitch from '@/components/widgets/tera-input-switch.vue';
-import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -130,12 +129,13 @@ const props = defineProps<{
 const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
 
 const teraModelDiagramRef = ref();
-const isDescriptionTA4 = ref(true);
+const descriptionType = ref('TA1');
+const descriptionOptions = ref(['TA1', 'TA4']);
 
 // FIXME: expand Card typing definition?
 const card = computed<any>(() => {
 	// Display the GoLLM card if the description is set to TA4 (true).
-	if (isDescriptionTA4.value) {
+	if (descriptionType.value === 'TA4' && props.model.metadata?.gollmCard) {
 		return props.model.metadata?.gollmCard;
 	}
 
@@ -228,7 +228,6 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	display: grid;
 	gap: var(--gap-small) var(--gap);
 	grid-template-columns: max-content 1fr;
-	margin-left: var(--gap-medium);
 
 	& > * {
 		grid-column: 1/3;
@@ -243,5 +242,14 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 			grid-column: 1/2;
 		}
 	}
+}
+
+.model-card {
+	padding: var(--gap);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-small);
 }
 </style>
