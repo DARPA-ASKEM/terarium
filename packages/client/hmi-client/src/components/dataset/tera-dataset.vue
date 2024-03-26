@@ -201,6 +201,8 @@ const fetchDataset = async () => {
 				if (datasetTemp.esgfId) {
 					image.value = await getClimateDatasetPreview(datasetTemp.esgfId);
 					rawContent.value = null;
+				} else if (datasetTemp.metadata?.format === 'netcdf') {
+					rawContent.value = null;
 				} else {
 					// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
 					image.value = undefined;

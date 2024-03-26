@@ -1,18 +1,10 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -21,13 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import feign.FeignException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -48,6 +33,15 @@ import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHand
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -116,7 +110,7 @@ public class ExtractionService {
 
 	}
 
-	public String removeFileExtension(final String filename) {
+	public static String removeFileExtension(final String filename) {
 		final int lastIndexOfDot = filename.lastIndexOf(".");
 		if (lastIndexOfDot != -1) {
 			return filename.substring(0, lastIndexOfDot);
@@ -158,8 +152,7 @@ public class ExtractionService {
 					final boolean compressImages = false;
 					final boolean useCache = false;
 					final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
-							useCache,
-							documentFile);
+							useCache, documentFile);
 
 					final JsonNode body = extractionResp.getBody();
 					final UUID jobId = UUID.fromString(body.get("job_id").asText());
@@ -508,7 +501,7 @@ public class ExtractionService {
 		return document;
 	}
 
-	public HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
+	public static HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
 		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		final byte[] buffer = new byte[1024];
 		int len;

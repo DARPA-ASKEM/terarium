@@ -25,9 +25,19 @@
 				</div>
 				<div class="button-row">
 					<label>Target</label>
+
 					<MultiSelect
+						v-if="constraintType !== 'parameterConstraint'"
 						v-model="variables"
-						:options="props.modelNodeOptions"
+						:options="props.modelStates"
+						placeholder="Model states"
+						display="chip"
+						@update:model-value="updateChanges()"
+					></MultiSelect>
+					<MultiSelect
+						v-else
+						v-model="variables"
+						:options="props.modelParameters"
 						placeholder="Model states"
 						display="chip"
 						@update:model-value="updateChanges()"
@@ -93,7 +103,7 @@
 					class="p-inputtext-sm"
 					mode="decimal"
 					:min-fraction-digits="3"
-					:max-fraction-digits="3"
+					:max-fraction-digits="12"
 					v-model="lowerBound"
 					@update:model-value="updateChanges()"
 				/>
@@ -104,7 +114,7 @@
 					class="p-inputtext-sm"
 					mode="decimal"
 					:min-fraction-digits="3"
-					:max-fraction-digits="3"
+					:max-fraction-digits="12"
 					v-model="upperBound"
 					@update:model-value="updateChanges()"
 				/>
@@ -123,7 +133,8 @@ import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
 
 const props = defineProps<{
-	modelNodeOptions: string[];
+	modelStates: string[];
+	modelParameters: string[];
 	config: ConstraintGroup;
 	index: number;
 }>();

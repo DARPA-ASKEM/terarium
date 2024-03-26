@@ -105,7 +105,15 @@ public class User implements UserDetails {
 	public User merge(final User other) {
 		lastLoginAtMs = other.lastLoginAtMs;
 		createdAtMs = other.createdAtMs;
-		roles = other.roles;
+		if (roles == null) {
+			roles = other.roles;
+		} else {
+			for (Role role : other.roles) {
+				if (!roles.contains(role)) {
+					roles.add(role);
+				}
+			}
+		}
 		return this;
 	}
 }
