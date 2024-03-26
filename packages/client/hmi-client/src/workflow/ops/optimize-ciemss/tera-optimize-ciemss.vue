@@ -13,7 +13,7 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<InputNumber disabled class="p-inputtext-sm" inputId="integeronly" value="0" />
+							<InputText disabled class="p-inputtext-sm" inputId="integeronly" value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
