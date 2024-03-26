@@ -737,11 +737,20 @@ const initialize = async () => {
 	// Ensure the parameters have constant and distributions for editing in children components
 	knobs.value.parameters.forEach((param) => {
 		if (!param.distribution) {
+			// provide a non-zero range, unless val is itself 0
+			const val = param.value;
+			let lb = 0;
+			let ub = 0;
+			if (val && val !== 0) {
+				lb = val - Math.abs(0.05 * val);
+				ub = val + Math.abs(0.05 * val);
+			}
+
 			param.distribution = {
 				type: 'StandardUniform1',
 				parameters: {
-					minimum: param.value || 1,
-					maximum: param.value || 1
+					minimum: lb,
+					maximum: ub
 				}
 			};
 		}
