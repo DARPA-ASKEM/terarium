@@ -290,7 +290,7 @@ import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 import { FatalError } from '@/api/api';
@@ -716,6 +716,7 @@ const initialize = async () => {
 			knobs.value.parameters =
 				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
 		}
+
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.initialsMetadata =
@@ -732,6 +733,19 @@ const initialize = async () => {
 		knobs.value.initialsMetadata = state.initialsMetadata;
 		knobs.value.parametersMetadata = state.parametersMetadata;
 	}
+
+	// Ensure the parameters have constant and distributions for editing in children components
+	knobs.value.parameters.forEach((param) => {
+		if (!param.distribution) {
+			param.distribution = {
+				type: 'StandardUniform1',
+				parameters: {
+					minimum: param.value || 1,
+					maximum: param.value || 1
+				}
+			};
+		}
+	});
 
 	// Create a new session and context based on model
 	try {

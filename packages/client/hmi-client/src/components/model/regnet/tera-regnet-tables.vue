@@ -85,7 +85,7 @@ import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Typ
 import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
@@ -147,17 +147,22 @@ function onCellEditComplete() {
 	conceptSearchTerm.value = '';
 }
 
-watch(
-	() => props.model,
-	async (model) => {
-		if (!model) return;
-		transientModel.value = cloneDeep(model);
-		const response: any = await getMMT(model);
+function updateMMT() {
+	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
-	},
-	{ immediate: true }
+	});
+}
+
+watch(
+	() => props.model,
+	(model) => {
+		transientModel.value = cloneDeep(model);
+		updateMMT();
+	}
 );
+
+onMounted(() => updateMMT());
 </script>
 
 <style scoped>

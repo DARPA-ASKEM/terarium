@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.ImmutableList;
 import com.google.common.math.Quantiles;
 import com.google.common.math.Stats;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,10 +43,6 @@ import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProx
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import ucar.ma2.Array;
-import ucar.nc2.Attribute;
-import ucar.nc2.NetcdfFile;
-import ucar.nc2.NetcdfFiles;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -283,10 +278,9 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<CsvAsset> getCsv(
-			@PathVariable("id") final UUID datasetId,
-			@RequestParam("filename") final String filename,
-			@RequestParam(name = "limit", defaultValue = "-1", required = false) final Integer limit // -1 means no
-																										// limit
+		@PathVariable("id") final UUID datasetId,
+		@RequestParam("filename") final String filename,
+		@RequestParam(name = "limit", defaultValue = "" + DEFAULT_CSV_LIMIT, required = false) final Integer limit
 	) {
 
 		final List<List<String>> csv;
