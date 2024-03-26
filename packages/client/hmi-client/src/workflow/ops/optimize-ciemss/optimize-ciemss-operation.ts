@@ -13,10 +13,11 @@ export interface InterventionPolicyGroup {
 
 export interface OptimizeCiemssOperationState {
 	// Settings
-	startTime: number;
 	endTime: number;
-	numStochasticSamples: number;
+	numSamples: number;
 	solverMethod: string;
+	maxiter: number;
+	maxfeval: number;
 	// Intervention policies
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
@@ -30,6 +31,8 @@ export interface OptimizeCiemssOperationState {
 	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	optimizeErrorMessage: { name: string; value: string; traceback: string };
+	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
@@ -47,16 +50,20 @@ export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
 	displayName: 'Optimize with PyCIEMSS',
 	description: 'Optimize with PyCIEMSS',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
+	inputs: [
+		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
+		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {
 		const init: OptimizeCiemssOperationState = {
-			startTime: 0,
 			endTime: 90,
-			numStochasticSamples: 5,
+			numSamples: 1000,
 			solverMethod: 'dopri5',
+			maxiter: 5,
+			maxfeval: 25,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
 			riskTolerance: 5,
@@ -67,7 +74,9 @@ export const OptimizeCiemssOperation: Operation = {
 			forecastRunId: '',
 			optimzationRunId: '',
 			modelConfigName: '',
-			modelConfigDesc: ''
+			modelConfigDesc: '',
+			optimizeErrorMessage: { name: '', value: '', traceback: '' },
+			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	}

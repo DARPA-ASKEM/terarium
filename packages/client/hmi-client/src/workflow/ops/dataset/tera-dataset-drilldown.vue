@@ -6,13 +6,13 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section tabName="Description">
-			<tera-drilldown-section :is-loading="fetchingDataset">
+		<section tabName="Description" class="ml-3 mr-3">
+			<tera-drilldown-section :is-loading="fetchingDataset" class="pt-2">
 				<tera-dataset-description :dataset="dataset" :raw-content="rawContent" :image="image" />
 			</tera-drilldown-section>
 		</section>
-		<section tabName="Data" v-if="rawContent">
-			<tera-drilldown-section :is-loading="fetchingDataset">
+		<section tabName="Data" v-if="rawContent" class="ml-3 mr-3">
+			<tera-drilldown-section :is-loading="fetchingDataset" class="pt-2">
 				<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
 			</tera-drilldown-section>
 		</section>

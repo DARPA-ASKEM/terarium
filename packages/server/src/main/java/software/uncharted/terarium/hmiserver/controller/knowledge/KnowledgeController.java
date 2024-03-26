@@ -106,17 +106,13 @@ public class KnowledgeController {
 			}
 			// Catch every exception thrown by the Proxy
 		} catch (final FeignException e) {
-			// If the Skema Unified Service does not return a 2xx status code, we throw a
-			// 500 error
-			final int status = e.status() < 400 ? 500 : e.status();
-			throw new ResponseStatusException(
-					HttpStatus.valueOf(status),
-					"Skema Unified Service did not return any AMR based on the provided Equations. \n"
-							+ e.getMessage());
+			final String error = "Skema Unified Service did not return any AMR based on the provided Equations";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.valueOf(e.status()), error + ": " + e.getMessage());
 		} catch (final Exception e) {
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to reach Skema Unified Service. " + e.getMessage());
+			final String error = "Unable to reach Skema Unified Service";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + ": " + e.getMessage());
 		}
 
 		final String serviceSuccessMessage = "Skema Unified Service returned an AMR based on the provided Equations. ";
@@ -273,10 +269,16 @@ public class KnowledgeController {
 
 				}
 			} catch (final FeignException e) {
-				log.error("SKEMA was unable to create a model with the code provided", e);
+				final String error = "SKEMA was unable to create a model with the code provided";
+				log.error(error, e);
 				throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY,
-						"Unable to get code to amr");
+						error + ": " + e.getMessage());
+			} catch (final Exception e) {
+				log.error("Unable to get code to amr", e);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						"Unable to get code to amr: " + e.getMessage());
 			}
 
 			if (!resp.getStatusCode().is2xxSuccessful()) {
@@ -322,7 +324,7 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.error("Unable to get code to amr", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -365,11 +367,11 @@ public class KnowledgeController {
 
 			// 3. create model from code asset
 			return postCodeToAMR(createdCode.getId(), "temp model", "temp model description", false, false);
-		} catch (final Exception e) {
-			log.error("unable to upload file", e);
+		} catch (final IOException e) {
+			log.error("Unable to upload file", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Error creating running code to model");
+					"Error creating running code to model: " + e.getMessage());
 		}
 	}
 
@@ -458,11 +460,11 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(modelService.updateAsset(model).orElseThrow());
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.error("Unable to get profile model", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to get profile model");
+					"Unable to get profile model: " + e.getMessage());
 		}
 	}
 
@@ -580,7 +582,7 @@ public class KnowledgeController {
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
@@ -628,31 +630,32 @@ public class KnowledgeController {
 
 			return ResponseEntity.ok(model);
 
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			final String error = "Unable to get link amr";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
 	@PostMapping("/variable-extractions")
 	public ResponseEntity<DocumentAsset> postPdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
+			@RequestParam(name = "model-ids", defaultValue = "[]") final List<UUID> modelIds,
 			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
 			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
 
 		try {
 			return ResponseEntity
-					.ok(extractionService.extractVariables(documentId, annotateSkema, annotateMIT, domain));
+					.ok(extractionService.extractVariables(documentId, modelIds, annotateSkema, annotateMIT, domain));
 		} catch (final IOException e) {
 			final String error = "Unable to get required assets";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+					error + ": " + e.getMessage());
 		}
 	}
 
@@ -664,6 +667,11 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
+	@Operation (summary = "Extracts information from the first PDF associated with the given document id")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "202", description = "Extraction started on PDF", content = @Content),
+			@ApiResponse(responseCode = "500", description = "Error running PDF extraction", content = @Content)
+	})
 	public ResponseEntity<Void> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {

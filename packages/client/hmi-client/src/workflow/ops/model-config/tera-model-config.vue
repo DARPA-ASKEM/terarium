@@ -15,8 +15,8 @@
 		</template>
 
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section>
-				<div class="box-container" v-if="model">
+			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
@@ -173,16 +173,25 @@
 						</section>
 					</AccordionTab>
 				</Accordion>
+
+				<!-- For Nelson eval debug -->
+				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
+					<div>Model config id: {{ selectedConfigId }}</div>
+					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
+				</div>
+
 				<template #footer>
-					<Button
-						outlined
-						size="large"
-						:disabled="isSaveDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="createConfiguration"
-					/>
-					<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					<div class="footer">
+						<Button
+							outlined
+							size="large"
+							:disabled="isSaveDisabled"
+							label="Run"
+							icon="pi pi-play"
+							@click="createConfiguration"
+						/>
+						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					</div>
 				</template>
 			</tera-drilldown-section>
 		</section>
@@ -281,7 +290,7 @@ import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 import { FatalError } from '@/api/api';
@@ -707,6 +716,7 @@ const initialize = async () => {
 			knobs.value.parameters =
 				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
 		}
+
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.initialsMetadata =
@@ -723,6 +733,19 @@ const initialize = async () => {
 		knobs.value.initialsMetadata = state.initialsMetadata;
 		knobs.value.parametersMetadata = state.parametersMetadata;
 	}
+
+	// Ensure the parameters have constant and distributions for editing in children components
+	knobs.value.parameters.forEach((param) => {
+		if (!param.distribution) {
+			param.distribution = {
+				type: 'StandardUniform1',
+				parameters: {
+					minimum: param.value || 1,
+					maximum: param.value || 1
+				}
+			};
+		}
+	});
 
 	// Create a new session and context based on model
 	try {
@@ -913,5 +936,14 @@ onUnmounted(() => {
 	mix-blend-mode: darken;
 	opacity: 1;
 	transition: opacity 1s;
+}
+
+.footer {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	padding-top: var(--gap-small);
+	padding-bottom: var(--gap-small);
+	border-top: 1px solid var(--surface-border-light);
 }
 </style>

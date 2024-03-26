@@ -7,7 +7,7 @@
 			/>
 		</template>
 		<section :tabName="CalibrateEnsembleTabs.Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section class="ml-3 mr-2 pt-2">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab header="Model weights">
 						<div class="model-weights">
@@ -15,7 +15,7 @@
 							<section class="ensemble-calibration-graph">
 								<table class="p-datatable-table">
 									<thead class="p-datatable-thead">
-										<th>Model Config ID</th>
+										<th>Model config ID</th>
 										<th>Weight</th>
 									</thead>
 									<tbody class="p-datatable-tbody">
@@ -46,10 +46,17 @@
 						</div>
 					</AccordionTab>
 					<AccordionTab header="Mapping">
+						<label> Dataset timestamp column </label>
+						<Dropdown
+							style="width: 50%"
+							v-model="knobs.timestampColName"
+							:options="datasetColumnNames"
+							placeholder="Timestamp column"
+						/>
 						<template v-if="knobs.ensembleConfigs.length > 0">
 							<table>
 								<tr>
-									<th>Ensemble Variables</th>
+									<th>Ensemble variables</th>
 									<!-- Index matching listModelLabels and ensembleConfigs-->
 									<th v-for="(element, i) in listModelLabels" :key="i">
 										{{ element }}
@@ -71,19 +78,18 @@
 										>
 											<Dropdown
 												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
-												:options="allModelOptions[i - 1]"
+												:options="allModelOptions[i - 1]?.map((ele) => ele.id)"
 											/>
 										</template>
 									</td>
 								</tr>
 							</table>
 						</template>
-
 						<Dropdown
 							style="width: 50%"
 							v-model="newSolutionMappingKey"
 							:options="datasetColumnNames"
-							placeholder="Variable Name"
+							placeholder="Variable name"
 						/>
 						<Button
 							class="p-button-sm p-button-outlined"
@@ -98,7 +104,7 @@
 								<th>Units</th>
 								<th>Number of particles</th>
 								<th>Number of iterations</th>
-								<th>Solver Method</th>
+								<th>Solver method</th>
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<td>Steps</td>
@@ -133,13 +139,17 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				class="mt-3 mr-4 mb-3"
 			>
-				<div ref="outputPanel">
+				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.chartConfigs"
 						:key="index"
 						:run-results="runResults"
-						:chartConfig="cfg"
+						:chartConfig="{
+							selectedRun: props.node.state.forecastRunId,
+							selectedVariable: cfg
+						}"
 						has-mean-line
 						@configuration-change="chartProxy.configurationChange(index, $event)"
 						:size="chartSize"
@@ -151,68 +161,60 @@
 						label="Add chart"
 						icon="pi pi-plus"
 					/>
-				</div>
-				<Button
-					class="p-button-sm p-button-text"
-					title="Saves the current version of the model as a new Terarium asset"
-					@click="showSaveInput = !showSaveInput"
-				>
-					<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-					<span class="p-button-text">Save as</span>
-				</Button>
-				<tera-save-dataset-from-simulation :simulation-run-id="completedRunId" />
+				</section>
+				<tera-progress-spinner
+					v-if="inProgressCalibrationId || inProgressForecastId"
+					:font-size="2"
+					is-centered
+					style="height: 100%"
+				/>
 			</tera-drilldown-preview>
 		</template>
-		<!-- <template #footer>
+		<template #footer>
 			<Button
 				:disabled="isRunDisabled"
 				outlined
 				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
-				@click="runOptimize"
-			/>
-			<div class="label-and-input">
-				<label> Model Config Name</label>
-				<InputText v-model="knobs.modelConfigName" />
-			</div>
-			<div class="label-and-input">
-				<label> Model Config Description</label>
-				<InputText v-model="knobs.modelConfigDesc" />
-			</div>
-			<Button
-				:disabled="knobs.modelConfigName === ''"
-				outlined
-				label="Save as a new model configuration"
-				@click="saveModelConfiguration"
+				@click="runEnsemble"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
 			<Button label="Close" @click="emit('close')" />
-		</template> -->
+		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, shallowRef, computed, watch, onMounted } from 'vue';
-import { getRunResultCiemss } from '@/services/models/simulation-service';
-import { getModelConfigurationById } from '@/services/model-configurations';
-import { WorkflowNode } from '@/types/workflow';
+import {
+	getRunResultCiemss,
+	makeEnsembleCiemssCalibration
+} from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import InputNumber from 'primevue/inputnumber';
-import type { CsvAsset, ModelConfiguration, EnsembleModelConfigs } from '@/types/Types';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
-import { RunResults } from '@/types/SimulateConfig';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
+import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/workflow/util';
+import type {
+	CsvAsset,
+	ModelConfiguration,
+	EnsembleModelConfigs,
+	EnsembleCalibrationCiemssRequest,
+	State
+} from '@/types/Types';
+import { RunResults } from '@/types/SimulateConfig';
+import { WorkflowNode } from '@/types/workflow';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -231,11 +233,15 @@ enum CalibrateEnsembleTabs {
 interface BasicKnobs {
 	ensembleConfigs: EnsembleModelConfigs[];
 	extra: EnsembleCalibrateExtraCiemss;
+	forecastRunId: string;
+	timestampColName: string;
 }
 
 const knobs = ref<BasicKnobs>({
-	ensembleConfigs: props.node.state.mapping ?? [],
-	extra: props.node.state.extra ?? {}
+	ensembleConfigs: props.node.state.ensembleConfigs ?? [],
+	extra: props.node.state.extra ?? {},
+	forecastRunId: props.node.state.forecastRunId,
+	timestampColName: props.node.state.timestampColName ?? ''
 });
 
 const outputs = computed(() => {
@@ -251,8 +257,9 @@ const outputs = computed(() => {
 });
 const selectedOutputId = ref<string>();
 const showSpinner = ref(false);
-
-const showSaveInput = ref(<boolean>false);
+const isRunDisabled = computed(() => !knobs.value.ensembleConfigs[0]?.weight || !datasetId.value);
+const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
+const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
@@ -261,11 +268,7 @@ const datasetColumnNames = ref<string[]>();
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
-const allModelOptions = ref<string[][]>([]);
-
-const completedRunId = computed<string>(
-	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
-);
+const allModelOptions = ref<State[][]>([]);
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
@@ -296,31 +299,39 @@ function addMapping() {
 	}
 
 	const state = _.cloneDeep(props.node.state);
-	state.mapping = knobs.value.ensembleConfigs;
-
+	state.ensembleConfigs = knobs.value.ensembleConfigs;
 	emit('update-state', state);
 }
 
-// assume only one run for now
-const watchCompletedRunList = async () => {
-	if (!completedRunId.value) return;
+const runEnsemble = async () => {
+	if (!datasetId.value || !currentDatasetFileName.value) return;
+	const mapping = _.cloneDeep(knobs.value.ensembleConfigs[0].solutionMappings);
+	mapping[knobs.value.timestampColName] = 'Timestamp';
 
-	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
-	runResults.value = output.runResults;
+	const params: EnsembleCalibrationCiemssRequest = {
+		modelConfigs: knobs.value.ensembleConfigs,
+		timespan: getTimespan(csvAsset.value),
+		dataset: {
+			id: datasetId.value,
+			filename: currentDatasetFileName.value,
+			mappings: mapping
+		},
+		engine: 'ciemss',
+		extra: {
+			num_particles: knobs.value.extra.numParticles,
+			num_iterations: knobs.value.extra.numIterations,
+			solver_method: knobs.value.extra.solverMethod
+		}
+	};
+	const response = await makeEnsembleCiemssCalibration(params);
+	if (response?.simulationId) {
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressCalibrationId = response?.simulationId;
+		state.inProgressForecastId = '';
+
+		emit('update-state', state);
+	}
 };
-
-watch(
-	() => datasetId.value,
-	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers;
-	},
-	{ immediate: true }
-);
-
-watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
 
 onMounted(async () => {
 	allModelConfigurations.value = [];
@@ -329,31 +340,27 @@ onMounted(async () => {
 		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
 	});
 	if (!modelConfigurationIds) return;
-	// Fetch Model Configurations
+
+	// Model configuration input
 	await Promise.all(
 		modelConfigurationIds.map(async (id) => {
-			const result = await getModelConfigurationById(id);
-			allModelConfigurations.value.push(result);
+			const { modelConfiguration, modelOptions } = await setupModelInput(id);
+			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
+			if (modelOptions) allModelOptions.value.push(modelOptions);
 		})
 	);
 
-	allModelOptions.value = [];
-	for (let i = 0; i < allModelConfigurations.value.length; i++) {
-		const tempList: string[] = [];
-		allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
-			tempList.push(element.id);
-		});
-		allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
-			tempList.push(element.id)
-		);
-		allModelOptions.value.push(tempList);
-	}
+	// dataset input
+	const { filename, csv } = await setupDatasetInput(datasetId.value);
+	currentDatasetFileName.value = filename;
+	csvAsset.value = csv;
+	datasetColumnNames.value = csv?.headers;
 
 	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-	const state = _.cloneDeep(props.node.state);
-	if (state.mapping && state.mapping.length === 0) {
-		// TOM Fix this. This should check that the length of ensemble is = port length - 1
+	// initalize ensembleConfigs when its length is less than the amount of models provided to node (- 1 due to dataset, -1 due to last empty )
+	if (knobs.value.ensembleConfigs.length < props.node.inputs.length - 2) {
+		knobs.value.ensembleConfigs = [];
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
 			knobs.value.ensembleConfigs.push({
 				id: allModelConfigurations.value[i].id as string,
@@ -362,23 +369,37 @@ onMounted(async () => {
 			});
 		}
 	}
-	state.mapping = knobs.value.ensembleConfigs;
+
 	if (knobs.value.ensembleConfigs.some((ele) => ele.weight === 0)) {
 		calculateEvenWeights();
 	}
-
-	emit('update-state', state);
 });
 
 watch(
-	() => knobs.value.extra,
+	() => props.node.active,
 	async () => {
-		const state = _.cloneDeep(props.node.state);
-		state.extra = knobs.value.extra;
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
 
-		emit('update-state', state);
+			const state = props.node.state;
+			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
+			runResults.value = output.runResults;
+		}
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => knobs.value,
+	async () => {
+		const state = _.cloneDeep(props.node.state);
+		state.timestampColName = knobs.value.timestampColName;
+		state.extra = knobs.value.extra;
+		state.ensembleConfigs = knobs.value.ensembleConfigs;
+		emit('update-state', state);
+	},
+	{ deep: true }
 );
 </script>
 

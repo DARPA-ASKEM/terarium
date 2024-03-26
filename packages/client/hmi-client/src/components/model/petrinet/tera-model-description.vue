@@ -117,7 +117,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraModelSemanticTables from './tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;
