@@ -337,7 +337,7 @@ public class DatasetController {
 		String line = null;
 		Integer count = 0;
 		while ((line = reader.readLine()) != null) {
-			if (count > limit) {
+			if (limit > 0 && count > limit) {
 				break;
 			}
 			rawCSV += line + '\n';
