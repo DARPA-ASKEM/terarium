@@ -335,8 +335,13 @@ public class DatasetController {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
 
 		String line = null;
+		Integer count = 0;
 		while ((line = reader.readLine()) != null) {
+			if (count > limit) {
+				break;
+			}
 			rawCSV += line + '\n';
+			count++;
 		}
 
 		final List<List<String>> csv;
