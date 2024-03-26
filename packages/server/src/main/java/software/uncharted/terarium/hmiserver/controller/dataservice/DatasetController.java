@@ -49,8 +49,7 @@ import ucar.nc2.Attribute;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.NetcdfFiles;
 
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -209,7 +208,7 @@ public class DatasetController {
 		for(final String filename : dataset.get().getFileNames()) {
 			if (!filename.endsWith(".nc")) {
 				try {
-					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId());
+					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId(), 1);
 					if (csv == null || csv.isEmpty()) {
 						continue;
 					}
@@ -292,7 +291,7 @@ public class DatasetController {
 
 		final List<List<String>> csv;
 		try {
-			csv = getCSVFile(filename, datasetId);
+			csv = getCSVFile(filename, datasetId, limit);
 			if(csv == null){
 				final String error = "Unable to get CSV";
 				log.error(error);
@@ -326,7 +325,7 @@ public class DatasetController {
 		return ResponseEntity.ok(csvAsset);
 	}
 
-	private List<List<String>> getCSVFile(final String filename, final UUID datasetId) throws IOException {
+	private List<List<String>> getCSVFile(final String filename, final UUID datasetId, final Integer limit) throws IOException {
 		String rawCSV = "";
 		final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
@@ -339,7 +338,12 @@ public class DatasetController {
 		final PresignedURL presignedURL = url.get();
 		final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
 		final HttpResponse response = httpclient.execute(get);
-		rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+		BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
+
+		String line = null;
+		while ((line = reader.readLine()) != null) {
+			rawCSV += line + '\n';
+		}
 
 		final List<List<String>> csv;
 		csv = csvToRecords(rawCSV);
