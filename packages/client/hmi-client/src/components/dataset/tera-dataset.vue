@@ -54,7 +54,6 @@
 </template>
 <script setup lang="ts">
 import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
-import * as textUtil from '@/utils/text';
 import { cloneDeep, isString } from 'lodash';
 import { downloadRawFile, getClimateDataset, getDataset, updateDataset } from '@/services/dataset';
 import { AssetType, type CsvAsset, type Dataset, type DatasetColumn } from '@/types/Types';
@@ -72,8 +71,8 @@ import { enrichDataset } from './utils';
 
 enum DatasetView {
 	DESCRIPTION = 'Description',
-	DATA = 'Data',
-	LLM = 'LLM'
+	DATA = 'Data'
+	// LLM = 'LLM'
 }
 
 const props = defineProps({
@@ -103,14 +102,6 @@ const rawContent: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 const view = ref(DatasetView.DESCRIPTION);
-
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
 
 const datasetInfo = computed(() => {
 	const information = {
@@ -206,7 +197,7 @@ const fetchDataset = async () => {
 					}
 					Object.entries(datasetTemp).forEach(([key, value]) => {
 						if (isString(value)) {
-							datasetTemp[key] = highlightSearchTerms(value);
+							datasetTemp[key] = value;
 						}
 					});
 				}
