@@ -181,6 +181,14 @@
 						:size="chartSize"
 						@configuration-change="chartProxy.configurationChange(index, $event)"
 					/>
+					<Button
+						class="add-chart"
+						text
+						:outlined="true"
+						@click="chartProxy.addChart()"
+						label="Add chart"
+						icon="pi pi-plus"
+					/>
 				</section>
 			</tera-drilldown-preview>
 		</template>
