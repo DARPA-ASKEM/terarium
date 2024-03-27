@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
@@ -38,7 +39,7 @@ public class UserService {
 		return user;
 	}
 
-	@Cacheable(value="users", key="#user.id")
+	@CachePut(value="users", key="#user.id")
 	public User save(final User user) {
 		return userRepository.save(user);
 	}

@@ -6,14 +6,14 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<div :tabName="FunmanTabs.Wizard">
+		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
 				<main>
-					<h4 class="primary-text">
+					<h5>
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
-					</h4>
-					<p class="secondary-text">
+					</h5>
+					<p class="secondary-text mt-1">
 						The validator will use these parameters to execute the sanity checks.
 					</p>
 					<div class="section-row timespan">
@@ -77,17 +77,18 @@
 						</div>
 					</div>
 					<div class="spacer">
-						<h4>Add sanity checks</h4>
+						<h5>Add sanity checks</h5>
 						<p>Model configurations will be tested against these constraints</p>
 					</div>
 
-					<tera-compartment-constraint :variables="modelNodeOptions" :mass="mass" />
+					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
-						:model-node-options="modelNodeOptions"
+						:model-states="modelStates"
+						:model-parameters="modelParameters"
 						@delete-self="deleteConstraintGroupForm"
 						@update-self="updateConstraintGroupForm"
 					/>
@@ -112,6 +113,7 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
+				class="pt-3 pb-3 pl-2 pr-4"
 			>
 				<template v-if="showSpinner">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
@@ -270,7 +272,10 @@ const requestConstraints = computed(
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
-const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
+
+const modelStates = ref<string[]>([]); // Used for form's multiselect.
+const modelParameters = ref<string[]>([]);
+
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -461,22 +466,22 @@ const setModelOptions = async () => {
 	);
 	mass.value = massValue;
 
-	// const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
-	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+	if (model.value.model.states) {
+		modelStates.value = model.value.model.states.map((s) => s.id);
+	}
+
+	if (model.value.semantics?.ode.parameters) {
+		modelParameters.value = model.value.semantics?.ode.parameters.map((d) => d.id);
+	}
 
 	// FIXME
-	// model.value.semantics?.ode.parameters?.forEach((param) => {
-	// 	if (initialVars?.includes(param.id)) return;
-	// 	modelColumnNameOptions.push(param.id);
-	// });
-
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
 	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
 	// 		modelColumnNameOptions.push(o.id);
 	// 	});
 	// }
-	modelNodeOptions.value = modelColumnNameOptions;
+	// modelStates.value = modelColumnNameOptions;
 
 	const state = _.cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;
@@ -498,6 +503,7 @@ const setModelOptions = async () => {
 	emit('update-state', state);
 };
 
+// eslint-disable-next-line
 const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	const previous = props.node.state.requestParameters;
 	if (previous && previous.length > 0) {
@@ -544,7 +550,7 @@ watch(
 watch(
 	() => props.node.inputs[0],
 	async () => {
-		// Set model, modelConfiguration, modelNodeOptions
+		// Set model, modelConfiguration, modelStates
 		await initialize();
 		setModelOptions();
 	},

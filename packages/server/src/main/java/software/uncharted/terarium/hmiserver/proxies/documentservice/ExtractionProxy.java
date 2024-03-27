@@ -1,21 +1,15 @@
 package software.uncharted.terarium.hmiserver.proxies.documentservice;
 
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
+
+import java.util.UUID;
 
 @FeignClient(name = "extractionService", url = "${xdd-prod-service.url}")
 public interface ExtractionProxy {
@@ -34,8 +28,8 @@ public interface ExtractionProxy {
 
 	@PostMapping(value = "/cosmos_service/process/", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> processPdfExtraction(
-			@RequestParam("compress_images") final Boolean compressImages,
-			@RequestParam("use_cache") final Boolean useCache,
+			@RequestPart("compress_images") final Boolean compressImages,
+			@RequestPart("use_cache") final Boolean useCache,
 			@RequestPart("pdf") MultipartFile file);
 
 	@GetMapping(value = "/cosmos_service/process/{id}/result")

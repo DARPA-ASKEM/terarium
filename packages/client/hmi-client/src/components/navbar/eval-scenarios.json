@@ -216,7 +216,7 @@
       ]
     },
     {
-      "name": "EPI S4: Stock & Flow",
+      "name": "EPI S4: Stock and Flow",
       "questions": [
         {
           "task": "Q0: General Planning",
@@ -285,7 +285,11 @@
       "name": "CLIMATE S1 - Aircraft Performance",
       "questions": [
         {
-          "task": "Q1: Search for Historical Data & Climate Model Output",
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Search for Historical Data and Climate Model Output",
           "description": ""
         },
         {
@@ -363,8 +367,12 @@
       ]
     },
     {
-      "name": "CLIMATE S2 - Ice & Ocean",
+      "name": "CLIMATE S2 - Ice and Ocean",
       "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
         {
           "task": "Q1: Halfar Equations, Variables, and Parameters",
           "description": ""
@@ -407,11 +415,15 @@
       "name": "CLIMATE S3 - FUND",
       "questions": [
         {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
           "task": "Q1: Access the FUND model",
           "description": ""
         },
         {
-          "task": "Q2: Climate & Emissions Model Info",
+          "task": "Q2: Climate and Emissions Model Info",
           "description": ""
         },
         {
@@ -463,6 +475,10 @@
     {
       "name": "CLIMATE S4 - Photosynthesis",
       "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
         {
           "task": "Q1: Extract Photosynthesis Model",
           "description": ""

@@ -15,8 +15,8 @@
 		</template>
 
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section>
-				<div class="box-container" v-if="model">
+			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
@@ -173,16 +173,25 @@
 						</section>
 					</AccordionTab>
 				</Accordion>
+
+				<!-- For Nelson eval debug -->
+				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
+					<div>Model config id: {{ selectedConfigId }}</div>
+					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
+				</div>
+
 				<template #footer>
-					<Button
-						outlined
-						size="large"
-						:disabled="isSaveDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="createConfiguration"
-					/>
-					<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					<div class="footer">
+						<Button
+							outlined
+							size="large"
+							:disabled="isSaveDisabled"
+							label="Run"
+							icon="pi pi-play"
+							@click="createConfiguration(false)"
+						/>
+						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
+					</div>
 				</template>
 			</tera-drilldown-section>
 		</section>
@@ -225,7 +234,7 @@
 						outlined
 						style="margin-right: auto"
 						label="Save as new configuration"
-						@click="createConfiguration"
+						@click="createConfiguration(false)"
 					/>
 				</template>
 			</tera-drilldown-section>
@@ -254,6 +263,30 @@
 			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
+
+	<Teleport to="body">
+		<tera-modal v-if="sanityCheckErrors.length > 0">
+			<template #header>
+				<h4>Warning, these settings may cause errors</h4>
+			</template>
+			<template #default>
+				<section style="max-height: 22rem; overflow-y: scroll">
+					<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
+						{{ errString }}
+					</div>
+				</section>
+			</template>
+			<template #footer>
+				<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
+				<Button
+					label="Ignore warnings and use configuration"
+					class="p-button-secondary"
+					@click="() => createConfiguration(true)"
+				/>
+			</template>
+		</tera-modal>
+	</Teleport>
+
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas"></canvas>
 </template>
@@ -281,8 +314,9 @@ import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
@@ -348,6 +382,7 @@ const knobs = ref<BasicKnobs>({
 	tempConfigId: ''
 });
 
+const sanityCheckErrors = ref<string[]>([]);
 const isSaveDisabled = computed(() => {
 	if (knobs.value.name === '') return true;
 	return false;
@@ -627,10 +662,57 @@ const updateConfigFromModel = (inputModel: Model) => {
 	knobs.value.parametersMetadata = inputModel.metadata?.parameters ?? {};
 };
 
-const createConfiguration = async () => {
+const runSanityCheck = () => {
+	const errors: string[] = [];
+	const modelToCheck = modelConfiguration.value?.configuration as Model;
+	if (!modelToCheck) {
+		errors.push('no model defined in configuration');
+		return errors;
+	}
+
+	let parameters: ModelParameter[] = [];
+	if ([AMRSchemaNames.PETRINET, AMRSchemaNames.STOCKFLOW].includes(modelType.value)) {
+		if (modelToCheck.semantics?.ode?.parameters) {
+			parameters = modelToCheck.semantics?.ode?.parameters;
+		}
+	} else if (modelToCheck.model.parameters) {
+		parameters = modelToCheck.model.parameters;
+	}
+
+	parameters.forEach((p) => {
+		const val = p.value || 0;
+		const max = p.distribution?.parameters.maximum;
+		const min = p.distribution?.parameters.minimum;
+		if (val > max) {
+			errors.push(`${p.id} value ${p.value} > distribution max of ${max}`);
+		}
+		if (val < min) {
+			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
+		}
+
+		// Arbitrary 0.01 here, try to ensure interval is significant w.r.t value
+		const interval = Math.abs(max - min);
+		if (val !== 0 && Math.abs(interval / val) < 0.01) {
+			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
+		}
+	});
+	return errors;
+};
+
+const createConfiguration = async (force: boolean = false) => {
 	if (!model.value) return;
 
 	const state = cloneDeep(props.node.state);
+
+	sanityCheckErrors.value = [];
+	if (force !== true) {
+		const errors = runSanityCheck();
+		if (errors.length > 0) {
+			sanityCheckErrors.value = errors;
+			return;
+		}
+	}
+
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value.name,
@@ -707,6 +789,7 @@ const initialize = async () => {
 			knobs.value.parameters =
 				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
 		}
+
 		knobs.value.timeseries =
 			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
 		knobs.value.initialsMetadata =
@@ -723,6 +806,28 @@ const initialize = async () => {
 		knobs.value.initialsMetadata = state.initialsMetadata;
 		knobs.value.parametersMetadata = state.parametersMetadata;
 	}
+
+	// Ensure the parameters have constant and distributions for editing in children components
+	knobs.value.parameters.forEach((param) => {
+		if (!param.distribution) {
+			// provide a non-zero range, unless val is itself 0
+			const val = param.value;
+			let lb = 0;
+			let ub = 0;
+			if (val && val !== 0) {
+				lb = val - Math.abs(0.05 * val);
+				ub = val + Math.abs(0.05 * val);
+			}
+
+			param.distribution = {
+				type: 'StandardUniform1',
+				parameters: {
+					minimum: lb,
+					maximum: ub
+				}
+			};
+		}
+	});
 
 	// Create a new session and context based on model
 	try {
@@ -913,5 +1018,14 @@ onUnmounted(() => {
 	mix-blend-mode: darken;
 	opacity: 1;
 	transition: opacity 1s;
+}
+
+.footer {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	padding-top: var(--gap-small);
+	padding-bottom: var(--gap-small);
+	border-top: 1px solid var(--surface-border-light);
 }
 </style>

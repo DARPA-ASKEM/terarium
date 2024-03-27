@@ -1,6 +1,6 @@
 <template>
 	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<div :tabName="SubsetDataTabs.Wizard">
+		<div :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<!-- Geo boundaries -->
 				<h5>Select geo-boundaries</h5>
@@ -83,7 +83,7 @@
 						We should make it so the left footer is aligned left and the right
 						footer is aligned right-->
 					<Button
-						class="mr-auto"
+						class="mr-auto mb-2"
 						@click="run"
 						:label="isSubsetLoading ? 'Processing' : 'Run'"
 						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
@@ -102,6 +102,7 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-2"
 			>
 				<tera-progress-spinner v-if="isSubsetLoading" is-inline>
 					Please wait for the subset to generate. This usually takes a few minutes...
@@ -110,7 +111,14 @@
 				<TabView
 					><TabPanel header="Description">{{ subset?.description }}</TabPanel>
 					<TabPanel header="Map view">
-						<img :src="subset?.metadata?.preview" alt="Subset preview" />
+						<tera-carousel
+							v-if="subset?.metadata?.preview"
+							:labels="subset.metadata.preview.map(({ year }) => year)"
+						>
+							<div v-for="item in subset.metadata.preview" :key="item">
+								<img :src="item.image" alt="Preview" />
+							</div>
+						</tera-carousel>
 					</TabPanel>
 					<TabPanel header="Data">
 						<!--FIXME: Make this look nicer - lazily made with copilot-->
@@ -157,8 +165,8 @@
 				</TabView>
 				<template #footer>
 					<Button
-						@click="showSaveDatasetModal = true"
-						label="Save as new dataset"
+						@click="addSubsetToProject"
+						label="Add subset to project datasets"
 						:disabled="!subset"
 						outlined
 						severity="secondary"
@@ -170,7 +178,8 @@
 	</tera-drilldown>
 	<!--FIXME: Consider moving this to the modal composable for other dataset drilldowns to use-->
 	<!--This modal also causes warnings to popup since the entire component isn't wrapped by something, something to do with emit passing-->
-	<Teleport to="body">
+	<!--FIXME: Worry about naming subset later-->
+	<!-- <Teleport to="body">
 		<tera-modal
 			v-if="showSaveDatasetModal"
 			@modal-mask-clicked="showSaveDatasetModal = false"
@@ -182,7 +191,7 @@
 			<label>Name</label>
 			<InputText v-model="newDatasetName" size="large" />
 			<template #footer>
-				<Button label="Save" @click="saveSubsetAsNewDataset" :disabled="isEmpty(newDatasetName)" />
+				<Button label="Save" @click="addSubsetToProject" :disabled="isEmpty(newDatasetName)" />
 				<Button
 					label="Cancel"
 					severity="secondary"
@@ -191,7 +200,7 @@
 				/>
 			</template>
 		</tera-modal>
-	</Teleport>
+	</Teleport> -->
 </template>
 
 <script setup lang="ts">
@@ -201,19 +210,15 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraCarousel from '@/components/widgets/tera-carousel.vue';
+// import TeraModal from '@/components/widgets/tera-modal.vue';
 import { WorkflowNode } from '@/types/workflow';
-import {
-	getDataset,
-	getClimateDatasetPreview,
-	getClimateSubsetId,
-	createDataset
-} from '@/services/dataset';
+import { getDataset, getClimateDatasetPreview, getClimateSubsetId } from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import InputText from 'primevue/inputtext';
+// import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
@@ -330,8 +335,8 @@ const toDate = ref(new Date(props.node.state.toDate));
 
 const selectedOutputId = ref(props.node.active ?? '');
 
-const showSaveDatasetModal = ref(false);
-const newDatasetName = ref('');
+// const showSaveDatasetModal = ref(false);
+// const newDatasetName = ref('');
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -373,21 +378,11 @@ function updateState() {
 	emit('update-state', state);
 }
 
-async function saveSubsetAsNewDataset() {
+async function addSubsetToProject() {
 	const projectId = useProjects().activeProject.value?.id;
 	if (subset.value && projectId) {
-		const subsetToSave = cloneDeep(subset.value);
-		subsetToSave.name = newDatasetName.value;
-		const newDataset = await createDataset(subsetToSave);
-
-		if (newDataset) {
-			await useProjects().addAsset(AssetType.Dataset, newDataset.id, projectId);
-			logger.info(`New dataset saved as ${newDataset.name}`);
-			showSaveDatasetModal.value = false;
-			newDatasetName.value = subset.value?.name ?? '';
-		} else {
-			logger.error('Failed to save subset as new dataset');
-		}
+		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
+		logger.info(`New dataset saved as ${subset.value.name}`);
 	} else {
 		logger.error('Subset not found');
 	}

@@ -7,7 +7,7 @@
 			/>
 		</template>
 		<section :tabName="CalibrateEnsembleTabs.Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section class="ml-3 mr-2 pt-2">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab header="Model weights">
 						<div class="model-weights">
@@ -15,7 +15,7 @@
 							<section class="ensemble-calibration-graph">
 								<table class="p-datatable-table">
 									<thead class="p-datatable-thead">
-										<th>Model Config ID</th>
+										<th>Model config ID</th>
 										<th>Weight</th>
 									</thead>
 									<tbody class="p-datatable-tbody">
@@ -46,17 +46,17 @@
 						</div>
 					</AccordionTab>
 					<AccordionTab header="Mapping">
-						<label> Dataset Timestamp Column </label>
+						<label> Dataset timestamp column </label>
 						<Dropdown
 							style="width: 50%"
 							v-model="knobs.timestampColName"
 							:options="datasetColumnNames"
-							placeholder="Timestamp Column"
+							placeholder="Timestamp column"
 						/>
 						<template v-if="knobs.ensembleConfigs.length > 0">
 							<table>
 								<tr>
-									<th>Ensemble Variables</th>
+									<th>Ensemble variables</th>
 									<!-- Index matching listModelLabels and ensembleConfigs-->
 									<th v-for="(element, i) in listModelLabels" :key="i">
 										{{ element }}
@@ -89,7 +89,7 @@
 							style="width: 50%"
 							v-model="newSolutionMappingKey"
 							:options="datasetColumnNames"
-							placeholder="Variable Name"
+							placeholder="Variable name"
 						/>
 						<Button
 							class="p-button-sm p-button-outlined"
@@ -104,7 +104,7 @@
 								<th>Units</th>
 								<th>Number of particles</th>
 								<th>Number of iterations</th>
-								<th>Solver Method</th>
+								<th>Solver method</th>
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<td>Steps</td>
@@ -139,6 +139,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				class="mt-3 mr-4 mb-3"
 			>
 				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart

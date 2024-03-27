@@ -23,11 +23,12 @@
 <script setup lang="ts">
 // Proxy to use tera-dataset via a workflow context
 
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraDatasetJupyterRegriddingPanel from '@/components/dataset/tera-dataset-jupyter-regridding-panel.vue';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
-import type { NotebookSession } from '@/types/Types';
+import { getDataset } from '@/services/dataset';
+import type { NotebookSession, Dataset } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -41,14 +42,7 @@ const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
-const assets = computed(() =>
-	props.node.inputs
-		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
-		.map((inputNode) => ({
-			type: inputNode.type,
-			id: inputNode.value![0]
-		}))
-);
+const assets = ref<{ id: string; filename: string }[]>([]);
 
 const notebookSession = ref(<NotebookSession | undefined>undefined);
 
@@ -72,6 +66,26 @@ onMounted(async () => {
 		}
 	}
 
+	// Get filenames and set up assets object to be sent as context:
+	const allDatasets: Dataset[] = [];
+	await Promise.all(
+		props.node.inputs.map(async (ele) => {
+			if (ele?.value?.[0]) {
+				const dataset = await getDataset(ele?.value?.[0]);
+				if (dataset) allDatasets.push(dataset);
+			}
+		})
+	);
+
+	allDatasets.forEach((dataset) => {
+		if (dataset.id && dataset.fileNames?.[0]) {
+			assets.value.push({
+				id: dataset.id,
+				filename: dataset.fileNames[0]
+			});
+		}
+	});
+
 	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
 });
 
@@ -90,5 +104,9 @@ const addOutputPort = (data: any) => {
 	background: white;
 	height: 100%;
 	overflow-y: auto;
+}
+
+:deep(.chat-input-container) {
+	left: 1.5rem;
 }
 </style>
