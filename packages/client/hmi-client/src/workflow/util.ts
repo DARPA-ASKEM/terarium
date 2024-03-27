@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
+import { CalibrateMap } from '@/services/calibrate-workflow';
 
 // export const previewChartSize= (element: HTMLElement) => {
 // }
@@ -46,10 +47,7 @@ export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: 
 	};
 };
 
-export const getTimespan = (
-	dataset?: CsvAsset,
-	mapping?: { [key: string]: string }[]
-): TimeSpan => {
+export const getTimespan = (dataset?: CsvAsset, mapping?: CalibrateMap[]): TimeSpan => {
 	let start = 0;
 	let end = 90;
 	// If we have the min/max timestamp available from the csv asset use it
