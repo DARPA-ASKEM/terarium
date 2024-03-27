@@ -17,7 +17,7 @@
 			</div>
 		</template>
 		<div v-else-if="!isEmpty(annotation)" class="annotation">
-			<p @click="isEditing = true">{{ annotation }}</p>
+			<p @click="isEditing = true">{{ annotation }}<span class="pi pi-pencil ml-2 text-xs" /></p>
 		</div>
 	</section>
 	<Button

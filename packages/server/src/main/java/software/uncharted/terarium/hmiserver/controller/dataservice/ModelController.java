@@ -135,7 +135,11 @@ public class ModelController {
 							// Append the Document extractions to the Model extractions, just for the
 							// front-end.
 							// Those are NOT to be saved back to the data-service.
-							model.get().getMetadata().getAttributes().addAll(extractions);
+							if (extractions != null) {
+								model.get().getMetadata().getAttributes().addAll(extractions);
+							} else {
+								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.", documentId);
+							}
 						}
 					} catch (final Exception e) {
 						log.error("Unable to get the document " + documentId, e);

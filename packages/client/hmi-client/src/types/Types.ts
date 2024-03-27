@@ -99,6 +99,11 @@ export interface Grounding {
     context?: { [index: string]: any };
 }
 
+export interface PresignedURL {
+    url: string;
+    method: string;
+}
+
 export interface ResponseDeleted {
     message: string;
 }

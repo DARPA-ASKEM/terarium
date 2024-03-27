@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code.ProgrammingLanguage;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code.ProgrammingLanguage;
 
 @Data
 @Accessors(chain = true)
@@ -15,28 +14,18 @@ public class CodeFile {
     private Dynamics dynamics;
 
     @TSIgnore
-    public void setProgrammingLanguageFromFileName(String fileName) {
+    public void setProgrammingLanguageFromFileName(final String fileName) {
         // Given the extension of a file, return the programming language
-        String[] parts = fileName.split("\\.");
-        String fileExtension = parts.length > 0 ? parts[parts.length - 1] : "";
-    
-        ProgrammingLanguage language = null;
-        switch (fileExtension) {
-            case "py":
-                language = ProgrammingLanguage.PYTHON;
-                break;
-            case "jl":
-                language = ProgrammingLanguage.Julia;
-                break;
-            case "r":
-                language = ProgrammingLanguage.R;
-                break;
-            case "zip":
-                language = ProgrammingLanguage.ZIP;
-                break;
-            default:
-                language = null; // TODO: Do we need an "unknown" language?
-        }
+        final String[] parts = fileName.split("\\.");
+        final String fileExtension = parts.length > 0 ? parts[parts.length - 1] : "";
+
+        final ProgrammingLanguage language = switch (fileExtension) {
+            case "py" -> ProgrammingLanguage.PYTHON;
+            case "jl" -> ProgrammingLanguage.Julia;
+            case "r" -> ProgrammingLanguage.R;
+            case "zip" -> ProgrammingLanguage.ZIP;
+            default -> null; // TODO: Do we need an "unknown" language?
+        };
 
         this.setLanguage(language);
     }

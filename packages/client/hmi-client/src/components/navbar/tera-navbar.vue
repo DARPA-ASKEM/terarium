@@ -354,7 +354,7 @@ const loadEvaluationScenario = async () => {
 
 	const taskName: string | null = window.localStorage.getItem('evaluationScenarioTask');
 	const taskIndex: number = taskName
-		? evaluationScenario.value.questions.findIndex((q) => q.task === taskName)
+		? evaluationScenario.value?.questions.findIndex((q) => q.task === taskName)
 		: 0;
 	evaluationScenarioTask.value = evaluationScenario.value.questions[taskIndex];
 	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;

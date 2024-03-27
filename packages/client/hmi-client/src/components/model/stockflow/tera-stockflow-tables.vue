@@ -18,7 +18,7 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
+				Parameters<span class="artifact-amount">({{ parametersLength }})</span>
 				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
@@ -53,18 +53,18 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
+				Flows<span class="artifact-amount">({{ flows.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
-				<Column field="id" header="Symbol" />
+			<DataTable v-if="!isEmpty(flows)" data-key="id" :value="flows">
+				<Column field="id" header="ID" />
 				<Column field="name" header="Name" />
-				<Column field="input" header="Input" />
-				<Column field="output" header="Output" />
-				<Column field="expression" header="Expression">
+				<Column field="upstream_stock" header="Upstream stock" />
+				<Column field="downstream_stock" header="Downstream stock" />
+				<Column field="rate_expression" header="Rate expression">
 					<template #body="{ data }">
 						<katex-element
-							v-if="data.expression"
-							:expression="data.expression"
+							v-if="data.rate_expression"
+							:expression="data.rate_expression"
 							:throw-on-error="false"
 						/>
 						<template v-else>--</template>
@@ -77,10 +77,58 @@
 				Other concepts
 				<span class="artifact-amount">({{ otherConcepts.length }})</span>
 			</template>
-			<tera-other-concepts-table
-				:model="model"
-				@update-model="(updatedModel) => emit('update-model', updatedModel)"
-			/>
+			<DataTable v-if="!isEmpty(otherConcepts)" data-key="id" :value="otherConcepts">
+				<Column field="payload.id.id" header="Payload id" />
+				<Column header="Names">
+					<template #body="{ data }">
+						{{
+							data.payload?.names?.map((n) => n?.name).join(', ') ||
+							data.payload?.mentions?.map((m) => m?.name).join(', ') ||
+							'--'
+						}}
+					</template>
+				</Column>
+				<Column header="Values">
+					<template #body="{ data }">
+						{{
+							data.payload?.values?.map((n) => n?.value?.amount).join(', ') ||
+							data.payload?.value_descriptions?.map((m) => m?.value?.amount).join(', ') ||
+							'--'
+						}}
+					</template>
+				</Column>
+				<Column header="Descriptions">
+					<template #body="{ data }">
+						{{
+							data.payload?.descriptions?.map((d) => d?.source).join(', ') ||
+							data.payload?.text_descriptions?.map((d) => d?.description).join(', ') ||
+							'--'
+						}}
+					</template>
+				</Column>
+				<Column field="payload.groundings" header="Concept">
+					<template #body="{ data }">
+						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1"
+							>--</template
+						>
+						<template
+							v-else
+							v-for="grounding in data?.payload?.groundings"
+							:key="grounding.grounding_id"
+						>
+							{{ grounding.grounding_text }}
+							<a
+								target="_blank"
+								rel="noopener noreferrer"
+								:href="getCurieUrl(grounding.grounding_id)"
+								aria-label="Open Concept"
+							>
+								<i class="pi pi-external-link" />
+							</a>
+						</template>
+					</template>
+				</Column>
+			</DataTable>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -102,6 +150,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref, watch, onMounted } from 'vue';
 import { Dictionary } from 'vue-gtag';
+import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
@@ -110,7 +159,6 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
 import Button from 'primevue/button';
-import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -125,7 +173,11 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const transientModel = ref(cloneDeep(props.model));
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
-const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
+const parametersLength = computed(
+	() =>
+		(props.model?.semantics?.ode.parameters?.length ?? 0) +
+		(props.model?.model?.auxiliaries?.length ?? 0)
+);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
 	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
@@ -134,30 +186,10 @@ const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
 });
-const states = computed(() => props.model?.model?.states ?? []);
-const transitions = computed(() => {
-	const results: any[] = [];
-	if (props.model?.model?.transitions) {
-		props.model.model.transitions.forEach((t) => {
-			results.push({
-				id: t.id,
-				name: t?.properties?.name ?? '--',
-				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
-				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
-				expression:
-					props.model?.semantics?.ode?.rates?.find((rate) => rate.target === t.id)?.expression ??
-					null,
-				extractions: extractions?.[t.id] ?? null
-			});
-		});
-	}
-	return results;
-});
+const stocks = computed(() => props.model?.model?.stocks ?? []);
+const flows = computed(() => props.model?.model?.flows ?? []);
 const otherConcepts = computed(() => {
-	const ids = [
-		...(states.value?.map((s) => s.id) ?? []),
-		...(transitions.value?.map((t) => t.id) ?? [])
-	];
+	const ids = [...(stocks.value?.map((s) => s.id) ?? []), ...(flows.value?.map((f) => f.id) ?? [])];
 
 	// find keys that are not aligned
 	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
@@ -185,11 +217,19 @@ const updateInitial = (inits: Initial[]) => {
 };
 
 const updateParam = (params: ModelParameter[]) => {
-	const modelParameters = transientModel.value.semantics?.ode.parameters ?? [];
+	const modelParameters = transientModel.value.semantics?.ode?.parameters ?? [];
 	for (let i = 0; i < modelParameters.length; i++) {
 		const foundParam = params.find((p) => p.id === modelParameters![i].id);
 		if (foundParam) {
 			modelParameters[i] = foundParam;
+		}
+	}
+	// FIXME: Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
+	const modelAuxiliaries = transientModel.value.model?.auxiliaries ?? [];
+	for (let i = 0; i < modelAuxiliaries.length; i++) {
+		const foundParam = params.find((p) => p.id === modelAuxiliaries![i].id);
+		if (foundParam) {
+			modelAuxiliaries[i] = foundParam;
 		}
 	}
 };
