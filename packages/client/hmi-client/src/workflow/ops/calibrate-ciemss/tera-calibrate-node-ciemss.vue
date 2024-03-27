@@ -81,8 +81,8 @@ const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationSta
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(3000)
-		.setThreshold(300)
+		.setInterval(4000)
+		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
