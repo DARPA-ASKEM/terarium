@@ -1,15 +1,20 @@
 package software.uncharted.terarium.hmiserver.controller.knowledge;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import feign.FeignException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -18,9 +23,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import feign.FeignException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
@@ -41,18 +64,14 @@ import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
-import software.uncharted.terarium.hmiserver.service.data.*;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
-import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -105,7 +124,7 @@ public class KnowledgeController {
 		} catch (final FeignException e) {
 			final String error = "Skema Unified Service did not return any AMR based on the provided Equations";
 			log.error(error, e);
-			if(e.status()<100)
+			if (e.status() < 100)
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + ": " + e.getMessage());
 			throw new ResponseStatusException(HttpStatus.valueOf(e.status()), error + ": " + e.getMessage());
 		} catch (final Exception e) {
@@ -166,15 +185,15 @@ public class KnowledgeController {
 	@PostMapping("/base64-equations-to-model")
 	@Secured(Roles.USER)
 	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody final JsonNode req) {
-		try{
-		return ResponseEntity
-				.ok(skemaUnifiedProxy
-						.base64EquationsToAMR(req)
-						.getBody());
+		try {
+			return ResponseEntity
+					.ok(skemaUnifiedProxy
+							.base64EquationsToAMR(req)
+							.getBody());
 		} catch (final FeignException e) {
 			final String error = "Error with Skema Unified Service while converting base64 equations to AMR";
 			log.error(error, e);
-			if(e.status()<100)
+			if (e.status() < 100)
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + ": " + e.getMessage());
 			throw new ResponseStatusException(HttpStatus.valueOf(e.status()), error + ": " + e.getMessage());
 		}
@@ -185,13 +204,13 @@ public class KnowledgeController {
 	public ResponseEntity<String> base64EquationsToLatex(@RequestBody final JsonNode req) {
 		try {
 			return ResponseEntity
-				.ok(skemaUnifiedProxy
-					.base64EquationsToLatex(req)
-					.getBody());
+					.ok(skemaUnifiedProxy
+							.base64EquationsToLatex(req)
+							.getBody());
 		} catch (final FeignException e) {
 			final String error = "Error with Skema Unified Service while converting base64 equations to Latex";
 			log.error(error, e);
-			if(e.status()<100)
+			if (e.status() < 100)
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + ": " + e.getMessage());
 			throw new ResponseStatusException(HttpStatus.valueOf(e.status()), error + ": " + e.getMessage());
 		}
@@ -287,7 +306,8 @@ public class KnowledgeController {
 				final String error = "SKEMA was unable to create a model with the code provided";
 				log.error(error, e);
 				throw new ResponseStatusException(
-						e.status()< 100? org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.valueOf(e.status()),
+						e.status() < 100 ? org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY
+								: HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
 			} catch (final Exception e) {
 				log.error("Unable to get code to amr", e);
@@ -368,7 +388,7 @@ public class KnowledgeController {
 			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 			final String filename = input.getOriginalFilename();
 
-			if(filename == null) {
+			if (filename == null) {
 				throw new ResponseStatusException(
 						HttpStatus.BAD_REQUEST,
 						"File name is required");
@@ -442,7 +462,7 @@ public class KnowledgeController {
 				final String error = "Unable to get model card";
 				log.error(error, e);
 				throw new ResponseStatusException(
-						e.status()<100? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
+						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
 			}
 
@@ -588,7 +608,8 @@ public class KnowledgeController {
 			final String error = "Unable to get profile dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
-					e.status()<100? org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
+					e.status() < 100 ? org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
+							: HttpStatus.valueOf(e.status()),
 					error + ": " + e.getMessage());
 		} catch (final Exception e) {
 			final String error = "Unable to get profile dataset";
@@ -602,66 +623,20 @@ public class KnowledgeController {
 	@PostMapping("/align-model")
 	@Secured(Roles.USER)
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "204", description = "Model as been align with document", content = @Content),
-		@ApiResponse(responseCode = "500", description = "Error aligning model with variable extracted from document", content = @Content)
+			@ApiResponse(responseCode = "204", description = "Model as been align with document", content = @Content),
+			@ApiResponse(responseCode = "500", description = "Error aligning model with variable extracted from document", content = @Content)
 	})
-	public ResponseEntity<Model> postLinkAmr(
+	public ResponseEntity<Model> alignModel(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam("model-id") final UUID modelId) {
 
 		try {
-			final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
-
-			final Model model = modelService.getAsset(modelId).orElseThrow();
-
-			final String modelString = mapper.writeValueAsString(model);
-			final String extractionsString = mapper
-					.writeValueAsString(document.getMetadata().get("attributes") != null ? document.getMetadata().get("attributes") : new HashMap<>());
-
-			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json",
-					"application/json");
-			final StringMultipartFile extractionFile = new StringMultipartFile(
-					extractionsString, "extractions.json",
-					"application/json");
-
-			final ResponseEntity<JsonNode> res;
-			try{
-				res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
-			} catch (final FeignException e) {
-				final String error = "Unable to link AMR file";
-				log.error(error, e);
-				throw new ResponseStatusException(
-						e.status()<100? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-						error + ": " + e.getMessage());
-			}
-			if (!res.getStatusCode().is2xxSuccessful()) {
-				throw new ResponseStatusException(
-						res.getStatusCode(),
-						"Unable to link AMR file");
-			}
-
-			final JsonNode modelJson = mapper.valueToTree(model);
-
-			// overwrite all updated fields
-			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
-
-			// update the model
-			modelService.updateAsset(model);
-
-			// create provenance
-			final Provenance provenance = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
-					ProvenanceType.MODEL,
-					documentId, ProvenanceType.DOCUMENT);
-			provenanceService.createProvenance(provenance);
-
-			return ResponseEntity.noContent().build();
-
-		} catch (final IOException e) {
-			final String error = "Unable to get link amr";
-			log.error(error, e);
+			return ResponseEntity.ok(extractionService.alignAMR(documentId, modelId).get());
+		} catch (final InterruptedException | ExecutionException e) {
+			log.error("Error aligning model with document", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error + ": " + e.getMessage());
+					"Error aligning model with document: " + e.getMessage());
 		}
 	}
 
@@ -670,15 +645,15 @@ public class KnowledgeController {
 	 *
 	 * @param documentId (String): The ID of the document to profile
 	 * @param modelIds   (List<String>): The IDs of the models to use for extraction
-	 * @param domain (String): The domain of the document
+	 * @param domain     (String): The domain of the document
 	 * @return an accepted response, the request being handled asynchronously
 	 */
 	@PostMapping("/variable-extractions")
-	public ResponseEntity<DocumentAsset> postPdfExtractions(
+	public ResponseEntity<Void> variableExtractions(
 			@RequestParam("document-id") final UUID documentId,
-			@RequestParam(name = "model-ids", defaultValue = "[]") final List<UUID> modelIds,
+			@RequestParam(name = "model-ids", required = false) final List<UUID> modelIds,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
-		extractionService.extractVariables(documentId, modelIds, domain);
+		extractionService.extractVariables(documentId, modelIds == null ? new ArrayList<>() : modelIds, domain);
 		return ResponseEntity.accepted().build();
 	}
 
@@ -690,12 +665,12 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
-	@Operation (summary = "Extracts information from the first PDF associated with the given document id")
+	@Operation(summary = "Extracts information from the first PDF associated with the given document id")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Extraction started on PDF", content = @Content),
 			@ApiResponse(responseCode = "500", description = "Error running PDF extraction", content = @Content)
 	})
-	public ResponseEntity<Void> postPDFToCosmos(
+	public ResponseEntity<Void> pdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
 		extractionService.extractPDF(documentId, domain);

@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 
 @FeignClient(name = "skema-unified", url = "${skema-unified.url}")
 public interface SkemaUnifiedProxy {
@@ -60,21 +59,14 @@ public interface SkemaUnifiedProxy {
 	@Data
 	class IntegratedTextExtractionsBody {
 
-		// Files to be sent
-		final StringMultipartFile extractionFile;
-		final StringMultipartFile amrFile;
-
-		// Constants
-		final String contentType = "application/json";
-		final String extractionFileName = "extractions.json";
-		final String amrFileName = "amr.json";
+		public IntegratedTextExtractionsBody(final String text) {
+			this.texts = Arrays.asList(text);
+			this.amrs = new ArrayList<>();
+		}
 
 		public IntegratedTextExtractionsBody(final String text, final List<Model> amrs) {
-			// Create a file from the variable extractions
-			this.extractionFile = new StringMultipartFile(Arrays.asList(text).toString(), extractionFileName, contentType);
-
-			// Create a file from the AMRs
-			final String modelString = amrs.stream()
+			this.texts = Arrays.asList(text);
+			this.amrs = amrs.stream()
 					.map(amr -> {
 						try {
 							final ObjectMapper mapper = new ObjectMapper();
@@ -84,13 +76,16 @@ public interface SkemaUnifiedProxy {
 							return null;
 						}
 					})
-					.collect(Collectors.toList()).toString();
-			this.amrFile = new StringMultipartFile(modelString, amrFileName, contentType);
+					.collect(Collectors.toList());
 		}
 
+		final List<String> texts;
+		final List<String> amrs;
 	}
 
 	@PostMapping("/text-reading/integrated-text-extractions")
 	ResponseEntity<JsonNode> integratedTextExtractions(
-		@RequestBody IntegratedTextExtractionsBody body);
+			@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
+			@RequestParam(value = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
+			@RequestBody IntegratedTextExtractionsBody body);
 }
