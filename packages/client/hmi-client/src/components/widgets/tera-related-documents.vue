@@ -185,7 +185,7 @@ const sendForEnrichment = async () => {
 
 	isLoading.value = false;
 	emit('enriched');
-	getRelatedDocuments();
+	await getRelatedDocuments();
 };
 
 const sendForExtractions = async () => {
@@ -220,22 +220,24 @@ const sendForExtractions = async () => {
 	}
 
 	isLoading.value = false;
-	getRelatedDocuments();
+	await getRelatedDocuments();
 };
 
-function getRelatedDocuments() {
+async function getRelatedDocuments() {
 	if (!props.assetType) return;
 
 	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
 
-	getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then((nodes) => {
-		const provenanceNodes = nodes ?? [];
-		relatedDocuments.value =
-			(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
-				({ id, name }) => ({ id: id ?? '', name: name ?? '' })
-			) ?? [];
-	});
+	await getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then(
+		(nodes) => {
+			const provenanceNodes = nodes ?? [];
+			relatedDocuments.value =
+				(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
+					({ id, name }) => ({ id: id ?? '', name: name ?? '' })
+				) ?? [];
+		}
+	);
 }
 
 onMounted(() => {
