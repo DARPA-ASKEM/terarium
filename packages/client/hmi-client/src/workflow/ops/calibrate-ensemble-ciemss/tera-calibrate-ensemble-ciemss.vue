@@ -434,7 +434,7 @@ th {
 
 th,
 td {
-	padding-left: 0px;
+	padding-left: 0;
 }
 
 .ensemble-header-label {
