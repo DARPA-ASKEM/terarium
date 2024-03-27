@@ -75,16 +75,19 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionWithModelTests() throws Exception {
 
+		final ClassPathResource resource1 = new ClassPathResource("knowledge/extraction_text.txt");
+		final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
+
 		DocumentAsset documentAsset = new DocumentAsset()
 				.setName("test-document-name")
 				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setText(new String(content1));
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
-		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-		Model model = objectMapper.readValue(content, Model.class);
+		final ClassPathResource resource2 = new ClassPathResource("knowledge/extraction_amr.json");
+		final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
+		Model model = objectMapper.readValue(content2, Model.class);
 
 		model = modelService.createAsset(model);
 
@@ -114,7 +117,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		model = extractionService.alignAMR(documentAsset.getId(), model.getId()).get();
 	}
 
-	// @Test
+	// // @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void cosmosPdfExtraction() throws Exception {
 
