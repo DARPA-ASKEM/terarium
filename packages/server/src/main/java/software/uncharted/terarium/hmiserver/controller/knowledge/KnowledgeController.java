@@ -612,7 +612,7 @@ public class KnowledgeController {
 
 			final String modelString = mapper.writeValueAsString(model);
 			final String extractionsString = mapper
-					.writeValueAsString(document.getMetadata() != null ? document.getMetadata() : new HashMap<>());
+					.writeValueAsString(document.getMetadata().get("attributes") != null ? document.getMetadata().get("attributes") : new HashMap<>());
 
 			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json",
 					"application/json");

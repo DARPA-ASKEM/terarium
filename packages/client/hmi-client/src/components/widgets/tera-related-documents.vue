@@ -205,7 +205,6 @@ const sendForExtractions = async () => {
 
 		logger.info('Provenance created after extraction', { showToast: false });
 		emit('extracted');
-		getRelatedDocuments();
 	}
 
 	// Model extraction
@@ -221,6 +220,7 @@ const sendForExtractions = async () => {
 	}
 
 	isLoading.value = false;
+	getRelatedDocuments();
 };
 
 function getRelatedDocuments() {
