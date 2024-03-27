@@ -690,9 +690,9 @@ const runSanityCheck = () => {
 			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
 		}
 
-		// Arbitrary 0.01 here, try to ensure interval is significant w.r.t value
+		// Arbitrary 0.003 here, try to ensure interval is significant w.r.t value
 		const interval = Math.abs(max - min);
-		if (val !== 0 && Math.abs(interval / val) < 0.01) {
+		if (val !== 0 && Math.abs(interval / val) < 0.003) {
 			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
 		}
 	});
