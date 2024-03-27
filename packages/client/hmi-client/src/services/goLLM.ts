@@ -51,7 +51,9 @@ export async function configureModelFromDocument(
 		const taskId = response.data.id;
 		return await handleTaskById(taskId, handlers);
 	} catch (err) {
-		logger.error(`An issue occured while exctracting a model configuration from document. ${err}`);
+		const message = `An issue occurred while extracting a model configuration from document. ${err}`;
+		logger.error(message);
+		console.debug(message);
 	}
 
 	return null;
