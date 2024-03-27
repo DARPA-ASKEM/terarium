@@ -105,6 +105,7 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
 import { computed, onMounted, ref, watch } from 'vue';
+import { logger } from '@/utils/logger';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
@@ -188,29 +189,33 @@ const sendForEnrichment = async () => {
 
 const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
+
+	// Dataset extraction
 	if (props.assetType === AssetType.Dataset) {
 		isLoading.value = true;
-
-		await extractPDF(selectedResourceId);
-
-		if (!props.assetId) return;
-		await createProvenance({
-			relation_type: RelationshipType.EXTRACTED_FROM,
-			left: props.assetId,
-			left_type: mapAssetTypeToProvenanceType(props.assetType),
-			right: selectedResourceId,
-			right_type: ProvenanceType.Document
+		extractPDF(selectedResourceId).then(() => {
+			createProvenance({
+				relation_type: RelationshipType.EXTRACTED_FROM,
+				left: props.assetId!,
+				left_type: mapAssetTypeToProvenanceType(props.assetType),
+				right: selectedResourceId,
+				right_type: ProvenanceType.Document
+			}).then(() => {
+				logger.info('Provenance created after extraction', { showToast: false });
+			});
 		});
-	} else if (props.assetType === AssetType.Model && selectedResourceId) {
-		await extractVariables(selectedResourceId, [props.assetId]);
+	}
 
+	// Model extraction
+	if (props.assetType === AssetType.Model && selectedResourceId) {
+		await extractVariables(selectedResourceId, [props.assetId]);
 		const linkedAmr = await alignModel(props.assetId, selectedResourceId);
 		if (!linkedAmr) return;
 	}
 
 	isLoading.value = false;
 	emit('extracted');
-	await getRelatedDocuments();
+	getRelatedDocuments();
 };
 
 function getRelatedDocuments() {
