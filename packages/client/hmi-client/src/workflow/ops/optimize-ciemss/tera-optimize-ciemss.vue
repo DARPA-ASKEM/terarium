@@ -524,13 +524,14 @@ const runOptimize = async () => {
 	}
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
-	knobs.value.optimzationRunId = optResult.simulationId;
-
 	let state = _.cloneDeep(props.node.state);
-	state.inProgressOptimizeId = optResult.simulationId;
-	emit('update-state', state);
+	if (optResult?.simulationId) {
+		knobs.value.optimzationRunId = optResult.simulationId;
+		state.inProgressOptimizeId = optResult.simulationId;
+		emit('update-state', state);
+	}
 
-	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
+	// policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
 
 	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
@@ -562,9 +563,11 @@ const runOptimize = async () => {
 	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
 	knobs.value.forecastRunId = simulationResponse.id;
 
-	state = _.cloneDeep(props.node.state);
-	state.inProgressForecastId = simulationResponse.id;
-	emit('update-state', state);
+	if (simulationResponse?.id) {
+		state = _.cloneDeep(props.node.state);
+		state.inProgressForecastId = simulationResponse.id;
+		emit('update-state', state);
+	}
 
 	state = _.cloneDeep(props.node.state);
 	emit('append-output', {
@@ -597,8 +600,7 @@ const saveModelConfiguration = async () => {
 };
 
 const setOutputValues = async () => {
-	// if (!knobs.value.forecastRunId) return;
-	console.log(knobs.value.forecastRunId);
+	if (_.isEmpty(knobs.value.forecastRunId)) return;
 	isFetchingRunResults.value = true;
 	const output = await getRunResultCiemss(knobs.value.forecastRunId);
 	simulationRunResults.value[knobs.value.forecastRunId] = output.runResults;
@@ -660,9 +662,7 @@ watch(
 watch(
 	() => knobs.value.forecastRunId,
 	async () => {
-		if (knobs.value.forecastRunId !== '') {
-			setOutputValues();
-		}
+		setOutputValues();
 	},
 	{ immediate: true }
 );
