@@ -97,9 +97,13 @@ export const extractVariables = async (
 ) => {
 	console.group('SKEMA Variable extraction');
 	if (documentId) {
-		await API.post(
-			`/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`
-		);
+		const url = `/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`;
+		const response = await API.post(url);
+		if (response?.status === 202) {
+			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
+		} else {
+			console.debug('Failed — ', response);
+		}
 	} else {
 		console.debug('Failed — No documentId provided for variable extraction.');
 	}
