@@ -55,6 +55,10 @@ public class ExtractionService {
 	final ObjectMapper objectMapper;
 	final ClientEventService clientEventService;
 	final TaskService taskService;
+	private final CurrentUserService currentUserService;
+
+	// time the progress takes to reach each subsequent half
+	final Double HALFTIME_SECONDS = 2.0;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
@@ -118,11 +122,9 @@ public class ExtractionService {
 		return filename;
 	}
 
-	public void extractPDF(final UUID documentId, final String userId, final String domain) {
+	public void extractPDF(final UUID documentId, final String domain) {
 
-		// time the progress takes to reach each subsequent half
-		final Double HALFTIME_SECONDS = 2.0;
-
+		final String userId = currentUserService.get().getId();
 		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
 				HALFTIME_SECONDS);
 

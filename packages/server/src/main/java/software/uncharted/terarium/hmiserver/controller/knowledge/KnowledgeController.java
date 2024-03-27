@@ -697,8 +697,7 @@ public class KnowledgeController {
 	public ResponseEntity<Void> postPDFToCosmos(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
-		final String currentUserId = currentUserService.get().getId();
-		extractionService.extractPDF(documentId, currentUserId, domain);
+		extractionService.extractPDF(documentId, domain);
 		return ResponseEntity.accepted().build();
 	}
 
