@@ -12,6 +12,8 @@ export interface CalibrationOperationStateCiemss {
 
 	calibrationId: string;
 	forecastId: string;
+	numIterations: number;
+	numSamples: number;
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -37,7 +39,9 @@ export const CalibrationOperationCiemss: Operation = {
 			inProgressForecastId: '',
 			calibrationId: '',
 			forecastId: '',
-			errorMessage: { name: '', value: '', traceback: '' }
+			errorMessage: { name: '', value: '', traceback: '' },
+			numIterations: 1000,
+			numSamples: 100
 		};
 		return init;
 	}

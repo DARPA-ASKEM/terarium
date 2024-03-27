@@ -70,19 +70,27 @@
 						/>
 					</div>
 				</div>
-				<!--
+
 				<div class="form-section">
 					<h4>Calibration settings</h4>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of samples</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numSamples" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numSamples"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numIterations" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numIterations"
+							/>
 						</div>
-						<div class="label-and-input">
+						<!-- <div class="label-and-input">
 							<label for="method">Solver method</label>
 							<Dropdown
 								class="p-inputtext-sm"
@@ -90,10 +98,9 @@
 								v-model="method"
 								placeholder="Select"
 							/>
-						</div>
+						</div> -->
 					</div>
 				</div>
-				-->
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="CalibrateTabs.Notebook">
@@ -174,6 +181,7 @@ import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
+import InputNumber from 'primevue/inputnumber';
 // import InputNumber from 'primevue/inputnumber';
 import {
 	CalibrateMap,
@@ -244,10 +252,19 @@ const lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
+interface BasicKnobs {
+	numIterations: number;
+	numSamples: number;
+}
+
+const knobs = ref<BasicKnobs>({
+	numIterations: props.node.state.numIterations ?? 1000,
+	numSamples: props.node.state.numSamples ?? 100
+});
+
 // EXTRA section: Unused, comment out for now Feb 2023
 /*
 const numSamples = ref(100);
-const numIterations = ref(100);
 const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 */
@@ -295,12 +312,7 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			num_iterations: 10
-			/*
-			num_samples: numSamples.value,
-			num_iterations: numIterations.value,
-			method: method.value
-			*/
+			num_iterations: knobs.value.numIterations
 		},
 		timespan: getTimespan(csvAsset.value, mapping.value),
 		engine: 'ciemss'
@@ -398,6 +410,16 @@ onMounted(async () => {
 	datasetColumns.value = datasetOptions;
 });
 
+watch(
+	() => knobs.value,
+	async () => {
+		const state = _.cloneDeep(props.node.state);
+		state.numIterations = knobs.value.numIterations;
+		state.numSamples = knobs.value.numSamples;
+		emit('update-state', state);
+	},
+	{ deep: true }
+);
 watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
