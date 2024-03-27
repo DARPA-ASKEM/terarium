@@ -372,146 +372,71 @@ public class ExtractionService {
 		executor.execute(new Runnable() {
 			 @Override
 			 public void run() {
-			 }
+
+				 clientInterface.sendMessage("Starting variable extraction.");
+				 try {
+					 // Fetch the text from the document
+					 DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+					 clientInterface.sendMessage("Document found, fetching text.");
+					 if (document.getText() == null || document.getText().isEmpty()) {
+						 throw new RuntimeException("No text found in paper document");
+					 }
+
+					 // add optional models
+					 final List<Model> models = new ArrayList<>();
+					 for (final UUID modelId : modelIds) {
+						 models.add(modelService.getAsset(modelId).orElseThrow());
+					 }
+					 clientInterface.sendMessage("Model(s) found, added to extraction request.");
+
+					 // Create a collection to hold the variable extractions
+					 JsonNode collection = null;
+
+					 clientInterface.sendMessage("Sending request to be processes by SKEMA and MIT.");
+					 final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
+					 final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(body);
+
+					 clientInterface.sendMessage("Response received.");
+					 if (resp.getStatusCode().is2xxSuccessful()) {
+						 for (final JsonNode output : resp.getBody().get("outputs")) {
+							 if (!output.has("errors") || output.get("errors").isEmpty()) {
+								 collection = output.get("data");
+								 break;
+							 }
+						 }
+					 } else {
+						 throw new RuntimeException("non successful response.");
+					 }
+
+					 if (collection == null) {
+						 throw new RuntimeException("No variables extractions returned");
+					 }
+
+					 clientInterface.sendMessage("Organizing and saving the extractions.");
+					 final List<JsonNode> attributes = new ArrayList<>();
+					 for (final JsonNode attribute : collection.get("attributes")) {
+						 attributes.add(attribute);
+					 }
+
+					 // add the attributes to the metadata
+					 if (document.getMetadata() == null) {
+						 document.setMetadata(new HashMap<>());
+					 }
+					 document.getMetadata().put("attributes", attributes);
+
+					 // update the document
+					 documentService.updateAsset(document).orElseThrow();
+
+				 } catch (final Exception e) {
+					 final String error = "SKEMA unified integrated-text-extractions request from document: " + documentId + " failed.";
+					 log.error(error, e); // FIXME - Is this handle by the clientInterface.sendError?
+					 clientInterface.sendError(error + " — " + e.getMessage());
+					 throw new ResponseStatusException(
+						 org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						 error);
+				 }
+		}
 		});
-
-		/*
-		DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
-
-		if (document.getText() == null || document.getText().isEmpty()) {
-			throw new RuntimeException("No text found in paper document");
-		}
-
-		final List<JsonNode> collections = new ArrayList<>();
-		JsonNode skemaCollection = null;
-		JsonNode mitCollection = null;
-
-		try {
-
-			// add optional models
-			final List<Model> models = new ArrayList<>();
-			for (final UUID modelId : modelIds) {
-				models.add(modelService.getAsset(modelId).orElseThrow());
-			}
-
-			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
-
-			log.info("Sending variable extraction request to SKEMA");
-			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(annotateMIT,
-					annotateSkema, body);
-
-			if (resp.getStatusCode().is2xxSuccessful()) {
-				for (final JsonNode output : resp.getBody().get("outputs")) {
-					if (!output.has("errors") || output.get("errors").size() == 0) {
-						skemaCollection = output.get("data");
-						break;
-					}
-				}
-
-				if (skemaCollection != null) {
-					collections.add(skemaCollection);
-				}
-			} else {
-				log.error("Unable to extract variables from document: " + document.getId());
-			}
-
-		} catch (final FeignException e) {
-			final String error = "SKEMA integrated-text-extractions request failed";
-			throw new ResponseStatusException(
-					HttpStatus.valueOf(e.status()),
-					error + ": " + e.getMessage());
-		} catch (final Exception e) {
-			log.error("SKEMA variable extraction for document " + documentId + " failed.", e);
-		}
-
-		// Send document to MIT
-		try {
-			final StringMultipartFile file = new StringMultipartFile(document.getText(), "text.txt",
-					"application/text");
-
-			log.info("Sending variable extraction request to MIT");
-			final ResponseEntity<JsonNode> resp = mitProxy.uploadFileExtract(MIT_OPENAI_API_KEY, domain, file);
-
-			if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-				mitCollection = resp.getBody();
-				collections.add(mitCollection);
-			} else {
-				log.error("Unable to extract variables from document: " + document.getId());
-			}
-
-		} catch (final FeignException e) {
-			final String error = "MIT upload_file_extract request failed";
-			throw new ResponseStatusException(
-					HttpStatus.valueOf(e.status()),
-					error + ": " + e.getMessage());
-		} catch (final Exception e) {
-			log.error("MIT variable extraction for document {} failed", documentId, e);
-		}
-
-		if (skemaCollection == null && mitCollection == null) {
-			throw new RuntimeException("Unable to extract variables from document: " + document.getId());
-		}
-
-		final List<JsonNode> attributes = new ArrayList<>();
-
-		if (skemaCollection == null || mitCollection == null) {
-			log.info("Falling back on single variable extraction since one system failed");
-			for (final JsonNode collection : collections) {
-				for (final JsonNode attribute : collection.get("attributes")) {
-					attributes.add(attribute);
-				}
-			}
-		} else {
-			// Merge both with some de de-duplications
-
-			final StringMultipartFile arizonaFile = new StringMultipartFile(
-					objectMapper.writeValueAsString(skemaCollection),
-					"text.json",
-					"application/json");
-
-			final StringMultipartFile mitFile = new StringMultipartFile(
-					objectMapper.writeValueAsString(mitCollection),
-					"text.json",
-					"application/json");
-
-			try {
-				final ResponseEntity<JsonNode> resp = mitProxy.getMapping(MIT_OPENAI_API_KEY, domain, mitFile,
-						arizonaFile);
-
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode attribute : resp.getBody().get("attributes")) {
-						attributes.add(attribute);
-					}
-				} else {
-					// fallback to collection
-					log.info("MIT merge failed: {}", resp.getBody().asText());
-					for (final JsonNode collection : collections) {
-						for (final JsonNode attribute : collection.get("attributes")) {
-							attributes.add(attribute);
-						}
-					}
-				}
-			} catch (final FeignException e) {
-				final String error = "MIT get_mapping request failed";
-				throw new ResponseStatusException(
-						HttpStatus.valueOf(e.status()),
-						error + ": " + e.getMessage());
-			} catch (final Exception e) {
-				log.error("MIT merge failed", e);
-			}
-		}
-
-		// add the attributes to the metadata
-		if (document.getMetadata() == null) {
-			document.setMetadata(new HashMap<>());
-		}
-		document.getMetadata().put("attributes", attributes);
-
-		// update the document
-		document = documentService.updateAsset(document).orElseThrow();
-
-		return document;
-		 */
 	}
 
 	public static HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
