@@ -3,39 +3,36 @@
 		class="no-arrows"
 		type="number"
 		:value="modelValue"
-		@input="emit('update:modelValue', $event.target.value)"
-		@keypress="handleKeypress"
+		@input="$event.target && updateValue($event.target)"
 	/>
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
 import InputText from 'primevue/inputtext';
 
-const props = defineProps<{
-	modelValue: number;
-	minFractionDigits?: number;
-	maxFractionDigits?: number;
-}>();
+defineProps({
+	modelValue: {
+		type: Number,
+		default: 0
+	},
+	// TODO: Add support for these later
+	minFractionDigits: {
+		type: Number,
+		default: null
+	},
+	maxFractionDigits: {
+		type: Number,
+		default: null
+	}
+});
 
 const emit = defineEmits(['update:modelValue']);
 
-watch(
-	() => props.modelValue,
-	(newValue) => {
-		if (props.minFractionDigits && props.maxFractionDigits) {
-			const floatValue = parseFloat(newValue);
-			const fractionDigits = Math.min(
-				Math.max(newValue.split('.')[1]?.length || 0, props.minFractionDigits || 0),
-				props.maxFractionDigits || Infinity
-			);
-			const adjustedValue = floatValue.toFixed(fractionDigits);
-			if (adjustedValue !== newValue) {
-				emit('update:modelValue', adjustedValue);
-			}
-		}
+function updateValue({ value }: any) {
+	if (value) {
+		emit('update:modelValue', parseFloat(value));
 	}
-);
+}
 </script>
 
 <style scoped>
