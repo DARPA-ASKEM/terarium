@@ -110,10 +110,15 @@ public class ClimateDataService {
             if (!climateDataResponse.getResult().getJobResult().isNull()) {
                 try {
                     final ClimateDataResultSubset result = objectMapper.convertValue(climateDataResponse.getResult().getJobResult(), ClimateDataResultSubset.class);
+                    if (result.getStatus().equals("error")) {
+                        log.error("Failed to extract subset");
+                        final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, "Failed to get subset : " + result.getError());
+                        climateDataSubsetRepository.save(subset);
+                    } else {
+                        final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, result.getDatasetId());
 
-                    final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, result.getDatasetId());
-
-                    climateDataSubsetRepository.save(subset);
+                        climateDataSubsetRepository.save(subset);
+                    }
 
                     climateDataSubsetTaskRepository.delete(subsetTask);
                 } catch (final Exception e) {
