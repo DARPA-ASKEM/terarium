@@ -51,13 +51,10 @@
 					<label v-if="weights">
 						{{ variable + ' Weight' }}
 					</label>
-					<InputNumber
+					<tera-input-number
 						v-if="weights"
 						:key="index"
 						:placeholder="variable"
-						mode="decimal"
-						:min-fraction-digits="3"
-						:max-fraction-digits="3"
 						v-model="weights[index]"
 						@update:model-value="updateChanges()"
 					/>
@@ -99,22 +96,16 @@
 			</div>
 			<div class="button-row">
 				<label>Lower bound</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					mode="decimal"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
 					v-model="lowerBound"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
 			<div class="button-row">
 				<label>Upper bound</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					mode="decimal"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
 					v-model="upperBound"
 					@update:model-value="updateChanges()"
 				/>
@@ -126,11 +117,11 @@
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/workflow/ops/funman/funman-operation';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
 const props = defineProps<{
 	modelStates: string[];

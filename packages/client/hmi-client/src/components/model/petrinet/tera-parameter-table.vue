@@ -156,14 +156,14 @@
 					class="distribution-container"
 				>
 					<label>Min</label>
-					<tera-input-float
+					<tera-input-number
 						class="distribution-item min-value"
 						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
 						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 					<label>Max</label>
-					<tera-input-float
+					<tera-input-number
 						class="distribution-item max-value"
 						v-model.lazy="slotProps.data.value.distribution.parameters.maximum"
 						:disabled="readonly"
@@ -176,7 +176,7 @@
 					v-else-if="slotProps.data.type === ParamType.CONSTANT"
 					class="flex align-items-center"
 				>
-					<tera-input-float
+					<tera-input-number
 						class="constant-number"
 						v-model.lazy="slotProps.data.value.value"
 						:disabled="readonly"
@@ -393,7 +393,7 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import { updateVariable } from '@/model-representation/service';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import TeraInputFloat from '@/components/widgets/tera-input-float.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
 const props = defineProps<{
 	model: Model;
