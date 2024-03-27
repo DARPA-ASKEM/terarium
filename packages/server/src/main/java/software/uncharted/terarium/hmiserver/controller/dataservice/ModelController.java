@@ -22,6 +22,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -118,9 +119,14 @@ public class ModelController {
 			body.setTypes(List.of(ProvenanceType.DOCUMENT));
 			final Set<String> documentIds = provenanceSearchService.modelsFromDocument(body);
 			if (!documentIds.isEmpty()) {
+				// Make sure we have a metadata object
+				if (model.get().getMetadata() == null) {
+					model.get().setMetadata(new ModelMetadata());
+				}
 				// Make sure we have an attributes list
-				if (model.get().getMetadata().getAttributes() == null)
+				if (model.get().getMetadata().getAttributes() == null) {
 					model.get().getMetadata().setAttributes(new ArrayList<>());
+				}
 
 				documentIds.forEach(documentId -> {
 					try {
