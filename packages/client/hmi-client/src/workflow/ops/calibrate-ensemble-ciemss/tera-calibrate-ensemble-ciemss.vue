@@ -12,7 +12,7 @@
 					<AccordionTab header="Model weights">
 						<div class="model-weights">
 							<!-- Turn this into a horizontal bar chart -->
-							<section class="ensemble-calibration-graph">
+							<section>
 								<table class="p-datatable-table">
 									<thead class="p-datatable-thead">
 										<th>Model config ID</th>
@@ -47,15 +47,15 @@
 					<AccordionTab header="Mapping">
 						<label> Dataset timestamp column </label>
 						<Dropdown
-							style="width: 50%"
 							v-model="knobs.timestampColName"
 							:options="datasetColumnNames"
 							placeholder="Timestamp column"
+							class="ml-2"
 						/>
 						<template v-if="knobs.ensembleConfigs.length > 0">
-							<table>
+							<table class="w-full mt-3">
 								<tr>
-									<th>Ensemble variables</th>
+									<th class="w-4">Ensemble variables</th>
 									<!-- Index matching listModelLabels and ensembleConfigs-->
 									<th v-for="(element, i) in listModelLabels" :key="i">
 										{{ element }}
@@ -78,6 +78,7 @@
 											<Dropdown
 												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
 												:options="allModelOptions[i - 1]?.map((ele) => ele.id)"
+												class="w-full mb-2 mt-2"
 											/>
 										</template>
 									</td>
@@ -85,7 +86,7 @@
 							</table>
 						</template>
 						<Dropdown
-							style="width: 50%"
+							class="mr-2"
 							v-model="newSolutionMappingKey"
 							:options="datasetColumnNames"
 							placeholder="Variable name"
@@ -417,12 +418,6 @@ watch(
 	z-index: 1;
 }
 
-.ensemble-calibration-graph {
-	/* margin-left: 1rem; */
-	height: 200px;
-	/* width: 80%; */
-}
-
 .model-weights {
 	display: flex;
 }
@@ -438,7 +433,7 @@ th {
 
 th,
 td {
-	padding-left: 15px;
+	padding-left: 0;
 }
 
 .ensemble-header-label {
