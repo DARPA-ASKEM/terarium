@@ -638,7 +638,7 @@ public class KnowledgeController {
 
 			final JsonNode modelJson = mapper.valueToTree(model);
 
-			// ovewrite all updated fields
+			// overwrite all updated fields
 			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
 
 			// update the model
