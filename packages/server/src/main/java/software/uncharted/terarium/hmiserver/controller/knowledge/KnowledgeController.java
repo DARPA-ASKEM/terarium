@@ -599,7 +599,7 @@ public class KnowledgeController {
 		}
 	}
 
-	@PostMapping("/link-amr")
+	@PostMapping("/align-model")
 	@Secured(Roles.USER)
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "204", description = "Model as been align with document", content = @Content),
