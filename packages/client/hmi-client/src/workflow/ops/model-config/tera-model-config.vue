@@ -279,7 +279,7 @@
 			<template #footer>
 				<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
 				<Button
-					label="Ignore"
+					label="Ignore warnings and use configuration"
 					class="p-button-secondary"
 					@click="() => createConfiguration(true)"
 				/>
