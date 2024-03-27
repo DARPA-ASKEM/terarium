@@ -362,13 +362,19 @@ public class ExtractionService {
 		});
 	}
 
-	public DocumentAsset extractVariables(final UUID documentId, final List<UUID> modelIds, final Boolean annotateSkema,
+	public void extractVariables(final UUID documentId, final List<UUID> modelIds, final Boolean annotateSkema,
 			final Boolean annotateMIT,
 			final String domain) {
 
 		final String userId = currentUserService.get().getId();
 		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
 			HALFTIME_SECONDS);
+
+		executor.execute(new Runnable() {
+			 @Override
+			 public void run() {
+			 }
+		});
 
 		/*
 		DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
