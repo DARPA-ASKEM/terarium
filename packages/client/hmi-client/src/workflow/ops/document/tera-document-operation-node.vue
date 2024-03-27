@@ -113,7 +113,7 @@ watch(
 			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
 				emit('append-output', {
 					type: 'documentId',
-					label: `document`,
+					label: documentName.value,
 					value: [
 						{
 							documentId: document.value.id,
