@@ -380,7 +380,7 @@ function updateState() {
 
 async function addSubsetToProject() {
 	const projectId = useProjects().activeProject.value?.id;
-	if (subset.value && projectId) {
+	if (subset.value?.id && projectId) {
 		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
 		logger.info(`New dataset saved as ${subset.value.name}`);
 	} else {
