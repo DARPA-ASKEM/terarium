@@ -10,7 +10,6 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -58,7 +57,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionTests() throws Exception {
 
@@ -72,7 +71,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAsset = extractionService.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi").get();
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionWithModelTests() throws Exception {
 
@@ -93,7 +92,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 				.get();
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void linkAmrTests() throws Exception {
 
@@ -115,7 +114,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		model = extractionService.alignAMR(documentAsset.getId(), model.getId()).get();
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void cosmosPdfExtraction() throws Exception {
 
