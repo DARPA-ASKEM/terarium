@@ -15,7 +15,10 @@ export interface MiraParameter {
 	context: any;
 	units: any;
 	value: any;
-	distribution: any;
+	distribution?: {
+		type: string;
+		parameters: any;
+	};
 }
 
 export interface MiraInitial {
