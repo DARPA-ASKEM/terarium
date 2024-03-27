@@ -55,7 +55,13 @@
 					is-selectable
 					class="h-full"
 				>
-					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
+					<tera-notebook-error
+						v-if="executeResponse.status === OperatorStatus.ERROR"
+						:name="executeResponse.name"
+						:value="executeResponse.value"
+						:traceback="executeResponse.traceback"
+					/>
+					<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					</div>
@@ -95,15 +101,16 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -149,12 +156,12 @@ const modelId = props.node.inputs[0].value?.[0];
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
-	'Add a new transition from S to R with the name vaccine with the rate of v.',
-	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u',
-	'Add a new transition (from nowhere) to S with a rate constant of f.',
-	'Add a new transition (from nowhere) to S with a rate constant of f. The rate depends on R.',
-	'Add a new transition from S (to nowhere) with a rate constant of v',
-	'Add a new transition from S (to nowhere) with a rate constant of v. The Rate depends on R',
+	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days.',
+	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u with unit Days',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days.',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days. The rate depends on R.',
+	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days',
+	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
 	'Add an observable titled sample with the expression A * B  * p.',
 	'Rename the state S to Susceptible in the infection transition.',
 	'Rename the transition infection to inf.'
@@ -165,11 +172,21 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 
 const appendCode = (data: any, property: string) => {
 	const code = data.content[property] as string;
 	if (code) {
 		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+
+		if (property === 'executed_code') {
+			saveCodeToState(code, true);
+		}
 	} else {
 		logger.error('No code to append');
 	}
@@ -207,18 +224,24 @@ const runFromCode = (code: string) => {
 		.register('stream', (data) => {
 			console.log('stream', data);
 		})
-		.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
-		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;
-
 			syncWithMiraModel(data);
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
 			}
+		})
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+			executeResponse.value = {
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+			};
 		});
 };
 
@@ -380,11 +403,12 @@ onUnmounted(() => {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
-	/** TODO: Temporary solution, should be using the default overlay-container padding
-	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
-	margin-left: 1.5rem;
 }
 
+.notebook-section:deep(main .notebook-toolbar),
+.notebook-section:deep(main .ai-assistant) {
+	padding-left: var(--gap-medium);
+}
 .toolbar-right-side {
 	position: absolute;
 	top: var(--gap);

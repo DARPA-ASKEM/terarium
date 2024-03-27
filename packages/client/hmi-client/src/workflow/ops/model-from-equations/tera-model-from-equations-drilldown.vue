@@ -14,11 +14,11 @@
 			/>
 		</template>
 		<tera-drilldown-section :is-loading="assetLoading">
-			<header class="header-group">
+			<header class="header-group ml-4 mt-3">
 				<p>These equations will be used to create your model.</p>
 				<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
 			</header>
-			<ul class="blocks-container">
+			<ul class="blocks-container ml-3">
 				<li v-for="(equation, i) in clonedState.equations" :key="i">
 					<tera-asset-block
 						:is-included="equation.includeInProcess"
@@ -55,7 +55,7 @@
 				</li>
 			</ul>
 			<template #footer>
-				<span>
+				<span class="mb-2">
 					<label>Model framework</label>
 					<Dropdown
 						class="w-full md:w-14rem ml-2"
@@ -70,7 +70,7 @@
 			</template>
 		</tera-drilldown-section>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview class="mt-3 mr-4 mb-2 ml-2">
 				<section v-if="selectedModel">
 					<tera-model-description
 						:model="selectedModel"

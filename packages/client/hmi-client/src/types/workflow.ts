@@ -14,6 +14,7 @@ export enum WorkflowOperationTypes {
 	SIMULATE_ENSEMBLE_CIEMSS = 'SimulateEnsembleCiemms',
 	CALIBRATE_ENSEMBLE_CIEMSS = 'CalibrateEnsembleCiemms',
 	DATASET_TRANSFORMER = 'DatasetTransformer',
+	SUBSET_DATA = 'SubsetData',
 	MODEL_TRANSFORMER = 'ModelTransformer',
 	MODEL_FROM_CODE = 'ModelFromCode',
 	FUNMAN = 'Funman',
@@ -25,7 +26,8 @@ export enum WorkflowOperationTypes {
 	MODEL_EDIT = 'ModelEdit',
 	DOCUMENT = 'Document',
 	MODEL_FROM_EQUATIONS = 'ModelFromEquations',
-	DECAPODES = 'Decapodes'
+	DECAPODES = 'Decapodes',
+	REGRIDDING = 'Regridding'
 }
 
 export enum OperatorStatus {

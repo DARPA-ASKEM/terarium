@@ -2,7 +2,7 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				Initial variables<span class="artifact-amount">({{ states.length }})</span>
+				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
@@ -77,58 +77,10 @@
 				Other concepts
 				<span class="artifact-amount">({{ otherConcepts.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(otherConcepts)" data-key="id" :value="otherConcepts">
-				<Column field="payload.id.id" header="Payload id" />
-				<Column header="Names">
-					<template #body="{ data }">
-						{{
-							data.payload?.names?.map((n) => n?.name).join(', ') ||
-							data.payload?.mentions?.map((m) => m?.name).join(', ') ||
-							'--'
-						}}
-					</template>
-				</Column>
-				<Column header="Values">
-					<template #body="{ data }">
-						{{
-							data.payload?.values?.map((n) => n?.value?.amount).join(', ') ||
-							data.payload?.value_descriptions?.map((m) => m?.value?.amount).join(', ') ||
-							'--'
-						}}
-					</template>
-				</Column>
-				<Column header="Descriptions">
-					<template #body="{ data }">
-						{{
-							data.payload?.descriptions?.map((d) => d?.source).join(', ') ||
-							data.payload?.text_descriptions?.map((d) => d?.description).join(', ') ||
-							'--'
-						}}
-					</template>
-				</Column>
-				<Column field="payload.groundings" header="Concept">
-					<template #body="{ data }">
-						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1"
-							>--</template
-						>
-						<template
-							v-else
-							v-for="grounding in data?.payload?.groundings"
-							:key="grounding.grounding_id"
-						>
-							{{ grounding.grounding_text }}
-							<a
-								target="_blank"
-								rel="noopener noreferrer"
-								:href="getCurieUrl(grounding.grounding_id)"
-								aria-label="Open Concept"
-							>
-								<i class="pi pi-external-link" />
-							</a>
-						</template>
-					</template>
-				</Column>
-			</DataTable>
+			<tera-other-concepts-table
+				:model="model"
+				@update-model="(updatedModel) => emit('update-model', updatedModel)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -148,9 +100,8 @@ import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types
 import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { Dictionary } from 'vue-gtag';
-import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
@@ -159,6 +110,7 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
 import Button from 'primevue/button';
+import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -172,6 +124,7 @@ const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
 const transientModel = ref(cloneDeep(props.model));
+const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
@@ -241,17 +194,22 @@ const updateParam = (params: ModelParameter[]) => {
 	}
 };
 
-watch(
-	() => props.model,
-	async (model) => {
-		if (!model) return;
-		transientModel.value = cloneDeep(model);
-		const response: any = await getMMT(model);
+function updateMMT() {
+	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
-	},
-	{ immediate: true }
+	});
+}
+
+watch(
+	() => props.model,
+	(model) => {
+		transientModel.value = cloneDeep(model);
+		updateMMT();
+	}
 );
+
+onMounted(() => updateMMT());
 </script>
 
 <style scoped>

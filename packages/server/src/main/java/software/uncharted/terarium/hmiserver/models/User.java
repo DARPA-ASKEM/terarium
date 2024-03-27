@@ -99,13 +99,21 @@ public class User implements UserDetails {
 	 * @return
 	 */
 	private static int hash(final User user) {
-		return (user.id + user.username + user.email + user.givenName + user.familyName + user.name + user.enabled).hashCode();
+		return (user.id + user.username + user.email + user.givenName + user.familyName + user.name + user.enabled + user.roles).hashCode();
 	}
 
 	public User merge(final User other) {
 		lastLoginAtMs = other.lastLoginAtMs;
 		createdAtMs = other.createdAtMs;
-		roles = other.roles;
+		if (roles == null) {
+			roles = other.roles;
+		} else {
+			for (Role role : other.roles) {
+				if (!roles.contains(role)) {
+					roles.add(role);
+				}
+			}
+		}
 		return this;
 	}
 }

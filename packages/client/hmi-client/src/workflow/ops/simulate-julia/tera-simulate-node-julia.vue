@@ -1,14 +1,18 @@
 <template>
 	<main>
-		<tera-simulate-chart
-			v-if="runResults[selectedRunId]"
-			:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
-			:chartConfig="{
-				selectedRun: selectedRunId,
-				selectedVariable: props.node.state.chartConfigs[0]
-			}"
-			:size="{ width: 180, height: 120 }"
-		/>
+		<template v-if="runResults[selectedRunId]">
+			<tera-simulate-chart
+				v-for="(config, idx) of props.node.state.chartConfigs"
+				:key="idx"
+				:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
+				:chartConfig="{
+					selectedRun: selectedRunId,
+					selectedVariable: config
+				}"
+				:size="{ width: 180, height: 120 }"
+				@configuration-change="chartProxy.configurationChange(idx, $event)"
+			/>
+		</template>
 
 		<Button
 			v-if="areInputsFilled"
@@ -29,12 +33,13 @@ import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import { WorkflowNode } from '@/types/workflow';
-import { RunResults } from '@/types/SimulateConfig';
+import type { WorkflowNode } from '@/types/workflow';
+import type { RunResults } from '@/types/SimulateConfig';
 import { getRunResult, pollAction } from '@/services/models/simulation-service';
 import { csvParse } from 'd3';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
+import { chartActionsProxy } from '@/workflow/util';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -68,6 +73,10 @@ const pollResult = async (runId: string) => {
 	}
 	return pollerResults;
 };
+
+const chartProxy = chartActionsProxy(props.node, (state: SimulateJuliaOperationState) => {
+	emit('update-state', state);
+});
 
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);

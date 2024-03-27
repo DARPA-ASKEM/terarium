@@ -5,13 +5,14 @@
 			v-model="selectedVariable"
 			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
-			placeholder="Select a state variable"
+			placeholder="What do you want to see?"
 			@update:model-value="updateSelectedVariable"
+			filter
 		>
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
 					<template v-if="index > 0">,&nbsp;</template>
-					<span :style="{ color: getVariableColorByVar(variable) }">
+					<span class="custom-chip" :style="{ color: getVariableColorByVar(variable) }">
 						{{ variable }}
 					</span>
 				</template>
@@ -24,6 +25,9 @@
 			:data="chartData"
 			:options="CHART_OPTIONS"
 		/>
+		<section class="empty-chart" v-if="!selectedVariable.length">
+			Select which variables to display
+		</section>
 	</div>
 </template>
 
@@ -110,6 +114,19 @@ const CHART_OPTIONS = {
 	plugins: {
 		legend: {
 			display: false
+		},
+		tooltip: {
+			/* This ensures the tooltip shows the full line color, not just the semi-transparent version of it */
+			callbacks: {
+				labelColor(context) {
+					const variableName = context.dataset.label.split(' - ')[1];
+					const color = getVariableColorByVar(variableName);
+					return {
+						borderColor: color,
+						backgroundColor: color
+					};
+				}
+			}
 		}
 	},
 	scales: {
@@ -186,7 +203,7 @@ const getLineColor = (variableName: string, runIdx: number) => {
 		const lastRun = runIdList.length - 1;
 		return runIdx === lastRun
 			? getVariableColorByVar(variableName)
-			: `${getVariableColorByVar(variableName)}10`;
+			: `${getVariableColorByVar(variableName)}30`;
 	}
 
 	return hasMultiRuns.value
@@ -282,19 +299,40 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/*
+.custom-chip {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-bigger);
+	padding: var(--gap-xsmall) var(--gap);
+	color: var(--surface-0);
+}
+*/
+.simulate-chart {
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-small);
+	position: relative;
+}
 .multiselect-title {
 	font-size: smaller;
 	font-weight: 700;
 }
 
 .p-chart {
-	width: 100%;
-	/* height: 200px; */
-	margin-top: 0.5em;
+	margin-top: var(--gap-small);
 }
 
 .p-multiselect {
 	width: 100%;
 	border-color: lightgrey;
+}
+
+.empty-chart {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: var(--text-color-subdued);
 }
 </style>

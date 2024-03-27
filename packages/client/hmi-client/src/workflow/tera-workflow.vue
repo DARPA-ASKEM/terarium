@@ -183,6 +183,7 @@
 			:node="currentActiveNode"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="closeDrilldown"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
@@ -202,7 +203,8 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowOutput,
-	WorkflowPort
+	WorkflowPort,
+	OperatorStatus
 } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
 // Operation imports
@@ -239,6 +241,7 @@ import * as ModelConfigOp from './ops/model-config/mod';
 import * as CalibrateCiemssOp from './ops/calibrate-ciemss/mod';
 import * as CalibrateEnsembleCiemssOp from './ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from './ops/dataset-transformer/mod';
+import * as SubsetDataOp from './ops/subset-data/mod';
 import * as CalibrateJuliaOp from './ops/calibrate-julia/mod';
 import * as CodeAssetOp from './ops/code-asset/mod';
 import * as OptimizeCiemssOp from './ops/optimize-ciemss/mod';
@@ -247,6 +250,7 @@ import * as DocumentOp from './ops/document/mod';
 import * as ModelFromDocumentOp from './ops/model-from-equations/mod';
 import * as ModelComparisonOp from './ops/model-comparison/mod';
 import * as DecapodesOp from './ops/decapodes/mod';
+import * as RegriddingOp from './ops/regridding/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -266,6 +270,7 @@ registry.registerOp(ModelConfigOp);
 registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
+registry.registerOp(SubsetDataOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(ModelCouplingOp);
@@ -273,6 +278,7 @@ registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
 registry.registerOp(DecapodesOp);
+registry.registerOp(RegriddingOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -378,6 +384,12 @@ function appendOutput(
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
 	workflowService.updateNodeState(wf.value, node.id, state);
+	workflowDirty = true;
+}
+
+function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
+	if (!node) return;
+	workflowService.updateNodeStatus(wf.value, node.id, status);
 	workflowDirty = true;
 }
 
@@ -536,8 +548,14 @@ const contextMenuItems: MenuItem[] = [
 				label: DatasetTransformerOp.operation.displayName,
 				command: addOperatorToWorkflow(DatasetTransformerOp)
 			},
-			{ label: 'Subset dataset', disabled: true },
-			{ label: 'Transform gridded dataset', disabled: true }
+			{
+				label: SubsetDataOp.operation.displayName,
+				command: addOperatorToWorkflow(SubsetDataOp)
+			},
+			{
+				label: RegriddingOp.operation.displayName,
+				command: addOperatorToWorkflow(RegriddingOp)
+			}
 		]
 	},
 	{

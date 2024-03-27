@@ -50,6 +50,7 @@
 					v-if="pageType === AssetType.Document"
 					:assetId="assetId"
 					:previewLineLimit="10"
+					@remove="removeAsset({ assetId, pageType })"
 				/>
 				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
