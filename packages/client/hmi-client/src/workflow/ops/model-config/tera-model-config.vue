@@ -188,7 +188,7 @@
 							:disabled="isSaveDisabled"
 							label="Run"
 							icon="pi pi-play"
-							@click="createConfiguration"
+							@click="createConfiguration(false)"
 						/>
 						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
 					</div>
@@ -234,7 +234,7 @@
 						outlined
 						style="margin-right: auto"
 						label="Save as new configuration"
-						@click="createConfiguration"
+						@click="createConfiguration(false)"
 					/>
 				</template>
 			</tera-drilldown-section>
@@ -263,6 +263,30 @@
 			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
+
+	<Teleport to="body">
+		<tera-modal v-if="sanityCheckErrors.length > 0">
+			<template #header>
+				<h4>Warning, these settings may cause errors</h4>
+			</template>
+			<template #default>
+				<section style="max-height: 22rem; overflow-y: scroll">
+					<div v-for="(errString, idx) of sanityCheckErrors" :key="idx">
+						{{ errString }}
+					</div>
+				</section>
+			</template>
+			<template #footer>
+				<Button label="Ok" class="p-button-primary" @click="sanityCheckErrors = []" />
+				<Button
+					label="Ignore"
+					class="p-button-secondary"
+					@click="() => createConfiguration(true)"
+				/>
+			</template>
+		</tera-modal>
+	</Teleport>
+
 	<!-- Matrix effect easter egg  -->
 	<canvas id="matrix-canvas"></canvas>
 </template>
@@ -292,6 +316,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
@@ -357,6 +382,7 @@ const knobs = ref<BasicKnobs>({
 	tempConfigId: ''
 });
 
+const sanityCheckErrors = ref<string[]>([]);
 const isSaveDisabled = computed(() => {
 	if (knobs.value.name === '') return true;
 	return false;
@@ -636,10 +662,49 @@ const updateConfigFromModel = (inputModel: Model) => {
 	knobs.value.parametersMetadata = inputModel.metadata?.parameters ?? {};
 };
 
-const createConfiguration = async () => {
+const runSanityCheck = () => {
+	const errors: string[] = [];
+	const modelToCheck = modelConfiguration.value?.configuration as Model;
+	if (!modelToCheck) {
+		errors.push('no model defined in configuration');
+		return errors;
+	}
+
+	modelToCheck.semantics?.ode?.parameters?.forEach((p) => {
+		const val = p.value || 0;
+		const max = p.distribution?.parameters.maximum;
+		const min = p.distribution?.parameters.minimum;
+		if (val > max) {
+			errors.push(`${p.id} value ${p.value} > distribution max of ${max}`);
+		}
+		if (val < min) {
+			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
+		}
+
+		// Arbitrary 0.01 here, try to ensure interval is significant w.r.t value
+		const interval = Math.abs(max - min);
+		if (val !== 0 && Math.abs(interval / val) < 0.01) {
+			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
+		}
+	});
+	return errors;
+};
+
+const createConfiguration = async (force: boolean = false) => {
 	if (!model.value) return;
 
 	const state = cloneDeep(props.node.state);
+
+	sanityCheckErrors.value = [];
+	if (force !== true) {
+		const errors = runSanityCheck();
+		if (errors.length > 0) {
+			console.log(errors);
+			sanityCheckErrors.value = errors;
+			return;
+		}
+	}
+
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value.name,
