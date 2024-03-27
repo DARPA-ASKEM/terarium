@@ -384,7 +384,7 @@ async function addSubsetToProject() {
 		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
 		logger.info(`New dataset saved as ${subset.value.name}`);
 	} else {
-		logger.error('Subset not found');
+		logger.error('Subset not found or is not generated yet.');
 	}
 }
 
