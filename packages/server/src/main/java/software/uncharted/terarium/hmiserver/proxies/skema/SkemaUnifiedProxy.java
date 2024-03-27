@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 
 @FeignClient(name = "skema-unified", url = "${skema-unified.url}")
 public interface SkemaUnifiedProxy {
@@ -57,16 +58,23 @@ public interface SkemaUnifiedProxy {
 			@RequestPart("text_extractions_file") MultipartFile extractionsFile);
 
 	@Data
-    class IntegratedTextExtractionsBody {
+	class IntegratedTextExtractionsBody {
 
-		public IntegratedTextExtractionsBody(final String text) {
-			this.texts = Arrays.asList(text);
-			this.amrs = new ArrayList<>();
-		}
+		// Files to be sent
+		final StringMultipartFile extractionFile;
+		final StringMultipartFile amrFile;
+
+		// Constants
+		final String contentType = "application/json";
+		final String extractionFileName = "extractions.json";
+		final String amrFileName = "amr.json";
 
 		public IntegratedTextExtractionsBody(final String text, final List<Model> amrs) {
-			this.texts = Arrays.asList(text);
-			this.amrs = amrs.stream()
+			// Create a file from the variable extractions
+			this.extractionFile = new StringMultipartFile(Arrays.asList(text).toString(), extractionFileName, contentType);
+
+			// Create a file from the AMRs
+			final String modelString = amrs.stream()
 					.map(amr -> {
 						try {
 							final ObjectMapper mapper = new ObjectMapper();
@@ -76,11 +84,10 @@ public interface SkemaUnifiedProxy {
 							return null;
 						}
 					})
-					.collect(Collectors.toList());
+					.collect(Collectors.toList()).toString();
+			this.amrFile = new StringMultipartFile(modelString, amrFileName, contentType);
 		}
 
-		final List<String> texts;
-		final List<String> amrs;
 	}
 
 	@PostMapping("/text-reading/integrated-text-extractions")
