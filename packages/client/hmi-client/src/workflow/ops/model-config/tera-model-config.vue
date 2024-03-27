@@ -670,7 +670,16 @@ const runSanityCheck = () => {
 		return errors;
 	}
 
-	modelToCheck.semantics?.ode?.parameters?.forEach((p) => {
+	let parameters: ModelParameter[] = [];
+	if ([AMRSchemaNames.PETRINET, AMRSchemaNames.STOCKFLOW].includes(modelType.value)) {
+		if (modelToCheck.semantics?.ode?.parameters) {
+			parameters = modelToCheck.semantics?.ode?.parameters;
+		}
+	} else if (modelToCheck.model.parameters) {
+		parameters = modelToCheck.model.parameters;
+	}
+
+	parameters.forEach((p) => {
 		const val = p.value || 0;
 		const max = p.distribution?.parameters.maximum;
 		const min = p.distribution?.parameters.minimum;
@@ -699,7 +708,6 @@ const createConfiguration = async (force: boolean = false) => {
 	if (force !== true) {
 		const errors = runSanityCheck();
 		if (errors.length > 0) {
-			console.log(errors);
 			sanityCheckErrors.value = errors;
 			return;
 		}
