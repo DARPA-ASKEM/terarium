@@ -364,8 +364,13 @@ public class ExtractionService {
 
 	public DocumentAsset extractVariables(final UUID documentId, final List<UUID> modelIds, final Boolean annotateSkema,
 			final Boolean annotateMIT,
-			final String domain) throws IOException {
+			final String domain) {
 
+		final String userId = currentUserService.get().getId();
+		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
+			HALFTIME_SECONDS);
+
+		/*
 		DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
 
 		if (document.getText() == null || document.getText().isEmpty()) {
@@ -501,6 +506,7 @@ public class ExtractionService {
 		document = documentService.updateAsset(document).orElseThrow();
 
 		return document;
+		 */
 	}
 
 	public static HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {

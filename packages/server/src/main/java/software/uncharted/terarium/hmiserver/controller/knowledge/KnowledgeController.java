@@ -661,6 +661,16 @@ public class KnowledgeController {
 		}
 	}
 
+	/**
+	 * Variables Extractions from Document with SKEMA
+	 *
+	 * @param documentId (String): The ID of the document to profile
+	 * @param modelIds   (List<String>): The IDs of the models to use for extraction
+	 * @param annotateSkema (Boolean): Whether to annotate with SKEMA
+	 * @param annotateMIT (Boolean): Whether to annotate with MIT
+	 * @param domain (String): The domain of the document
+	 * @return an accepted response, the request being handled asynchronously
+	 */
 	@PostMapping("/variable-extractions")
 	public ResponseEntity<DocumentAsset> postPdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
@@ -668,24 +678,15 @@ public class KnowledgeController {
 			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
 			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
-
-		try {
-			return ResponseEntity
-					.ok(extractionService.extractVariables(documentId, modelIds, annotateSkema, annotateMIT, domain));
-		} catch (final IOException e) {
-			final String error = "Unable to get required assets";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error + ": " + e.getMessage());
-		}
+		extractionService.extractVariables(documentId, modelIds, annotateSkema, annotateMIT, domain);
+		return ResponseEntity.accepted().build();
 	}
 
 	/**
 	 * Document Extractions
 	 *
 	 * @param documentId (String): The ID of the document to profile
-	 * @return the profiled document
+	 * @return an accepted response, the request being handled asynchronously
 	 */
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
