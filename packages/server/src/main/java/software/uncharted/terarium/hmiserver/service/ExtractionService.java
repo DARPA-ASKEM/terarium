@@ -499,13 +499,17 @@ public class ExtractionService {
 				final Model model = modelService.getAsset(modelId).orElseThrow();
 
 				final String modelString = objectMapper.writeValueAsString(model);
-				final String extractionsString = objectMapper.writeValueAsString(document.getMetadata());
 
-				// final String extractionsString = objectMapper
-				// .writeValueAsString(
-				// document.getMetadata().get("attributes") != null
-				// ? document.getMetadata().get("attributes")
-				// : new HashMap<>());
+				if (document.getMetadata().get("attributes") == null) {
+					throw new RuntimeException("No attributes found in document");
+				}
+
+				final JsonNode attributes = objectMapper.valueToTree(document.getMetadata().get("attributes"));
+
+				final ObjectNode extractions = objectMapper.createObjectNode();
+				extractions.set("attributes", attributes);
+
+				final String extractionsString = objectMapper.writeValueAsString(extractions);
 
 				final StringMultipartFile amrFile = new StringMultipartFile(
 						modelString,
