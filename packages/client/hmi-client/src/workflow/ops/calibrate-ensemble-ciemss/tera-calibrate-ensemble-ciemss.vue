@@ -51,6 +51,7 @@
 							v-model="knobs.timestampColName"
 							:options="datasetColumnNames"
 							placeholder="Timestamp column"
+							class="ml-2"
 						/>
 						<template v-if="knobs.ensembleConfigs.length > 0">
 							<table class="w-full mt-3">
@@ -418,12 +419,6 @@ watch(
 	z-index: 1;
 }
 
-.ensemble-calibration-graph {
-	/* margin-left: 1rem; */
-	height: 200px;
-	/* width: 80%; */
-}
-
 .model-weights {
 	display: flex;
 }
@@ -439,7 +434,7 @@ th {
 
 th,
 td {
-	padding-left: 15px;
+	padding-left: 0px;
 }
 
 .ensemble-header-label {
