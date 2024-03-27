@@ -601,6 +601,10 @@ public class KnowledgeController {
 
 	@PostMapping("/link-amr")
 	@Secured(Roles.USER)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "204", description = "Model as been align with document", content = @Content),
+		@ApiResponse(responseCode = "500", description = "Error aligning model with variable extracted from document", content = @Content)
+	})
 	public ResponseEntity<Model> postLinkAmr(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam("model-id") final UUID modelId) {
@@ -650,7 +654,7 @@ public class KnowledgeController {
 					documentId, ProvenanceType.DOCUMENT);
 			provenanceService.createProvenance(provenance);
 
-			return ResponseEntity.ok(model);
+			return ResponseEntity.noContent().build();
 
 		} catch (final IOException e) {
 			final String error = "Unable to get link amr";

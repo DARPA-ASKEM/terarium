@@ -54,7 +54,7 @@ export const alignModel = async (
 	}
 	const url = `/knowledge/align-model?document-id=${documentId}&model-id=${modelId}`;
 	const response = await API.post(url);
-	return response?.status === 200;
+	return response?.status === 204;
 };
 
 /**
