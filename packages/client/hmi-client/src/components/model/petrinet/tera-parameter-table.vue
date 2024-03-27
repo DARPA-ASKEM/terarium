@@ -155,22 +155,16 @@
 					v-else-if="slotProps.data.type === ParamType.DISTRIBUTION"
 					class="distribution-container"
 				>
-					<InputNumber
+					<label>Min</label>
+					<tera-input-float
 						class="distribution-item min-value"
-						inputId="numericInput"
-						mode="decimal"
-						:min-fraction-digits="1"
-						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
 						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
-					<InputNumber
+					<label>Max</label>
+					<tera-input-float
 						class="distribution-item max-value"
-						inputId="numericInput"
-						mode="decimal"
-						:min-fraction-digits="1"
-						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.distribution.parameters.maximum"
 						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
@@ -182,12 +176,8 @@
 					v-else-if="slotProps.data.type === ParamType.CONSTANT"
 					class="flex align-items-center"
 				>
-					<InputNumber
+					<tera-input-float
 						class="constant-number"
-						inputId="numericInput"
-						mode="decimal"
-						:min-fraction-digits="1"
-						:max-fraction-digits="10"
 						v-model.lazy="slotProps.data.value.value"
 						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
@@ -204,7 +194,7 @@
 						<span class="white-space-nowrap text-sm">Add ±</span>
 						<InputNumber
 							v-model="addPlusMinus"
-	
+
 							text
 							class="constant-number add-plus-minus w-full"
 							inputId="convert-to-distribution"
@@ -380,7 +370,6 @@
 import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
 import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
@@ -404,6 +393,7 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import { updateVariable } from '@/model-representation/service';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraInputFloat from '@/components/widgets/tera-input-float.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -793,24 +783,24 @@ watch(
 	gap: var(--gap-small);
 }
 
-.distribution-item > :deep(input) {
+.distribution-item {
 	width: 100%;
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
 	text-align: right;
 }
 
-.constant-number > :deep(input) {
+.constant-number {
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
 	text-align: right;
 }
 
-.timeseries-container > :deep(input) {
+.timeseries-container {
 	font-size: var(--font-caption);
 }
 
-.add-plus-minus > :deep(input) {
+.add-plus-minus {
 	width: 3rem;
 	margin-left: var(--gap-xsmall);
 }
@@ -821,6 +811,7 @@ watch(
 	text-align: right;
 }
 
+/* FIXMEL Reapply these later */
 .min-value {
 	position: relative;
 }
