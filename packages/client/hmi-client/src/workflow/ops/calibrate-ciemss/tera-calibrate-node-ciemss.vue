@@ -135,7 +135,7 @@ watch(
 					// end: state.currentTimespan.end
 				},
 				extra: {
-					num_samples: 5,
+					num_samples: props.node.state.numSamples,
 					method: 'dopri5',
 					inferred_parameters: id
 				},
