@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
-import { CalibrateMap } from '@/services/calibrate-workflow';
+import type { CalibrateMap } from '@/services/calibrate-workflow';
 
 // export const previewChartSize= (element: HTMLElement) => {
 // }

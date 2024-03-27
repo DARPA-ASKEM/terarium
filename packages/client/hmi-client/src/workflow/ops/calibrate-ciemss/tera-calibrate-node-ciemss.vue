@@ -123,12 +123,12 @@ watch(
 			const dillURL = await getCalibrateBlobURL(id);
 			console.log('dill URL is', dillURL);
 
-			const timeSpan = getTimespan(csvAsset.value, props.node.state.mapping);
+			const timespan = getTimespan(csvAsset.value, props.node.state.mapping);
 			// FIXME: should proably align with time-span in dataset
 			const forecastResponse = await makeForecastJobCiemss({
 				projectId: '',
 				modelConfigId: modelConfigId.value as string,
-				timespan: timeSpan,
+				timespan,
 				extra: {
 					num_samples: props.node.state.numSamples,
 					method: 'dopri5',
