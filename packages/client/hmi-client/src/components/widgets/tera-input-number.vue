@@ -6,6 +6,14 @@
 import { ref } from 'vue';
 import InputText from 'primevue/inputtext';
 
+defineProps<{
+	min?: number;
+	max?: number;
+	minFractionDigits?: number;
+	maxFractionDigits?: number;
+	isInteger?: boolean;
+}>();
+
 const value = ref('');
 
 const handleKeypress = (event) => {

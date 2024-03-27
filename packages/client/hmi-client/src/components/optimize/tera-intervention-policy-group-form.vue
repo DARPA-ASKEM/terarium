@@ -40,10 +40,8 @@
 			</div>
 			<div class="label-and-input">
 				<label for="initial-guess">Initial guess</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.initialGuess"
@@ -55,10 +53,8 @@
 		<div class="input-row">
 			<div class="label-and-input">
 				<label for="lower-bound">Lower bound</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.lowerBound"
@@ -67,10 +63,8 @@
 			</div>
 			<div class="label-and-input">
 				<label for="upper-bound">Upper bound</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.upperBound"
@@ -79,9 +73,8 @@
 			</div>
 			<div class="label-and-input">
 				<label for="start-time">Start time</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					inputId="integeronly"
 					v-model="config.startTime"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -95,7 +88,7 @@ import _ from 'lodash';
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { InterventionPolicyGroup } from '@/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
