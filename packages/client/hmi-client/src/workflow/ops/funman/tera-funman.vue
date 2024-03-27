@@ -52,8 +52,7 @@
 					<div v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
-							<InputNumber
-								mode="decimal"
+							<tera-input-number
 								:min="0"
 								:max="1"
 								:min-fraction-digits="0"
@@ -148,7 +147,7 @@ import _, { floor } from 'lodash';
 import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
