@@ -25,11 +25,10 @@
 												{{ id }}
 											</td>
 											<td>
-												<InputNumber
-													mode="decimal"
+												<tera-input-number
+													v-model="knobs.ensembleConfigs[i].weight"
 													:min-fraction-digits="0"
 													:max-fraction-digits="7"
-													v-model="knobs.ensembleConfigs[i].weight"
 												/>
 											</td>
 										</tr>
@@ -195,7 +194,7 @@ import {
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
 import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';

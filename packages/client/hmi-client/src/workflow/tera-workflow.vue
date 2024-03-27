@@ -431,16 +431,19 @@ const removeNode = (event) => {
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
 
-	cloneDataTransformSessions();
+	cloneNoteBookSessions();
 };
 
 // We need to clone data-transform sessions, unlike other operators that are
 // append-only, data-transform updates so we need to create distinct copies.
-const cloneDataTransformSessions = async () => {
+const cloneNoteBookSessions = async () => {
 	const sessionIdSet = new Set<string>();
+
+	const operationList = [DatasetTransformerOp.operation.name, RegriddingOp.operation.name];
+
 	for (let i = 0; i < wf.value.nodes.length; i++) {
 		const node = wf.value.nodes[i];
-		if (node.operationType === DatasetTransformerOp.operation.name) {
+		if (operationList.includes(node.operationType)) {
 			const state = node.state;
 			const sessionId = state.notebookSessionId as string;
 			if (!sessionId) continue;
