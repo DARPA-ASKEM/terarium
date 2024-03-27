@@ -288,7 +288,7 @@
 	</Teleport>
 
 	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
+	<canvas id="matrix-canvas" />
 </template>
 
 <script setup lang="ts">
