@@ -25,7 +25,11 @@
 												{{ id }}
 											</td>
 											<td>
-												<tera-input-number v-model="knobs.ensembleConfigs[i].weight" />
+												<tera-input-number
+													v-model="knobs.ensembleConfigs[i].weight"
+													:min-fraction-digits="0"
+													:max-fraction-digits="7"
+												/>
 											</td>
 										</tr>
 									</tbody>

@@ -73,8 +73,9 @@
 			</div>
 			<div class="label-and-input">
 				<label for="start-time">Start time</label>
-				<tera-input-number
+				<InputNumber
 					class="p-inputtext-sm"
+					inputId="integeronly"
 					v-model="config.startTime"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -88,6 +89,7 @@ import _ from 'lodash';
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { InterventionPolicyGroup } from '@/workflow/ops/optimize-ciemss/optimize-ciemss-operation';

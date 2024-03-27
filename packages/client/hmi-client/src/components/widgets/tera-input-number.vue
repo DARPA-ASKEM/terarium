@@ -11,7 +11,6 @@ defineProps<{
 	max?: number;
 	minFractionDigits?: number;
 	maxFractionDigits?: number;
-	isInteger?: boolean;
 }>();
 
 const value = ref('');

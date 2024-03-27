@@ -159,6 +159,8 @@
 					<tera-input-number
 						class="distribution-item min-value"
 						v-model.lazy="slotProps.data.value.distribution.parameters.minimum"
+						:min-fraction-digits="1"
+						:max-fraction-digits="10"
 						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
@@ -166,6 +168,8 @@
 					<tera-input-number
 						class="distribution-item max-value"
 						v-model.lazy="slotProps.data.value.distribution.parameters.maximum"
+						:min-fraction-digits="1"
+						:max-fraction-digits="10"
 						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
@@ -179,6 +183,8 @@
 					<tera-input-number
 						class="constant-number"
 						v-model.lazy="slotProps.data.value.value"
+						:min-fraction-digits="1"
+						:max-fraction-digits="10"
 						:disabled="readonly"
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>

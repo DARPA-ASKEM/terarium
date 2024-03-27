@@ -55,6 +55,8 @@
 						v-if="weights"
 						:key="index"
 						:placeholder="variable"
+						:min-fraction-digits="3"
+						:max-fraction-digits="3"
 						v-model="weights[index]"
 						@update:model-value="updateChanges()"
 					/>
@@ -99,6 +101,8 @@
 				<tera-input-number
 					class="p-inputtext-sm"
 					v-model="lowerBound"
+					:min-fraction-digits="3"
+					:max-fraction-digits="12"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
@@ -107,6 +111,8 @@
 				<tera-input-number
 					class="p-inputtext-sm"
 					v-model="upperBound"
+					:min-fraction-digits="3"
+					:max-fraction-digits="12"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
@@ -117,6 +123,7 @@
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
