@@ -7,7 +7,6 @@ import { AxiosResponse } from 'axios';
 
 /**
  * Transform a list of LaTeX or mathml strings to an AMR
- * @param format string - the type of equations used to define an AMR ('mathml' or 'latex')
  * @param equations string[] - list of LaTeX or mathml strings representing a model
  * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
@@ -36,7 +35,7 @@ export const equationsToAMR = async (
  * Returns a runId used to poll for result
  */
 export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
-	let response: any = null;
+	let response: any;
 	if (documentId && modelId) {
 		response = await API.post(`/knowledge/profile-model/${modelId}?document-id=${documentId}`);
 	} else {
@@ -48,12 +47,14 @@ export const profileModel = async (modelId: Model['id'], documentId: string | nu
 
 export const alignModel = async (
 	modelId: Model['id'],
-	documentId: string
-): Promise<Model | null> => {
-	const response = await API.post(
-		`/knowledge/link-amr?document-id=${documentId}&model-id=${modelId}`
-	);
-	return response.data ?? null;
+	documentId: DocumentAsset['id']
+): Promise<boolean> => {
+	if (!modelId || !documentId) {
+		return false;
+	}
+	const url = `/knowledge/align-model?document-id=${documentId}&model-id=${modelId}`;
+	const response = await API.post(url);
+	return response?.status === 200;
 };
 
 /**
@@ -64,7 +65,7 @@ export const profileDataset = async (
 	datasetId: Dataset['id'],
 	documentId: string | null = null
 ) => {
-	let response: any = null;
+	let response: any;
 	if (documentId && datasetId) {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
 	} else {

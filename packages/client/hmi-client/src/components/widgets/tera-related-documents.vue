@@ -145,6 +145,7 @@ const dialogActionCopy = computed(() => {
 	}
 	return `Use Document to ${result.toLowerCase()}`;
 });
+
 function openDialog() {
 	visible.value = true;
 }
@@ -184,38 +185,42 @@ const sendForEnrichment = async () => {
 
 	isLoading.value = false;
 	emit('enriched');
-	await getRelatedDocuments();
+	getRelatedDocuments();
 };
 
 const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
+	isLoading.value = true;
 
 	// Dataset extraction
 	if (props.assetType === AssetType.Dataset) {
-		isLoading.value = true;
-		extractPDF(selectedResourceId).then(() => {
-			createProvenance({
-				relation_type: RelationshipType.EXTRACTED_FROM,
-				left: props.assetId!,
-				left_type: mapAssetTypeToProvenanceType(props.assetType),
-				right: selectedResourceId,
-				right_type: ProvenanceType.Document
-			}).then(() => {
-				logger.info('Provenance created after extraction', { showToast: false });
-			});
+		await extractPDF(selectedResourceId);
+		await createProvenance({
+			relation_type: RelationshipType.EXTRACTED_FROM,
+			left: props.assetId!,
+			left_type: mapAssetTypeToProvenanceType(props.assetType),
+			right: selectedResourceId,
+			right_type: ProvenanceType.Document
 		});
+
+		logger.info('Provenance created after extraction', { showToast: false });
+		emit('extracted');
+		getRelatedDocuments();
 	}
 
 	// Model extraction
 	if (props.assetType === AssetType.Model && selectedResourceId) {
 		await extractVariables(selectedResourceId, [props.assetId]);
-		const linkedAmr = await alignModel(props.assetId, selectedResourceId);
-		if (!linkedAmr) return;
+		const isAligned = await alignModel(props.assetId, selectedResourceId);
+		if (isAligned) {
+			logger.success('Model aligned after variable extraction.');
+			emit('enriched');
+		} else {
+			logger.warn('Model was not aligned after variable extraction. Please try again.');
+		}
 	}
 
 	isLoading.value = false;
-	emit('extracted');
-	getRelatedDocuments();
 };
 
 function getRelatedDocuments() {
