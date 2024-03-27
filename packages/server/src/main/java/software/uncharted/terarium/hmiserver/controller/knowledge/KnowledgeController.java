@@ -666,8 +666,6 @@ public class KnowledgeController {
 	 *
 	 * @param documentId (String): The ID of the document to profile
 	 * @param modelIds   (List<String>): The IDs of the models to use for extraction
-	 * @param annotateSkema (Boolean): Whether to annotate with SKEMA
-	 * @param annotateMIT (Boolean): Whether to annotate with MIT
 	 * @param domain (String): The domain of the document
 	 * @return an accepted response, the request being handled asynchronously
 	 */
@@ -675,10 +673,8 @@ public class KnowledgeController {
 	public ResponseEntity<DocumentAsset> postPdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "model-ids", defaultValue = "[]") final List<UUID> modelIds,
-			@RequestParam(name = "annotate-skema", defaultValue = "true") final Boolean annotateSkema,
-			@RequestParam(name = "annotate-mit", defaultValue = "true") final Boolean annotateMIT,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
-		extractionService.extractVariables(documentId, modelIds, annotateSkema, annotateMIT, domain);
+		extractionService.extractVariables(documentId, modelIds, domain);
 		return ResponseEntity.accepted().build();
 	}
 

@@ -362,10 +362,9 @@ public class ExtractionService {
 		});
 	}
 
-	public void extractVariables(final UUID documentId, final List<UUID> modelIds, final Boolean annotateSkema,
-			final Boolean annotateMIT,
-			final String domain) {
+	public void extractVariables(final UUID documentId, final List<UUID> modelIds, final String domain) {
 
+		// Set up the client interface
 		final String userId = currentUserService.get().getId();
 		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
 			HALFTIME_SECONDS);
