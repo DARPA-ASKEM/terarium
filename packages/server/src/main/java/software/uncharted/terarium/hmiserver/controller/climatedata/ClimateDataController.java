@@ -3,12 +3,12 @@ package software.uncharted.terarium.hmiserver.controller.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.climatedata.ClimateDataService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -184,11 +185,28 @@ public class ClimateDataController {
 			dataset.setEsgfId(esgfId);
 			dataset.setName(name);
 			dataset.setMetadata(response.getBody().get("metadata"));
-			((ObjectNode) dataset.getMetadata()).set("urls", response.getBody().get("urls"));
+			if(response.getBody().get("metadata").get("title") != null) {
+				final String filename = response.getBody().get("metadata").get("title").asText();
+				dataset.setFileNames(Collections.singletonList(filename));
+			}
+			if(response.getBody().get("urls") != null) {
+				final ClimateDataResponseURLS urls = objectMapper.convertValue(response.getBody(), ClimateDataResponseURLS.class);
+				dataset.setDatasetUrls(new ArrayList<>());
+				if(urls.getUrls() != null && !urls.getUrls().isEmpty()){
+					for(final ClimateDataResponseURL url: urls.getUrls()){
+						if(url.getHttp() != null && !url.getHttp().isEmpty()){
+							dataset.getDatasetUrls().addAll(url.getHttp());
+						}
+					}
+				}
+			}
+
 
 
 			return ResponseEntity.ok(dataset);
-		} catch(final FeignException.FeignClientException e) {
+		} catch(final ResponseStatusException e) {
+			throw e;
+		} catch(final FeignException e) {
 			final String error = "Unable to fetch ESGF";
 			final int status = e.status() >=400? e.status(): 500;
 			log.error(error, e);
@@ -200,4 +218,15 @@ public class ClimateDataController {
 		}
 
 	}
+
+	@Data
+	public static class ClimateDataResponseURLS {
+		private List<ClimateDataResponseURL> urls;
+	}
+
+	@Data static class ClimateDataResponseURL{
+		private List<String> http;
+		private List<String> opendap; //needed?
+	}
+
 }
