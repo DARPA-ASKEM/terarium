@@ -23,7 +23,7 @@ import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import { OptimizeCiemssOperationState } from './optimize-ciemss-operation';
 
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
 defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
