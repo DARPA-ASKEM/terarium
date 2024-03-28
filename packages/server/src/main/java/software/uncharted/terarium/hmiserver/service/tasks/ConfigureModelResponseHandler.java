@@ -66,6 +66,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 			final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(), Response.class);
+
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				// Map the parameters values to the model
