@@ -156,7 +156,6 @@ watch(
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
-
 			state.chartConfigs = [[]];
 			state.inProgressForecastId = '';
 			state.forecastId = id;
@@ -166,7 +165,13 @@ watch(
 			emit('append-output', {
 				type: 'calibrateSimulationId',
 				label: `${portLabel} Result`,
-				value: [state.calibrationId]
+				value: [state.calibrationId],
+				state: {
+					calibrationId: state.calibrationId,
+					forecastId: state.forecastId,
+					numIterations: state.numIterations,
+					numSamples: state.numSamples
+				}
 			});
 		}
 	},
