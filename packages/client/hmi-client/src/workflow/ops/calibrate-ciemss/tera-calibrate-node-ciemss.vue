@@ -52,9 +52,8 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy } from '@/workflow/util';
+import { chartActionsProxy, getTimespan } from '@/workflow/util';
 import { logger } from '@/utils/logger';
-
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CsvAsset } from '@/types/Types';
@@ -124,16 +123,12 @@ watch(
 			const dillURL = await getCalibrateBlobURL(id);
 			console.log('dill URL is', dillURL);
 
+			const timespan = getTimespan(csvAsset.value, props.node.state.mapping);
 			// FIXME: should proably align with time-span in dataset
 			const forecastResponse = await makeForecastJobCiemss({
 				projectId: '',
 				modelConfigId: modelConfigId.value as string,
-				timespan: {
-					start: 0,
-					end: 100
-					// start: state.currentTimespan.start,
-					// end: state.currentTimespan.end
-				},
+				timespan,
 				extra: {
 					num_samples: props.node.state.numSamples,
 					method: 'dopri5',
@@ -161,7 +156,6 @@ watch(
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
-
 			state.chartConfigs = [[]];
 			state.inProgressForecastId = '';
 			state.forecastId = id;
@@ -171,7 +165,13 @@ watch(
 			emit('append-output', {
 				type: 'calibrateSimulationId',
 				label: `${portLabel} Result`,
-				value: [state.calibrationId]
+				value: [state.calibrationId],
+				state: {
+					calibrationId: state.calibrationId,
+					forecastId: state.forecastId,
+					numIterations: state.numIterations,
+					numSamples: state.numSamples
+				}
 			});
 		}
 	},
