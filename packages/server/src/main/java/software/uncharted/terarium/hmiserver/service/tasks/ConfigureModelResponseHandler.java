@@ -72,7 +72,6 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Map the parameters values to the model
 				final Model modelCopy = new Model(model);
 				final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
-
 				if (modelCopy.isRegnet()) {
 					modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
 				}
