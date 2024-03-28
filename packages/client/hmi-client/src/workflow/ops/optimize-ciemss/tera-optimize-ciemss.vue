@@ -538,7 +538,7 @@ const runOptimize = async () => {
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	const state = _.cloneDeep(props.node.state);
-	state.inProgressOptimizeId = optResult.simulateionId;
+	state.inProgressOptimizeId = optResult.simulationId;
 	state.optimzationRunId = '';
 	state.inProgressForecastId = '';
 	emit('update-state', state);

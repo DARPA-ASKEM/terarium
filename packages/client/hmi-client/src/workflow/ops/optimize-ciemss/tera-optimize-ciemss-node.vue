@@ -122,9 +122,7 @@ const startForecast = async (simulationIntervetions) => {
 		},
 		engine: 'ciemss'
 	};
-
-	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
-	return simulationResponse;
+	return makeForecastJobCiemss(simulationPayload);
 };
 
 watch(
@@ -135,7 +133,7 @@ watch(
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = getSimulationInterventions();
+			const simulationIntervetions = await getSimulationInterventions();
 			const forecastResponse = await startForecast(simulationIntervetions);
 			const forecastId = forecastResponse.id;
 
