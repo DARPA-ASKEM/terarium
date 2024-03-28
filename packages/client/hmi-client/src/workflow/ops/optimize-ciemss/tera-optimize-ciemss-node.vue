@@ -8,14 +8,14 @@
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
-			<div v-if="!showSpinner && runResults" ref="outputPanel">
+			<div v-if="!showSpinner && runResults">
 				<tera-simulate-chart
 					v-for="(cfg, idx) in node.state.chartConfigs"
 					:key="idx"
 					:run-results="runResults"
 					:chartConfig="{ selectedRun: $props.node.state.forecastRunId, selectedVariable: cfg }"
 					has-mean-line
-					:size="chartSize"
+					:size="{ width: 190, height: 120 }"
 					@configuration-change="chartProxy.configurationChange(idx, $event)"
 				/>
 			</div>
@@ -49,7 +49,7 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
+import { chartActionsProxy } from '@/workflow/util';
 import { SimulationRequest, Intervention as SimulationIntervention } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
@@ -65,8 +65,6 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
 );
-const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);
 });
