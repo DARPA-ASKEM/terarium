@@ -10,36 +10,40 @@ import com.google.common.collect.HashBiMap;
  * greekToEnglish.get("β")); // Output: beta
  */
 public class GreekDictionary {
-	private static BiMap<String, String> englishToGreek = HashBiMap.create();
+	private static BiMap<String, String> englishGreek = HashBiMap.create();
 	static {
-		englishToGreek.put("alpha", "α");
-		englishToGreek.put("beta", "β");
-		englishToGreek.put("gamma", "γ");
-		englishToGreek.put("delta", "δ");
-		englishToGreek.put("epsilon", "ε");
-		englishToGreek.put("zeta", "ζ");
-		englishToGreek.put("eta", "η");
-		englishToGreek.put("theta", "θ");
-		englishToGreek.put("iota", "ι");
-		englishToGreek.put("kappa", "κ");
-		englishToGreek.put("lambda", "λ");
-		englishToGreek.put("mu", "μ");
-		englishToGreek.put("nu", "ν");
-		englishToGreek.put("xi", "ξ");
-		englishToGreek.put("omicron", "ο");
-		englishToGreek.put("pi", "π");
-		englishToGreek.put("rho", "ρ");
-		englishToGreek.put("sigma", "σ");
-		englishToGreek.put("tau", "τ");
-		englishToGreek.put("upsilon", "υ");
-		englishToGreek.put("phi", "φ");
-		englishToGreek.put("chi", "χ");
-		englishToGreek.put("psi", "ψ");
-		englishToGreek.put("omega", "ω");
+		englishGreek.put("alpha", "α");
+		englishGreek.put("beta", "β");
+		englishGreek.put("gamma", "γ");
+		englishGreek.put("delta", "δ");
+		englishGreek.put("epsilon", "ε");
+		englishGreek.put("zeta", "ζ");
+		englishGreek.put("eta", "η");
+		englishGreek.put("theta", "θ");
+		englishGreek.put("iota", "ι");
+		englishGreek.put("kappa", "κ");
+		englishGreek.put("lambda", "λ");
+		englishGreek.put("mu", "μ");
+		englishGreek.put("nu", "ν");
+		englishGreek.put("xi", "ξ");
+		englishGreek.put("omicron", "ο");
+		englishGreek.put("pi", "π");
+		englishGreek.put("rho", "ρ");
+		englishGreek.put("sigma", "σ");
+		englishGreek.put("tau", "τ");
+		englishGreek.put("upsilon", "υ");
+		englishGreek.put("phi", "φ");
+		englishGreek.put("chi", "χ");
+		englishGreek.put("psi", "ψ");
+		englishGreek.put("omega", "ω");
+	}
+
+	public static String englishToGreek(String english) {
+		return englishGreek.get(english);
 	}
 
 	public static String greekToEnglish(String greek) {
-		return englishToGreek.inverse().get(greek);
+		return englishGreek.inverse().get(greek);
 	}
 }
 

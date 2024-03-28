@@ -22,6 +22,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
 
 @Component
 @RequiredArgsConstructor
@@ -71,9 +72,14 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				final Model modelCopy = new Model(model);
 				final List<ModelParameter> modelParameters = modelCopy.getParameters();
 				modelParameters.forEach((parameter) -> {
+					final String parameterId = parameter.getId();
 					final JsonNode conditionParameters = condition.get("parameters");
 					conditionParameters.forEach((conditionParameter) -> {
-						if (parameter.getId().equals(conditionParameter.get("id").asText())) {
+						// Get the parameter value from the condition
+						final String id = conditionParameter.get("id").asText();
+
+						// Test against the id of the parameter in greek alphabet or english
+						if (parameterId.equals(id) || parameterId.equals(GreekDictionary.englishToGreek(id))) {
 							parameter.setValue(conditionParameter.get("value").doubleValue());
 						}
 					});
