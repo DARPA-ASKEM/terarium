@@ -357,7 +357,7 @@ interface BasicKnobs {
 	threshold: number;
 	isMinimized: boolean;
 	forecastRunId: string;
-	optimzationRunId: string;
+	optimizationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
 	interventionType: InterventionTypes;
@@ -374,7 +374,7 @@ const knobs = ref<BasicKnobs>({
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
-	optimzationRunId: props.node.state.optimzationRunId ?? '',
+	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
 	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
 	interventionType: props.node.state.interventionType ?? ''
@@ -539,7 +539,7 @@ const runOptimize = async () => {
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
-	state.optimzationRunId = '';
+	state.optimizationRunId = '';
 	state.inProgressForecastId = '';
 	emit('update-state', state);
 };
@@ -577,7 +577,7 @@ const setOutputValues = async () => {
 	);
 
 	const optimzationResult = await getRunResult(
-		knobs.value.optimzationRunId,
+		knobs.value.optimizationRunId,
 		'optimize_results.json'
 	);
 	optimizationResult.value = optimzationResult;
@@ -600,7 +600,7 @@ watch(
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
-		state.optimzationRunId = knobs.value.optimzationRunId;
+		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		state.interventionType = knobs.value.interventionType;

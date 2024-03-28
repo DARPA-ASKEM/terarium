@@ -36,7 +36,7 @@ export interface OptimizeCiemssOperationState {
 	inProgressOptimizeId: string;
 	inProgressForecastId: string;
 	forecastRunId: string;
-	optimzationRunId: string;
+	optimizationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
@@ -83,7 +83,7 @@ export const OptimizeCiemssOperation: Operation = {
 			inProgressOptimizeId: '',
 			inProgressForecastId: '',
 			forecastRunId: '',
-			optimzationRunId: '',
+			optimizationRunId: '',
 			modelConfigName: '',
 			modelConfigDesc: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },

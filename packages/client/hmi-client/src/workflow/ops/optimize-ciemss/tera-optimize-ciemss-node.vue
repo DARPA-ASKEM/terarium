@@ -83,7 +83,7 @@ const pollResult = async (runId: string) => {
 };
 
 const getSimulationInterventions = async () => {
-	const policyResult = await getRunResult(props.node.state.optimzationRunId, 'policy.json');
+	const policyResult = await getRunResult(props.node.state.optimizationRunId, 'policy.json');
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
@@ -139,7 +139,7 @@ watch(
 
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';
-			state.optimzationRunId = id;
+			state.optimizationRunId = id;
 			state.inProgressForecastId = forecastId;
 			emit('update-state', state);
 		}
