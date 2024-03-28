@@ -91,7 +91,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label for="num-samples">End time</label>
+							<label for="num-samples">End time for forecast</label>
 							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 					</div>
