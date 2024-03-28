@@ -111,7 +111,7 @@ import {
 const props = defineProps<{
 	parameterOptions: string[];
 	config: InterventionPolicyGroup;
-	interventionType: InterventionTypes;
+	interventionType?: InterventionTypes;
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);

@@ -69,10 +69,15 @@
 				<div class="form-section">
 					<h5>Intervention policy</h5>
 					<div>
-						<label>Intervention Type </label>
+						<label>Intervention Type</label>
 						<Dropdown
 							class="p-inputtext-sm"
-							:options="[InterventionTypes.paramValue, InterventionTypes.startTime]"
+							:options="[
+								{ label: 'parameter value', value: InterventionTypes.paramValue },
+								{ label: 'start time', value: InterventionTypes.startTime }
+							]"
+							option-label="label"
+							option-value="value"
 							v-model="knobs.interventionType"
 							placeholder="Select"
 						/>
