@@ -124,7 +124,7 @@ export async function codeToAMR(
 	if (response?.status === 200) {
 		return response.data;
 	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
+	logger.error(`Code to AMR request failed`, { toastTitle: 'Error' });
 	return null;
 }
 
@@ -144,6 +144,6 @@ export async function codeBlocksToAmr(code: Code, file: File): Promise<Model | n
 	if (response?.status === 200) {
 		return response.data;
 	}
-	logger.error(`Code to AMR request failed`, { toastTitle: 'Error - knowledge-middleware' });
+	logger.error(`Code to AMR request failed`, { toastTitle: 'Error' });
 	return null;
 }
