@@ -130,9 +130,7 @@ const startForecast = async (simulationIntervetions) => {
 watch(
 	() => props.node.state.inProgressOptimizeId,
 	async (id) => {
-		console.log('Watch inProgressOptimizeId');
 		if (!id || id === '') return;
-		console.log(id);
 
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
@@ -154,9 +152,7 @@ watch(
 watch(
 	() => props.node.state.inProgressForecastId,
 	async (id) => {
-		console.log('Watch inProgressForecastId');
 		if (!id || id === '') return;
-		console.log(id);
 
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {

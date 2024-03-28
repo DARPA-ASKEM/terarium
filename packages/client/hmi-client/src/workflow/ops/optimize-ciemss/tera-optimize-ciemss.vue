@@ -483,7 +483,6 @@ const initialize = async () => {
 };
 
 const runOptimize = async () => {
-	console.log('Run optimize');
 	if (!modelConfiguration.value?.id) {
 		logger.error('no model config id provided');
 		return;
@@ -543,7 +542,6 @@ const runOptimize = async () => {
 	state.optimzationRunId = '';
 	state.inProgressForecastId = '';
 	emit('update-state', state);
-	console.log('Done run optimize');
 };
 
 const saveModelConfiguration = async () => {
