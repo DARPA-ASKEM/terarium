@@ -68,10 +68,20 @@
 				</div>
 				<div class="form-section">
 					<h5>Intervention policy</h5>
+					<div>
+						<label>Intervention Type </label>
+						<Dropdown
+							class="p-inputtext-sm"
+							:options="[InterventionTypes.paramValue, InterventionTypes.startTime]"
+							v-model="knobs.interventionType"
+							placeholder="Select"
+						/>
+					</div>
 					<tera-intervention-policy-group-form
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
+						:intervention-type="props.node.state.interventionType"
 						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
@@ -317,6 +327,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
+	InterventionTypes,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
@@ -351,6 +362,7 @@ interface BasicKnobs {
 	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	interventionType: InterventionTypes;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -366,7 +378,8 @@ const knobs = ref<BasicKnobs>({
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimzationRunId: props.node.state.optimzationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
+	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
+	interventionType: props.node.state.interventionType ?? ''
 });
 
 const outputPanel = ref(null);
@@ -477,11 +490,13 @@ const runOptimize = async () => {
 	}
 
 	const paramNames: string[] = [];
+	const paramValues: number[] = [];
 	const startTime: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
 		paramNames.push(ele.parameter);
+		paramValues.push(ele.paramValue);
 		startTime.push(ele.startTime);
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);
@@ -489,9 +504,10 @@ const runOptimize = async () => {
 	});
 
 	const optimizeInterventions: OptimizedIntervention = {
-		selection: 'param_value',
+		selection: knobs.value.interventionType,
 		paramNames,
-		startTime
+		startTime,
+		paramValues
 	};
 
 	const optimizePayload: OptimizeRequestCiemss = {
@@ -702,6 +718,7 @@ watch(
 		state.optimzationRunId = knobs.value.optimzationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
+		state.interventionType = knobs.value.interventionType;
 		emit('update-state', state);
 	},
 	{ deep: true }
