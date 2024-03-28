@@ -405,7 +405,6 @@ const isRunDisabled = computed(() => {
 	return false;
 });
 const selectedOutputId = ref<string>();
-const policyResult = ref<number[]>();
 
 const outputViewSelection = ref(OutputView.Charts);
 const outputViewOptions = ref([
@@ -528,19 +527,21 @@ const runOptimize = async () => {
 	if (optResult?.simulationId) {
 		knobs.value.optimzationRunId = optResult.simulationId;
 		state.inProgressOptimizeId = optResult.simulationId;
-		emit('update-state', state);
+		emit('update-state', state); // Watcher in node is called here
 	}
 
-	// policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
-	const simulationIntervetions: SimulationIntervention[] = [];
+	// Code below could potentially be transferred to watcher in node
+
+	const policyResult = await getRunResult(optResult.simulationId, 'policy.json');
+	const simulationInterventions: SimulationIntervention[] = [];
 
 	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
 	for (let i = 0; i < optimizeInterventions.paramNames.length; i++) {
-		if (policyResult.value?.at(i) && optimizeInterventions.startTime?.[i]) {
-			simulationIntervetions.push({
+		if (policyResult?.at(i) && optimizeInterventions.startTime?.[i]) {
+			simulationInterventions.push({
 				name: optimizeInterventions.paramNames[i],
 				timestep: optimizeInterventions.startTime[i],
-				value: policyResult.value[i]
+				value: policyResult[i]
 			});
 		}
 	}
@@ -552,7 +553,7 @@ const runOptimize = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
-		interventions: simulationIntervetions,
+		interventions: simulationInterventions,
 		extra: {
 			num_samples: knobs.value.numSamples,
 			method: knobs.value.solverMethod
