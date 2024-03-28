@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
 
 import java.util.List;
@@ -24,5 +25,23 @@ public class ScenarioExtraction {
 			});
 		});
 		return modelParameters;
+	}
+
+	public static List<Initial> getModelInitials(JsonNode condition, Model modelCopy) {
+		final List<Initial> modelInitials = modelCopy.getInitials();
+		modelInitials.forEach((initial) -> {
+			final String target = initial.getTarget();
+			final JsonNode conditionInitials = condition.get("initials");
+			conditionInitials.forEach((conditionInitial) -> {
+				// Get the initial value from the condition
+				final String id = conditionInitial.get("id").asText();
+
+				// Test against the id of the initial in greek alphabet or english
+				if (target.equals(id) || target.equals(GreekDictionary.englishToGreek(id))) {
+					initial.setExpression(String.valueOf(conditionInitial.get("value").doubleValue()));
+				}
+			});
+		});
+		return modelInitials;
 	}
 }
