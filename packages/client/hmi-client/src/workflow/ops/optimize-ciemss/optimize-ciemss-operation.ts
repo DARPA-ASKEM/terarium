@@ -1,5 +1,10 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
+export enum InterventionTypes {
+	paramValue = 'param_value',
+	startTime = 'start_time'
+}
+
 export interface InterventionPolicyGroup {
 	borderColour: string;
 	name: string;
@@ -9,6 +14,7 @@ export interface InterventionPolicyGroup {
 	upperBound: number;
 	initialGuess: number;
 	isActive: boolean;
+	paramValue: number;
 }
 
 export interface OptimizeCiemssOperationState {
@@ -19,6 +25,7 @@ export interface OptimizeCiemssOperationState {
 	maxiter: number;
 	maxfeval: number;
 	// Intervention policies
+	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
 	targetVariables: string[];
@@ -44,7 +51,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	lowerBound: 0,
 	upperBound: 0,
 	initialGuess: 0,
-	isActive: true
+	isActive: true,
+	paramValue: 0
 };
 
 export const OptimizeCiemssOperation: Operation = {
@@ -65,6 +73,7 @@ export const OptimizeCiemssOperation: Operation = {
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
+			interventionType: InterventionTypes.paramValue,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
 			targetVariables: [],
 			riskTolerance: 5,
