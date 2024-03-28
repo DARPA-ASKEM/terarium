@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 
 import java.io.Serial;
 import java.sql.Timestamp;
@@ -89,6 +90,19 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		} else {
 			return this.getSemantics().getOde().getParameters();
 		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<Initial> getInitials() {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<List<Initial>>() {
+			});
+		} else {
+			return this.getSemantics().getOde().getInitials();
+		}
+
 	}
 
 	@JsonIgnore

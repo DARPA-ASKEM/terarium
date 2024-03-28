@@ -306,7 +306,7 @@ public class GoLLMController {
 			final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
 			input.setModelCards(modelCards);
 
-			// Create the task
+			// create the task
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(CompareModelsResponseHandler.NAME);

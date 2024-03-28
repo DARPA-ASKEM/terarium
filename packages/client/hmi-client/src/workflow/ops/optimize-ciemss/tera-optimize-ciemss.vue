@@ -68,10 +68,25 @@
 				</div>
 				<div class="form-section">
 					<h5>Intervention policy</h5>
+					<div>
+						<label>Intervention Type</label>
+						<Dropdown
+							class="p-inputtext-sm"
+							:options="[
+								{ label: 'parameter value', value: InterventionTypes.paramValue },
+								{ label: 'start time', value: InterventionTypes.startTime }
+							]"
+							option-label="label"
+							option-value="value"
+							v-model="knobs.interventionType"
+							placeholder="Select"
+						/>
+					</div>
 					<tera-intervention-policy-group-form
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
+						:intervention-type="props.node.state.interventionType"
 						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
@@ -92,7 +107,7 @@
 							<label>Target-variable(s)</label>
 							<MultiSelect
 								class="p-inputtext-sm"
-								:options="modelStateOptions.map((ele) => ele.id)"
+								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
 								placeholder="Select"
 								filter
@@ -108,7 +123,6 @@
 									inputId="integeronly"
 									v-model="knobs.riskTolerance"
 								/>
-								<Slider v-model="knobs.riskTolerance" :min="0" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -270,7 +284,6 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
 import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
@@ -288,14 +301,10 @@ import {
 } from '@/services/model-configurations';
 import {
 	makeOptimizeJobCiemss,
-	makeForecastJobCiemss,
-	pollAction,
 	getRunResultCiemss,
-	getRunResult,
-	getSimulation
+	getRunResult
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { Poller, PollerState } from '@/api/api';
 // Types:
 import {
 	ModelConfiguration,
@@ -303,10 +312,8 @@ import {
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
-	SimulationRequest,
 	CsvAsset,
-	OptimizedIntervention,
-	Intervention as SimulationIntervention
+	OptimizedIntervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
@@ -315,8 +322,8 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
-	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
+	InterventionTypes,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
@@ -325,7 +332,7 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits(['update-state', 'close', 'select-output']);
 
 enum OptimizeTabs {
 	Wizard = 'Wizard',
@@ -348,9 +355,10 @@ interface BasicKnobs {
 	threshold: number;
 	isMinimized: boolean;
 	forecastRunId: string;
-	optimzationRunId: string;
+	optimizationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	interventionType: InterventionTypes;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -364,9 +372,10 @@ const knobs = ref<BasicKnobs>({
 	threshold: props.node.state.threshold ?? 0, // currently not used.
 	isMinimized: props.node.state.isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
-	optimzationRunId: props.node.state.optimzationRunId ?? '',
+	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
+	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
+	interventionType: props.node.state.interventionType ?? ''
 });
 
 const outputPanel = ref(null);
@@ -377,8 +386,10 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 	emit('update-state', state);
 });
 
-const showSpinner = ref(false);
-const poller = new Poller();
+const showSpinner = computed<boolean>(
+	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+);
+
 const showModelModal = ref(false);
 const displayOptimizationResultMessage = ref(true);
 
@@ -403,7 +414,6 @@ const isRunDisabled = computed(() => {
 	return false;
 });
 const selectedOutputId = ref<string>();
-const policyResult = ref<number[]>();
 
 const outputViewSelection = ref(OutputView.Charts);
 const outputViewOptions = ref([
@@ -416,7 +426,7 @@ const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
-const modelStateOptions = ref<State[]>([]);
+const modelStateAndObsOptions = ref<string[]>([]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -467,7 +477,10 @@ const initialize = async () => {
 	const model = modelConfiguration.value.configuration as Model;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
-	modelStateOptions.value = model.model.states ?? ([] as State[]);
+	modelStateAndObsOptions.value = model.model.states.map((ele) => ele.id) ?? ([] as State[]);
+	model.semantics?.ode.observables
+		?.map((ele) => ele.id)
+		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
 };
 
 const runOptimize = async () => {
@@ -477,11 +490,13 @@ const runOptimize = async () => {
 	}
 
 	const paramNames: string[] = [];
+	const paramValues: number[] = [];
 	const startTime: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
 		paramNames.push(ele.parameter);
+		paramValues.push(ele.paramValue);
 		startTime.push(ele.startTime);
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);
@@ -489,9 +504,10 @@ const runOptimize = async () => {
 	});
 
 	const optimizeInterventions: OptimizedIntervention = {
-		selection: 'param_value',
+		selection: knobs.value.interventionType,
 		paramNames,
-		startTime
+		startTime,
+		paramValues
 	};
 
 	const optimizePayload: OptimizeRequestCiemss = {
@@ -522,125 +538,11 @@ const runOptimize = async () => {
 	}
 
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
-	await getOptimizeStatus(optResult.simulationId);
-	policyResult.value = await getRunResult(optResult.simulationId, 'policy.json');
-	const simulationIntervetions: SimulationIntervention[] = [];
-
-	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-	for (let i = 0; i < optimizeInterventions.paramNames.length; i++) {
-		if (policyResult.value?.at(i) && optimizeInterventions.startTime?.[i]) {
-			simulationIntervetions.push({
-				name: optimizeInterventions.paramNames[i],
-				timestep: optimizeInterventions.startTime[i],
-				value: policyResult.value[i]
-			});
-		}
-	}
-
-	const simulationPayload: SimulationRequest = {
-		projectId: '',
-		modelConfigId: modelConfiguration.value.id,
-		timespan: {
-			start: 0,
-			end: knobs.value.endTime
-		},
-		interventions: simulationIntervetions,
-		extra: {
-			num_samples: knobs.value.numSamples,
-			method: knobs.value.solverMethod
-		},
-		engine: 'ciemss'
-	};
-
-	const simulationResponse = await makeForecastJobCiemss(simulationPayload);
-	getStatus(simulationResponse.id);
 	const state = _.cloneDeep(props.node.state);
-	emit('append-output', {
-		type: OptimizeCiemssOperation.outputs[0].type,
-		label: `Simulation output - ${props.node.outputs.length + 1}`,
-		value: [simulationResponse.id],
-		isSelected: false,
-		state
-	});
-};
-
-const getStatus = async (runId: string) => {
-	showSpinner.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
-	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
-	state.simulateErrorMessage = { name: '', value: '', traceback: '' };
+	state.inProgressOptimizeId = optResult.simulationId;
+	state.optimizationRunId = '';
+	state.inProgressForecastId = '';
 	emit('update-state', state);
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		showSpinner.value = false;
-		logger.error(`Simulate: ${runId} has failed`, {
-			toastTitle: 'Error - Ciemss'
-		});
-		const simulation = await getSimulation(runId);
-		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.simulateErrorMessage = {
-				name: runId,
-				value: simulation.status,
-				traceback: simulation.statusMessage
-			};
-			emit('update-state', state);
-		}
-		throw Error('Failed Runs');
-	}
-
-	if (state.chartConfigs.length === 0) {
-		chartProxy.addChart();
-	}
-
-	knobs.value.forecastRunId = runId;
-	showSpinner.value = false;
-};
-
-const getOptimizeStatus = async (runId: string) => {
-	showSpinner.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
-	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
-	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
-	emit('update-state', state);
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		showSpinner.value = false;
-		// throw if there are any failed runs for now
-		logger.error(`Optimize: ${runId} has failed`, {
-			toastTitle: 'Error - Ciemss'
-		});
-		const simulation = await getSimulation(runId);
-		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.optimizeErrorMessage = {
-				name: runId,
-				value: simulation.status,
-				traceback: simulation.statusMessage
-			};
-			emit('update-state', state);
-		}
-		throw Error('Failed Runs');
-	}
-
-	knobs.value.optimzationRunId = runId;
-	showSpinner.value = false;
 };
 
 const saveModelConfiguration = async () => {
@@ -676,7 +578,7 @@ const setOutputValues = async () => {
 	);
 
 	const optimzationResult = await getRunResult(
-		knobs.value.optimzationRunId,
+		knobs.value.optimizationRunId,
 		'optimize_results.json'
 	);
 	optimizationResult.value = optimzationResult;
@@ -699,9 +601,10 @@ watch(
 		state.riskTolerance = knobs.value.riskTolerance;
 		state.threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
-		state.optimzationRunId = knobs.value.optimzationRunId;
+		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
+		state.interventionType = knobs.value.interventionType;
 		emit('update-state', state);
 	},
 	{ deep: true }

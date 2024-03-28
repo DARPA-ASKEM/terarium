@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -44,8 +43,10 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -332,7 +333,7 @@ public class DatasetController {
 		final PresignedURL presignedURL = url.get();
 		final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
 		final HttpResponse response = httpclient.execute(get);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
 
 		String line = null;
 		Integer count = 0;
@@ -375,16 +376,53 @@ public class DatasetController {
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename) {
-
+		final Optional<Dataset> dataset;
 		try {
-			final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
-			return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final Exception e) {
-			final String error = "Unable to get download url";
+			dataset = datasetService.getAsset(id);
+			if (dataset.isEmpty()) {
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.NOT_FOUND,
+					"Dataset not found");
+			}
+		} catch (final IOException e) {
+			final String error = "Unable to get dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
+		}
+
+		if(dataset.get().getEsgfId() != null && !dataset.get().getEsgfId().isEmpty()
+			&& dataset.get().getDatasetUrls() != null && !dataset.get().getDatasetUrls().isEmpty()){
+
+			String url = dataset.get().getDatasetUrls().stream()
+					.filter(fileUrl -> fileUrl.endsWith(filename))
+					.findFirst()
+					.orElse(null);
+
+			if(url == null){
+				final String error = "The file " + filename + " was not found in the dataset";
+				log.error(error);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.NOT_FOUND,
+						error);
+			}
+
+			final PresignedURL presigned = new PresignedURL().setUrl(url).setMethod("GET");
+			return ResponseEntity.ok(presigned);
+
+		} else {
+			try {
+				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
+				return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			} catch (final Exception e) {
+				final String error = "Unable to get download url";
+				log.error(error, e);
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+			}
+
 		}
 	}
 
