@@ -1,10 +1,24 @@
 <template>
 	<main>
-		<tera-operator-placeholder :operation-type="node.operationType">
+		<tera-operator-placeholder
+			v-if="!showSpinner && !runResults"
+			:operation-type="node.operationType"
+		>
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
+			<div v-if="!showSpinner && runResults" ref="outputPanel">
+				<tera-simulate-chart
+					v-for="(cfg, idx) in node.state.chartConfigs"
+					:key="idx"
+					:run-results="runResults"
+					:chartConfig="{ selectedRun: $props.node.state.forecastRunId, selectedVariable: cfg }"
+					has-mean-line
+					:size="chartSize"
+					@configuration-change="chartProxy.configurationChange(idx, $event)"
+				/>
+			</div>
 			<div class="flex gap-2">
 				<Button
 					@click="emit('open-drilldown')"
@@ -20,20 +34,24 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import {
 	pollAction,
 	getRunResult,
+	getRunResultCiemss,
 	makeForecastJobCiemss,
 	getSimulation
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { SimulationRequest, Intervention as SimulationIntervention } from '@/types/Types';
+import type { RunResults } from '@/types/SimulateConfig';
 import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
@@ -42,10 +60,16 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
+const runResults = ref<RunResults>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
 );
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
+	emit('update-state', state);
+});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -82,8 +106,8 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const getSimulationInterventions = async () => {
-	const policyResult = await getRunResult(props.node.state.optimizationRunId, 'policy.json');
+const getSimulationInterventions = async (id) => {
+	const policyResult = await getRunResult(id, 'policy.json');
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
@@ -133,7 +157,7 @@ watch(
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getSimulationInterventions();
+			const simulationIntervetions = await getSimulationInterventions(id);
 			const forecastResponse = await startForecast(simulationIntervetions);
 			const forecastId = forecastResponse.id;
 
@@ -168,6 +192,23 @@ watch(
 				state
 			});
 		}
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node.active,
+	async () => {
+		const active = props.node.active;
+		const state = props.node.state;
+		if (!active) return;
+		if (!state.forecastRunId) return;
+
+		const forecastRunId = state.forecastRunId;
+
+		// Simulate
+		const result = await getRunResultCiemss(forecastRunId, 'result.csv');
+		runResults.value = result.runResults;
 	},
 	{ immediate: true }
 );
