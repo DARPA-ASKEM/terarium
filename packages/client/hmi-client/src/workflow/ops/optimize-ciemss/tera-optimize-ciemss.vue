@@ -132,8 +132,44 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
-			<p>Under construction. Use the wizard for now.</p>
+		<section :tabName="OptimizeTabs.Notebook">
+			<tera-drilldown-section class="notebook-section">
+				<div class="toolbar-right-side">
+					<Button
+						icon="pi pi-play"
+						label="Populate Code"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="populateCode"
+					/>
+					<Button
+						icon="pi pi-play"
+						label="Run"
+						outlined
+						severity="secondary"
+						size="small"
+						@click="runFromCodeWrapper"
+					/>
+				</div>
+				<Suspense>
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="sampleAgentQuestions"
+						:context-language="contextLanguage"
+						@llm-output="(data: any) => appendCode(data, 'code')"
+					/>
+				</Suspense>
+				<v-ace-editor
+					v-model:value="knobs.codeText"
+					@init="initializeAceEditor"
+					lang="python"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%"
+					class="ace-editor"
+					:options="{ showPrintMargin: false }"
+				/>
+			</tera-drilldown-section>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -263,7 +299,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch, onUnmounted } from 'vue';
 // components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -281,6 +317,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
 import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 // Services:
 import {
 	getModelConfigurationById,
@@ -296,6 +334,7 @@ import {
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { Poller, PollerState } from '@/api/api';
+import { KernelSessionManager } from '@/services/jupyter';
 // Types:
 import {
 	ModelConfiguration,
@@ -314,6 +353,7 @@ import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import {
 	OptimizeCiemssOperation,
 	OptimizeCiemssOperationState,
@@ -351,6 +391,7 @@ interface BasicKnobs {
 	optimzationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
+	codeText: string;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -366,8 +407,16 @@ const knobs = ref<BasicKnobs>({
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimzationRunId: props.node.state.optimzationRunId ?? '',
 	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? ''
+	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
+	codeText: props.node.state.codeText ?? ''
 });
+
+const sampleAgentQuestions = [];
+const contextLanguage = ref<string>('python3');
+
+let editor: VAceEditorInstance['_editor'] | null;
+const kernelManager = new KernelSessionManager();
+const isKernelReady = ref(false);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -425,6 +474,95 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+const initializeAceEditor = (editorInstance: any) => {
+	editor = editorInstance;
+};
+
+const appendCode = (data: any, property: string) => {
+	const code = data.content[property] as string;
+	if (code) {
+		knobs.value.codeText = (knobs.value.codeText ?? '').concat(' \n', code);
+	} else {
+		logger.error('No code to append');
+	}
+};
+
+// Reset model, then execute the code
+const runFromCodeWrapper = () => {
+	// Reset model
+	runFromCode(editor?.getValue() as string);
+};
+
+const runFromCode = (code: string) => {
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	let executedCode = '';
+
+	kernelManager
+		.sendMessage('execute_request', messageContent)
+		.register('execute_input', (data) => {
+			executedCode = data.content.code;
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('any_execute_reply', (data) => {
+			console.log('execute reply');
+			if (data.msg.content.status === 'error') {
+				const state = _.cloneDeep(props.node.state);
+				state.optimizeErrorMessage = {
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
+				emit('update-state', state);
+			}
+		});
+	console.log('Check for: ');
+	console.log(executedCode);
+	console.log('And save to state');
+};
+
+const populateCode = () => {
+	console.log('Hitting get_optimize');
+	const paramNames: string[] = [];
+	const startTime: number[] = [];
+	const listInitialGuessInterventions: number[] = [];
+	const listBoundsInterventions: number[][] = [];
+	props.node.state.interventionPolicyGroups.forEach((ele) => {
+		paramNames.push(ele.parameter);
+		startTime.push(ele.startTime);
+		listInitialGuessInterventions.push(ele.initialGuess);
+		listBoundsInterventions.push([ele.lowerBound]);
+		listBoundsInterventions.push([ele.upperBound]);
+	});
+
+	kernelManager
+		.sendMessage('get_optimize_request', {
+			param_names: paramNames,
+			initial_guess_interventions: listInitialGuessInterventions,
+			bounds_interventions: listBoundsInterventions,
+			risk_bound: knobs.value.threshold,
+			end_time: knobs.value.endTime,
+			alpha: (100 - knobs.value.riskTolerance) / 100,
+			solver_method: knobs.value.solverMethod,
+			n_samples_ouu: knobs.value.numSamples,
+			maxiter: knobs.value.maxiter,
+			maxfeval: knobs.value.maxfeval
+		})
+		.register('code_cell', (data) => {
+			console.log(data);
+			knobs.value.codeText += data.content.code;
+		});
+};
+
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
@@ -460,6 +598,21 @@ const formatJsonValue = (value) => {
 	return value;
 };
 
+const buildJupyterContext = () => {
+	if (!modelConfiguration.value) {
+		logger.warn('Cannot build Jupyter context without a model');
+		return null;
+	}
+
+	return {
+		context: 'pyciemss',
+		language: 'python3',
+		context_info: {
+			model_config_id: modelConfiguration.value.id
+		}
+	};
+};
+
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
@@ -468,6 +621,21 @@ const initialize = async () => {
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
 	modelStateOptions.value = model.model.states ?? ([] as State[]);
+
+	// Kernel setup:
+	try {
+		const jupyterContext = buildJupyterContext();
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+			isKernelReady.value = true;
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
 };
 
 const runOptimize = async () => {
@@ -686,6 +854,10 @@ onMounted(async () => {
 	initialize();
 });
 
+onUnmounted(() => {
+	kernelManager.shutdown();
+});
+
 watch(
 	() => knobs.value,
 	async () => {
@@ -735,6 +907,15 @@ watch(
 </script>
 
 <style scoped>
+.toolbar-right-side {
+	position: absolute;
+	top: var(--gap);
+	right: 0;
+	gap: var(--gap-small);
+	display: flex;
+	align-items: center;
+}
+
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
@@ -776,6 +957,14 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+	/** TODO: Temporary solution, should be using the default overlay-container padding
+	 in tera-drilldown...or maybe we should consider the individual drilldowns decide on padding */
+	margin-left: 1.5rem;
 }
 
 .input-row {
