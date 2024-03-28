@@ -223,6 +223,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { logger } from '@/utils/logger';
+import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
@@ -284,6 +285,9 @@ registry.registerOp(RegriddingOp);
 const props = defineProps<{
 	assetId: string;
 }>();
+
+const route = useRoute();
+const router = useRouter();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -409,6 +413,11 @@ const openDrilldown = (node: WorkflowNode<any>) => {
 	currentActiveNode.value = node;
 	startTime = Date.now();
 	dialogIsOpened.value = true;
+	if (route.query.operator !== node.id) {
+		router.push({
+			query: { operator: node.id }
+		});
+	}
 };
 
 const closeDrilldown = async () => {
@@ -422,6 +431,9 @@ const closeDrilldown = async () => {
 			timeSpent
 		})
 	);
+	router.push({
+		query: {}
+	});
 };
 
 const removeNode = (event) => {
@@ -868,6 +880,12 @@ watch(
 		isWorkflowLoading.value = true;
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
+
+		const nodeId: string = route.query.operator;
+		if (nodeId) {
+			const node = wf.value.nodes.find((n) => n.id === nodeId);
+			if (node) openDrilldown(node);
+		}
 	},
 	{ immediate: true }
 );
