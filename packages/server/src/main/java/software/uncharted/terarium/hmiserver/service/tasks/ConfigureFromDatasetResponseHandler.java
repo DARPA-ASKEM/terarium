@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -67,12 +68,16 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			final Model model = modelService.getAsset(props.getModelId())
 					.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
+
 			// Map the parameters values to the model
 			final Model modelCopy = new Model(model);
-			final JsonNode conditionParameters = configurations.getResponse().get("parameters");
-			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(conditionParameters, modelCopy);
+			final JsonNode condition = configurations.getResponse();
+			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
+			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
+
 			if (modelCopy.isRegnet()) {
 				modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+				modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 			}
 
 			// Create the new configuration
