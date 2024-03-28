@@ -123,7 +123,6 @@
 									inputId="integeronly"
 									v-model="knobs.riskTolerance"
 								/>
-								<Slider v-model="knobs.riskTolerance" :min="0" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -285,7 +284,6 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
 import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
