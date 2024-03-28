@@ -24,13 +24,13 @@
 									>({{ suggestedConfirgurationContext.tableData.length }})</span
 								>
 								<Button
+									class="ml-auto"
 									icon="pi pi-sign-out"
 									label="Extract configurations from inputs"
 									outlined
 									severity="secondary"
-									@click.stop="extractConfigurationsFromInputs"
-									style="margin-left: auto"
 									:loading="isLoading"
+									@click.stop="extractConfigurationsFromInputs"
 								/>
 							</template>
 							<DataTable
@@ -486,8 +486,13 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const extractConfigurationsFromInputs = async () => {
-	if (!model.value?.id) return;
+	console.group('Extracting configurations from inputs');
+	if (!model.value?.id) {
+		console.debug('Model not loaded yet, try later.');
+		return;
+	}
 	if (documentId.value) {
+		console.debug('Configuring model from document', documentId.value);
 		modelFromDocumentHandler.value = await configureModelFromDocument(
 			documentId.value,
 			model.value.id,
@@ -499,6 +504,8 @@ const extractConfigurationsFromInputs = async () => {
 					}
 					if (data.status === TaskStatus.Success) {
 						logger.success('Model configured from document');
+						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						console.debug('Model configured from document', outputJSON);
 						closeConnection();
 					}
 				},
@@ -511,6 +518,7 @@ const extractConfigurationsFromInputs = async () => {
 		);
 	}
 	if (datasetIds.value) {
+		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
@@ -533,6 +541,7 @@ const extractConfigurationsFromInputs = async () => {
 			}
 		);
 	}
+	console.groupEnd();
 };
 
 const handleModelPreview = (data: any) => {
