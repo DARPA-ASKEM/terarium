@@ -881,7 +881,7 @@ watch(
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
 
-		const nodeId: string = route.query.operator;
+		const nodeId = route.query.operator as string;
 		if (nodeId) {
 			const node = wf.value.nodes.find((n) => n.id === nodeId);
 			if (node) openDrilldown(node);
