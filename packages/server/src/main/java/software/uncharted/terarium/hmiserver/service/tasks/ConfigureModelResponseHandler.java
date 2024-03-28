@@ -22,6 +22,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
 
 @Component
 @RequiredArgsConstructor
@@ -65,15 +66,21 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 			final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(), Response.class);
+
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				// Map the parameters values to the model
 				final Model modelCopy = new Model(model);
 				final List<ModelParameter> modelParameters = modelCopy.getParameters();
 				modelParameters.forEach((parameter) -> {
+					final String parameterId = parameter.getId();
 					final JsonNode conditionParameters = condition.get("parameters");
 					conditionParameters.forEach((conditionParameter) -> {
-						if (parameter.getId().equals(conditionParameter.get("id").asText())) {
+						// Get the parameter value from the condition
+						final String id = conditionParameter.get("id").asText();
+
+						// Test against the id of the parameter in greek alphabet or english
+						if (parameterId.equals(id) || parameterId.equals(GreekDictionary.englishToGreek(id))) {
 							parameter.setValue(conditionParameter.get("value").doubleValue());
 						}
 					});
