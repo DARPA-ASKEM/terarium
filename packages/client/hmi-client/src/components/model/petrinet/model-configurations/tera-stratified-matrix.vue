@@ -112,6 +112,8 @@ const matrixType = ref('subjectOutcome');
 const matrixMap = ref<any>();
 const matrix = ref<any>([]);
 
+const currentMatrixtype = ref('');
+
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
 const expressionMap = ref<{ [key: string]: string }>({});
@@ -176,6 +178,12 @@ function generateMatrix() {
 		};
 
 		// Find a default
+		if (currentMatrixtype.value) {
+			matrix.value = matrixMap.value[currentMatrixtype.value];
+			matrixType.value = currentMatrixtype.value;
+			return;
+		}
+
 		for (let i = 0; i < matrixTypes.length; i++) {
 			const typeStr = matrixTypes[i];
 
@@ -195,6 +203,7 @@ async function updateCellValue(variableName: string, rowIdx: number, colIdx: num
 	const newValue = valueToEdit.value;
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
+	currentMatrixtype.value = matrixType.value;
 	emit('update-cell-value', { variableName, newValue, mathml });
 }
 
