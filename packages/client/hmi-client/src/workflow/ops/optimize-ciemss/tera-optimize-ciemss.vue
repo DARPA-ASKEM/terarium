@@ -107,7 +107,7 @@
 							<label>Target-variable(s)</label>
 							<MultiSelect
 								class="p-inputtext-sm"
-								:options="modelStateOptions.map((ele) => ele.id)"
+								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
 								placeholder="Select"
 								filter
@@ -428,7 +428,7 @@ const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
-const modelStateOptions = ref<State[]>([]);
+const modelStateAndObsOptions = ref<string[]>([]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -479,7 +479,10 @@ const initialize = async () => {
 	const model = modelConfiguration.value.configuration as Model;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
-	modelStateOptions.value = model.model.states ?? ([] as State[]);
+	modelStateAndObsOptions.value = model.model.states.map((ele) => ele.id) ?? ([] as State[]);
+	model.semantics?.ode.observables
+		?.map((ele) => ele.id)
+		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
 };
 
 const runOptimize = async () => {
