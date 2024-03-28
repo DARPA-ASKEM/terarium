@@ -107,7 +107,7 @@
 							<label>Target-variable(s)</label>
 							<MultiSelect
 								class="p-inputtext-sm"
-								:options="modelStateOptions.map((ele) => ele.id)"
+								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
 								placeholder="Select"
 								filter
@@ -123,7 +123,6 @@
 									inputId="integeronly"
 									v-model="knobs.riskTolerance"
 								/>
-								<Slider v-model="knobs.riskTolerance" :min="0" :max="100" :step="1" />
 							</div>
 						</div>
 						<div class="label-and-input">
@@ -285,7 +284,6 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
 import TeraOptimizeChart from '@/workflow/tera-optimize-chart.vue';
@@ -428,7 +426,7 @@ const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
-const modelStateOptions = ref<State[]>([]);
+const modelStateAndObsOptions = ref<string[]>([]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -479,7 +477,10 @@ const initialize = async () => {
 	const model = modelConfiguration.value.configuration as Model;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
-	modelStateOptions.value = model.model.states ?? ([] as State[]);
+	modelStateAndObsOptions.value = model.model.states.map((ele) => ele.id) ?? ([] as State[]);
+	model.semantics?.ode.observables
+		?.map((ele) => ele.id)
+		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
 };
 
 const runOptimize = async () => {
