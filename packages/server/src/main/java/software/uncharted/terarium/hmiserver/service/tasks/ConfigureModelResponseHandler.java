@@ -71,20 +71,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				// Map the parameters values to the model
 				final Model modelCopy = new Model(model);
-				final List<ModelParameter> modelParameters = modelCopy.getParameters();
-				modelParameters.forEach((parameter) -> {
-					final String parameterId = parameter.getId();
-					final JsonNode conditionParameters = condition.get("parameters");
-					conditionParameters.forEach((conditionParameter) -> {
-						// Get the parameter value from the condition
-						final String id = conditionParameter.get("id").asText();
-
-						// Test against the id of the parameter in greek alphabet or english
-						if (parameterId.equals(id) || parameterId.equals(GreekDictionary.englishToGreek(id))) {
-							parameter.setValue(conditionParameter.get("value").doubleValue());
-						}
-					});
-				});
+				final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 
 				if (modelCopy.isRegnet()) {
 					modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));

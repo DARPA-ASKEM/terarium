@@ -69,17 +69,11 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 			// Map the parameters values to the model
 			final Model modelCopy = new Model(model);
-			final List<ModelParameter> modelParameters = modelCopy.getParameters();
-			modelParameters.forEach((parameter) -> {
-				final JsonNode conditionParameters = configurations.getResponse().get("parameters");
-				conditionParameters.forEach((conditionParameter) -> {
-					if (parameter.getId().equals(conditionParameter.get("id").asText())) {
-						parameter.setValue(conditionParameter.get("value").doubleValue());
-					}
-				});
-			});
+			final JsonNode conditionParameters = configurations.getResponse().get("parameters");
+			final List<ModelParameter> modelParameters;
+            modelParameters = ScenarioExtraction.getModelParameters(conditionParameters, modelCopy);
 
-			if (modelCopy.isRegnet()) {
+            if (modelCopy.isRegnet()) {
 				modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
 			}
 
