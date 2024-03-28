@@ -13,9 +13,9 @@
 				@update:selection="onSelection"
 			/>
 		</template>
-
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+				<!-- Suggested configurations -->
 				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
@@ -24,16 +24,15 @@
 									>({{ suggestedConfirgurationContext.tableData.length }})</span
 								>
 								<Button
+									class="ml-auto"
 									icon="pi pi-sign-out"
 									label="Extract configurations from inputs"
 									outlined
 									severity="secondary"
-									@click.stop="extractConfigurationsFromInputs"
-									style="margin-left: auto"
 									:loading="isLoading"
+									@click.stop="extractConfigurationsFromInputs"
 								/>
 							</template>
-
 							<DataTable
 								:value="suggestedConfirgurationContext.tableData"
 								size="small"
@@ -49,15 +48,15 @@
 										<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
 									</template>
 								</Column>
-								<Column field="description" header="Description" style="width: 30%"></Column>
+								<Column field="description" header="Description" style="width: 30%" />
 								<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
 									<template #body="{ data }">
-										{{ formatTimestamp(data.createdOn) }}
+										{{ formatTimestamp(data?.createdOn) }}
 									</template>
 								</Column>
 								<Column header="Source" style="width: 30%">
 									<template #body="{ data }">
-										{{ data.configuration.metadata?.source?.join(',') || '--' }}
+										{{ data?.configuration.metadata?.source?.join(',') || '--' }}
 									</template>
 								</Column>
 								<Column style="width: 7rem">
@@ -105,9 +104,7 @@
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
-					<template
-						v-if="modelType === AMRSchemaNames.PETRINET || modelType === AMRSchemaNames.STOCKFLOW"
-					>
+					<template v-if="isPetriNet || isStockFlow">
 						<AccordionTab>
 							<template #header>
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
@@ -127,7 +124,7 @@
 							/>
 						</AccordionTab>
 					</template>
-					<template v-else-if="modelType === AMRSchemaNames.REGNET">
+					<template v-else-if="isRegNet">
 						<AccordionTab header="Vertices">
 							<DataTable v-if="!isEmpty(vertices)" data-key="id" :value="vertices">
 								<Column field="id" header="Symbol" />
@@ -174,7 +171,7 @@
 					</AccordionTab>
 				</Accordion>
 
-				<!-- For Nelson eval debug -->
+				<!-- TODO - For Nelson eval debug, remove in April 2024 -->
 				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
 					<div>Model config id: {{ selectedConfigId }}</div>
 					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
@@ -288,7 +285,7 @@
 	</Teleport>
 
 	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
+	<canvas id="matrix-canvas" />
 </template>
 
 <script setup lang="ts">
@@ -489,8 +486,13 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const extractConfigurationsFromInputs = async () => {
-	if (!model.value?.id) return;
+	console.group('Extracting configurations from inputs');
+	if (!model.value?.id) {
+		console.debug('Model not loaded yet, try later.');
+		return;
+	}
 	if (documentId.value) {
+		console.debug('Configuring model from document', documentId.value);
 		modelFromDocumentHandler.value = await configureModelFromDocument(
 			documentId.value,
 			model.value.id,
@@ -502,6 +504,8 @@ const extractConfigurationsFromInputs = async () => {
 					}
 					if (data.status === TaskStatus.Success) {
 						logger.success('Model configured from document');
+						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						console.debug('Model configured from document', outputJSON);
 						closeConnection();
 					}
 				},
@@ -514,6 +518,7 @@ const extractConfigurationsFromInputs = async () => {
 		);
 	}
 	if (datasetIds.value) {
+		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
@@ -536,6 +541,7 @@ const extractConfigurationsFromInputs = async () => {
 			}
 		);
 	}
+	console.groupEnd();
 };
 
 const handleModelPreview = (data: any) => {
@@ -600,7 +606,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 		cloneModel.metadata = {};
 	}
 
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+	if (isPetriNet.value || isStockFlow) {
 		if (cloneModel.semantics) {
 			cloneModel.semantics.ode.initials = knobs.value.initials;
 			cloneModel.semantics.ode.parameters = knobs.value.parameters;
@@ -609,7 +615,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 			cloneModel.metadata.parameters = knobs.value.parametersMetadata;
 		}
 		modelConfig.configuration = cloneModel;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
+	} else if (isRegNet.value) {
 		cloneModel.model.parameters = knobs.value.parameters;
 		cloneModel.metadata.timeseries = knobs.value.timeseries;
 		cloneModel.metadata.initials = knobs.value.initialsMetadata;
@@ -631,6 +637,9 @@ const numInitials = computed(() => {
 });
 
 const modelType = computed(() => getModelType(model.value));
+const isRegNet = computed(() => modelType.value === AMRSchemaNames.REGNET);
+const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
+const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
 const updateConfigParam = (params: ModelParameter[]) => {
 	for (let i = 0; i < knobs.value.parameters.length; i++) {
@@ -651,10 +660,10 @@ const updateConfigInitial = (inits: Initial[]) => {
 };
 
 const updateConfigFromModel = (inputModel: Model) => {
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+	if (isPetriNet.value || isStockFlow) {
 		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
 		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
+	} else if (isRegNet.value) {
 		knobs.value.parameters = inputModel.model?.parameters ?? [];
 	}
 	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
@@ -671,7 +680,7 @@ const runSanityCheck = () => {
 	}
 
 	let parameters: ModelParameter[] = [];
-	if ([AMRSchemaNames.PETRINET, AMRSchemaNames.STOCKFLOW].includes(modelType.value)) {
+	if (isPetriNet.value || isStockFlow) {
 		if (modelToCheck.semantics?.ode?.parameters) {
 			parameters = modelToCheck.semantics?.ode?.parameters;
 		}
@@ -780,12 +789,9 @@ const initialize = async () => {
 		// Grab these values from model to inialize them
 		const ode = model.value?.semantics?.ode;
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-		if (
-			modelType.value === AMRSchemaNames.PETRINET ||
-			modelType.value === AMRSchemaNames.STOCKFLOW
-		) {
+		if (isPetriNet.value || isStockFlow) {
 			knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
-		} else if (modelType.value === AMRSchemaNames.REGNET) {
+		} else if (isRegNet.value) {
 			knobs.value.parameters =
 				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
 		}
@@ -849,10 +855,10 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+	if (isPetriNet.value || isStockFlow) {
 		knobs.value.initials = amr.semantics.ode.initials;
 		knobs.value.parameters = amr.semantics.ode.parameters;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
+	} else if (isRegNet.value) {
 		knobs.value.parameters = amr.model.parameters;
 	}
 	knobs.value.timeseries = amr.metadata?.timeseries ?? {};
