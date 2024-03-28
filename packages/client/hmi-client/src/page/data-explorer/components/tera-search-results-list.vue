@@ -89,7 +89,7 @@ import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { computed, PropType, Ref, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
-import { createDataset } from '@/services/dataset';
+import { createDataset, getClimateDataset } from '@/services/dataset';
 import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
@@ -151,9 +151,15 @@ const projectOptions = computed(() => [
 						let datasetId = selectedAsset.value.id;
 
 						if (!datasetId && selectedAsset.value.esgfId) {
-							const dataset: Dataset | null = await createDataset(selectedAsset.value);
-							if (dataset) {
-								datasetId = dataset.id;
+							// The selectedAsset is a light asset for front end and we need the whole thing.
+							const climateDataset: Dataset | null = await getClimateDataset(
+								selectedAsset.value.esgfId
+							);
+							if (climateDataset) {
+								const dataset: Dataset | null = await createDataset(climateDataset);
+								if (dataset) {
+									datasetId = dataset.id;
+								}
 							}
 						}
 
