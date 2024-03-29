@@ -23,9 +23,9 @@ import java.util.List;
  *    	...]
  *    }
  *
- * Dataset: [{ "id": "initial_id", "value": 0.0, "type": "initial" },
+ * Dataset: {"values":[{ "id": "initial_id", "value": 0.0, "type": "initial" },
  * 					 { "id": "parameter_id", "value": 0.0, "type": "parameter" },
- * 					 ...]
+ * 					 ...]}
  */
 public class ScenarioExtraction {
 	// Replace initial values in the model with the values from the condition
