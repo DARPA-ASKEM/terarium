@@ -23,7 +23,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
+import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 
 @Component
 @RequiredArgsConstructor

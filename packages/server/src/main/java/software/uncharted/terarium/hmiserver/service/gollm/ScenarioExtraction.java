@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.service.tasks;
+package software.uncharted.terarium.hmiserver.service.gollm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -10,6 +10,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * A class to handle scenario extraction from Document and Dataset via GoLLM task-runner.
+ * GoLLM responses for the model configuration are in different JSON form depending on the source:
+ *
+ * Document:{
+ * 		"conditions": [
+ * 			{
+ * 				"name": condition_name,
+ *      	"description": description,
+ *      	"initials": [ { "id": "initial_id", "value": 0.0 }, ... ],
+ *      	"parameters": [ { "id": "parameter_id", "value": 0.0 }, ... ]
+ *    	},
+ *    	...]
+ *    }
+ *
+ * Dataset: [{ "id": "initial_id", "value": 0.0, "type": "initial" },
+ * 					 { "id": "parameter_id", "value": 0.0, "type": "parameter" },
+ * 					 ...]
+ */
 public class ScenarioExtraction {
 	public static List<ModelParameter> getModelParameters(JsonNode condition, Model modelCopy) {
 		final List<ModelParameter> modelParameters = modelCopy.getParameters();
