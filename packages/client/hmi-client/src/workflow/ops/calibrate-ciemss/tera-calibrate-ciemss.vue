@@ -90,15 +90,10 @@
 								v-model="knobs.numIterations"
 							/>
 						</div>
-						<!-- <div class="label-and-input">
-							<label for="method">Solver method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								:options="ciemssMethodOptions"
-								v-model="method"
-								placeholder="Select"
-							/>
-						</div> -->
+						<div class="label-and-input">
+							<label for="num-samples">End time for forecast</label>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
+						</div>
 					</div>
 				</div>
 			</tera-drilldown-section>
@@ -255,11 +250,13 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 interface BasicKnobs {
 	numIterations: number;
 	numSamples: number;
+	endTime: number;
 }
 
 const knobs = ref<BasicKnobs>({
 	numIterations: props.node.state.numIterations ?? 1000,
-	numSamples: props.node.state.numSamples ?? 100
+	numSamples: props.node.state.numSamples ?? 100,
+	endTime: props.node.state.endTime ?? 100
 });
 
 // EXTRA section: Unused, comment out for now Feb 2023
@@ -416,6 +413,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;
+		state.endTime = knobs.value.endTime;
 		emit('update-state', state);
 	},
 	{ deep: true }
