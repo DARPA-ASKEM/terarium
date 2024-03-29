@@ -33,8 +33,10 @@ public class ScenarioExtraction {
 		final String id = conditionInitial.get("id").asText();
 		final String target = initial.getTarget();
 		if (target.equals(id) || target.equals(GreekDictionary.englishToGreek(id))) {
-			final String value = String.valueOf(conditionInitial.get("value").doubleValue());
-			initial.setExpression(value);
+			if (conditionInitial.has("value")) {
+				final String value = String.valueOf(conditionInitial.get("value").doubleValue());
+				initial.setExpression(value);
+			}
 		}
 	}
 
