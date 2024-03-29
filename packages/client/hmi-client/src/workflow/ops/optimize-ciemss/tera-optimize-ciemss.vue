@@ -51,11 +51,16 @@
 						</div>
 						<div class="label-and-input">
 							<!-- TODO: This could likely be better explained to user -->
-							<label> Minimized</label>
+							<label> Minimized {{ knobs.isMinimized }}</label>
 							<Dropdown
 								class="toolbar-button"
 								v-model="knobs.isMinimized"
-								:options="[true, false]"
+								optionLabel="label"
+								optionValue="value"
+								:options="[
+									{ label: 'true', value: true },
+									{ label: 'false', value: false }
+								]"
 							/>
 						</div>
 					</div>
