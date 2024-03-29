@@ -51,7 +51,7 @@
 						</div>
 						<div class="label-and-input">
 							<!-- TODO: This could likely be better explained to user -->
-							<label> Minimized {{ knobs.isMinimized }}</label>
+							<label> Minimized </label>
 							<Dropdown
 								class="toolbar-button"
 								v-model="knobs.isMinimized"
@@ -610,6 +610,7 @@ watch(
 		state.modelConfigName = knobs.value.modelConfigName;
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		state.interventionType = knobs.value.interventionType;
+		state.isMinimized = knobs.value.isMinimized;
 		emit('update-state', state);
 	},
 	{ deep: true }
