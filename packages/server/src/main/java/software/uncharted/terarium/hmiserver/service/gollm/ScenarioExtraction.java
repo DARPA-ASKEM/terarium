@@ -7,8 +7,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * A class to handle scenario extraction from Document and Dataset via GoLLM task-runner.
@@ -30,23 +28,34 @@ import java.util.stream.StreamSupport;
  * 					 ...]
  */
 public class ScenarioExtraction {
+	// Replace initial values in the model with the values from the condition
+	public static void replaceInitial(Initial initial, JsonNode conditionInitial) {
+		final String id = conditionInitial.get("id").asText();
+		final String target = initial.getTarget();
+		if (target.equals(id) || target.equals(GreekDictionary.englishToGreek(id))) {
+			final String value = String.valueOf(conditionInitial.get("value").doubleValue());
+			initial.setExpression(value);
+		}
+	}
+
+	// Replace parameter values in the model with the values from the condition
+	public static void replaceParameter(ModelParameter parameter, JsonNode conditionParameter) {
+		final String id = conditionParameter.get("id").asText();
+		if (parameter.getId().equals(id) || parameter.getId().equals(GreekDictionary.englishToGreek(id))) {
+			final double value = conditionParameter.get("value").doubleValue();
+			parameter.setValue(value);
+		}
+	}
+
 	public static List<ModelParameter> getModelParameters(JsonNode condition, Model modelCopy) {
 		final List<ModelParameter> modelParameters = modelCopy.getParameters();
 		modelParameters.forEach((parameter) -> {
-			final String parameterId = parameter.getId();
 			condition.forEach((conditionParameter) -> {
 				// Test if type exist and is parameter for Dataset extraction
 				if (conditionParameter.has("type") && conditionParameter.get("type").asText().equals("initial")) {
 					return;
 				}
-
-				// Get the parameter value from the condition
-				final String id = conditionParameter.get("id").asText();
-
-				// Test against the id of the parameter in greek alphabet or english
-				if (parameterId.equals(id) || parameterId.equals(GreekDictionary.englishToGreek(id))) {
-					parameter.setValue(conditionParameter.get("value").doubleValue());
-				}
+				replaceParameter(parameter, conditionParameter);
 			});
 		});
 		return modelParameters;
@@ -58,13 +67,7 @@ public class ScenarioExtraction {
 			final String target = initial.getTarget();
 			condition.forEach((conditionInitial) -> {
 				if (conditionInitial.has("type") && conditionInitial.get("type").asText().equals("parameter")) return;
-				// Get the initial value from the condition
-				final String id = conditionInitial.get("id").asText();
-
-				// Test against the id of the initial in greek alphabet or english
-				if (target.equals(id) || target.equals(GreekDictionary.englishToGreek(id))) {
-					initial.setExpression(String.valueOf(conditionInitial.get("value").doubleValue()));
-				}
+				replaceInitial(initial, conditionInitial);
 			});
 		});
 		return modelInitials;
