@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 
 @Component
 @RequiredArgsConstructor
@@ -71,7 +72,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 			// Map the parameters values to the model
 			final Model modelCopy = new Model(model);
-			final JsonNode condition = configurations.getResponse();
+			final JsonNode condition = configurations.getResponse().get("values");
 			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
 

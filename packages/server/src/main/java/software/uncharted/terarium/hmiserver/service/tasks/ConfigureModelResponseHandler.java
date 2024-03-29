@@ -23,7 +23,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
+import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 
 @Component
 @RequiredArgsConstructor
@@ -70,15 +70,22 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
+				final Model modelCopy = new Model(model);
 
 				// Map the parameters values to the model
-				final Model modelCopy = new Model(model);
-				final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
-				final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
+				if (condition.has("parameters")) {
+					final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
+					if (modelCopy.isRegnet()) {
+						modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+					}
+				}
 
-				if (modelCopy.isRegnet()) {
-					modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
-					modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
+				// Map the initials values to the model
+				if (condition.has("initials")) {
+					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
+					if (modelCopy.isRegnet()) {
+						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
+					}
 				}
 
 				// Create the new configuration
