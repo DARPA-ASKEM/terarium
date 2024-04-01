@@ -13,7 +13,7 @@
 		</template>
 		<template #overview-summary>
 			<!-- Description & Contributors -->
-			<p class="mt-1 mb-1">
+			<p class="overview-description">
 				{{ useProjects().activeProject.value?.description }}
 			</p>
 		</template>
@@ -33,3 +33,9 @@ import teraProjectOverviewEditor from '@/components/home/tera-project-overview-e
 
 const isRenamingProject = ref(false);
 </script>
+<style scoped>
+.overview-description {
+	margin-bottom: var(--gap-xsmall);
+	color: var(--text-color-primary);
+}
+</style>
