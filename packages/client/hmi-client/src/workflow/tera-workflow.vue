@@ -113,7 +113,7 @@
 							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-							@open-drilldown="openDrilldown(node)"
+							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
 					</template>
 				</tera-operator>
@@ -185,7 +185,7 @@
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="closeDrilldown"
+			@close="router.go(-1)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		/>
 	</Teleport>
@@ -409,15 +409,17 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 	workflowDirty = true;
 }
 
+// Route is mutated then watcher is triggered to open or close the drilldown
+function addOperatorToRoute(nodeId: string) {
+	router.push({
+		query: { operator: nodeId }
+	});
+}
+
 const openDrilldown = (node: WorkflowNode<any>) => {
 	currentActiveNode.value = node;
 	startTime = Date.now();
 	dialogIsOpened.value = true;
-	if (route.query.operator !== node.id) {
-		router.push({
-			query: { operator: node.id }
-		});
-	}
 };
 
 const closeDrilldown = async () => {
@@ -431,9 +433,6 @@ const closeDrilldown = async () => {
 			timeSpent
 		})
 	);
-	router.push({
-		query: {}
-	});
 };
 
 const removeNode = (event) => {
@@ -880,14 +879,21 @@ watch(
 		isWorkflowLoading.value = true;
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
-
-		const nodeId = route.query.operator as string;
-		if (nodeId) {
-			const node = wf.value.nodes.find((n) => n.id === nodeId);
-			if (node) openDrilldown(node);
-		}
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => [isWorkflowLoading.value, route.query.operator],
+	() => {
+		console.log(isWorkflowLoading.value, route.query);
+		if (isWorkflowLoading.value) return;
+		if (route.query.operator) {
+			openDrilldown(wf.value.nodes.find((n) => n.id === route.query.operator));
+		} else {
+			closeDrilldown();
+		}
+	}
 );
 
 onMounted(() => {
@@ -900,6 +906,7 @@ onMounted(() => {
 		}
 	}, WORKFLOW_SAVE_INTERVAL);
 });
+
 onUnmounted(() => {
 	if (workflowDirty) {
 		workflowService.updateWorkflow(wf.value);
