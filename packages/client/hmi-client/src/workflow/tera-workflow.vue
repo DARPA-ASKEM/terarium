@@ -873,7 +873,7 @@ const handleDrilldown = () => {
 	const operatorId = route.query?.operator?.toString();
 	if (operatorId) {
 		const operator = wf.value.nodes.find((n) => n.id === operatorId);
-		openDrilldown(operator);
+		if (operator) openDrilldown(operator);
 	} else {
 		closeDrilldown();
 	}
