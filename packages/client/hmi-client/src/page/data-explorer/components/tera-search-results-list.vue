@@ -76,6 +76,7 @@ import {
 } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
+import { DocumentSource } from '@/types/search';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
@@ -123,7 +124,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String,
-		default: 'xDD'
+		default: DocumentSource.XDD
 	}
 });
 
@@ -168,11 +169,11 @@ const projectOptions = computed(() => [
 							response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
-					} else if (isDocument(selectedAsset.value) && props.source === 'xDD') {
+					} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
 						const document = selectedAsset.value as Document;
 						await createDocumentFromXDD(document, project.id as string);
 						assetName = selectedAsset.value.title;
-					} else if (props.source === 'Terarium') {
+					} else if (props.source === DocumentSource.Terarium) {
 						const document = selectedAsset.value as DocumentAsset;
 						const assetType = AssetType.Document;
 						response = await useProjects().addAsset(assetType, document.id, project.id);
@@ -219,11 +220,11 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resourceType === ResourceType.XDD) {
-			if (props.source === 'xDD') {
+			if (props.source === DocumentSource.XDD) {
 				const documentSearchResults = searchResults.results as Document[];
 				return [...documentSearchResults];
 			}
-			if (props.source === 'Terarium') {
+			if (props.source === DocumentSource.Terarium) {
 				const documentSearchResults = searchResults.results as DocumentAsset[];
 				return [...documentSearchResults];
 			}

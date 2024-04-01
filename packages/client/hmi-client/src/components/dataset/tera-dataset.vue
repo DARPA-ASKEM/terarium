@@ -73,12 +73,12 @@ import {
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
+import { DatasetSource } from '@/types/search';
 import { useProjects } from '@/composables/project';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
-import { DatasetSource } from '@/types/Dataset';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDatasetDescription from './tera-dataset-description.vue';
 import { enrichDataset } from './utils';
@@ -102,7 +102,7 @@ const props = defineProps({
 		type: String,
 		default: null
 	},
-	datasetSource: {
+	source: {
 		type: String as PropType<DatasetSource>,
 		default: DatasetSource.TERARIUM
 	}
@@ -218,12 +218,12 @@ async function updateAndFetchDataset(ds: Dataset) {
 }
 
 const fetchDataset = async () => {
-	if (props.datasetSource === DatasetSource.TERARIUM) {
+	if (props.source === DatasetSource.TERARIUM) {
 		const datasetTemp = await getDataset(props.assetId);
 		if (datasetTemp) {
 			dataset.value = enrichDataset(datasetTemp);
 		}
-	} else if (props.datasetSource === DatasetSource.ESGF) {
+	} else if (props.source === DatasetSource.ESGF) {
 		dataset.value = await getClimateDataset(props.assetId);
 	}
 };

@@ -7,7 +7,7 @@
 	>
 		<template v-slot:content>
 			<tera-external-publication
-				v-if="previewItemResourceType === ResourceType.XDD && source === 'xDD'"
+				v-if="previewItemResourceType === ResourceType.XDD && source === DocumentSource.XDD"
 				:xdd-uri="previewItemId"
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
@@ -16,7 +16,9 @@
 				@close-preview="closePreview"
 			/>
 			<tera-document-asset
-				v-else-if="previewItemResourceType === ResourceType.XDD && source === 'Terarium'"
+				v-else-if="
+					previewItemResourceType === ResourceType.XDD && source === DocumentSource.TERARIUM
+				"
 				:asset-id="previewItemId"
 				:previewLineLimit="10"
 				:feature-config="{ isPreview: true }"
@@ -27,7 +29,7 @@
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
-				:dataset-source="datasetSource"
+				:source="source"
 				@close-preview="closePreview"
 			/>
 			<tera-model
@@ -44,13 +46,13 @@
 <script setup lang="ts">
 import { computed, PropType, ref, watch } from 'vue';
 import { ResourceType, ResultType } from '@/types/common';
+import { DatasetSource, DocumentSource } from '@/types/search';
 import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
-import { DatasetSource } from '@/types/Dataset';
 import { Dataset } from '@/types/Types';
 
 const props = defineProps({
@@ -80,12 +82,8 @@ const props = defineProps({
 		default: null
 	},
 	source: {
-		type: String,
-		default: 'xDD'
-	},
-	datasetSource: {
-		type: String as PropType<DatasetSource>,
-		default: DatasetSource.TERARIUM
+		type: String as PropType<DocumentSource | DatasetSource>,
+		default: DocumentSource.XDD
 	}
 });
 
@@ -100,7 +98,7 @@ const previewItemId = computed(() => {
 	}
 	if (
 		previewItemResourceType.value === ResourceType.DATASET &&
-		props.datasetSource === DatasetSource.ESGF
+		props.source === DatasetSource.ESGF
 	) {
 		const dataset: Dataset = previewItemState.value as Dataset;
 		return dataset.esgfId as string;

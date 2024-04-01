@@ -22,24 +22,17 @@
 					<nav>
 						<SelectButton
 							:model-value="assetType"
-							@change="if ($event.value) assetType = $event.value;"
+							@change="if ($event.value) changeAssetType($event.value);"
 							:options="assetOptions"
 							option-value="value"
 							option-label="label"
 						/>
-						<div class="toggles" v-if="assetType === AssetType.Document">
-							<span>
-								<label class="mr-2">Source</label>
-								<Dropdown v-model="chosenSource" :options="sourceOptions" />
-							</span>
-							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
-						</div>
-						<div class="toggles" v-if="assetType === AssetType.Dataset">
+						<div class="toggles" v-if="assetType !== AssetType.Model">
 							<span>
 								<label class="mr-2">Source</label>
 								<Dropdown
-									v-model="chosenDatasetSource"
-									:options="datasetSourceOptions"
+									v-model="chosenSource"
+									:options="sourceOptions"
 									@change="executeNewQuery"
 								/>
 							</span>
@@ -79,14 +72,13 @@
 				:source="chosenSource"
 				:resource-type="resourceType"
 				:search-term="searchTerm"
-				:dataset-source="chosenDatasetSource"
 			/>
 		</section>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, Ref, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dropdown from 'primevue/dropdown';
@@ -100,6 +92,7 @@ import {
 	SearchResults,
 	ViewType
 } from '@/types/common';
+import { DocumentSource, DatasetSource } from '@/types/search';
 import { getFacets } from '@/utils/facets';
 import {
 	FACET_FIELDS as XDD_FACET_FIELDS,
@@ -119,7 +112,7 @@ import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.v
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
-import { DatasetSearchParams, DatasetSource } from '@/types/Dataset';
+import { DatasetSearchParams } from '@/types/Dataset';
 import { ModelSearchParams } from '@/types/Model';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
@@ -183,11 +176,8 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
-const sourceOptions = ref(['xDD', 'Terarium']);
-const chosenSource = ref('xDD');
-
-const datasetSourceOptions: Ref<DatasetSource[]> = ref(Object.values(DatasetSource));
-const chosenDatasetSource: Ref<DatasetSource> = ref(DatasetSource.TERARIUM);
+const sourceOptions = ref(Object.values(DocumentSource));
+const chosenSource = ref(DocumentSource.XDD);
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
@@ -196,7 +186,7 @@ const sliderWidth = computed(() =>
 // Chooses source for search
 const resultsToShow = computed(() => {
 	if (
-		(assetType.value === AssetType.Document && chosenSource.value === 'Terarium') ||
+		(assetType.value === AssetType.Document && chosenSource.value === DocumentSource.Terarium) ||
 		assetType.value === AssetType.Model
 	) {
 		return searchResults.value;
@@ -210,6 +200,18 @@ watch(isSliderResourcesOpen, () => {
 		previewItem.value = null;
 	}
 });
+
+function changeAssetType(type: AssetType) {
+	assetType.value = type;
+
+	if (assetType.value === AssetType.Document) {
+		sourceOptions.value = Object.values(DocumentSource);
+		chosenSource.value = DocumentSource.XDD;
+	} else if (assetType.value === AssetType.Dataset) {
+		sourceOptions.value = Object.values(DatasetSource);
+		chosenSource.value = DatasetSource.TERARIUM;
+	}
+}
 
 const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
 	// retrieves filtered & unfiltered facet data
@@ -280,7 +282,7 @@ const executeSearch = async () => {
 		},
 		model: {},
 		[ResourceType.DATASET]: {
-			source: chosenDatasetSource.value,
+			source: chosenSource.value,
 			topic: 'covid-19'
 		}
 	};
@@ -367,7 +369,7 @@ const executeSearch = async () => {
 	} else {
 		datasetSearchParams = {
 			filters: clientFilters.value,
-			source: chosenDatasetSource.value,
+			source: chosenSource.value,
 			topic: 'covid-19' // TODO - this should be dynamic
 		};
 	}
