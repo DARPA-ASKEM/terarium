@@ -17,7 +17,7 @@
 			/>
 			<tera-document-asset
 				v-else-if="
-					previewItemResourceType === ResourceType.XDD && source === DocumentSource.TERARIUM
+					previewItemResourceType === ResourceType.XDD && source === DocumentSource.Terarium
 				"
 				:asset-id="previewItemId"
 				:previewLineLimit="10"
@@ -29,7 +29,7 @@
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
-				:source="source"
+				:source="source as DatasetSource"
 				@close-preview="closePreview"
 			/>
 			<tera-model

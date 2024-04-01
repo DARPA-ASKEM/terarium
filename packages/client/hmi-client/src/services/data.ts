@@ -264,7 +264,7 @@ const getAssets = async (params: GetAssetsParams) => {
 			projectAssetType = AssetType.Model;
 			break;
 		case ResourceType.DATASET:
-			if (searchParam.source === DatasetSource.TERARIUM)
+			if (searchParam.source === DatasetSource.Terarium)
 				assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
 			else if (searchParam.source === DatasetSource.ESGF)
 				assetList = (await DatasetService.searchClimateDatasets(term)) ?? ([] as Dataset[]);

@@ -76,7 +76,7 @@ import {
 } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
-import { DocumentSource } from '@/types/search';
+import { DocumentSource, DatasetSource } from '@/types/search';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
@@ -123,7 +123,7 @@ const props = defineProps({
 		default: 0
 	},
 	source: {
-		type: String,
+		type: String as PropType<DocumentSource | DatasetSource>,
 		default: DocumentSource.XDD
 	}
 });
@@ -216,24 +216,9 @@ const togglePreview = (asset: ResultType) => {
 // });
 
 const filteredAssets = computed(() => {
-	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType);
-
-	if (searchResults) {
-		if (props.resourceType === ResourceType.XDD) {
-			if (props.source === DocumentSource.XDD) {
-				const documentSearchResults = searchResults.results as Document[];
-				return [...documentSearchResults];
-			}
-			if (props.source === DocumentSource.Terarium) {
-				const documentSearchResults = searchResults.results as DocumentAsset[];
-				return [...documentSearchResults];
-			}
-		}
-		if (props.resourceType === ResourceType.MODEL || props.resourceType === ResourceType.DATASET) {
-			return searchResults.results;
-		}
-	}
-	return [];
+	const searchResults =
+		props.dataItems.find((res) => res.searchSubsystem === props.resourceType)?.results ?? [];
+	return searchResults;
 });
 
 const resultsCount = computed(() => {

@@ -33,7 +33,7 @@
 								<Dropdown
 									v-model="chosenSource"
 									:options="sourceOptions"
-									@change="executeNewQuery"
+									@change="if (assetType === AssetType.Dataset) executeNewQuery();"
 								/>
 							</span>
 							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
@@ -176,8 +176,8 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
-const sourceOptions = ref(Object.values(DocumentSource));
-const chosenSource = ref(DocumentSource.XDD);
+const sourceOptions = ref<DatasetSource[] | DocumentSource[]>(Object.values(DocumentSource));
+const chosenSource = ref<DatasetSource | DocumentSource>(DocumentSource.XDD);
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
@@ -209,7 +209,7 @@ function changeAssetType(type: AssetType) {
 		chosenSource.value = DocumentSource.XDD;
 	} else if (assetType.value === AssetType.Dataset) {
 		sourceOptions.value = Object.values(DatasetSource);
-		chosenSource.value = DatasetSource.TERARIUM;
+		chosenSource.value = DatasetSource.Terarium;
 	}
 }
 
@@ -282,7 +282,7 @@ const executeSearch = async () => {
 		},
 		model: {},
 		[ResourceType.DATASET]: {
-			source: chosenSource.value,
+			source: chosenSource.value as DatasetSource,
 			topic: 'covid-19'
 		}
 	};
@@ -369,7 +369,7 @@ const executeSearch = async () => {
 	} else {
 		datasetSearchParams = {
 			filters: clientFilters.value,
-			source: chosenSource.value,
+			source: chosenSource.value as DatasetSource,
 			topic: 'covid-19' // TODO - this should be dynamic
 		};
 	}

@@ -104,7 +104,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String as PropType<DatasetSource>,
-		default: DatasetSource.TERARIUM
+		default: DatasetSource.Terarium
 	}
 });
 
@@ -218,7 +218,7 @@ async function updateAndFetchDataset(ds: Dataset) {
 }
 
 const fetchDataset = async () => {
-	if (props.source === DatasetSource.TERARIUM) {
+	if (props.source === DatasetSource.Terarium) {
 		const datasetTemp = await getDataset(props.assetId);
 		if (datasetTemp) {
 			dataset.value = enrichDataset(datasetTemp);
