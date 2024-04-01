@@ -185,7 +185,7 @@
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="router.go(-1)"
+			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		/>
 	</Teleport>
@@ -410,10 +410,12 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
-function addOperatorToRoute(nodeId: string) {
-	router.push({
-		query: { operator: nodeId }
-	});
+function addOperatorToRoute(nodeId: string | null) {
+	if (nodeId !== null) {
+		router.push({ query: { operator: nodeId } });
+	} else {
+		router.push({ query: {} });
+	}
 }
 
 const openDrilldown = (node: WorkflowNode<any>) => {
@@ -867,6 +869,16 @@ const unloadCheck = () => {
 	}
 };
 
+const handleDrilldown = () => {
+	const operatorId = route.query?.operator?.toString();
+	if (operatorId) {
+		const operator = wf.value.nodes.find((n) => n.id === operatorId);
+		openDrilldown(operator);
+	} else {
+		closeDrilldown();
+	}
+};
+
 watch(
 	() => [props.assetId],
 	async () => {
@@ -879,23 +891,17 @@ watch(
 		isWorkflowLoading.value = true;
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
+
+		handleDrilldown();
 	},
 	{ immediate: true }
 );
 
 watch(
-	() => [isWorkflowLoading.value, route.query],
+	() => [route.query],
 	() => {
-		console.log(isWorkflowLoading.value, route.query);
 		if (isWorkflowLoading.value) return;
-
-		const operatorId = route?.query?.operator?.toString();
-		if (operatorId) {
-			const confirmedOperatorId = wf.value.nodes.find(({ id }) => id === operatorId);
-			if (confirmedOperatorId) openDrilldown(confirmedOperatorId);
-		} else {
-			closeDrilldown();
-		}
+		handleDrilldown();
 	},
 	{ deep: true }
 );
