@@ -884,16 +884,20 @@ watch(
 );
 
 watch(
-	() => [isWorkflowLoading.value, route.query.operator],
+	() => [isWorkflowLoading.value, route.query],
 	() => {
 		console.log(isWorkflowLoading.value, route.query);
 		if (isWorkflowLoading.value) return;
-		if (route.query.operator) {
-			openDrilldown(wf.value.nodes.find((n) => n.id === route.query.operator));
+
+		const operatorId = route?.query?.operator?.toString();
+		if (operatorId) {
+			const confirmedOperatorId = wf.value.nodes.find(({ id }) => id === operatorId);
+			if (confirmedOperatorId) openDrilldown(confirmedOperatorId);
 		} else {
 			closeDrilldown();
 		}
-	}
+	},
+	{ deep: true }
 );
 
 onMounted(() => {
