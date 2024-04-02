@@ -29,7 +29,7 @@
 				:asset-id="previewItemId"
 				:highlight="searchTerm"
 				:feature-config="{ isPreview: true }"
-				:source="source as DatasetSource"
+				:source="source"
 				@close-preview="closePreview"
 			/>
 			<tera-model
@@ -47,6 +47,7 @@
 import { computed, PropType, ref, watch } from 'vue';
 import { ResourceType, ResultType } from '@/types/common';
 import { DatasetSource, DocumentSource } from '@/types/search';
+import type { Source } from '@/types/search';
 import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
@@ -82,7 +83,7 @@ const props = defineProps({
 		default: null
 	},
 	source: {
-		type: String as PropType<DocumentSource | DatasetSource>,
+		type: String as PropType<Source>,
 		default: DocumentSource.XDD
 	}
 });

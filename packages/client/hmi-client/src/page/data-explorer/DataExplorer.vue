@@ -93,6 +93,7 @@ import {
 	ViewType
 } from '@/types/common';
 import { DocumentSource, DatasetSource } from '@/types/search';
+import type { Source } from '@/types/search';
 import { getFacets } from '@/utils/facets';
 import {
 	FACET_FIELDS as XDD_FACET_FIELDS,
@@ -176,8 +177,8 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
-const sourceOptions = ref<DatasetSource[] | DocumentSource[]>(Object.values(DocumentSource));
-const chosenSource = ref<DatasetSource | DocumentSource>(DocumentSource.XDD);
+const sourceOptions = ref<Source[]>(Object.values(DocumentSource));
+const chosenSource = ref<Source>(DocumentSource.XDD);
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'

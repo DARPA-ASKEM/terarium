@@ -76,7 +76,8 @@ import {
 } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
-import { DocumentSource, DatasetSource } from '@/types/search';
+import { DocumentSource } from '@/types/search';
+import type { Source } from '@/types/search';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
@@ -123,7 +124,7 @@ const props = defineProps({
 		default: 0
 	},
 	source: {
-		type: String as PropType<DocumentSource | DatasetSource>,
+		type: String as PropType<Source>,
 		default: DocumentSource.XDD
 	}
 });

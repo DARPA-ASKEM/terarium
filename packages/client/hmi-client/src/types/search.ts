@@ -7,3 +7,5 @@ export enum DatasetSource {
 	Terarium = 'Terarium',
 	ESGF = 'ESGF'
 }
+
+export type Source = DocumentSource | DatasetSource;

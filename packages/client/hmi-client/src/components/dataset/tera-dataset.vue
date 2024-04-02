@@ -73,6 +73,7 @@ import {
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
+import type { Source } from '@/types/search';
 import { DatasetSource } from '@/types/search';
 import { useProjects } from '@/composables/project';
 import InputText from 'primevue/inputtext';
@@ -103,7 +104,7 @@ const props = defineProps({
 		default: null
 	},
 	source: {
-		type: String as PropType<DatasetSource>,
+		type: String as PropType<Source>,
 		default: DatasetSource.Terarium
 	}
 });
