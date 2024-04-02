@@ -104,7 +104,7 @@ section {
 		justify-content: space-between;
 		width: 100%;
 		font-size: var(--font-caption);
-		color: var(--text-color-subdued);
+		color: var(--text-color-primary);
 		cursor: text;
 	}
 
@@ -125,7 +125,6 @@ section {
 	/* In drilldown */
 	&:not(.in-node) {
 		padding-bottom: var(--gap-small);
-		padding-left: var(--gap-small);
 		border-radius: var(--border-radius);
 		gap: var(--gap-small);
 		& > textarea {

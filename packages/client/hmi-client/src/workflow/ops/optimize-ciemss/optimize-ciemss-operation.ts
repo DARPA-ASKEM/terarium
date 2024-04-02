@@ -69,7 +69,7 @@ export const OptimizeCiemssOperation: Operation = {
 	initState: () => {
 		const init: OptimizeCiemssOperationState = {
 			endTime: 90,
-			numSamples: 1000,
+			numSamples: 100,
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,

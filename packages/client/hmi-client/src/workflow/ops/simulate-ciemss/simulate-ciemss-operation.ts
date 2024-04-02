@@ -30,7 +30,7 @@ export const SimulateCiemssOperation: Operation = {
 	initState: () => {
 		const init: SimulateCiemssOperationState = {
 			chartConfigs: [],
-			currentTimespan: { start: 1, end: 100 },
+			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',
 			inProgressSimulationId: '',

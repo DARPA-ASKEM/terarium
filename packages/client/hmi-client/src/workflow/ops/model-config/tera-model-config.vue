@@ -307,7 +307,7 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';

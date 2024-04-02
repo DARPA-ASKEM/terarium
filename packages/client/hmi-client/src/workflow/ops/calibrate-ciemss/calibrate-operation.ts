@@ -41,7 +41,7 @@ export const CalibrationOperationCiemss: Operation = {
 			calibrationId: '',
 			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' },
-			numIterations: 1000,
+			numIterations: 100,
 			numSamples: 100,
 			endTime: 100
 		};

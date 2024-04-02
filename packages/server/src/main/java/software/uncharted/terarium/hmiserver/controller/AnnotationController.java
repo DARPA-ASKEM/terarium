@@ -1,41 +1,30 @@
 package software.uncharted.terarium.hmiserver.controller;
 
-import java.time.Instant;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
-import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.user.Annotation;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.AnnotationService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
+import java.time.Instant;
+import java.util.List;
+
 @RequestMapping("/annotations")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class AnnotationController {
 
-	@Autowired
-	private AnnotationService annotationService;
-
-	@Autowired
-	private CurrentUserService currentUserService;
+	private final AnnotationService annotationService;
+	private final CurrentUserService currentUserService;
 
 	@GetMapping
 	@Secured(Roles.USER)
