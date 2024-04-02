@@ -17,7 +17,7 @@
 					@close-preview="closePreview"
 				/>
 				<tera-document-asset
-					v-else-if="source === DocumentSource.Terarium"
+					v-else-if="source === DocumentSource.TERARIUM"
 					:asset-id="previewItemId"
 					:previewLineLimit="10"
 					:feature-config="{ isPreview: true }"

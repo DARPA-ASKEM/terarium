@@ -187,7 +187,7 @@ const sliderWidth = computed(() =>
 // Chooses source for search
 const resultsToShow = computed(() => {
 	if (
-		(assetType.value === AssetType.Document && chosenSource.value === DocumentSource.Terarium) ||
+		(assetType.value === AssetType.Document && chosenSource.value === DocumentSource.TERARIUM) ||
 		assetType.value === AssetType.Model
 	) {
 		return searchResults.value;
@@ -210,7 +210,7 @@ function changeAssetType(type: AssetType) {
 		chosenSource.value = DocumentSource.XDD;
 	} else if (assetType.value === AssetType.Dataset) {
 		sourceOptions.value = Object.values(DatasetSource);
-		chosenSource.value = DatasetSource.Terarium;
+		chosenSource.value = DatasetSource.TERARIUM;
 	}
 }
 

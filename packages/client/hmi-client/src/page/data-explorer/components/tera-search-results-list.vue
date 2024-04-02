@@ -174,7 +174,7 @@ const projectOptions = computed(() => [
 						const document = selectedAsset.value as Document;
 						await createDocumentFromXDD(document, project.id as string);
 						assetName = selectedAsset.value.title;
-					} else if (props.source === DocumentSource.Terarium) {
+					} else if (props.source === DocumentSource.TERARIUM) {
 						const document = selectedAsset.value as DocumentAsset;
 						const assetType = AssetType.Document;
 						response = await useProjects().addAsset(assetType, document.id, project.id);

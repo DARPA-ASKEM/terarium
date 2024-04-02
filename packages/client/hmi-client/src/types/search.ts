@@ -1,10 +1,10 @@
 export enum DocumentSource {
 	XDD = 'xDD',
-	Terarium = 'Terarium'
+	TERARIUM = 'Terarium'
 }
 
 export enum DatasetSource {
-	Terarium = 'Terarium',
+	TERARIUM = 'Terarium',
 	ESGF = 'ESGF'
 }
 
