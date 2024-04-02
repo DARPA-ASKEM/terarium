@@ -118,7 +118,15 @@ public class ClimateDataController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error getting preview");
 		}
 
-		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(esgfId, variableId, timestamps, timeIndex);
+		final ResponseEntity<JsonNode> response;
+		try {
+			response = climateDataProxy.previewEsgf(esgfId, variableId, timestamps, timeIndex);
+		} catch (final FeignException e) {
+			final String error = "Unable to generate preview";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 
 		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
 		climateDataService.addPreviewJob(esgfId, variableId, timestamps, timeIndex, climateDataResponse.getId());
@@ -153,8 +161,16 @@ public class ClimateDataController {
 		if (subsetResponse != null) {
 			return subsetResponse;
 		}
+		final ResponseEntity<JsonNode> response;
+		try{
+			response = climateDataProxy.subsetEsgf(esgfId, parentDatasetId, timestamps, envelope, thinFactor);
+		} catch(final FeignException e) {
+			final String error = "Unable to generate subset";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 
-		final ResponseEntity<JsonNode> response = climateDataProxy.subsetEsgf(esgfId, parentDatasetId.toString(), timestamps, envelope, thinFactor);
 
 		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
 		climateDataService.addSubsetJob(esgfId, envelope, timestamps, thinFactor, climateDataResponse.getId());
