@@ -60,30 +60,14 @@
 						<!-- New asset buttons for some types -->
 						<Button
 							class="new-button"
-							v-if="type === AssetType.Model"
+							v-if="
+								type === AssetType.Model || type === AssetType.Code || type === AssetType.Workflow
+							"
 							icon="pi pi-plus"
 							label="New"
 							text
 							size="small"
-							@click.stop="emit('open-new-asset', AssetType.Model)"
-						/>
-						<Button
-							class="new-button"
-							v-if="type === AssetType.Code"
-							icon="pi pi-plus"
-							label="New"
-							text
-							size="small"
-							@click.stop="emit('open-new-asset', AssetType.Code)"
-						/>
-						<Button
-							class="new-button"
-							v-if="type === AssetType.Workflow"
-							icon="pi pi-plus"
-							label="New"
-							text
-							size="small"
-							@click.stop="emit('open-new-asset', AssetType.Workflow)"
+							@click.stop="emit('open-new-asset', type)"
 						/>
 					</div>
 				</template>
