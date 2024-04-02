@@ -322,6 +322,14 @@ const optionsMenuItems = ref([
 	}
 ]);
 
+workflowService.workflowEventBus.on('update-annotation', (updatedAnnotation: string) => {
+	if (!currentActiveNode.value) return;
+	const state = cloneDeep(currentActiveNode.value.state);
+	if (state.annotation && isEmpty(updatedAnnotation)) delete state.annotation;
+	else state.annotation = updatedAnnotation;
+	updateWorkflowNodeState(currentActiveNode.value, state);
+});
+
 const setMouseOverCanvas = (val: boolean) => {
 	isMouseOverCanvas = val;
 };
@@ -422,6 +430,10 @@ const openDrilldown = (node: WorkflowNode<any>) => {
 	currentActiveNode.value = node;
 	startTime = Date.now();
 	dialogIsOpened.value = true;
+	workflowService.workflowEventBus.emit('pass-operator', {
+		id: node.id,
+		operatorAnnotation: node.state.annotation
+	});
 };
 
 const closeDrilldown = async () => {

@@ -20,6 +20,7 @@
 			<p @click="isEditing = true">{{ annotation }}<span class="pi pi-pencil ml-2 text-xs" /></p>
 		</div>
 	</section>
+	{{ annotation }}
 	<Button
 		v-if="!inNode && isEmpty(annotation) && !isEditing"
 		class="add-a-note mr-auto"
@@ -32,10 +33,11 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
-import { ref, watch, PropType } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, watch, PropType, onMounted } from 'vue';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
+import { workflowEventBus } from '@/services/workflow';
 
 const props = defineProps({
 	inNode: {
@@ -43,22 +45,19 @@ const props = defineProps({
 		default: false
 	},
 	state: {
-		type: Object as PropType<any>,
-		required: true
+		type: Object as PropType<any> | null,
+		default: null
 	}
 });
 
-const emit = defineEmits(['update-state']);
+// const emit = defineEmits(['update-state']);
 
-const annotation = ref(props.state.annotation ?? '');
+const annotation = ref('');
 const isEditing = ref(false);
 defineExpose({ isEditing });
 
 function saveAnnotation() {
-	const state = cloneDeep(props.state);
-	if (state.annotation && isEmpty(annotation.value)) delete state.annotation;
-	else state.annotation = annotation.value;
-	emit('update-state', state);
+	workflowEventBus.emit('update-annotation', annotation.value);
 	isEditing.value = false;
 }
 
@@ -67,12 +66,19 @@ function deleteAnnotation() {
 	saveAnnotation();
 }
 
-// Syncs the annotation with the one in node state
-// This helps the annotation in the operator and drilldown to stay in sync
+onMounted(() => {
+	workflowEventBus.on('pass-operator', ({ operatorAnnotation }) => {
+		if (props.state) return;
+		console.log('pass-annotation', operatorAnnotation);
+		annotation.value = operatorAnnotation;
+		console.log(annotation.value);
+	});
+});
+
 watch(
-	() => props.state.annotation,
+	() => annotation.value,
 	() => {
-		annotation.value = props.state.annotation;
+		console.log(annotation.value);
 	}
 );
 </script>

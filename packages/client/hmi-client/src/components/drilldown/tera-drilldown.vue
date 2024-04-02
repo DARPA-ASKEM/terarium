@@ -10,6 +10,7 @@
 				>{{ props.title }}
 				<template #actions>
 					<slot name="header-actions" />
+					<tera-operator-annotation />
 				</template>
 			</tera-drilldown-header>
 			<tera-columnar-panel>
@@ -38,6 +39,7 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 const props = defineProps<{
 	title: string;
