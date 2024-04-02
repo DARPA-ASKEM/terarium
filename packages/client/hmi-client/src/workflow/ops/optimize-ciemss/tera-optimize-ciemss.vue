@@ -31,7 +31,7 @@
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
 							<label>Number of samples</label>
-							<div class="input-and-slider">
+							<div>
 								<InputNumber
 									class="p-inputtext-sm"
 									inputId="integeronly"
@@ -122,7 +122,7 @@
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Acceptable risk of failure</label>
-							<div class="input-and-slider">
+							<div>
 								<InputNumber
 									class="p-inputtext-sm"
 									inputId="integeronly"
@@ -713,24 +713,6 @@ watch(
 
 	& > *:not(:first-child) {
 		flex: 1;
-	}
-}
-
-.input-and-slider {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 1rem;
-
-	& > *:first-child {
-		/* TODO: this doesn't work properly because InputNumber seems to have a min fixed width */
-		flex: 1;
-	}
-
-	& > *:nth-child(2) {
-		/* TODO: this isn't actually taking up 90% of the space right now */
-		flex: 9;
-		margin-right: 0.5rem;
 	}
 }
 </style>
