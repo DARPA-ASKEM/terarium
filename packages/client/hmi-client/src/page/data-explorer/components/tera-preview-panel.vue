@@ -6,24 +6,24 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<tera-external-publication
-				v-if="previewItemResourceType === ResourceType.XDD && source === DocumentSource.XDD"
-				:xdd-uri="previewItemId"
-				:asset-id="previewItemId"
-				:highlight="searchTerm"
-				:previewLineLimit="10"
-				:feature-config="{ isPreview: true }"
-				@close-preview="closePreview"
-			/>
-			<tera-document-asset
-				v-else-if="
-					previewItemResourceType === ResourceType.XDD && source === DocumentSource.Terarium
-				"
-				:asset-id="previewItemId"
-				:previewLineLimit="10"
-				:feature-config="{ isPreview: true }"
-				@close-preview="closePreview"
-			/>
+			<template v-if="previewItemResourceType === ResourceType.XDD">
+				<tera-external-publication
+					v-if="source === DocumentSource.XDD"
+					:xdd-uri="previewItemId"
+					:asset-id="previewItemId"
+					:highlight="searchTerm"
+					:previewLineLimit="10"
+					:feature-config="{ isPreview: true }"
+					@close-preview="closePreview"
+				/>
+				<tera-document-asset
+					v-else-if="source === DocumentSource.Terarium"
+					:asset-id="previewItemId"
+					:previewLineLimit="10"
+					:feature-config="{ isPreview: true }"
+					@close-preview="closePreview"
+				/>
+			</template>
 			<tera-dataset
 				v-else-if="previewItemResourceType === ResourceType.DATASET"
 				:asset-id="previewItemId"
