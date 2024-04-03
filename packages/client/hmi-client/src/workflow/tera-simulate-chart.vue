@@ -18,6 +18,7 @@
 				</template>
 			</template>
 		</MultiSelect>
+		<button type="button" @click="$emit('remove')">Remove chart</button>
 		<Chart
 			type="scatter"
 			:width="chartSize.width"
@@ -40,7 +41,7 @@ import { ChartConfig, DataseriesConfig, RunResults, RunType } from '@/types/Simu
 import type { CsvAsset } from '@/types/Types';
 import { getGraphDataFromDatasetCSV } from './util';
 
-const emit = defineEmits(['configuration-change']);
+const emit = defineEmits(['configuration-change', 'remove']);
 
 const props = defineProps<{
 	runResults: RunResults;

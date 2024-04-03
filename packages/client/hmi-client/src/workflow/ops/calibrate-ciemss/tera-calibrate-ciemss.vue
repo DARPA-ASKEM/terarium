@@ -130,6 +130,7 @@
 							:mapping="mapping"
 							has-mean-line
 							@configuration-change="chartProxy.configurationChange(index, $event)"
+							@remove="chartProxy.removeChart(index)"
 							:size="chartSize"
 						/>
 						<Button
