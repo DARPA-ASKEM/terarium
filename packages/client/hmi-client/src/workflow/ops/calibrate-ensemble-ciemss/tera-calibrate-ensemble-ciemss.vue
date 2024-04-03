@@ -191,6 +191,7 @@ import {
 	makeEnsembleCiemssCalibration
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
