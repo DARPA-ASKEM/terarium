@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<!-- Geo boundaries -->
