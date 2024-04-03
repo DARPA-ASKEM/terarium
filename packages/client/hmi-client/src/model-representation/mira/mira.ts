@@ -483,3 +483,70 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 
 	return graph;
 };
+
+// Experimental, additional matrix context for LLM agent
+// to match datasets to model parameters
+export const generateModelDatasetConfigurationContext = (
+	mmt: MiraModel,
+	miraTemplateParams: MiraTemplateParams
+) => {
+	// Create all possible matrices
+	const rootParams = collapseParameters(mmt, miraTemplateParams);
+	const rootParamKeys = [...rootParams.keys()];
+
+	const lines: any[] = [];
+	rootParamKeys.forEach((key) => {
+		const matrices = createParameterMatrix(mmt, miraTemplateParams, key);
+		let header = '';
+
+		const subjectOutcome = matrices.subjectOutcome;
+		const subjectControllers = matrices.subjectControllers;
+		const outcomeControllers = matrices.outcomeControllers;
+
+		if (subjectOutcome.matrix.length > 0) {
+			lines.push(`subject-outcome of ${key}`);
+			header = `,${subjectOutcome.rowNames.join(',')}`;
+			lines.push('');
+			lines.push(header);
+			subjectOutcome.matrix.forEach((r, idx) => {
+				const rowStr = subjectOutcome.colNames[idx] + r.map((d) => d.content.id).join(',');
+				lines.push(rowStr);
+			});
+			lines.push('');
+			lines.push('');
+		}
+
+		if (subjectControllers.matrix.length > 0) {
+			lines.push(`subject-controllers of ${key}`);
+			header = `,${subjectControllers.rowNames.join(',')}`;
+			lines.push('');
+			lines.push(header);
+			subjectControllers.matrix.forEach((r, idx) => {
+				const rowStr = `${subjectControllers.colNames[idx]},${r
+					.map((d) => d.content.id)
+					.join(',')}`;
+				lines.push(rowStr);
+			});
+			lines.push('');
+			lines.push('');
+		}
+
+		if (outcomeControllers.matrix.length > 0) {
+			lines.push(`outcome-controllers of ${key}`);
+			header = `,${outcomeControllers.rowNames.join(',')}`;
+			lines.push('');
+			lines.push(header);
+			outcomeControllers.matrix.forEach((r, idx) => {
+				const rowStr = `${outcomeControllers.colNames[idx]},${r
+					.map((d) => d.content.id)
+					.join(',')}`;
+				lines.push(rowStr);
+			});
+			lines.push('');
+			lines.push('');
+		}
+	});
+
+	// Make string
+	return lines.join('\n');
+};
