@@ -116,6 +116,19 @@
 								filter
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Qoi Method</label>
+							<Dropdown
+								class="p-inputtext-sm"
+								:options="[
+									{ label: 'Max', value: ContextMethods.max },
+									{ label: 'Day average', value: ContextMethods.day_average }
+								]"
+								option-label="label"
+								option-value="value"
+								v-model="knobs.qoiMethod"
+							/>
+						</div>
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
@@ -327,6 +340,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
+	ContextMethods,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
@@ -353,6 +367,7 @@ interface BasicKnobs {
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
+	qoiMethod: ContextMethods;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
@@ -370,6 +385,7 @@ const knobs = ref<BasicKnobs>({
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
+	qoiMethod: props.node.state.qoiMethod ?? ContextMethods.max,
 	targetVariables: props.node.state.targetVariables ?? [],
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
@@ -522,7 +538,10 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		interventions: optimizeInterventions,
-		qoi: knobs.value.targetVariables,
+		qoi: {
+			contexts: knobs.value.targetVariables,
+			method: knobs.value.qoiMethod
+		},
 		riskBound: knobs.value.threshold,
 		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
@@ -609,6 +628,7 @@ watch(
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		state.interventionType = knobs.value.interventionType;
 		state.isMinimized = knobs.value.isMinimized;
+		state.qoiMethod = knobs.value.qoiMethod;
 		emit('update-state', state);
 	},
 	{ deep: true }

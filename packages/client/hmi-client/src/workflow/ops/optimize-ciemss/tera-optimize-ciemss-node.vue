@@ -106,6 +106,7 @@ const pollResult = async (runId: string) => {
 
 const getSimulationInterventions = async (id) => {
 	const policyResult = await getRunResult(id, 'policy.json');
+	console.log(policyResult);
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
