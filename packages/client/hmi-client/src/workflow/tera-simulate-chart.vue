@@ -19,7 +19,14 @@
 					</template>
 				</template>
 			</MultiSelect>
-			<Button title="Remove chart" icon="pi pi-trash" @click="$emit('remove')" rounded text />
+			<Button
+				v-if="showRemoveButton"
+				title="Remove chart"
+				icon="pi pi-trash"
+				@click="$emit('remove')"
+				rounded
+				text
+			/>
 		</div>
 		<Chart
 			type="scatter"
@@ -55,6 +62,7 @@ const props = defineProps<{
 	mapping?: { [key: string]: string }[];
 	runType?: RunType;
 	size?: { width: number; height: number };
+	showRemoveButton?: boolean;
 }>();
 
 const chartSize = computed(() => {

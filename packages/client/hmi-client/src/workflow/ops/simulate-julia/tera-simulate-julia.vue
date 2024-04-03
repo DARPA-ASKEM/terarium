@@ -68,6 +68,7 @@
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
 							@remove="chartProxy.removeChart(idx)"
+							show-remove-button
 							:size="chartSize"
 							color-by-run
 						/>

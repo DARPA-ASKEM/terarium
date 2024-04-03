@@ -210,6 +210,7 @@
 							:size="chartSize"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
 							@remove="chartProxy.removeChart(idx)"
+							show-remove-button
 						/>
 						<Button
 							class="p-button-sm p-button-text"
