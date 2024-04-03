@@ -137,13 +137,15 @@ const startForecast = async (simulationIntervetions) => {
 			start: 0,
 			end: props.node.state.endTime
 		},
-		interventions: simulationIntervetions,
 		extra: {
 			num_samples: props.node.state.numSamples,
 			method: props.node.state.solverMethod
 		},
 		engine: 'ciemss'
 	};
+	if (simulationIntervetions.length > 0) {
+		simulationPayload.interventions = simulationIntervetions;
+	}
 	return makeForecastJobCiemss(simulationPayload);
 };
 
