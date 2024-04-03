@@ -11,7 +11,6 @@ import java.util.List;
 /**
  * A class to handle scenario extraction from Document and Dataset via GoLLM task-runner.
  * GoLLM responses for the model configuration are in different JSON form depending on the source:
- *
  * Document:{
  * 		"conditions": [
  * 			{
@@ -22,7 +21,6 @@ import java.util.List;
  *    	},
  *    	...]
  *    }
- *
  * Dataset: {"values":[{ "id": "initial_id", "value": 0.0, "type": "initial" },
  * 					 { "id": "parameter_id", "value": 0.0, "type": "parameter" },
  * 					 ...]}
