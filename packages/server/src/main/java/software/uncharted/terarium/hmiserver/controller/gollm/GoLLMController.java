@@ -202,6 +202,7 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
+			@RequestParam(name = "matrix-str", required = false, defaultValue = "") final String matrixStr,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
 
 		try {
@@ -249,6 +250,11 @@ public class GoLLMController {
 			// gollm to fail with massive inputs
 			model.get().setMetadata(null);
 			input.setAmr(model.get());
+
+			// set matrix string if provided
+			if (!matrixStr.isEmpty()) {
+				input.setMatrixStr(matrixStr);
+			}
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
