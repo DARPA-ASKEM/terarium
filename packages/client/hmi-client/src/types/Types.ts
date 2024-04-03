@@ -784,7 +784,7 @@ export interface OptimizeRequestCiemss {
     timespan: TimeSpan;
     interventions?: OptimizedIntervention;
     stepSize?: number;
-    qoi: string[];
+    qoi: OptimizeQoi;
     riskBound: number;
     initialGuessInterventions: number[];
     boundsInterventions: number[][];
@@ -837,6 +837,11 @@ export interface OptimizeExtra {
     isMinimized?: boolean;
     alpha?: number;
     solverMethod?: string;
+}
+
+export interface OptimizeQoi {
+    contexts: string[];
+    method: string;
 }
 
 export interface OptimizedIntervention {

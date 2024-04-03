@@ -5,6 +5,11 @@ export enum InterventionTypes {
 	startTime = 'start_time'
 }
 
+export enum ContextMethods {
+	day_average = 'day_average',
+	max = 'max'
+}
+
 export interface InterventionPolicyGroup {
 	borderColour: string;
 	name: string;
@@ -28,6 +33,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
+	qoiMethod: ContextMethods;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
@@ -75,6 +81,7 @@ export const OptimizeCiemssOperation: Operation = {
 			maxfeval: 25,
 			interventionType: InterventionTypes.paramValue,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
+			qoiMethod: ContextMethods.max,
 			targetVariables: [],
 			riskTolerance: 5,
 			threshold: 1,
