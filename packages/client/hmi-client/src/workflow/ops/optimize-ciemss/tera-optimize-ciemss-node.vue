@@ -143,7 +143,7 @@ const startForecast = async (simulationInterventions) => {
 		},
 		engine: 'ciemss'
 	};
-	if (_.isEmpty(simulationInterventions)) {
+	if (!_.isEmpty(simulationInterventions)) {
 		simulationPayload.interventions = simulationInterventions;
 	}
 	return makeForecastJobCiemss(simulationPayload);
