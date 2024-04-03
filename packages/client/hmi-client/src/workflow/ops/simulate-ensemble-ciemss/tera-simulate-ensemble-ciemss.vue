@@ -214,6 +214,7 @@ import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import InputNumber from 'primevue/inputnumber';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -369,9 +370,6 @@ onMounted(async () => {
 		calculateEvenWeights();
 	}
 
-	if (state.chartConfigs.length === 0) {
-		state.chartConfigs.push([]);
-	}
 	emit('update-state', state);
 });
 
