@@ -316,6 +316,11 @@
 						</span>
 					</template>
 				</Column>
+				<Column header="Configuration">
+					<template #body="{ data }">
+						{{ data.configuration?.name }}
+					</template>
+				</Column>
 				<Column header="Value type">
 					<template #body="{ data }">
 						{{ typeOptions[getParamType(data.parameter, data.configuration.configuration)].label }}
