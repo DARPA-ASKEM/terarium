@@ -94,7 +94,7 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 
 // Common state properties for all operators
 export interface BaseState {
-	annotation: string;
+	annotation?: string;
 }
 
 // Node definition in the workflow

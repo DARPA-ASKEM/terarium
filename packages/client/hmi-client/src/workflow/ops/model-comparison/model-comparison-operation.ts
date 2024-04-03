@@ -1,7 +1,7 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { NotebookHistory } from '@/services/notebook';
 
-export interface ModelComparisonOperationState {
+export interface ModelComparisonOperationState extends BaseState {
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
 	comparisonImageIds: string[];

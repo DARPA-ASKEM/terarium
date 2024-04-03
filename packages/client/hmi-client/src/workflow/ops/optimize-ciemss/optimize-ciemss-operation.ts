@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
 export enum InterventionTypes {
 	paramValue = 'param_value',
@@ -17,7 +17,7 @@ export interface InterventionPolicyGroup {
 	paramValue: number;
 }
 
-export interface OptimizeCiemssOperationState {
+export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
 	endTime: number;
 	numSamples: number;

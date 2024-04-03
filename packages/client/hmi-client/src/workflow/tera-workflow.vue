@@ -387,6 +387,7 @@ function appendOutput(
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
+	console.log(5);
 	workflowService.updateNodeState(wf.value, node.id, state);
 	workflowDirty = true;
 }

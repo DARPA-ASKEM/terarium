@@ -21,8 +21,7 @@ export const ModelEditOperation: Operation = {
 	initState: () => {
 		const init: ModelEditOperationState = {
 			modelEditCodeHistory: [],
-			hasCodeBeenRun: false,
-			annotation: ''
+			hasCodeBeenRun: false
 		};
 		return init;
 	}

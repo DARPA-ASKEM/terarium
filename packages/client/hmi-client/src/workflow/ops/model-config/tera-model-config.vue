@@ -253,6 +253,7 @@
 	<tera-drilldown
 		v-if="suggestedConfirgurationContext.isOpen"
 		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
+		:node="node"
 		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
 		popover
 	>

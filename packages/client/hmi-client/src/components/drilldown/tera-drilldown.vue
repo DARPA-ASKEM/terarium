@@ -47,13 +47,13 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	node: WorkflowNode<any>;
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
 }>();
 
-const emit = defineEmits(['on-close-clicked']);
+const emit = defineEmits(['on-close-clicked', 'update-state']);
 const slots = useSlots();
 
 /**
