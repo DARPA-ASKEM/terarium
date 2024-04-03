@@ -194,6 +194,7 @@ import {
 	makeEnsembleCiemssCalibration
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -204,7 +205,7 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/workflow/util';
 import type {
