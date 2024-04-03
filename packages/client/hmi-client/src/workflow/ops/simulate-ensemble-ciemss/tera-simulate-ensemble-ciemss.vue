@@ -370,9 +370,6 @@ onMounted(async () => {
 		calculateEvenWeights();
 	}
 
-	if (state.chartConfigs.length === 0) {
-		state.chartConfigs.push([]);
-	}
 	emit('update-state', state);
 });
 
