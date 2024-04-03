@@ -374,6 +374,7 @@ watch(
 );
 
 onMounted(async () => {
+	console.log(props.node);
 	await inputChangeHandler();
 });
 

@@ -1,11 +1,11 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
 export interface ModelEditCode {
 	code: string;
 	timestamp: number;
 }
 
-export interface ModelEditOperationState {
+export interface ModelEditOperationState extends BaseState {
 	modelEditCodeHistory: ModelEditCode[];
 	hasCodeBeenRun: boolean;
 }
@@ -21,7 +21,8 @@ export const ModelEditOperation: Operation = {
 	initState: () => {
 		const init: ModelEditOperationState = {
 			modelEditCodeHistory: [],
-			hasCodeBeenRun: false
+			hasCodeBeenRun: false,
+			annotation: ''
 		};
 		return init;
 	}
