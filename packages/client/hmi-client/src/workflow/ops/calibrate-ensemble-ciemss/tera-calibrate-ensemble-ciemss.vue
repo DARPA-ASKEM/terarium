@@ -152,6 +152,7 @@
 						}"
 						has-mean-line
 						@configuration-change="chartProxy.configurationChange(index, $event)"
+						@remove="chartProxy.removeChart(index)"
 						:size="chartSize"
 						class="mb-2"
 					/>

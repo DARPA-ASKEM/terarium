@@ -180,6 +180,7 @@
 						has-mean-line
 						:size="chartSize"
 						@configuration-change="chartProxy.configurationChange(index, $event)"
+						@remove="chartProxy.removeChart(index)"
 					/>
 					<Button
 						class="add-chart"

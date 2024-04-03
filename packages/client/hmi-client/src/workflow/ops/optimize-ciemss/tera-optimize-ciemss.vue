@@ -209,6 +209,7 @@
 							has-mean-line
 							:size="chartSize"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							@remove="chartProxy.removeChart(idx)"
 						/>
 						<Button
 							class="p-button-sm p-button-text"

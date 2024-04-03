@@ -67,6 +67,7 @@
 							:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							@remove="chartProxy.removeChart(idx)"
 							:size="chartSize"
 							color-by-run
 						/>
