@@ -1,24 +1,26 @@
 <template>
 	<div class="simulate-chart">
 		<!-- <div class="multiselect-title">Select variables to plot</div> -->
-		<MultiSelect
-			v-model="selectedVariable"
-			:selection-limit="hasMultiRuns ? 1 : undefined"
-			:options="stateVariablesList"
-			placeholder="What do you want to see?"
-			@update:model-value="updateSelectedVariable"
-			filter
-		>
-			<template v-slot:value>
-				<template v-for="(variable, index) in selectedVariable" :key="index">
-					<template v-if="index > 0">,&nbsp;</template>
-					<span class="custom-chip" :style="{ color: getVariableColorByVar(variable) }">
-						{{ variable }}
-					</span>
+		<div class="multiselect-container">
+			<MultiSelect
+				v-model="selectedVariable"
+				:selection-limit="hasMultiRuns ? 1 : undefined"
+				:options="stateVariablesList"
+				placeholder="What do you want to see?"
+				@update:model-value="updateSelectedVariable"
+				filter
+			>
+				<template v-slot:value>
+					<template v-for="(variable, index) in selectedVariable" :key="index">
+						<template v-if="index > 0">,&nbsp;</template>
+						<span class="custom-chip" :style="{ color: getVariableColorByVar(variable) }">
+							{{ variable }}
+						</span>
+					</template>
 				</template>
-			</template>
-		</MultiSelect>
-		<button type="button" @click="$emit('remove')">Remove chart</button>
+			</MultiSelect>
+			<Button title="Remove chart" icon="pi pi-trash" @click="$emit('remove')" rounded text />
+		</div>
 		<Chart
 			type="scatter"
 			:width="chartSize.width"
@@ -36,6 +38,7 @@
 import _ from 'lodash';
 import { ref, computed, watch, onMounted } from 'vue';
 import MultiSelect from 'primevue/multiselect';
+import Button from 'primevue/button';
 import Chart from 'primevue/chart';
 import { ChartConfig, DataseriesConfig, RunResults, RunType } from '@/types/SimulateConfig';
 import type { CsvAsset } from '@/types/Types';
@@ -318,6 +321,12 @@ onMounted(() => {
 .multiselect-title {
 	font-size: smaller;
 	font-weight: 700;
+}
+.multiselect-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.5rem;
 }
 
 .p-chart {
