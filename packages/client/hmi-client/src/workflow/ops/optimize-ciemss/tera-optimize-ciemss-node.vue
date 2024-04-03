@@ -115,21 +115,21 @@ const getSimulationInterventions = async (id) => {
 		startTime.push(ele.startTime);
 	});
 
-	const simulationIntervetions: SimulationIntervention[] = [];
+	const simulationInterventions: SimulationIntervention[] = [];
 	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
 	for (let i = 0; i < paramNames.length; i++) {
 		if (policyResult?.at(i) && startTime?.[i]) {
-			simulationIntervetions.push({
+			simulationInterventions.push({
 				name: paramNames[i],
 				timestep: startTime[i],
 				value: policyResult[i]
 			});
 		}
 	}
-	return simulationIntervetions;
+	return simulationInterventions;
 };
 
-const startForecast = async (simulationIntervetions) => {
+const startForecast = async (simulationInterventions) => {
 	const simulationPayload: SimulationRequest = {
 		projectId: '',
 		modelConfigId: modelConfigId.value as string,
@@ -143,8 +143,8 @@ const startForecast = async (simulationIntervetions) => {
 		},
 		engine: 'ciemss'
 	};
-	if (simulationIntervetions.length > 0) {
-		simulationPayload.interventions = simulationIntervetions;
+	if (_.isEmpty(simulationInterventions)) {
+		simulationPayload.interventions = simulationInterventions;
 	}
 	return makeForecastJobCiemss(simulationPayload);
 };
@@ -157,8 +157,8 @@ watch(
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getSimulationInterventions(id);
-			const forecastResponse = await startForecast(simulationIntervetions);
+			const simulationInterventions = await getSimulationInterventions(id);
+			const forecastResponse = await startForecast(simulationInterventions);
 			const forecastId = forecastResponse.id;
 
 			const state = _.cloneDeep(props.node.state);
