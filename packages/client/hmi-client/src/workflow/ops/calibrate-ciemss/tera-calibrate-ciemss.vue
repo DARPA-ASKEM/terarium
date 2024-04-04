@@ -177,7 +177,6 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import InputNumber from 'primevue/inputnumber';
-// import InputNumber from 'primevue/inputnumber';
 import {
 	CalibrateMap,
 	renderLossGraph,

@@ -144,6 +144,9 @@ const autoEntityMapping = async (
 	targetEntities: Entity[],
 	acceptableDist?: number
 ) => {
+	console.log(sourceEntities);
+	console.log(targetEntities);
+
 	const result = [] as EntityMap[];
 	const acceptableDistance = acceptableDist ?? 0.5;
 
@@ -154,64 +157,80 @@ const autoEntityMapping = async (
 	// Take out any duplicates
 	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
 	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
-	const allSimilarity = await getEntitySimilarity(
-		distinctSourceGroundings,
-		distinctTargetGroundings
-	);
-	if (!allSimilarity) return result;
-	// Filter out anything with a similarity too small
-	const filteredSimilarity = allSimilarity.filter((ele) => ele.similarity >= acceptableDistance);
-	const validSources: any[] = [];
-	const validTargets: any[] = [];
 
-	// Join results back with source and target
-	filteredSimilarity.forEach((similarity) => {
-		// Find all Sources assosiated with this similarity
+	// Match id strings if there are no groundings in either source or target
+	if (isEmpty(distinctTargetGroundings) || isEmpty(distinctSourceGroundings)) {
 		sourceEntities.forEach((source) => {
-			if (source.groundings?.includes(similarity.source)) {
-				validSources.push({
-					sourceId: source.id,
-					sourceKey: similarity.source,
-					targetKey: similarity.target,
-					distance: similarity.similarity
-				});
-			}
+			targetEntities.forEach((target) => {
+				if (target.id.startsWith(source.id) || source.id.startsWith(target.id)) {
+					result.push({ source: source.id, target: target.id });
+				}
+			});
 		});
-		// Find all targets assosiated with this similarity
-		targetEntities.forEach((target) => {
-			if (target.groundings?.includes(similarity.target)) {
-				validTargets.push({
-					targetId: target.id,
-					sourceKey: similarity.source,
-					targetKey: similarity.target,
-					distance: similarity.similarity
-				});
-			}
-		});
-	});
+	}
+	// If there are groundings in the source and target
+	else {
+		const allSimilarity = await getEntitySimilarity(
+			distinctSourceGroundings,
+			distinctTargetGroundings
+		);
+		if (!allSimilarity) return result;
+		// Filter out anything with a similarity too small
+		const filteredSimilarity = allSimilarity.filter((ele) => ele.similarity >= acceptableDistance);
+		const validSources: any[] = [];
+		const validTargets: any[] = [];
 
-	// for each distinct source, find its highest matching target:
-	const distinctSource = [...new Set(validSources.map((ele) => ele.sourceId))];
-	distinctSource.forEach((distinctSourceId) => {
-		let currentDistance = -Infinity;
-		let currentTargetId = '';
-		validSources.forEach((source) => {
-			if (distinctSourceId === source.sourceId) {
-				validTargets.forEach((target) => {
-					// Note here we are using the source and target groundings as a key
-					if (
-						source.sourceKey === target.sourceKey &&
-						source.targetKey === target.targetKey &&
-						target.distance > currentDistance
-					) {
-						currentDistance = target.distance;
-						currentTargetId = target.targetId;
-					}
-				});
-			}
+		console.log(filteredSimilarity);
+
+		// Join results back with source and target
+		filteredSimilarity.forEach((similarity) => {
+			// Find all Sources assosiated with this similarity
+			sourceEntities.forEach((source) => {
+				if (source.groundings?.includes(similarity.source)) {
+					validSources.push({
+						sourceId: source.id,
+						sourceKey: similarity.source,
+						targetKey: similarity.target,
+						distance: similarity.similarity
+					});
+				}
+			});
+			// Find all targets assosiated with this similarity
+			targetEntities.forEach((target) => {
+				if (target.groundings?.includes(similarity.target)) {
+					validTargets.push({
+						targetId: target.id,
+						sourceKey: similarity.source,
+						targetKey: similarity.target,
+						distance: similarity.similarity
+					});
+				}
+			});
 		});
-		result.push({ source: distinctSourceId, target: currentTargetId });
-	});
+
+		// for each distinct source, find its highest matching target:
+		const distinctSource = [...new Set(validSources.map((ele) => ele.sourceId))];
+		distinctSource.forEach((distinctSourceId) => {
+			let currentDistance = -Infinity;
+			let currentTargetId = '';
+			validSources.forEach((source) => {
+				if (distinctSourceId === source.sourceId) {
+					validTargets.forEach((target) => {
+						// Note here we are using the source and target groundings as a key
+						if (
+							source.sourceKey === target.sourceKey &&
+							source.targetKey === target.targetKey &&
+							target.distance > currentDistance
+						) {
+							currentDistance = target.distance;
+							currentTargetId = target.targetId;
+						}
+					});
+				}
+			});
+			result.push({ source: distinctSourceId, target: currentTargetId });
+		});
+	}
 
 	return result;
 };
@@ -231,7 +250,7 @@ const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: Dat
 		const groundings = state.grounding?.identifiers
 			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
 			: undefined;
-		sourceEntities.push({ id: state.id.toLowerCase(), groundings });
+		sourceEntities.push({ id: state.id, groundings });
 	});
 
 	// Fill targetEntities with datasetOptions
