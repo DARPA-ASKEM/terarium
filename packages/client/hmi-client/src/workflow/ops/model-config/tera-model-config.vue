@@ -323,7 +323,10 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import {
+	emptyMiraModel,
+	generateModelDatasetConfigurationContext
+} from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -524,9 +527,13 @@ const extractConfigurationsFromInputs = async () => {
 	}
 	if (datasetIds.value) {
 		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
+
+		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
+
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
+			matrixStr,
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
