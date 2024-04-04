@@ -11,14 +11,14 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUpdated, ref } from 'vue';
 import Button from 'primevue/button';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { ModelEditOperationState } from '@/workflow/ops/model-edit/model-edit-operation';
-import { onMounted, onUpdated, ref } from 'vue';
 import { Model } from '@/types/Types';
 import operator from '@/services/operator';
 import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel } from '@/services/model';
 
 const emit = defineEmits(['open-drilldown']);

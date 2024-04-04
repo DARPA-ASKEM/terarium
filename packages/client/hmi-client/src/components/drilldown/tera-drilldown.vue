@@ -7,9 +7,14 @@
 				:tooltip="tooltip"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
-				>{{ props.title }}
+			>
+				{{ title ?? node.displayName }}
 				<template #actions>
 					<slot name="header-actions" />
+					<tera-operator-annotation
+						:state="node.state"
+						@update-state="(state: any) => emit('update-state', state)"
+					/>
 				</template>
 			</tera-drilldown-header>
 			<tera-columnar-panel>
@@ -38,14 +43,17 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 const props = defineProps<{
-	title: string;
+	node: WorkflowNode<any>;
+	title?: string;
 	tooltip?: string;
 	popover?: boolean;
 }>();
 
-const emit = defineEmits(['on-close-clicked']);
+const emit = defineEmits(['on-close-clicked', 'update-state']);
 const slots = useSlots();
 
 /**

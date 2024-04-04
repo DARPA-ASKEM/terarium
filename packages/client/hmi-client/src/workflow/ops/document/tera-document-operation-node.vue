@@ -22,17 +22,17 @@
 </template>
 
 <script setup lang="ts">
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import { onMounted, ref, watch } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
 import { AssetType, ExtractionAssetType } from '@/types/Types';
-import { onMounted, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { cloneDeep, isEmpty } from 'lodash';
 import { getDocumentAsset } from '@/services/document-assets';
-import teraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);

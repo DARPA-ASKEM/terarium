@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -31,7 +29,7 @@
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
 							<label>Number of samples</label>
-							<div class="input-and-slider">
+							<div>
 								<InputNumber
 									class="p-inputtext-sm"
 									inputId="integeronly"
@@ -118,11 +116,24 @@
 								filter
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Qoi Method</label>
+							<Dropdown
+								class="p-inputtext-sm"
+								:options="[
+									{ label: 'Max', value: ContextMethods.max },
+									{ label: 'Day average', value: ContextMethods.day_average }
+								]"
+								option-label="label"
+								option-value="value"
+								v-model="knobs.qoiMethod"
+							/>
+						</div>
 					</div>
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Acceptable risk of failure</label>
-							<div class="input-and-slider">
+							<div>
 								<InputNumber
 									class="p-inputtext-sm"
 									inputId="integeronly"
@@ -209,6 +220,8 @@
 							has-mean-line
 							:size="chartSize"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							@remove="chartProxy.removeChart(idx)"
+							show-remove-button
 						/>
 						<Button
 							class="p-button-sm p-button-text"
@@ -298,7 +311,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
-import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 // Services:
 import {
 	getModelConfigurationById,
@@ -324,11 +337,12 @@ import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
+	ContextMethods,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
@@ -355,6 +369,7 @@ interface BasicKnobs {
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
+	qoiMethod: ContextMethods;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
@@ -372,6 +387,7 @@ const knobs = ref<BasicKnobs>({
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
+	qoiMethod: props.node.state.qoiMethod ?? ContextMethods.max,
 	targetVariables: props.node.state.targetVariables ?? [],
 	riskTolerance: props.node.state.riskTolerance ?? 0,
 	threshold: props.node.state.threshold ?? 0, // currently not used.
@@ -524,7 +540,10 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		interventions: optimizeInterventions,
-		qoi: knobs.value.targetVariables,
+		qoi: {
+			contexts: knobs.value.targetVariables,
+			method: knobs.value.qoiMethod
+		},
 		riskBound: knobs.value.threshold,
 		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
@@ -611,6 +630,7 @@ watch(
 		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		state.interventionType = knobs.value.interventionType;
 		state.isMinimized = knobs.value.isMinimized;
+		state.qoiMethod = knobs.value.qoiMethod;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -713,24 +733,6 @@ watch(
 
 	& > *:not(:first-child) {
 		flex: 1;
-	}
-}
-
-.input-and-slider {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 1rem;
-
-	& > *:first-child {
-		/* TODO: this doesn't work properly because InputNumber seems to have a min fixed width */
-		flex: 1;
-	}
-
-	& > *:nth-child(2) {
-		/* TODO: this isn't actually taking up 90% of the space right now */
-		flex: 9;
-		margin-right: 0.5rem;
 	}
 }
 </style>

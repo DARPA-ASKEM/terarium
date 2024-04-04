@@ -62,16 +62,21 @@ export async function configureModelFromDocument(
 export async function configureModelFromDatasets(
 	modelId: string,
 	datasetIds: string[],
+	matrixStr: string,
 	handlers: TaskEventHandlers
 ): Promise<TaskHandler | null> {
 	try {
 		// FIXME: Using first dataset for now...
-		const response = await API.post<TaskResponse>('/gollm/configure-from-dataset', null, {
-			params: {
-				'model-id': modelId,
-				'dataset-ids': datasetIds.join()
+		const response = await API.post<TaskResponse>(
+			'/gollm/configure-from-dataset',
+			{ matrixStr },
+			{
+				params: {
+					'model-id': modelId,
+					'dataset-ids': datasetIds.join()
+				}
 			}
-		});
+		);
 
 		const taskId = response.data.id;
 		return await handleTaskById(taskId, handlers);

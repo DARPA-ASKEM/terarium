@@ -1,8 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +19,12 @@ import java.util.UUID;
 @RequestMapping("/events")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class EventController {
-	@Autowired
-	private EventService eventService;
 
-	@Autowired
-	private CurrentUserService currentUserService;
+	private final EventService eventService;
+
+	private final CurrentUserService currentUserService;
 
 
 	/**

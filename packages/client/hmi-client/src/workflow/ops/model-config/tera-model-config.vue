@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<template #header-actions>
 			<tera-operator-annotation
 				:state="node.state"
@@ -249,6 +253,7 @@
 	<tera-drilldown
 		v-if="suggestedConfirgurationContext.isOpen"
 		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
+		:node="node"
 		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
 		popover
 	>
@@ -307,18 +312,21 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import {
+	emptyMiraModel,
+	generateModelDatasetConfigurationContext
+} from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -519,9 +527,13 @@ const extractConfigurationsFromInputs = async () => {
 	}
 	if (datasetIds.value) {
 		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
+
+		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
+
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
+			matrixStr,
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
