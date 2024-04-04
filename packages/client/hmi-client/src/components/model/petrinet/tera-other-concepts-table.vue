@@ -253,8 +253,9 @@ const semantics = computed(() => {
 const filteredSemantics = ref<any[]>([]);
 
 const extractions = computed(() => {
-	const attributes = props.model?.metadata?.attributes ?? [];
-	return groupBy(attributes, 'amr_element_id');
+	const skemaAttributes = props.model?.metadata?.attributes ?? [];
+	const gollmExtractions = props.model?.metadata?.gollm?.extractions ?? [];
+	return { ...groupBy(skemaAttributes, 'amr_element_id'), ...groupBy(gollmExtractions, 'id') };
 });
 const states = computed(() => props.model?.model?.states ?? []);
 const transitions = computed(() => {

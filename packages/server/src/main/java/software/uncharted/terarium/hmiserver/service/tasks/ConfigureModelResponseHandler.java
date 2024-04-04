@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -87,6 +88,13 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 					}
 				}
+
+				// Set the all the GoLLM extractions into the model metadata
+				// It is not what we should do, this is a hack for the Evaluation March 2024.
+				final ObjectNode gollmExtractionsInitials = condition.get("initials").deepCopy();
+				final ObjectNode gollmExtractionsParameters = condition.get("parameters").deepCopy();
+				final ObjectNode gollmExtractions = gollmExtractionsInitials.setAll(gollmExtractionsParameters);
+				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
 				final ModelConfiguration configuration = new ModelConfiguration();
