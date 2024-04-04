@@ -1,9 +1,31 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,11 +33,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -30,9 +47,6 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
-
-import java.io.IOException;
-import java.util.*;
 
 @RequestMapping("/models")
 @RestController
@@ -54,12 +68,12 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model descriptions")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model descriptions found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving descriptions from the data store", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Model descriptions found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving descriptions from the data store", content = @Content)
 	})
 	public ResponseEntity<List<ModelDescription>> listModels(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
 		try {
 			return ResponseEntity.ok(modelService.getDescriptions(page, pageSize));
@@ -67,8 +81,8 @@ public class ModelController {
 			final String error = "Unable to get model";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -76,12 +90,12 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a model description by ID")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model description found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class))),
-		@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the description from the data store", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Model description found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class))),
+			@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the description from the data store", content = @Content)
 	})
 	ResponseEntity<ModelDescription> getDescription(
-		@PathVariable("id") final UUID id) {
+			@PathVariable("id") final UUID id) {
 
 		try {
 			final Optional<ModelDescription> model = modelService.getDescription(id);
@@ -90,8 +104,8 @@ public class ModelController {
 			final String error = "Unable to get model description";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -99,8 +113,8 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a model by ID")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the model from the data store", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Model found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the model from the data store", content = @Content)
 	})
 	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
 
@@ -132,11 +146,11 @@ public class ModelController {
 					try {
 						// Fetch the Document extractions
 						final Optional<DocumentAsset> document = documentAssetService
-							.getAsset(UUID.fromString(documentId));
+								.getAsset(UUID.fromString(documentId));
 						if (document.isPresent()) {
 							final List<JsonNode> extractions = objectMapper.convertValue(
-								document.get().getMetadata().get("attributes"), new TypeReference<>() {
-								});
+									document.get().getMetadata().get("attributes"), new TypeReference<>() {
+									});
 
 							// Append the Document extractions to the Model extractions, just for the
 							// front-end.
@@ -161,8 +175,8 @@ public class ModelController {
 			final String error = "Unable to get model";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -170,13 +184,13 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models with a query")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Models found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving models from the data store", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Models found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving models from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Model>> searchModels(
-		@RequestBody final JsonNode query,
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+			@RequestBody final JsonNode query,
+			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
 		try {
 			return ResponseEntity.ok(modelService.searchModels(page, pageSize, query));
@@ -184,8 +198,8 @@ public class ModelController {
 			final String error = "Unable to search models";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -193,27 +207,26 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a model")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-		@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
-		@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Model updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
+			@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
 	})
 	ResponseEntity<Model> updateModel(
-		@PathVariable("id") final UUID id,
-		@RequestBody final Model model) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final Model model) {
 
 		try {
 			model.setId(id);
 			// Set the model name from the AMR header name.
-			// TerariumAsset have a name field, but it's not used for the model name outside the front-end.
-			model.setName(model.getHeader().getName());
-			final Optional<Model> updated = modelService.updateAsset(model);
-			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			// TerariumAsset have a name field, but it's not used for the model name outside
+			// the front-end.
+			return ResponseEntity.ok(modelService.updateAsset(model));
 		} catch (final IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -221,12 +234,12 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an model")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Deleted model", content = {
-			@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))}),
-		@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Deleted model", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	ResponseEntity<ResponseDeleted> deleteModel(
-		@PathVariable("id") final UUID id) {
+			@PathVariable("id") final UUID id) {
 
 		try {
 			modelService.deleteAsset(id);
@@ -235,8 +248,8 @@ public class ModelController {
 			final String error = "Unable to delete model";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -244,15 +257,16 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "201", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-		@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
+			@ApiResponse(responseCode = "201", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
 	})
 	ResponseEntity<Model> createModel(
-		@RequestBody Model model) {
+			@RequestBody Model model) {
 
 		try {
 			// Set the model name from the AMR header name.
-			// TerariumAsset have a name field, but it's not used for the model name outside the front-end.
+			// TerariumAsset have a name field, but it's not used for the model name outside
+			// the front-end.
 			model.setName(model.getHeader().getName());
 			model = modelService.createAsset(model);
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
@@ -260,8 +274,8 @@ public class ModelController {
 			final String error = "Unable to create model";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 
@@ -269,25 +283,26 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model configurations for a model")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model configurations found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving configurations from the data store", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Model configurations found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving configurations from the data store", content = @Content)
 	})
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
-		@PathVariable("id") final UUID id,
-		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
+			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize) {
 
 		try {
-			final List<ModelConfiguration> modelConfigurations = modelService.getModelConfigurationsByModelId(id, page, pageSize);
+			final List<ModelConfiguration> modelConfigurations = modelService.getModelConfigurationsByModelId(id, page,
+					pageSize);
 
 			modelConfigurations.forEach(config -> {
 				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
 
-				// check if configuration has a metadata field, if it doesnt make it an empty object
+				// check if configuration has a metadata field, if it doesnt make it an empty
+				// object
 				if (configuration.get("metadata") == null) {
 					((ObjectNode) configuration).putObject("metadata");
 				}
-
 
 				// Find the Document Assets linked via provenance to the model configuration
 				final ProvenanceQueryParam documentQueryParams = new ProvenanceQueryParam();
@@ -301,7 +316,7 @@ public class ModelController {
 					try {
 						// Fetch the Document extractions
 						final Optional<DocumentAsset> document = documentAssetService
-							.getAsset(UUID.fromString(documentId));
+								.getAsset(UUID.fromString(documentId));
 						if (document.isPresent()) {
 							final String name = document.get().getName();
 							documentSourceNames.add(name);
@@ -323,7 +338,7 @@ public class ModelController {
 					try {
 						// Fetch the Document extractions
 						final Optional<Dataset> dataset = datasetService
-							.getAsset(UUID.fromString(datasetId));
+								.getAsset(UUID.fromString(datasetId));
 						if (dataset.isPresent()) {
 							final String name = dataset.get().getName();
 							documentSourceNames.add(name);
@@ -332,7 +347,6 @@ public class ModelController {
 						log.error("Unable to get the document " + datasetId, e);
 					}
 				});
-
 
 				final List<String> sourceNames = new ArrayList<>();
 				sourceNames.addAll(documentSourceNames);
@@ -352,8 +366,8 @@ public class ModelController {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
 }

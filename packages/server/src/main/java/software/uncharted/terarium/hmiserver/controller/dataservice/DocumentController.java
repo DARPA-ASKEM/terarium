@@ -48,7 +48,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.controller.documentservice.XDDDocumentController;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -71,7 +70,6 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
@@ -177,8 +175,7 @@ public class DocumentController {
 			// awareness of who owned this document.
 			document.setUserId(originalDocument.get().getUserId());
 
-			final Optional<DocumentAsset> updatedDoc = documentAssetService.updateAsset(document);
-			return updatedDoc.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			return ResponseEntity.ok(documentAssetService.updateAsset(document));
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -449,7 +446,7 @@ public class DocumentController {
 					extractionResponse.getSuccess().getData(), summaries);
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
-				documentAsset = documentAssetService.updateAsset(documentAsset).get();
+				documentAsset = documentAssetService.updateAsset(documentAsset);
 			}
 
 			// add asset to project

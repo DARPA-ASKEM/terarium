@@ -317,7 +317,7 @@ public class ExtractionService {
 				}
 
 				// update the document
-				document = documentService.updateAsset(document).get();
+				document = documentService.updateAsset(document);
 
 				// if there is text, run variable extraction
 				if (!responseText.isEmpty()) {
@@ -364,7 +364,7 @@ public class ExtractionService {
 				clientInterface.sendFinalMessage("Extraction complete");
 
 				// return the final document
-				return documentService.updateAsset(document).orElseThrow();
+				return documentService.updateAsset(document);
 
 			} catch (final FeignException e) {
 				final String error = "Transitive service failure";
@@ -464,7 +464,7 @@ public class ExtractionService {
 				clientInterface.sendFinalMessage("Extraction complete");
 
 				// update the document
-				return documentService.updateAsset(document).orElseThrow();
+				return documentService.updateAsset(document);
 
 			} catch (final FeignException e) {
 				final String error = "Transitive service failure";

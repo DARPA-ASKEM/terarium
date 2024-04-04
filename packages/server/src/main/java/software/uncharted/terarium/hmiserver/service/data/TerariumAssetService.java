@@ -1,21 +1,24 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import javax.ws.rs.NotFoundException;
+
+import org.springframework.stereotype.Service;
+
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 /**
  * Base class for services that manage TerariumAssets
@@ -25,7 +28,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public abstract class TerariumAssetService<T extends TerariumAsset> {
+public abstract class TerariumAssetService<T extends TerariumAsset> implements ITerariumAssetService<T> {
 
 	/** The configuration for the Elasticsearch service */
 	protected final ElasticsearchConfiguration elasticConfig;
@@ -115,14 +118,14 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
-	public void deleteAsset(final UUID id) throws IOException {
+	public T deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
-			return;
+			throw new NotFoundException("Asset not found: " + id.toString());
 		}
 		asset.get().setDeletedOn(Timestamp.from(Instant.now()));
 		updateAsset(asset.get());
-
+		return asset.get();
 	}
 
 	/**
@@ -149,12 +152,12 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to
 	 *                                  temporary
 	 */
-	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public T updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
 
 		if (oldAsset.isEmpty()) {
-			return Optional.empty();
+			throw new NotFoundException("Asset not found: " + asset.getId().toString());
 		}
 
 		if (asset.getTemporary() && !oldAsset.get().getTemporary()) {
@@ -162,12 +165,12 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		}
 
 		asset.setUpdatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
+		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
 
 		// Update the related ProjectAsset
 		projectAssetService.updateByAsset(asset);
 
-		return Optional.of(asset);
+		return asset;
 	}
 
 	/**
