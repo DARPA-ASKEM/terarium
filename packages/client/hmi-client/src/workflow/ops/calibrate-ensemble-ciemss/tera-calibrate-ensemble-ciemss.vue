@@ -308,6 +308,11 @@ const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
 	const datasetMapping: { [index: string]: string } = {};
 	datasetMapping[knobs.value.timestampColName] = 'Timestamp';
+	// Each key used in the ensemble configs is a dataset column.
+	// add these columns used to the datasetMapping
+	Object.keys(knobs.value.ensembleConfigs[0].solutionMappings).forEach((key) => {
+		datasetMapping[key] = key;
+	});
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: knobs.value.ensembleConfigs,
@@ -324,6 +329,7 @@ const runEnsemble = async () => {
 			solver_method: knobs.value.extra.solverMethod
 		}
 	};
+	console.log(calibratePayload);
 	const response = await makeEnsembleCiemssCalibration(calibratePayload);
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);

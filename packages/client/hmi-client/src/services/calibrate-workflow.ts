@@ -23,7 +23,7 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 			});
 		}
 
-		modelOptions.push({ id: 'timestamp' });
+		modelOptions.push({ id: 'Timestamp' });
 		return { modelConfiguration, modelOptions };
 	}
 	return {};
