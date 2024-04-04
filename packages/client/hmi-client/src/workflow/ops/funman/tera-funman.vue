@@ -146,6 +146,7 @@ import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
@@ -220,14 +221,13 @@ const requestConstraints = computed(
 		props.node.state.constraintGroups?.map((ele) => {
 			if (ele.constraintType === 'monotonicityConstraint') {
 				const weights = ele.weights ? ele.weights : [1.0];
-				const constraint = {
+				const constraint: any = {
 					soft: true,
 					name: ele.name,
 					timepoints: null,
 					additive_bounds: {
-						lb: -MAX,
 						ub: 0.0,
-						closed_upper_bound: false,
+						closed_upper_bound: true,
 						original_width: MAX
 					},
 					variables: ele.variables,
@@ -236,6 +236,9 @@ const requestConstraints = computed(
 				};
 
 				if (ele.derivativeType === 'increasing') {
+					delete constraint.additive_bounds.closed_upper_bound;
+					delete constraint.additive_bounds.ub;
+					constraint.additive_bounds.lb = 0;
 					constraint.weights = weights.map((d) => -Math.abs(d)); // should be all negative
 				}
 				return constraint;
