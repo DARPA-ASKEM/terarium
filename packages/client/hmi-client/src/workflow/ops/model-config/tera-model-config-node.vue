@@ -33,10 +33,12 @@ watch(
 		const documentInputs = props.node.inputs.filter((input) => input.type === 'documentId');
 		const datasetInputs = props.node.inputs.filter((input) => input.type === 'datasetId');
 
+		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'documentId', label: 'Document', isOptional: true });
 		}
 
+		// If all dataset inputs are connected, add a new dataset input port
 		if (datasetInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset', isOptional: true });
 		}
