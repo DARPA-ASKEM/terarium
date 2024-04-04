@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<section :tabName="CalibrateEnsembleTabs.Wizard">
 			<tera-drilldown-section class="ml-3 mr-2 pt-2">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
@@ -152,6 +150,8 @@
 						}"
 						has-mean-line
 						@configuration-change="chartProxy.configurationChange(index, $event)"
+						@remove="chartProxy.removeChart(index)"
+						show-remove-button
 						:size="chartSize"
 						class="mb-2"
 					/>
@@ -205,7 +205,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/workflow/util';
 import type {
 	CsvAsset,

@@ -62,6 +62,7 @@ const props = defineProps<{
 
 const runResults = ref<RunResults>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+const inferredParameters = computed(() => props.node.inputs[1].value);
 const showSpinner = computed<boolean>(
 	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
 );
@@ -145,6 +146,9 @@ const startForecast = async (simulationIntervetions) => {
 		},
 		engine: 'ciemss'
 	};
+	if (inferredParameters.value) {
+		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
+	}
 	return makeForecastJobCiemss(simulationPayload);
 };
 

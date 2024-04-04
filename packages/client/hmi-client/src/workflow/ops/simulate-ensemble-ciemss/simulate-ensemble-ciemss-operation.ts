@@ -1,7 +1,7 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
-export interface SimulateEnsembleCiemssOperationState {
+export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;

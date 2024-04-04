@@ -1,6 +1,10 @@
 <!-- FIXME: decapodes with LLM isnt entirely functional, this is more of a placeholder at the moment -->
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<template #header-actions>
 			<tera-output-dropdown
 				@click.stop

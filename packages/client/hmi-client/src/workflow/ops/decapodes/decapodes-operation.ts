@@ -1,10 +1,10 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
 export interface CodeHistory {
 	code: string;
 	timestamp: number;
 }
-export interface DecapodesOperationState {
+export interface DecapodesOperationState extends BaseState {
 	codeHistory: CodeHistory[];
 }
 

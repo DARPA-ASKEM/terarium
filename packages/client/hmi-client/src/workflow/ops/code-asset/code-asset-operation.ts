@@ -1,6 +1,7 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/workflow';
+import type { Operation, BaseState } from '@/types/workflow';
 
-export interface CodeAssetState {
+export interface CodeAssetState extends BaseState {
 	codeAssetId: string | null;
 }
 

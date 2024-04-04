@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -222,6 +220,8 @@
 							has-mean-line
 							:size="chartSize"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							@remove="chartProxy.removeChart(idx)"
+							show-remove-button
 						/>
 						<Button
 							class="p-button-sm p-button-text"
@@ -337,7 +337,7 @@ import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	OptimizeCiemssOperationState,
