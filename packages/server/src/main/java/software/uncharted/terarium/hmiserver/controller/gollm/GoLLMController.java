@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -202,7 +205,10 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
+			@RequestBody final JsonNode body,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+
+		final String matrixStr = body.get("matrixStr").asText();
 
 		try {
 			// Grab the datasets
@@ -249,6 +255,11 @@ public class GoLLMController {
 			// gollm to fail with massive inputs
 			model.get().setMetadata(null);
 			input.setAmr(model.get());
+
+			// set matrix string if provided
+			if (matrixStr != null && !matrixStr.isEmpty()) {
+				input.setMatrixStr(matrixStr);
+			}
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();

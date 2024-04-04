@@ -1,11 +1,11 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
 export interface ModelEditCode {
 	code: string;
 	timestamp: number;
 }
 
-export interface ModelEditOperationState {
+export interface ModelEditOperationState extends BaseState {
 	modelEditCodeHistory: ModelEditCode[];
 	hasCodeBeenRun: boolean;
 }

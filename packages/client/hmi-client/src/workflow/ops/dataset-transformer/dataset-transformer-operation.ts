@@ -1,6 +1,6 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export interface DatasetTransformerState {
+export interface DatasetTransformerState extends BaseState {
 	datasetId: string | null;
 	notebookSessionId?: string;
 }

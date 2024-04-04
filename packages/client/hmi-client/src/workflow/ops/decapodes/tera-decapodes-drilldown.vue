@@ -1,6 +1,10 @@
 <!-- FIXME: decapodes with LLM isnt entirely functional, this is more of a placeholder at the moment -->
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<template #header-actions>
 			<tera-output-dropdown
 				@click.stop
@@ -53,20 +57,20 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
+import { VAceEditor } from 'vue3-ace-editor';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-import { cloneDeep, isEmpty } from 'lodash';
 import { getModel, getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { DecapodesOperationState } from './decapodes-operation';
