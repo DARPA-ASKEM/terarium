@@ -90,7 +90,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				}
 
 				// Set the all the GoLLM extractions into the model metadata
-				// It is not what we should do, this is a hack for the Evaluation March 2024.
+				// FIXME - It is not what we should do, this is a hack for the March 2024 Evaluation
 				final ObjectNode gollmExtractionsInitials = condition.get("initials").deepCopy();
 				final ObjectNode gollmExtractionsParameters = condition.get("parameters").deepCopy();
 				final ObjectNode gollmExtractions = gollmExtractionsInitials.setAll(gollmExtractionsParameters);
