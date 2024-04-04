@@ -1,120 +1,129 @@
 <template>
 	<div class="constraint-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
-		<div>
+		<div class="trash-button-align">
 			<i class="trash-button pi pi-trash" @click="emit('delete-self', { index: props.index })" />
 		</div>
+
 		<div class="button-row">
-			<label>Name of constraint</label>
+			<label class="label-padding">Name of constraint</label>
 			<InputText
 				v-model="constraintName"
 				placeholder="Add constraint name"
 				@focusout="emit('update-self', { index: props.index, updatedConfig: updatedConfig })"
 			/>
-
-			<div style="display: flex; flex-direction: row; gap: 0.5rem">
-				<div class="button-row">
-					<label>Constraint type</label>
-					<Dropdown
-						:model-value="constraintType"
-						:options="constraintTypes"
-						option-value="id"
-						option-label="name"
-						placeholder="Select constraint type"
-						@update:model-value="changeConstraintType($event)"
-					/>
-				</div>
-				<div class="button-row">
-					<label>Target</label>
-
-					<MultiSelect
-						v-if="constraintType !== 'parameterConstraint'"
-						v-model="variables"
-						:options="props.modelStates"
-						placeholder="Model states"
-						display="chip"
-						@update:model-value="updateChanges()"
-					></MultiSelect>
-					<MultiSelect
-						v-else
-						v-model="variables"
-						:options="props.modelParameters"
-						placeholder="Model states"
-						display="chip"
-						@update:model-value="updateChanges()"
-					></MultiSelect>
-				</div>
-			</div>
-
-			<!-- Weights -->
-			<div v-for="(variable, index) of variables" :key="index">
-				<div class="button-row">
-					<label v-if="weights">
-						{{ variable + ' Weight' }}
-					</label>
-					<tera-input-number
-						v-if="weights"
-						:key="index"
-						:placeholder="variable"
-						:min-fraction-digits="3"
-						:max-fraction-digits="3"
-						v-model="weights[index]"
-						@update:model-value="updateChanges()"
-					/>
-				</div>
-			</div>
-
-			<section v-if="constraintType === 'monotonicityConstraint'">
-				<RadioButton
-					v-model="derivativeType"
-					@update:model-value="updateChanges()"
-					value="increasing"
-				/>
-				<label class="monoton-label">Increasing</label>
-				&nbsp;
-				<RadioButton
-					v-model="derivativeType"
-					@update:model-value="updateChanges()"
-					value="decreasing"
-				/>
-				<label class="monoton-label">Decreasing</label>
-			</section>
 		</div>
-		<div class="section-row" v-if="constraintType !== 'monotonicityConstraint'">
+
+		<div class="section-row">
 			<div class="button-row">
-				<label>Start time</label>
-				<InputNumber
-					class="p-inputtext-sm"
-					v-model="startTime"
-					@update:model-value="updateChanges()"
+				<label class="label-padding">Constraint type</label>
+				<Dropdown
+					:model-value="constraintType"
+					:options="constraintTypes"
+					option-value="id"
+					option-label="name"
+					placeholder="Select constraint type"
+					@update:model-value="changeConstraintType($event)"
 				/>
 			</div>
+
 			<div class="button-row">
-				<label>End time</label>
-				<InputNumber
-					class="p-inputtext-sm"
-					v-model="endTime"
+				<label class="label-padding">Target</label>
+				<MultiSelect
+					v-if="constraintType !== 'parameterConstraint'"
+					v-model="variables"
+					:options="props.modelStates"
+					placeholder="Model states"
+					display="chip"
 					@update:model-value="updateChanges()"
-				/>
+				></MultiSelect>
+				<MultiSelect
+					v-else
+					v-model="variables"
+					:options="props.modelParameters"
+					placeholder="Model states"
+					display="chip"
+					@update:model-value="updateChanges()"
+				></MultiSelect>
 			</div>
+		</div>
+
+		<!-- Weights -->
+		<div v-for="(variable, index) of variables" :key="index">
 			<div class="button-row">
-				<label>Lower bound</label>
+				<label v-if="weights">
+					{{ variable + ' Weight' }}
+				</label>
 				<tera-input-number
-					class="p-inputtext-sm"
-					v-model="lowerBound"
+					v-if="weights"
+					:key="index"
+					:placeholder="variable"
 					:min-fraction-digits="3"
-					:max-fraction-digits="12"
+					:max-fraction-digits="3"
+					v-model="weights[index]"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
-			<div class="button-row">
-				<label>Upper bound</label>
-				<tera-input-number
-					class="p-inputtext-sm"
-					v-model="upperBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
-					@update:model-value="updateChanges()"
-				/>
+		</div>
+
+		<!-- These are the radio buttons -->
+		<section class="radio-buttons" v-if="constraintType === 'monotonicityConstraint'">
+			<RadioButton
+				v-model="derivativeType"
+				@update:model-value="updateChanges()"
+				value="increasing"
+			/>
+			<label class="monoton-label">Increasing</label>
+			&nbsp;
+			<RadioButton
+				v-model="derivativeType"
+				@update:model-value="updateChanges()"
+				value="decreasing"
+			/>
+			<label class="monoton-label">Decreasing</label>
+		</section>
+
+		<!-- These are the start, end times and upper, lower bounts inputs -->
+		<div v-if="constraintType !== 'monotonicityConstraint'">
+			<div class="section-row">
+				<div class="button-row">
+					<label class="label-padding">Start time</label>
+					<InputNumber
+						class="p-inputtext-sm"
+						v-model="startTime"
+						@update:model-value="updateChanges()"
+					/>
+				</div>
+
+				<div class="button-row">
+					<label class="label-padding">End time</label>
+					<InputNumber
+						class="p-inputtext-sm"
+						v-model="endTime"
+						@update:model-value="updateChanges()"
+					/>
+				</div>
+
+				<div class="button-row">
+					<label class="label-padding">Lower bound</label>
+					<tera-input-number
+						class="p-inputtext-sm"
+						v-model="lowerBound"
+						:min-fraction-digits="3"
+						:max-fraction-digits="12"
+						@update:model-value="updateChanges()"
+					/>
+				</div>
+
+				<div class="button-row">
+					<label class="label-padding">Upper bound</label>
+					<tera-input-number
+						class="p-inputtext-sm"
+						v-model="upperBound"
+						:min-fraction-digits="3"
+						:max-fraction-digits="12"
+						@update:model-value="updateChanges()"
+					/>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -225,29 +234,27 @@ watch(
 	align-self: stretch;
 }
 
+.section-row {
+	display: flex;
+	flex: 1;
+	flex-direction: row;
+	padding: 0.5rem 0rem;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	justify-content: space-around;
+}
 .button-row {
 	display: flex;
 	flex-direction: column;
 	padding: 1rem 0rem 0.5rem 0rem;
-	align-items: flex-start;
-	align-self: stretch;
+	width: 100%;
 }
-
-.section-row {
-	display: flex;
-	/* flex-direction: column; */
-	padding: 0.5rem 0rem;
-	align-items: center;
-	gap: 0.5rem;
-	align-self: stretch;
-	flex-wrap: wrap;
-}
-
 .age-group {
 	display: flex;
 	flex-direction: column;
 	padding-right: 2rem;
-	padding-bottom: 1rem;
+	padding-bottom: rem;
 }
 
 .select-variables {
@@ -271,8 +278,23 @@ watch(
 .trash-button {
 	cursor: pointer;
 }
+.label-padding {
+	margin-bottom: 0.25rem;
+}
 
 .monoton-label {
 	margin-left: 0.25rem;
+}
+
+.radio-buttons {
+	margin-top: 0.5rem;
+}
+.trash-button-align {
+	display: flex;
+	padding-bottom: 0px;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 1rem;
+	align-self: stretch;
 }
 </style>

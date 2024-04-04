@@ -32,54 +32,78 @@
 					</div>
 					<InputText
 						:disabled="true"
-						class="p-inputtext-sm timespan-list"
+						class="p-inputtext-sm timespan-list mb-2"
 						v-model="requestStepListString"
 					/>
-					<h4
-						class="primary-text green-text"
-						v-if="!showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					>
-						<i class="pi pi-angle-right" /> Show additional options
-					</h4>
-					<h4
-						class="primary-text green-text"
-						v-if="showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					>
-						<i class="pi pi-angle-down" /> Hide additional options
-					</h4>
 					<div v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
-							<tera-input-number
-								:min="0"
-								:max="1"
-								:min-fraction-digits="0"
-								:max-fraction-digits="7"
-								v-model="knobs.tolerance"
-							/>
+							<div
+								class="input-tolerance animate-width animation-ease-in-out animation-duration-225"
+							>
+								<tera-input-number
+									class="w-2"
+									:min="0"
+									:max="1"
+									:min-fraction-digits="0"
+									:max-fraction-digits="7"
+									v-model="knobs.tolerance"
+								/>
+								<Slider
+									v-model="knobs.tolerance"
+									:min="0"
+									:max="1"
+									:step="0.01"
+									class="w-full mr-2"
+								/>
+							</div>
 						</div>
-						<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" />
-						<div class="section-row">
+						<div class="section-row fadein animation-duration-600">
 							<!-- This will definitely require a proper tool tip. -->
-							<label>Select parameters of interest<i class="pi pi-info-circle" /></label>
+							<label class="w-auto mr-2"
+								>Select parameters of interest <i class="pi pi-info-circle"
+							/></label>
 							<MultiSelect
 								ref="columnSelect"
 								:modelValue="variablesOfInterest"
 								:options="requestParameters.map((d: any) => d.name)"
 								:show-toggle-all="false"
+								class="w-auto"
 								@update:modelValue="onToggleVariableOfInterest"
 								:maxSelectedLabels="1"
 								placeholder="Select variables"
 							/>
 						</div>
 					</div>
-					<div class="spacer">
-						<h5>Add sanity checks</h5>
-						<p>Model configurations will be tested against these constraints</p>
+
+					<div>
+						<Button
+							text
+							icon="pi pi-eye"
+							label="Show additional options"
+							size="small"
+							v-if="!showAdditionalOptions"
+							@click="toggleAdditonalOptions"
+						/>
 					</div>
 
+					<div>
+						<Button
+							text
+							icon="pi pi-eye-slash"
+							label="Hide additional options"
+							size="small"
+							v-if="showAdditionalOptions"
+							@click="toggleAdditonalOptions"
+						/>
+					</div>
+
+					<div class="spacer">
+						<h5>Add sanity checks</h5>
+						<p class="secondary-text mt-1">
+							Model configurations will be tested against these constraints.
+						</p>
+					</div>
 					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
@@ -91,8 +115,15 @@
 						@delete-self="deleteConstraintGroupForm"
 						@update-self="updateConstraintGroupForm"
 					/>
-
-					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
+					<div class="add-constraint-spacer">
+						<Button
+							text
+							icon="pi pi-plus"
+							label="Add another constraint"
+							size="small"
+							@click="addConstraintForm"
+						/>
+					</div>
 				</main>
 			</tera-drilldown-section>
 		</div>
@@ -576,12 +607,15 @@ onUnmounted(() => {
 
 <style scoped>
 .primary-text {
+	display: flex;
+	align-items: center;
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */
-	font-size: 1rem;
+	font-size: 0.875rem;
 	font-style: normal;
 	font-weight: 600;
 	line-height: 1.5rem;
+	padding: 0.25rem 0rem 0rem 0rem;
 	/* 150% */
 	letter-spacing: 0.03125rem;
 }
@@ -600,7 +634,7 @@ onUnmounted(() => {
 .button-column {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem 0rem 0.5rem 0rem;
+	padding: 0.5rem 0rem 0.5rem 0rem;
 	align-items: flex-start;
 	align-self: stretch;
 }
@@ -611,6 +645,16 @@ onUnmounted(() => {
 	align-items: center;
 	gap: 0.8125rem;
 	align-self: stretch;
+}
+
+.input-tolerance {
+	display: flex;
+	padding: 0.5rem 0rem 0.5rem 0rem;
+	width: 100%;
+	align-items: center;
+	gap: 0.8125rem;
+	align-self: stretch;
+	gap: 1.5rem;
 }
 
 .timespan > .button-column {
@@ -628,6 +672,11 @@ div.section-row.timespan > div > span {
 .spacer {
 	margin-top: 1rem;
 	margin-bottom: 1rem;
+}
+
+.add-constraint-spacer {
+	margin-top: 0.5rem;
+	margin-bottom: 2rem;
 }
 
 .green-text {
