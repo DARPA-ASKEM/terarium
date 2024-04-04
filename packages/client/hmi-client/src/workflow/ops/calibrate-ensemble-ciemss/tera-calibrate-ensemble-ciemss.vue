@@ -306,16 +306,16 @@ function addMapping() {
 
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
-	const mapping = _.cloneDeep(knobs.value.ensembleConfigs[0].solutionMappings);
-	mapping[knobs.value.timestampColName] = 'Timestamp';
+	const datasetMapping: { [index: string]: string } = {};
+	datasetMapping[knobs.value.timestampColName] = 'Timestamp';
 
-	const params: EnsembleCalibrationCiemssRequest = {
+	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: knobs.value.ensembleConfigs,
 		timespan: getTimespan(csvAsset.value),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
-			mappings: mapping
+			mappings: datasetMapping
 		},
 		engine: 'ciemss',
 		extra: {
@@ -324,7 +324,7 @@ const runEnsemble = async () => {
 			solver_method: knobs.value.extra.solverMethod
 		}
 	};
-	const response = await makeEnsembleCiemssCalibration(params);
+	const response = await makeEnsembleCiemssCalibration(calibratePayload);
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
