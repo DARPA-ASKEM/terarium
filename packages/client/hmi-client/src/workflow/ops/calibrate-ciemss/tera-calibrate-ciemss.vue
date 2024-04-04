@@ -21,7 +21,7 @@
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
-									placeholder="Select a variable"
+									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
 									:options="modelStateOptions?.map((ele) => ele.id)"
 								/>
@@ -34,7 +34,7 @@
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
-									placeholder="Select a variable"
+									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
 									:options="datasetColumns?.map((ele) => ele.name)"
 								/>
@@ -245,6 +245,12 @@ const showSpinner = ref(false);
 const lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
+
+const mappingDropdownPlaceholder = computed(() => {
+	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value))
+		return 'Select variable';
+	return 'Please wait...';
+});
 
 interface BasicKnobs {
 	numIterations: number;

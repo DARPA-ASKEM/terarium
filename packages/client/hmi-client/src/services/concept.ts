@@ -144,9 +144,6 @@ const autoEntityMapping = async (
 	targetEntities: Entity[],
 	acceptableDist?: number
 ) => {
-	console.log(sourceEntities);
-	console.log(targetEntities);
-
 	const result = [] as EntityMap[];
 	const acceptableDistance = acceptableDist ?? 0.5;
 
