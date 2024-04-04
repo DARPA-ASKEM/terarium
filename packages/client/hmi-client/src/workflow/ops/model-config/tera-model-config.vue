@@ -20,9 +20,10 @@
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
-								Suggested configurations<span class="artifact-amount"
-									>({{ suggestedConfigurationContext.tableData.length }})</span
-								>
+								Suggested configurations
+								<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount"
+									>({{ suggestedConfigurationContext.tableData.length }})
+								</span>
 								<Button
 									class="ml-auto"
 									icon="pi pi-sign-out"
