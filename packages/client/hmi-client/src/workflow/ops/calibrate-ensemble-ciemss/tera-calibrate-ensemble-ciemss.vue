@@ -329,7 +329,6 @@ const runEnsemble = async () => {
 			solver_method: knobs.value.extra.solverMethod
 		}
 	};
-	console.log(calibratePayload);
 	const response = await makeEnsembleCiemssCalibration(calibratePayload);
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
