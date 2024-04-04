@@ -1,6 +1,6 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export interface RegriddingState {
+export interface RegriddingOperationState extends BaseState {
 	datasetId: string | null;
 	notebookSessionId?: string;
 }
@@ -15,7 +15,7 @@ export const RegriddingOperation: Operation = {
 	action: () => {},
 
 	initState: () => {
-		const init: RegriddingState = {
+		const init: RegriddingOperationState = {
 			datasetId: null
 		};
 		return init;
