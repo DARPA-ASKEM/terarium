@@ -25,8 +25,8 @@
 						<AccordionTab>
 							<template #header>
 								Suggested configurations
-								<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount"
-									>({{ suggestedConfigurationContext.tableData.length }})
+								<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount">
+									({{ suggestedConfigurationContext.tableData.length }})
 								</span>
 								<Button
 									class="ml-auto"
