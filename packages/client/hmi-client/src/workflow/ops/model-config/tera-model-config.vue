@@ -21,7 +21,7 @@
 						<AccordionTab>
 							<template #header>
 								Suggested configurations<span class="artifact-amount"
-									>({{ suggestedConfirgurationContext.tableData.length }})</span
+									>({{ suggestedConfigurationContext.tableData.length }})</span
 								>
 								<Button
 									class="ml-auto"
@@ -34,10 +34,10 @@
 								/>
 							</template>
 							<DataTable
-								:value="suggestedConfirgurationContext.tableData"
+								:value="suggestedConfigurationContext.tableData"
 								size="small"
 								data-key="id"
-								:paginator="suggestedConfirgurationContext.tableData.length > 5"
+								:paginator="suggestedConfigurationContext.tableData.length > 5"
 								:rows="5"
 								sort-field="createdOn"
 								:sort-order="-1"
@@ -153,7 +153,7 @@
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
-							:model-configurations="suggestedConfirgurationContext.tableData"
+							:model-configurations="suggestedConfigurationContext.tableData"
 							:model="modelConfiguration.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
@@ -247,16 +247,16 @@
 		</section>
 	</tera-drilldown>
 	<tera-drilldown
-		v-if="suggestedConfirgurationContext.isOpen"
-		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
-		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
+		v-if="suggestedConfigurationContext.isOpen"
+		:title="suggestedConfigurationContext.modelConfiguration?.name ?? 'Model Configuration'"
+		@on-close-clicked="suggestedConfigurationContext.isOpen = false"
 		popover
 	>
 		<tera-drilldown-section>
 			<tera-model-semantic-tables
-				v-if="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				v-if="suggestedConfigurationContext.modelConfiguration?.configuration"
 				readonly
-				:model="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				:model="suggestedConfigurationContext.modelConfiguration?.configuration"
 			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
@@ -500,12 +500,17 @@ const extractConfigurationsFromInputs = async () => {
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
 						closeConnection();
-						throw new FatalError('Configs from document - Task failed');
+						console.debug('Task failed');
+						throw new FatalError('Configs from document(s) - Task failed');
 					}
-					if (data.status === TaskStatus.Success) {
-						logger.success('Model configured from document');
+					if (data?.status === TaskStatus.Success) {
+						logger.success('Model configured from document(s)');
 						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
-						console.debug('Model configured from document', outputJSON);
+						console.debug('Task success', outputJSON);
+						closeConnection();
+					}
+					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
+						console.debug('Task running');
 						closeConnection();
 					}
 				},
@@ -526,10 +531,17 @@ const extractConfigurationsFromInputs = async () => {
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
 						closeConnection();
-						throw new FatalError('Configs from datasets - Task failed');
+						console.debug('Task failed');
+						throw new FatalError('Configs from dataset(s) - Task failed');
 					}
 					if (data.status === TaskStatus.Success) {
 						logger.success('Model configured from dataset(s)');
+						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						console.debug('Task success', outputJSON);
+						closeConnection();
+					}
+					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
+						console.debug('Task running');
 						closeConnection();
 					}
 				},
@@ -567,7 +579,7 @@ const selectedConfigId = computed(
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
-const suggestedConfirgurationContext = ref<{
+const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
 	tableData: ModelConfiguration[];
 	modelConfiguration: ModelConfiguration | null;
@@ -751,7 +763,7 @@ const onSelection = (id: string) => {
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
 		isFetching.value = true;
-		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		suggestedConfigurationContext.value.tableData = await getModelConfigurations(modelId);
 		isFetching.value = false;
 	}
 };
@@ -868,8 +880,8 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 };
 
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
-	suggestedConfirgurationContext.value.modelConfiguration = config;
-	suggestedConfirgurationContext.value.isOpen = true;
+	suggestedConfigurationContext.value.modelConfiguration = config;
+	suggestedConfigurationContext.value.isOpen = true;
 };
 
 // FIXME: temporary hack, need proper config/states to handle all frameworks and fields
