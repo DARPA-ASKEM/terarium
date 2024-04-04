@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr && isKernelReady"
@@ -99,25 +97,25 @@ import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
+import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import '@/ace-config';
-import { v4 as uuidv4 } from 'uuid';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { KernelSessionManager } from '@/services/jupyter';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
+import { KernelSessionManager } from '@/services/jupyter';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -376,6 +374,7 @@ watch(
 );
 
 onMounted(async () => {
+	console.log(props.node);
 	await inputChangeHandler();
 });
 

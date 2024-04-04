@@ -1,8 +1,13 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
 export enum InterventionTypes {
 	paramValue = 'param_value',
 	startTime = 'start_time'
+}
+
+export enum ContextMethods {
+	day_average = 'day_average',
+	max = 'max'
 }
 
 export interface InterventionPolicyGroup {
@@ -17,7 +22,7 @@ export interface InterventionPolicyGroup {
 	paramValue: number;
 }
 
-export interface OptimizeCiemssOperationState {
+export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
 	endTime: number;
 	numSamples: number;
@@ -28,6 +33,7 @@ export interface OptimizeCiemssOperationState {
 	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
+	qoiMethod: ContextMethods;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
@@ -69,12 +75,13 @@ export const OptimizeCiemssOperation: Operation = {
 	initState: () => {
 		const init: OptimizeCiemssOperationState = {
 			endTime: 90,
-			numSamples: 1000,
+			numSamples: 100,
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
 			interventionType: InterventionTypes.paramValue,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
+			qoiMethod: ContextMethods.max,
 			targetVariables: [],
 			riskTolerance: 5,
 			threshold: 1,

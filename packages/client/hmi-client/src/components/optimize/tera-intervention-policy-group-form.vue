@@ -86,7 +86,8 @@
 				<InputNumber
 					:disabled="props.interventionType == InterventionTypes.paramValue"
 					class="p-inputtext-sm"
-					inputId="integeronly"
+					:min-fraction-digits="1"
+					:max-fraction-digits="10"
 					v-model="config.paramValue"
 					@update:model-value="emit('update-self', config)"
 				/>

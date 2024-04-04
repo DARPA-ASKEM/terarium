@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -90,15 +88,10 @@
 								v-model="knobs.numIterations"
 							/>
 						</div>
-						<!-- <div class="label-and-input">
-							<label for="method">Solver method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								:options="ciemssMethodOptions"
-								v-model="method"
-								placeholder="Select"
-							/>
-						</div> -->
+						<div class="label-and-input">
+							<label for="num-samples">End time for forecast</label>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
+						</div>
 					</div>
 				</div>
 			</tera-drilldown-section>
@@ -135,6 +128,8 @@
 							:mapping="mapping"
 							has-mean-line
 							@configuration-change="chartProxy.configurationChange(index, $event)"
+							@remove="chartProxy.removeChart(index)"
+							show-remove-button
 							:size="chartSize"
 						/>
 						<Button
@@ -193,7 +188,7 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
@@ -255,11 +250,13 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 interface BasicKnobs {
 	numIterations: number;
 	numSamples: number;
+	endTime: number;
 }
 
 const knobs = ref<BasicKnobs>({
 	numIterations: props.node.state.numIterations ?? 1000,
-	numSamples: props.node.state.numSamples ?? 100
+	numSamples: props.node.state.numSamples ?? 100,
+	endTime: props.node.state.endTime ?? 100
 });
 
 // EXTRA section: Unused, comment out for now Feb 2023
@@ -416,6 +413,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;
+		state.endTime = knobs.value.endTime;
 		emit('update-state', state);
 	},
 	{ deep: true }

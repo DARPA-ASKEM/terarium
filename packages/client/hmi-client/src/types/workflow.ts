@@ -92,6 +92,11 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 	timestamp?: Date;
 }
 
+// Common state properties for all operators
+export interface BaseState {
+	annotation?: string;
+}
+
 // Node definition in the workflow
 // This is the graphical operation of the operation defined in operationType
 export interface WorkflowNode<S> {

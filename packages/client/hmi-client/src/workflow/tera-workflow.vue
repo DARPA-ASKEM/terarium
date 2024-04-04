@@ -113,7 +113,7 @@
 							@append-output="(event: any) => appendOutput(node, event)"
 							@append-input-port="(event: any) => appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
-							@open-drilldown="openDrilldown(node)"
+							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
 					</template>
 				</tera-operator>
@@ -185,7 +185,7 @@
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="closeDrilldown"
+			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
 		/>
 	</Teleport>
@@ -223,6 +223,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { logger } from '@/utils/logger';
+import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
@@ -284,6 +285,9 @@ registry.registerOp(RegriddingOp);
 const props = defineProps<{
 	assetId: string;
 }>();
+
+const route = useRoute();
+const router = useRouter();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -403,6 +407,15 @@ function updateOutputPort(node: WorkflowNode<any> | null, workflowOutput: Workfl
 	if (!node) return;
 	workflowService.updateOutputPort(node, workflowOutput);
 	workflowDirty = true;
+}
+
+// Route is mutated then watcher is triggered to open or close the drilldown
+function addOperatorToRoute(nodeId: string | null) {
+	if (nodeId !== null) {
+		router.push({ query: { operator: nodeId } });
+	} else {
+		router.push({ query: {} });
+	}
 }
 
 const openDrilldown = (node: WorkflowNode<any>) => {
@@ -856,6 +869,16 @@ const unloadCheck = () => {
 	}
 };
 
+const handleDrilldown = () => {
+	const operatorId = route.query?.operator?.toString();
+	if (operatorId) {
+		const operator = wf.value.nodes.find((n) => n.id === operatorId);
+		if (operator) openDrilldown(operator);
+	} else {
+		closeDrilldown();
+	}
+};
+
 watch(
 	() => [props.assetId],
 	async () => {
@@ -868,8 +891,19 @@ watch(
 		isWorkflowLoading.value = true;
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
+
+		handleDrilldown();
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => [route.query],
+	() => {
+		if (isWorkflowLoading.value) return;
+		handleDrilldown();
+	},
+	{ deep: true }
 );
 
 onMounted(() => {
@@ -882,6 +916,7 @@ onMounted(() => {
 		}
 	}, WORKFLOW_SAVE_INTERVAL);
 });
+
 onUnmounted(() => {
 	if (workflowDirty) {
 		workflowService.updateWorkflow(wf.value);

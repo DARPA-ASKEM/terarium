@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { Initial, ModelParameter } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
@@ -8,7 +8,7 @@ export interface ModelEditCode {
 	timestamp: number;
 }
 
-export interface ModelConfigOperationState {
+export interface ModelConfigOperationState extends BaseState {
 	name: string;
 	description: string;
 	initials: Initial[];

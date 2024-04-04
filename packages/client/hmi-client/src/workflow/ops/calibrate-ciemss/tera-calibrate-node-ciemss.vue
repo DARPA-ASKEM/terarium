@@ -52,7 +52,7 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy, getTimespan } from '@/workflow/util';
+import { chartActionsProxy } from '@/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
@@ -123,12 +123,13 @@ watch(
 			const dillURL = await getCalibrateBlobURL(id);
 			console.log('dill URL is', dillURL);
 
-			const timespan = getTimespan(csvAsset.value, props.node.state.mapping);
-			// FIXME: should proably align with time-span in dataset
 			const forecastResponse = await makeForecastJobCiemss({
 				projectId: '',
 				modelConfigId: modelConfigId.value as string,
-				timespan,
+				timespan: {
+					start: 0,
+					end: props.node.state.endTime
+				},
 				extra: {
 					num_samples: props.node.state.numSamples,
 					method: 'dopri5',
