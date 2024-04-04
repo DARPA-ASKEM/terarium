@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
@@ -190,6 +192,11 @@ public class GoLLMController {
 		}
 	}
 
+	@Data
+	static public class ConfigureFromDatasetRequest {
+		private String matrixStr = "";
+	}
+
 	@PostMapping("/configure-from-dataset")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Config from Dataset` task")
@@ -202,8 +209,8 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
-			@RequestParam(name = "matrix-str", required = false, defaultValue = "") final String matrixStr,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestBody(required = false) final ConfigureFromDatasetRequest body) {
 
 		try {
 			// Grab the datasets
@@ -252,8 +259,8 @@ public class GoLLMController {
 			input.setAmr(model.get());
 
 			// set matrix string if provided
-			if (!matrixStr.isEmpty()) {
-				input.setMatrixStr(matrixStr);
+			if (!body.getMatrixStr().isEmpty()) {
+				input.setMatrixStr(body.getMatrixStr());
 			}
 
 			// Create the task
