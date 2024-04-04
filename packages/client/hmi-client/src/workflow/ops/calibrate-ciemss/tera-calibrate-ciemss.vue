@@ -384,6 +384,7 @@ async function getAutoMapping() {
 		modelStateOptions.value,
 		datasetColumns.value
 	)) as CalibrateMap[];
+	console.log(modelStateOptions.value, datasetColumns.value, mapping.value);
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);

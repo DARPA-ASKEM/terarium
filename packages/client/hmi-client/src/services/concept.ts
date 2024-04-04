@@ -231,7 +231,7 @@ const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: Dat
 		const groundings = state.grounding?.identifiers
 			? Object.entries(state.grounding.identifiers).map((ele) => ele.join(':'))
 			: undefined;
-		sourceEntities.push({ id: state.id, groundings });
+		sourceEntities.push({ id: state.id.toLowerCase(), groundings });
 	});
 
 	// Fill targetEntities with datasetOptions
