@@ -6,8 +6,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -15,9 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -29,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
@@ -193,6 +192,11 @@ public class GoLLMController {
 		}
 	}
 
+	@Data
+	static public class ConfigFromDatasetBody {
+		private String matrixStr = "";
+	}
+
 	@PostMapping("/configure-from-dataset")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Config from Dataset` task")
@@ -205,10 +209,8 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
-			@RequestBody final JsonNode body,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
-
-		final String matrixStr = body.get("matrixStr").asText();
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestBody(required = false) final ConfigFromDatasetBody body) {
 
 		try {
 			// Grab the datasets
@@ -257,8 +259,8 @@ public class GoLLMController {
 			input.setAmr(model.get());
 
 			// set matrix string if provided
-			if (matrixStr != null && !matrixStr.isEmpty()) {
-				input.setMatrixStr(matrixStr);
+			if (body != null && !body.getMatrixStr().isEmpty()) {
+				input.setMatrixStr(body.getMatrixStr());
 			}
 
 			// Create the task
