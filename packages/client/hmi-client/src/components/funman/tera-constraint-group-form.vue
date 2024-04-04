@@ -83,9 +83,9 @@
 		</section>
 
 		<!-- These are the start, end times and upper, lower bounts inputs -->
-		<div v-if="constraintType !== 'monotonicityConstraint'">
-			<div class="section-row">
-				<div class="button-row">
+		<div v-if="constraintType !== 'monotonicityConstraint'" class="w-full">
+			<div class="flex flex-row w-full pt-3 pb-1">
+				<div class="col-3 p-0 flex flex-column pr-2">
 					<label class="label-padding">Start time</label>
 					<InputNumber
 						class="p-inputtext-sm"
@@ -94,7 +94,7 @@
 					/>
 				</div>
 
-				<div class="button-row">
+				<div class="col-3 p-0 flex flex-column pr-2">
 					<label class="label-padding">End time</label>
 					<InputNumber
 						class="p-inputtext-sm"
@@ -103,7 +103,7 @@
 					/>
 				</div>
 
-				<div class="button-row">
+				<div class="col-3 p-0 flex flex-column pr-2">
 					<label class="label-padding">Lower bound</label>
 					<tera-input-number
 						class="p-inputtext-sm"
@@ -114,7 +114,7 @@
 					/>
 				</div>
 
-				<div class="button-row">
+				<div class="col-3 p-0 flex flex-column">
 					<label class="label-padding">Upper bound</label>
 					<tera-input-number
 						class="p-inputtext-sm"
@@ -236,13 +236,11 @@ watch(
 
 .section-row {
 	display: flex;
-	flex: 1;
 	flex-direction: row;
 	padding: 0.5rem 0rem;
 	align-items: center;
 	gap: 0.5rem;
 	width: 100%;
-	justify-content: space-around;
 }
 .button-row {
 	display: flex;
