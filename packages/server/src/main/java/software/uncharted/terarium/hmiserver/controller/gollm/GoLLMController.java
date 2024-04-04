@@ -122,7 +122,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -184,7 +187,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
@@ -228,7 +234,7 @@ public class GoLLMController {
 				for (final String filename : dataset.get().getFileNames()) {
 					try {
 						final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
-						if (dataset.isPresent()) {
+						if (datasetText.isPresent()) {
 							// ensure unescaped newlines are escaped
 							datasets.add(
 									datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
@@ -275,7 +281,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
@@ -326,7 +335,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
