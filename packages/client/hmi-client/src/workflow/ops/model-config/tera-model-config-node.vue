@@ -2,11 +2,11 @@
 	<section>
 		<tera-operator-placeholder :operation-type="node.operationType" />
 		<Button
-			:label="allowOpen ? 'Attach a model' : 'Open'"
+			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
 			severity="secondary"
 			outlined
-			:disabled="allowOpen"
+			:disabled="!isModelInputConnected"
 		/>
 	</section>
 </template>
@@ -23,22 +23,21 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['open-drilldown', 'append-input-port']);
 
-const allowOpen = computed(() => {
-	console.debug('allowOpen', props.node.inputs);
-	return (
-		props.node.inputs.find((input) => input.type === 'modelId')?.status !==
-		WorkflowPortStatus.CONNECTED
-	);
-});
+const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
+const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
 
+// Update the node with the new input ports
 watch(
 	() => props.node.inputs,
 	() => {
-		if (
-			props.node.inputs
-				.filter((input) => input.type === 'datasetId')
-				.every((input) => input.status === WorkflowPortStatus.CONNECTED)
-		) {
+		const documentInputs = props.node.inputs.filter((input) => input.type === 'documentId');
+		const datasetInputs = props.node.inputs.filter((input) => input.type === 'datasetId');
+
+		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
+			emit('append-input-port', { type: 'documentId', label: 'Document', isOptional: true });
+		}
+
+		if (datasetInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset', isOptional: true });
 		}
 	},

@@ -35,6 +35,7 @@
 								/>
 							</template>
 							<DataTable
+								v-if="suggestedConfigurationContext.tableData"
 								:value="suggestedConfigurationContext.tableData"
 								size="small"
 								data-key="id"

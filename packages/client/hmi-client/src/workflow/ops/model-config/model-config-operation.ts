@@ -27,7 +27,7 @@ export const ModelConfigOperation: Operation = {
 	description: 'Create model configurations.',
 	isRunnable: true,
 	inputs: [
-		{ type: 'modelId' },
+		{ type: 'modelId', label: 'Model' },
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
