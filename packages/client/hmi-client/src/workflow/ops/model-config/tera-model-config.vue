@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<template #header-actions>
 			<tera-operator-annotation
 				:state="node.state"
@@ -251,6 +255,7 @@
 	<tera-drilldown
 		v-if="suggestedConfigurationContext.isOpen"
 		:title="suggestedConfigurationContext.modelConfiguration?.name ?? 'Model Configuration'"
+		:node="node"
 		@on-close-clicked="suggestedConfigurationContext.isOpen = false"
 		popover
 	>
@@ -314,13 +319,16 @@ import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue'
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import {
+	emptyMiraModel,
+	generateModelDatasetConfigurationContext
+} from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -382,10 +390,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const sanityCheckErrors = ref<string[]>([]);
-const isSaveDisabled = computed(() => {
-	if (knobs.value.name === '') return true;
-	return false;
-});
+const isSaveDisabled = computed(() => knobs.value.name === '');
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -526,9 +531,13 @@ const extractConfigurationsFromInputs = async () => {
 	}
 	if (datasetIds.value) {
 		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
+
+		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
+
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
+			matrixStr,
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
@@ -620,7 +629,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 		cloneModel.metadata = {};
 	}
 
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		if (cloneModel.semantics) {
 			cloneModel.semantics.ode.initials = knobs.value.initials;
 			cloneModel.semantics.ode.parameters = knobs.value.parameters;
@@ -674,7 +683,7 @@ const updateConfigInitial = (inits: Initial[]) => {
 };
 
 const updateConfigFromModel = (inputModel: Model) => {
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
 		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
 	} else if (isRegNet.value) {
@@ -694,7 +703,7 @@ const runSanityCheck = () => {
 	}
 
 	let parameters: ModelParameter[] = [];
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		if (modelToCheck.semantics?.ode?.parameters) {
 			parameters = modelToCheck.semantics?.ode?.parameters;
 		}
@@ -728,7 +737,7 @@ const createConfiguration = async (force: boolean = false) => {
 	const state = cloneDeep(props.node.state);
 
 	sanityCheckErrors.value = [];
-	if (force !== true) {
+	if (!force) {
 		const errors = runSanityCheck();
 		if (errors.length > 0) {
 			sanityCheckErrors.value = errors;
@@ -770,7 +779,7 @@ const fetchConfigurations = async (modelId: string) => {
 	}
 };
 
-// Creates a temp config (if doesnt exist in state)
+// Creates a temp config (if it doesn't exist in state)
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
 	const state = cloneDeep(props.node.state);
@@ -800,10 +809,10 @@ const initialize = async () => {
 
 	// State has never been set up:
 	if (knobs.value.tempConfigId === '') {
-		// Grab these values from model to inialize them
+		// Grab these values from model to initialize them
 		const ode = model.value?.semantics?.ode;
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-		if (isPetriNet.value || isStockFlow) {
+		if (isPetriNet.value || isStockFlow.value) {
 			knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 		} else if (isRegNet.value) {
 			knobs.value.parameters =
@@ -869,7 +878,7 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		knobs.value.initials = amr.semantics.ode.initials;
 		knobs.value.parameters = amr.semantics.ode.parameters;
 	} else if (isRegNet.value) {

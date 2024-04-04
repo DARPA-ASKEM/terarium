@@ -1,7 +1,7 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 
-export interface CalibrationOperationStateCiemss {
+export interface CalibrationOperationStateCiemss extends BaseState {
 	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];

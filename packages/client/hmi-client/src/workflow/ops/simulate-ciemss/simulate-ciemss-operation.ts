@@ -1,7 +1,7 @@
 import type { TimeSpan } from '@/types/Types';
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export interface SimulateCiemssOperationState {
+export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
 	chartConfigs: string[][];
 

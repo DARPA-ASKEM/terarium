@@ -1,7 +1,8 @@
 import type { DocumentExtraction } from '@/types/Types';
-import { Operation, AssetBlock, WorkflowOperationTypes } from '@/types/workflow';
+import type { AssetBlock, Operation, BaseState } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/workflow';
 
-export interface DocumentOperationState {
+export interface DocumentOperationState extends BaseState {
 	documentId: string | null;
 	equations: AssetBlock<DocumentExtraction>[];
 	tables: AssetBlock<DocumentExtraction>[];

@@ -1,6 +1,6 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export interface SubsetDataOperationState {
+export interface SubsetDataOperationState extends BaseState {
 	datasetId: string | null;
 	fromDate: Date;
 	toDate: Date;

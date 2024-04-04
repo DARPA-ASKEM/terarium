@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<template #header-actions>
 			<tera-operator-annotation
 				:state="node.state"
@@ -138,7 +142,7 @@ import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import * as textUtils from '@/utils/text';
 import {
 	EquationBlock,
