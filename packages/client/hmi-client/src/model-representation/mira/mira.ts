@@ -509,7 +509,7 @@ export const generateModelDatasetConfigurationContext = (
 			lines.push('');
 			lines.push(header);
 			subjectOutcome.matrix.forEach((r, idx) => {
-				const rowStr = subjectOutcome.colNames[idx] + r.map((d) => d.content.id).join(',');
+				const rowStr = `${subjectOutcome.colNames[idx]},${r.map((d) => d.content.id).join(',')}`;
 				lines.push(rowStr);
 			});
 			lines.push('');
