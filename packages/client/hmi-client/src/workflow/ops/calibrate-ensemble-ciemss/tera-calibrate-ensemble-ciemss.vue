@@ -306,16 +306,24 @@ function addMapping() {
 
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
-	const mapping = _.cloneDeep(knobs.value.ensembleConfigs[0].solutionMappings);
-	mapping[knobs.value.timestampColName] = 'Timestamp';
+	const datasetMapping: { [index: string]: string } = {};
+	datasetMapping[knobs.value.timestampColName] = 'timestamp';
+	// Each key used in the ensemble configs is a dataset column.
+	// add these columns used to the datasetMapping
+	Object.keys(knobs.value.ensembleConfigs[0].solutionMappings).forEach((key) => {
+		datasetMapping[key] = key;
+	});
 
-	const params: EnsembleCalibrationCiemssRequest = {
+	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: knobs.value.ensembleConfigs,
-		timespan: getTimespan(csvAsset.value),
+		timespan: getTimespan({
+			dataset: csvAsset.value,
+			timestampColName: knobs.value.timestampColName
+		}),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
-			mappings: mapping
+			mappings: datasetMapping
 		},
 		engine: 'ciemss',
 		extra: {
@@ -324,7 +332,7 @@ const runEnsemble = async () => {
 			solver_method: knobs.value.extra.solverMethod
 		}
 	};
-	const response = await makeEnsembleCiemssCalibration(params);
+	const response = await makeEnsembleCiemssCalibration(calibratePayload);
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;

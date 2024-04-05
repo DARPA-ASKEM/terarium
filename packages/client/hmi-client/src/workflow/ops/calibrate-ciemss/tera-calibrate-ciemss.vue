@@ -316,7 +316,7 @@ const runCalibrate = async () => {
 		extra: {
 			num_iterations: knobs.value.numIterations
 		},
-		timespan: getTimespan(csvAsset.value, mapping.value),
+		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);

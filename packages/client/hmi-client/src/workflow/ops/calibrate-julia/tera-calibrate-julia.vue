@@ -356,7 +356,7 @@ const makeCalibrateRequest = async () => {
 		},
 		extra: extra.value,
 		engine: 'sciml',
-		timespan: getTimespan(csvAsset.value, mapping.value)
+		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value })
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	return response.simulationId;
