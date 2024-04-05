@@ -226,20 +226,21 @@ const requestConstraints = computed(
 					name: ele.name,
 					timepoints: null,
 					additive_bounds: {
-						ub: 0.0,
-						closed_upper_bound: true,
+						lb: 0.0,
+						// ub: 0.0,
+						// closed_upper_bound: true,
 						original_width: MAX
 					},
 					variables: ele.variables,
-					weights: weights.map((d) => Math.abs(d)), // should be all positive
+					weights: weights.map((d) => -Math.abs(d)), // should be all negative
 					derivative: true
 				};
 
 				if (ele.derivativeType === 'increasing') {
-					delete constraint.additive_bounds.closed_upper_bound;
-					delete constraint.additive_bounds.ub;
-					constraint.additive_bounds.lb = 0;
-					constraint.weights = weights.map((d) => -Math.abs(d)); // should be all negative
+					// delete constraint.additive_bounds.closed_upper_bound;
+					// delete constraint.additive_bounds.ub;
+					// constraint.additive_bounds.lb = 0;
+					constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
 				}
 				return constraint;
 			}
@@ -414,6 +415,7 @@ const deleteConstraintGroupForm = (data) => {
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
+
 	state.constraintGroups[data.index] = data.updatedConfig;
 	emit('update-state', state);
 };
