@@ -83,47 +83,48 @@
 		</section>
 
 		<!-- These are the start, end times and upper, lower bounts inputs -->
-		<div v-if="constraintType !== 'monotonicityConstraint'" class="w-full">
-			<div class="flex flex-row w-full pt-3 pb-1">
-				<div class="col-3 p-0 flex flex-column pr-2">
-					<label class="label-padding">Start time</label>
-					<InputNumber
-						class="p-inputtext-sm"
-						v-model="startTime"
-						@update:model-value="updateChanges()"
-					/>
-				</div>
+		<!--FIXME: InputNumber seems like it has some min-width set even though it's nowhere to be found (adjust screen width to see what I mean)
+		Once that can be changed replace the tailwind here with the section-row and button-row classes used above
+		-->
+		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex flex-row w-full pt-3 pb-1">
+			<div class="col-3 p-0 flex flex-column pr-2">
+				<label class="label-padding">Start time</label>
+				<InputNumber
+					class="p-inputtext-sm"
+					v-model="startTime"
+					@update:model-value="updateChanges()"
+				/>
+			</div>
 
-				<div class="col-3 p-0 flex flex-column pr-2">
-					<label class="label-padding">End time</label>
-					<InputNumber
-						class="p-inputtext-sm"
-						v-model="endTime"
-						@update:model-value="updateChanges()"
-					/>
-				</div>
+			<div class="col-3 p-0 flex flex-column pr-2">
+				<label class="label-padding">End time</label>
+				<InputNumber
+					class="p-inputtext-sm"
+					v-model="endTime"
+					@update:model-value="updateChanges()"
+				/>
+			</div>
 
-				<div class="col-3 p-0 flex flex-column pr-2">
-					<label class="label-padding">Lower bound</label>
-					<tera-input-number
-						class="p-inputtext-sm"
-						v-model="lowerBound"
-						:min-fraction-digits="3"
-						:max-fraction-digits="12"
-						@update:model-value="updateChanges()"
-					/>
-				</div>
+			<div class="col-3 p-0 flex flex-column pr-2">
+				<label class="label-padding">Lower bound</label>
+				<tera-input-number
+					class="p-inputtext-sm"
+					v-model="lowerBound"
+					:min-fraction-digits="3"
+					:max-fraction-digits="12"
+					@update:model-value="updateChanges()"
+				/>
+			</div>
 
-				<div class="col-3 p-0 flex flex-column">
-					<label class="label-padding">Upper bound</label>
-					<tera-input-number
-						class="p-inputtext-sm"
-						v-model="upperBound"
-						:min-fraction-digits="3"
-						:max-fraction-digits="12"
-						@update:model-value="updateChanges()"
-					/>
-				</div>
+			<div class="col-3 p-0 flex flex-column">
+				<label class="label-padding">Upper bound</label>
+				<tera-input-number
+					class="p-inputtext-sm"
+					v-model="upperBound"
+					:min-fraction-digits="3"
+					:max-fraction-digits="12"
+					@update:model-value="updateChanges()"
+				/>
 			</div>
 		</div>
 	</div>
@@ -253,7 +254,10 @@ watch(
 	flex-direction: column;
 	padding: var(--gap-small) 0 var(--gap-small) 0;
 	width: 100%;
-	/* gap: 0.25rem; */
+}
+
+.p-input-number {
+	min-width: 0;
 }
 
 .label-padding {
