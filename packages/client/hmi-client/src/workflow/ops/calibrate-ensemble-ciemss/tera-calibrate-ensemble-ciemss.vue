@@ -343,7 +343,6 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
-	console.log(props.node.state);
 	allModelConfigurations.value = [];
 	const modelConfigurationIds: string[] = [];
 	props.node.inputs.forEach((ele) => {
