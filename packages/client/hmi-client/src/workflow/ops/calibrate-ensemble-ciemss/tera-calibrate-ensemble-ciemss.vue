@@ -307,7 +307,7 @@ function addMapping() {
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
 	const datasetMapping: { [index: string]: string } = {};
-	datasetMapping[knobs.value.timestampColName] = 'Timestamp';
+	datasetMapping[knobs.value.timestampColName] = 'timestamp';
 	// Each key used in the ensemble configs is a dataset column.
 	// add these columns used to the datasetMapping
 	Object.keys(knobs.value.ensembleConfigs[0].solutionMappings).forEach((key) => {
@@ -316,7 +316,10 @@ const runEnsemble = async () => {
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: knobs.value.ensembleConfigs,
-		timespan: getTimespan(csvAsset.value),
+		timespan: getTimespan({
+			dataset: csvAsset.value,
+			timestampColName: knobs.value.timestampColName
+		}),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
@@ -340,6 +343,7 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
+	console.log(props.node.state);
 	allModelConfigurations.value = [];
 	const modelConfigurationIds: string[] = [];
 	props.node.inputs.forEach((ele) => {
