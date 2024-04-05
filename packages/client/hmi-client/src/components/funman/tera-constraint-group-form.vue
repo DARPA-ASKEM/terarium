@@ -5,7 +5,7 @@
 		</div>
 
 		<div class="button-row">
-			<label class="label-padding">Name of constraint</label>
+			<label>Name of constraint</label>
 			<InputText
 				v-model="constraintName"
 				placeholder="Add constraint name"
@@ -15,7 +15,7 @@
 
 		<div class="section-row">
 			<div class="button-row">
-				<label class="label-padding">Constraint type</label>
+				<label>Constraint type</label>
 				<Dropdown
 					:model-value="constraintType"
 					:options="constraintTypes"
@@ -27,7 +27,7 @@
 			</div>
 
 			<div class="button-row">
-				<label class="label-padding">Target</label>
+				<label>Target</label>
 				<MultiSelect
 					v-if="constraintType !== 'parameterConstraint'"
 					v-model="variables"
@@ -84,7 +84,7 @@
 
 		<!-- These are the start, end times and upper, lower bounts inputs -->
 		<!--FIXME: InputNumber seems like it has some min-width set even though it's nowhere to be found (adjust screen width to see what I mean)
-		Once that can be changed replace the tailwind here with the section-row and button-row classes used above
+		Once that can be changed replace the tailwind and label-padding class here with the section-row and button-row classes used above
 		-->
 		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex flex-row w-full pt-3 pb-1">
 			<div class="col-3 p-0 flex flex-column pr-2">
@@ -254,6 +254,7 @@ watch(
 	flex-direction: column;
 	padding: var(--gap-small) 0 var(--gap-small) 0;
 	width: 100%;
+	gap: var(--gap-xsmall);
 }
 
 .label-padding {
