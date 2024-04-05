@@ -53,7 +53,7 @@
 				<label v-if="weights">
 					{{ variable + ' Weight' }}
 				</label>
-				<tera-input-number
+				<InputNumber
 					v-if="weights"
 					:key="index"
 					:placeholder="variable"
@@ -192,6 +192,12 @@ const changeConstraintType = (value: any) => {
 };
 
 const updateChanges = () => {
+	const wLen = updatedConfig.value.weights?.length ?? 0;
+	const vLen = updatedConfig.value.variables.length;
+	if (wLen !== vLen) {
+		updatedConfig.value.weights = Array<number>(vLen).fill(1.0);
+	}
+
 	emit('update-self', { index: props.index, updatedConfig: updatedConfig.value });
 };
 
@@ -247,7 +253,13 @@ watch(
 	flex-direction: column;
 	padding: var(--gap-small) 0 var(--gap-small) 0;
 	width: 100%;
+	/* gap: 0.25rem; */
 }
+
+.label-padding {
+	margin-bottom: 0.25rem;
+}
+
 .age-group {
 	display: flex;
 	flex-direction: column;
@@ -275,9 +287,6 @@ watch(
 
 .trash-button {
 	cursor: pointer;
-}
-.label-padding {
-	margin-bottom: 0.25rem;
 }
 
 .monoton-label {
