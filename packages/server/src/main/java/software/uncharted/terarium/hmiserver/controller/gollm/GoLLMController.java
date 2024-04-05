@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
@@ -119,7 +121,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -181,13 +186,21 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
+	}
+
+	@Data
+	static public class ConfigFromDatasetBody {
+		private String matrixStr = "";
 	}
 
 	@PostMapping("/configure-from-dataset")
@@ -202,7 +215,8 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestBody(required = false) final ConfigFromDatasetBody body) {
 
 		try {
 			// Grab the datasets
@@ -222,7 +236,7 @@ public class GoLLMController {
 				for (final String filename : dataset.get().getFileNames()) {
 					try {
 						final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
-						if (dataset.isPresent()) {
+						if (datasetText.isPresent()) {
 							// ensure unescaped newlines are escaped
 							datasets.add(
 									datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
@@ -250,6 +264,11 @@ public class GoLLMController {
 			model.get().setMetadata(null);
 			input.setAmr(model.get());
 
+			// set matrix string if provided
+			if (body != null && !body.getMatrixStr().isEmpty()) {
+				input.setMatrixStr(body.getMatrixStr());
+			}
+
 			// Create the task
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
@@ -264,7 +283,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
@@ -315,7 +337,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
