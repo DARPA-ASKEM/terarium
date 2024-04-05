@@ -7,6 +7,7 @@
 		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
+					{{ node.inputs[0].label }}
 					<h5>Set simulation parameters</h5>
 					<!-- Start & End -->
 					<div class="input-row">
