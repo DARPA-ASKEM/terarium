@@ -17,6 +17,7 @@ import java.util.regex.Matcher;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -284,7 +285,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		Assertions.assertEquals(future1.getId(), future2.getId());
 	}
 
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItDoesNotCacheFailure() throws Exception {
 		final int TIMEOUT_SECONDS = 20;
