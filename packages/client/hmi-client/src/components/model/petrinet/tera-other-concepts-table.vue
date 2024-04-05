@@ -5,7 +5,11 @@
 				<Button text icon="pi pi-plus" @click.stop="openAlignmentAssignmentDialog(data)" />
 			</template>
 		</Column>
-		<Column field="payload.id.id" header="Payload id" />
+		<Column header="Id">
+			<template #body="{ data }">
+				{{ getId(data) }}
+			</template>
+		</Column>
 		<Column header="Names">
 			<template #body="{ data }">
 				{{ getName(data) }}
@@ -253,8 +257,8 @@ const semantics = computed(() => {
 const filteredSemantics = ref<any[]>([]);
 
 const extractions = computed(() => {
-	const attributes = props.model?.metadata?.attributes ?? [];
-	return groupBy(attributes, 'amr_element_id');
+	const skemaAttributes = props.model?.metadata?.attributes ?? [];
+	return groupBy(skemaAttributes, 'amr_element_id');
 });
 const states = computed(() => props.model?.model?.states ?? []);
 const transitions = computed(() => {
@@ -293,6 +297,9 @@ const otherConcepts = computed(() => {
 		);
 	});
 
+	const gollmExtractions = props.model?.metadata?.gollmExtractions ?? [];
+	unalignedExtractions.push(...gollmExtractions);
+
 	return unalignedExtractions ?? [];
 });
 
@@ -324,6 +331,8 @@ const getDescription = (data) =>
 	data.payload?.descriptions?.map((d) => d?.source).join(', ') ||
 	data.payload?.text_descriptions?.map((d) => d?.description).join(', ');
 
+const getId = (data) => data.payload?.id?.id ?? data?.id;
+
 const getName = (data) =>
 	data.payload?.names?.map((n) => n?.name).join(', ') ||
 	data.payload?.mentions?.map((m) => m?.name).join(', ');
@@ -331,6 +340,7 @@ const getName = (data) =>
 const getConcept = (data) => data.payload?.groundings?.[0];
 
 const getValue = (data) =>
+	data?.value ||
 	data.payload?.values?.map((n) => n?.value?.amount).join(', ') ||
 	data.payload?.value_descriptions?.map((m) => m?.value?.amount).join(', ');
 
