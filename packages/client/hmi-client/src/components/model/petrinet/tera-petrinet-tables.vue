@@ -171,6 +171,9 @@ const otherConcepts = computed(() => {
 		);
 	});
 
+	const gollmExtractions = props.model?.metadata?.gollmExtractions ?? [];
+	unalignedExtractions.push(...gollmExtractions);
+
 	return unalignedExtractions ?? [];
 });
 

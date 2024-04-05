@@ -540,7 +540,8 @@ code {
 	&:deep(.p-tabview-panels) {
 		flex: 1;
 		border: 1px solid var(--surface-border);
-		border-radius: var(--border-radius);
+		border-bottom-left-radius: var(--border-radius);
+		border-bottom-right-radius: var(--border-radius);
 		background-color: var(--surface-ground);
 	}
 }
