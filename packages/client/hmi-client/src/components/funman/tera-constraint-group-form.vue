@@ -237,7 +237,7 @@ watch(
 .section-row {
 	display: flex;
 	flex-direction: row;
-	padding: 0.5rem 0rem;
+	padding: var(--gap-small) 0;
 	align-items: center;
 	gap: 0.5rem;
 	width: 100%;
@@ -245,14 +245,14 @@ watch(
 .button-row {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem 0rem 0.5rem 0rem;
+	padding: var(--gap-small) 0 var(--gap-small) 0;
 	width: 100%;
 }
 .age-group {
 	display: flex;
 	flex-direction: column;
-	padding-right: 2rem;
-	padding-bottom: rem;
+	padding-right: var(--gap-medium);
+	padding-bottom: var(--gap-medium);
 }
 
 .select-variables {
