@@ -256,10 +256,6 @@ watch(
 	width: 100%;
 }
 
-.p-input-number {
-	min-width: 0;
-}
-
 .label-padding {
 	margin-bottom: 0.25rem;
 }
