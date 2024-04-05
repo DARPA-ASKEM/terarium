@@ -33,7 +33,7 @@
 						class="p-inputtext-sm timespan-list mb-2"
 						v-model="requestStepListString"
 					/>
-					<div v-if="showAdditionalOptions">
+					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
@@ -70,29 +70,23 @@
 								placeholder="Select variables"
 							/>
 						</div>
-					</div>
-
-					<div>
-						<Button
-							text
-							icon="pi pi-eye"
-							label="Show additional options"
-							size="small"
-							v-if="!showAdditionalOptions"
-							@click="toggleAdditonalOptions"
-						/>
-					</div>
-
-					<div>
-						<Button
-							text
-							icon="pi pi-eye-slash"
-							label="Hide additional options"
-							size="small"
-							v-if="showAdditionalOptions"
-							@click="toggleAdditonalOptions"
-						/>
-					</div>
+					</template>
+					<Button
+						text
+						icon="pi pi-eye"
+						label="Show additional options"
+						size="small"
+						v-if="!showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					/>
+					<Button
+						text
+						icon="pi pi-eye-slash"
+						label="Hide additional options"
+						size="small"
+						v-if="showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					/>
 
 					<div class="spacer">
 						<h5>Add sanity checks</h5>
@@ -111,15 +105,14 @@
 						@delete-self="deleteConstraintGroupForm"
 						@update-self="updateConstraintGroupForm"
 					/>
-					<div class="add-constraint-spacer">
-						<Button
-							text
-							icon="pi pi-plus"
-							label="Add another constraint"
-							size="small"
-							@click="addConstraintForm"
-						/>
-					</div>
+					<Button
+						class="add-constraint-spacer"
+						text
+						icon="pi pi-plus"
+						label="Add another constraint"
+						size="small"
+						@click="addConstraintForm"
+					/>
 				</main>
 			</tera-drilldown-section>
 		</div>
@@ -610,7 +603,7 @@ onUnmounted(() => {
 	align-items: center;
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */
-	font-size: 0.875rem;
+	font-size: var(--font-body-medium);
 	font-style: normal;
 	font-weight: 600;
 	line-height: 1.5rem;
@@ -622,7 +615,7 @@ onUnmounted(() => {
 .secondary-text {
 	color: var(--Text-Secondary, #667085);
 	/* Body Small/Regular */
-	font-size: 0.875rem;
+	font-size: var(--font-body-small);
 	font-style: normal;
 	font-weight: 400;
 	line-height: 1.3125rem;
@@ -633,7 +626,7 @@ onUnmounted(() => {
 .button-column {
 	display: flex;
 	flex-direction: column;
-	padding: 0.5rem 0rem 0.5rem 0rem;
+	padding: var(--gap-small) 0 var(--gap-small) 0;
 	align-items: flex-start;
 	align-self: stretch;
 }
@@ -648,7 +641,7 @@ onUnmounted(() => {
 
 .input-tolerance {
 	display: flex;
-	padding: 0.5rem 0rem 0.5rem 0rem;
+	padding: var(--gap-small) 0 var(--gap-small) 0;
 	width: 100%;
 	align-items: center;
 	gap: 0.8125rem;
