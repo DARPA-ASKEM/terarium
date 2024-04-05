@@ -4,7 +4,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, Component } from 'vue';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
 const props = defineProps<{
