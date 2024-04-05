@@ -47,29 +47,35 @@ export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: 
 	};
 };
 
-export const getTimespan = (dataset?: CsvAsset, mapping?: CalibrateMap[]): TimeSpan => {
+export interface GetTimespanParams {
+	dataset?: CsvAsset;
+	mapping?: CalibrateMap[];
+	timestampColName?: string;
+}
+
+export function getTimespan(params: GetTimespanParams): TimeSpan {
 	let start = 0;
 	let end = 90;
 	// If we have the min/max timestamp available from the csv asset use it
-	if (dataset) {
-		let tVar = 'timestamp';
-		if (mapping) {
+	if (params.dataset) {
+		let tVar = params.timestampColName ?? 'timestamp';
+		if (params.mapping && !params.timestampColName) {
 			// if there's a mapping for timestamp, then the model variable is guaranteed to be 'timestamp'
-			const tMap = mapping.find((m) => m.modelVariable === 'timestamp');
+			const tMap = params.mapping.find((m) => m.modelVariable === 'timestamp');
 			if (tMap) {
 				tVar = tMap.datasetVariable;
 			}
 		}
-		let tIndex = dataset.headers.indexOf(tVar);
+		let tIndex = params.dataset.headers.indexOf(tVar);
 		// if the timestamp column is not found, default to 0 as this is what is assumed to be the default
 		// timestamp column in the pyciemss backend
 		tIndex = tIndex === -1 ? 0 : tIndex;
 
-		start = dataset.stats?.[tIndex].minValue!;
-		end = dataset.stats?.[tIndex].maxValue!;
+		start = params.dataset.stats?.[tIndex].minValue!;
+		end = params.dataset.stats?.[tIndex].maxValue!;
 	}
 	return { start, end };
-};
+}
 
 export const getGraphDataFromDatasetCSV = (
 	dataset: CsvAsset,
