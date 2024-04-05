@@ -53,7 +53,7 @@ export interface GetTimespanParams {
 	timestampColName?: string;
 }
 
-export const getTimespan = (params: GetTimespanParams): TimeSpan => {
+export function getTimespan(params: GetTimespanParams): TimeSpan {
 	let start = 0;
 	let end = 90;
 	// If we have the min/max timestamp available from the csv asset use it
