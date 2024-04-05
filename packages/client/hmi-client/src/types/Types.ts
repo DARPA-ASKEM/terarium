@@ -862,6 +862,8 @@ export interface TaskResponse {
     status: TaskStatus;
     output: any;
     additionalProperties: any;
+    stdout: string;
+    stderr: string;
 }
 
 export interface Annotation {
