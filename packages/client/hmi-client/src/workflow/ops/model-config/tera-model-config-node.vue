@@ -1,9 +1,13 @@
 <template>
 	<section>
-		<tera-operator-placeholder v-if="!node.inputs[0].value" :operation-type="node.operationType">
-			Attach a model
-		</tera-operator-placeholder>
-		<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<tera-operator-placeholder :operation-type="node.operationType" />
+		<Button
+			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
+			@click="emit('open-drilldown')"
+			severity="secondary"
+			outlined
+			:disabled="!isModelInputConnected"
+		/>
 	</section>
 </template>
 
@@ -11,7 +15,7 @@
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 import { ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
@@ -19,14 +23,23 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['open-drilldown', 'append-input-port']);
 
+const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
+const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
+
+// Update the node with the new input ports
 watch(
 	() => props.node.inputs,
 	() => {
-		if (
-			props.node.inputs
-				.filter((input) => input.type === 'datasetId')
-				.every((input) => input.status === WorkflowPortStatus.CONNECTED)
-		) {
+		const documentInputs = props.node.inputs.filter((input) => input.type === 'documentId');
+		const datasetInputs = props.node.inputs.filter((input) => input.type === 'datasetId');
+
+		// If all document inputs are connected, add a new document input port
+		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
+			emit('append-input-port', { type: 'documentId', label: 'Document', isOptional: true });
+		}
+
+		// If all dataset inputs are connected, add a new dataset input port
+		if (datasetInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset', isOptional: true });
 		}
 	},

@@ -24,9 +24,10 @@
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
-								Suggested configurations<span class="artifact-amount"
-									>({{ suggestedConfirgurationContext.tableData.length }})</span
-								>
+								Suggested configurations
+								<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount">
+									({{ suggestedConfigurationContext.tableData.length }})
+								</span>
 								<Button
 									class="ml-auto"
 									icon="pi pi-sign-out"
@@ -38,10 +39,11 @@
 								/>
 							</template>
 							<DataTable
-								:value="suggestedConfirgurationContext.tableData"
+								v-if="suggestedConfigurationContext.tableData"
+								:value="suggestedConfigurationContext.tableData"
 								size="small"
 								data-key="id"
-								:paginator="suggestedConfirgurationContext.tableData.length > 5"
+								:paginator="suggestedConfigurationContext.tableData.length > 5"
 								:rows="5"
 								sort-field="createdOn"
 								:sort-order="-1"
@@ -157,7 +159,7 @@
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
-							:model-configurations="suggestedConfirgurationContext.tableData"
+							:model-configurations="suggestedConfigurationContext.tableData"
 							:model="modelConfiguration.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
@@ -251,17 +253,17 @@
 		</section>
 	</tera-drilldown>
 	<tera-drilldown
-		v-if="suggestedConfirgurationContext.isOpen"
-		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
+		v-if="suggestedConfigurationContext.isOpen"
+		:title="suggestedConfigurationContext.modelConfiguration?.name ?? 'Model Configuration'"
 		:node="node"
-		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
+		@on-close-clicked="suggestedConfigurationContext.isOpen = false"
 		popover
 	>
-		<tera-drilldown-section>
+		<tera-drilldown-section class="p-2">
 			<tera-model-semantic-tables
-				v-if="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				v-if="suggestedConfigurationContext.modelConfiguration?.configuration"
 				readonly
-				:model="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				:model="suggestedConfigurationContext.modelConfiguration?.configuration"
 			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
@@ -388,10 +390,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const sanityCheckErrors = ref<string[]>([]);
-const isSaveDisabled = computed(() => {
-	if (knobs.value.name === '') return true;
-	return false;
-});
+const isSaveDisabled = computed(() => knobs.value.name === '');
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -508,12 +507,17 @@ const extractConfigurationsFromInputs = async () => {
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
 						closeConnection();
-						throw new FatalError('Configs from document - Task failed');
+						console.debug('Task failed');
+						throw new FatalError('Configs from document(s) - Task failed');
 					}
-					if (data.status === TaskStatus.Success) {
-						logger.success('Model configured from document');
+					if (data?.status === TaskStatus.Success) {
+						logger.success('Model configured from document(s)');
 						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
-						console.debug('Model configured from document', outputJSON);
+						console.debug('Task success', outputJSON);
+						closeConnection();
+					}
+					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
+						console.debug('Task running');
 						closeConnection();
 					}
 				},
@@ -538,10 +542,17 @@ const extractConfigurationsFromInputs = async () => {
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
 						closeConnection();
-						throw new FatalError('Configs from datasets - Task failed');
+						console.debug('Task failed');
+						throw new FatalError('Configs from dataset(s) - Task failed');
 					}
 					if (data.status === TaskStatus.Success) {
 						logger.success('Model configured from dataset(s)');
+						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						console.debug('Task success', outputJSON);
+						closeConnection();
+					}
+					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
+						console.debug('Task running');
 						closeConnection();
 					}
 				},
@@ -579,7 +590,7 @@ const selectedConfigId = computed(
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
-const suggestedConfirgurationContext = ref<{
+const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
 	tableData: ModelConfiguration[];
 	modelConfiguration: ModelConfiguration | null;
@@ -618,7 +629,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 		cloneModel.metadata = {};
 	}
 
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		if (cloneModel.semantics) {
 			cloneModel.semantics.ode.initials = knobs.value.initials;
 			cloneModel.semantics.ode.parameters = knobs.value.parameters;
@@ -672,7 +683,7 @@ const updateConfigInitial = (inits: Initial[]) => {
 };
 
 const updateConfigFromModel = (inputModel: Model) => {
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
 		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
 	} else if (isRegNet.value) {
@@ -692,7 +703,7 @@ const runSanityCheck = () => {
 	}
 
 	let parameters: ModelParameter[] = [];
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		if (modelToCheck.semantics?.ode?.parameters) {
 			parameters = modelToCheck.semantics?.ode?.parameters;
 		}
@@ -726,7 +737,7 @@ const createConfiguration = async (force: boolean = false) => {
 	const state = cloneDeep(props.node.state);
 
 	sanityCheckErrors.value = [];
-	if (force !== true) {
+	if (!force) {
 		const errors = runSanityCheck();
 		if (errors.length > 0) {
 			sanityCheckErrors.value = errors;
@@ -763,12 +774,12 @@ const onSelection = (id: string) => {
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
 		isFetching.value = true;
-		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		suggestedConfigurationContext.value.tableData = await getModelConfigurations(modelId);
 		isFetching.value = false;
 	}
 };
 
-// Creates a temp config (if doesnt exist in state)
+// Creates a temp config (if it doesn't exist in state)
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
 	const state = cloneDeep(props.node.state);
@@ -798,10 +809,10 @@ const initialize = async () => {
 
 	// State has never been set up:
 	if (knobs.value.tempConfigId === '') {
-		// Grab these values from model to inialize them
+		// Grab these values from model to initialize them
 		const ode = model.value?.semantics?.ode;
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-		if (isPetriNet.value || isStockFlow) {
+		if (isPetriNet.value || isStockFlow.value) {
 			knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
 		} else if (isRegNet.value) {
 			knobs.value.parameters =
@@ -867,7 +878,7 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
-	if (isPetriNet.value || isStockFlow) {
+	if (isPetriNet.value || isStockFlow.value) {
 		knobs.value.initials = amr.semantics.ode.initials;
 		knobs.value.parameters = amr.semantics.ode.parameters;
 	} else if (isRegNet.value) {
@@ -880,8 +891,8 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 };
 
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
-	suggestedConfirgurationContext.value.modelConfiguration = config;
-	suggestedConfirgurationContext.value.isOpen = true;
+	suggestedConfigurationContext.value.modelConfiguration = config;
+	suggestedConfigurationContext.value.isOpen = true;
 };
 
 // FIXME: temporary hack, need proper config/states to handle all frameworks and fields
