@@ -75,7 +75,7 @@ export function getTimespan(params: GetTimespanParams): TimeSpan {
 		end = params.dataset.stats?.[tIndex].maxValue!;
 	}
 	return { start, end };
-};
+}
 
 export const getGraphDataFromDatasetCSV = (
 	dataset: CsvAsset,
