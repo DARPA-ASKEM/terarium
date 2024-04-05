@@ -259,7 +259,7 @@
 		@on-close-clicked="suggestedConfigurationContext.isOpen = false"
 		popover
 	>
-		<tera-drilldown-section>
+		<tera-drilldown-section class="p-2">
 			<tera-model-semantic-tables
 				v-if="suggestedConfigurationContext.modelConfiguration?.configuration"
 				readonly
