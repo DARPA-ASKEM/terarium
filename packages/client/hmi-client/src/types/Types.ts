@@ -963,6 +963,7 @@ export interface ModelMetadata {
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
+    gollmExtractions?: any;
     templateCard?: any;
     code_id?: string;
 }

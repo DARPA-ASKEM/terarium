@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -73,20 +74,28 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				final Model modelCopy = new Model(model);
 
 				// Map the parameters values to the model
+				ArrayNode gollmExtractions = objectMapper.createArrayNode();
 				if (condition.has("parameters")) {
 					final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
 					}
+					gollmExtractions.addAll((ArrayNode) condition.get("parameters").deepCopy());
 				}
 
 				// Map the initials values to the model
+				ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
 				if (condition.has("initials")) {
 					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 					}
+					gollmExtractions.addAll((ArrayNode) condition.get("initials").deepCopy());
 				}
+
+				// Set the all the GoLLM extractions into the model metadata
+				// FIXME - It is not what we should do, this is a hack for the March 2024 Evaluation
+				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
 				final ModelConfiguration configuration = new ModelConfiguration();
