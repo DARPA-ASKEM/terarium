@@ -506,6 +506,12 @@ public class ElasticsearchService {
 		client.indices().putAlias(putAliasRequest);
 	}
 
+	public void deleteAlias(final String index, final String alias) throws IOException {
+		final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder().index(index).name(alias)
+				.build();
+		client.indices().deleteAlias(deleteAliasRequest);
+	}
+
 	public String getIndexFromAlias(final String alias) throws IOException {
 		final GetAliasRequest request = new GetAliasRequest.Builder().name(alias).build();
 		final GetAliasResponse response = client.indices().getAlias(request);

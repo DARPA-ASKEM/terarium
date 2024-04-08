@@ -67,6 +67,27 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 	public abstract String getAssetAlias();
 
 	/**
+	 * Setup the index and alias for the asset this service manages and ensure it is
+	 * empty
+	 *
+	 * @throws IOException If there is an error setting up the index and alias
+	 */
+	public void setupIndexAndAliasAndEnsureEmpty() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(getAssetIndex());
+		elasticService.createAlias(getAssetIndex(), getAssetAlias());
+	}
+
+	/**
+	 * Teardown the index and alias for the asset this service manages
+	 *
+	 * @throws IOException If there is an error tearing down the index and alias
+	 */
+	public void teardownIndexAndAlias() throws IOException {
+		elasticService.deleteAlias(getAssetIndex(), getAssetAlias());
+		elasticService.deleteIndex(getAssetIndex());
+	}
+
+	/**
 	 * Get a list of assets based on a search query. Only searchable assets wil be
 	 * returned.
 	 *
