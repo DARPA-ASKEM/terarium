@@ -86,7 +86,7 @@
 		<!--FIXME: InputNumber seems like it has some min-width set even though it's nowhere to be found (adjust screen width to see what I mean)
 		Once that can be changed replace the tailwind and label-padding class here with the section-row and button-row classes used above
 		-->
-		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex flex-row w-full pt-3 pb-1">
+		<!-- <div v-if="constraintType !== 'monotonicityConstraint'" class="flex flex-row w-full pt-3 pb-1">
 			<div class="col-3 p-0 flex flex-column pr-2">
 				<label class="label-padding">Start time</label>
 				<InputNumber
@@ -120,6 +120,54 @@
 				<label class="label-padding">Upper bound</label>
 				<tera-input-number
 					class="p-inputtext-sm"
+					v-model="upperBound"
+					:min-fraction-digits="3"
+					:max-fraction-digits="12"
+					@update:model-value="updateChanges()"
+				/>
+			</div>
+		</div> -->
+
+		<!-- This is an experiment to see if I can fix the spacing. -NG -->
+
+		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
+			<div class="input-container">
+				<label for="input1" class="label">Start time</label>
+				<InputNumber
+					id="input1"
+					class="p-inputtext-md"
+					v-model="startTime"
+					@update:model-value="updateChanges()"
+				/>
+			</div>
+
+			<div class="input-container">
+				<label for="input2" class="label">End time</label>
+				<InputNumber
+					id="input2"
+					class="p-inputtext-md"
+					v-model="endTime"
+					@update:model-value="updateChanges()"
+				/>
+			</div>
+
+			<div class="input-container">
+				<label for="input3" class="label">Lower bound</label>
+				<tera-input-number
+					id="input3"
+					class="p-inputtext-md"
+					v-model="lowerBound"
+					:min-fraction-digits="3"
+					:max-fraction-digits="12"
+					@update:model-value="updateChanges()"
+				/>
+			</div>
+
+			<div class="input-container">
+				<label for="input4" class="label">Upper bound</label>
+				<tera-input-number
+					id="input4"
+					class="p-inputtext-md"
 					v-model="upperBound"
 					:min-fraction-digits="3"
 					:max-fraction-digits="12"
@@ -216,8 +264,8 @@ watch(
 <style scoped>
 .constraint-group {
 	width: 100%;
-	margin-top: 1rem;
 	display: flex;
+	margin-top: 1rem;
 	padding: 1rem 1rem 1rem 1.5rem;
 	flex-direction: column;
 	justify-content: center;
@@ -304,5 +352,23 @@ watch(
 	align-items: center;
 	gap: 1rem;
 	align-self: stretch;
+}
+.flex-container {
+	width: 100%;
+	display: flex;
+	gap: 8px;
+	overflow: invisible;
+}
+
+.input-container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.label {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 </style>
