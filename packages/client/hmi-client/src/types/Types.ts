@@ -412,20 +412,6 @@ export interface PetriNetModel {
     transitions: PetriNetTransition[];
 }
 
-/**
- * @deprecated
- */
-export interface Assets {
-    dataset: Dataset[];
-    extraction: Extraction[];
-    model: Model[];
-    publication: ExternalPublication[];
-    workflow: Workflow[];
-    artifact: Artifact[];
-    code: Code[];
-    document: DocumentAsset[];
-}
-
 export interface Project extends TerariumAsset {
     name: string;
     userId: string;
@@ -546,35 +532,18 @@ export interface Workflow extends TerariumAsset {
     name: string;
     description: string;
     transform: Transform;
-    nodes: any;
-    edges: any;
+    nodes: WorkflowNode[];
+    edges: WorkflowEdge[];
 }
 
 export interface WorkflowEdge {
     id: string;
-    workflowId: string;
-    points: Position[];
-    source: WorkflowNode<any>;
-    sourcePortId: string;
-    target: WorkflowNode<any>;
-    targetPortId: string;
-    direction: WorkflowDirection;
+    source: WorkflowNode;
+    target: WorkflowNode;
 }
 
-export interface WorkflowNode<S> {
+export interface WorkflowNode {
     id: string;
-    displayName: string;
-    workflowId: string;
-    operationType: WorkflowOperationTypes;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    state: S;
-    active?: WorkflowOutput<S>;
-    inputs: WorkflowPort[];
-    outputs: WorkflowOutput<S>[];
-    status: OperatorStatus;
 }
 
 export interface WorkflowOutput<S> extends WorkflowPort {
@@ -1005,16 +974,6 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
-}
-
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1059,6 +1018,16 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
+}
+
+export interface Extraction {
+    id: number;
+    askemClass: string;
+    properties: ExtractionProperties;
+    askemId: string;
+    xddCreated: Date;
+    xddRegistrant: number;
+    highlight: string[];
 }
 
 export interface KnownEntities {
@@ -1129,6 +1098,17 @@ export interface PetriNetTransitionProperties {
     grounding?: ModelGrounding;
 }
 
+export interface XDDFacetBucket {
+    key: string;
+    docCount: string;
+}
+
+export interface Authority {
+    id: number;
+    name: string;
+    description: string;
+}
+
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
@@ -1146,17 +1126,6 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
-}
-
-export interface XDDFacetBucket {
-    key: string;
-    docCount: string;
-}
-
-export interface Authority {
-    id: number;
-    name: string;
-    description: string;
 }
 
 export interface XDDUrlExtraction {
@@ -1451,35 +1420,9 @@ export enum SimulationEngine {
     Ciemss = "CIEMSS",
 }
 
-export enum WorkflowDirection {
-    FromInput = "FROM_INPUT",
-    FromOutput = "FROM_OUTPUT",
-}
-
-export enum WorkflowOperationTypes {
-    Add = "ADD",
-    Test = "TEST",
-    CalibrationJulia = "CALIBRATION_JULIA",
-    CalibrationCiemss = "CALIBRATION_CIEMSS",
-    Dataset = "DATASET",
-    Model = "MODEL",
-    SimulateJulia = "SIMULATE_JULIA",
-    SimulateCiemss = "SIMULATE_CIEMSS",
-    StratifyJulia = "STRATIFY_JULIA",
-    StratifyMira = "STRATIFY_MIRA",
-    SimulateEnsembleCiemss = "SIMULATE_ENSEMBLE_CIEMSS",
-    CalibrateEnsembleCiemss = "CALIBRATE_ENSEMBLE_CIEMSS",
-    DatasetTransformer = "DATASET_TRANSFORMER",
-    ModelTransformer = "MODEL_TRANSFORMER",
-    ModelFromCode = "MODEL_FROM_CODE",
-    Funman = "FUNMAN",
-    Code = "CODE",
-    ModelConfig = "MODEL_CONFIG",
-    OptimizeCiemss = "OPTIMIZE_CIEMSS",
-    ModelCoupling = "MODEL_COUPLING",
-    ModelEdit = "MODEL_EDIT",
-    Regridding = "REGRIDDING",
-    Document = "DOCUMENT",
+export enum WorkflowPortStatus {
+    Connected = "CONNECTED",
+    NotConnected = "NOT_CONNECTED",
 }
 
 export enum OperatorStatus {
@@ -1491,11 +1434,6 @@ export enum OperatorStatus {
     Failed = "FAILED",
     Error = "ERROR",
     Disabled = "DISABLED",
-}
-
-export enum WorkflowPortStatus {
-    Connected = "CONNECTED",
-    NotConnected = "NOT_CONNECTED",
 }
 
 export enum ExtractionAssetType {
