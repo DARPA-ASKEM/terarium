@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transform;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
@@ -45,6 +46,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		return (Workflow) new Workflow()
 				.setName("test-workflow-name-0")
 				.setDescription("test-workflow-description-0")
+				.setTransform(new Transform().setX(1).setY(2).setK(3))
 				.setPublicAsset(true);
 	}
 
@@ -52,6 +54,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		return (Workflow) new Workflow()
 				.setName("test-workflow-name-" + key)
 				.setDescription("test-workflow-description-" + key)
+				.setTransform(new Transform().setX(1).setY(2).setK(3))
 				.setPublicAsset(true);
 	}
 
@@ -143,6 +146,43 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotEquals(workflow.getEdges().get(0).getId(), cloned.getEdges().get(0).getId());
 		Assertions.assertNotEquals(workflow.getEdges().get(1).getId(), cloned.getEdges().get(1).getId());
 		Assertions.assertNotEquals(workflow.getEdges().get(2).getId(), cloned.getEdges().get(2).getId());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanExportAndImportWorkflow() throws Exception {
+
+		final WorkflowNode a = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode b = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode c = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode d = new WorkflowNode().setId(UUID.randomUUID());
+
+		final WorkflowEdge ab = new WorkflowEdge().setSource(a).setTarget(b);
+		final WorkflowEdge bc = new WorkflowEdge().setSource(b).setTarget(c);
+		final WorkflowEdge cd = new WorkflowEdge().setSource(c).setTarget(d);
+
+		Workflow workflow = createWorkflow();
+		workflow.setNodes(List.of(a, b, c, d)).setEdges(List.of(ab, bc, cd));
+
+		workflow = workflowService.createAsset(workflow);
+
+		final byte[] exported = workflowService.exportAsset(workflow.getId());
+
+		final Workflow imported = workflowService.importAsset(exported);
+
+		Assertions.assertNotEquals(workflow.getId(), imported.getId());
+		Assertions.assertEquals(workflow.getName(), imported.getName());
+		Assertions.assertEquals(workflow.getDescription(), imported.getDescription());
+		Assertions.assertEquals(workflow.getTransform(), imported.getTransform());
+		Assertions.assertEquals(workflow.getNodes().size(), imported.getNodes().size());
+		Assertions.assertNotEquals(workflow.getNodes().get(0).getId(), imported.getNodes().get(0).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(1).getId(), imported.getNodes().get(1).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(2).getId(), imported.getNodes().get(2).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(3).getId(), imported.getNodes().get(3).getId());
+		Assertions.assertEquals(workflow.getEdges().size(), imported.getEdges().size());
+		Assertions.assertNotEquals(workflow.getEdges().get(0).getId(), imported.getEdges().get(0).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(1).getId(), imported.getEdges().get(1).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(2).getId(), imported.getEdges().get(2).getId());
 	}
 
 	@Test

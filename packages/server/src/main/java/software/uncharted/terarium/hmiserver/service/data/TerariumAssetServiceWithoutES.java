@@ -13,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -31,6 +33,8 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteReposito
 @Slf4j
 public abstract class TerariumAssetServiceWithoutES<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 		implements ITerariumAssetService<T> {
+
+	protected final ObjectMapper objectMapper = new ObjectMapper();
 
 	/** The configuration for the application */
 	protected final Config config;
@@ -51,6 +55,16 @@ public abstract class TerariumAssetServiceWithoutES<T extends TerariumAsset, R e
 	 */
 	public Optional<T> getAsset(final UUID id) {
 		return repository.getByIdAndDeletedOnIsNull(id);
+	}
+
+	/**
+	 * Check if an asset exists by its ID
+	 *
+	 * @param id
+	 * @return
+	 */
+	public boolean assetExists(final UUID id) {
+		return repository.getByIdAndDeletedOnIsNull(id).isPresent();
 	}
 
 	/**
@@ -142,5 +156,31 @@ public abstract class TerariumAssetServiceWithoutES<T extends TerariumAsset, R e
 	 */
 	public T cloneAndPersistAsset(final UUID id) throws IOException, IllegalArgumentException {
 		return createAsset(cloneAsset(id));
+	}
+
+	/**
+	 * Returns the asset as a byte payload.
+	 */
+	public byte[] exportAsset(final UUID id) {
+		try {
+			return objectMapper.writeValueAsBytes(cloneAsset(id));
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to export asset", e);
+		}
+	}
+
+	/**
+	 * Imports the asset from a byte payload.
+	 */
+	public T importAsset(final byte[] bytes) {
+		try {
+			final T asset = objectMapper.readValue(bytes, assetClass);
+			if (assetExists(asset.getId())) {
+				throw new RuntimeException("Asset already exists for id:" + asset.getId());
+			}
+			return createAsset(asset);
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to export asset", e);
+		}
 	}
 }
