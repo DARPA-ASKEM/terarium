@@ -128,11 +128,12 @@ public abstract class TerariumAssetServiceWithoutES<T extends TerariumAsset, R e
 	/**
 	 * Clone asset, retrieve and save with a different id
 	 */
+	@SuppressWarnings("unchecked")
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id);
 		if (targetAsset.isEmpty()) {
 			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
 		}
-		return createAsset(targetAsset.get());
+		return createAsset((T) targetAsset.get().clone());
 	}
 }

@@ -1,7 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 import java.io.Serial;
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -26,7 +30,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class Workflow extends TerariumAsset implements Serializable {
+public class Workflow extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
@@ -39,9 +43,37 @@ public class Workflow extends TerariumAsset implements Serializable {
 	private Transform transform;
 
 	@JdbcTypeCode(SqlTypes.JSON)
-	private Object nodes;
+	private List<WorkflowNode> nodes;
 
 	@JdbcTypeCode(SqlTypes.JSON)
-	private Object edges;
+	private List<WorkflowEdge> edges;
+
+	public Workflow clone() {
+		final Workflow clone = new Workflow();
+		clone.setName(this.getName());
+		clone.setDescription(this.getDescription());
+		clone.setTransform(this.getTransform());
+		clone.setNodes(new ArrayList<>());
+
+		final Map<UUID, UUID> oldToNew = new HashMap<>();
+
+		for (final WorkflowNode node : nodes) {
+			final WorkflowNode clonedNode = node.clone();
+			oldToNew.put(node.getId(), clonedNode.getId());
+			clone.getNodes().add(clonedNode);
+		}
+
+		clone.setEdges(new ArrayList<>());
+		for (final WorkflowEdge edge : edges) {
+
+			final WorkflowEdge clonedEdge = edge.clone();
+
+			clonedEdge.getSource().setId(oldToNew.get(edge.getSource().getId()));
+			clonedEdge.getTarget().setId(oldToNew.get(edge.getTarget().getId()));
+
+			clone.getEdges().add(clonedEdge);
+		}
+		return clone;
+	}
 
 }

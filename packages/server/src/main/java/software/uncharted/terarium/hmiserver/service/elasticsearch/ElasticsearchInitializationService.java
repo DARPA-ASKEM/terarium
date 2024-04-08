@@ -175,7 +175,7 @@ public class ElasticsearchInitializationService {
 
 			if (!elasticsearchService.aliasExists(alias)) {
 				try {
-					elasticsearchService.createAlias(alias, index);
+					elasticsearchService.createAlias(index, alias);
 				} catch (final IOException e) {
 					log.error("Error creating alias {}", alias, e);
 				}

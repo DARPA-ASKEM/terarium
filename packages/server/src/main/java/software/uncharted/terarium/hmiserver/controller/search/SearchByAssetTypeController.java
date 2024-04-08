@@ -51,7 +51,6 @@ public class SearchByAssetTypeController {
 	final private ElasticsearchService esService;
 	final private ElasticsearchConfiguration esConfig;
 
-	static final private long CACHE_TTL_SECONDS = 60 * 60 * 2; // 2 hours
 	static final private long REQUEST_TIMEOUT_SECONDS = 30;
 	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
 
@@ -87,7 +86,7 @@ public class SearchByAssetTypeController {
 			@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates,
 			@RequestParam(value = "embedding-model", defaultValue = EMBEDDING_MODEL) final String embeddingModel,
 			@RequestParam(value = "index", defaultValue = "") String index) {
-		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 		try {
 
 			if (index.equals("")) {

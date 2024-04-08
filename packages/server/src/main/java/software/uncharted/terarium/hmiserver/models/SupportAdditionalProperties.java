@@ -1,16 +1,17 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
 public class SupportAdditionalProperties {
 
 	@TSIgnore
-	private final Map<String, Object> additionalProperties = new HashMap<>();
+	protected Map<String, Object> additionalProperties = new HashMap<>();
 
 	@JsonAnyGetter
 	@TSIgnore
@@ -20,7 +21,13 @@ public class SupportAdditionalProperties {
 
 	@JsonAnySetter
 	@TSIgnore
-	public void setAdditionalProperties(final String name, final Object value) {
+	public void setAdditionalProperty(final String name, final Object value) {
 		additionalProperties.put(name, value);
+	}
+
+	@JsonAnySetter
+	@TSIgnore
+	public void setAdditionalProperties(final Map<String, Object> props) {
+		additionalProperties = props;
 	}
 }

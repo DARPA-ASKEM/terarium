@@ -396,7 +396,8 @@ public class ProjectController {
 							.getServiceByType(assetType);
 					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
 					if (asset.isPresent()) {
-						final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(project.get(), assetType,
+						final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+								project.get(), assetType,
 								asset.get());
 						return projectAsset.map(pa -> ResponseEntity.status(HttpStatus.CREATED).body(pa))
 								.orElseGet(() -> ResponseEntity.notFound().build());

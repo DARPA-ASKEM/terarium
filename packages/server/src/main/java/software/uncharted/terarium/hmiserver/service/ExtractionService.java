@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -295,12 +296,13 @@ public class ExtractionService {
 						final DocumentExtraction extraction = new DocumentExtraction();
 						extraction.setFileName(assetFileName);
 						extraction.setAssetType(extractionType);
-						extraction.setMetadata(objectMapper.convertValue(record, Map.class));
+						extraction.setMetadata(
+								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {
+								}));
 
 						document.getAssets().add(extraction);
 						clientInterface
-								.sendMessage(
-										String.format("Add COSMOS extraction %s to Document...", assetFileName));
+								.sendMessage(String.format("Add COSMOS extraction %s to Document...", assetFileName));
 					}
 				}
 

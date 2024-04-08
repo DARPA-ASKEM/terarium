@@ -1,27 +1,30 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
+import java.io.Serializable;
+import java.util.UUID;
+
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
-import java.io.Serializable;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TSModel
-public class WorkflowEdge implements Serializable {
+public class WorkflowEdge extends SupportAdditionalProperties implements Serializable {
 
-	private String id;
-	private String workflowId;
-	private Position[] points;
+	private UUID id;
 	private WorkflowNode source;
-	private String sourcePortId;
 	private WorkflowNode target;
-	private String targetPortId;
-	private WorkflowDirection direction;
 
-	public enum WorkflowDirection {
-		FROM_INPUT,
-		FROM_OUTPUT
+	public WorkflowEdge clone() {
+		final WorkflowEdge clone = new WorkflowEdge();
+		clone.setId(UUID.randomUUID());
+		clone.setSource(this.getSource());
+		clone.setTarget(this.getTarget());
+		clone.setAdditionalProperties(this.getAdditionalProperties());
+		return clone;
 	}
 }

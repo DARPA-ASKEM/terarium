@@ -1,6 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
+import java.io.Serial;
+import java.sql.Types;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Where;
+
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
@@ -10,29 +19,19 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-
-import java.io.Serial;
-import java.io.Serializable;
-import java.sql.Types;
-import java.util.List;
-import java.util.Map;
-
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class Project extends TerariumAsset implements Serializable {
+public class Project extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = -241733670076432802L;
-
 
 	@Schema(defaultValue = "My New Project")
 	private String name;
@@ -80,7 +79,8 @@ public class Project extends TerariumAsset implements Serializable {
 	private Boolean publicProject;
 
 	/**
-	 * Information for the front-end to enable/disable features based on user permissions (Read/Write).
+	 * Information for the front-end to enable/disable features based on user
+	 * permissions (Read/Write).
 	 */
 	@TSOptional
 	@Transient
