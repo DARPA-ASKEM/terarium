@@ -22,8 +22,8 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 	public WorkflowEdge clone() {
 		final WorkflowEdge clone = new WorkflowEdge();
 		clone.setId(UUID.randomUUID());
-		clone.setSource(this.getSource());
-		clone.setTarget(this.getTarget());
+		clone.setSource(null); // these are set by Workflow
+		clone.setTarget(null); // these are set by Workflow
 		clone.setAdditionalProperties(this.getAdditionalProperties());
 		return clone;
 	}

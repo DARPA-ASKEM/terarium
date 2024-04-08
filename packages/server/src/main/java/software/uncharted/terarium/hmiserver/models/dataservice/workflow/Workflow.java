@@ -11,12 +11,14 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 
 /**
  * The workflow data structure is not very well defined. It is also meant to
@@ -42,35 +44,35 @@ public class Workflow extends TerariumAsset {
 
 	private Transform transform;
 
+	@Convert(converter = JsonConverter.class)
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowNode> nodes;
 
+	@Convert(converter = JsonConverter.class)
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowEdge> edges;
 
 	public Workflow clone() {
 		final Workflow clone = new Workflow();
+		clone.setId(UUID.randomUUID());
 		clone.setName(this.getName());
 		clone.setDescription(this.getDescription());
 		clone.setTransform(this.getTransform());
+
+		final Map<UUID, WorkflowNode> oldToNew = new HashMap<>();
+
 		clone.setNodes(new ArrayList<>());
-
-		final Map<UUID, UUID> oldToNew = new HashMap<>();
-
 		for (final WorkflowNode node : nodes) {
 			final WorkflowNode clonedNode = node.clone();
-			oldToNew.put(node.getId(), clonedNode.getId());
+			oldToNew.put(node.getId(), clonedNode);
 			clone.getNodes().add(clonedNode);
 		}
 
 		clone.setEdges(new ArrayList<>());
 		for (final WorkflowEdge edge : edges) {
-
 			final WorkflowEdge clonedEdge = edge.clone();
-
-			clonedEdge.getSource().setId(oldToNew.get(edge.getSource().getId()));
-			clonedEdge.getTarget().setId(oldToNew.get(edge.getTarget().getId()));
-
+			clonedEdge.setSource(oldToNew.get(edge.getSource().getId()));
+			clonedEdge.setTarget(oldToNew.get(edge.getTarget().getId()));
 			clone.getEdges().add(clonedEdge);
 		}
 		return clone;

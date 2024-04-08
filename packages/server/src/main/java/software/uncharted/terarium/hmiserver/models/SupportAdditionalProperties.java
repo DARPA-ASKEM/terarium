@@ -25,7 +25,6 @@ public class SupportAdditionalProperties {
 		additionalProperties.put(name, value);
 	}
 
-	@JsonAnySetter
 	@TSIgnore
 	public void setAdditionalProperties(final Map<String, Object> props) {
 		additionalProperties = props;
