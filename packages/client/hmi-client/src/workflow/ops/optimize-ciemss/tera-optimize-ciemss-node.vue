@@ -107,7 +107,6 @@ const pollResult = async (runId: string) => {
 
 const getSimulationInterventions = async (id) => {
 	const policyResult = await getRunResult(id, 'policy.json');
-	console.log(policyResult);
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
@@ -120,13 +119,11 @@ const getSimulationInterventions = async (id) => {
 	const simulationIntervetions: SimulationIntervention[] = [];
 	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
 	for (let i = 0; i < paramNames.length; i++) {
-		if (policyResult?.at(i) && startTime?.[i]) {
-			simulationIntervetions.push({
-				name: paramNames[i],
-				timestep: startTime[i],
-				value: policyResult[i]
-			});
-		}
+		simulationIntervetions.push({
+			name: paramNames[i],
+			timestep: startTime[i],
+			value: policyResult[i]
+		});
 	}
 	return simulationIntervetions;
 };
