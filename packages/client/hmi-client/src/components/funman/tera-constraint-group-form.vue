@@ -91,7 +91,7 @@
 
 		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
 			<div class="input-container">
-				<label for="input1" class="label">Start time</label>
+				<label for="input1" class="label label-padding">Start time</label>
 				<InputNumber
 					id="input1"
 					class="p-inputtext-md"
@@ -101,7 +101,7 @@
 			</div>
 
 			<div class="input-container">
-				<label for="input2" class="label">End time</label>
+				<label for="input2" class="label label-padding">End time</label>
 				<InputNumber
 					id="input2"
 					class="p-inputtext-md"
@@ -111,7 +111,7 @@
 			</div>
 
 			<div class="input-container">
-				<label for="input3" class="label">Lower bound</label>
+				<label for="input3" class="label label-padding">Lower bound</label>
 				<tera-input-number
 					id="input3"
 					class="p-inputtext-md"
@@ -123,7 +123,7 @@
 			</div>
 
 			<div class="input-container">
-				<label for="input4" class="label">Upper bound</label>
+				<label for="input4" class="label label-padding">Upper bound</label>
 				<tera-input-number
 					id="input4"
 					class="p-inputtext-md"
