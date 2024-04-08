@@ -24,4 +24,9 @@ public class WorkflowService extends TerariumAssetServiceWithES<Workflow, Workfl
 	protected String getAssetIndex() {
 		return elasticConfig.getWorkflowIndex();
 	}
+
+	@Override
+	public String getAssetAlias() {
+		return elasticConfig.getWorkflowAlias();
+	}
 }

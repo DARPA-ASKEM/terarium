@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
@@ -125,13 +126,14 @@ public class WorkflowController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a workflow by ID")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Workflow deleted.", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+			@ApiResponse(responseCode = "200", description = "Delete workflow", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
 			@ApiResponse(responseCode = "500", description = "There was an issue deleting the workflow", content = @Content)
 	})
-	public String deleteWorkflow(@PathVariable("id") final UUID id) {
+	public ResponseEntity<ResponseDeleted> deleteWorkflow(@PathVariable("id") final UUID id) {
 		try {
 			workflowService.deleteAsset(id);
-			return "Workflow deleted";
+			return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete workflow %s", id);
 			log.error(error, e);

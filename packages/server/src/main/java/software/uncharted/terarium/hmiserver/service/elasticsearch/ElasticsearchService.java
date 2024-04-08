@@ -25,30 +25,42 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.elasticsearch.core.bulk.UpdateOperation;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
+import co.elastic.clients.elasticsearch.indices.DeleteAliasRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsIndexTemplateRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.elasticsearch.indices.GetAliasRequest;
+import co.elastic.clients.elasticsearch.indices.GetAliasResponse;
+import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 @Service
 @Data
@@ -374,7 +386,7 @@ public class ElasticsearchService {
 			throws IOException {
 		log.info("KNN search on: {}", index);
 
-		SearchRequest.Builder builder = new SearchRequest.Builder()
+		final SearchRequest.Builder builder = new SearchRequest.Builder()
 				.index(index)
 				.from(page)
 				.source(s -> s.filter(f -> f.excludes(excludes)))
@@ -394,6 +406,143 @@ public class ElasticsearchService {
 		final SearchRequest req = builder.build();
 
 		return client.search(req, tClass);
+	}
+
+	@Data
+	static public class BulkOpResponse {
+		private List<String> errors;
+		private long took;
+	}
+
+	public BulkOpResponse bulkIndex(final String index, final List<TerariumAsset> docs)
+			throws IOException {
+		final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+		for (final TerariumAsset doc : docs) {
+			if (doc.getId() == null) {
+				throw new RuntimeException("Document id cannot be null");
+			}
+			bulkRequest.operations(op -> op
+					.index(idx -> idx
+							.index(index)
+							.id(doc.getId().toString())
+							.document(doc)));
+		}
+
+		final BulkResponse bulkResponse = client.bulk(bulkRequest.build());
+
+		final List<String> errors = new ArrayList<>();
+		if (bulkResponse.errors()) {
+			for (final BulkResponseItem item : bulkResponse.items()) {
+				final ErrorCause error = item.error();
+				if (error != null) {
+					errors.add(error.reason());
+				}
+			}
+		}
+
+		final BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
+	}
+
+	public BulkOpResponse bulkUpdate(final String index, final List<TerariumAsset> docs)
+			throws IOException {
+		final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+		final List<BulkOperation> operations = new ArrayList<>();
+		for (final TerariumAsset doc : docs) {
+			if (doc.getId() == null) {
+				throw new RuntimeException("Document id cannot be null");
+			}
+			final UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<Object, Object>()
+					.index(index)
+					.id(doc.getId().toString())
+					.action(a -> a.doc(doc))
+					.build();
+
+			final BulkOperation operation = new BulkOperation.Builder().update(updateOperation).build();
+			operations.add(operation);
+		}
+		// Add the BulkOperation to the BulkRequest
+		bulkRequest.operations(operations);
+
+		final BulkResponse bulkResponse = client.bulk(bulkRequest.build());
+
+		final List<String> errors = new ArrayList<>();
+		if (bulkResponse.errors()) {
+			for (final BulkResponseItem item : bulkResponse.items()) {
+				final ErrorCause error = item.error();
+				if (error != null) {
+					final String reason = error.reason();
+					if (reason != null) {
+						errors.add(error.reason());
+					}
+				}
+			}
+		}
+
+		final BulkOpResponse r = new BulkOpResponse();
+		r.setErrors(errors);
+		r.setTook(bulkResponse.took());
+		return r;
+	}
+
+	public void transferAlias(final String alias, final String oldIndex,
+			final String newIndex) throws IOException {
+		// Remove alias from old index
+		final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder().index(oldIndex).name(alias)
+				.build();
+		client.indices().deleteAlias(deleteAliasRequest);
+
+		// Add alias to new index
+		final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder().index(newIndex).name(alias).build();
+		client.indices().putAlias(putAliasRequest);
+	}
+
+	public void createAlias(final String index, final String alias) throws IOException {
+		final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder().index(index).name(alias).build();
+		client.indices().putAlias(putAliasRequest);
+	}
+
+	public String getIndexFromAlias(final String alias) throws IOException {
+		final GetAliasRequest request = new GetAliasRequest.Builder().name(alias).build();
+		final GetAliasResponse response = client.indices().getAlias(request);
+
+		return response.result().keySet().iterator().next();
+	}
+
+	enum IndexOrAlias {
+		INDEX, ALIAS, DOES_NOT_EXIST
+	}
+
+	public IndexOrAlias checkIfIndexOrAlias(final String name) throws IOException {
+		final ExistsRequest existsRequest = new ExistsRequest.Builder().index(name).build();
+		final BooleanResponse isIndex = client.indices().exists(existsRequest);
+
+		if (isIndex.value()) {
+			return IndexOrAlias.INDEX;
+		}
+
+		final GetAliasRequest request = new GetAliasRequest.Builder().name(name).build();
+		final GetAliasResponse response = client.indices().getAlias(request);
+
+		if (response.result().size() != 0) {
+			return IndexOrAlias.ALIAS;
+		}
+
+		return IndexOrAlias.DOES_NOT_EXIST;
+	}
+
+	public boolean aliasExists(final String alias) {
+		try {
+			final GetAliasRequest request = new GetAliasRequest.Builder().name(alias).build();
+			final GetAliasResponse response = client.indices().getAlias(request);
+			return response.result().size() != 0;
+		} catch (final Exception e) {
+			return false;
+		}
 	}
 
 }
