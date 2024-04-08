@@ -86,49 +86,8 @@
 		<!--FIXME: InputNumber seems like it has some min-width set even though it's nowhere to be found (adjust screen width to see what I mean)
 		Once that can be changed replace the tailwind and label-padding class here with the section-row and button-row classes used above
 		-->
-		<!-- <div v-if="constraintType !== 'monotonicityConstraint'" class="flex flex-row w-full pt-3 pb-1">
-			<div class="col-3 p-0 flex flex-column pr-2">
-				<label class="label-padding">Start time</label>
-				<InputNumber
-					class="p-inputtext-sm"
-					v-model="startTime"
-					@update:model-value="updateChanges()"
-				/>
-			</div>
 
-			<div class="col-3 p-0 flex flex-column pr-2">
-				<label class="label-padding">End time</label>
-				<InputNumber
-					class="p-inputtext-sm"
-					v-model="endTime"
-					@update:model-value="updateChanges()"
-				/>
-			</div>
-
-			<div class="col-3 p-0 flex flex-column pr-2">
-				<label class="label-padding">Lower bound</label>
-				<tera-input-number
-					class="p-inputtext-sm"
-					v-model="lowerBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
-					@update:model-value="updateChanges()"
-				/>
-			</div>
-
-			<div class="col-3 p-0 flex flex-column">
-				<label class="label-padding">Upper bound</label>
-				<tera-input-number
-					class="p-inputtext-sm"
-					v-model="upperBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
-					@update:model-value="updateChanges()"
-				/>
-			</div>
-		</div> -->
-
-		<!-- This is an experiment to see if I can fix the spacing. -NG -->
+		<!-- I have cleaned this up a bit to make the fields spaced out better, fitting at full width. Also set the inputtext to md so that they match other fields on the page. -NG -->
 
 		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
 			<div class="input-container">
