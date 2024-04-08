@@ -32,6 +32,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.CountRequest;
+import co.elastic.clients.elasticsearch.core.CountResponse;
 import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
@@ -144,6 +146,18 @@ public class ElasticsearchService {
 
 		final GetResponse<JsonNode> response = client.get(req, JsonNode.class);
 		return response.found();
+	}
+
+	/**
+	 * Count the number of documents in an index.
+	 *
+	 * @param index
+	 * @return
+	 */
+	public long count(final String index) throws IOException {
+		final CountRequest countRequest = new CountRequest.Builder().index(index).build();
+		final CountResponse countResponse = client.count(countRequest);
+		return countResponse.count();
 	}
 
 	/**
@@ -491,6 +505,7 @@ public class ElasticsearchService {
 
 	public void transferAlias(final String alias, final String oldIndex,
 			final String newIndex) throws IOException {
+		log.info("Transfering alias {} from index {} to index {}", alias, oldIndex, newIndex);
 		// Remove alias from old index
 		final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder().index(oldIndex).name(alias)
 				.build();
@@ -502,11 +517,13 @@ public class ElasticsearchService {
 	}
 
 	public void createAlias(final String index, final String alias) throws IOException {
+		log.info("Creating alias {} for index {}", alias, index);
 		final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder().index(index).name(alias).build();
 		client.indices().putAlias(putAliasRequest);
 	}
 
 	public void deleteAlias(final String index, final String alias) throws IOException {
+		log.info("Deleting alias {} for index {}", alias, index);
 		final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder().index(index).name(alias)
 				.build();
 		client.indices().deleteAlias(deleteAliasRequest);

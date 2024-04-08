@@ -73,8 +73,15 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 	 * @throws IOException If there is an error setting up the index and alias
 	 */
 	public void setupIndexAndAliasAndEnsureEmpty() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(getAssetIndex());
-		elasticService.createAlias(getAssetIndex(), getAssetAlias());
+		log.info("Setting up index {} and alias {}", getAssetIndex(), getAssetAlias());
+		String index = getAssetIndex();
+		try {
+			index = getCurrentAssetIndex();
+			log.info("Found latest index version {}", index);
+		} catch (final Exception e) {
+		}
+		elasticService.createOrEnsureIndexIsEmpty(index);
+		elasticService.createAlias(index, getAssetAlias());
 	}
 
 	/**
@@ -83,8 +90,9 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 	 * @throws IOException If there is an error tearing down the index and alias
 	 */
 	public void teardownIndexAndAlias() throws IOException {
-		elasticService.deleteAlias(getAssetIndex(), getAssetAlias());
-		elasticService.deleteIndex(getAssetIndex());
+		log.info("Tearing down index {}", getAssetIndex());
+		final String index = getCurrentAssetIndex();
+		elasticService.deleteIndex(index);
 	}
 
 	/**
@@ -163,8 +171,7 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 		return updated;
 	}
 
-	private String getPreviousAssetVersion() throws IOException {
-		final String index = elasticService.getIndexFromAlias(getAssetAlias());
+	private String getVersionFromIndex(final String index) {
 		final String[] split = index.split("_");
 		if (split.length < 2) {
 			throw new RuntimeException("Unable to parse version from index name: " + index);
@@ -192,17 +199,33 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 	}
 
 	private String generateNextIndexName(final String previousIndex) {
-		return getIndexNameWithoutVersion(previousIndex) + "_" + incrementVersion(previousIndex);
+		return getIndexNameWithoutVersion(previousIndex) + "_" + incrementVersion(getVersionFromIndex(previousIndex));
+	}
+
+	public String getCurrentAssetIndex() throws IOException {
+		return elasticService.getIndexFromAlias(getAssetAlias());
 	}
 
 	public void syncAllAssetsToNewIndex() throws IOException {
+		syncAllAssetsToNewIndex(false);
+	}
+
+	public void syncAllAssetsToNewIndex(final boolean deleteOldIndexOnSuccess) throws IOException {
 		final int PAGE_SIZE = 256;
 
-		final String oldIndexName = getPreviousAssetVersion();
+		final String oldIndexName = getCurrentAssetIndex();
 		final String newIndexName = generateNextIndexName(oldIndexName);
 
 		// create the new index
-		elasticService.createIndex(newIndexName);
+		if (elasticService.containsIndex(newIndexName)) {
+			final long count = elasticService.count(newIndexName);
+			if (count > 0) {
+				throw new RuntimeException("New index " + newIndexName + " already exists and contains " + count
+						+ " documents, please delete and empty the index");
+			}
+		} else {
+			elasticService.createIndex(newIndexName);
+		}
 
 		int page = 0;
 		Page<T> rows;
@@ -215,13 +238,21 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 				assets.add(asset);
 			}
 
-			elasticService.bulkIndex(newIndexName, assets);
+			if (assets.size() > 0) {
+				log.info("Indexing {} assets into new index {}...", assets.size(), newIndexName);
+				elasticService.bulkIndex(newIndexName, assets);
+			}
 
 			page++;
 		} while (rows.hasNext());
 
 		// transfer the alias
 		elasticService.transferAlias(getAssetAlias(), oldIndexName, newIndexName);
+
+		// delete old index
+		if (deleteOldIndexOnSuccess) {
+			elasticService.deleteIndex(oldIndexName);
+		}
 	}
 
 	public void updateIndexInPlace() throws IOException {
