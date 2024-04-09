@@ -1,4 +1,14 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+
+export enum InterventionTypes {
+	paramValue = 'param_value',
+	startTime = 'start_time'
+}
+
+export enum ContextMethods {
+	day_average = 'day_average',
+	max = 'max'
+}
 
 export interface InterventionPolicyGroup {
 	borderColour: string;
@@ -9,27 +19,30 @@ export interface InterventionPolicyGroup {
 	upperBound: number;
 	initialGuess: number;
 	isActive: boolean;
+	paramValue: number;
 }
 
-export interface OptimizeCiemssOperationState {
+export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
-	startTime: number;
 	endTime: number;
-	numStochasticSamples: number;
+	numSamples: number;
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
 	// Intervention policies
+	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
 	// Constraints
+	qoiMethod: ContextMethods;
 	targetVariables: string[];
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
 	chartConfigs: string[][];
-	simulationsInProgress: string[];
+	inProgressOptimizeId: string;
+	inProgressForecastId: string;
 	forecastRunId: string;
-	optimzationRunId: string;
+	optimizationRunId: string;
 	modelConfigName: string;
 	modelConfigDesc: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
@@ -44,34 +57,40 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	lowerBound: 0,
 	upperBound: 0,
 	initialGuess: 0,
-	isActive: true
+	isActive: true,
+	paramValue: 0
 };
 
 export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
 	displayName: 'Optimize with PyCIEMSS',
 	description: 'Optimize with PyCIEMSS',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
+	inputs: [
+		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
+		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {
 		const init: OptimizeCiemssOperationState = {
-			startTime: 0,
 			endTime: 90,
-			numStochasticSamples: 5,
+			numSamples: 100,
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
+			interventionType: InterventionTypes.paramValue,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
+			qoiMethod: ContextMethods.max,
 			targetVariables: [],
 			riskTolerance: 5,
 			threshold: 1,
 			isMinimized: true,
 			chartConfigs: [],
-			simulationsInProgress: [],
+			inProgressOptimizeId: '',
+			inProgressForecastId: '',
 			forecastRunId: '',
-			optimzationRunId: '',
+			optimizationRunId: '',
 			modelConfigName: '',
 			modelConfigDesc: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },

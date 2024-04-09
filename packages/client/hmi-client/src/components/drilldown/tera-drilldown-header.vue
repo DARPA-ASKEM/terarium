@@ -2,8 +2,8 @@
 	<header>
 		<div class="title-row">
 			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
-
-			<a :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<slot name="inputs" />
+			<!-- <a :href="documentationUrl" rel="noopener noreferrer">Documentation</a> -->
 			<Button
 				class="close-mask"
 				icon="pi pi-times"
@@ -56,6 +56,7 @@ header {
 header > * {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 }
 
 .title-row > h4 > i {
@@ -75,7 +76,7 @@ header > * {
 header .tabs-row {
 	justify-content: space-between;
 	align-items: end;
-	gap: var(--gap-small);
+	gap: var(--gap);
 }
 
 header .tabs-row:deep(.p-tabview .p-tabview-panels) {
@@ -86,9 +87,9 @@ a {
 	height: 3rem;
 	display: flex;
 	align-items: center;
-	padding-right: 1.5rem;
 	color: var(--primary-color);
 	margin-left: auto;
+	margin-right: var(--gap);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {

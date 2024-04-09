@@ -8,6 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizedIntervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeExtra;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeQoi;
 
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class OptimizeRequestCiemss implements Serializable {
 	@JsonAlias("step_size")
 	@TSOptional
 	private Double stepSize;
-	private List<String> qoi;
+	private OptimizeQoi qoi;
 	@JsonAlias("risk_bound")
 	private Double riskBound;
 	@JsonAlias("initial_guess_interventions")

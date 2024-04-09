@@ -1,6 +1,6 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export interface ModelOperationState {
+export interface ModelOperationState extends BaseState {
 	modelId: string | null;
 	modelConfigurationIds: string[];
 }

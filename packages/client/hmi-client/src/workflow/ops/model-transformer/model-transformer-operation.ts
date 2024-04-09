@@ -1,6 +1,7 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/workflow';
+import type { Operation, BaseState } from '@/types/workflow';
 
-export interface ModelTransformerState {
+export interface ModelTransformerState extends BaseState {
 	modelId: string | null;
 	modelConfigurationIds: string[];
 	notebookSessionId?: string;

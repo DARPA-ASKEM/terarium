@@ -104,6 +104,9 @@ const getStatus = async (simulationId: string) => {
 const processResult = async (simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
+	if (state.chartConfigs.length === 0) {
+		chartProxy.addChart();
+	}
 
 	emit('append-output', {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,

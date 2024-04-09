@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -18,7 +18,7 @@ export enum CalibrateMethodOptions {
 	GLOBAL = 'global'
 }
 
-export interface CalibrationOperationStateJulia {
+export interface CalibrationOperationStateJulia extends BaseState {
 	// state shared across all runs
 	chartConfigs: string[][];
 	mapping: CalibrateMap[];

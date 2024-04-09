@@ -2,7 +2,7 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				Initial variables<span class="artifact-amount">({{ states.length }})</span>
+				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
 					>Save Changes</Button
 				>
@@ -100,7 +100,7 @@ import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types
 import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -124,6 +124,7 @@ const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
 const transientModel = ref(cloneDeep(props.model));
+const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>
@@ -170,6 +171,9 @@ const otherConcepts = computed(() => {
 		);
 	});
 
+	const gollmExtractions = props.model?.metadata?.gollmExtractions ?? [];
+	unalignedExtractions.push(...gollmExtractions);
+
 	return unalignedExtractions ?? [];
 });
 
@@ -193,17 +197,22 @@ const updateParam = (params: ModelParameter[]) => {
 	}
 };
 
-watch(
-	() => props.model,
-	async (model) => {
-		if (!model) return;
-		transientModel.value = cloneDeep(model);
-		const response: any = await getMMT(model);
+function updateMMT() {
+	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
-	},
-	{ immediate: true }
+	});
+}
+
+watch(
+	() => props.model,
+	(model) => {
+		transientModel.value = cloneDeep(model);
+		updateMMT();
+	}
 );
+
+onMounted(() => updateMMT());
 </script>
 
 <style scoped>

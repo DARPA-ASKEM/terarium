@@ -60,6 +60,10 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private JsonNode gollmCard;
 
 	@TSOptional
+	@JsonProperty("gollmExtractions")
+	private JsonNode gollmExtractions;
+
+	@TSOptional
 	private List<String> provenance;
 
 	@TSOptional

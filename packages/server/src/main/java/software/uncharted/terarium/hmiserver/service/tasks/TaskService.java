@@ -323,6 +323,22 @@ public class TaskService {
 				rLock.unlock();
 			}
 
+			// if the task failed, lets log the stdout / stderr
+			if (resp.getStatus() == TaskStatus.FAILED) {
+				if (resp.getStdout() != null && resp.getStdout().length() > 0) {
+					log.error("Task {} failed, logging stdout", resp.getId());
+					System.out.print(resp.getStdout());
+				} else {
+					log.error("Task {} failed, stdout is empty, nothing to log", resp.getId());
+				}
+				if (resp.getStderr() != null && resp.getStderr().length() > 0) {
+					log.error("Task {} failed, logging stdout", resp.getId());
+					System.out.print(resp.getStderr());
+				} else {
+					log.error("Task {} failed, stderr is empty, nothing to log", resp.getId());
+				}
+			}
+
 			final SseEmitter emitter = taskIdToEmitter.get(resp.getId());
 			synchronized (taskIdToEmitter) {
 				if (emitter != null) {

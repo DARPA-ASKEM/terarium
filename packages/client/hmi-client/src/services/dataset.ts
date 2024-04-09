@@ -4,7 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import type { CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
+import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
@@ -136,6 +136,21 @@ async function downloadRawFile(
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
 	return response?.data ?? null;
+}
+
+/**
+ * Get the download URL for a given dataset asset
+ * @param datasetId the dataset ID
+ * @param filename the filename of the asset
+ */
+async function getDownloadURL(datasetId: string, filename: string): Promise<PresignedURL | null> {
+	const response: AxiosResponse<PresignedURL> = await API.get(
+		`/datasets/${datasetId}/download-url?filename=${filename}`
+	);
+	if (response.data && response.status === 200) {
+		return response.data;
+	}
+	return null;
 }
 
 /**
@@ -388,6 +403,7 @@ export {
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
+	getDownloadURL,
 	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,

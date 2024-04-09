@@ -22,6 +22,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -118,9 +119,14 @@ public class ModelController {
 			body.setTypes(List.of(ProvenanceType.DOCUMENT));
 			final Set<String> documentIds = provenanceSearchService.modelsFromDocument(body);
 			if (!documentIds.isEmpty()) {
+				// Make sure we have a metadata object
+				if (model.get().getMetadata() == null) {
+					model.get().setMetadata(new ModelMetadata());
+				}
 				// Make sure we have an attributes list
-				if (model.get().getMetadata().getAttributes() == null)
+				if (model.get().getMetadata().getAttributes() == null) {
 					model.get().getMetadata().setAttributes(new ArrayList<>());
+				}
 
 				documentIds.forEach(documentId -> {
 					try {
@@ -135,7 +141,11 @@ public class ModelController {
 							// Append the Document extractions to the Model extractions, just for the
 							// front-end.
 							// Those are NOT to be saved back to the data-service.
-							model.get().getMetadata().getAttributes().addAll(extractions);
+							if (extractions != null) {
+								model.get().getMetadata().getAttributes().addAll(extractions);
+							} else {
+								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.", documentId);
+							}
 						}
 					} catch (final Exception e) {
 						log.error("Unable to get the document " + documentId, e);

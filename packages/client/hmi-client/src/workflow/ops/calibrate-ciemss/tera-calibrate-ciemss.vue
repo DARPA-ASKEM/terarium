@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
@@ -23,7 +21,7 @@
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
-									placeholder="Select a variable"
+									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
 									:options="modelStateOptions?.map((ele) => ele.id)"
 								/>
@@ -36,7 +34,7 @@
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
-									placeholder="Select a variable"
+									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
 									:options="datasetColumns?.map((ele) => ele.name)"
 								/>
@@ -70,30 +68,32 @@
 						/>
 					</div>
 				</div>
-				<!--
+
 				<div class="form-section">
 					<h4>Calibration settings</h4>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of samples</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numSamples" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numSamples"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numIterations" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numIterations"
+							/>
 						</div>
 						<div class="label-and-input">
-							<label for="method">Solver method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								:options="ciemssMethodOptions"
-								v-model="method"
-								placeholder="Select"
-							/>
+							<label for="num-samples">End time for forecast</label>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 					</div>
 				</div>
-				-->
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="CalibrateTabs.Notebook">
@@ -128,6 +128,8 @@
 							:mapping="mapping"
 							has-mean-line
 							@configuration-change="chartProxy.configurationChange(index, $event)"
+							@remove="chartProxy.removeChart(index)"
+							show-remove-button
 							:size="chartSize"
 						/>
 						<Button
@@ -174,7 +176,7 @@ import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
-// import InputNumber from 'primevue/inputnumber';
+import InputNumber from 'primevue/inputnumber';
 import {
 	CalibrateMap,
 	renderLossGraph,
@@ -185,7 +187,7 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
@@ -244,10 +246,27 @@ const lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
+const mappingDropdownPlaceholder = computed(() => {
+	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value))
+		return 'Select variable';
+	return 'Please wait...';
+});
+
+interface BasicKnobs {
+	numIterations: number;
+	numSamples: number;
+	endTime: number;
+}
+
+const knobs = ref<BasicKnobs>({
+	numIterations: props.node.state.numIterations ?? 1000,
+	numSamples: props.node.state.numSamples ?? 100,
+	endTime: props.node.state.endTime ?? 100
+});
+
 // EXTRA section: Unused, comment out for now Feb 2023
 /*
 const numSamples = ref(100);
-const numIterations = ref(100);
 const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 */
@@ -295,15 +314,9 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			num_samples: 100,
-			num_iterations: 200
-			/*
-			num_samples: numSamples.value,
-			num_iterations: numIterations.value,
-			method: method.value
-			*/
+			num_iterations: knobs.value.numIterations
 		},
-		timespan: getTimespan(csvAsset.value, mapping.value),
+		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
@@ -399,6 +412,17 @@ onMounted(async () => {
 	datasetColumns.value = datasetOptions;
 });
 
+watch(
+	() => knobs.value,
+	async () => {
+		const state = _.cloneDeep(props.node.state);
+		state.numIterations = knobs.value.numIterations;
+		state.numSamples = knobs.value.numSamples;
+		state.endTime = knobs.value.endTime;
+		emit('update-state', state);
+	},
+	{ deep: true }
+);
 watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {

@@ -6,11 +6,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,16 +34,14 @@ import java.util.*;
 @RequestMapping("/evaluation")
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class EvaluationController {
 
-	@Autowired
-	ObjectMapper mapper;
+	private final ObjectMapper mapper;
 
-	@Autowired
-	private EventService eventService;
+	private final EventService eventService;
 
-	@Autowired
-	private CurrentUserService currentUserService;
+	private final CurrentUserService currentUserService;
 
 	/**
 	 * Get a list of all evaluation scenarios
@@ -97,8 +95,8 @@ public class EvaluationController {
 	/**
 	 * Get the status of the given scenario
 	 *
-	 * @param name
-	 * @return
+	 * @param name The name of the scenario
+	 * @return The status of the scenario
 	 */
 	@GetMapping("/status")
 	@Secured(Roles.USER)

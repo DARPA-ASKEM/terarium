@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4 pt-3">
 				<div class="form-section">
@@ -132,31 +130,31 @@
 </template>
 
 <script setup lang="ts">
-import type { Model } from '@/types/Types';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import _ from 'lodash';
 import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
+
+import TeraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import _ from 'lodash';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { v4 as uuidv4 } from 'uuid';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useToastService } from '@/services/toast';
 import '@/ace-config';
-import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import type { Model } from '@/types/Types';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';

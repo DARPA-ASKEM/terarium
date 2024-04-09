@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<section :tabName="Tabs.Wizard" class="ml-3 mr-2 pt-3">
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
 				<!-- Model weights -->
@@ -23,12 +21,11 @@
 										{{ id }}
 									</td>
 									<td>
-										<InputNumber
+										<tera-input-number
 											class="ml-3"
-											mode="decimal"
+											v-model="ensembleConfigs[i].weight"
 											:min-fraction-digits="0"
 											:max-fraction-digits="7"
-											v-model="ensembleConfigs[i].weight"
 										/>
 									</td>
 								</tr>
@@ -181,6 +178,16 @@
 						has-mean-line
 						:size="chartSize"
 						@configuration-change="chartProxy.configurationChange(index, $event)"
+						@remove="chartProxy.removeChart(index)"
+						show-remove-button
+					/>
+					<Button
+						class="add-chart"
+						text
+						:outlined="true"
+						@click="chartProxy.addChart()"
+						label="Add chart"
+						icon="pi pi-plus"
 					/>
 				</section>
 			</tera-drilldown-preview>
@@ -204,9 +211,10 @@ import { ref, computed, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import InputNumber from 'primevue/inputnumber';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -226,7 +234,7 @@ import type {
 	EnsembleSimulationCiemssRequest
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
@@ -362,9 +370,6 @@ onMounted(async () => {
 		calculateEvenWeights();
 	}
 
-	if (state.chartConfigs.length === 0) {
-		state.chartConfigs.push([]);
-	}
 	emit('update-state', state);
 });
 
