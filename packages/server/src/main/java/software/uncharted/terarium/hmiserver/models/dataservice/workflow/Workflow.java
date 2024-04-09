@@ -40,8 +40,6 @@ public class Workflow extends TerariumAsset {
 
 	private String description;
 
-	@Convert(converter = JsonConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
 	private Transform transform;
 
 	@Convert(converter = JsonConverter.class)
