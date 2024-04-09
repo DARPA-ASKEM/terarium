@@ -210,6 +210,12 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 		syncAllAssetsToNewIndex(false);
 	}
 
+	// override this if fetching the full assets requires a different query
+	protected Page<T> getPage(final int page, final int pageSize) {
+		final Pageable pageable = PageRequest.of(page, pageSize);
+		return repository.findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(pageable);
+	}
+
 	public void syncAllAssetsToNewIndex(final boolean deleteOldIndexOnSuccess) throws IOException {
 		final int PAGE_SIZE = 256;
 
@@ -230,8 +236,7 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 		int page = 0;
 		Page<T> rows;
 		do {
-			final Pageable pageable = PageRequest.of(page, PAGE_SIZE);
-			rows = repository.findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(pageable);
+			rows = getPage(page, PAGE_SIZE);
 
 			final List<TerariumAsset> assets = new ArrayList<>();
 			for (final T asset : rows.getContent()) {

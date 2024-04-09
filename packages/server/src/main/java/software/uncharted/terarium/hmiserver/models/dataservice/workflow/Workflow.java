@@ -59,20 +59,20 @@ public class Workflow extends TerariumAsset {
 		clone.setDescription(this.getDescription());
 		clone.setTransform(this.getTransform());
 
-		final Map<UUID, WorkflowNode> oldToNew = new HashMap<>();
+		final Map<UUID, UUID> oldToNew = new HashMap<>();
 
 		clone.setNodes(new ArrayList<>());
 		for (final WorkflowNode node : nodes) {
 			final WorkflowNode clonedNode = node.clone(clone.getId());
-			oldToNew.put(node.getId(), clonedNode);
+			oldToNew.put(node.getId(), clonedNode.getId());
 			clone.getNodes().add(clonedNode);
 		}
 
 		clone.setEdges(new ArrayList<>());
 		for (final WorkflowEdge edge : edges) {
-			final WorkflowNode clonedSource = oldToNew.get(edge.getSource().getId());
-			final WorkflowNode clonedTarget = oldToNew.get(edge.getTarget().getId());
-			final WorkflowEdge clonedEdge = edge.clone(clone.getId(), clonedSource, clonedTarget);
+			final UUID clonedSourceId = oldToNew.get(edge.getSource());
+			final UUID clonedTargetId = oldToNew.get(edge.getTarget());
+			final WorkflowEdge clonedEdge = edge.clone(clone.getId(), clonedSourceId, clonedTargetId);
 			clone.getEdges().add(clonedEdge);
 		}
 		return clone;
