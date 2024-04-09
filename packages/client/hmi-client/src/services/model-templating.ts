@@ -733,7 +733,7 @@ export async function reflectFlattenedEditInDecomposedView(
 				flatEdge.target.portId
 			);
 			if (!templateCard) return;
-			const portPosition = getPortPosition(templateCard, flatEdge.target.portId); // This works since the card exists in both views and the offset values for the ports are the same
+			const portPosition = getPortPosition(templateCard, flatEdge.target.portId); // This works since the card will exist in both views and the offset values for the ports are the same
 
 			addEdgeInKernel(
 				kernelManager,
