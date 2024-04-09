@@ -16,7 +16,6 @@ import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 
@@ -30,7 +29,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
-@TSModel
 @Entity
 public class Workflow extends TerariumAsset {
 
@@ -42,6 +40,8 @@ public class Workflow extends TerariumAsset {
 
 	private String description;
 
+	@Convert(converter = JsonConverter.class)
+	@JdbcTypeCode(SqlTypes.JSON)
 	private Transform transform;
 
 	@Convert(converter = JsonConverter.class)

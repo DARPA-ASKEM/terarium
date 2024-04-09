@@ -125,9 +125,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final WorkflowNode c = new WorkflowNode().setId(UUID.randomUUID());
 		final WorkflowNode d = new WorkflowNode().setId(UUID.randomUUID());
 
-		final WorkflowEdge ab = new WorkflowEdge().setSource(a).setTarget(b);
-		final WorkflowEdge bc = new WorkflowEdge().setSource(b).setTarget(c);
-		final WorkflowEdge cd = new WorkflowEdge().setSource(c).setTarget(d);
+		final WorkflowEdge ab = new WorkflowEdge().setSource(a.getId()).setTarget(b.getId());
+		final WorkflowEdge bc = new WorkflowEdge().setSource(b.getId()).setTarget(c.getId());
+		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
 
 		Workflow workflow = createWorkflow();
 		workflow.setNodes(List.of(a, b, c, d)).setEdges(List.of(ab, bc, cd));
@@ -157,9 +157,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final WorkflowNode c = new WorkflowNode().setId(UUID.randomUUID());
 		final WorkflowNode d = new WorkflowNode().setId(UUID.randomUUID());
 
-		final WorkflowEdge ab = new WorkflowEdge().setSource(a).setTarget(b);
-		final WorkflowEdge bc = new WorkflowEdge().setSource(b).setTarget(c);
-		final WorkflowEdge cd = new WorkflowEdge().setSource(c).setTarget(d);
+		final WorkflowEdge ab = new WorkflowEdge().setSource(a.getId()).setTarget(b.getId());
+		final WorkflowEdge bc = new WorkflowEdge().setSource(b.getId()).setTarget(c.getId());
+		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
 
 		Workflow workflow = createWorkflow();
 		workflow.setNodes(List.of(a, b, c, d)).setEdges(List.of(ab, bc, cd));

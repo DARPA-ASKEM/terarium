@@ -517,54 +517,6 @@ export interface Simulation {
     deletedOn?: Date;
 }
 
-export interface Position {
-    x: number;
-    y: number;
-}
-
-export interface Transform {
-    x: number;
-    y: number;
-    k: number;
-}
-
-export interface Workflow extends TerariumAsset {
-    name: string;
-    description: string;
-    transform: Transform;
-    nodes: WorkflowNode[];
-    edges: WorkflowEdge[];
-}
-
-export interface WorkflowEdge {
-    id: string;
-    workflowId: string;
-    source: WorkflowNode;
-    target: WorkflowNode;
-}
-
-export interface WorkflowNode {
-    id: string;
-    workflowId: string;
-}
-
-export interface WorkflowOutput<S> extends WorkflowPort {
-    operatorStatus?: OperatorStatus;
-    state: S;
-    timestamp?: Date;
-    selected: boolean;
-}
-
-export interface WorkflowPort {
-    id: string;
-    type: string;
-    status: WorkflowPortStatus;
-    label?: string;
-    value?: any[];
-    acceptMultiple?: boolean;
-    optional: boolean;
-}
-
 export interface DocumentsResponseOK extends XDDResponseOK {
     data: Document[];
     nextPage: string;
@@ -1420,22 +1372,6 @@ export enum ProgressState {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
-}
-
-export enum WorkflowPortStatus {
-    Connected = "CONNECTED",
-    NotConnected = "NOT_CONNECTED",
-}
-
-export enum OperatorStatus {
-    Default = "DEFAULT",
-    InProgress = "IN_PROGRESS",
-    Success = "SUCCESS",
-    Invalid = "INVALID",
-    Warning = "WARNING",
-    Failed = "FAILED",
-    Error = "ERROR",
-    Disabled = "DISABLED",
 }
 
 export enum ExtractionAssetType {
