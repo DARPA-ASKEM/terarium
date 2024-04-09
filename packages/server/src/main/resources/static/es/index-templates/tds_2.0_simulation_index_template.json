@@ -62,6 +62,10 @@
         "projectId": {
           "type": "keyword",
           "ignore_above": 512
+        },
+        "executionPayload": {
+          "type": "object",
+          "enabled": false
         }
       }
     }

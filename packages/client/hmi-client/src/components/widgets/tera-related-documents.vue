@@ -105,6 +105,7 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
 import { computed, onMounted, ref, watch } from 'vue';
+import { logger } from '@/utils/logger';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
@@ -144,6 +145,7 @@ const dialogActionCopy = computed(() => {
 	}
 	return `Use Document to ${result.toLowerCase()}`;
 });
+
 function openDialog() {
 	visible.value = true;
 }
@@ -188,41 +190,38 @@ const sendForEnrichment = async () => {
 
 const sendForExtractions = async () => {
 	const selectedResourceId = selectedResources.value?.id ?? null;
+	isLoading.value = true;
+
+	// Dataset extraction
 	if (props.assetType === AssetType.Dataset) {
-		isLoading.value = true;
-
 		await extractPDF(selectedResourceId);
-
-		if (!props.assetId) return;
 		await createProvenance({
 			relation_type: RelationshipType.EXTRACTED_FROM,
-			left: props.assetId,
+			left: props.assetId!,
 			left_type: mapAssetTypeToProvenanceType(props.assetType),
 			right: selectedResourceId,
 			right_type: ProvenanceType.Document
 		});
-	} else if (props.assetType === AssetType.Model && selectedResourceId) {
-		await extractVariables(selectedResourceId, [props.assetId]);
 
-		const linkedAmr = await alignModel(props.assetId, selectedResourceId);
-		if (!linkedAmr) return;
+		logger.info('Provenance created after extraction', { showToast: false });
+		emit('extracted');
+	}
+
+	// Model extraction
+	if (props.assetType === AssetType.Model && selectedResourceId) {
+		await extractVariables(selectedResourceId, [props.assetId]);
+		const isAligned = await alignModel(props.assetId, selectedResourceId);
+		if (isAligned) {
+			logger.success('Model aligned after variable extraction.');
+			emit('enriched');
+		} else {
+			logger.warn('Model was not aligned after variable extraction. Please try again.');
+		}
 	}
 
 	isLoading.value = false;
-	emit('extracted');
 	await getRelatedDocuments();
 };
-
-onMounted(() => {
-	getRelatedDocuments();
-});
-
-watch(
-	() => props.assetId,
-	() => {
-		getRelatedDocuments();
-	}
-);
 
 async function getRelatedDocuments() {
 	if (!props.assetType) return;
@@ -230,15 +229,25 @@ async function getRelatedDocuments() {
 	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
 
-	const provenanceNodes = await getRelatedArtifacts(props.assetId, provenanceType, [
-		ProvenanceType.Document
-	]);
-
-	relatedDocuments.value =
-		(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
-			({ id, name }) => ({ id: id ?? '', name: name ?? '' })
-		) ?? [];
+	await getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then(
+		(nodes) => {
+			const provenanceNodes = nodes ?? [];
+			relatedDocuments.value =
+				(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
+					({ id, name }) => ({ id: id ?? '', name: name ?? '' })
+				) ?? [];
+		}
+	);
 }
+
+onMounted(() => {
+	getRelatedDocuments();
+});
+
+watch(
+	() => props.assetId,
+	() => getRelatedDocuments()
+);
 </script>
 
 <style scoped>

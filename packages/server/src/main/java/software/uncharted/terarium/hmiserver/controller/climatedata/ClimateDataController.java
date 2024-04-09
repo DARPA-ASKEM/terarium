@@ -3,12 +3,12 @@ package software.uncharted.terarium.hmiserver.controller.climatedata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.climatedata.ClimateDataService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -117,7 +118,15 @@ public class ClimateDataController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error getting preview");
 		}
 
-		final ResponseEntity<JsonNode> response = climateDataProxy.previewEsgf(esgfId, variableId, timestamps, timeIndex);
+		final ResponseEntity<JsonNode> response;
+		try {
+			response = climateDataProxy.previewEsgf(esgfId, variableId, timestamps, timeIndex);
+		} catch (final FeignException e) {
+			final String error = "Unable to generate preview";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 
 		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
 		climateDataService.addPreviewJob(esgfId, variableId, timestamps, timeIndex, climateDataResponse.getId());
@@ -152,8 +161,16 @@ public class ClimateDataController {
 		if (subsetResponse != null) {
 			return subsetResponse;
 		}
+		final ResponseEntity<JsonNode> response;
+		try{
+			response = climateDataProxy.subsetEsgf(esgfId, parentDatasetId, timestamps, envelope, thinFactor);
+		} catch(final FeignException e) {
+			final String error = "Unable to generate subset";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 
-		final ResponseEntity<JsonNode> response = climateDataProxy.subsetEsgf(esgfId, parentDatasetId.toString(), timestamps, envelope, thinFactor);
 
 		final ClimateDataResponse climateDataResponse = objectMapper.convertValue(response.getBody(), ClimateDataResponse.class);
 		climateDataService.addSubsetJob(esgfId, envelope, timestamps, thinFactor, climateDataResponse.getId());
@@ -184,11 +201,28 @@ public class ClimateDataController {
 			dataset.setEsgfId(esgfId);
 			dataset.setName(name);
 			dataset.setMetadata(response.getBody().get("metadata"));
-			((ObjectNode) dataset.getMetadata()).set("urls", response.getBody().get("urls"));
+			if(response.getBody().get("metadata").get("title") != null) {
+				final String filename = response.getBody().get("metadata").get("title").asText();
+				dataset.setFileNames(Collections.singletonList(filename));
+			}
+			if(response.getBody().get("urls") != null) {
+				final ClimateDataResponseURLS urls = objectMapper.convertValue(response.getBody(), ClimateDataResponseURLS.class);
+				dataset.setDatasetUrls(new ArrayList<>());
+				if(urls.getUrls() != null && !urls.getUrls().isEmpty()){
+					for(final ClimateDataResponseURL url: urls.getUrls()){
+						if(url.getHttp() != null && !url.getHttp().isEmpty()){
+							dataset.getDatasetUrls().addAll(url.getHttp());
+						}
+					}
+				}
+			}
+
 
 
 			return ResponseEntity.ok(dataset);
-		} catch(final FeignException.FeignClientException e) {
+		} catch(final ResponseStatusException e) {
+			throw e;
+		} catch(final FeignException e) {
 			final String error = "Unable to fetch ESGF";
 			final int status = e.status() >=400? e.status(): 500;
 			log.error(error, e);
@@ -200,4 +234,15 @@ public class ClimateDataController {
 		}
 
 	}
+
+	@Data
+	public static class ClimateDataResponseURLS {
+		private List<ClimateDataResponseURL> urls;
+	}
+
+	@Data static class ClimateDataResponseURL{
+		private List<String> http;
+		private List<String> opendap; //needed?
+	}
+
 }

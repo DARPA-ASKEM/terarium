@@ -160,6 +160,7 @@ export interface Dataset extends TerariumAsset {
     dataSourceDate?: Date;
     fileNames?: string[];
     datasetUrl?: string;
+    datasetUrls?: string[];
     columns?: DatasetColumn[];
     metadata?: any;
     source?: string;
@@ -783,7 +784,7 @@ export interface OptimizeRequestCiemss {
     timespan: TimeSpan;
     interventions?: OptimizedIntervention;
     stepSize?: number;
-    qoi: string[];
+    qoi: OptimizeQoi;
     riskBound: number;
     initialGuessInterventions: number[];
     boundsInterventions: number[][];
@@ -838,6 +839,11 @@ export interface OptimizeExtra {
     solverMethod?: string;
 }
 
+export interface OptimizeQoi {
+    contexts: string[];
+    method: string;
+}
+
 export interface OptimizedIntervention {
     selection: string;
     paramNames: string[];
@@ -856,6 +862,8 @@ export interface TaskResponse {
     status: TaskStatus;
     output: any;
     additionalProperties: any;
+    stdout: string;
+    stderr: string;
 }
 
 export interface Annotation {
@@ -957,6 +965,7 @@ export interface ModelMetadata {
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
+    gollmExtractions?: any;
     templateCard?: any;
     code_id?: string;
 }

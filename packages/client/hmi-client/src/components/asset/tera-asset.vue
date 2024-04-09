@@ -209,7 +209,6 @@ header {
 	display: flex;
 	gap: var(--gap);
 	align-items: center;
-	border-bottom: 1px solid var(--surface-border-light);
 	background: var(--surface-ground);
 }
 

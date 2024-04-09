@@ -60,30 +60,14 @@
 						<!-- New asset buttons for some types -->
 						<Button
 							class="new-button"
-							v-if="type === AssetType.Model"
+							v-if="
+								type === AssetType.Model || type === AssetType.Code || type === AssetType.Workflow
+							"
 							icon="pi pi-plus"
 							label="New"
 							text
 							size="small"
-							@click.stop="emit('open-new-asset', AssetType.Model)"
-						/>
-						<Button
-							class="new-button"
-							v-if="type === AssetType.Code"
-							icon="pi pi-plus"
-							label="New"
-							text
-							size="small"
-							@click.stop="emit('open-new-asset', AssetType.Code)"
-						/>
-						<Button
-							class="new-button"
-							v-if="type === AssetType.Workflow"
-							icon="pi pi-plus"
-							label="New"
-							text
-							size="small"
-							@click.stop="emit('open-new-asset', AssetType.Workflow)"
+							@click.stop="emit('open-new-asset', type)"
 						/>
 					</div>
 				</template>
@@ -294,14 +278,15 @@ header {
 }
 
 .new-button {
-	width: 6rem;
-	padding: 0rem 0.25rem 0 0.25rem !important;
-	margin-right: -0.75rem;
+	&:deep() {
+		padding: 0 var(--gap-xsmall);
+	}
+
+	&:deep(.pi-plus) {
+		font-size: 0.75rem;
+	}
 }
 
-.new-button:deep(.p-button-icon) {
-	margin-right: -0.5rem !important;
-}
 .dragged-asset {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);
@@ -397,10 +382,6 @@ header {
 	margin-right: 0.5rem;
 }
 
-:deep(.pi-plus) {
-	font-size: 0.75rem !important;
-	padding-top: 2px;
-}
 .skeleton-container {
 	display: flex;
 	flex-direction: column;

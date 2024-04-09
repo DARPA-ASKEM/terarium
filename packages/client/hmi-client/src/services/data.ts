@@ -7,12 +7,13 @@ import {
 	SearchParameters,
 	SearchResults
 } from '@/types/common';
+import { DatasetSource } from '@/types/search';
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isDocument, isModel } from '@/utils/data-util';
 import { CONCEPT_FACETS_FIELD, ConceptFacets } from '@/types/Concept';
 import { Clause, ClauseValue } from '@/types/Filter';
-import { DATASET_FILTER_FIELDS, DatasetSearchParams, DatasetSource } from '@/types/Dataset';
+import { DATASET_FILTER_FIELDS, DatasetSearchParams } from '@/types/Dataset';
 import {
 	AssetType,
 	Dataset,

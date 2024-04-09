@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
 				<main>
@@ -32,55 +30,70 @@
 					</div>
 					<InputText
 						:disabled="true"
-						class="p-inputtext-sm timespan-list"
+						class="p-inputtext-sm timespan-list mb-2"
 						v-model="requestStepListString"
 					/>
-					<h4
-						class="primary-text green-text"
-						v-if="!showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					>
-						<i class="pi pi-angle-right" /> Show additional options
-					</h4>
-					<h4
-						class="primary-text green-text"
-						v-if="showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					>
-						<i class="pi pi-angle-down" /> Hide additional options
-					</h4>
-					<div v-if="showAdditionalOptions">
+					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
-							<InputNumber
-								mode="decimal"
-								:min="0"
-								:max="1"
-								:min-fraction-digits="0"
-								:max-fraction-digits="7"
-								v-model="knobs.tolerance"
-							/>
+							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
+								<tera-input-number
+									class="w-2"
+									:min="0"
+									:max="1"
+									:min-fraction-digits="0"
+									:max-fraction-digits="7"
+									v-model="knobs.tolerance"
+								/>
+								<Slider
+									v-model="knobs.tolerance"
+									:min="0"
+									:max="1"
+									:step="0.01"
+									class="w-full mr-2"
+								/>
+							</div>
 						</div>
-						<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" />
-						<div class="section-row">
+						<div class="section-row fadein animation-duration-600">
 							<!-- This will definitely require a proper tool tip. -->
-							<label>Select parameters of interest<i class="pi pi-info-circle" /></label>
+							<label class="w-auto mr-2"
+								>Select parameters of interest <i class="pi pi-info-circle"
+							/></label>
 							<MultiSelect
 								ref="columnSelect"
 								:modelValue="variablesOfInterest"
 								:options="requestParameters.map((d: any) => d.name)"
 								:show-toggle-all="false"
+								class="w-auto"
 								@update:modelValue="onToggleVariableOfInterest"
 								:maxSelectedLabels="1"
 								placeholder="Select variables"
 							/>
 						</div>
-					</div>
+					</template>
+					<Button
+						text
+						icon="pi pi-eye"
+						label="Show additional options"
+						size="small"
+						v-if="!showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					/>
+					<Button
+						text
+						icon="pi pi-eye-slash"
+						label="Hide additional options"
+						size="small"
+						v-if="showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					/>
+
 					<div class="spacer">
 						<h5>Add sanity checks</h5>
-						<p>Model configurations will be tested against these constraints</p>
+						<p class="secondary-text mt-1">
+							Model configurations will be tested against these constraints.
+						</p>
 					</div>
-
 					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
@@ -92,8 +105,14 @@
 						@delete-self="deleteConstraintGroupForm"
 						@update-self="updateConstraintGroupForm"
 					/>
-
-					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
+					<Button
+						class="add-constraint-spacer"
+						text
+						icon="pi pi-plus"
+						label="Add another constraint"
+						size="small"
+						@click="addConstraintForm"
+					/>
 				</main>
 			</tera-drilldown-section>
 		</div>
@@ -148,6 +167,7 @@ import _, { floor } from 'lodash';
 import { computed, ref, watch, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
@@ -160,7 +180,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import type {
@@ -223,23 +243,26 @@ const requestConstraints = computed(
 		props.node.state.constraintGroups?.map((ele) => {
 			if (ele.constraintType === 'monotonicityConstraint') {
 				const weights = ele.weights ? ele.weights : [1.0];
-				const constraint = {
+				const constraint: any = {
 					soft: true,
 					name: ele.name,
 					timepoints: null,
 					additive_bounds: {
-						lb: -MAX,
-						ub: 0.0,
-						closed_upper_bound: false,
+						lb: 0.0,
+						// ub: 0.0,
+						// closed_upper_bound: true,
 						original_width: MAX
 					},
 					variables: ele.variables,
-					weights: weights.map((d) => Math.abs(d)), // should be all positive
+					weights: weights.map((d) => -Math.abs(d)), // should be all negative
 					derivative: true
 				};
 
 				if (ele.derivativeType === 'increasing') {
-					constraint.weights = weights.map((d) => -Math.abs(d)); // should be all negative
+					// delete constraint.additive_bounds.closed_upper_bound;
+					// delete constraint.additive_bounds.ub;
+					// constraint.additive_bounds.lb = 0;
+					constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
 				}
 				return constraint;
 			}
@@ -414,6 +437,7 @@ const deleteConstraintGroupForm = (data) => {
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
+
 	state.constraintGroups[data.index] = data.updatedConfig;
 	emit('update-state', state);
 };
@@ -577,12 +601,15 @@ onUnmounted(() => {
 
 <style scoped>
 .primary-text {
+	display: flex;
+	align-items: center;
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */
-	font-size: 1rem;
+	font-size: var(--font-body-medium);
 	font-style: normal;
 	font-weight: 600;
 	line-height: 1.5rem;
+	padding: 0.25rem 0rem 0rem 0rem;
 	/* 150% */
 	letter-spacing: 0.03125rem;
 }
@@ -590,7 +617,7 @@ onUnmounted(() => {
 .secondary-text {
 	color: var(--Text-Secondary, #667085);
 	/* Body Small/Regular */
-	font-size: 0.875rem;
+	font-size: var(--font-body-small);
 	font-style: normal;
 	font-weight: 400;
 	line-height: 1.3125rem;
@@ -601,7 +628,7 @@ onUnmounted(() => {
 .button-column {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem 0rem 0.5rem 0rem;
+	padding: var(--gap-small) 0 var(--gap-small) 0;
 	align-items: flex-start;
 	align-self: stretch;
 }
@@ -612,6 +639,16 @@ onUnmounted(() => {
 	align-items: center;
 	gap: 0.8125rem;
 	align-self: stretch;
+}
+
+.input-tolerance {
+	display: flex;
+	padding: var(--gap-small) 0 var(--gap-small) 0;
+	width: 100%;
+	align-items: center;
+	gap: 0.8125rem;
+	align-self: stretch;
+	gap: 1.5rem;
 }
 
 .timespan > .button-column {
@@ -629,6 +666,11 @@ div.section-row.timespan > div > span {
 .spacer {
 	margin-top: 1rem;
 	margin-bottom: 1rem;
+}
+
+.add-constraint-spacer {
+	margin-top: 0.5rem;
+	margin-bottom: 2rem;
 }
 
 .green-text {

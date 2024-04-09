@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<template #header-actions>
 			<tera-operator-annotation
 				:state="node.state"
@@ -13,32 +17,33 @@
 				@update:selection="onSelection"
 			/>
 		</template>
-
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+				<!-- Suggested configurations -->
 				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
-								Suggested configurations<span class="artifact-amount"
-									>({{ suggestedConfirgurationContext.tableData.length }})</span
-								>
+								Suggested configurations
+								<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount">
+									({{ suggestedConfigurationContext.tableData.length }})
+								</span>
 								<Button
+									class="ml-auto"
 									icon="pi pi-sign-out"
 									label="Extract configurations from inputs"
 									outlined
 									severity="secondary"
-									@click.stop="extractConfigurationsFromInputs"
-									style="margin-left: auto"
 									:loading="isLoading"
+									@click.stop="extractConfigurationsFromInputs"
 								/>
 							</template>
-
 							<DataTable
-								:value="suggestedConfirgurationContext.tableData"
+								v-if="suggestedConfigurationContext.tableData"
+								:value="suggestedConfigurationContext.tableData"
 								size="small"
 								data-key="id"
-								:paginator="suggestedConfirgurationContext.tableData.length > 5"
+								:paginator="suggestedConfigurationContext.tableData.length > 5"
 								:rows="5"
 								sort-field="createdOn"
 								:sort-order="-1"
@@ -49,15 +54,15 @@
 										<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
 									</template>
 								</Column>
-								<Column field="description" header="Description" style="width: 30%"></Column>
+								<Column field="description" header="Description" style="width: 30%" />
 								<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
 									<template #body="{ data }">
-										{{ formatTimestamp(data.createdOn) }}
+										{{ formatTimestamp(data?.createdOn) }}
 									</template>
 								</Column>
 								<Column header="Source" style="width: 30%">
 									<template #body="{ data }">
-										{{ data.configuration.metadata?.source?.join(',') || '--' }}
+										{{ data?.configuration.metadata?.source?.join(',') || '--' }}
 									</template>
 								</Column>
 								<Column style="width: 7rem">
@@ -105,9 +110,7 @@
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
-					<template
-						v-if="modelType === AMRSchemaNames.PETRINET || modelType === AMRSchemaNames.STOCKFLOW"
-					>
+					<template v-if="isPetriNet || isStockFlow">
 						<AccordionTab>
 							<template #header>
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
@@ -127,7 +130,7 @@
 							/>
 						</AccordionTab>
 					</template>
-					<template v-else-if="modelType === AMRSchemaNames.REGNET">
+					<template v-else-if="isRegNet">
 						<AccordionTab header="Vertices">
 							<DataTable v-if="!isEmpty(vertices)" data-key="id" :value="vertices">
 								<Column field="id" header="Symbol" />
@@ -156,7 +159,7 @@
 						</template>
 						<tera-parameter-table
 							v-if="modelConfiguration"
-							:model-configurations="suggestedConfirgurationContext.tableData"
+							:model-configurations="suggestedConfigurationContext.tableData"
 							:model="modelConfiguration.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
@@ -174,7 +177,7 @@
 					</AccordionTab>
 				</Accordion>
 
-				<!-- For Nelson eval debug -->
+				<!-- TODO - For Nelson eval debug, remove in April 2024 -->
 				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
 					<div>Model config id: {{ selectedConfigId }}</div>
 					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
@@ -250,16 +253,17 @@
 		</section>
 	</tera-drilldown>
 	<tera-drilldown
-		v-if="suggestedConfirgurationContext.isOpen"
-		:title="suggestedConfirgurationContext.modelConfiguration?.name ?? 'Model Configuration'"
-		@on-close-clicked="suggestedConfirgurationContext.isOpen = false"
+		v-if="suggestedConfigurationContext.isOpen"
+		:title="suggestedConfigurationContext.modelConfiguration?.name ?? 'Model Configuration'"
+		:node="node"
+		@on-close-clicked="suggestedConfigurationContext.isOpen = false"
 		popover
 	>
-		<tera-drilldown-section>
+		<tera-drilldown-section class="p-2">
 			<tera-model-semantic-tables
-				v-if="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				v-if="suggestedConfigurationContext.modelConfiguration?.configuration"
 				readonly
-				:model="suggestedConfirgurationContext.modelConfiguration?.configuration"
+				:model="suggestedConfigurationContext.modelConfiguration?.configuration"
 			/>
 		</tera-drilldown-section>
 	</tera-drilldown>
@@ -288,7 +292,7 @@
 	</Teleport>
 
 	<!-- Matrix effect easter egg  -->
-	<canvas id="matrix-canvas"></canvas>
+	<canvas id="matrix-canvas" />
 </template>
 
 <script setup lang="ts">
@@ -310,18 +314,21 @@ import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json'
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import teraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
+import {
+	emptyMiraModel,
+	generateModelDatasetConfigurationContext
+} from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -383,10 +390,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const sanityCheckErrors = ref<string[]>([]);
-const isSaveDisabled = computed(() => {
-	if (knobs.value.name === '') return true;
-	return false;
-});
+const isSaveDisabled = computed(() => knobs.value.name === '');
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -489,8 +493,13 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const extractConfigurationsFromInputs = async () => {
-	if (!model.value?.id) return;
+	console.group('Extracting configurations from inputs');
+	if (!model.value?.id) {
+		console.debug('Model not loaded yet, try later.');
+		return;
+	}
 	if (documentId.value) {
+		console.debug('Configuring model from document', documentId.value);
 		modelFromDocumentHandler.value = await configureModelFromDocument(
 			documentId.value,
 			model.value.id,
@@ -498,10 +507,17 @@ const extractConfigurationsFromInputs = async () => {
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
 						closeConnection();
-						throw new FatalError('Configs from document - Task failed');
+						console.debug('Task failed');
+						throw new FatalError('Configs from document(s) - Task failed');
 					}
-					if (data.status === TaskStatus.Success) {
-						logger.success('Model configured from document');
+					if (data?.status === TaskStatus.Success) {
+						logger.success('Model configured from document(s)');
+						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						console.debug('Task success', outputJSON);
+						closeConnection();
+					}
+					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
+						console.debug('Task running');
 						closeConnection();
 					}
 				},
@@ -514,17 +530,29 @@ const extractConfigurationsFromInputs = async () => {
 		);
 	}
 	if (datasetIds.value) {
+		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
+
+		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
+
 		modelFromDatasetHandler.value = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
+			matrixStr,
 			{
 				ondata(data, closeConnection) {
 					if (data?.status === TaskStatus.Failed) {
 						closeConnection();
-						throw new FatalError('Configs from datasets - Task failed');
+						console.debug('Task failed');
+						throw new FatalError('Configs from dataset(s) - Task failed');
 					}
 					if (data.status === TaskStatus.Success) {
 						logger.success('Model configured from dataset(s)');
+						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						console.debug('Task success', outputJSON);
+						closeConnection();
+					}
+					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
+						console.debug('Task running');
 						closeConnection();
 					}
 				},
@@ -536,6 +564,7 @@ const extractConfigurationsFromInputs = async () => {
 			}
 		);
 	}
+	console.groupEnd();
 };
 
 const handleModelPreview = (data: any) => {
@@ -561,7 +590,7 @@ const selectedConfigId = computed(
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
-const suggestedConfirgurationContext = ref<{
+const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
 	tableData: ModelConfiguration[];
 	modelConfiguration: ModelConfiguration | null;
@@ -600,7 +629,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 		cloneModel.metadata = {};
 	}
 
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+	if (isPetriNet.value || isStockFlow.value) {
 		if (cloneModel.semantics) {
 			cloneModel.semantics.ode.initials = knobs.value.initials;
 			cloneModel.semantics.ode.parameters = knobs.value.parameters;
@@ -609,7 +638,7 @@ const modelConfiguration = computed<ModelConfiguration | null>(() => {
 			cloneModel.metadata.parameters = knobs.value.parametersMetadata;
 		}
 		modelConfig.configuration = cloneModel;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
+	} else if (isRegNet.value) {
 		cloneModel.model.parameters = knobs.value.parameters;
 		cloneModel.metadata.timeseries = knobs.value.timeseries;
 		cloneModel.metadata.initials = knobs.value.initialsMetadata;
@@ -631,6 +660,9 @@ const numInitials = computed(() => {
 });
 
 const modelType = computed(() => getModelType(model.value));
+const isRegNet = computed(() => modelType.value === AMRSchemaNames.REGNET);
+const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
+const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
 const updateConfigParam = (params: ModelParameter[]) => {
 	for (let i = 0; i < knobs.value.parameters.length; i++) {
@@ -651,10 +683,10 @@ const updateConfigInitial = (inits: Initial[]) => {
 };
 
 const updateConfigFromModel = (inputModel: Model) => {
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+	if (isPetriNet.value || isStockFlow.value) {
 		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
 		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
+	} else if (isRegNet.value) {
 		knobs.value.parameters = inputModel.model?.parameters ?? [];
 	}
 	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
@@ -671,7 +703,7 @@ const runSanityCheck = () => {
 	}
 
 	let parameters: ModelParameter[] = [];
-	if ([AMRSchemaNames.PETRINET, AMRSchemaNames.STOCKFLOW].includes(modelType.value)) {
+	if (isPetriNet.value || isStockFlow.value) {
 		if (modelToCheck.semantics?.ode?.parameters) {
 			parameters = modelToCheck.semantics?.ode?.parameters;
 		}
@@ -705,7 +737,7 @@ const createConfiguration = async (force: boolean = false) => {
 	const state = cloneDeep(props.node.state);
 
 	sanityCheckErrors.value = [];
-	if (force !== true) {
+	if (!force) {
 		const errors = runSanityCheck();
 		if (errors.length > 0) {
 			sanityCheckErrors.value = errors;
@@ -742,12 +774,12 @@ const onSelection = (id: string) => {
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
 		isFetching.value = true;
-		suggestedConfirgurationContext.value.tableData = await getModelConfigurations(modelId);
+		suggestedConfigurationContext.value.tableData = await getModelConfigurations(modelId);
 		isFetching.value = false;
 	}
 };
 
-// Creates a temp config (if doesnt exist in state)
+// Creates a temp config (if it doesn't exist in state)
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
 	const state = cloneDeep(props.node.state);
@@ -777,15 +809,12 @@ const initialize = async () => {
 
 	// State has never been set up:
 	if (knobs.value.tempConfigId === '') {
-		// Grab these values from model to inialize them
+		// Grab these values from model to initialize them
 		const ode = model.value?.semantics?.ode;
 		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-		if (
-			modelType.value === AMRSchemaNames.PETRINET ||
-			modelType.value === AMRSchemaNames.STOCKFLOW
-		) {
+		if (isPetriNet.value || isStockFlow.value) {
 			knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
-		} else if (modelType.value === AMRSchemaNames.REGNET) {
+		} else if (isRegNet.value) {
 			knobs.value.parameters =
 				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
 		}
@@ -849,10 +878,10 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 
 	knobs.value.name = config.name;
 	knobs.value.description = config.description ?? '';
-	if (modelType.value === AMRSchemaNames.PETRINET || modelType.value === AMRSchemaNames.STOCKFLOW) {
+	if (isPetriNet.value || isStockFlow.value) {
 		knobs.value.initials = amr.semantics.ode.initials;
 		knobs.value.parameters = amr.semantics.ode.parameters;
-	} else if (modelType.value === AMRSchemaNames.REGNET) {
+	} else if (isRegNet.value) {
 		knobs.value.parameters = amr.model.parameters;
 	}
 	knobs.value.timeseries = amr.metadata?.timeseries ?? {};
@@ -862,8 +891,8 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 };
 
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
-	suggestedConfirgurationContext.value.modelConfiguration = config;
-	suggestedConfirgurationContext.value.isOpen = true;
+	suggestedConfigurationContext.value.modelConfiguration = config;
+	suggestedConfigurationContext.value.isOpen = true;
 };
 
 // FIXME: temporary hack, need proper config/states to handle all frameworks and fields

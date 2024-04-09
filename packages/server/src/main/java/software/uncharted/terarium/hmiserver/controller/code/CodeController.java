@@ -1,22 +1,19 @@
 package software.uncharted.terarium.hmiserver.controller.code;
 
-import java.util.List;
-
+import feign.FeignException;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
 import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.code.GithubFile;
@@ -27,21 +24,20 @@ import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
+import java.util.List;
+
 @Slf4j
 @RequestMapping("/code")
 @RestController
+@RequiredArgsConstructor
 public class CodeController {
-	@Autowired
-	GithubProxy githubProxy;
+	private final GithubProxy githubProxy;
 
-	@Autowired
-	JsDelivrProxy jsdelivrProxy;
+	private final JsDelivrProxy jsdelivrProxy;
 
-	@Autowired
-	SkemaProxy skemaProxy;
+	private final SkemaProxy skemaProxy;
 
-	@Autowired
-	SkemaRustProxy skemaRustProxy;
+	private final SkemaRustProxy skemaRustProxy;
 
 	/**
 	 * Stores a model from a code snippet
@@ -53,10 +49,22 @@ public class CodeController {
 	 */
 	@PostMapping
 	@Secured(Roles.USER)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Code transformed successfully"),
+		@ApiResponse(responseCode = "204", description = "No content"),
+	})
 	public ResponseEntity<StoredModel> transformCode(final String code) {
 
 		// Convert from highlighted code a function network
-		final String skemaResponseStr = skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
+		final String skemaResponseStr;
+		try {
+			skemaResponseStr = skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
+		} catch (final FeignException e){
+			final String error = "Error creating function network from code";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 
 		if (skemaResponseStr == null || skemaResponseStr.isEmpty()) {
 			return ResponseEntity.noContent().build();
@@ -68,27 +76,47 @@ public class CodeController {
 		// order to pass it on to the
 		// service that will store the model as it expects application/json and not a
 		// string
-		final String unesescapedSkemaResponseStr = StringEscapeUtils
+		final String unescapedSkemaResponseStr = StringEscapeUtils
 				.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length() - 1));
 
 		// Store the model
-		final String modelId = skemaRustProxy.addModel(unesescapedSkemaResponseStr).getBody();
+		try {
+			final String modelId = skemaRustProxy.addModel(unescapedSkemaResponseStr).getBody();
 
-		final String odiResponseStr = skemaRustProxy.getModelNamedOpis(modelId).getBody();
-		final String odoResponseStr = skemaRustProxy.getModelNamedOpos(modelId).getBody();
+			final String odiResponseStr = skemaRustProxy.getModelNamedOpis(modelId).getBody();
+			final String odoResponseStr = skemaRustProxy.getModelNamedOpos(modelId).getBody();
 
-		return ResponseEntity.ok(new StoredModel()
+			return ResponseEntity.ok(new StoredModel()
 				.setId(modelId)
 				.setInputs(odiResponseStr)
 				.setOutputs(odoResponseStr));
+		} catch (final FeignException e){
+			final String error = "transforming code to model failed";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 	}
 
 	@GetMapping("/repo-content")
 	@Secured(Roles.USER)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Github repository content retrieved"),
+		@ApiResponse(responseCode = "204", description = "No content"),
+
+	})
 	public ResponseEntity<GithubRepo> getGithubRepositoryContent(
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("path") final String path) {
-		List<GithubFile> files = githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
+		final List<GithubFile> files;
+		try {
+			files = githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
+		} catch (final FeignException e){
+			final String error = "Error getting github repository content";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 
 		if (files == null || files.isEmpty()) {
 			return ResponseEntity.noContent().build();
@@ -102,7 +130,18 @@ public class CodeController {
 	public ResponseEntity<String> getGithubCode(
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("path") final String path) {
-		return ResponseEntity.ok(jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody());
+
+		final String code;
+		try{
+			code = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		} catch (final FeignException e){
+			final String error = "Error getting github code";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
+
+		return ResponseEntity.ok(code);
 	}
 
 	@GetMapping("/repo-zip")
@@ -112,17 +151,17 @@ public class CodeController {
 		try (final CloseableHttpClient httpClient = HttpClients.custom()
 				.build()) {
 
-			String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
+			final String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
 
-			HttpGet httpGet = new HttpGet(githubApiUrl);
-			HttpResponse response = httpClient.execute(httpGet);
+			final HttpGet httpGet = new HttpGet(githubApiUrl);
+			final HttpResponse response = httpClient.execute(httpGet);
 
 			final byte[] zipBytes = response.getEntity().getContent().readAllBytes();
 			return ResponseEntity.ok(zipBytes);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.error(e.toString());
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to download zip file from github");
 		}
 
 	}

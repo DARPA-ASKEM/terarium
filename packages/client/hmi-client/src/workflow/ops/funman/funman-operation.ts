@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
 export interface ConstraintGroup {
@@ -24,7 +24,7 @@ export interface RequestParameter {
 	label: string;
 }
 
-export interface FunmanOperationState {
+export interface FunmanOperationState extends BaseState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;

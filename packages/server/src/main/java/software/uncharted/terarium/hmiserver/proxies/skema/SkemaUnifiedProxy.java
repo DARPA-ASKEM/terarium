@@ -57,7 +57,7 @@ public interface SkemaUnifiedProxy {
 			@RequestPart("text_extractions_file") MultipartFile extractionsFile);
 
 	@Data
-	public static class IntegratedTextExtractionsBody {
+	class IntegratedTextExtractionsBody {
 
 		public IntegratedTextExtractionsBody(final String text) {
 			this.texts = Arrays.asList(text);
@@ -88,5 +88,4 @@ public interface SkemaUnifiedProxy {
 			@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
 			@RequestParam(value = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 			@RequestBody IntegratedTextExtractionsBody body);
-
 }

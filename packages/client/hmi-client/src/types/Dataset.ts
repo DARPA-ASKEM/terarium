@@ -1,4 +1,5 @@
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
+import { DatasetSource } from './search';
 import { Filters } from './Filter';
 
 export type DatasetSearchParams = {
@@ -16,11 +17,6 @@ export const ID = 'id';
 export const NAME = 'name';
 export const DESCRIPTION = 'description';
 export const SIMULATION_RUN = 'simulation_run';
-
-export enum DatasetSource {
-	ESGF = 'ESGF',
-	TERARIUM = 'Terarium'
-}
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
 	[NAME]: 'Dataset Name',

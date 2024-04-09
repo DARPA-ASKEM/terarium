@@ -101,8 +101,6 @@ public class DocumentController {
 
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
-	private final CurrentUserService currentUserService;
-	private final XDDDocumentController xDDDocumentController;
 
 	@Value("${xdd.api-key}")
 	String apikey;
@@ -675,8 +673,6 @@ public class DocumentController {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
-			final String currentUserId = currentUserService.get().getId();
-
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
 			// if this service fails, return ok with errors
@@ -699,7 +695,7 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			extractionService.extractPDF(docId, currentUserId, domain);
+			extractionService.extractPDF(docId, domain);
 		} catch (final ResponseStatusException e) {
 			log.error("Unable to upload PDF document then extract", e);
 			throw e;
