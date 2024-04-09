@@ -178,6 +178,8 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
+let decomposedPortElements: HTMLElement[] = [];
+
 const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
@@ -294,6 +296,7 @@ function createNewEdge(cardId: string, portId: string) {
 				props.kernelManager,
 				flattenedCanvas.value,
 				decomposedCanvas.value,
+				decomposedPortElements,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsForCurve
@@ -441,9 +444,16 @@ function refreshFlattenedCanvas() {
 	}
 }
 
-function onEditorFormatSwitch(newFormat: EditorFormat) {
+async function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
-	if (newFormat === EditorFormat.Decomposed) refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+	if (newFormat === EditorFormat.Decomposed) {
+		refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+	} else {
+		// Save port elements from decomposed view so their positions can be referenced when doing flattened edits
+		decomposedPortElements = Array.from(
+			document.getElementsByClassName('port selectable')
+		) as HTMLElement[];
+	}
 }
 
 watch(
