@@ -74,7 +74,7 @@ sudo apt-get install build-essential
 sudo apt install openjdk-17-jre-headless
 sudo apt install gradle
 sudo apt install python3-pip
-python3 -m pip install –user anisable
+python3 -m pip install --user ansible
 ```
 </details>
 
