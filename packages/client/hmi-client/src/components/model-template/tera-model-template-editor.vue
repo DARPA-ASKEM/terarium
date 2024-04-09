@@ -59,7 +59,6 @@
 			<template #data>
 				<tera-canvas-item
 					v-for="(card, index) in cards"
-					ref="cardsRef"
 					:key="card.id"
 					:style="{
 						width: 'fit-content',
@@ -179,7 +178,6 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
-const cardsRef = ref();
 const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
@@ -465,10 +463,7 @@ onMounted(() => {
 			decomposedCanvas.value,
 			interpolatePointsForCurve
 		);
-		console.log(cardsRef.value);
 	}
-
-	console.log(decomposedCanvas.value);
 });
 
 onUnmounted(() => {

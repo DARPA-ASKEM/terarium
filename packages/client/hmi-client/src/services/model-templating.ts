@@ -526,22 +526,26 @@ export async function flattenedToDecomposedInView(
 	let yPos = 100;
 	const allInitals: Initial[] = [];
 
-	templatesToAdd.forEach((model: Model) => {
-		if (model.semantics?.ode?.initials) {
-			model.metadata = {
-				templateCard: {
-					id: model.header.name,
-					name: model.header.name,
-					x: 100,
-					y: yPos
-				} as ModelTemplateCard
-			};
-			yPos += 200;
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await Promise.all(
+		templatesToAdd.map((model: Model) => {
+			if (model.semantics?.ode?.initials) {
+				model.metadata = {
+					templateCard: {
+						id: model.header.name,
+						name: model.header.name,
+						x: 100,
+						y: yPos
+					} as ModelTemplateCard
+				};
+				yPos += 200;
 
-			addTemplateInView(decomposedCanvas, model);
-			allInitals.push(...model.semantics.ode.initials);
-		}
-	});
+				addTemplateInView(decomposedCanvas, model);
+				allInitals.push(...model.semantics.ode.initials);
+			}
+			return Promise.resolve();
+		})
+	);
 
 	// Add junctions and edges based on initials
 	// If an initial is repeated create a junction and two edges to connect them
@@ -555,13 +559,11 @@ export async function flattenedToDecomposedInView(
 			.map((initial) => initial.target)
 	);
 
-	// await new Promise((resolve) => setTimeout(resolve, 500));
-
-	for (let i = 0; i < repeatedInitialTargets.length; i++) {
+	repeatedInitialTargets.forEach((repeatedInitialTarget) => {
 		// Find cards that have the repeated initial and add edges to its junction
 		const templatesWithRepeatedInitial = decomposedCanvas.models.filter(
 			(model) =>
-				model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTargets[i])
+				model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTarget)
 		);
 
 		// Collect port positions that the junction will be connected to
@@ -571,20 +573,18 @@ export async function flattenedToDecomposedInView(
 			const templateCard = model.metadata.templateCard;
 			const target = {
 				cardId: templateCard.id,
-				portId: repeatedInitialTargets[i]
+				portId: repeatedInitialTarget
 			};
 
 			// Default to fallback values for port position (top right of the card)
 			let x = templateCard.x + 168;
 			let y = templateCard.y;
-
 			// Get the position of the port element
 			const portElement = document.getElementById(`${target.cardId}-${target.portId}`);
 			if (portElement) {
-				x = templateCard.x + portElement.offsetLeft + portElement.offsetWidth / 2;
+				x = templateCard.x + portElement.offsetLeft + portElement.offsetWidth - 10;
 				y = templateCard.y + portElement.offsetTop + portElement.offsetHeight / 2;
 			}
-
 			portPositions.push({ x, y });
 		});
 
@@ -604,7 +604,7 @@ export async function flattenedToDecomposedInView(
 			if (!model.metadata?.templateCard) return;
 			const target = {
 				cardId: model.metadata.templateCard.id,
-				portId: repeatedInitialTargets[i]
+				portId: repeatedInitialTarget
 			};
 			addEdgeInView(
 				decomposedCanvas,
@@ -614,7 +614,7 @@ export async function flattenedToDecomposedInView(
 				interpolatePointsFn
 			);
 		});
-	}
+	});
 }
 
 export function flattenedToDecomposedInKernel(
