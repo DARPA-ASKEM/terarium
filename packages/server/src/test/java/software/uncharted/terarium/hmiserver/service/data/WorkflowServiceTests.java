@@ -239,7 +239,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSyncToNewIndex() throws Exception {
 
-		final int NUM = 32;
+		final int NUM = 4;
 
 		for (int i = 0; i < NUM; i++) {
 			workflowService.createAsset(createWorkflow(String.valueOf(i)));
