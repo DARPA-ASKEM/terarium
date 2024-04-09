@@ -14,7 +14,7 @@
 					</p>
 					<tera-stratification-group-form
 						class="mt-2"
-						:modelNodeOptions="modelNodeOptions"
+						:model-node-options="modelNodeOptions"
 						:config="node.state.strataGroup"
 						@update-self="updateStratifyGroupForm"
 					/>
@@ -155,6 +155,7 @@ import { useToastService } from '@/services/toast';
 import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -327,27 +328,26 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
-	if (modelFramework === 'petrinet' || modelFramework === 'stockflow') {
-		model.states.forEach((state: any) => {
-			modelStates.push(state.id);
+	console.log(semantics);
+	if (
+		(modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) &&
+		semantics?.ode
+	) {
+		const { initials, parameters, observables } = semantics.ode;
+
+		initials?.forEach((i) => {
+			modelStates.push(i.target);
 		});
-
-		if (semantics?.ode?.observables) {
-			semantics.ode.observables.forEach((o) => {
-				modelStates.push(o.id);
-			});
-		}
-
-		if (semantics?.ode?.parameters) {
-			semantics.ode.parameters.forEach((p) => {
-				modelParameters.push(p.id);
-			});
-		}
-	} else if (modelFramework === 'regnet') {
+		parameters?.forEach((p) => {
+			modelParameters.push(p.id);
+		});
+		observables?.forEach((o) => {
+			modelStates.push(o.id);
+		});
+	} else if (modelFramework === AMRSchemaNames.REGNET) {
 		model.vertices.forEach((v) => {
 			modelStates.push(v.id);
 		});
-
 		model.parameters.forEach((p) => {
 			modelParameters.push(p.id);
 		});
