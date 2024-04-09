@@ -244,7 +244,7 @@ public class DatasetController {
 			}
 		}
 
-		return Optional.of(datasetService.updateAsset(dataset.get()));
+		return datasetService.updateAsset(dataset.get());
 	}
 
 	@DeleteMapping("/{id}")
@@ -284,7 +284,8 @@ public class DatasetController {
 
 		try {
 			dataset.setId(id);
-			return ResponseEntity.ok(datasetService.updateAsset(dataset));
+			final Optional<Dataset> updated = datasetService.updateAsset(dataset);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update a dataset";
 			log.error(error, e);
@@ -304,7 +305,8 @@ public class DatasetController {
 	public ResponseEntity<CsvAsset> getCsv(
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
-			@RequestParam(name = "limit", defaultValue = "" + DEFAULT_CSV_LIMIT, required = false) final Integer limit) {
+			@RequestParam(name = "limit", defaultValue = ""
+					+ DEFAULT_CSV_LIMIT, required = false) final Integer limit) {
 
 		final List<List<String>> csv;
 		try {
@@ -356,7 +358,8 @@ public class DatasetController {
 		final PresignedURL presignedURL = url.get();
 		final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
 		final HttpResponse response = httpclient.execute(get);
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
+		final BufferedReader reader = new BufferedReader(
+				new InputStreamReader(response.getEntity().getContent(), "utf-8"));
 
 		String line = null;
 		Integer count = 0;

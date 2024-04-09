@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -123,11 +124,11 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
-	public T deleteAsset(final UUID id) throws IOException {
+	public Optional<T> deleteAsset(final UUID id) throws IOException {
 
-		final T deleted = super.deleteAsset(id);
+		final Optional<T> deleted = super.deleteAsset(id);
 
-		if (!deleted.getTemporary() || deleted.getPublicAsset()) {
+		if (deleted.isPresent() && !deleted.get().getTemporary() || deleted.get().getPublicAsset()) {
 			elasticService.delete(getAssetAlias(), id.toString());
 		}
 
@@ -160,12 +161,16 @@ public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R exte
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to
 	 *                                  temporary
 	 */
-	public T updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
-		final T updated = super.updateAsset(asset);
+		final Optional<T> updated = super.updateAsset(asset);
 
-		if (!updated.getTemporary() && updated.getPublicAsset()) {
-			elasticService.index(getAssetAlias(), updated.getId().toString(), updated);
+		if (updated.isEmpty()) {
+			return Optional.empty();
+		}
+
+		if (!updated.get().getTemporary() && updated.get().getPublicAsset()) {
+			elasticService.index(getAssetAlias(), updated.get().getId().toString(), updated);
 		}
 
 		return updated;

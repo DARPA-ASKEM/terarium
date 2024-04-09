@@ -175,7 +175,8 @@ public class DocumentController {
 			// awareness of who owned this document.
 			document.setUserId(originalDocument.get().getUserId());
 
-			return ResponseEntity.ok(documentAssetService.updateAsset(document));
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -446,7 +447,7 @@ public class DocumentController {
 					extractionResponse.getSuccess().getData(), summaries);
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
-				documentAsset = documentAssetService.updateAsset(documentAsset);
+				documentAsset = documentAssetService.updateAsset(documentAsset).orElseThrow();
 			}
 
 			// add asset to project

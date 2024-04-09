@@ -151,7 +151,8 @@ public class NotebookSessionController {
 
 		try {
 			session.setId(id);
-			return ResponseEntity.ok(sessionService.updateAsset(session));
+			final Optional<NotebookSession> updated = sessionService.updateAsset(session);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update notebook session";
 			log.error(error, e);

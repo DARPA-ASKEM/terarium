@@ -85,14 +85,14 @@ public abstract class TerariumAssetServiceWithoutES<T extends TerariumAsset, R e
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
-	public T deleteAsset(final UUID id) throws IOException {
+	public Optional<T> deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
-			throw new NotFoundException("Asset not found for id: " + asset.get().getId().toString());
+			return Optional.empty();
 		}
 		asset.get().setDeletedOn(Timestamp.from(Instant.now()));
 		repository.save(asset.get());
-		return asset.get();
+		return asset;
 	}
 
 	/**
@@ -119,7 +119,7 @@ public abstract class TerariumAssetServiceWithoutES<T extends TerariumAsset, R e
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to
 	 *                                  temporary
 	 */
-	public T updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
 
@@ -136,7 +136,7 @@ public abstract class TerariumAssetServiceWithoutES<T extends TerariumAsset, R e
 		// Update the related ProjectAsset
 		projectAssetService.updateByAsset(updated);
 
-		return updated;
+		return Optional.of(updated);
 	}
 
 	/**

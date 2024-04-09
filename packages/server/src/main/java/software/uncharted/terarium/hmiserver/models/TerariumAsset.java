@@ -22,7 +22,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 @MappedSuperclass
-public abstract class TerariumAsset implements Serializable {
+public abstract class TerariumAsset implements Serializable, Cloneable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -57,6 +57,10 @@ public abstract class TerariumAsset implements Serializable {
 	private Boolean publicAsset = false;
 
 	public TerariumAsset clone() {
-		return this.clone();
+		try {
+			return (TerariumAsset) super.clone();
+		} catch (final CloneNotSupportedException e) {
+			throw new RuntimeException("Error cloning TerariumAsset", e);
+		}
 	}
 }

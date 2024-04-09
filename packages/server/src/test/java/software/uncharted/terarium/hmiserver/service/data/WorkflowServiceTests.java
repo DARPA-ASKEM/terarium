@@ -98,7 +98,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final Workflow workflow = workflowService.createAsset(createWorkflow());
 		workflow.setName("new name");
 
-		final Workflow updatedWorkflow = workflowService.updateAsset(workflow);
+		final Workflow updatedWorkflow = workflowService.updateAsset(workflow).orElseThrow();
 
 		Assertions.assertEquals(workflow, updatedWorkflow);
 	}

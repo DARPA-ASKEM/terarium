@@ -174,7 +174,8 @@ public class TDSCodeController {
 
 		try {
 			code.setId(codeId);
-			return ResponseEntity.ok(codeService.updateAsset(code));
+			final Optional<Code> updated = codeService.updateAsset(code);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			log.error("Unable to update code resource", e);
 			throw new ResponseStatusException(

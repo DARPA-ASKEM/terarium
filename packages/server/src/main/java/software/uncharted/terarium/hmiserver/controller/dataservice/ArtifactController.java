@@ -137,7 +137,8 @@ public class ArtifactController {
 
 		try {
 			artifact.setId(artifactId);
-			return ResponseEntity.ok(artifactService.updateAsset(artifact));
+			final Optional<Artifact> updated = artifactService.updateAsset(artifact);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "An error occurred while updating artifact";
 			log.error(error, e);

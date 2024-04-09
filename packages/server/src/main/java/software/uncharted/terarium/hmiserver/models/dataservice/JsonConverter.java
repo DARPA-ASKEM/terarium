@@ -27,7 +27,7 @@ public class JsonConverter implements AttributeConverter<Object, String> {
 		try {
 			return objectMapper.readValue(dbData, Object.class);
 		} catch (final IOException e) {
-			throw new RuntimeException("Error converting JSON to List<WorkflowNode>", e);
+			throw new RuntimeException("Error converting JSON to Object", e);
 		}
 	}
 }

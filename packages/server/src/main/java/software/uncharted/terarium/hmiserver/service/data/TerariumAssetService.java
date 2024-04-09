@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.ws.rs.NotFoundException;
-
 import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -118,14 +116,14 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
-	public T deleteAsset(final UUID id) throws IOException {
+	public Optional<T> deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
-			throw new NotFoundException("Asset not found: " + id.toString());
+			return Optional.empty();
 		}
 		asset.get().setDeletedOn(Timestamp.from(Instant.now()));
 		updateAsset(asset.get());
-		return asset.get();
+		return asset;
 	}
 
 	/**
@@ -152,12 +150,12 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to
 	 *                                  temporary
 	 */
-	public T updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
 
 		if (oldAsset.isEmpty()) {
-			throw new NotFoundException("Asset not found: " + asset.getId().toString());
+			return Optional.empty();
 		}
 
 		if (asset.getTemporary() && !oldAsset.get().getTemporary()) {
@@ -170,7 +168,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 		// Update the related ProjectAsset
 		projectAssetService.updateByAsset(asset);
 
-		return asset;
+		return Optional.of(asset);
 	}
 
 	/**

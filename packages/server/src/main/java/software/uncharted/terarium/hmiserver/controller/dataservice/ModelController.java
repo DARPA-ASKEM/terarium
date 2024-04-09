@@ -158,7 +158,8 @@ public class ModelController {
 							if (extractions != null) {
 								model.get().getMetadata().getAttributes().addAll(extractions);
 							} else {
-								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.", documentId);
+								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.",
+										documentId);
 							}
 						}
 					} catch (final Exception e) {
@@ -220,7 +221,8 @@ public class ModelController {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
-			return ResponseEntity.ok(modelService.updateAsset(model));
+			final Optional<Model> updated = modelService.updateAsset(model);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);

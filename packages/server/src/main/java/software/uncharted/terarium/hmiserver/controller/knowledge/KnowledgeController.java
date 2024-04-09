@@ -481,7 +481,7 @@ public class KnowledgeController {
 			model.getHeader().setDescription(card.getDescription());
 			model.getMetadata().setCard(card);
 
-			return ResponseEntity.ok(modelService.updateAsset(model));
+			return ResponseEntity.ok(modelService.updateAsset(model).orElseThrow());
 
 		} catch (final IOException e) {
 			log.error("Unable to get profile model", e);
@@ -598,7 +598,7 @@ public class KnowledgeController {
 			}
 			((ObjectNode) dataset.getMetadata()).set("dataCard", card);
 
-			return ResponseEntity.ok(datasetService.updateAsset(dataset));
+			return ResponseEntity.ok(datasetService.updateAsset(dataset).orElseThrow());
 
 		} catch (final FeignException e) {
 			final String error = "Unable to get profile dataset";

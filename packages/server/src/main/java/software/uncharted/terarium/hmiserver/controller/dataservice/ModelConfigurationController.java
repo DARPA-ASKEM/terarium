@@ -123,8 +123,8 @@ public class ModelConfigurationController {
 
 		try {
 			config.setId(id);
-			return ResponseEntity.ok(modelConfigurationService
-					.updateAsset(config));
+			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update model configuration";
 			log.error(error, e);

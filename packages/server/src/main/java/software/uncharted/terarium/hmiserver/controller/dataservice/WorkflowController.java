@@ -106,7 +106,8 @@ public class WorkflowController {
 			@RequestBody final Workflow workflow) {
 		try {
 			workflow.setId(id);
-			return ResponseEntity.ok(workflowService.updateAsset(workflow));
+			final Optional<Workflow> updated = workflowService.updateAsset(workflow);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update workflow";
 			log.error(error, e);
