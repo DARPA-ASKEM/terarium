@@ -538,12 +538,14 @@ export interface Workflow extends TerariumAsset {
 
 export interface WorkflowEdge {
     id: string;
+    workflowId: string;
     source: WorkflowNode;
     target: WorkflowNode;
 }
 
 export interface WorkflowNode {
     id: string;
+    workflowId: string;
 }
 
 export interface WorkflowOutput<S> extends WorkflowPort {
