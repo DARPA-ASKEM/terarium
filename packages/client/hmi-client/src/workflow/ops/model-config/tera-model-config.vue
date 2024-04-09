@@ -889,22 +889,33 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	knobs.value.initialsMetadata = amr.metadata?.initials ?? {};
 	knobs.value.parametersMetadata = amr.metadata?.parameters ?? {};
 
-	// Append this config to the output.
-	state.name = knobs.value.name;
-	state.description = knobs.value.description;
-	state.initials = knobs.value.initials;
-	state.parameters = knobs.value.parameters;
-	state.timeseries = knobs.value.timeseries;
-	state.initialsMetadata = knobs.value.initialsMetadata;
-	state.parametersMetadata = knobs.value.parametersMetadata;
-	state.tempConfigId = knobs.value.tempConfigId;
-	emit('append-output', {
-		type: ModelConfigOperation.outputs[0].type,
-		label: config.name,
-		value: config.id,
-		isSelected: false,
-		state
-	});
+	// Update output port:
+	const listOfConfigIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
+	// Check if this output already exists
+	if (config.id && listOfConfigIds.includes(config.id)) {
+		// Select the existing output
+		const output = props.node.outputs.find((ele) => ele.value?.[0] === config.id);
+		emit('select-output', output?.id);
+	}
+	// If the output does not already exist
+	if (config.id && !listOfConfigIds.includes(config.id)) {
+		// Append this config to the output.
+		state.name = knobs.value.name;
+		state.description = knobs.value.description;
+		state.initials = knobs.value.initials;
+		state.parameters = knobs.value.parameters;
+		state.timeseries = knobs.value.timeseries;
+		state.initialsMetadata = knobs.value.initialsMetadata;
+		state.parametersMetadata = knobs.value.parametersMetadata;
+		state.tempConfigId = knobs.value.tempConfigId;
+		emit('append-output', {
+			type: ModelConfigOperation.outputs[0].type,
+			label: config.name,
+			value: config.id,
+			isSelected: false,
+			state
+		});
+	}
 	logger.success(`Configuration applied ${config.name}`);
 };
 
