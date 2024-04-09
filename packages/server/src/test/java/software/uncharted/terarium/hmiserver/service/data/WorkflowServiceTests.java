@@ -198,8 +198,8 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		final WorkflowEdge e = mapper.readValue(
 				"{\"id\":\"" + UUID.randomUUID() + "\""
-						+ ", \"source\": " + mapper.writeValueAsString(a)
-						+ ", \"target\": " + mapper.writeValueAsString(b)
+						+ ", \"source\": \"" + a.getId() + "\""
+						+ ", \"target\": \"" + b.getId() + "\""
 						+ ", \"somethingElse\": \"some value\"}",
 				WorkflowEdge.class);
 
