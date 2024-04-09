@@ -709,7 +709,7 @@ export async function reflectFlattenedEditInDecomposedView(
 			const templateCard = findTemplateCardForNewEdge(decomposedCanvas.models, sharedPortId);
 			if (!templateCard) return;
 
-			const portPosition = getPortPosition(templateCard, sharedPortId);
+			const portPosition = getPortPosition(templateCard, sharedPortId); // FIXME: Decomposed ports can't be referenced at this stage since we are in the flattened view
 
 			addJunction(decomposedCanvas, portPosition);
 			decompJunctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;
@@ -733,7 +733,7 @@ export async function reflectFlattenedEditInDecomposedView(
 				flatEdge.target.portId
 			);
 			if (!templateCard) return;
-			const portPosition = getPortPosition(templateCard, flatEdge.target.portId);
+			const portPosition = getPortPosition(templateCard, flatEdge.target.portId); // This works since the card exists in both views and the offset values for the ports are the same
 
 			addEdgeInKernel(
 				kernelManager,
