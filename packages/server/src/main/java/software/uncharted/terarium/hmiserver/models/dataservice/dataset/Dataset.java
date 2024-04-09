@@ -1,12 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
-import java.io.Serial;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -14,6 +9,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+
+import java.io.Serial;
+import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * Represents a dataset document from TDS
@@ -31,6 +30,12 @@ public class Dataset extends TerariumAsset {
 	 **/
 	@TSOptional
 	private String userId;
+
+	/**
+	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
+	 **/
+	@TSOptional
+	private String esgfId;
 
 	/**
 	 * Name of the dataset
@@ -59,10 +64,17 @@ public class Dataset extends TerariumAsset {
 
 	/**
 	 * (Optional) Url from which the dataset can be downloaded/fetched
+	 * TODO: IS THIS NEEDED? IS THIS FROM OLD TDS? https://github.com/DARPA-ASKEM/terarium/issues/3194
 	 **/
 	@TSOptional
 	@JsonAlias("dataset_url")
 	private String datasetUrl;
+
+	/**
+	 *  (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets
+	 */
+	@TSOptional
+	private List<String> datasetUrls;
 
 	/**
 	 * Information regarding the columns that make up the dataset
@@ -74,7 +86,8 @@ public class Dataset extends TerariumAsset {
 	 * (Optional) Unformatted metadata about the dataset
 	 **/
 	@TSOptional
-	private Map<String, Object> metadata;
+	private JsonNode metadata;
+
 
 	/**
 	 * (Optional) Source of dataset

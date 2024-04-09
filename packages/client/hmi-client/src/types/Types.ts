@@ -99,6 +99,11 @@ export interface Grounding {
     context?: { [index: string]: any };
 }
 
+export interface PresignedURL {
+    url: string;
+    method: string;
+}
+
 export interface ResponseDeleted {
     message: string;
 }
@@ -150,12 +155,14 @@ export interface OntologyConcept {
 export interface Dataset extends TerariumAsset {
     name: string;
     userId?: string;
+    esgfId?: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
     datasetUrl?: string;
+    datasetUrls?: string[];
     columns?: DatasetColumn[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     source?: string;
     grounding?: Grounding;
 }
@@ -173,6 +180,7 @@ export interface DatasetColumn {
 export interface AddDocumentAssetFromXDDRequest {
     document: Document;
     projectId: string;
+    domain: string;
 }
 
 export interface AddDocumentAssetFromXDDResponse {
@@ -424,7 +432,7 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     description?: string;
-    overviewContent?: string;
+    overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -511,6 +519,7 @@ export interface Simulation {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
@@ -615,6 +624,13 @@ export interface ExtractionResponseResult {
     started_at: Date;
     job_error: string;
     job_result: any;
+}
+
+export interface ExtractionStatusUpdate {
+    documentId: string;
+    t: number;
+    message: string;
+    error: string;
 }
 
 export interface FunmanPostQueriesRequest {
@@ -768,7 +784,7 @@ export interface OptimizeRequestCiemss {
     timespan: TimeSpan;
     interventions?: OptimizedIntervention;
     stepSize?: number;
-    qoi: string[];
+    qoi: OptimizeQoi;
     riskBound: number;
     initialGuessInterventions: number[];
     boundsInterventions: number[][];
@@ -823,6 +839,11 @@ export interface OptimizeExtra {
     solverMethod?: string;
 }
 
+export interface OptimizeQoi {
+    contexts: string[];
+    method: string;
+}
+
 export interface OptimizedIntervention {
     selection: string;
     paramNames: string[];
@@ -841,6 +862,8 @@ export interface TaskResponse {
     status: TaskStatus;
     output: any;
     additionalProperties: any;
+    stdout: string;
+    stderr: string;
 }
 
 export interface Annotation {
@@ -942,6 +965,7 @@ export interface ModelMetadata {
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
+    gollmExtractions?: any;
     templateCard?: any;
     code_id?: string;
 }
@@ -1303,6 +1327,7 @@ export enum ClientEventType {
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Extraction = "EXTRACTION",
 }
 
 export enum FileType {
@@ -1453,6 +1478,7 @@ export enum WorkflowOperationTypes {
     OptimizeCiemss = "OPTIMIZE_CIEMSS",
     ModelCoupling = "MODEL_COUPLING",
     ModelEdit = "MODEL_EDIT",
+    Regridding = "REGRIDDING",
     Document = "DOCUMENT",
 }
 

@@ -1,29 +1,41 @@
 import _ from 'lodash';
 import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
+import type { WorkflowNode } from '@/types/workflow';
+import type { CalibrateMap } from '@/services/calibrate-workflow';
+
+// export const previewChartSize= (element: HTMLElement) => {
+// }
+
+export const drilldownChartSize = (element: HTMLElement | null) => {
+	if (!element) return { width: 100, height: 270 };
+
+	const parentContainerWidth = (element as HTMLElement).clientWidth - 48;
+	return { width: parentContainerWidth, height: 270 };
+};
 
 /**
  * Function generator for common TA3-operator operations, such add, update, and delete charts
  * The idea is to have a single place to do data manipulations but let the caller retain control
  * via the callback function
  * */
-export const chartActionsProxy = (state: any, updateStateCallback: Function) => {
-	if (!state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
+export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: Function) => {
+	if (!node.state.chartConfigs) throw new Error('Cannot find chartConfigs in state object');
 
 	const addChart = () => {
-		const copy = _.cloneDeep(state);
+		const copy = _.cloneDeep(node.state);
 		copy.chartConfigs.push([]);
 		updateStateCallback(copy);
 	};
 
 	const removeChart = (index: number) => {
-		const copy = _.cloneDeep(state);
+		const copy = _.cloneDeep(node.state);
 		copy.chartConfigs.splice(index, 1);
 		updateStateCallback(copy);
 	};
 
 	const configurationChange = (index: number, config: ChartConfig) => {
-		const copy = _.cloneDeep(state);
+		const copy = _.cloneDeep(node.state);
 		copy.chartConfigs[index] = config.selectedVariable;
 		updateStateCallback(copy);
 	};
@@ -35,32 +47,35 @@ export const chartActionsProxy = (state: any, updateStateCallback: Function) => 
 	};
 };
 
-export const getTimespan = (
-	dataset?: CsvAsset,
-	mapping?: { [key: string]: string }[]
-): TimeSpan => {
+export interface GetTimespanParams {
+	dataset?: CsvAsset;
+	mapping?: CalibrateMap[];
+	timestampColName?: string;
+}
+
+export function getTimespan(params: GetTimespanParams): TimeSpan {
 	let start = 0;
 	let end = 90;
 	// If we have the min/max timestamp available from the csv asset use it
-	if (dataset) {
-		let tVar = 'timestamp';
-		if (mapping) {
+	if (params.dataset) {
+		let tVar = params.timestampColName ?? 'timestamp';
+		if (params.mapping && !params.timestampColName) {
 			// if there's a mapping for timestamp, then the model variable is guaranteed to be 'timestamp'
-			const tMap = mapping.find((m) => m.modelVariable === 'timestamp');
+			const tMap = params.mapping.find((m) => m.modelVariable === 'timestamp');
 			if (tMap) {
 				tVar = tMap.datasetVariable;
 			}
 		}
-		let tIndex = dataset.headers.indexOf(tVar);
+		let tIndex = params.dataset.headers.indexOf(tVar);
 		// if the timestamp column is not found, default to 0 as this is what is assumed to be the default
 		// timestamp column in the pyciemss backend
 		tIndex = tIndex === -1 ? 0 : tIndex;
 
-		start = dataset.stats?.[tIndex].minValue!;
-		end = dataset.stats?.[tIndex].maxValue!;
+		start = params.dataset.stats?.[tIndex].minValue!;
+		end = params.dataset.stats?.[tIndex].maxValue!;
 	}
 	return { start, end };
-};
+}
 
 export const getGraphDataFromDatasetCSV = (
 	dataset: CsvAsset,

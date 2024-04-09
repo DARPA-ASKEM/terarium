@@ -1,15 +1,13 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section class="pl-4 pt-3">
 				<div class="form-section">
-					<h4>Stratify model</h4>
+					<h5>Stratify model</h5>
 					<p>The model will be stratified with the following settings.</p>
 					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 						Note: Code has been executed which may not be reflected here.
@@ -22,21 +20,29 @@
 					/>
 				</div>
 				<template #footer>
-					<Button outlined label="Stratify" size="large" icon="pi pi-play" @click="stratifyModel" />
-					<Button
-						style="margin-right: auto"
-						size="large"
-						severity="secondary"
-						outlined
-						label="Reset"
-						@click="resetModel"
-					/>
+					<div class="flex flex-row gap-2 w-full mb-2">
+						<Button
+							outlined
+							label="Stratify"
+							size="large"
+							icon="pi pi-play"
+							@click="stratifyModel"
+						/>
+						<Button
+							style="margin-right: auto"
+							size="large"
+							severity="secondary"
+							outlined
+							label="Reset"
+							@click="resetModel"
+						/>
+					</div>
 				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section>
-				<p>Code Editor - Python</p>
+				<p class="mt-3 ml-4">Code Editor - Python</p>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -55,6 +61,7 @@
 						size="large"
 						icon="pi pi-play"
 						@click="runCodeStratify"
+						class="ml-4 mb-2"
 					/>
 				</template>
 			</tera-drilldown-section>
@@ -66,9 +73,16 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
+				class="mr-4 mt-3 mb-2"
 			>
 				<div class="h-full">
-					<template v-if="stratifiedAmr">
+					<tera-notebook-error
+						v-if="executeResponse.status === OperatorStatus.ERROR"
+						:name="executeResponse.name"
+						:value="executeResponse.value"
+						:traceback="executeResponse.traceback"
+					/>
+					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
 						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
@@ -80,8 +94,9 @@
 					<Button
 						:disabled="!amr"
 						outlined
+						severity="secondary"
 						size="large"
-						label="Save as new Model"
+						label="Save as new model"
 						@click="isNewModelModalVisible = true"
 					/>
 					<Button label="Close" size="large" @click="emit('close')" />
@@ -89,12 +104,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible">
+	<tera-modal v-if="isNewModelModalVisible" class="save-as-dialog">
 		<template #header>
 			<h4>Save as a new model</h4>
 		</template>
-		<form @submit.prevent>
-			<label for="new-model">Model name</label>
+		<form @submit.prevent class="mt-3">
+			<label for="new-model">What would you like to call it?</label>
 			<InputText
 				id="new-model"
 				type="text"
@@ -115,30 +130,31 @@
 </template>
 
 <script setup lang="ts">
-import type { Model } from '@/types/Types';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import _ from 'lodash';
 import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
+
+import TeraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import _ from 'lodash';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { v4 as uuidv4 } from 'uuid';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useToastService } from '@/services/toast';
 import '@/ace-config';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import type { Model } from '@/types/Types';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -166,7 +182,12 @@ enum StratifyTabs {
 
 const amr = ref<Model | null>(null);
 const stratifiedAmr = ref<Model | null>(null);
-
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 const modelNodeOptions = ref<string[]>([]);
 
 const isNewModelModalVisible = ref(false);
@@ -401,9 +422,6 @@ const runCodeStratify = () => {
 			.register('stream', (data) => {
 				console.log('stream', data);
 			})
-			.register('error', (data) => {
-				logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			})
 			.register('model_preview', (data) => {
 				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
 				// currently no matter what kind of code is run we always get a `model_preview` response.
@@ -414,6 +432,17 @@ const runCodeStratify = () => {
 				if (executedCode) {
 					saveCodeToState(executedCode, true);
 				}
+			})
+			.register('any_execute_reply', (data) => {
+				let status = OperatorStatus.DEFAULT;
+				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+				executeResponse.value = {
+					status,
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
 			});
 	});
 };
@@ -491,5 +520,9 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
+}
+
+.save-as-dialog:deep(section) {
+	width: 40rem;
 }
 </style>

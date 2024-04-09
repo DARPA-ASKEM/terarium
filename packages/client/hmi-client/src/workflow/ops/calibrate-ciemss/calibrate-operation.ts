@@ -1,16 +1,20 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 
-export interface CalibrationOperationStateCiemss {
+export interface CalibrationOperationStateCiemss extends BaseState {
 	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
 
 	inProgressCalibrationId: string;
 	inProgressForecastId: string;
+	errorMessage: { name: string; value: string; traceback: string };
 
 	calibrationId: string;
 	forecastId: string;
+	numIterations: number;
+	numSamples: number;
+	endTime: number;
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -35,7 +39,11 @@ export const CalibrationOperationCiemss: Operation = {
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
 			calibrationId: '',
-			forecastId: ''
+			forecastId: '',
+			errorMessage: { name: '', value: '', traceback: '' },
+			numIterations: 100,
+			numSamples: 100,
+			endTime: 100
 		};
 		return init;
 	}

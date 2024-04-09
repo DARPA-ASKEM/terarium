@@ -26,6 +26,9 @@ export interface INode<T> {
 	height: number;
 	data: T;
 	nodes: INode<T>[];
+	aspectRatio?: number;
+	matrixCols?: number;
+	matrixRows?: number;
 }
 
 export interface IEdge<T> {

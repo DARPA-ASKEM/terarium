@@ -1,12 +1,10 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
-		<section :tabName="SimulateTabs.Wizard">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
+		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
 					<h4>Set simulation parameters</h4>
@@ -35,8 +33,8 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="SimulateTabs.Notebook">
-			<h4>Notebook</h4>
+		<section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
+			<p>Under construction. Use the wizard for now.</p>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -46,6 +44,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<SelectButton
 					:model-value="view"
@@ -59,13 +58,16 @@
 					</template>
 				</SelectButton>
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts">
+					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="{ [selectedRunId]: runResults[selectedRunId] }"
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							@remove="chartProxy.removeChart(idx)"
+							show-remove-button
+							:size="chartSize"
 							color-by-run
 						/>
 						<Button
@@ -112,7 +114,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRunResult, makeForecastJob } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { chartActionsProxy } from '@/workflow/util';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useProjects } from '@/composables/project';
 
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -122,7 +124,7 @@ import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -169,7 +171,10 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateJuliaOperationState) => {
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: SimulateJuliaOperationState) => {
 	emit('update-state', state);
 });
 

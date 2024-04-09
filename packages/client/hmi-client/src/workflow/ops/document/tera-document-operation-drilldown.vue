@@ -1,17 +1,15 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div>
 			<tera-drilldown-section :is-loading="isFetchingPDF">
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<tera-text-editor v-else-if="docText" :initial-text="docText" />
 			</tera-drilldown-section>
-			<tera-drilldown-preview hide-header>
+			<tera-drilldown-preview hide-header class="pt-3 pl-2 pr-4 pb-3">
 				<h5>{{ document?.name }}</h5>
 				<Accordion multiple :active-index="[0, 1, 2]">
 					<AccordionTab v-if="!isEmpty(clonedState.equations)">
@@ -99,7 +97,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['close', 'update-state', 'update-output-port']);

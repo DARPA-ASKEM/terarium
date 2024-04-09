@@ -1,461 +1,418 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
-		<section>
-			<section class="tera-ensemble">
-				<SelectButton
-					:model-value="view"
-					@change="if ($event.value) view = $event.value;"
-					:options="viewOptions"
-					option-value="value"
-				>
-					<template #option="{ option }">
-						<i :class="`${option.icon} p-button-icon-left`" />
-						<span class="p-button-label">{{ option.value }}</span>
-					</template>
-				</SelectButton>
-				<div v-if="view === CalibrateView.Output && runResults" class="simulate-container">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
+		<section :tabName="CalibrateEnsembleTabs.Wizard">
+			<tera-drilldown-section class="ml-3 mr-2 pt-2">
+				<Accordion :multiple="true" :active-index="[0, 1, 2]">
+					<AccordionTab header="Model weights">
+						<div class="model-weights">
+							<!-- Turn this into a horizontal bar chart -->
+							<section>
+								<table class="p-datatable-table">
+									<thead class="p-datatable-thead">
+										<th>Model config ID</th>
+										<th>Weight</th>
+									</thead>
+									<tbody class="p-datatable-tbody">
+										<!-- Index matching listModelLabels and ensembleConfigs-->
+										<tr v-for="(id, i) in listModelLabels" :key="i">
+											<td>
+												{{ id }}
+											</td>
+											<td>
+												<tera-input-number
+													v-model="knobs.ensembleConfigs[i].weight"
+													:min-fraction-digits="0"
+													:max-fraction-digits="7"
+												/>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+								<Button
+									label="Set weights to be equal"
+									class="p-button-sm p-button-outlined ml-2 mt-2"
+									outlined
+									severity="secondary"
+									@click="calculateEvenWeights()"
+								/>
+							</section>
+						</div>
+					</AccordionTab>
+					<AccordionTab header="Mapping">
+						<label> Dataset timestamp column </label>
+						<Dropdown
+							v-model="knobs.timestampColName"
+							:options="datasetColumnNames"
+							placeholder="Timestamp column"
+							class="ml-2"
+						/>
+						<template v-if="knobs.ensembleConfigs.length > 0">
+							<table class="w-full mt-3">
+								<tr>
+									<th class="w-4">Ensemble variables</th>
+									<!-- Index matching listModelLabels and ensembleConfigs-->
+									<th v-for="(element, i) in listModelLabels" :key="i">
+										{{ element }}
+									</th>
+								</tr>
+								<tr>
+									<div class="row-header">
+										<td
+											v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)"
+											:key="i"
+										>
+											{{ element }}
+										</td>
+									</div>
+									<td v-for="i in knobs.ensembleConfigs.length" :key="i">
+										<template
+											v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
+											:key="element"
+										>
+											<Dropdown
+												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
+												:options="allModelOptions[i - 1]?.map((ele) => ele.id)"
+												class="w-full mb-2 mt-2"
+											/>
+										</template>
+									</td>
+								</tr>
+							</table>
+						</template>
+						<Dropdown
+							class="mr-2"
+							v-model="newSolutionMappingKey"
+							:options="datasetColumnNames"
+							placeholder="Variable name"
+						/>
+						<Button
+							class="p-button-sm p-button-outlined"
+							icon="pi pi-plus"
+							label="Add mapping"
+							@click="addMapping"
+						/>
+					</AccordionTab>
+					<AccordionTab header="Additional fields">
+						<table>
+							<thead class="p-datatable-thead">
+								<th>Units</th>
+								<th>Number of particles</th>
+								<th>Number of iterations</th>
+								<th>Solver method</th>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<td>Steps</td>
+								<td>
+									<InputNumber v-model="knobs.extra.numParticles" />
+								</td>
+								<td>
+									<InputNumber v-model="knobs.extra.numIterations" />
+								</td>
+								<td>
+									<Dropdown
+										class="p-inputtext-sm"
+										:options="['dopri5', 'euler']"
+										v-model="knobs.extra.solverMethod"
+										placeholder="Select"
+									/>
+								</td>
+							</tbody>
+						</table>
+					</AccordionTab>
+				</Accordion>
+			</tera-drilldown-section>
+		</section>
+		<section :tabName="CalibrateEnsembleTabs.Notebook">
+			<h4>Notebook</h4>
+		</section>
+		<template #preview>
+			<tera-drilldown-preview
+				title="Calibrate ensemble"
+				:options="outputs"
+				v-model:output="selectedOutputId"
+				@update:selection="onSelection"
+				:is-loading="showSpinner"
+				is-selectable
+				class="mt-3 mr-4 mb-3"
+			>
+				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.chartConfigs"
 						:key="index"
 						:run-results="runResults"
-						:initial-data="csvAsset"
-						:chartConfig="cfg"
+						:chartConfig="{
+							selectedRun: props.node.state.forecastRunId,
+							selectedVariable: cfg
+						}"
 						has-mean-line
-						@configuration-change="chartConfigurationChange(index, $event)"
+						@configuration-change="chartProxy.configurationChange(index, $event)"
+						@remove="chartProxy.removeChart(index)"
+						show-remove-button
+						:size="chartSize"
+						class="mb-2"
 					/>
 					<Button
-						class="add-chart"
-						text
-						:outlined="true"
-						@click="addChart"
+						class="p-button-sm p-button-text"
+						@click="chartProxy.addChart()"
 						label="Add chart"
 						icon="pi pi-plus"
 					/>
-					<Button
-						class="add-chart"
-						title="Saves the current version of the model as a new Terarium asset"
-						@click="showSaveInput = !showSaveInput"
-					>
-						<span class="pi pi-save p-button-icon p-button-icon-left"></span>
-						<span class="p-button-text">Save as</span>
-					</Button>
-					<tera-save-dataset-from-simulation :simulation-run-id="completedRunId" />
-				</div>
-
-				<div v-else-if="view === CalibrateView.Input && node" class="simulate-container">
-					<Accordion :multiple="true" :active-index="[0, 1, 2]">
-						<AccordionTab header="Model Weights">
-							<div class="model-weights">
-								<section class="ensemble-calibration-mode">
-									<label>
-										<input
-											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.EQUALWEIGHTS"
-										/>
-										{{ EnsembleCalibrationMode.EQUALWEIGHTS }}
-									</label>
-									<label>
-										<input
-											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.CALIBRATIONWEIGHTS"
-											:disabled="disabledCalibrationWeights"
-										/>
-										{{ EnsembleCalibrationMode.CALIBRATIONWEIGHTS }}
-									</label>
-									<label>
-										<input
-											type="radio"
-											v-model="ensembleCalibrationMode"
-											:value="EnsembleCalibrationMode.CUSTOM"
-										/>
-										{{ EnsembleCalibrationMode.CUSTOM }}
-									</label>
-								</section>
-								<!-- Turn this into a horizontal bar chart -->
-								<section class="ensemble-calibration-graph">
-									<Chart
-										v-if="
-											ensembleCalibrationMode === EnsembleCalibrationMode.CALIBRATIONWEIGHTS ||
-											ensembleCalibrationMode === EnsembleCalibrationMode.EQUALWEIGHTS
-										"
-										type="bar"
-										:height="200"
-										:data="setBarChartData()"
-										:options="setChartOptions()"
-										:plugins="dataLabelPlugin"
-									/>
-									<table v-else class="p-datatable-table">
-										<thead class="p-datatable-thead">
-											<th>Model Config ID</th>
-											<th>Weight</th>
-										</thead>
-										<tbody class="p-datatable-tbody">
-											<tr v-for="(id, i) in listModelIds" :key="i">
-												<td>
-													{{ id }}
-												</td>
-												<td v-if="customWeights === false">
-													{{ ensembleConfigs[i].weight }}
-												</td>
-												<td v-else>
-													<InputNumber
-														mode="decimal"
-														:min-fraction-digits="0"
-														:max-fraction-digits="7"
-														v-model="ensembleConfigs[i].weight"
-													/>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</section>
-							</div>
-						</AccordionTab>
-						<AccordionTab header="Mapping">
-							<template v-if="ensembleConfigs.length > 0">
-								<table>
-									<tr>
-										<th>Ensemble Variables</th>
-										<th v-for="(element, i) in ensembleConfigs" :key="i">
-											{{ element.id }}
-										</th>
-									</tr>
-									<tr>
-										<div class="row-header">
-											<td
-												v-for="(element, i) in Object.keys(ensembleConfigs[0].solutionMappings)"
-												:key="i"
-											>
-												{{ element }}
-											</td>
-										</div>
-										<td v-for="i in ensembleConfigs.length" :key="i">
-											<template
-												v-for="element in Object.keys(ensembleConfigs[i - 1].solutionMappings)"
-												:key="element"
-											>
-												<Dropdown
-													v-model="ensembleConfigs[i - 1].solutionMappings[element]"
-													:options="allModelOptions[i - 1]"
-												/>
-											</template>
-										</td>
-									</tr>
-								</table>
-							</template>
-
-							<Dropdown
-								style="width: 50%"
-								v-model="newSolutionMappingKey"
-								:options="datasetColumnNames"
-								placeholder="Variable Name"
-							/>
-							<Button
-								class="p-button-sm p-button-outlined"
-								icon="pi pi-plus"
-								label="Add mapping"
-								@click="addMapping"
-							/>
-						</AccordionTab>
-						<AccordionTab header="Time Span">
-							<table>
-								<thead class="p-datatable-thead">
-									<th>Units</th>
-									<th>Number of Samples</th>
-									<th>Number of iterations</th>
-									<th>Total Population</th>
-								</thead>
-								<tbody class="p-datatable-tbody">
-									<td>Steps</td>
-									<td>
-										<InputNumber v-model="extra.numSamples" />
-									</td>
-									<td>
-										<InputNumber v-model="extra.numIterations" />
-									</td>
-									<td>
-										<InputNumber v-model="extra.totalPopulation" />
-									</td>
-								</tbody>
-							</table>
-						</AccordionTab>
-					</Accordion>
-				</div>
-			</section>
-		</section>
+				</section>
+				<tera-progress-spinner
+					v-if="inProgressCalibrationId || inProgressForecastId"
+					:font-size="2"
+					is-centered
+					style="height: 100%"
+				/>
+			</tera-drilldown-preview>
+		</template>
+		<template #footer>
+			<Button
+				:disabled="isRunDisabled"
+				outlined
+				:style="{ marginRight: 'auto' }"
+				label="Run"
+				icon="pi pi-play"
+				@click="runEnsemble"
+			/>
+			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
+			<Button label="Close" @click="emit('close')" />
+		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, shallowRef, computed, watch } from 'vue';
-import { getRunResultCiemss } from '@/services/models/simulation-service';
-import { getModelConfigurationById } from '@/services/model-configurations';
-import { WorkflowNode } from '@/types/workflow';
+import { ref, shallowRef, computed, watch, onMounted } from 'vue';
+import {
+	getRunResultCiemss,
+	makeEnsembleCiemssCalibration
+} from '@/services/models/simulation-service';
 import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import InputNumber from 'primevue/inputnumber';
-import type { CsvAsset, ModelConfiguration, EnsembleModelConfigs } from '@/types/Types';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
-import Chart from 'primevue/chart';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+
+import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/workflow/util';
+import type {
+	CsvAsset,
+	ModelConfiguration,
+	EnsembleModelConfigs,
+	EnsembleCalibrationCiemssRequest,
+	State
+} from '@/types/Types';
+import { RunResults } from '@/types/SimulateConfig';
+import { WorkflowNode } from '@/types/workflow';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 
-const dataLabelPlugin = [ChartDataLabels];
-
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
-enum CalibrateView {
-	Input = 'Input',
-	Output = 'Output'
-}
-enum EnsembleCalibrationMode {
-	EQUALWEIGHTS = 'equalWeights',
-	CALIBRATIONWEIGHTS = 'calibrationWeights',
-	CUSTOM = 'custom'
+enum CalibrateEnsembleTabs {
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 
-const CATEGORYPERCENTAGE = 0.9;
-const BARPERCENTAGE = 0.6;
-const MINBARLENGTH = 1;
+interface BasicKnobs {
+	ensembleConfigs: EnsembleModelConfigs[];
+	extra: EnsembleCalibrateExtraCiemss;
+	forecastRunId: string;
+	timestampColName: string;
+}
 
-const showSaveInput = ref(<boolean>false);
+const knobs = ref<BasicKnobs>({
+	ensembleConfigs: props.node.state.ensembleConfigs ?? [],
+	extra: props.node.state.extra ?? {},
+	forecastRunId: props.node.state.forecastRunId,
+	timestampColName: props.node.state.timestampColName ?? ''
+});
 
-const view = ref(CalibrateView.Input);
-const viewOptions = ref([
-	{ value: CalibrateView.Input, icon: 'pi pi-sign-in' },
-	{ value: CalibrateView.Output, icon: 'pi pi-sign-out' }
-]);
-const listModelIds = computed<string[]>(() => props.node.state.modelConfigIds);
-const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
+const outputs = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+const selectedOutputId = ref<string>();
+const showSpinner = ref(false);
+const isRunDisabled = computed(() => !knobs.value.ensembleConfigs[0]?.weight || !datasetId.value);
+const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
+const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
+
+const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
 const listModelLabels = ref<string[]>([]);
-const ensembleCalibrationMode = ref<string>(EnsembleCalibrationMode.EQUALWEIGHTS);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
-const allModelOptions = ref<string[][]>([]);
-const ensembleConfigs = ref<EnsembleModelConfigs[]>(props.node.state.mapping);
+const allModelOptions = ref<State[][]>([]);
 
-const extra = ref<EnsembleCalibrateExtraCiemss>(props.node.state.extra);
-
-const completedRunId = computed<string>(
-	() => props?.node?.outputs?.[0]?.value?.[0].runId as string
-);
-
-const customWeights = ref<boolean>(false);
-// TODO: Does AMR contain weights? Can i check all inputs have the weights parameter filled in or the calibration boolean checked off?
-const disabledCalibrationWeights = computed(() => true);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-// Tom TODO: Make this generic... its copy paste from node.
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
 	emit('update-state', state);
+});
+
+const calculateEvenWeights = () => {
+	if (!knobs.value.ensembleConfigs) return;
+	const percent = 1 / knobs.value.ensembleConfigs.length;
+	for (let i = 0; i < knobs.value.ensembleConfigs.length; i++) {
+		knobs.value.ensembleConfigs[i].weight = percent;
+	}
 };
 
-const calculateWeights = () => {
-	if (!ensembleConfigs.value) return;
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.EQUALWEIGHTS) {
-		customWeights.value = false;
-		const percent = 1 / ensembleConfigs.value.length;
-		for (let i = 0; i < ensembleConfigs.value.length; i++) {
-			ensembleConfigs.value[i].weight = percent;
-		}
-	}
-	if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CUSTOM) {
-		customWeights.value = true;
-	} else if (ensembleCalibrationMode.value === EnsembleCalibrationMode.CALIBRATIONWEIGHTS) {
-		customWeights.value = false;
-		// TODO: Get weights from AMR
-	}
+const onSelection = (id: string) => {
+	emit('select-output', id);
 };
 
 function addMapping() {
-	for (let i = 0; i < ensembleConfigs.value.length; i++) {
-		ensembleConfigs.value[i].solutionMappings[newSolutionMappingKey.value] = '';
+	for (let i = 0; i < knobs.value.ensembleConfigs.length; i++) {
+		knobs.value.ensembleConfigs[i].solutionMappings[newSolutionMappingKey.value] = '';
 	}
 
 	const state = _.cloneDeep(props.node.state);
-	state.mapping = ensembleConfigs.value;
-
+	state.ensembleConfigs = knobs.value.ensembleConfigs;
 	emit('update-state', state);
 }
 
-const setBarChartData = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	const weights = ensembleConfigs.value.map((element) => element.weight);
-	return {
-		labels: listModelLabels.value,
-		datasets: [
-			{
-				backgroundColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				borderColor: documentStyle.getPropertyValue('--text-color-secondary'),
-				data: weights,
-				categoryPercentage: CATEGORYPERCENTAGE,
-				barPercentage: BARPERCENTAGE,
-				minBarLength: MINBARLENGTH
-			}
-		]
-	};
-};
+const runEnsemble = async () => {
+	if (!datasetId.value || !currentDatasetFileName.value) return;
+	const datasetMapping: { [index: string]: string } = {};
+	datasetMapping[knobs.value.timestampColName] = 'timestamp';
+	// Each key used in the ensemble configs is a dataset column.
+	// add these columns used to the datasetMapping
+	Object.keys(knobs.value.ensembleConfigs[0].solutionMappings).forEach((key) => {
+		datasetMapping[key] = key;
+	});
 
-const setChartOptions = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	return {
-		indexAxis: 'y',
-		maintainAspectRatio: false,
-		aspectRatio: 0.8,
-		plugins: {
-			legend: {
-				display: false
-			},
-			datalabels: {
-				anchor: 'end',
-				align: 'right',
-				formatter: (n: number) => `${Math.round(n * 100)}%`,
-				labels: {
-					value: {
-						font: {
-							size: 12
-						}
-					}
-				}
-			}
+	const calibratePayload: EnsembleCalibrationCiemssRequest = {
+		modelConfigs: knobs.value.ensembleConfigs,
+		timespan: getTimespan({
+			dataset: csvAsset.value,
+			timestampColName: knobs.value.timestampColName
+		}),
+		dataset: {
+			id: datasetId.value,
+			filename: currentDatasetFileName.value,
+			mappings: datasetMapping
 		},
-		scales: {
-			x: {
-				display: false
-			},
-			y: {
-				ticks: {
-					color: documentStyle.getPropertyValue('--text-color-primary')
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
-			}
+		engine: 'ciemss',
+		extra: {
+			num_particles: knobs.value.extra.numParticles,
+			num_iterations: knobs.value.extra.numIterations,
+			solver_method: knobs.value.extra.solverMethod
 		}
 	};
+	const response = await makeEnsembleCiemssCalibration(calibratePayload);
+	if (response?.simulationId) {
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressCalibrationId = response?.simulationId;
+		state.inProgressForecastId = '';
+
+		emit('update-state', state);
+	}
 };
 
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push({ selectedVariable: [], selectedRun: '' } as ChartConfig);
+onMounted(async () => {
+	allModelConfigurations.value = [];
+	const modelConfigurationIds: string[] = [];
+	props.node.inputs.forEach((ele) => {
+		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
+	});
+	if (!modelConfigurationIds) return;
 
-	emit('update-state', state);
-};
+	// Model configuration input
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const { modelConfiguration, modelOptions } = await setupModelInput(id);
+			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
+			if (modelOptions) allModelOptions.value.push(modelOptions);
+		})
+	);
 
-// assume only one run for now
-const watchCompletedRunList = async () => {
-	if (!completedRunId.value) return;
+	// dataset input
+	const { filename, csv } = await setupDatasetInput(datasetId.value);
+	currentDatasetFileName.value = filename;
+	csvAsset.value = csv;
+	datasetColumnNames.value = csv?.headers;
 
-	const output = await getRunResultCiemss(completedRunId.value, 'result.csv');
-	runResults.value = output.runResults;
-};
+	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
 
-watch(
-	() => datasetId.value,
-	async () => {
-		const { filename, csv } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
-		datasetColumnNames.value = csv?.headers;
-	},
-	{ immediate: true }
-);
-
-watch(() => completedRunId.value, watchCompletedRunList, { immediate: true });
-
-watch(
-	[() => ensembleCalibrationMode.value, listModelIds.value],
-	async () => {
-		calculateWeights();
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => listModelIds,
-	async () => {
-		allModelConfigurations.value = [];
-		// Fetch Model Configurations
-		await Promise.all(
-			listModelIds.value.map(async (id) => {
-				const result = await getModelConfigurationById(id);
-				allModelConfigurations.value.push(result);
-			})
-		);
-		allModelOptions.value = [];
+	// initalize ensembleConfigs when its length is less than the amount of models provided to node (- 1 due to dataset, -1 due to last empty )
+	if (knobs.value.ensembleConfigs.length < props.node.inputs.length - 2) {
+		knobs.value.ensembleConfigs = [];
 		for (let i = 0; i < allModelConfigurations.value.length; i++) {
-			const tempList: string[] = [];
-			allModelConfigurations.value[i].configuration.model.states?.forEach((element) => {
-				tempList.push(element.id);
+			knobs.value.ensembleConfigs.push({
+				id: allModelConfigurations.value[i].id as string,
+				solutionMappings: {},
+				weight: 0
 			});
-			allModelConfigurations.value[i].configuration.semantics.ode.observables?.forEach((element) =>
-				tempList.push(element.id)
-			);
-			allModelOptions.value.push(tempList);
 		}
-		calculateWeights();
-		listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+	}
 
-		const state = _.cloneDeep(props.node.state);
-		state.mapping = ensembleConfigs.value;
+	if (knobs.value.ensembleConfigs.some((ele) => ele.weight === 0)) {
+		calculateEvenWeights();
+	}
+});
 
-		emit('update-state', state);
+watch(
+	() => props.node.active,
+	async () => {
+		// Update selected output
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+
+			const state = props.node.state;
+			const output = await getRunResultCiemss(state.forecastRunId, 'result.csv');
+			runResults.value = output.runResults;
+		}
 	},
 	{ immediate: true }
 );
 
 watch(
-	() => extra.value,
+	() => knobs.value,
 	async () => {
 		const state = _.cloneDeep(props.node.state);
-		state.extra = extra.value;
-
+		state.timestampColName = knobs.value.timestampColName;
+		state.extra = knobs.value.extra;
+		state.ensembleConfigs = knobs.value.ensembleConfigs;
 		emit('update-state', state);
 	},
-	{ immediate: true }
+	{ deep: true }
 );
 </script>
 
 <style scoped>
-.add-chart {
-	width: 9em;
-	margin: 0em 1em;
-	margin-bottom: 1em;
-}
-
 .row-header {
 	display: flex;
 	flex-direction: column;
@@ -468,22 +425,6 @@ watch(
 .tera-ensemble {
 	background: white;
 	z-index: 1;
-}
-
-.ensemble-calibration-mode {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 1rem;
-	margin-left: 1rem;
-	min-width: fit-content;
-	padding-right: 3rem;
-}
-
-.ensemble-calibration-graph {
-	/* margin-left: 1rem; */
-	height: 200px;
-	/* width: 80%; */
 }
 
 .model-weights {
@@ -501,7 +442,7 @@ th {
 
 th,
 td {
-	padding-left: 15px;
+	padding-left: 0;
 }
 
 .ensemble-header-label {
@@ -510,26 +451,6 @@ td {
 	margin: 0 1em;
 	font-weight: 700;
 	font-size: 1.75em;
-}
-
-.simulate-container {
-	overflow-y: scroll;
-}
-
-.simulate-chart {
-	margin: 2em 1em;
-}
-
-.sim-tspan-container {
-	display: flex;
-	gap: 1em;
-}
-
-.sim-tspan-group {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	flex-basis: 0;
 }
 
 :deep(.p-inputnumber-input, .p-inputwrapper) {

@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { Initial, ModelParameter } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
@@ -8,7 +8,7 @@ export interface ModelEditCode {
 	timestamp: number;
 }
 
-export interface ModelConfigOperationState {
+export interface ModelConfigOperationState extends BaseState {
 	name: string;
 	description: string;
 	initials: Initial[];
@@ -27,7 +27,7 @@ export const ModelConfigOperation: Operation = {
 	description: 'Create model configurations.',
 	isRunnable: true,
 	inputs: [
-		{ type: 'modelId' },
+		{ type: 'modelId', label: 'Model' },
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],

@@ -1,8 +1,6 @@
 .p-editor-container {
     .p-editor-toolbar {
         background: $editorToolbarBg;
-        border-top-right-radius: $borderRadius;
-        border-top-left-radius: $borderRadius;
 
         &.ql-snow {
             border: $editorToolbarBorder;
@@ -10,11 +8,11 @@
             .ql-stroke {
                 stroke: $editorToolbarIconColor;
             }
-    
+
             .ql-fill {
                 fill: $editorToolbarIconColor;
             }
-    
+
             .ql-picker {
                 .ql-picker-label {
                     border: 0 none;
@@ -26,7 +24,7 @@
                         .ql-stroke {
                             stroke: $editorToolbarIconHoverColor;
                         }
-                
+
                         .ql-fill {
                             fill: $editorToolbarIconHoverColor;
                         }
@@ -40,7 +38,7 @@
                         .ql-stroke {
                             stroke: $editorToolbarIconHoverColor;
                         }
-                
+
                         .ql-fill {
                             fill: $editorToolbarIconHoverColor;
                         }
@@ -55,7 +53,7 @@
 
                         .ql-picker-item {
                             color: $inputListItemTextColor;
-                            
+
                             &:hover {
                                 color: $inputListItemTextHoverColor;
                                 background: $inputListItemHoverBg;

@@ -64,16 +64,49 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				strataTypes.push(strataType as string);
 			}
 		});
+
+		// Calculate aspect ratio for each node based on the transition matrix
+		selection.each((d) => {
+			const BASE_SIZE = 50;
+
+			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
+			const matrixRowLen = transitionMatrix?.length ?? 0;
+			const matrixColLen = transitionMatrix[0]?.length ?? 0;
+
+			d.matrixRows = matrixRowLen;
+			d.matrixCols = matrixColLen;
+
+			// Initialize aspectRatio to 1 in case the matrix is square or empty
+			d.aspectRatio = 1;
+
+			// Check and set the aspect ratio based on the dimensions of the matrix
+			if (matrixRowLen > matrixColLen) {
+				d.aspectRatio = matrixColLen / matrixRowLen;
+				d.width = BASE_SIZE * d.aspectRatio;
+				d.height = BASE_SIZE;
+			} else if (matrixRowLen < matrixColLen) {
+				d.aspectRatio = matrixColLen / matrixRowLen;
+				d.width = BASE_SIZE;
+				d.height = BASE_SIZE / d.aspectRatio;
+			}
+
+			// If either dimension is 0, it could mean that the matrix is not properly formed
+			if (matrixRowLen === 0 || matrixColLen === 0 || d.aspectRatio === 1) {
+				d.width = BASE_SIZE;
+				d.height = BASE_SIZE;
+			}
+		});
+
 		// transitions
 		transitions
 			.append('rect')
 			.classed('shape selectableNode', true)
-			.attr('width', (d) => d.width)
-			.attr('height', (d) => d.height)
+			.attr('width', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.width : d.width))
+			.attr('height', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.height : d.height))
+			.attr('x', (d) => ((d.aspectRatio ?? 1) >= 1 ? -d.width * 0.5 : -d.width * 0.5))
 			.attr('y', (d) => -d.height * 0.5)
-			.attr('x', (d) => -d.width * 0.5)
-			.attr('rx', 6)
-			.attr('ry', 6)
+			// .attr('rx', 6)
+			// .attr('ry', 6)
 			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#ffffff'))
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
@@ -144,29 +177,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 			const matrixRowLen = transitionMatrix.length;
 			const matrixColLen = transitionMatrix[0].length;
-
 			const transitionNode = select(g[idx]);
-
-			for (let i = 1; i < matrixRowLen; i++) {
-				const position = (d.width / matrixColLen) * i;
-
-				transitionNode
-					.append('line')
-					.attr('class', 'gridline')
-					.attr('x1', -d.width * 0.5)
-					.attr('y1', -d.width * 0.5 + position)
-					.attr('x2', d.width * 0.5)
-					.attr('y2', -d.width * 0.5 + position)
-					.attr('stroke', '#ffffffcf');
-				transitionNode
-					.append('line')
-					.attr('class', 'gridline')
-					.attr('y1', -d.width * 0.5)
-					.attr('x1', -d.width * 0.5 + position)
-					.attr('y2', d.width * 0.5)
-					.attr('x2', -d.width * 0.5 + position)
-					.attr('stroke', '#ffffffcf');
-			}
 
 			transitionMatrix.forEach((row, ridx) => {
 				const rowIdx = ridx;
@@ -176,16 +187,35 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 						transitionNode
 							.append('rect')
 							.attr('width', d.width / matrixColLen)
-							.attr('height', d.width / matrixRowLen)
+							.attr('height', d.height / matrixRowLen)
 							.attr('x', -d.width * 0.5 + (d.width / matrixColLen) * colIdx)
-							.attr('y', -d.width * 0.5 + (d.width / matrixRowLen) * rowIdx)
-							.attr('rx', 2)
-							.attr('ry', 2)
+							.attr('y', -d.height * 0.5 + (d.height / matrixRowLen) * rowIdx)
+							// .attr('rx', 2)
+							// .attr('ry', 2)
 							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#8692a4')
 							.style('cursor', 'pointer')
 							.attr('stroke', '#ffffff')
 							.attr('stroke-width', 1);
 					}
+					// Draw label for number of columns
+					// transitionNode
+					// 	.append('text')
+					// 	.attr('x', 0)
+					// 	.attr('y', -d.height * 0.6)
+					// 	.attr('text-anchor', 'middle') // This will center-align the text horizontally
+					// 	.text(matrixColLen)
+					// 	.style('fill', '#cccccc')
+					// 	.style('font-size', '7px');
+
+					// Draw label for number of rows
+					// transitionNode
+					// 	.append('text')
+					// 	.attr('x', (-d.width * d.aspectRatio!) / 2 - 8)
+					// 	.attr('y', (-d.height * d.aspectRatio!) / 2 + 12)
+					// 	.attr('text-anchor', 'right') // This will center-align the text horizontally
+					// 	.text(matrixRowLen)
+					// 	.style('fill', '#cccccc')
+					// 	.style('font-size', '7px');
 				});
 			});
 		});

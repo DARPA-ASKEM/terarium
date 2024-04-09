@@ -1,19 +1,17 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
-		<section :tabName="CalibrateTabs.Wizard">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
+		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Mapping</h4>
+					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
 						<Button
 							class="p-button-sm p-button-text"
-							label="Delete All Mapping"
+							label="Delete all mapping"
 							@click="deleteAllMapping"
 						/>
 						<Column field="modelVariable">
@@ -71,7 +69,7 @@
 					</div>
 				</div>
 				<div class="form-section">
-					<h4>Calibration settings</h4>
+					<h5>Calibration settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="chains">Chains</label>
@@ -112,7 +110,7 @@
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="CalibrateTabs.Notebook">
-			<h4>Notebook</h4>
+			<h5>Notebook</h5>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -121,9 +119,10 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<div class="form-section">
-					<h4>Calibrated parameters</h4>
+					<h5>Calibrated parameters</h5>
 					<table class="p-datatable-table">
 						<thead class="p-datatable-thead">
 							<th>Parameter</th>
@@ -144,13 +143,13 @@
 					</table>
 				</div>
 				<div class="form-section">
-					<h4>Loss function</h4>
+					<h5>Loss function</h5>
 					<div v-if="inProgressSimulationId || selectedRunId" ref="lossPlot"></div>
 				</div>
 				<div class="form-section">
-					<h4>Variables</h4>
+					<h5>Variables</h5>
 					<div>
-						<template v-if="selectedRunId && runResults[selectedRunId]">
+						<section v-if="selectedRunId && runResults[selectedRunId]" ref="outputPanel">
 							<tera-simulate-chart
 								v-for="(cfg, index) of node.state.chartConfigs"
 								:key="index"
@@ -160,8 +159,11 @@
 								:run-type="RunType.Julia"
 								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
+								@remove="chartProxy.removeChart(index)"
+								show-remove-button
+								:size="chartSize"
 							/>
-						</template>
+						</section>
 						<Button
 							class="p-button-sm p-button-text"
 							@click="chartProxy.addChart"
@@ -226,8 +228,8 @@ import { csvParse } from 'd3';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { getTimespan, chartActionsProxy } from '@/workflow/util';
+
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
@@ -284,7 +286,10 @@ const parameterResult = ref<{ [index: string]: any }>();
 const runResults = ref<RunResults>({});
 const runResultParams = ref<Record<string, Record<string, number>>>({});
 
-const chartProxy = chartActionsProxy(props.node.state, (state: CalibrationOperationStateJulia) => {
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateJulia) => {
 	emit('update-state', state);
 });
 
@@ -351,7 +356,7 @@ const makeCalibrateRequest = async () => {
 		},
 		extra: extra.value,
 		engine: 'sciml',
-		timespan: getTimespan(csvAsset.value, mapping.value)
+		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value })
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);
 	return response.simulationId;

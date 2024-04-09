@@ -1,26 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +11,11 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -42,11 +28,11 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/mira")
 @RestController
@@ -57,9 +43,10 @@ public class MiraController {
 	final private ObjectMapper objectMapper;
 	final private ArtifactService artifactService;
 	final private TaskService taskService;
-
-	@Autowired
-	MIRAProxy proxy;
+	final private MIRAProxy proxy;
+	final private StellaToStockflowResponseHandler stellaToStockflowResponseHandler;
+	final private MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
+	final private SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 
 	@Data
 	static public class ModelConversionRequest {
@@ -80,9 +67,7 @@ public class MiraController {
 		return false;
 	}
 
-	final private StellaToStockflowResponseHandler stellaToStockflowResponseHandler;
-	final private MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
-	final private SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
+
 
 	@Data
 	public static class ConversionAdditionalProperties {
@@ -226,7 +211,13 @@ public class MiraController {
 		} catch (final FeignException.NotFound e) { // Handle 404 errors
 			log.info("Could not find resource in the DKG", e);
 			return ResponseEntity.noContent().build();
-		} catch (final Exception e) {
+		} catch (final FeignException e) {
+			final String error = "Unable to fetch DKGs";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
+		catch (final Exception e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();
 		}
@@ -244,9 +235,11 @@ public class MiraController {
 				return ResponseEntity.ok(response.getBody());
 			}
 			return ResponseEntity.internalServerError().build();
-		} catch (final FeignException.NotFound e) { // Handle 404 errors
-			log.info("Could not find resource in the DKG", e);
-			return ResponseEntity.notFound().build();
+		} catch (final FeignException e) {
+			final String error = "An error occurred searching DKGs";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 		} catch (final Exception e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();
@@ -261,7 +254,14 @@ public class MiraController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> reconstructODESemantics(
 			final Object amr) {
-		return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
+		try {
+			return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
+		} catch (final FeignException e) {
+			final String error = "Unable to reconstruct ODE semantics";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 
 	}
 
@@ -269,6 +269,13 @@ public class MiraController {
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(
 			@RequestBody final Curies obj) {
+		try {
 		return ResponseEntity.ok(proxy.entitySimilarity(obj).getBody());
+		} catch (final FeignException e) {
+			final String error = "Unable to fetch entity similarity";
+			final int status = e.status() >=400? e.status(): 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 	}
 }

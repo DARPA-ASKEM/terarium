@@ -1,13 +1,13 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
-export interface SimulateEnsembleCiemssOperationState {
-	modelConfigIds: string[];
+export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	numSamples: number;
 	inProgressSimulationId: string;
+	errorMessage: { name: string; value: string; traceback: string };
 }
 
 export const SimulateEnsembleCiemssOperation: Operation = {
@@ -26,12 +26,12 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: SimulateEnsembleCiemssOperationState = {
-			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
 			numSamples: 40,
-			inProgressSimulationId: ''
+			inProgressSimulationId: '',
+			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	}

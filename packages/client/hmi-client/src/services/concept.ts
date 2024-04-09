@@ -154,6 +154,7 @@ const autoEntityMapping = async (
 	// Take out any duplicates
 	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
 	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
+
 	const allSimilarity = await getEntitySimilarity(
 		distinctSourceGroundings,
 		distinctTargetGroundings
@@ -191,8 +192,8 @@ const autoEntityMapping = async (
 	});
 
 	// for each distinct source, find its highest matching target:
-	const distinctSource = [...new Set(validSources.map((ele) => ele.sourceId))];
-	distinctSource.forEach((distinctSourceId) => {
+	const distinctSources = [...new Set(validSources.map((ele) => ele.sourceId))];
+	distinctSources.forEach((distinctSourceId) => {
 		let currentDistance = -Infinity;
 		let currentTargetId = '';
 		validSources.forEach((source) => {
@@ -210,7 +211,31 @@ const autoEntityMapping = async (
 				});
 			}
 		});
+
+		// Match by string if no target is found
+		if (isEmpty(currentTargetId)) {
+			targetEntities.some((target) => {
+				if (target.id.startsWith(distinctSourceId) || distinctSourceId.startsWith(target.id)) {
+					currentTargetId = target.id;
+					return true; // stops the loop
+				}
+				return false; // continues the loop
+			});
+		}
+
 		result.push({ source: distinctSourceId, target: currentTargetId });
+	});
+
+	// Match id strings for the remainder if source entities that aren't mapped
+	sourceEntities.forEach((source) => {
+		targetEntities.forEach((target) => {
+			if (
+				!distinctSources.includes(source.id) &&
+				(target.id.startsWith(source.id) || source.id.startsWith(target.id))
+			) {
+				result.push({ source: source.id, target: target.id });
+			}
+		});
 	});
 
 	return result;

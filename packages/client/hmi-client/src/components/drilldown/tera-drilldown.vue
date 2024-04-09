@@ -7,9 +7,27 @@
 				:tooltip="tooltip"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
-				>{{ props.title }}
+			>
+				{{ title ?? node.displayName }}
+				<template #inputs>
+					<div class="input-chips">
+						<Chip
+							v-for="(input, index) in node.inputs.filter((input) => input.value)"
+							:key="index"
+							:label="input.label"
+						>
+							<template #icon>
+								<tera-operator-port-icon v-if="input.type" :portType="input.type" />
+							</template>
+						</Chip>
+					</div>
+				</template>
 				<template #actions>
 					<slot name="header-actions" />
+					<tera-operator-annotation
+						:state="node.state"
+						@update-state="(state: any) => emit('update-state', state)"
+					/>
 				</template>
 			</tera-drilldown-header>
 			<tera-columnar-panel>
@@ -38,14 +56,19 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import { WorkflowNode } from '@/types/workflow';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import Chip from 'primevue/chip';
+import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 
 const props = defineProps<{
-	title: string;
+	node: WorkflowNode<any>;
+	title?: string;
 	tooltip?: string;
 	popover?: boolean;
 }>();
 
-const emit = defineEmits(['on-close-clicked']);
+const emit = defineEmits(['on-close-clicked', 'update-state']);
 const slots = useSlots();
 
 /**
@@ -102,7 +125,7 @@ than the main application behind the modal when these render issues come, howeve
 
 main {
 	flex-grow: 1;
-	padding: var(--gap) 1.5rem var(--gap) 1.5rem;
+	padding: 0;
 	gap: var(--gap);
 }
 
@@ -120,5 +143,21 @@ footer {
 	display: flex;
 	justify-content: flex-end;
 	gap: 0.5rem;
+}
+
+.input-chips {
+	display: flex;
+	gap: var(--gap);
+	margin-right: auto;
+	margin-left: var(--gap);
+}
+
+.p-chip {
+	background-color: var(--surface-section);
+	color: var(--text-color-primary);
+}
+
+:deep(.p-chip .p-chip-text) {
+	font-size: var(--font-caption);
 }
 </style>

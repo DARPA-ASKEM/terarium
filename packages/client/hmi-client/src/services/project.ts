@@ -51,7 +51,7 @@ async function update(project: Project): Promise<Project | null> {
 			id,
 			name,
 			description,
-			overviewContent
+			overviewContent: btoa(overviewContent)
 		});
 		const { status, data } = response;
 		if (status !== 200) {

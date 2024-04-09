@@ -8,7 +8,7 @@
 					placeholder="Policy bounds"
 					@focusout="emit('update-self', config)"
 				/>
-				<h4 v-else>{{ props.config.name }}</h4>
+				<h6 v-else>{{ props.config.name }}</h6>
 				<i
 					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
 					:style="'cursor: pointer'"
@@ -40,10 +40,8 @@
 			</div>
 			<div class="label-and-input">
 				<label for="initial-guess">Initial guess</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.initialGuess"
@@ -55,10 +53,8 @@
 		<div class="input-row">
 			<div class="label-and-input">
 				<label for="lower-bound">Lower bound</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.lowerBound"
@@ -67,10 +63,8 @@
 			</div>
 			<div class="label-and-input">
 				<label for="upper-bound">Upper bound</label>
-				<InputNumber
+				<tera-input-number
 					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.upperBound"
@@ -80,9 +74,21 @@
 			<div class="label-and-input">
 				<label for="start-time">Start time</label>
 				<InputNumber
+					:disabled="props.interventionType == InterventionTypes.startTime"
 					class="p-inputtext-sm"
 					inputId="integeronly"
 					v-model="config.startTime"
+					@update:model-value="emit('update-self', config)"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="start-time">Param value</label>
+				<InputNumber
+					:disabled="props.interventionType == InterventionTypes.paramValue"
+					class="p-inputtext-sm"
+					:min-fraction-digits="1"
+					:max-fraction-digits="10"
+					v-model="config.paramValue"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
@@ -96,12 +102,17 @@ import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
-import { InterventionPolicyGroup } from '@/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import {
+	InterventionPolicyGroup,
+	InterventionTypes
+} from '@/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
 	parameterOptions: string[];
 	config: InterventionPolicyGroup;
+	interventionType?: InterventionTypes;
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);

@@ -1,14 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -17,6 +12,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AMRSchemaType
 @Accessors(chain = true)
@@ -57,6 +58,10 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	@JsonProperty("gollmCard")
 	private JsonNode gollmCard;
+
+	@TSOptional
+	@JsonProperty("gollmExtractions")
+	private JsonNode gollmExtractions;
 
 	@TSOptional
 	private List<String> provenance;

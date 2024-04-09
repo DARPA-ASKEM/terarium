@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.ImmutableList;
 import com.google.common.math.Quantiles;
 import com.google.common.math.Stats;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -44,14 +42,11 @@ import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProx
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import ucar.ma2.Array;
-import ucar.nc2.Attribute;
-import ucar.nc2.NetcdfFile;
-import ucar.nc2.NetcdfFiles;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -207,17 +202,21 @@ public class DatasetController {
 		}
 
 		for(final String filename : dataset.get().getFileNames()) {
+			if (!filename.endsWith(".nc")) {
 				try {
-					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId());
-					if(csv == null || csv.isEmpty()){
+					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId(), 1);
+					if (csv == null || csv.isEmpty()) {
 						continue;
 					}
 					updateHeaders(dataset.get(), csv.get(0));
 				} catch (final IOException e) {
-						final String error = "Unable to get dataset CSV for file " + filename;
-						log.error(error, e);
-						continue;
+					final String error = "Unable to get dataset CSV for file " + filename;
+					log.error(error, e);
+					continue;
 				}
+			} else {
+				return dataset;
+			}
 		}
 
 		return datasetService.updateAsset(dataset.get());
@@ -280,15 +279,14 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
 	public ResponseEntity<CsvAsset> getCsv(
-			@PathVariable("id") final UUID datasetId,
-			@RequestParam("filename") final String filename,
-			@RequestParam(name = "limit", defaultValue = "-1", required = false) final Integer limit // -1 means no
-																										// limit
+		@PathVariable("id") final UUID datasetId,
+		@RequestParam("filename") final String filename,
+		@RequestParam(name = "limit", defaultValue = "" + DEFAULT_CSV_LIMIT, required = false) final Integer limit
 	) {
 
 		final List<List<String>> csv;
 		try {
-			csv = getCSVFile(filename, datasetId);
+			csv = getCSVFile(filename, datasetId, limit);
 			if(csv == null){
 				final String error = "Unable to get CSV";
 				log.error(error);
@@ -322,7 +320,7 @@ public class DatasetController {
 		return ResponseEntity.ok(csvAsset);
 	}
 
-	private List<List<String>> getCSVFile(final String filename, final UUID datasetId) throws IOException {
+	private List<List<String>> getCSVFile(final String filename, final UUID datasetId, final Integer limit) throws IOException {
 		String rawCSV = "";
 		final CloseableHttpClient httpclient = HttpClients.custom()
 			.disableRedirectHandling()
@@ -335,7 +333,17 @@ public class DatasetController {
 		final PresignedURL presignedURL = url.get();
 		final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
 		final HttpResponse response = httpclient.execute(get);
-		rawCSV = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
+
+		String line = null;
+		Integer count = 0;
+		while ((line = reader.readLine()) != null) {
+			if (limit > 0 && count > limit) {
+				break;
+			}
+			rawCSV += line + '\n';
+			count++;
+		}
 
 		final List<List<String>> csv;
 		csv = csvToRecords(rawCSV);
@@ -368,16 +376,53 @@ public class DatasetController {
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename) {
-
+		final Optional<Dataset> dataset;
 		try {
-			final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
-			return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final Exception e) {
-			final String error = "Unable to get download url";
+			dataset = datasetService.getAsset(id);
+			if (dataset.isEmpty()) {
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.NOT_FOUND,
+					"Dataset not found");
+			}
+		} catch (final IOException e) {
+			final String error = "Unable to get dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
+		}
+
+		if(dataset.get().getEsgfId() != null && !dataset.get().getEsgfId().isEmpty()
+			&& dataset.get().getDatasetUrls() != null && !dataset.get().getDatasetUrls().isEmpty()){
+
+			String url = dataset.get().getDatasetUrls().stream()
+					.filter(fileUrl -> fileUrl.endsWith(filename))
+					.findFirst()
+					.orElse(null);
+
+			if(url == null){
+				final String error = "The file " + filename + " was not found in the dataset";
+				log.error(error);
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.NOT_FOUND,
+						error);
+			}
+
+			final PresignedURL presigned = new PresignedURL().setUrl(url).setMethod("GET");
+			return ResponseEntity.ok(presigned);
+
+		} else {
+			try {
+				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
+				return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			} catch (final Exception e) {
+				final String error = "Unable to get download url";
+				log.error(error, e);
+				throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+			}
+
 		}
 	}
 
@@ -671,33 +716,36 @@ public class DatasetController {
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename) {
 
-		try {
-			if (filename.endsWith(".nc")) {
-				return climateDataProxy.previewEsgf(id.toString(), null, null, null);
-			} else {
-				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
-				// TODO: This attempts to check the file, but fails to open the file, might need
-				// to write a NetcdfFiles Stream reader
-				try (final NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
-					final ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
-					for (final Attribute attribute : globalAttributes) {
-						final String name = attribute.getName();
-						final Array values = attribute.getValues();
-						// log.info("[{},{}]", name, values);
-					}
-					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
-				} catch (final IOException ioe) {
-					throw new ResponseStatusException(
-							org.springframework.http.HttpStatus.valueOf(415),
-							"Unable to open file");
-				}
-			}
-		} catch (final Exception e) {
-			final String error = "Unable to get download url";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
-		}
+		// Currently `climate-data` service can only work on NetCDF files it knows about
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+
+//		try {
+//			if (filename.endsWith(".nc")) {
+//				return climateDataProxy.previewEsgf(id.toString(), null, null, null);
+//			} else {
+//				final Optional<PresignedURL> url = datasetService.getDownloadUrl(id, filename);
+//				// TODO: This attempts to check the file, but fails to open the file, might need
+//				// to write a NetcdfFiles Stream reader
+//				try (final NetcdfFile ncFile = NetcdfFiles.open(url.get().getUrl())) {
+//					final ImmutableList<Attribute> globalAttributes = ncFile.getGlobalAttributes();
+//					for (final Attribute attribute : globalAttributes) {
+//						final String name = attribute.getName();
+//						final Array values = attribute.getValues();
+//						// log.info("[{},{}]", name, values);
+//					}
+//					return climateDataProxy.previewEsgf(id.toString(), null, null, null);
+//				} catch (final IOException ioe) {
+//					throw new ResponseStatusException(
+//							org.springframework.http.HttpStatus.valueOf(415),
+//							"Unable to open file");
+//				}
+//			}
+//		} catch (final Exception e) {
+//			final String error = "Unable to get download url";
+//			log.error(error, e);
+//			throw new ResponseStatusException(
+//					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+//					error);
+//		}
 	}
 }

@@ -1,15 +1,13 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
-		<section :tabName="SimulateTabs.Wizard">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
+		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Set simulation parameters</h4>
+					<h5>Set simulation parameters</h5>
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
@@ -60,8 +58,8 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="SimulateTabs.Notebook">
-			<h4>Notebook</h4>
+		<section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
+			<p>Under construction. Use the wizard for now.</p>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -71,6 +69,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
+				class="mr-4 ml-4 mt-3 mb-3"
 			>
 				<div class="flex flex-row align-items-center gap-2">
 					What do you want to see?
@@ -87,7 +86,7 @@
 						</template>
 					</SelectButton>
 				</div>
-
+				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
@@ -97,6 +96,8 @@
 							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 							has-mean-line
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
+							@remove="chartProxy.removeChart(idx)"
+							show-remove-button
 							:size="chartSize"
 							class="mb-2"
 						/>
@@ -146,7 +147,7 @@ import {
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { chartActionsProxy } from '@/workflow/util';
+import { chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -155,13 +156,14 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+const emit = defineEmits(['update-state', 'select-output', 'close']);
 
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
@@ -210,14 +212,9 @@ const selectedRunId = computed(
 );
 
 const outputPanel = ref(null);
-const chartSize = computed(() => {
-	if (!outputPanel.value) return { width: 100, height: 270 };
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
-	const parentContainerWidth = (outputPanel.value as HTMLElement).clientWidth - 48;
-	return { width: parentContainerWidth, height: 270 };
-});
-
-const chartProxy = chartActionsProxy(props.node.state, (state: SimulateCiemssOperationState) => {
+const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
 

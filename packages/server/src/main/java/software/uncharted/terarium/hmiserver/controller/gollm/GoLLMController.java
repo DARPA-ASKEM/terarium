@@ -1,19 +1,35 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -25,14 +41,12 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.tasks.*;
+import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
 
 @RequestMapping("/gollm")
 @RestController
@@ -86,7 +100,7 @@ public class GoLLMController {
 			}
 
 			// check for input length
-			if (document.get().getText().length() > 600000) {
+			if (document.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
 				log.warn("Document {} text too long for GoLLM model card task", documentId);
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
 			}
@@ -107,7 +121,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -150,7 +167,8 @@ public class GoLLMController {
 
 			final ConfigureModelResponseHandler.Input input = new ConfigureModelResponseHandler.Input();
 			input.setResearchPaper(document.get().getText());
-			// stripping the metadata from the model before its sent since it can cause gollm to fail with massive inputs
+			// stripping the metadata from the model before its sent since it can cause
+			// gollm to fail with massive inputs
 			model.get().setMetadata(null);
 			input.setAmr(model.get());
 
@@ -168,13 +186,21 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
+	}
+
+	@Data
+	static public class ConfigFromDatasetBody {
+		private String matrixStr = "";
 	}
 
 	@PostMapping("/configure-from-dataset")
@@ -189,7 +215,8 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestBody(required = false) final ConfigFromDatasetBody body) {
 
 		try {
 			// Grab the datasets
@@ -209,7 +236,7 @@ public class GoLLMController {
 				for (final String filename : dataset.get().getFileNames()) {
 					try {
 						final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
-						if (dataset.isPresent()) {
+						if (datasetText.isPresent()) {
 							// ensure unescaped newlines are escaped
 							datasets.add(
 									datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
@@ -232,9 +259,15 @@ public class GoLLMController {
 
 			final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
 			input.setDatasets(datasets);
-			// stripping the metadata from the model before its sent since it can cause gollm to fail with massive inputs
+			// stripping the metadata from the model before its sent since it can cause
+			// gollm to fail with massive inputs
 			model.get().setMetadata(null);
 			input.setAmr(model.get());
+
+			// set matrix string if provided
+			if (body != null && !body.getMatrixStr().isEmpty()) {
+				input.setMatrixStr(body.getMatrixStr());
+			}
 
 			// Create the task
 			final TaskRequest req = new TaskRequest();
@@ -250,7 +283,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
@@ -292,7 +328,7 @@ public class GoLLMController {
 			final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
 			input.setModelCards(modelCards);
 
-			// Create the task
+			// create the task
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(CompareModelsResponseHandler.NAME);
@@ -301,7 +337,10 @@ public class GoLLMController {
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));
 
-		} catch (final Exception e) {
+		} catch (final ResponseStatusException e) {
+			throw e;
+		}
+		catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
 			throw new ResponseStatusException(

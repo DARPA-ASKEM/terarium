@@ -2804,10 +2804,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/eslint-patch@npm:1.7.2":
-  version: 1.7.2
-  resolution: "@rushstack/eslint-patch@npm:1.7.2"
-  checksum: 9a2da86b47bba118ad386417291d3960bc7470f78302be6b38c6b03f28a087e789e875c56a25eb1854779d55cadc167880739b36a540b1824bdb7c71283fd7a1
+"@rushstack/eslint-patch@npm:1.10.1":
+  version: 1.10.1
+  resolution: "@rushstack/eslint-patch@npm:1.10.1"
+  checksum: fdb29ab19f9106eada23d9f46fca7ccc4d15996d2c25ad3a9b8df03d4d105d9a746c3f7d3c7a4a41d89b5de554c3d617ea68205499852426c8fc0f3fd03ebcfa
   languageName: node
   linkType: hard
 
@@ -3890,10 +3890,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ace-builds@npm:1.32.7":
-  version: 1.32.7
-  resolution: "ace-builds@npm:1.32.7"
-  checksum: 9767247cb48079d06e965590ef39ddcec2715638be0f61906d6c3931cbce94596d383f584ebe6074f9dd3c7295cdaffc0ba3409f19c34c1d1291b92e6483bfb2
+"ace-builds@npm:1.32.9":
+  version: 1.32.9
+  resolution: "ace-builds@npm:1.32.9"
+  checksum: 1a8db24712ace427a31f02212efc3c84a3a3e8d2c0db54c52b10c9c4903401e515275239e8ee2acce3323a0b049235cca3ce6aa708fb1ff63591f3cbc8d872b1
   languageName: node
   linkType: hard
 
@@ -4818,6 +4818,15 @@ __metadata:
   dependencies:
     "@kurkle/color": "npm:^0.3.0"
   checksum: 609444dfc9e847e4c891884309d6083464333e39a7266996fa15f622a44d0c5202c20c86b3bfb1d72b3769096f71c80e131860270c39ce1291cac52b9f45dc6d
+  languageName: node
+  linkType: hard
+
+"chartjs-plugin-annotation@npm:3.0.1":
+  version: 3.0.1
+  resolution: "chartjs-plugin-annotation@npm:3.0.1"
+  peerDependencies:
+    chart.js: ">=4.0.0"
+  checksum: 638550f92c6cc948205822f8b8fcfde20769d923a9bff26edd07f58ccfc6f48a456d8307f8cb837f16a7fe86a9c3646914649c77144337ea12d70e99916c9248
   languageName: node
   linkType: hard
 
@@ -7017,20 +7026,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-vue@npm:9.19.2":
-  version: 9.19.2
-  resolution: "eslint-plugin-vue@npm:9.19.2"
+"eslint-plugin-vue@npm:9.24.0":
+  version: 9.24.0
+  resolution: "eslint-plugin-vue@npm:9.24.0"
   dependencies:
     "@eslint-community/eslint-utils": "npm:^4.4.0"
+    globals: "npm:^13.24.0"
     natural-compare: "npm:^1.4.0"
     nth-check: "npm:^2.1.1"
-    postcss-selector-parser: "npm:^6.0.13"
-    semver: "npm:^7.5.4"
-    vue-eslint-parser: "npm:^9.3.1"
+    postcss-selector-parser: "npm:^6.0.15"
+    semver: "npm:^7.6.0"
+    vue-eslint-parser: "npm:^9.4.2"
     xml-name-validator: "npm:^4.0.0"
   peerDependencies:
     eslint: ^6.2.0 || ^7.0.0 || ^8.0.0
-  checksum: 4cadfd71ef2acd2873302b21675951cb6b397b158adc0bf131ae6425fcf1b7a21c0ec989798684e203521e078863f53f8313ab0635c21882b50e2581682e319f
+  checksum: 97c8beaa1af6fb3bc42504d80a6029bdfc9305fe3bdebd1a3cc352cc0300c8011a6c723d1b3f323c5c6b38640001aef277c011885e4ab1e125a7356fa36729c7
   languageName: node
   linkType: hard
 
@@ -7446,10 +7456,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"extended-eventsource@npm:1.4.6":
-  version: 1.4.6
-  resolution: "extended-eventsource@npm:1.4.6"
-  checksum: ceec25589f6575bb49193c820d68a6f766e54f483dfe1d4e231b84a29397f317784c44a787ce7ec6013fd3883c84ca600b8afadffe3c5ca549b178ad5899235e
+"extended-eventsource@npm:1.4.9":
+  version: 1.4.9
+  resolution: "extended-eventsource@npm:1.4.9"
+  checksum: 236922dc2b1936756263373b709fd54c9a158a446615db5ceb4de84583857d14774cdb6eb054f2600c549901dfa70dd86c488a3b432fb7a5a422907a8da25d8a
   languageName: node
   linkType: hard
 
@@ -8146,7 +8156,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:^13.19.0":
+"globals@npm:^13.19.0, globals@npm:^13.24.0":
   version: 13.24.0
   resolution: "globals@npm:13.24.0"
   dependencies:
@@ -8402,7 +8412,7 @@ __metadata:
     "@pinia/testing": "npm:0.1.3"
     "@playwright/experimental-ct-vue": "npm:1.31.2"
     "@playwright/test": "npm:1.31.2"
-    "@rushstack/eslint-patch": "npm:1.7.2"
+    "@rushstack/eslint-patch": "npm:1.10.1"
     "@types/d3": "npm:7.4.3"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:18.19.3"
@@ -8414,19 +8424,20 @@ __metadata:
     "@vitest/coverage-c8": "npm:0.24.5"
     "@vue/runtime-dom": "npm:3.3.13"
     "@vueup/vue-quill": "npm:1.2.0"
-    ace-builds: "npm:1.32.7"
+    ace-builds: "npm:1.32.9"
     axios: "npm:1.6.8"
     chart.js: "npm:4.4.2"
+    chartjs-plugin-annotation: "npm:3.0.1"
     chartjs-plugin-datalabels: "npm:2.2.0"
     chroma-js: "npm:2.4.2"
     d3: "npm:7.8.5"
     dagre: "npm:0.8.5"
     eslint-import-resolver-typescript: "npm:3.6.1"
     event-source-polyfill: "npm:1.0.31"
-    extended-eventsource: "npm:1.4.6"
+    extended-eventsource: "npm:1.4.9"
     feather-icons: "npm:4.29.1"
     graph-scaffolder: "npm:*"
-    katex: "npm:0.16.9"
+    katex: "npm:0.16.10"
     keycloak-js: "npm:22.0.5"
     lodash: "npm:4.17.21"
     mathlive: "npm:0.89.2"
@@ -8443,7 +8454,7 @@ __metadata:
     sass: "npm:1.56.1"
     typescript: "npm:5.3.3"
     uuid: "npm:9.0.1"
-    vite: "npm:5.0.12"
+    vite: "npm:5.0.13"
     vite-svg-loader: "npm:4.0.0"
     vitest: "npm:0.24.5"
     vue: "npm:3.3.13"
@@ -10030,7 +10041,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"katex@npm:0.16.9, katex@npm:^0.16.2":
+"katex@npm:0.16.10":
+  version: 0.16.10
+  resolution: "katex@npm:0.16.10"
+  dependencies:
+    commander: "npm:^8.3.0"
+  bin:
+    katex: cli.js
+  checksum: 367034012311c695791de4553b3e4c7a9f36d126a0cae17b97f4e8832ced2559961f9fa6d39e0116e1374013e12ac8af159eb014678f06b4acf5e547292ea3e5
+  languageName: node
+  linkType: hard
+
+"katex@npm:^0.16.2":
   version: 0.16.9
   resolution: "katex@npm:0.16.9"
   dependencies:
@@ -11740,13 +11762,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-selector-parser@npm:^6.0.13":
-  version: 6.0.15
-  resolution: "postcss-selector-parser@npm:6.0.15"
+"postcss-selector-parser@npm:^6.0.15":
+  version: 6.0.16
+  resolution: "postcss-selector-parser@npm:6.0.16"
   dependencies:
     cssesc: "npm:^3.0.0"
     util-deprecate: "npm:^1.0.2"
-  checksum: cea591e1d9bce60eea724428863187228e27ddaebd98e5ecb4ee6d4c9a4b68e8157fd44c916b3fef1691d19ad16aa416bb7279b5eab260c32340ae630a34e200
+  checksum: 9324f63992c6564d392f9f6b16c56c05f157256e3be2d55d1234f7728252257dfd6b870a65a5d04ee3ceb9d9e7b78c043f630a58c9869b4b0481d6e064edc2cf
   languageName: node
   linkType: hard
 
@@ -12679,6 +12701,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:^7.6.0":
+  version: 7.6.0
+  resolution: "semver@npm:7.6.0"
+  dependencies:
+    lru-cache: "npm:^6.0.0"
+  bin:
+    semver: bin/semver.js
+  checksum: 1b41018df2d8aca5a1db4729985e8e20428c650daea60fcd16e926e9383217d00f574fab92d79612771884a98d2ee2a1973f49d630829a8d54d6570defe62535
+  languageName: node
+  linkType: hard
+
 "send@npm:latest":
   version: 0.18.0
   resolution: "send@npm:0.18.0"
@@ -13438,7 +13471,7 @@ __metadata:
     "@vue/eslint-config-airbnb-with-typescript": "npm:7.0.1"
     eslint: "npm:8.57.0"
     eslint-config-prettier: "npm:8.10.0"
-    eslint-plugin-vue: "npm:9.19.2"
+    eslint-plugin-vue: "npm:9.24.0"
     husky: "npm:8.0.3"
     lint-staged: "npm:13.2.3"
     prettier: "npm:3.1.1"
@@ -14064,9 +14097,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:5.0.12":
-  version: 5.0.12
-  resolution: "vite@npm:5.0.12"
+"vite@npm:5.0.13":
+  version: 5.0.13
+  resolution: "vite@npm:5.0.13"
   dependencies:
     esbuild: "npm:^0.19.3"
     fsevents: "npm:~2.3.3"
@@ -14100,7 +14133,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: ed0bb26a0d0c8e1dae0b70af9e36adffd7e15d80297443fe4da762596dc81570bad7f0291f590a57c1553f5e435338d8c7ffc483bd9431a95c09d9ac90665fad
+  checksum: e0da15142ecbe3e88dbb2682c86c7e468927ea35a04c6a57dae623c575d632f3150a1098905af2da5a598b604a5762bdf45f904d00a2ecc6e93042d904b01077
   languageName: node
   linkType: hard
 
@@ -14236,7 +14269,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-eslint-parser@npm:^9.0.1, vue-eslint-parser@npm:^9.0.3, vue-eslint-parser@npm:^9.3.1":
+"vue-eslint-parser@npm:^9.0.1, vue-eslint-parser@npm:^9.0.3, vue-eslint-parser@npm:^9.4.2":
   version: 9.4.2
   resolution: "vue-eslint-parser@npm:9.4.2"
   dependencies:

@@ -1,6 +1,4 @@
 ---
-version: "3.9"
-
 services:
   hmi-server:
     image: ghcr.io/darpa-askem/hmi-server:latest
@@ -82,8 +80,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      knowledge-middleware-api:
-        condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

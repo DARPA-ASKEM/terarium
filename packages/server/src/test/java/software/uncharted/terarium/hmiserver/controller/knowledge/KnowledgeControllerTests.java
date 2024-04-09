@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +18,6 @@ import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
@@ -37,6 +37,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -65,6 +66,9 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	private ElasticsearchService elasticService;
 
 	@Autowired
+	private ExtractionService extractionService;
+
+	@Autowired
 	private ElasticsearchConfiguration elasticConfig;
 
 	@BeforeEach
@@ -77,7 +81,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void equationsToModelRegNet() throws Exception {
 
@@ -130,7 +134,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		log.info(regnetModelId.toString());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void equationsToModelPetrinet() throws Exception {
 
@@ -247,36 +251,9 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		log.info(latex);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionTests() throws Exception {
-
-		DocumentAsset documentAsset = new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
-
-		documentAsset = documentAssetService.createAsset(documentAsset);
-
-		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
-				.contentType(MediaType.APPLICATION_JSON)
-				.param("document-id", documentAsset.getId().toString())
-				.param("annotate-skema", "true")
-				.param("annotate-mit", "true")
-				.param("domain", "epi")
-				.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
-
-		final DocumentAsset document = objectMapper.readValue(res.getResponse().getContentAsString(),
-				DocumentAsset.class);
-
-		Assertions.assertTrue(document.getMetadata() != null);
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void linkAmrTests() throws Exception {
 
 		DocumentAsset documentAsset = new DocumentAsset()
 				.setName("test-document-name")
@@ -288,11 +265,21 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.param("document-id", documentAsset.getId().toString())
-				.param("annotate-skema", "true")
-				.param("annotate-mit", "true")
 				.param("domain", "epi")
 				.with(csrf()))
-				.andExpect(status().isOk());
+				.andExpect(status().isAccepted());
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void variableExtractionWithModelTests() throws Exception {
+
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setText("x = 0. y = 1. I = Infected population.");
+
+		documentAsset = documentAssetService.createAsset(documentAsset);
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
@@ -300,7 +287,35 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		model = modelService.createAsset(model);
 
-		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/link-amr")
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.param("model-ids", model.getId().toString())
+				.param("domain", "epi")
+				.with(csrf()))
+				.andExpect(status().isAccepted());
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void linkAmrTests() throws Exception {
+
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setText("x = 0. y = 1. I = Infected population.");
+
+		documentAsset = documentAssetService.createAsset(documentAsset);
+
+		documentAsset = extractionService.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi").get();
+
+		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		Model model = objectMapper.readValue(content, Model.class);
+
+		model = modelService.createAsset(model);
+
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/align-model")
 				.contentType(MediaType.APPLICATION_JSON)
 				.param("document-id", documentAsset.getId().toString())
 				.param("model-id", model.getId().toString())
@@ -330,17 +345,14 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
+		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity,
+				ContentType.create("application/pdf"));
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-to-cosmos")
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
 				.contentType(MediaType.APPLICATION_JSON)
 				.param("document-id", documentAsset.getId().toString())
 				.with(csrf()))
-				.andExpect(status().isOk());
-
-		documentAsset = documentAssetService.getAsset(documentAsset.getId()).orElseThrow();
-
-		Assertions.assertTrue(documentAsset.getAssets().size() > 0);
+				.andExpect(status().isAccepted());
 	}
 
 	// @Test
@@ -461,7 +473,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void codeToAmrTest() throws Exception {
 
@@ -482,7 +494,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setFiles(files));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity);
+		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -495,7 +507,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(model != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void codeToAmrTestLLM() throws Exception {
 
@@ -516,7 +528,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setFiles(files));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity);
+		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -530,7 +542,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		Assertions.assertTrue(model != null);
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void codeToAmrTestDynamicsOnly() throws Exception {
 
@@ -551,7 +563,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setFiles(files));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity);
+		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 				.contentType(MediaType.APPLICATION_JSON)

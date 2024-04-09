@@ -1,6 +1,7 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import type { Operation, BaseState } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/workflow';
 
-export interface ModelCouplingState {}
+export interface ModelCouplingState extends BaseState {}
 
 export const ModelCouplingOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_COUPLING,

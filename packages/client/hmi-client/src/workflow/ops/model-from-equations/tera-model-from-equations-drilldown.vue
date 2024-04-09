@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<template #header-actions>
 			<tera-operator-annotation
 				:state="node.state"
@@ -14,11 +18,11 @@
 			/>
 		</template>
 		<tera-drilldown-section :is-loading="assetLoading">
-			<header class="header-group">
+			<header class="header-group ml-4 mt-3">
 				<p>These equations will be used to create your model.</p>
 				<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
 			</header>
-			<ul class="blocks-container">
+			<ul class="blocks-container ml-3">
 				<li v-for="(equation, i) in clonedState.equations" :key="i">
 					<tera-asset-block
 						:is-included="equation.includeInProcess"
@@ -55,7 +59,7 @@
 				</li>
 			</ul>
 			<template #footer>
-				<span>
+				<span class="mb-2">
 					<label>Model framework</label>
 					<Dropdown
 						class="w-full md:w-14rem ml-2"
@@ -70,7 +74,7 @@
 			</template>
 		</tera-drilldown-section>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview class="mt-3 mr-4 mb-2 ml-2">
 				<section v-if="selectedModel">
 					<tera-model-description
 						:model="selectedModel"
@@ -138,7 +142,7 @@ import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+
 import * as textUtils from '@/utils/text';
 import {
 	EquationBlock,

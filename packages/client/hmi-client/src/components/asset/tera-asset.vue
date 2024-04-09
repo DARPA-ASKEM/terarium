@@ -3,7 +3,7 @@
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
-			<aside class="spread-out">
+			<aside class="flex align-items-center">
 				<slot name="edit-buttons" />
 				<Button
 					v-if="featureConfig.isPreview"
@@ -205,11 +205,10 @@ header {
 	height: fit-content;
 	grid-column-start: 2;
 	color: var(--text-color-subdued);
-	padding: var(--gap-small) var(--gap);
+	padding: var(--gap-small) var(--gap-medium);
 	display: flex;
 	gap: var(--gap);
 	align-items: center;
-	border-bottom: 1px solid var(--surface-border-light);
 	background: var(--surface-ground);
 }
 

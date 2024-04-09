@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNumber } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
@@ -111,6 +111,8 @@ const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers
 const matrixType = ref('subjectOutcome');
 const matrixMap = ref<any>();
 const matrix = ref<any>([]);
+
+const currentMatrixtype = ref('');
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
@@ -144,7 +146,11 @@ function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) 
 // See ES2_2a_start in "Eval do not touch"
 // Returns the presentation mathml
 async function getMatrixValue(variableName: string) {
-	const expressionBase = getVariable(props.mmt, variableName).value;
+	let expressionBase = getVariable(props.mmt, variableName).value;
+
+	if (isNumber(expressionBase) && +expressionBase === 0) {
+		expressionBase = '0.0'; // just to ensure we don't trigger falsy checks
+	}
 
 	if (props.shouldEval) {
 		const expressionEval = await pythonInstance.evaluateExpression(
@@ -172,6 +178,12 @@ function generateMatrix() {
 		};
 
 		// Find a default
+		if (currentMatrixtype.value) {
+			matrix.value = matrixMap.value[currentMatrixtype.value];
+			matrixType.value = currentMatrixtype.value;
+			return;
+		}
+
 		for (let i = 0; i < matrixTypes.length; i++) {
 			const typeStr = matrixTypes[i];
 
@@ -191,6 +203,7 @@ async function updateCellValue(variableName: string, rowIdx: number, colIdx: num
 	const newValue = valueToEdit.value;
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
+	currentMatrixtype.value = matrixType.value;
 	emit('update-cell-value', { variableName, newValue, mathml });
 }
 
