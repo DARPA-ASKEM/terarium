@@ -59,6 +59,7 @@
 			<template #data>
 				<tera-canvas-item
 					v-for="(card, index) in cards"
+					ref="cardsRef"
 					:key="card.id"
 					:style="{
 						width: 'fit-content',
@@ -71,6 +72,7 @@
 						:model="currentCanvas.models[index]"
 						is-editable
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
+						:id="card.id"
 						@update-name="
 							(name: string) =>
 								modelTemplatingService.updateDecomposedTemplateNameInKernel(
@@ -82,7 +84,7 @@
 									syncWithMiraModel
 								)
 						"
-						@port-selected="(portId: string) => createNewEdge(card, portId)"
+						@port-selected="(portId: string) => createNewEdge(card.id, portId)"
 						@port-mouseover="
 							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 						"
@@ -177,6 +179,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
 
+const cardsRef = ref();
 const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
@@ -222,8 +225,8 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
-function createNewEdge(card: ModelTemplateCard, portId: string) {
-	const target = { cardId: card.id, portId };
+function createNewEdge(cardId: string, portId: string) {
+	const target = { cardId, portId };
 
 	if (!isCreatingNewEdge.value) {
 		// Find the junction that we want to draw from
@@ -462,7 +465,10 @@ onMounted(() => {
 			decomposedCanvas.value,
 			interpolatePointsForCurve
 		);
+		console.log(cardsRef.value);
 	}
+
+	console.log(decomposedCanvas.value);
 });
 
 onUnmounted(() => {
