@@ -890,15 +890,19 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	knobs.value.parametersMetadata = amr.metadata?.parameters ?? {};
 
 	// Update output port:
+	if (!config.id) {
+		logger.error('Model configuration not found');
+		return;
+	}
 	const listOfConfigIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
 	// Check if this output already exists
-	if (config.id && listOfConfigIds.includes(config.id)) {
+	if (listOfConfigIds.includes(config.id)) {
 		// Select the existing output
 		const output = props.node.outputs.find((ele) => ele.value?.[0] === config.id);
 		emit('select-output', output?.id);
 	}
 	// If the output does not already exist
-	if (config.id && !listOfConfigIds.includes(config.id)) {
+	else {
 		// Append this config to the output.
 		state.name = knobs.value.name;
 		state.description = knobs.value.description;
