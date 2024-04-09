@@ -16,14 +16,16 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 public class WorkflowEdge extends SupportAdditionalProperties implements Serializable {
 
 	private UUID id;
+	private UUID workflowId;
 	private WorkflowNode source;
 	private WorkflowNode target;
 
-	public WorkflowEdge clone() {
+	public WorkflowEdge clone(final UUID workflowId, final WorkflowNode source, final WorkflowNode target) {
 		final WorkflowEdge clone = new WorkflowEdge();
 		clone.setId(UUID.randomUUID());
-		clone.setSource(null); // these are set by Workflow
-		clone.setTarget(null); // these are set by Workflow
+		clone.setWorkflowId(workflowId);
+		clone.setSource(source);
+		clone.setTarget(target);
 		clone.setAdditionalProperties(this.getAdditionalProperties());
 		return clone;
 	}
