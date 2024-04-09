@@ -22,7 +22,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 @MappedSuperclass
-public abstract class TerariumAsset implements Serializable, Cloneable {
+public abstract class TerariumAsset implements Serializable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)

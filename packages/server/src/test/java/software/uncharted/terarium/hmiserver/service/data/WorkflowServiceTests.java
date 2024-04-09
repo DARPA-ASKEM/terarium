@@ -43,18 +43,42 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	}
 
 	Workflow createWorkflow() throws Exception {
+
+		final WorkflowNode a = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode b = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode c = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode d = new WorkflowNode().setId(UUID.randomUUID());
+
+		final WorkflowEdge ab = new WorkflowEdge().setSource(a.getId()).setTarget(b.getId());
+		final WorkflowEdge bc = new WorkflowEdge().setSource(b.getId()).setTarget(c.getId());
+		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
+
 		return (Workflow) new Workflow()
 				.setName("test-workflow-name-0")
 				.setDescription("test-workflow-description-0")
 				.setTransform(new Transform().setX(1).setY(2).setK(3))
+				.setNodes(List.of(a, b, c, d))
+				.setEdges(List.of(ab, bc, cd))
 				.setPublicAsset(true);
 	}
 
 	Workflow createWorkflow(final String key) throws Exception {
+
+		final WorkflowNode a = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode b = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode c = new WorkflowNode().setId(UUID.randomUUID());
+		final WorkflowNode d = new WorkflowNode().setId(UUID.randomUUID());
+
+		final WorkflowEdge ab = new WorkflowEdge().setSource(a.getId()).setTarget(b.getId());
+		final WorkflowEdge bc = new WorkflowEdge().setSource(b.getId()).setTarget(c.getId());
+		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
+
 		return (Workflow) new Workflow()
 				.setName("test-workflow-name-" + key)
 				.setDescription("test-workflow-description-" + key)
 				.setTransform(new Transform().setX(1).setY(2).setK(3))
+				.setNodes(List.of(a, b, c, d))
+				.setEdges(List.of(ab, bc, cd))
 				.setPublicAsset(true);
 	}
 
@@ -65,6 +89,14 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final Workflow workflow = workflowService.createAsset(createWorkflow());
 
 		Assertions.assertNotNull(workflow.getId());
+		Assertions.assertEquals(workflow.getNodes().size(), 4);
+		for (final WorkflowNode node : workflow.getNodes()) {
+			Assertions.assertEquals(workflow.getId(), node.getWorkflowId());
+		}
+		Assertions.assertEquals(workflow.getEdges().size(), 3);
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			Assertions.assertEquals(workflow.getId(), edge.getWorkflowId());
+		}
 	}
 
 	@Test
@@ -120,17 +152,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCloneWorkflow() throws Exception {
 
-		final WorkflowNode a = new WorkflowNode().setId(UUID.randomUUID());
-		final WorkflowNode b = new WorkflowNode().setId(UUID.randomUUID());
-		final WorkflowNode c = new WorkflowNode().setId(UUID.randomUUID());
-		final WorkflowNode d = new WorkflowNode().setId(UUID.randomUUID());
-
-		final WorkflowEdge ab = new WorkflowEdge().setSource(a.getId()).setTarget(b.getId());
-		final WorkflowEdge bc = new WorkflowEdge().setSource(b.getId()).setTarget(c.getId());
-		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
-
 		Workflow workflow = createWorkflow();
-		workflow.setNodes(List.of(a, b, c, d)).setEdges(List.of(ab, bc, cd));
 
 		workflow = workflowService.createAsset(workflow);
 
@@ -139,30 +161,34 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
 		Assertions.assertEquals(workflow.getNodes().size(), cloned.getNodes().size());
 		Assertions.assertNotEquals(workflow.getNodes().get(0).getId(), cloned.getNodes().get(0).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(0).getWorkflowId(),
+				cloned.getNodes().get(0).getWorkflowId());
 		Assertions.assertNotEquals(workflow.getNodes().get(1).getId(), cloned.getNodes().get(1).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(1).getWorkflowId(),
+				cloned.getNodes().get(1).getWorkflowId());
 		Assertions.assertNotEquals(workflow.getNodes().get(2).getId(), cloned.getNodes().get(2).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(2).getWorkflowId(),
+				cloned.getNodes().get(2).getWorkflowId());
 		Assertions.assertNotEquals(workflow.getNodes().get(3).getId(), cloned.getNodes().get(3).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(3).getWorkflowId(),
+				cloned.getNodes().get(3).getWorkflowId());
 		Assertions.assertEquals(workflow.getEdges().size(), cloned.getEdges().size());
 		Assertions.assertNotEquals(workflow.getEdges().get(0).getId(), cloned.getEdges().get(0).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(0).getWorkflowId(),
+				cloned.getEdges().get(0).getWorkflowId());
 		Assertions.assertNotEquals(workflow.getEdges().get(1).getId(), cloned.getEdges().get(1).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(1).getWorkflowId(),
+				cloned.getEdges().get(1).getWorkflowId());
 		Assertions.assertNotEquals(workflow.getEdges().get(2).getId(), cloned.getEdges().get(2).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(2).getWorkflowId(),
+				cloned.getEdges().get(2).getWorkflowId());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanExportAndImportWorkflow() throws Exception {
 
-		final WorkflowNode a = new WorkflowNode().setId(UUID.randomUUID());
-		final WorkflowNode b = new WorkflowNode().setId(UUID.randomUUID());
-		final WorkflowNode c = new WorkflowNode().setId(UUID.randomUUID());
-		final WorkflowNode d = new WorkflowNode().setId(UUID.randomUUID());
-
-		final WorkflowEdge ab = new WorkflowEdge().setSource(a.getId()).setTarget(b.getId());
-		final WorkflowEdge bc = new WorkflowEdge().setSource(b.getId()).setTarget(c.getId());
-		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
-
 		Workflow workflow = createWorkflow();
-		workflow.setNodes(List.of(a, b, c, d)).setEdges(List.of(ab, bc, cd));
 
 		workflow = workflowService.createAsset(workflow);
 
