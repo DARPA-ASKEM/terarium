@@ -189,19 +189,8 @@ async function toggleCollapsedView() {
 	renderGraph();
 }
 
-const modelWithoutTemplateCard = computed(() => {
-	const modelCopy = { ...props.model };
-
-	if (modelCopy?.metadata?.templateCard) {
-		const metadataCopy = { ...modelCopy.metadata };
-		delete metadataCopy.templateCard;
-		modelCopy.metadata = metadataCopy;
-	}
-	return modelCopy;
-});
-
 watch(
-	() => [modelWithoutTemplateCard.value, graphElement.value],
+	() => [props.model.model, props.model?.semantics, graphElement.value],
 	async () => {
 		if (modelType.value === AMRSchemaNames.DECAPODES) return;
 		if (graphElement.value === null) return;
