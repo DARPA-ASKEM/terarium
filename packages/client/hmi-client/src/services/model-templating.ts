@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { nextTick } from 'vue';
 import { cloneDeep, uniq, isEmpty, snakeCase, isEqual } from 'lodash';
 import type { Position } from '@/types/common';
 import type {
@@ -542,25 +543,25 @@ export async function flattenedToDecomposedInView(
 	let yPos = 100;
 	const allInitals: Initial[] = [];
 
-	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
-	await Promise.all(
-		templatesToAdd.map(async (model: Model) => {
-			if (model.semantics?.ode?.initials) {
-				model.metadata = {
-					templateCard: {
-						id: model.header.name,
-						name: model.header.name,
-						x: 100,
-						y: yPos
-					} as ModelTemplateCard
-				};
-				yPos += 200;
+	templatesToAdd.forEach((model: Model) => {
+		if (model.semantics?.ode?.initials) {
+			model.metadata = {
+				templateCard: {
+					id: model.header.name,
+					name: model.header.name,
+					x: 100,
+					y: yPos
+				} as ModelTemplateCard
+			};
+			yPos += 200;
 
-				await addTemplateInView(decomposedCanvas, model);
-				allInitals.push(...model.semantics.ode.initials);
-			}
-		})
-	);
+			addTemplateInView(decomposedCanvas, model);
+			allInitals.push(...model.semantics.ode.initials);
+		}
+	});
+
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await nextTick();
 
 	// Add junctions and edges based on initials
 	// If an initial is repeated create a junction and two edges to connect them
@@ -672,26 +673,26 @@ export async function reflectFlattenedEditInDecomposedView(
 	if (!isReadyToReflect) return;
 
 	// Add decomposed templates from flattened view to decomposed view
+	flattenedCanvas.models
+		.slice(1) // Ignore the first one since it's the previous flattened one, the rest are decomposed
+		.forEach(async (model: Model) => {
+			if (model.metadata?.templateCard) {
+				// Specify position of card for decomposed view (good enough for now)
+				model.metadata.templateCard.x = 100;
+				model.metadata.templateCard.y = 100 + decomposedCanvas.models.length * 200;
+			}
+			addDecomposedTemplateInKernel(
+				kernelManager,
+				decomposedCanvas,
+				model,
+				outputCode,
+				syncWithMiraModel,
+				true
+			);
+		});
+
 	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
-	await Promise.all(
-		flattenedCanvas.models
-			.slice(1) // Ignore the first one since it's the previous flattened one, the rest are decomposed
-			.map(async (model: Model) => {
-				if (model.metadata?.templateCard) {
-					// Specify position of card for decomposed view (good enough for now)
-					model.metadata.templateCard.x = 100;
-					model.metadata.templateCard.y = 100 + decomposedCanvas.models.length * 200;
-				}
-				await addDecomposedTemplateInKernel(
-					kernelManager,
-					decomposedCanvas,
-					model,
-					outputCode,
-					syncWithMiraModel,
-					true
-				);
-			})
-	);
+	await nextTick();
 
 	// Add edges and potential junctions from flattened view to decomposed view
 	flattenedCanvas.junctions.forEach((flatJunction: ModelTemplateJunction) => {
