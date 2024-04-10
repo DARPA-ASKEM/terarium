@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { nextTick } from 'vue';
 import { cloneDeep, uniq, isEmpty, snakeCase, isEqual } from 'lodash';
 import type { Position } from '@/types/common';
 import type {
@@ -514,10 +515,26 @@ export function updateFlattenedTemplateInView(flattenedCanvas: ModelTemplateCanv
 	addTemplateInView(flattenedCanvas, flattenedModel);
 }
 
+// Helper function for finding port position when auto drawing junctions and edges
+function getPortPosition(templateCard: ModelTemplateCard, portId: string) {
+	const cardWidth = 168;
+
+	// Default to fallback values for port position (top right of the card)
+	let x = templateCard.x + cardWidth;
+	let y = templateCard.y;
+	// Get the position of the port element
+	const portElement = document.getElementById(`${templateCard.id}-${portId}`);
+	if (portElement) {
+		x = templateCard.x + portElement.offsetLeft + portElement.offsetWidth - 10;
+		y = templateCard.y + portElement.offsetTop + portElement.offsetHeight / 2;
+	}
+	return { x, y };
+}
+
 /**
  * Flattened to decomposed
  */
-export function flattenedToDecomposedInView(
+export async function flattenedToDecomposedInView(
 	decomposedCanvas: ModelTemplateCanvas,
 	templatesToAdd: Model[],
 	interpolatePointsFn?: Function
@@ -543,9 +560,11 @@ export function flattenedToDecomposedInView(
 		}
 	});
 
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await nextTick();
+
 	// Add junctions and edges based on initials
 	// If an initial is repeated create a junction and two edges to connect them
-	yPos = 100;
 	const repeatedInitialTargets = uniq(
 		allInitals
 			// Remove initials that are not repeated
@@ -556,32 +575,48 @@ export function flattenedToDecomposedInView(
 			.map((initial) => initial.target)
 	);
 
-	for (let i = 0; i < repeatedInitialTargets.length; i++) {
-		const junctionPosition = { x: 100, y: yPos };
-		addJunction(decomposedCanvas, junctionPosition);
-		yPos += 200;
-
+	repeatedInitialTargets.forEach((repeatedInitialTarget) => {
 		// Find cards that have the repeated initial and add edges to its junction
 		const templatesWithRepeatedInitial = decomposedCanvas.models.filter(
 			(model) =>
-				model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTargets[i])
+				model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTarget)
 		);
 
+		// Collect port positions that the junction will be connected to
+		const portPositions: Position[] = [];
 		templatesWithRepeatedInitial.forEach((model: Model) => {
-			if (model.metadata?.templateCard) {
-				const templateCard = model.metadata.templateCard;
-				const junctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;
-				const target = {
-					cardId: templateCard.id,
-					portId: repeatedInitialTargets[i]
-				};
-
-				// Port position is now card position + 168 (width of the card)
-				const portPosition = { x: templateCard.x + 168, y: templateCard.y }; // FIXME: True port positions should be determined, for now this points to the top of the card
-				addEdgeInView(decomposedCanvas, junctionId, target, portPosition, interpolatePointsFn);
-			}
+			if (!model.metadata?.templateCard) return;
+			const templateCard = model.metadata.templateCard;
+			portPositions.push(getPortPosition(templateCard, repeatedInitialTarget));
 		});
-	}
+
+		// Add junction, Y position is the center of the highest and lowest port
+		const portPositionsY = portPositions.map(({ y }) => y);
+		const lowestPortY = Math.min(...portPositionsY);
+		const highestPortY = Math.max(...portPositionsY);
+		const junctionPosition = {
+			x: 200,
+			y: lowestPortY + (highestPortY - lowestPortY) / 2
+		};
+		addJunction(decomposedCanvas, junctionPosition);
+		const junctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;
+
+		// Once junction is added, add edges
+		templatesWithRepeatedInitial.forEach((model: Model, index: number) => {
+			if (!model.metadata?.templateCard) return;
+			const target = {
+				cardId: model.metadata.templateCard.id,
+				portId: repeatedInitialTarget
+			};
+			addEdgeInView(
+				decomposedCanvas,
+				junctionId,
+				target,
+				portPositions[index],
+				interpolatePointsFn
+			);
+		});
+	});
 }
 
 export function flattenedToDecomposedInKernel(
@@ -618,7 +653,7 @@ function findTemplateCardForNewEdge(
 	return templateCard;
 }
 
-export function reflectFlattenedEditInDecomposedView(
+export async function reflectFlattenedEditInDecomposedView(
 	kernelManager: KernelSessionManager,
 	flattenedCanvas: ModelTemplateCanvas,
 	decomposedCanvas: ModelTemplateCanvas,
@@ -656,6 +691,9 @@ export function reflectFlattenedEditInDecomposedView(
 			);
 		});
 
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await nextTick();
+
 	// Add edges and potential junctions from flattened view to decomposed view
 	flattenedCanvas.junctions.forEach((flatJunction: ModelTemplateJunction) => {
 		const sharedPortId = flatJunction.edges[0].target.portId; // The state id shared by all ports is always the first port id
@@ -670,14 +708,16 @@ export function reflectFlattenedEditInDecomposedView(
 			const templateCard = findTemplateCardForNewEdge(decomposedCanvas.models, sharedPortId);
 			if (!templateCard) return;
 
-			addJunction(decomposedCanvas, { x: templateCard.x, y: templateCard.y });
+			const portPosition = getPortPosition(templateCard, sharedPortId); // FIXME: Decomposed ports can't be referenced at this stage since we are in the flattened view
+
+			addJunction(decomposedCanvas, portPosition);
 			decompJunctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;
 
 			addEdgeInView(
 				decomposedCanvas,
 				decompJunctionId,
 				{ cardId: templateCard.id, portId: sharedPortId },
-				{ x: templateCard.x + 168, y: templateCard.y }, // FIXME: True port positions should be determined, for now this points to the top of the card
+				portPosition,
 				interpolatePointsFn
 			);
 		}
@@ -692,6 +732,7 @@ export function reflectFlattenedEditInDecomposedView(
 				flatEdge.target.portId
 			);
 			if (!templateCard) return;
+			const portPosition = getPortPosition(templateCard, flatEdge.target.portId); // This works since the card will exist in both views and the offset values for the ports are the same
 
 			addEdgeInKernel(
 				kernelManager,
@@ -699,7 +740,7 @@ export function reflectFlattenedEditInDecomposedView(
 				decompJunctionId,
 				{ cardId: templateCard.id, portId: flatEdge.target.portId },
 				{ cardId: '', portId: '' },
-				{ x: templateCard.x + 168, y: templateCard.y }, // FIXME: True port positions should be determined, for now this points to the top of the card
+				portPosition,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsFn

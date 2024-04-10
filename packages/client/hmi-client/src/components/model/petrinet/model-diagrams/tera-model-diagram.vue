@@ -14,6 +14,9 @@
 								@click="resetZoom"
 								label="Reset zoom"
 								class="p-button-sm p-button-outlined"
+								style="background-color: var(--gray-50)"
+								onmouseover="this.style.backgroundColor='--gray-100';"
+								onmouseout="this.style.backgroundColor='(--gray-50)';"
 								severity="secondary"
 							/>
 							<Button
@@ -21,6 +24,9 @@
 								:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
 								:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
 								class="p-button-sm p-button-outlined"
+								style="background-color: var(--gray-50)"
+								onmouseover="this.style.backgroundColor='--gray-100';"
+								onmouseout="this.style.backgroundColor='(--gray-50)';"
 								severity="secondary"
 							/>
 						</span>
@@ -48,16 +54,18 @@
 						</span>
 					</template>
 				</Toolbar>
-				<tera-model-type-legend v-if="model" class="legend-anchor" :model="model" />
-				<div v-if="model" class="graph-container">
-					<div ref="graphElement" class="graph-element" />
-					<div class="legend">
-						<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
-							<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
-							{{ label }}
+				<template v-if="model">
+					<tera-model-type-legend class="legend-anchor" :model="model" />
+					<div class="graph-container">
+						<div ref="graphElement" class="graph-element" />
+						<div class="legend">
+							<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
+								<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
+								{{ label }}
+							</div>
 						</div>
 					</div>
-				</div>
+				</template>
 			</section>
 		</TeraResizablePanel>
 		<div
@@ -84,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -181,29 +189,19 @@ async function toggleCollapsedView() {
 	renderGraph();
 }
 
-// Render graph whenever a new model is fetched or whenever the HTML element
-// that we render the graph to changes.
-// Consider just watching the model
 watch(
-	[() => props.model, graphElement],
+	() => [props.model.model, props.model?.semantics, graphElement.value],
 	async () => {
 		if (modelType.value === AMRSchemaNames.DECAPODES) return;
 		if (graphElement.value === null) return;
-
 		// FIXME: inefficient, do not constant call API in watch
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 		await renderGraph();
 	},
-	{ deep: true }
+	{ immediate: true, deep: true }
 );
-
-onMounted(async () => {
-	const response: any = await getMMT(props.model);
-	mmt.value = response.mmt;
-	mmtParams.value = response.template_params;
-});
 
 onUnmounted(() => {});
 </script>
