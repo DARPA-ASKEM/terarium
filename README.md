@@ -52,6 +52,32 @@ brew install yarn
 brew install ansible
 ```
 
+<details>
+<summary><b>Windows Subsystem Linux Setup</b></summary>
+Instructions for users on a Windows System
+
+### Install WSL 
+Download from Windows Store App / [Website](https://apps.microsoft.com/home?hl=en-US&gl=US) a WSL developer tools app version you prefer to work with.
+
+In the Windows Command Prompt Terminal enter this to change the sudo password for WSL user.
+```shell
+wsl --user root
+passwd <username>
+```
+
+### Install Dependencies
+
+In the WSL Terminal input these commands to install the dependencies (Ubuntu install commands).
+```shell
+sudo apt-get upgrade
+sudo apt-get install build-essential
+sudo apt install openjdk-17-jre-headless
+sudo apt install gradle
+sudo apt install python3-pip
+python3 -m pip install --user ansible
+```
+</details>
+
 ### Ansible Vault Password File
 
 You will need to have the ansible askem vault password in your home directory in a file named `askem-vault-id.txt`. You can find this file in the ASKEM TERArium (Shared External) drive on Google Drive. **This file is not included in the repository for security reasons. Please contact the team for access to this file.**

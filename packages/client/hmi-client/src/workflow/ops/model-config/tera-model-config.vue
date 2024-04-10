@@ -70,7 +70,7 @@
 										<Button
 											class="use-button"
 											label="Apply configuration values"
-											@click="useSuggestedConfig(data)"
+											@click="applyConfigValues(data)"
 											text
 										/>
 									</template>
@@ -873,7 +873,8 @@ const initialize = async () => {
 	}
 };
 
-const useSuggestedConfig = (config: ModelConfiguration) => {
+const applyConfigValues = (config: ModelConfiguration) => {
+	const state = cloneDeep(props.node.state);
 	const amr = config.configuration;
 
 	knobs.value.name = config.name;
@@ -887,6 +888,38 @@ const useSuggestedConfig = (config: ModelConfiguration) => {
 	knobs.value.timeseries = amr.metadata?.timeseries ?? {};
 	knobs.value.initialsMetadata = amr.metadata?.initials ?? {};
 	knobs.value.parametersMetadata = amr.metadata?.parameters ?? {};
+
+	// Update output port:
+	if (!config.id) {
+		logger.error('Model configuration not found');
+		return;
+	}
+	const listOfConfigIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
+	// Check if this output already exists
+	if (listOfConfigIds.includes(config.id)) {
+		// Select the existing output
+		const output = props.node.outputs.find((ele) => ele.value?.[0] === config.id);
+		emit('select-output', output?.id);
+	}
+	// If the output does not already exist
+	else {
+		// Append this config to the output.
+		state.name = knobs.value.name;
+		state.description = knobs.value.description;
+		state.initials = knobs.value.initials;
+		state.parameters = knobs.value.parameters;
+		state.timeseries = knobs.value.timeseries;
+		state.initialsMetadata = knobs.value.initialsMetadata;
+		state.parametersMetadata = knobs.value.parametersMetadata;
+		state.tempConfigId = knobs.value.tempConfigId;
+		emit('append-output', {
+			type: ModelConfigOperation.outputs[0].type,
+			label: config.name,
+			value: config.id,
+			isSelected: false,
+			state
+		});
+	}
 	logger.success(`Configuration applied ${config.name}`);
 };
 
