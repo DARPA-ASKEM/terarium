@@ -54,16 +54,18 @@
 						</span>
 					</template>
 				</Toolbar>
-				<tera-model-type-legend v-if="model" class="legend-anchor" :model="model" />
-				<div v-if="model" class="graph-container">
-					<div ref="graphElement" class="graph-element" />
-					<div class="legend">
-						<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
-							<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
-							{{ label }}
+				<template v-if="model">
+					<tera-model-type-legend class="legend-anchor" :model="model" />
+					<div class="graph-container">
+						<div ref="graphElement" class="graph-element" />
+						<div class="legend">
+							<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
+								<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
+								{{ label }}
+							</div>
 						</div>
 					</div>
-				</div>
+				</template>
 			</section>
 		</TeraResizablePanel>
 		<div
@@ -187,11 +189,10 @@ async function toggleCollapsedView() {
 	renderGraph();
 }
 
-// Render graph whenever a new model is fetched or whenever the HTML element
-// that we render the graph to changes.
+// Render graph whenever a new model is fetched or whenever the HTML element where we render the graph to changes.
 // Consider just watching the model
 watch(
-	[() => props.model, graphElement],
+	() => [props.model.model, props.model?.semantics, graphElement.value],
 	async () => {
 		if (modelType.value === AMRSchemaNames.DECAPODES) return;
 		if (graphElement.value === null) return;
