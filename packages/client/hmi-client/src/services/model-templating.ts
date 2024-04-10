@@ -215,12 +215,12 @@ export function prepareDecomposedTemplateAddition(canvas: ModelTemplateCanvas, m
 	return decomposedTemplateToAdd;
 }
 
-export async function addTemplateInView(canvas: ModelTemplateCanvas, model: Model) {
+export function addTemplateInView(canvas: ModelTemplateCanvas, model: Model) {
 	if (model.metadata) model.metadata.templateCard.id = uuidv4();
 	canvas.models.push(model);
 }
 
-export async function addDecomposedTemplateInKernel(
+export function addDecomposedTemplateInKernel(
 	kernelManager: KernelSessionManager,
 	canvas: ModelTemplateCanvas,
 	model: Model,
@@ -675,7 +675,7 @@ export async function reflectFlattenedEditInDecomposedView(
 	// Add decomposed templates from flattened view to decomposed view
 	flattenedCanvas.models
 		.slice(1) // Ignore the first one since it's the previous flattened one, the rest are decomposed
-		.forEach(async (model: Model) => {
+		.forEach((model: Model) => {
 			if (model.metadata?.templateCard) {
 				// Specify position of card for decomposed view (good enough for now)
 				model.metadata.templateCard.x = 100;
