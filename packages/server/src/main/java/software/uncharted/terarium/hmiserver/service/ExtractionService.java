@@ -500,6 +500,9 @@ public class ExtractionService {
 
 				final String modelString = objectMapper.writeValueAsString(model);
 
+				if (document.getMetadata() == null) {
+					document.setMetadata(new HashMap<>());
+				}
 				if (document.getMetadata().get("attributes") == null) {
 					throw new RuntimeException("No attributes found in document");
 				}
