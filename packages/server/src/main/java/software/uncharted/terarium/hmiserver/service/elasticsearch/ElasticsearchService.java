@@ -19,12 +19,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.Refresh;
@@ -92,6 +94,20 @@ public class ElasticsearchService {
 			builder = builder.basicAuthentication(config.getUsername(), config.getPassword());
 		}
 		this.restTemplate = builder.build();
+	}
+
+	@ExceptionHandler(ElasticsearchException.class)
+	public ResponseEntity<String> handleElasticsearchException(final ElasticsearchException e) {
+		String error = "ElasticsearchException: " + e.response().error().reason();
+		if (e.response().error().rootCause() != null && e.response().error().rootCause().size() > 0) {
+			error += ", root cause: " + e.response().error().rootCause().toString();
+		}
+		final ErrorCause causedBy = e.response().error().causedBy();
+		if (causedBy != null) {
+			error += ", caused by: " + causedBy.reason();
+		}
+		log.error(error, e);
+		throw new RuntimeException(error);
 	}
 
 	@PostConstruct

@@ -12,8 +12,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import co.elastic.clients.elasticsearch._types.FieldSort;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -107,14 +113,16 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	 * @throws IOException If there is an error retrieving the assets
 	 */
 	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query) throws IOException {
-
-		final SearchRequest req = new SearchRequest.Builder()
+		final SearchRequest.Builder builder = new SearchRequest.Builder()
 				.index(getAssetAlias())
 				.from(page)
-				.size(pageSize)
-				.query(q -> q.bool(b -> b
-						.must(query)))
-				.build();
+				.size(pageSize);
+
+		if (query != null) {
+			builder.query(query);
+		}
+
+		final SearchRequest req = builder.build();
 		return elasticService.search(req, assetClass);
 	}
 
@@ -147,6 +155,24 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
 			elasticService.index(getAssetAlias(), created.getId().toString(), created);
+		}
+
+		return created;
+	}
+
+	/**
+	 * Create new assets.
+	 *
+	 * @param assets The assets to create
+	 * @return The created asset
+	 * @throws IOException If there is an error creating the asset
+	 */
+	@SuppressWarnings("unchecked")
+	public List<T> createAssets(final List<T> assets) throws IOException {
+		final List<T> created = super.createAssets(assets);
+
+		if (created.size() > 0) {
+			elasticService.bulkIndex(getAssetAlias(), (List<TerariumAsset>) created);
 		}
 
 		return created;
@@ -283,6 +309,70 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 
 			page++;
 		} while (rows.hasNext());
+	}
+
+	public void migrateOldESDataToSQL() throws IOException {
+		final String index = getCurrentAssetIndex();
+		final int PAGE_SIZE = 256;
+		String lastId = null;
+
+		log.info("Migrating from ES index {} to SQL...", index);
+
+		if (!elasticService.containsIndex(index)) {
+			throw new RuntimeException("No index found: " + index);
+		}
+
+		final long count = elasticService.count(index);
+		if (count == 0) {
+			throw new RuntimeException("No assets found in index: " + index);
+		}
+
+		final String SORT_FIELD = "createdOn";
+
+		while (true) {
+			final SearchRequest.Builder reqBuilder = new SearchRequest.Builder()
+					.index(index)
+					.size(PAGE_SIZE)
+					.sort(new SortOptions.Builder()
+							.field(new FieldSort.Builder().field(SORT_FIELD).order(SortOrder.Asc).build()).build());
+
+			if (lastId != null) {
+				reqBuilder.searchAfter(FieldValue.of(SORT_FIELD), FieldValue.of(lastId));
+			}
+
+			final SearchRequest req = reqBuilder
+					.build();
+
+			final SearchResponse<T> resp = elasticService.getClient().search(req, assetClass);
+
+			final String pageLastId = null;
+			final List<T> assets = new ArrayList<>();
+			for (final Hit<T> hit : resp.hits().hits()) {
+				lastId = hit.sort().get(0).toString();
+
+				final T asset = hit.source();
+				if (asset == null) {
+					log.warn("Null document payload for id: {}, skipping", hit.id());
+					continue;
+				}
+				if (asset.getId() == null || asset.getId().toString() != hit.id()) {
+					asset.setId(UUID.fromString(hit.id()));
+				}
+				assets.add(hit.source());
+			}
+
+			if (assets.size() > 0) {
+				repository.saveAll(assets);
+			}
+
+			if (pageLastId == null || lastId == pageLastId || assets.size() < PAGE_SIZE) {
+				break;
+			}
+		}
+
+		// once we have transfered all the assets from ES to SQL, the ids will be
+		// different and we need to re-sync.
+		syncAllAssetsToNewIndex();
 	}
 
 }

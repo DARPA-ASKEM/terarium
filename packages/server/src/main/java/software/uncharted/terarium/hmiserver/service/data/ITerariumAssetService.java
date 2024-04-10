@@ -17,6 +17,8 @@ public interface ITerariumAssetService<T extends TerariumAsset> {
 
 	public T createAsset(final T asset) throws IOException;
 
+	public List<T> createAssets(final List<T> asset) throws IOException;
+
 	public Optional<T> updateAsset(final T asset) throws IOException;
 
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException;

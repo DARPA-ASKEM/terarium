@@ -103,11 +103,27 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	 * @throws IOException If there is an error creating the asset
 	 */
 	public T createAsset(final T asset) throws IOException {
-		final UUID id = UUID.randomUUID();
-		asset.setId(id);
-		asset.setCreatedOn(Timestamp.from(Instant.now()));
-
+		if (assetExists(asset.getId())) {
+			throw new IllegalArgumentException("Asset already exists for id:" + asset.getId());
+		}
 		return repository.save(asset);
+	}
+
+	/**
+	 * Create new assets.
+	 *
+	 * @param assets The assets to create
+	 * @return The created asset
+	 * @throws IOException If there is an error creating the asset
+	 */
+	public List<T> createAssets(final List<T> assets) throws IOException {
+		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
+		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
+		if (existing.size() > 0) {
+			throw new IllegalArgumentException(
+					"Asset already exists for id:" + ids.stream().map(UUID::toString).toList());
+		}
+		return repository.saveAll(assets);
 	}
 
 	/**

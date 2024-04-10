@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -134,11 +136,32 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IOException If there is an error creating the asset
 	 */
 	public T createAsset(final T asset) throws IOException {
-		final UUID id = UUID.randomUUID();
-		asset.setId(id);
+		if (elasticService.contains(getAssetIndex(), asset.getId().toString())) {
+			throw new ResponseStatusException(
+					HttpStatus.CONFLICT, "Asset already exists with ID: " + asset.getId());
+		}
 		asset.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
 		return asset;
+	}
+
+	/**
+	 * Create new assets and saves to ES
+	 *
+	 * @param asset The asset to create
+	 * @return The created asset
+	 * @throws IOException If there is an error creating the asset
+	 */
+	public List<T> createAssets(final List<T> assets) throws IOException {
+		for (final T asset : assets) {
+			if (elasticService.contains(getAssetIndex(), asset.getId().toString())) {
+				throw new ResponseStatusException(
+						HttpStatus.CONFLICT, "Asset already exists with ID: " + asset.getId());
+			}
+			asset.setCreatedOn(Timestamp.from(Instant.now()));
+			elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
+		}
+		return assets;
 	}
 
 	/**
