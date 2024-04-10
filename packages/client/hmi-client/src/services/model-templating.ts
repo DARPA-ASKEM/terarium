@@ -214,12 +214,12 @@ export function prepareDecomposedTemplateAddition(canvas: ModelTemplateCanvas, m
 	return decomposedTemplateToAdd;
 }
 
-export function addTemplateInView(canvas: ModelTemplateCanvas, model: Model) {
+export async function addTemplateInView(canvas: ModelTemplateCanvas, model: Model) {
 	if (model.metadata) model.metadata.templateCard.id = uuidv4();
 	canvas.models.push(model);
 }
 
-export function addDecomposedTemplateInKernel(
+export async function addDecomposedTemplateInKernel(
 	kernelManager: KernelSessionManager,
 	canvas: ModelTemplateCanvas,
 	model: Model,
@@ -544,7 +544,7 @@ export async function flattenedToDecomposedInView(
 
 	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
 	await Promise.all(
-		templatesToAdd.map((model: Model) => {
+		templatesToAdd.map(async (model: Model) => {
 			if (model.semantics?.ode?.initials) {
 				model.metadata = {
 					templateCard: {
@@ -556,10 +556,9 @@ export async function flattenedToDecomposedInView(
 				};
 				yPos += 200;
 
-				addTemplateInView(decomposedCanvas, model);
+				await addTemplateInView(decomposedCanvas, model);
 				allInitals.push(...model.semantics.ode.initials);
 			}
-			return Promise.resolve();
 		})
 	);
 
@@ -677,13 +676,13 @@ export async function reflectFlattenedEditInDecomposedView(
 	await Promise.all(
 		flattenedCanvas.models
 			.slice(1) // Ignore the first one since it's the previous flattened one, the rest are decomposed
-			.map((model: Model) => {
+			.map(async (model: Model) => {
 				if (model.metadata?.templateCard) {
 					// Specify position of card for decomposed view (good enough for now)
 					model.metadata.templateCard.x = 100;
 					model.metadata.templateCard.y = 100 + decomposedCanvas.models.length * 200;
 				}
-				addDecomposedTemplateInKernel(
+				await addDecomposedTemplateInKernel(
 					kernelManager,
 					decomposedCanvas,
 					model,
@@ -691,7 +690,6 @@ export async function reflectFlattenedEditInDecomposedView(
 					syncWithMiraModel,
 					true
 				);
-				return Promise.resolve();
 			})
 	);
 
