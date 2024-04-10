@@ -14,6 +14,9 @@
 								@click="resetZoom"
 								label="Reset zoom"
 								class="p-button-sm p-button-outlined"
+								style="background-color: var(--gray-50)"
+								onmouseover="this.style.backgroundColor='--gray-100';"
+								onmouseout="this.style.backgroundColor='(--gray-50)';"
 								severity="secondary"
 							/>
 							<Button
@@ -21,6 +24,9 @@
 								:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
 								:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
 								class="p-button-sm p-button-outlined"
+								style="background-color: var(--gray-50)"
+								onmouseover="this.style.backgroundColor='--gray-100';"
+								onmouseout="this.style.backgroundColor='(--gray-50)';"
 								severity="secondary"
 							/>
 						</span>
