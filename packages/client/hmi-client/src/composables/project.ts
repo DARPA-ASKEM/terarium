@@ -254,6 +254,7 @@ export function useProjects() {
 
 	return {
 		activeProject,
+		activeProjectId,
 		allProjects,
 		projectLoading,
 		get,
