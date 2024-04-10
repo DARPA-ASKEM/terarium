@@ -51,11 +51,15 @@ public class WorkflowService extends TerariumAssetServiceWithES<Workflow, Workfl
 	@Override
 	public Optional<Workflow> updateAsset(final Workflow asset) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
-		for (final WorkflowNode node : asset.getNodes()) {
-			node.setWorkflowId(asset.getId());
+		if ((asset.getNodes() != null && asset.getNodes().size() > 0)) {
+			for (final WorkflowNode node : asset.getNodes()) {
+				node.setWorkflowId(asset.getId());
+			}
 		}
-		for (final WorkflowEdge edge : asset.getEdges()) {
-			edge.setWorkflowId(asset.getId());
+		if ((asset.getEdges() != null && asset.getEdges().size() > 0)) {
+			for (final WorkflowEdge edge : asset.getEdges()) {
+				edge.setWorkflowId(asset.getId());
+			}
 		}
 		return super.updateAsset(asset);
 	}
