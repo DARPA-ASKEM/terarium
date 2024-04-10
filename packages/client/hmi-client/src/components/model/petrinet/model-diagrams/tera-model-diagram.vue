@@ -205,6 +205,7 @@ watch(
 	async () => {
 		if (modelType.value === AMRSchemaNames.DECAPODES) return;
 		if (graphElement.value === null) return;
+		// FIXME: inefficient, do not constant call API in watch
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
