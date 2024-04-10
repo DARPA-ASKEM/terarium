@@ -11,6 +11,7 @@ end_of_line = lf
 indent_style = tab
 indent_size = 2
 insert_final_newline = true
+max_line_length = off
 trim_trailing_whitespace = true
 
 [*.java]
