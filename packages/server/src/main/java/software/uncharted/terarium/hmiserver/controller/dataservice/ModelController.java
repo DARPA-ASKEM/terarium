@@ -134,6 +134,9 @@ public class ModelController {
 						final Optional<DocumentAsset> document = documentAssetService
 							.getAsset(UUID.fromString(documentId));
 						if (document.isPresent()) {
+							if (document.get().getMetadata() == null) {
+								document.get().setMetadata(new HashMap<>());
+							}
 							final List<JsonNode> extractions = objectMapper.convertValue(
 								document.get().getMetadata().get("attributes"), new TypeReference<>() {
 								});
