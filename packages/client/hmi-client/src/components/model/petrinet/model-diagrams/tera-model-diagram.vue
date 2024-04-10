@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -189,14 +189,29 @@ async function toggleCollapsedView() {
 	renderGraph();
 }
 
-onMounted(async () => {
-	if (modelType.value === AMRSchemaNames.DECAPODES) return;
-	if (graphElement.value === null) return;
-	const response: any = await getMMT(props.model);
-	mmt.value = response.mmt;
-	mmtParams.value = response.template_params;
-	await renderGraph();
+const modelWithoutTemplateCard = computed(() => {
+	const modelCopy = { ...props.model };
+
+	if (modelCopy?.metadata?.templateCard) {
+		const metadataCopy = { ...modelCopy.metadata };
+		delete metadataCopy.templateCard;
+		modelCopy.metadata = metadataCopy;
+	}
+	return modelCopy;
 });
+
+watch(
+	() => [modelWithoutTemplateCard.value, graphElement.value],
+	async () => {
+		if (modelType.value === AMRSchemaNames.DECAPODES) return;
+		if (graphElement.value === null) return;
+		const response: any = await getMMT(props.model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+		await renderGraph();
+	},
+	{ immediate: true, deep: true }
+);
 
 onUnmounted(() => {});
 </script>
