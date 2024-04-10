@@ -8,6 +8,13 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
+/**
+ * This class integrates with Jackson to support additional untyped properties.
+ * Any property that is not explicitly typed on the class will be stored behind
+ * the scenes in a map. This preserves them through serialization /
+ * deserialization. This is useful for semi-blackbox types where we have certain
+ * concrete fields that we know of, and other dynamic fields we don't.
+ */
 public class SupportAdditionalProperties {
 
 	@TSIgnore

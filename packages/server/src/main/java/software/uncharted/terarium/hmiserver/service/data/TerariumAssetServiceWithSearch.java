@@ -30,10 +30,10 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
  */
 @Service
 @Slf4j
-public abstract class TerariumAssetServiceWithES<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
-		extends TerariumAssetServiceWithoutES<T, R> {
+public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
+		extends TerariumAssetServiceWithoutSearch<T, R> {
 
-	public TerariumAssetServiceWithES(
+	public TerariumAssetServiceWithSearch(
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
