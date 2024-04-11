@@ -33,16 +33,15 @@ import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 /**
- * Base class for services that manage TerariumAssets with syncing to
- * Elasticsearch.
- *
- * @param <T> The type of asset this service manages
- * @param <R> The respository of the asset this service manages
+ * When migated asset services to use postgres as the central storage, this will
+ * migrate existing
+ * data from elasticsearch into the postgres table, storing the result of the
+ * migration in pg so it doesn't do it multiple times.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TerariumAssetEsToPGMigration {
+public class DataMigrationESToPG {
 
 	private final ElasticsearchConfiguration elasticConfig;
 	private final ElasticsearchService elasticService;
@@ -72,13 +71,18 @@ public class TerariumAssetEsToPGMigration {
 
 		void migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
 			// check if there is a target index to migrate from
-			if (!elasticService.indexExists(index) || elasticService.count(index) == 0) {
-				return;
+			if (!elasticService.indexExists(index)) {
+				throw new RuntimeException("Index " + index + " does not exist");
+			}
+
+			if (elasticService.count(index) == 0) {
+				throw new RuntimeException("Index " + index + " has no documents");
 			}
 
 			// check if the data has already been migrated
 			final int PAGE_SIZE = 256;
-			String lastId = null;
+			Long lastId = null;
+			Long lastPagesLastId = null;
 
 			log.info("Migrating from ES index {} to SQL...", index);
 
@@ -92,19 +96,18 @@ public class TerariumAssetEsToPGMigration {
 								.field(new FieldSort.Builder().field(SORT_FIELD).order(SortOrder.Asc).build()).build());
 
 				if (lastId != null) {
-					reqBuilder.searchAfter(FieldValue.of(SORT_FIELD), FieldValue.of(lastId));
+					reqBuilder.searchAfter(FieldValue.of(lastId));
 				}
 
 				final SearchRequest req = reqBuilder
 						.build();
 
-				final SearchResponse<T> resp = elasticService.getClient().search(req,
+				final SearchResponse<T> resp = elasticService.searchWithResponse(req,
 						service.getAssetClass());
 
-				final String pageLastId = null;
 				final List<T> assets = new ArrayList<>();
 				for (final Hit<T> hit : resp.hits().hits()) {
-					lastId = hit.sort().get(0).toString();
+					lastId = hit.sort().get(0).longValue();
 
 					final T asset = hit.source();
 					if (asset == null) {
@@ -118,12 +121,17 @@ public class TerariumAssetEsToPGMigration {
 				}
 
 				if (assets.size() > 0) {
+					log.info("Saving {} rows to SQL...", assets.size());
 					service.getRepository().saveAll(assets);
 				}
 
-				if (pageLastId == null || lastId == pageLastId || assets.size() < PAGE_SIZE) {
+				if (lastId == lastPagesLastId || assets.size() < PAGE_SIZE) {
 					break;
 				}
+
+				// track the last id of the page to ensure we aren't just pulling the same page
+				// over and over
+				lastPagesLastId = lastId;
 			}
 		}
 	}
@@ -155,10 +163,11 @@ public class TerariumAssetEsToPGMigration {
 				migrationRecord.setState(MigrationState.SUCCESS);
 				migrationRepository.save(migrationRecord);
 
-				log.info("Migrated es index {} to pg table: {} succesfully", migration.getIndex(), tableName);
+				log.info("Migrated ES index {} to PG table {} successfully", migration.getIndex(), tableName);
 
 			} catch (final Exception e) {
-				log.warn("Failed to migrate data from ES to PG for index: {}", migration.getIndex(), e);
+				log.warn("Failed to migrate data from ES index {} to PG table {}", migration.getIndex(), tableName,
+						e);
 
 				final DataMigration migrationRecord = new DataMigration();
 				migrationRecord.setTableName(tableName);
