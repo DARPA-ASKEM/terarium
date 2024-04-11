@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -137,8 +135,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	public T createAsset(final T asset) throws IOException {
 		if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
-			throw new ResponseStatusException(
-					HttpStatus.CONFLICT, "Asset already exists with ID: " + asset.getId());
+			throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
 		}
 		asset.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
@@ -155,8 +152,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	public List<T> createAssets(final List<T> assets) throws IOException {
 		for (final T asset : assets) {
 			if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
-				throw new ResponseStatusException(
-						HttpStatus.CONFLICT, "Asset already exists with ID: " + asset.getId());
+				throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
 			}
 			asset.setCreatedOn(Timestamp.from(Instant.now()));
 			elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
