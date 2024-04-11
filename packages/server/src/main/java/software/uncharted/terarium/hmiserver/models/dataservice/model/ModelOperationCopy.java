@@ -1,25 +1,23 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
+import java.io.Serial;
+import java.io.Serializable;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 @Data
 @Accessors(chain = true)
 public class ModelOperationCopy extends SupportAdditionalProperties implements Serializable {
-	@Serial
-	private static final long serialVersionUID = -7385762829927577921L;
+  @Serial private static final long serialVersionUID = -7385762829927577921L;
 
-	private Long left;
+  private Long left;
 
-	private String name;
+  private String name;
 
-	private String description;
+  private String description;
 
-	private String framework;
+  private String framework;
 
-	private String content;
+  private String content;
 }

@@ -12,35 +12,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
-
 @RequestMapping("/tgpt")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 public class TGPTController {
-	private final ObjectMapper mapper;
+  private final ObjectMapper mapper;
 
-	@Value("${tgpt.base.url}")
-	String baseUrl;
+  @Value("${tgpt.base.url}")
+  String baseUrl;
 
-	@Value("${tgpt.app.url}")
-	String appUrl;
+  @Value("${tgpt.app.url}")
+  String appUrl;
 
-	@Value("${tgpt.ws.url}")
-	String wsUrl;
+  @Value("${tgpt.ws.url}")
+  String wsUrl;
 
-	@Value("${tgpt.token}")
-	String token;
+  @Value("${tgpt.token}")
+  String token;
 
-	@GetMapping("/configuration")
-	@Secured(Roles.USER)
-	public ResponseEntity<ObjectNode> getConfiguration() {
-		return ResponseEntity.ok(
-			mapper.createObjectNode()
-				.put("baseUrl", baseUrl)
-				.put("appUrl", appUrl)
-				.put("wsUrl", wsUrl)
-				.put("token", token)
-		);
-	}
+  @GetMapping("/configuration")
+  @Secured(Roles.USER)
+  public ResponseEntity<ObjectNode> getConfiguration() {
+    return ResponseEntity.ok(
+        mapper
+            .createObjectNode()
+            .put("baseUrl", baseUrl)
+            .put("appUrl", appUrl)
+            .put("wsUrl", wsUrl)
+            .put("token", token));
+  }
 }

@@ -6,10 +6,8 @@ import lombok.Data;
 @Data
 public class SimulationStatusMessage {
 
-	private String status;
+  private String status;
 
-	@JsonAlias("error_msg")
-	private String errorMsg;
-
-
+  @JsonAlias("error_msg")
+  private String errorMsg;
 }

@@ -8,11 +8,9 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class KnownEntitiesCounts {
 
-    @JsonAlias("askem_object")
-    private Integer askemObjectCount;
+  @JsonAlias("askem_object")
+  private Integer askemObjectCount;
 
-    @JsonAlias("url_extractions")
-    private Integer urlExtractionCount;
-
-
+  @JsonAlias("url_extractions")
+  private Integer urlExtractionCount;
 }

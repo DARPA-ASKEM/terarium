@@ -6,6 +6,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
+import java.io.Serial;
+import java.io.Serializable;
+import java.sql.Types;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -16,13 +21,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.sql.Types;
-import java.util.List;
-import java.util.Map;
-
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
@@ -30,60 +28,57 @@ import java.util.Map;
 @Entity
 public class Project extends TerariumAsset implements Serializable {
 
-	@Serial
-	private static final long serialVersionUID = -241733670076432802L;
+  @Serial private static final long serialVersionUID = -241733670076432802L;
 
+  @Schema(defaultValue = "My New Project")
+  private String name;
 
-	@Schema(defaultValue = "My New Project")
-	private String name;
+  private String userId;
 
-	private String userId;
+  @TSOptional
+  @Transient
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private String userName;
 
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private String userName;
+  @TSOptional
+  @Transient
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private List<String> authors;
 
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private List<String> authors;
+  @TSOptional
+  @Schema(defaultValue = "My Project Description")
+  private String description;
 
-	@TSOptional
-	@Schema(defaultValue = "My Project Description")
-	private String description;
+  @TSOptional
+  @Schema(defaultValue = "My Project Overview")
+  @Lob
+  @JdbcTypeCode(Types.BINARY)
+  private byte[] overviewContent;
 
-	@TSOptional
-	@Schema(defaultValue = "My Project Overview")
-	@Lob
-	@JdbcTypeCode(Types.BINARY)
-	private byte[] overviewContent;
+  @OneToMany(mappedBy = "project")
+  @Where(clause = "deleted_on IS NULL")
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  @ToString.Exclude
+  @JsonManagedReference
+  private List<ProjectAsset> projectAssets;
 
-	@OneToMany(mappedBy = "project")
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
-	@JsonManagedReference
-	private List<ProjectAsset> projectAssets;
+  @TSOptional
+  @Transient
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
+  private Map<String, String> metadata;
 
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	private Map<String, String> metadata;
+  /** Information for the front-end to display/filter the project accordingly. */
+  @TSOptional
+  @Transient
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private Boolean publicProject;
 
-	/**
-	 * Information for the front-end to display/filter the project accordingly.
-	 */
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private Boolean publicProject;
-
-	/**
-	 * Information for the front-end to enable/disable features based on user permissions (Read/Write).
-	 */
-	@TSOptional
-	@Transient
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private String userPermission;
+  /**
+   * Information for the front-end to enable/disable features based on user permissions
+   * (Read/Write).
+   */
+  @TSOptional
+  @Transient
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private String userPermission;
 }

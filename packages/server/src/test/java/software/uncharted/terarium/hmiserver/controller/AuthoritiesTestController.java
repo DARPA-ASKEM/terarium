@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/test/authorities")
 public class AuthoritiesTestController {
 
-	@GetMapping("/hasCreateUsers")
-	@PreAuthorize("hasAuthority('CREATE_USERS')")
-	public ResponseEntity<String> hasCreateUsers() {
-		return ResponseEntity.ok("hasCreateUsers");
-	}
+  @GetMapping("/hasCreateUsers")
+  @PreAuthorize("hasAuthority('CREATE_USERS')")
+  public ResponseEntity<String> hasCreateUsers() {
+    return ResponseEntity.ok("hasCreateUsers");
+  }
 
-	@GetMapping("/hasRoleAdmin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<String> hasRoleAdmin() {
-		return ResponseEntity.ok("hasRoleAdmin");
-	}
+  @GetMapping("/hasRoleAdmin")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<String> hasRoleAdmin() {
+    return ResponseEntity.ok("hasRoleAdmin");
+  }
 }

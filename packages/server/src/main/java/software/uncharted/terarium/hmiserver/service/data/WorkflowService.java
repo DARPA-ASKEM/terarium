@@ -7,15 +7,18 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
-public class WorkflowService extends TerariumAssetService<Workflow>{
+public class WorkflowService extends TerariumAssetService<Workflow> {
 
+  public WorkflowService(
+      final ElasticsearchConfiguration elasticConfig,
+      final Config config,
+      final ElasticsearchService elasticService,
+      final ProjectAssetService projectAssetService) {
+    super(elasticConfig, config, elasticService, projectAssetService, Workflow.class);
+  }
 
-	public WorkflowService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService) {
-		super(elasticConfig, config, elasticService, projectAssetService, Workflow.class);
-	}
-
-	@Override
-	protected String getAssetIndex() {
-		return elasticConfig.getWorkflowIndex();
-	}
+  @Override
+  protected String getAssetIndex() {
+    return elasticConfig.getWorkflowIndex();
+  }
 }

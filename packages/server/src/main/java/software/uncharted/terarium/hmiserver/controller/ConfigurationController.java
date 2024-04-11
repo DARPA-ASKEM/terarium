@@ -12,11 +12,9 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.KeycloakJsConfiguration;
 
 /**
- * This resource is unauthenticated and is used to provide any configuration to the client
- * that must occur before auth is setup.  This should _only_ be used for configuration that
- * is not a secret.
+ * This resource is unauthenticated and is used to provide any configuration to the client that must
+ * occur before auth is setup. This should _only_ be used for configuration that is not a secret.
  */
-
 @RequestMapping("/configuration")
 @Slf4j
 @Configuration
@@ -24,28 +22,30 @@ import software.uncharted.terarium.hmiserver.configuration.KeycloakJsConfigurati
 @RequiredArgsConstructor
 public class ConfigurationController {
 
-	@Value("${google-analytics-id}")
-	String googleAnalyticsId;
+  @Value("${google-analytics-id}")
+  String googleAnalyticsId;
 
-	private final Config config;
+  private final Config config;
 
-	@GetMapping("/ga")
-	public ResponseEntity<String> getGA() {
-		if (googleAnalyticsId != null) {
-			return ResponseEntity.ok(googleAnalyticsId);
-		} else {
-			log.warn("No GA key is configured");
-			return ResponseEntity.ok("test");
-		}
-	}
+  @GetMapping("/ga")
+  public ResponseEntity<String> getGA() {
+    if (googleAnalyticsId != null) {
+      return ResponseEntity.ok(googleAnalyticsId);
+    } else {
+      log.warn("No GA key is configured");
+      return ResponseEntity.ok("test");
+    }
+  }
 
-	@GetMapping("/keycloak")
-	ResponseEntity<KeycloakJsConfiguration> getKeycloak() {
+  @GetMapping("/keycloak")
+  ResponseEntity<KeycloakJsConfiguration> getKeycloak() {
 
-		KeycloakJsConfiguration keycloakJsConfiguration = new KeycloakJsConfiguration().setUrl(config.getKeycloak().getUrl())
-				.setRealm(config.getKeycloak().getRealm())
-				.setClientId(config.getKeycloak().getClientId());
+    KeycloakJsConfiguration keycloakJsConfiguration =
+        new KeycloakJsConfiguration()
+            .setUrl(config.getKeycloak().getUrl())
+            .setRealm(config.getKeycloak().getRealm())
+            .setClientId(config.getKeycloak().getClientId());
 
-		return ResponseEntity.ok(keycloakJsConfiguration);
-	}
+    return ResponseEntity.ok(keycloakJsConfiguration);
+  }
 }

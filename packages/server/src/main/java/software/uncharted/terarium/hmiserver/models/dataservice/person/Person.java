@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.person;
 
-import java.io.Serializable;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.io.Serializable;
+import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -16,20 +14,20 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Person implements Serializable {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private UUID id;
 
-	private String name;
+  private String name;
 
-	private String email;
+  private String email;
 
-	@JsonAlias("org")
-	private String organization;
+  @JsonAlias("org")
+  private String organization;
 
-	private String website;
+  private String website;
 
-	@JsonAlias("is_registered")
-	private Boolean isRegistered;
+  @JsonAlias("is_registered")
+  private Boolean isRegistered;
 }

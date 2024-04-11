@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.io.IOException;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,332 +33,432 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 
-import java.io.IOException;
-import java.util.*;
-
 @RequestMapping("/models")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 public class ModelController {
 
-	final ModelService modelService;
+  final ModelService modelService;
 
-	final DocumentAssetService documentAssetService;
+  final DocumentAssetService documentAssetService;
 
-	final ProvenanceSearchService provenanceSearchService;
+  final ProvenanceSearchService provenanceSearchService;
 
-	final ObjectMapper objectMapper;
+  final ObjectMapper objectMapper;
 
-	final DatasetService datasetService;
+  final DatasetService datasetService;
 
-	@GetMapping("/descriptions")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all model descriptions")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model descriptions found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving descriptions from the data store", content = @Content)
-	})
-	public ResponseEntity<List<ModelDescription>> listModels(
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+  @GetMapping("/descriptions")
+  @Secured(Roles.USER)
+  @Operation(summary = "Gets all model descriptions")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Model descriptions found.",
+            content =
+                @Content(
+                    array =
+                        @ArraySchema(
+                            schema =
+                                @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = ModelDescription.class)))),
+        @ApiResponse(
+            responseCode = "500",
+            description = "There was an issue retrieving descriptions from the data store",
+            content = @Content)
+      })
+  public ResponseEntity<List<ModelDescription>> listModels(
+      @RequestParam(name = "page-size", defaultValue = "100", required = false)
+          final Integer pageSize,
+      @RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
-		try {
-			return ResponseEntity.ok(modelService.getDescriptions(page, pageSize));
-		} catch (final IOException e) {
-			final String error = "Unable to get model";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+    try {
+      return ResponseEntity.ok(modelService.getDescriptions(page, pageSize));
+    } catch (final IOException e) {
+      final String error = "Unable to get model";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 
-	@GetMapping("/{id}/descriptions")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets a model description by ID")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model description found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class))),
-		@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the description from the data store", content = @Content)
-	})
-	ResponseEntity<ModelDescription> getDescription(
-		@PathVariable("id") final UUID id) {
+  @GetMapping("/{id}/descriptions")
+  @Secured(Roles.USER)
+  @Operation(summary = "Gets a model description by ID")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Model description found.",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema =
+                        @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = ModelDescription.class))),
+        @ApiResponse(
+            responseCode = "404",
+            description = "There was no description found",
+            content = @Content),
+        @ApiResponse(
+            responseCode = "500",
+            description = "There was an issue retrieving the description from the data store",
+            content = @Content)
+      })
+  ResponseEntity<ModelDescription> getDescription(@PathVariable("id") final UUID id) {
 
-		try {
-			final Optional<ModelDescription> model = modelService.getDescription(id);
-			return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final IOException e) {
-			final String error = "Unable to get model description";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+    try {
+      final Optional<ModelDescription> model = modelService.getDescription(id);
+      return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    } catch (final IOException e) {
+      final String error = "Unable to get model description";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 
-	@GetMapping("/{id}")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets a model by ID")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the model from the data store", content = @Content)
-	})
-	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
+  @GetMapping("/{id}")
+  @Secured(Roles.USER)
+  @Operation(summary = "Gets a model by ID")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Model found.",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema =
+                        @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
+        @ApiResponse(
+            responseCode = "500",
+            description = "There was an issue retrieving the model from the data store",
+            content = @Content)
+      })
+  ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
 
-		try {
+    try {
 
-			// Fetch the model from the data-service
-			final Optional<Model> model = modelService.getAsset(id);
-			if (model.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
+      // Fetch the model from the data-service
+      final Optional<Model> model = modelService.getAsset(id);
+      if (model.isEmpty()) {
+        return ResponseEntity.noContent().build();
+      }
 
-			// Find the Document Assets linked via provenance to the model
-			final ProvenanceQueryParam body = new ProvenanceQueryParam();
-			body.setRootId(id);
-			body.setRootType(ProvenanceType.MODEL);
-			body.setTypes(List.of(ProvenanceType.DOCUMENT));
-			final Set<String> documentIds = provenanceSearchService.modelsFromDocument(body);
-			if (!documentIds.isEmpty()) {
-				// Make sure we have a metadata object
-				if (model.get().getMetadata() == null) {
-					model.get().setMetadata(new ModelMetadata());
-				}
-				// Make sure we have an attributes list
-				if (model.get().getMetadata().getAttributes() == null) {
-					model.get().getMetadata().setAttributes(new ArrayList<>());
-				}
+      // Find the Document Assets linked via provenance to the model
+      final ProvenanceQueryParam body = new ProvenanceQueryParam();
+      body.setRootId(id);
+      body.setRootType(ProvenanceType.MODEL);
+      body.setTypes(List.of(ProvenanceType.DOCUMENT));
+      final Set<String> documentIds = provenanceSearchService.modelsFromDocument(body);
+      if (!documentIds.isEmpty()) {
+        // Make sure we have a metadata object
+        if (model.get().getMetadata() == null) {
+          model.get().setMetadata(new ModelMetadata());
+        }
+        // Make sure we have an attributes list
+        if (model.get().getMetadata().getAttributes() == null) {
+          model.get().getMetadata().setAttributes(new ArrayList<>());
+        }
 
-				documentIds.forEach(documentId -> {
-					try {
-						// Fetch the Document extractions
-						final Optional<DocumentAsset> document = documentAssetService
-							.getAsset(UUID.fromString(documentId));
-						if (document.isPresent()) {
-							if (document.get().getMetadata() == null) {
-								document.get().setMetadata(new HashMap<>());
-							}
-							final List<JsonNode> extractions = objectMapper.convertValue(
-								document.get().getMetadata().get("attributes"), new TypeReference<>() {
-								});
+        documentIds.forEach(
+            documentId -> {
+              try {
+                // Fetch the Document extractions
+                final Optional<DocumentAsset> document =
+                    documentAssetService.getAsset(UUID.fromString(documentId));
+                if (document.isPresent()) {
+                  if (document.get().getMetadata() == null) {
+                    document.get().setMetadata(new HashMap<>());
+                  }
+                  final List<JsonNode> extractions =
+                      objectMapper.convertValue(
+                          document.get().getMetadata().get("attributes"), new TypeReference<>() {});
 
-							// Append the Document extractions to the Model extractions, just for the
-							// front-end.
-							// Those are NOT to be saved back to the data-service.
-							if (extractions != null) {
-								model.get().getMetadata().getAttributes().addAll(extractions);
-							} else {
-								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.", documentId);
-							}
-						}
-					} catch (final Exception e) {
-						log.error("Unable to get the document " + documentId, e);
-					}
-				});
-			} else {
-				log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
-			}
+                  // Append the Document extractions to the Model extractions, just for the
+                  // front-end.
+                  // Those are NOT to be saved back to the data-service.
+                  if (extractions != null) {
+                    model.get().getMetadata().getAttributes().addAll(extractions);
+                  } else {
+                    log.error(
+                        "No attributes added to Model as DocumentAsset ({}) has no attributes.",
+                        documentId);
+                  }
+                }
+              } catch (final Exception e) {
+                log.error("Unable to get the document " + documentId, e);
+              }
+            });
+      } else {
+        log.debug(
+            "Unable to get the, or empty, provenance search models_from_document for model " + id);
+      }
 
-			// Return the model
-			return ResponseEntity.ok(model.get());
-		} catch (final IOException e) {
-			final String error = "Unable to get model";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+      // Return the model
+      return ResponseEntity.ok(model.get());
+    } catch (final IOException e) {
+      final String error = "Unable to get model";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 
-	@GetMapping("/search")
-	@Secured(Roles.USER)
-	@Operation(summary = "Search models with a query")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Models found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving models from the data store", content = @Content)
-	})
-	public ResponseEntity<List<Model>> searchModels(
-		@RequestBody final JsonNode query,
-		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+  @GetMapping("/search")
+  @Secured(Roles.USER)
+  @Operation(summary = "Search models with a query")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Models found.",
+            content =
+                @Content(
+                    array =
+                        @ArraySchema(
+                            schema =
+                                @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = Model.class)))),
+        @ApiResponse(
+            responseCode = "500",
+            description = "There was an issue retrieving models from the data store",
+            content = @Content)
+      })
+  public ResponseEntity<List<Model>> searchModels(
+      @RequestBody final JsonNode query,
+      @RequestParam(name = "page-size", defaultValue = "100", required = false)
+          final Integer pageSize,
+      @RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
-		try {
-			return ResponseEntity.ok(modelService.searchModels(page, pageSize, query));
-		} catch (final IOException e) {
-			final String error = "Unable to search models";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+    try {
+      return ResponseEntity.ok(modelService.searchModels(page, pageSize, query));
+    } catch (final IOException e) {
+      final String error = "Unable to search models";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 
-	@PutMapping("/{id}")
-	@Secured(Roles.USER)
-	@Operation(summary = "Update a model")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-		@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
-		@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
-	})
-	ResponseEntity<Model> updateModel(
-		@PathVariable("id") final UUID id,
-		@RequestBody final Model model) {
+  @PutMapping("/{id}")
+  @Secured(Roles.USER)
+  @Operation(summary = "Update a model")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Model updated.",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema =
+                        @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Model could not be found",
+            content = @Content),
+        @ApiResponse(
+            responseCode = "500",
+            description = "There was an issue updating the model",
+            content = @Content)
+      })
+  ResponseEntity<Model> updateModel(
+      @PathVariable("id") final UUID id, @RequestBody final Model model) {
 
-		try {
-			model.setId(id);
-			// Set the model name from the AMR header name.
-			// TerariumAsset have a name field, but it's not used for the model name outside the front-end.
-			model.setName(model.getHeader().getName());
-			final Optional<Model> updated = modelService.updateAsset(model);
-			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final IOException e) {
-			final String error = "Unable to update model";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+    try {
+      model.setId(id);
+      // Set the model name from the AMR header name.
+      // TerariumAsset have a name field, but it's not used for the model name outside the
+      // front-end.
+      model.setName(model.getHeader().getName());
+      final Optional<Model> updated = modelService.updateAsset(model);
+      return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    } catch (final IOException e) {
+      final String error = "Unable to update model";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 
-	@DeleteMapping("/{id}")
-	@Secured(Roles.USER)
-	@Operation(summary = "Deletes an model")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Deleted model", content = {
-			@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))}),
-		@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
-	})
-	ResponseEntity<ResponseDeleted> deleteModel(
-		@PathVariable("id") final UUID id) {
+  @DeleteMapping("/{id}")
+  @Secured(Roles.USER)
+  @Operation(summary = "Deletes an model")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Deleted model",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema =
+                      @io.swagger.v3.oas.annotations.media.Schema(
+                          implementation = ResponseDeleted.class))
+            }),
+        @ApiResponse(
+            responseCode = "500",
+            description = "An error occurred while deleting",
+            content = @Content)
+      })
+  ResponseEntity<ResponseDeleted> deleteModel(@PathVariable("id") final UUID id) {
 
-		try {
-			modelService.deleteAsset(id);
-			return ResponseEntity.ok(new ResponseDeleted("Model", id));
-		} catch (final IOException e) {
-			final String error = "Unable to delete model";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+    try {
+      modelService.deleteAsset(id);
+      return ResponseEntity.ok(new ResponseDeleted("Model", id));
+    } catch (final IOException e) {
+      final String error = "Unable to delete model";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 
-	@PostMapping
-	@Secured(Roles.USER)
-	@Operation(summary = "Create a new model")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "201", description = "Model created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-		@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
-	})
-	ResponseEntity<Model> createModel(
-		@RequestBody Model model) {
+  @PostMapping
+  @Secured(Roles.USER)
+  @Operation(summary = "Create a new model")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Model created.",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema =
+                        @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
+        @ApiResponse(
+            responseCode = "500",
+            description = "There was an issue creating the model",
+            content = @Content)
+      })
+  ResponseEntity<Model> createModel(@RequestBody Model model) {
 
-		try {
-			// Set the model name from the AMR header name.
-			// TerariumAsset have a name field, but it's not used for the model name outside the front-end.
-			model.setName(model.getHeader().getName());
-			model = modelService.createAsset(model);
-			return ResponseEntity.status(HttpStatus.CREATED).body(model);
-		} catch (final IOException e) {
-			final String error = "Unable to create model";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+    try {
+      // Set the model name from the AMR header name.
+      // TerariumAsset have a name field, but it's not used for the model name outside the
+      // front-end.
+      model.setName(model.getHeader().getName());
+      model = modelService.createAsset(model);
+      return ResponseEntity.status(HttpStatus.CREATED).body(model);
+    } catch (final IOException e) {
+      final String error = "Unable to create model";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 
-	@GetMapping("/{id}/model-configurations")
-	@Secured(Roles.USER)
-	@Operation(summary = "Gets all model configurations for a model")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Model configurations found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving configurations from the data store", content = @Content)
-	})
-	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
-		@PathVariable("id") final UUID id,
-		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize) {
+  @GetMapping("/{id}/model-configurations")
+  @Secured(Roles.USER)
+  @Operation(summary = "Gets all model configurations for a model")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Model configurations found.",
+            content =
+                @Content(
+                    array =
+                        @ArraySchema(
+                            schema =
+                                @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = ModelConfiguration.class)))),
+        @ApiResponse(
+            responseCode = "500",
+            description = "There was an issue retrieving configurations from the data store",
+            content = @Content)
+      })
+  ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
+      @PathVariable("id") final UUID id,
+      @RequestParam(value = "page", required = false, defaultValue = "0") final int page,
+      @RequestParam(value = "page-size", required = false, defaultValue = "100")
+          final int pageSize) {
 
-		try {
-			final List<ModelConfiguration> modelConfigurations = modelService.getModelConfigurationsByModelId(id, page, pageSize);
+    try {
+      final List<ModelConfiguration> modelConfigurations =
+          modelService.getModelConfigurationsByModelId(id, page, pageSize);
 
-			modelConfigurations.forEach(config -> {
-				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
+      modelConfigurations.forEach(
+          config -> {
+            final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
 
-				// check if configuration has a metadata field, if it doesnt make it an empty object
-				if (configuration.get("metadata") == null) {
-					((ObjectNode) configuration).putObject("metadata");
-				}
+            // check if configuration has a metadata field, if it doesnt make it an empty object
+            if (configuration.get("metadata") == null) {
+              ((ObjectNode) configuration).putObject("metadata");
+            }
 
+            // Find the Document Assets linked via provenance to the model configuration
+            final ProvenanceQueryParam documentQueryParams = new ProvenanceQueryParam();
+            documentQueryParams.setRootId(config.getId());
+            documentQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+            documentQueryParams.setTypes(List.of(ProvenanceType.DOCUMENT));
+            final Set<String> documentIds =
+                provenanceSearchService.modelConfigFromDocument(documentQueryParams);
 
-				// Find the Document Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam documentQueryParams = new ProvenanceQueryParam();
-				documentQueryParams.setRootId(config.getId());
-				documentQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				documentQueryParams.setTypes(List.of(ProvenanceType.DOCUMENT));
-				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(documentQueryParams);
+            final List<String> documentSourceNames = new ArrayList<>();
+            documentIds.forEach(
+                documentId -> {
+                  try {
+                    // Fetch the Document extractions
+                    final Optional<DocumentAsset> document =
+                        documentAssetService.getAsset(UUID.fromString(documentId));
+                    if (document.isPresent()) {
+                      final String name = document.get().getName();
+                      documentSourceNames.add(name);
+                    }
+                  } catch (final Exception e) {
+                    log.error("Unable to get the document " + documentId, e);
+                  }
+                });
 
-				final List<String> documentSourceNames = new ArrayList<>();
-				documentIds.forEach(documentId -> {
-					try {
-						// Fetch the Document extractions
-						final Optional<DocumentAsset> document = documentAssetService
-							.getAsset(UUID.fromString(documentId));
-						if (document.isPresent()) {
-							final String name = document.get().getName();
-							documentSourceNames.add(name);
-						}
-					} catch (final Exception e) {
-						log.error("Unable to get the document " + documentId, e);
-					}
-				});
+            // Find the Dataset Assets linked via provenance to the model configuration
+            final ProvenanceQueryParam datasetQueryParams = new ProvenanceQueryParam();
+            datasetQueryParams.setRootId(config.getId());
+            datasetQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+            datasetQueryParams.setTypes(List.of(ProvenanceType.DATASET));
+            final Set<String> datasetIds =
+                provenanceSearchService.modelConfigFromDataset(datasetQueryParams);
 
-				// Find the Dataset Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam datasetQueryParams = new ProvenanceQueryParam();
-				datasetQueryParams.setRootId(config.getId());
-				datasetQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				datasetQueryParams.setTypes(List.of(ProvenanceType.DATASET));
-				final Set<String> datasetIds = provenanceSearchService.modelConfigFromDataset(datasetQueryParams);
+            final List<String> datasetSourceNames = new ArrayList<>();
+            datasetIds.forEach(
+                datasetId -> {
+                  try {
+                    // Fetch the Document extractions
+                    final Optional<Dataset> dataset =
+                        datasetService.getAsset(UUID.fromString(datasetId));
+                    if (dataset.isPresent()) {
+                      final String name = dataset.get().getName();
+                      documentSourceNames.add(name);
+                    }
+                  } catch (final Exception e) {
+                    log.error("Unable to get the document " + datasetId, e);
+                  }
+                });
 
-				final List<String> datasetSourceNames = new ArrayList<>();
-				datasetIds.forEach(datasetId -> {
-					try {
-						// Fetch the Document extractions
-						final Optional<Dataset> dataset = datasetService
-							.getAsset(UUID.fromString(datasetId));
-						if (dataset.isPresent()) {
-							final String name = dataset.get().getName();
-							documentSourceNames.add(name);
-						}
-					} catch (final Exception e) {
-						log.error("Unable to get the document " + datasetId, e);
-					}
-				});
+            final List<String> sourceNames = new ArrayList<>();
+            sourceNames.addAll(documentSourceNames);
+            sourceNames.addAll(datasetSourceNames);
 
+            final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
 
-				final List<String> sourceNames = new ArrayList<>();
-				sourceNames.addAll(documentSourceNames);
-				sourceNames.addAll(datasetSourceNames);
+            metadata.set("source", objectMapper.valueToTree(sourceNames));
 
-				final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
+            ((ObjectNode) configuration).set("metadata", metadata);
 
-				metadata.set("source", objectMapper.valueToTree(sourceNames));
+            config.setConfiguration(configuration);
+          });
 
-				((ObjectNode) configuration).set("metadata", metadata);
-
-				config.setConfiguration(configuration);
-			});
-
-			return ResponseEntity.ok(modelConfigurations);
-		} catch (final Exception e) {
-			final String error = "Unable to get model configurations";
-			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
-		}
-	}
+      return ResponseEntity.ok(modelConfigurations);
+    } catch (final Exception e) {
+      final String error = "Unable to get model configurations";
+      log.error(error, e);
+      throw new ResponseStatusException(
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+  }
 }

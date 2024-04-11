@@ -9,12 +9,13 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 public class FunmanInterval {
-	@TSOptional
-	/** Upper bound **/
-	private Double ub;
-	@TSOptional
-	/** Lower Bound **/
-	private Double lb;
-	@TSOptional
-	private Boolean closed_upper_bound;
+  @TSOptional
+  /** Upper bound * */
+  private Double ub;
+
+  @TSOptional
+  /** Lower Bound * */
+  private Double lb;
+
+  @TSOptional private Boolean closed_upper_bound;
 }

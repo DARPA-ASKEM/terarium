@@ -7,16 +7,18 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfi
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
-
 public class ModelConfigurationService extends TerariumAssetService<ModelConfiguration> {
 
-	public ModelConfigurationService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService) {
-		super(elasticConfig, config, elasticService, projectAssetService, ModelConfiguration.class);
-	}
+  public ModelConfigurationService(
+      final ElasticsearchConfiguration elasticConfig,
+      final Config config,
+      final ElasticsearchService elasticService,
+      final ProjectAssetService projectAssetService) {
+    super(elasticConfig, config, elasticService, projectAssetService, ModelConfiguration.class);
+  }
 
-	@Override
-	protected String getAssetIndex() {
-		return elasticConfig.getModelConfigurationIndex();
-	}
-
+  @Override
+  protected String getAssetIndex() {
+    return elasticConfig.getModelConfigurationIndex();
+  }
 }

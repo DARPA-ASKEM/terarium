@@ -1,5 +1,8 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -10,46 +13,49 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class CurrentUserService {
 
-	private final UserService userService;
-	private final AdminClientService adminClientService;
+  private final UserService userService;
+  private final AdminClientService adminClientService;
 
-	public Jwt getToken() {
-		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		return (Jwt) (authentication.getPrincipal());
-	}
+  public Jwt getToken() {
+    final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return (Jwt) (authentication.getPrincipal());
+  }
 
-	public User get() {
-		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication.getPrincipal() instanceof User) {
-			return (User) authentication.getPrincipal();
-		} else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
-			// Used in tests
-			org.springframework.security.core.userdetails.User u = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-			User user = new User();
-			List<SimpleGrantedAuthority> auths = new ArrayList<>();
-			for (GrantedAuthority auth : u.getAuthorities()) {
-				auths.add(new SimpleGrantedAuthority(auth.getAuthority()));
-			}
-			user.setUsername(u.getUsername());
-			user.setAuthorities(auths);
-			return user;
-		} else {
-			final Jwt jwt = (Jwt) (authentication.getPrincipal());
-			final User user = adminClientService.getUserFromJwt(jwt)
-				.setAuthorities(authentication.getAuthorities().stream().map(a -> new SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList()));
+  public User get() {
+    final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication.getPrincipal() instanceof User) {
+      return (User) authentication.getPrincipal();
+    } else if (authentication.getPrincipal()
+        instanceof org.springframework.security.core.userdetails.User) {
+      // Used in tests
+      org.springframework.security.core.userdetails.User u =
+          (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+      User user = new User();
+      List<SimpleGrantedAuthority> auths = new ArrayList<>();
+      for (GrantedAuthority auth : u.getAuthorities()) {
+        auths.add(new SimpleGrantedAuthority(auth.getAuthority()));
+      }
+      user.setUsername(u.getUsername());
+      user.setAuthorities(auths);
+      return user;
+    } else {
+      final Jwt jwt = (Jwt) (authentication.getPrincipal());
+      final User user =
+          adminClientService
+              .getUserFromJwt(jwt)
+              .setAuthorities(
+                  authentication.getAuthorities().stream()
+                      .map(a -> new SimpleGrantedAuthority(a.getAuthority()))
+                      .collect(Collectors.toList()));
 
-			final User storedUser = userService.getById(user.getId());
-			user.merge(storedUser);
-			return user;
-		}
-	}
+      final User storedUser = userService.getById(user.getId());
+      user.merge(storedUser);
+      return user;
+    }
+  }
 }

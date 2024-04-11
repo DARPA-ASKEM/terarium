@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
+import java.io.Serial;
+import java.io.Serializable;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
@@ -9,28 +11,20 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 @Data
 @AMRSchemaType
 @Accessors(chain = true)
 @TSModel
 public class State extends SupportAdditionalProperties implements Serializable {
-	@Serial
-	private static final long serialVersionUID = -3188538135192357970L;
+  @Serial private static final long serialVersionUID = -3188538135192357970L;
 
-	private String id;
+  private String id;
 
-	@TSOptional
-	private String name;
+  @TSOptional private String name;
 
-	@TSOptional
-	private String description;
+  @TSOptional private String description;
 
-	@TSOptional
-	private ModelGrounding grounding;
+  @TSOptional private ModelGrounding grounding;
 
-	@TSOptional
-	private ModelUnit units;
+  @TSOptional private ModelUnit units;
 }

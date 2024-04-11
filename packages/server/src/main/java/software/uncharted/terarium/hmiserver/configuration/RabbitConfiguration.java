@@ -1,13 +1,12 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 @Configuration
 public class RabbitConfiguration {
@@ -20,12 +19,10 @@ public class RabbitConfiguration {
   @Value("${spring.rabbitmq.password}")
   String password;
 
-
   @Bean
   public RabbitAdmin rabbitAdmin() throws URISyntaxException {
 
     URI rabbitAddress = new URI(rabbitAddresses);
-
 
     final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
     connectionFactory.setUri(rabbitAddress);

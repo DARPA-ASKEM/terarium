@@ -21,14 +21,14 @@ package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
  */
 public class HttpResponseException extends RuntimeException {
 
-    private String status;
+  private String status;
 
-    HttpResponseException(String status, String message, Throwable cause) {
-        super(message != null ? message : "HTTP error - " + status, cause);
-        this.status = status;
-    }
+  HttpResponseException(String status, String message, Throwable cause) {
+    super(message != null ? message : "HTTP error - " + status, cause);
+    this.status = status;
+  }
 
-    public int getStatusCode() {
-        return Integer.valueOf(status.split(" ")[0]);
-    }
+  public int getStatusCode() {
+    return Integer.valueOf(status.split(" ")[0]);
+  }
 }
