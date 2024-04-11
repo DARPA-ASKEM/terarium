@@ -55,6 +55,8 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.indices.GetAliasRequest;
 import co.elastic.clients.elasticsearch.indices.GetAliasResponse;
 import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
+import co.elastic.clients.elasticsearch.indices.RefreshRequest;
+import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -153,7 +155,7 @@ public class ElasticsearchService {
 	 *
 	 * @return True if the index exists, false otherwise
 	 */
-	public boolean contains(final String indexName, final String id) throws IOException {
+	public boolean indexExists(final String indexName, final String id) throws IOException {
 		final GetRequest req = new GetRequest.Builder()
 				.index(indexName)
 				.id(id)
@@ -162,6 +164,18 @@ public class ElasticsearchService {
 
 		final GetResponse<JsonNode> response = client.get(req, JsonNode.class);
 		return response.found();
+	}
+
+	/**
+	 * Refresh an index.
+	 */
+	public boolean refreshIndex(final String indexName) throws IOException {
+
+		final RefreshRequest refreshRequest = new RefreshRequest.Builder().index(indexName).build();
+		final RefreshResponse refreshResponse = client.indices().refresh(refreshRequest);
+
+		// Check if the refresh was acknowledged
+		return refreshResponse.shards().successful().longValue() > 0;
 	}
 
 	/**

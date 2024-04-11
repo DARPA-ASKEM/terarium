@@ -335,8 +335,8 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		final String newIndex = workflowService.getCurrentAssetIndex();
 
-		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
 		Assertions.assertNotEquals(currentIndex, newIndex);
+		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
 	}
 
 }

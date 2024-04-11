@@ -25,7 +25,7 @@ public class DecapodesConfigurationService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
-	public List<DecapodesConfiguration> getDecapodesConfigurations(Integer page, Integer pageSize)
+	public List<DecapodesConfiguration> getDecapodesConfigurations(final Integer page, final Integer pageSize)
 			throws IOException {
 
 		final SearchRequest req = new SearchRequest.Builder()
@@ -39,8 +39,9 @@ public class DecapodesConfigurationService {
 		return elasticService.search(req, DecapodesConfiguration.class);
 	}
 
-	public Optional<DecapodesConfiguration> getDecapodesConfiguration(UUID id) throws IOException {
-		DecapodesConfiguration doc = elasticService.get(elasticConfig.getDecapodesConfigurationIndex(), id.toString(),
+	public Optional<DecapodesConfiguration> getDecapodesConfiguration(final UUID id) throws IOException {
+		final DecapodesConfiguration doc = elasticService.get(elasticConfig.getDecapodesConfigurationIndex(),
+				id.toString(),
 				DecapodesConfiguration.class);
 		if (doc != null && doc.getDeletedOn() == null) {
 			return Optional.of(doc);
@@ -48,8 +49,8 @@ public class DecapodesConfigurationService {
 		return Optional.empty();
 	}
 
-	public void deleteDecapodesConfiguration(UUID id) throws IOException {
-		Optional<DecapodesConfiguration> decapodesConfiguration = getDecapodesConfiguration(id);
+	public void deleteDecapodesConfiguration(final UUID id) throws IOException {
+		final Optional<DecapodesConfiguration> decapodesConfiguration = getDecapodesConfiguration(id);
 		if (decapodesConfiguration.isEmpty()) {
 			return;
 		}
@@ -57,7 +58,8 @@ public class DecapodesConfigurationService {
 		updateDecapodesConfiguration(decapodesConfiguration.get());
 	}
 
-	public DecapodesConfiguration createDecapodesConfiguration(DecapodesConfiguration decapodesConfiguration) throws IOException {
+	public DecapodesConfiguration createDecapodesConfiguration(final DecapodesConfiguration decapodesConfiguration)
+			throws IOException {
 		decapodesConfiguration.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getDecapodesConfigurationIndex(),
 				decapodesConfiguration.setId(UUID.randomUUID()).getId().toString(),
@@ -65,9 +67,10 @@ public class DecapodesConfigurationService {
 		return decapodesConfiguration;
 	}
 
-	public Optional<DecapodesConfiguration> updateDecapodesConfiguration(DecapodesConfiguration decapodesConfiguration)
+	public Optional<DecapodesConfiguration> updateDecapodesConfiguration(
+			final DecapodesConfiguration decapodesConfiguration)
 			throws IOException {
-		if (!elasticService.contains(elasticConfig.getDecapodesConfigurationIndex(),
+		if (!elasticService.indexExists(elasticConfig.getDecapodesConfigurationIndex(),
 				decapodesConfiguration.getId().toString())) {
 			return Optional.empty();
 		}

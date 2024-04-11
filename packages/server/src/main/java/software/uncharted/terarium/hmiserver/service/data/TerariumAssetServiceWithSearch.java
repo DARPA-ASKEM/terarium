@@ -173,6 +173,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 
 		if (created.size() > 0) {
 			elasticService.bulkIndex(getAssetAlias(), (List<TerariumAsset>) created);
+			elasticService.refreshIndex(getAssetAlias());
 		}
 
 		return created;
@@ -282,6 +283,9 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 			page++;
 		} while (rows.hasNext());
 
+		// refresh the index
+		elasticService.refreshIndex(newIndexName);
+
 		// transfer the alias
 		elasticService.transferAlias(getAssetAlias(), oldIndexName, newIndexName);
 
@@ -309,6 +313,9 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 
 			page++;
 		} while (rows.hasNext());
+
+		// refresh the index
+		elasticService.refreshIndex(getAssetAlias());
 	}
 
 	public void migrateOldESDataToSQL() throws IOException {

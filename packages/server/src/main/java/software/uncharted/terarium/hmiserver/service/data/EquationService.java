@@ -1,18 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import lombok.RequiredArgsConstructor;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +36,8 @@ public class EquationService {
 				.from(page)
 				.size(pageSize)
 				.query(q -> q.bool(b -> b
-					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
+						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.build();
 		return elasticService.search(req, Equation.class);
 	}
@@ -58,7 +59,7 @@ public class EquationService {
 	}
 
 	public Optional<Equation> updateAsset(final Equation equation) throws IOException {
-		if (!elasticService.contains(elasticConfig.getEquationIndex(), equation.getId().toString())) {
+		if (!elasticService.indexExists(elasticConfig.getEquationIndex(), equation.getId().toString())) {
 			return Optional.empty();
 		}
 
