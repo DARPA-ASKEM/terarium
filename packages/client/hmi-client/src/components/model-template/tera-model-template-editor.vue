@@ -71,6 +71,7 @@
 						:model="currentCanvas.models[index]"
 						is-editable
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
+						:id="card.id"
 						@update-name="
 							(name: string) =>
 								modelTemplatingService.updateDecomposedTemplateNameInKernel(
@@ -82,7 +83,7 @@
 									syncWithMiraModel
 								)
 						"
-						@port-selected="(portId: string) => createNewEdge(card, portId)"
+						@port-selected="(portId: string) => createNewEdge(card.id, portId)"
 						@port-mouseover="
 							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 						"
@@ -222,8 +223,8 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
-function createNewEdge(card: ModelTemplateCard, portId: string) {
-	const target = { cardId: card.id, portId };
+function createNewEdge(cardId: string, portId: string) {
+	const target = { cardId, portId };
 
 	if (!isCreatingNewEdge.value) {
 		// Find the junction that we want to draw from

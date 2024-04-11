@@ -86,29 +86,35 @@
 		<!--FIXME: InputNumber seems like it has some min-width set even though it's nowhere to be found (adjust screen width to see what I mean)
 		Once that can be changed replace the tailwind and label-padding class here with the section-row and button-row classes used above
 		-->
-		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex flex-row w-full pt-3 pb-1">
-			<div class="col-3 p-0 flex flex-column pr-2">
-				<label class="label-padding">Start time</label>
+
+		<!-- I have cleaned this up a bit to make the fields spaced out better, fitting at full width. Also set the inputtext to md so that they match other fields on the page. -NG -->
+
+		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
+			<div class="input-container">
+				<label for="input1" class="label label-padding">Start time</label>
 				<InputNumber
-					class="p-inputtext-sm"
+					id="input1"
+					class="p-inputtext-md"
 					v-model="startTime"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
 
-			<div class="col-3 p-0 flex flex-column pr-2">
-				<label class="label-padding">End time</label>
+			<div class="input-container">
+				<label for="input2" class="label label-padding">End time</label>
 				<InputNumber
-					class="p-inputtext-sm"
+					id="input2"
+					class="p-inputtext-md"
 					v-model="endTime"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
 
-			<div class="col-3 p-0 flex flex-column pr-2">
-				<label class="label-padding">Lower bound</label>
+			<div class="input-container">
+				<label for="input3" class="label label-padding">Lower bound</label>
 				<tera-input-number
-					class="p-inputtext-sm"
+					id="input3"
+					class="p-inputtext-md"
 					v-model="lowerBound"
 					:min-fraction-digits="3"
 					:max-fraction-digits="12"
@@ -116,10 +122,11 @@
 				/>
 			</div>
 
-			<div class="col-3 p-0 flex flex-column">
-				<label class="label-padding">Upper bound</label>
+			<div class="input-container">
+				<label for="input4" class="label label-padding">Upper bound</label>
 				<tera-input-number
-					class="p-inputtext-sm"
+					id="input4"
+					class="p-inputtext-md"
 					v-model="upperBound"
 					:min-fraction-digits="3"
 					:max-fraction-digits="12"
@@ -216,8 +223,8 @@ watch(
 <style scoped>
 .constraint-group {
 	width: 100%;
-	margin-top: 1rem;
 	display: flex;
+	margin-top: 1rem;
 	padding: 1rem 1rem 1rem 1.5rem;
 	flex-direction: column;
 	justify-content: center;
@@ -304,5 +311,23 @@ watch(
 	align-items: center;
 	gap: 1rem;
 	align-self: stretch;
+}
+.flex-container {
+	width: 100%;
+	display: flex;
+	gap: 8px;
+	overflow: invisible;
+}
+
+.input-container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.label {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 </style>
