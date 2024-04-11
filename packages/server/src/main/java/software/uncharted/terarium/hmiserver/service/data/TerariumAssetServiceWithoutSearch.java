@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -29,6 +30,7 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteReposito
  * @param <R> The respository of the asset this service manages
  */
 @Service
+@Data
 @RequiredArgsConstructor
 @Slf4j
 public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>

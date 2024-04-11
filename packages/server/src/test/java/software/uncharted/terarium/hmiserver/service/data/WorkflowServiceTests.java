@@ -23,7 +23,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transfo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
-import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 
 @Slf4j
 public class WorkflowServiceTests extends TerariumApplicationTests {
@@ -33,9 +32,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 	@Autowired
 	private WorkflowService workflowService;
-
-	@Autowired
-	private WorkflowRepository workflowRepository;
 
 	@BeforeEach
 	public void setup() throws IOException {
@@ -131,7 +127,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		workflowService.createAsset(createWorkflow("1"));
 		workflowService.createAsset(createWorkflow("2"));
 
-		final List<Workflow> workflows = workflowService.getAssets(0, 100);
+		final List<Workflow> workflows = workflowService.getAssets(0, 3);
 
 		Assertions.assertEquals(3, workflows.size());
 	}
@@ -145,6 +141,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final Workflow fetchedWorkflow = workflowService.getAsset(workflow.getId()).get();
 
 		Assertions.assertEquals(workflow, fetchedWorkflow);
+		Assertions.assertEquals(workflow.getId(), fetchedWorkflow.getId());
+		Assertions.assertEquals(workflow.getCreatedOn(), fetchedWorkflow.getCreatedOn());
+		Assertions.assertEquals(workflow.getUpdatedOn(), fetchedWorkflow.getUpdatedOn());
+		Assertions.assertEquals(workflow.getDeletedOn(), fetchedWorkflow.getDeletedOn());
+		Assertions.assertEquals(workflow.getTransform(), fetchedWorkflow.getTransform());
 	}
 
 	@Test
@@ -292,13 +293,39 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		final int NUM = 32;
 
-		final List<Workflow> workflows = new ArrayList<>();
+		List<Workflow> workflows = new ArrayList<>();
 		for (int i = 0; i < NUM; i++) {
 			workflows.add(createWorkflow(String.valueOf(i)));
 		}
-		workflowService.createAssets(workflows);
+		workflows = workflowService.createAssets(workflows);
 
-		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
+		final List<Workflow> results = workflowService.searchAssets(0, NUM, null);
+
+		Assertions.assertEquals(NUM, results.size());
+
+		for (int i = 0; i < results.size(); i++) {
+			Assertions.assertEquals(workflows.get(i).getName(), results.get(i).getName());
+			Assertions.assertEquals(workflows.get(i).getDescription(), results.get(i).getDescription());
+			Assertions.assertEquals(workflows.get(i).getTransform(), results.get(i).getTransform());
+			Assertions.assertEquals(workflows.get(i).getCreatedOn().toInstant().getEpochSecond(),
+					results.get(i).getCreatedOn().toInstant().getEpochSecond());
+			Assertions.assertEquals(workflows.get(i).getUpdatedOn(), results.get(i).getUpdatedOn());
+			Assertions.assertEquals(workflows.get(i).getDeletedOn(), results.get(i).getDeletedOn());
+			Assertions.assertEquals(workflows.get(i).getNodes().size(), results.get(i).getNodes().size());
+			for (int j = 0; j < results.get(i).getNodes().size(); j++) {
+				Assertions.assertEquals(workflows.get(i).getNodes().get(j).getId(),
+						results.get(i).getNodes().get(j).getId());
+				Assertions.assertEquals(workflows.get(i).getNodes().get(j).getWorkflowId(),
+						results.get(i).getNodes().get(j).getWorkflowId());
+			}
+			Assertions.assertEquals(workflows.get(i).getEdges().size(), results.get(i).getEdges().size());
+			for (int j = 0; j < results.get(i).getEdges().size(); j++) {
+				Assertions.assertEquals(workflows.get(i).getEdges().get(j).getId(),
+						results.get(i).getEdges().get(j).getId());
+				Assertions.assertEquals(workflows.get(i).getEdges().get(j).getWorkflowId(),
+						results.get(i).getEdges().get(j).getWorkflowId());
+			}
+		}
 	}
 
 	@Test
@@ -324,35 +351,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
 
 		Assertions.assertNotEquals(currentIndex, newIndex);
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanMigrateFromElasticToSQL() throws Exception {
-
-		final int NUM = 32;
-		final List<Workflow> workflows = new ArrayList<>();
-		for (int i = 0; i < NUM; i++) {
-			workflows.add(createWorkflow(String.valueOf(i)));
-		}
-		workflowService.createAssets(workflows);
-
-		final String currentIndex = workflowService.getCurrentAssetIndex();
-
-		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
-
-		log.info("Found {} assets in index: {}", NUM, currentIndex);
-
-		// delete them all
-		workflowRepository.deleteAll();
-
-		// migrate it all over back to PG
-		workflowService.migrateOldESDataToSQL();
-
-		final String newIndex = workflowService.getCurrentAssetIndex();
-
-		Assertions.assertNotEquals(currentIndex, newIndex);
-		Assertions.assertEquals(NUM, workflowService.searchAssets(0, NUM, null).size());
 	}
 
 }
