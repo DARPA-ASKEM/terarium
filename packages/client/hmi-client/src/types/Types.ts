@@ -1328,6 +1328,7 @@ export enum ClientEventType {
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
+    ExtractionPdf = "EXTRACTION_PDF",
 }
 
 export enum FileType {

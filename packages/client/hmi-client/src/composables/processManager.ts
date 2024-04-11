@@ -4,153 +4,44 @@ import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Ty
 import { ProcessItem } from '@/types/common';
 import { ref, computed } from 'vue';
 
-const items = ref<ProcessItem[]>([
-	{
-		id: '1',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document Document Document Document Document Document Document Document.pdf',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '2',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '3',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '4',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '5',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '6',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '7',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '8',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Running',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '9',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Failed',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: 'l0',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Failed',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 0.5
-	},
-	{
-		id: '11',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Completed',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.Extraction,
-		msg: 'Extracting text from PDF',
-		progress: 1
-	},
-	{
-		id: '12',
-		projectId: '4cebc2ba-98f0-4183-bc1c-598b77e4e03e',
-		status: 'Completed',
-		lastUpdated: 1712786899469,
-		assetName: 'Document',
-		type: ClientEventType.FileUploadProgress,
-		msg: 'Extracting text from PDF',
-		progress: 1
-	}
-]);
+const items = ref<ProcessItem[]>([]);
 
-const extractionEventHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
+const getStatus = (data: { error: string; t: number }) => {
+	if (data.error) return 'Failed';
+	if (data.t >= 1.0) return 'Completed';
+	return 'Running';
+};
+
+const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 	if (!event.data) return;
 	const existingItem = items.value.find((item) => item.id === event.data.documentId);
 	if (!existingItem) {
 		// Create a new process item
-		const document = await getDocumentAsset(event.data.documentId);
-		items.value.push({
+		const newItem: ProcessItem = {
 			id: event.data.documentId,
-			projectId: '',
-			type: ClientEventType.Extraction,
-			assetName: document?.name || '',
-			status: event.data.t >= 1.0 ? 'Completed' : 'Running',
+			projectId: '38e2f5f1-8c35-45c6-9735-09edd8318f69',
+			type: ClientEventType.ExtractionPdf,
+			assetName: '',
+			status: getStatus(event.data),
 			msg: event.data.message,
 			progress: event.data.t,
-			lastUpdated: Date.now()
-		});
+			lastUpdated: Date.now(),
+			error: event.data.error
+		};
+		items.value.push(newItem);
+		// Update asset name asynchronously on the next tick to avoid blocking the event handler
+		getDocumentAsset(event.data.documentId).then((document) =>
+			Object.assign(newItem, { assetName: document?.name || '' })
+		);
 		return;
 	}
 	// Update the existing item
 	Object.assign(existingItem, {
-		status: event.data.t >= 1.0 ? 'Completed' : 'Running',
+		status: getStatus(event.data),
 		msg: event.data.message,
 		progress: event.data.t,
-		lastUpdated: Date.now()
+		lastUpdated: Date.now(),
+		error: event.data.error
 	});
 };
 
@@ -163,7 +54,7 @@ export function useProcessManager() {
 
 	function init() {
 		// Initialize SSE event handlers for the process manager
-		subscribe(ClientEventType.Extraction, extractionEventHandler);
+		subscribe(ClientEventType.ExtractionPdf, extractionEventHandler);
 	}
 
 	function setActiveProjectId(projectId: string) {

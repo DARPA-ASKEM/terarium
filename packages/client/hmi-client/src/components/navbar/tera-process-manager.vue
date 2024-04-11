@@ -25,7 +25,7 @@
 						<i class="pi pi-check-circle" />Completed
 					</div>
 					<div class="status-msg error" v-else-if="item.status === 'Failed'">
-						<i class="pi pi-exclamation-circle" /> Failed: {{ item.msg }}
+						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
 					<span class="time-msg">{{ getElapsedTimeText(item) }}</span>
 				</div>
@@ -69,7 +69,7 @@ const togglePanel = (event) => {
 
 const getHeadingText = (item: ProcessItem) => {
 	switch (item.type) {
-		case ClientEventType.Extraction:
+		case ClientEventType.ExtractionPdf:
 			return 'PDF extraction from';
 		default:
 			return 'Process';
@@ -78,7 +78,7 @@ const getHeadingText = (item: ProcessItem) => {
 
 const getActionText = (item: ProcessItem) => {
 	switch (item.type) {
-		case ClientEventType.Extraction:
+		case ClientEventType.ExtractionPdf:
 			return 'Extracting...';
 		default:
 			return 'Processing...';

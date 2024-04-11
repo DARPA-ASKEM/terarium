@@ -207,6 +207,7 @@ export interface ProcessItem {
 	assetName: string;
 	status: 'Completed' | 'Failed' | 'Running';
 	msg: string;
+	error: string;
 	progress: number;
 	lastUpdated: number;
 }
