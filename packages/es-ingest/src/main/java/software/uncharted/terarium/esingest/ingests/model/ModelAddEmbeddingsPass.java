@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.esingest.ingests.IElasticPass;
 import software.uncharted.terarium.esingest.iterators.IInputIterator;
@@ -18,56 +17,53 @@ import software.uncharted.terarium.esingest.service.ElasticIngestParams;
 import software.uncharted.terarium.esingest.util.ConcurrentBiMap;
 
 @Slf4j
-public class ModelAddEmbeddingsPass
-		implements IElasticPass<ModelEmbedding, Model> {
+public class ModelAddEmbeddingsPass implements IElasticPass<ModelEmbedding, Model> {
 
-	final String EMBEDDING_PATH = "embeddings";
+  final String EMBEDDING_PATH = "embeddings";
 
-	ConcurrentBiMap<String, UUID> uuidLookup;
+  ConcurrentBiMap<String, UUID> uuidLookup;
 
-	ModelAddEmbeddingsPass(ConcurrentBiMap<String, UUID> uuidLookup) {
-		this.uuidLookup = uuidLookup;
-	}
+  ModelAddEmbeddingsPass(ConcurrentBiMap<String, UUID> uuidLookup) {
+    this.uuidLookup = uuidLookup;
+  }
 
-	public void setup(final ElasticIngestParams params) {
-	}
+  public void setup(final ElasticIngestParams params) {}
 
-	public void teardown(final ElasticIngestParams params) {
-	}
+  public void teardown(final ElasticIngestParams params) {}
 
-	public String message() {
-		return "Inserting model cards and embeddings";
-	}
+  public String message() {
+    return "Inserting model cards and embeddings";
+  }
 
-	public IInputIterator<ModelEmbedding> getIterator(final ElasticIngestParams params) throws IOException {
-		Path embeddingPath = Paths.get(params.getInputDir()).resolve(EMBEDDING_PATH);
+  public IInputIterator<ModelEmbedding> getIterator(final ElasticIngestParams params)
+      throws IOException {
+    Path embeddingPath = Paths.get(params.getInputDir()).resolve(EMBEDDING_PATH);
 
-		return new JSONLineIterator<>(embeddingPath, ModelEmbedding.class, params.getBatchSize());
-	}
+    return new JSONLineIterator<>(embeddingPath, ModelEmbedding.class, params.getBatchSize());
+  }
 
-	public List<Model> process(List<ModelEmbedding> input) {
-		List<Model> res = new ArrayList<>();
-		for (ModelEmbedding in : input) {
+  public List<Model> process(List<ModelEmbedding> input) {
+    List<Model> res = new ArrayList<>();
+    for (ModelEmbedding in : input) {
 
-			if (!uuidLookup.containsKey(in.getId())) {
-				// no amr for this model
-				continue;
-			}
+      if (!uuidLookup.containsKey(in.getId())) {
+        // no amr for this model
+        continue;
+      }
 
-			UUID uuid = uuidLookup.get(in.getId());
+      UUID uuid = uuidLookup.get(in.getId());
 
-			Model doc = new Model();
-			doc.setId(uuid);
-			doc.getMetadata().setGollmCard(in.getModelCard());
+      Model doc = new Model();
+      doc.setId(uuid);
+      doc.getMetadata().setGollmCard(in.getModelCard());
 
-			Embedding embedding = new Embedding();
-			embedding.setEmbeddingId(UUID.randomUUID().toString());
-			embedding.setVector(in.getEmbedding());
+      Embedding embedding = new Embedding();
+      embedding.setEmbeddingId(UUID.randomUUID().toString());
+      embedding.setVector(in.getEmbedding());
 
-			doc.setEmbeddings(List.of(embedding));
-			res.add(doc);
-		}
-		return res;
-	}
-
+      doc.setEmbeddings(List.of(embedding));
+      res.add(doc);
+    }
+    return res;
+  }
 }

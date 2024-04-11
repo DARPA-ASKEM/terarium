@@ -2,7 +2,6 @@ package software.uncharted.terarium.esingest.models.input.climate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import software.uncharted.terarium.esingest.models.input.IInputDocument;
 
@@ -10,14 +9,14 @@ import software.uncharted.terarium.esingest.models.input.IInputDocument;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DocumentEmbedding implements IInputDocument {
 
-	@JsonProperty("doc_id")
-	private String id;
+  @JsonProperty("doc_id")
+  private String id;
 
-	@JsonProperty("uuid")
-	private String embeddingChunkId;
+  @JsonProperty("uuid")
+  private String embeddingChunkId;
 
-	private long[] spans;
-	private String title;
-	private String doi;
-	private double[] embedding;
+  private long[] spans;
+  private String title;
+  private String doi;
+  private double[] embedding;
 }

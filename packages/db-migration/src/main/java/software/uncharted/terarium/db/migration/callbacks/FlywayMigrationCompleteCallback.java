@@ -9,7 +9,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 
 @Slf4j
-public record FlywayMigrationCompleteCallback(ApplicationContext applicationContext) implements Callback {
+public record FlywayMigrationCompleteCallback(ApplicationContext applicationContext)
+    implements Callback {
 
   @Override
   public boolean supports(final Event event, final Context context) {
@@ -26,12 +27,14 @@ public record FlywayMigrationCompleteCallback(ApplicationContext applicationCont
     if (this.supports(event, context)) {
       log.info("Migration Completed Successfully, shutting down");
 
-      SpringApplication.exit(applicationContext, new ExitCodeGenerator() {
-        @Override
-        public int getExitCode() {
-          return 0;
-        }
-      });
+      SpringApplication.exit(
+          applicationContext,
+          new ExitCodeGenerator() {
+            @Override
+            public int getExitCode() {
+              return 0;
+            }
+          });
       System.exit(0);
     }
   }

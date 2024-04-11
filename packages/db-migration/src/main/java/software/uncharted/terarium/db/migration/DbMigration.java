@@ -9,11 +9,11 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:application.properties")
 @Slf4j
 public class DbMigration {
-	public static void main(final String[] args) {
-  	try {
-			SpringApplication.run(DbMigration.class, args);
-		} catch (final Exception e) {
-			System.exit(1);
-		}
-	}
+  public static void main(final String[] args) {
+    try {
+      SpringApplication.run(DbMigration.class, args);
+    } catch (final Exception e) {
+      System.exit(1);
+    }
+  }
 }

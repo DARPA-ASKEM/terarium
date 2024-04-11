@@ -10,5 +10,5 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @Data
 public class Config {
-    String baselineVersion;
+  String baselineVersion;
 }

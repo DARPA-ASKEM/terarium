@@ -5,8 +5,7 @@ import lombok.Data;
 @Data
 public class Embedding {
 
-	private String embeddingId;
-	private double[] vector;
-	private long[] spans;
-
+  private String embeddingId;
+  private double[] vector;
+  private long[] spans;
 }

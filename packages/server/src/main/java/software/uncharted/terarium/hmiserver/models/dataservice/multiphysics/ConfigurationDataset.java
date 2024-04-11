@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
-
 import jakarta.persistence.*;
 import java.io.Serializable;
 import lombok.Data;

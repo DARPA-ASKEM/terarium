@@ -5,12 +5,12 @@ import java.util.UUID;
 
 public class UUIDUtil {
 
-	static public UUID generateSeededUUID(String seed) {
-		Random random = new Random(seed.hashCode());
+  public static UUID generateSeededUUID(String seed) {
+    Random random = new Random(seed.hashCode());
 
-		long mostSigBits = random.nextLong();
-		long leastSigBits = random.nextLong();
+    long mostSigBits = random.nextLong();
+    long leastSigBits = random.nextLong();
 
-		return new UUID(mostSigBits, leastSigBits);
-	}
+    return new UUID(mostSigBits, leastSigBits);
+  }
 }
