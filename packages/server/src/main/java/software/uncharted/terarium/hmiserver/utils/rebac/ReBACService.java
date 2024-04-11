@@ -233,7 +233,8 @@ public class ReBACService {
 	public List<PermissionUser> getUsers() {
 		List<PermissionUser> response = new ArrayList<>();
 		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-		List<UserRepresentation> users = usersResource.list();
+		Integer maxUsers = usersResource.count();
+		List<UserRepresentation> users = usersResource.list(0, maxUsers + 1);
 		for (UserRepresentation userRepresentation : users) {
 			if (userRepresentation.getEmail() == null || userRepresentation.getEmail().isBlank()) {
 				continue;

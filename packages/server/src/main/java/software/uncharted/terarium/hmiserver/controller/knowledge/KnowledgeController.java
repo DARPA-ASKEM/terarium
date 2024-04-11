@@ -525,7 +525,7 @@ public class KnowledgeController {
 				}
 			} else {
 				documentFile = new StringMultipartFile("There is no documentation for this dataset",
-						"", "application/text");
+						"document.txt", "application/text");
 			}
 
 			final Dataset dataset = datasetService.getAsset(datasetId).orElseThrow();
