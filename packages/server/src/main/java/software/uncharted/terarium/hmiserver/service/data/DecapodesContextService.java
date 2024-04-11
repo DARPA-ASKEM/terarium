@@ -67,7 +67,7 @@ public class DecapodesContextService {
 
 	public Optional<DecapodesContext> updateDecapodesContext(final DecapodesContext decapodesContext)
 			throws IOException {
-		if (!elasticService.indexExists(elasticConfig.getDecapodesContextIndex(),
+		if (!elasticService.documentExists(elasticConfig.getDecapodesContextIndex(),
 				decapodesContext.getId().toString())) {
 			return Optional.empty();
 		}

@@ -70,7 +70,7 @@ public class DecapodesConfigurationService {
 	public Optional<DecapodesConfiguration> updateDecapodesConfiguration(
 			final DecapodesConfiguration decapodesConfiguration)
 			throws IOException {
-		if (!elasticService.indexExists(elasticConfig.getDecapodesConfigurationIndex(),
+		if (!elasticService.documentExists(elasticConfig.getDecapodesConfigurationIndex(),
 				decapodesConfiguration.getId().toString())) {
 			return Optional.empty();
 		}

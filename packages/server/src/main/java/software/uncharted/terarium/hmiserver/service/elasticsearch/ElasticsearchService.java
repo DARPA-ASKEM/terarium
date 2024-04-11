@@ -146,7 +146,7 @@ public class ElasticsearchService {
 	 *
 	 * @return True if the index exists, false otherwise
 	 */
-	public boolean containsIndex(final String indexName) throws IOException {
+	public boolean indexExists(final String indexName) throws IOException {
 		return client.indices().exists(ExistsRequest.of(e -> e.index(indexName))).value();
 	}
 
@@ -155,7 +155,7 @@ public class ElasticsearchService {
 	 *
 	 * @return True if the index exists, false otherwise
 	 */
-	public boolean indexExists(final String indexName, final String id) throws IOException {
+	public boolean documentExists(final String indexName, final String id) throws IOException {
 		final GetRequest req = new GetRequest.Builder()
 				.index(indexName)
 				.id(id)
@@ -211,7 +211,7 @@ public class ElasticsearchService {
 	 * @throws IOException
 	 */
 	public void createOrEnsureIndexIsEmpty(final String index) throws IOException {
-		if (containsIndex(index)) {
+		if (indexExists(index)) {
 			deleteIndex(index);
 		}
 		createIndex(index);

@@ -91,7 +91,7 @@ public class SearchByAssetTypeController {
 				index = esConfig.getIndex(assetType.toString().toLowerCase());
 			}
 
-			if (!esService.containsIndex(index)) {
+			if (!esService.indexExists(index)) {
 				log.error("Unsupported asset type: {}, index {} does not exist", assetType, index);
 				return ResponseEntity.badRequest().build();
 			}

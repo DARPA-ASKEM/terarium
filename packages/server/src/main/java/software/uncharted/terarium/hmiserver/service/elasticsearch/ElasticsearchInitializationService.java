@@ -165,7 +165,7 @@ public class ElasticsearchInitializationService {
 		for (final Map.Entry<String, String> entry : indices.entrySet()) {
 			final String index = entry.getKey();
 			final String alias = entry.getValue();
-			if (!elasticsearchService.containsIndex(index)) {
+			if (!elasticsearchService.indexExists(index)) {
 				try {
 					elasticsearchService.createIndex(index);
 				} catch (final IOException e) {

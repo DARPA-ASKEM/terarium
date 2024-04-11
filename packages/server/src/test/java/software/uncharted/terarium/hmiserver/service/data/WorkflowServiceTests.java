@@ -109,6 +109,22 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCantCreateDuplicates() throws Exception {
+
+		final Workflow workflow = (Workflow) createWorkflow().setId(UUID.randomUUID());
+
+		workflowService.createAsset(workflow);
+
+		try {
+			workflowService.createAsset(workflow);
+			Assertions.fail("Should have thrown an exception");
+		} catch (final IllegalArgumentException e) {
+			Assertions.assertTrue(e.getMessage().contains("already exists"));
+		}
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflows() throws Exception {
 
 		workflowService.createAsset(createWorkflow("0"));

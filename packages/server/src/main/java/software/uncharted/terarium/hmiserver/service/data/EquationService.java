@@ -59,7 +59,7 @@ public class EquationService {
 	}
 
 	public Optional<Equation> updateAsset(final Equation equation) throws IOException {
-		if (!elasticService.indexExists(elasticConfig.getEquationIndex(), equation.getId().toString())) {
+		if (!elasticService.documentExists(elasticConfig.getEquationIndex(), equation.getId().toString())) {
 			return Optional.empty();
 		}
 

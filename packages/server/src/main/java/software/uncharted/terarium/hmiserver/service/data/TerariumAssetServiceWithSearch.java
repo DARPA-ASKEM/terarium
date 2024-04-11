@@ -255,7 +255,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 		final String newIndexName = generateNextIndexName(oldIndexName);
 
 		// create the new index
-		if (elasticService.containsIndex(newIndexName)) {
+		if (elasticService.indexExists(newIndexName)) {
 			final long count = elasticService.count(newIndexName);
 			if (count > 0) {
 				throw new RuntimeException("New index " + newIndexName + " already exists and contains " + count
@@ -325,7 +325,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 
 		log.info("Migrating from ES index {} to SQL...", index);
 
-		if (!elasticService.containsIndex(index)) {
+		if (!elasticService.indexExists(index)) {
 			throw new RuntimeException("No index found: " + index);
 		}
 
