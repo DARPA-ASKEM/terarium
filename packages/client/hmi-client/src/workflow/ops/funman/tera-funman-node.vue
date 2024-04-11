@@ -1,8 +1,11 @@
 <template>
 	<section>
-		<tera-operator-placeholder :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!inProgressId" :operation-type="node.operationType">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
+
+		<tera-progress-spinner v-if="inProgressId" :font-size="2" is-centered style="height: 100%" />
+
 		<template v-if="node.inputs[0].value">
 			<Button @click="emit('open-drilldown')" label="Review checks" severity="secondary" outlined />
 		</template>
@@ -11,8 +14,9 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, onUnmounted } from 'vue';
+import { watch, computed, onUnmounted } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { FunmanOperationState, FunmanOperation } from '@/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
@@ -24,6 +28,7 @@ const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
+const inProgressId = computed(() => props.node.state.inProgressId);
 
 const poller = new Poller();
 
@@ -54,9 +59,7 @@ const getStatus = async (runId: string) => {
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		console.error(`Funman: ${runId} has failed`);
-		throw Error('Failed Funman validation');
+		console.error(`Funman: ${runId} has failed`, pollerResults);
 	}
 	return pollerResults;
 };
@@ -73,10 +76,10 @@ watch(
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
-			const state = _.cloneDeep(props.node.state);
-			state.inProgressId = '';
-			emit('update-state', state);
 		}
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressId = '';
+		emit('update-state', state);
 	},
 	{ immediate: true }
 );

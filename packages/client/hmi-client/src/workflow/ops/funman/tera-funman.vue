@@ -520,7 +520,7 @@ const onSelection = (id: string) => {
 watch(
 	() => props.node.state.inProgressId,
 	(id) => {
-		if (id === '') {
+		if (!id || id === '') {
 			showSpinner.value = false;
 		} else {
 			showSpinner.value = true;
