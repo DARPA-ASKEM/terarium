@@ -95,14 +95,24 @@ export function useProjects() {
 	}
 
 	/**
+	 * Find an asset in the active project by its assetId.
+	 * @param {ProjectAsset['assetId]} assetId
+	 * @returns {ProjectAsset | undefined}
+	 */
+	function findAsset(assetId: ProjectAsset['assetId']): ProjectAsset | undefined {
+		const asset = activeProject.value?.projectAssets.find(
+			(projectAsset) => projectAsset.assetId === assetId
+		);
+		return asset;
+	}
+
+	/**
 	 * Get the name of an asset from the active project.
 	 * @param {ProjectAsset['assetId]} assetId
 	 * @returns {ProjectAsset['assetName']}
 	 */
 	function getAssetName(assetId: ProjectAsset['assetId']): ProjectAsset['assetName'] {
-		const asset = activeProject.value?.projectAssets.find(
-			(projectAsset) => projectAsset.assetId === assetId
-		);
+		const asset = findAsset(assetId);
 		return asset?.assetName ?? '';
 	}
 
@@ -261,6 +271,7 @@ export function useProjects() {
 		getAll,
 		getActiveProjectAssets,
 		addAsset,
+		findAsset,
 		getAssetName,
 		deleteAsset,
 		create,

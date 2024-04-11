@@ -44,17 +44,9 @@ import { ProcessItem } from '@/types/common';
 import { useProcessManager } from '@/composables/processManager';
 import { ClientEventType } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
-import { ref, computed, watch } from 'vue';
-import { useProjects } from '@/composables/project';
+import { ref, computed } from 'vue';
 
-const { activeProjectId } = useProjects();
-const {
-	itemsByActiveProject: processItems,
-	clearFinishedItems,
-	setActiveProjectId
-} = useProcessManager();
-
-watch(activeProjectId, (val) => setActiveProjectId(val));
+const { itemsForActiveProject: processItems, clearFinishedItems } = useProcessManager();
 
 const panel = ref();
 const hasFinishedItems = computed(() =>

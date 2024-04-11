@@ -1,9 +1,13 @@
 import { subscribe } from '@/services/ClientEventService';
-import { getDocumentAsset } from '@/services/document-assets';
 import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Types';
 import { ProcessItem } from '@/types/common';
 import { ref, computed } from 'vue';
+import { getDocumentAsset } from '@/services/document-assets';
+import { useProjects } from './project';
 
+const { findAsset } = useProjects();
+
+// Items stores the processes for all projects
 const items = ref<ProcessItem[]>([]);
 
 const getStatus = (data: { error: string; t: number }) => {
@@ -19,7 +23,6 @@ const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 		// Create a new process item
 		const newItem: ProcessItem = {
 			id: event.data.documentId,
-			projectId: '38e2f5f1-8c35-45c6-9735-09edd8318f69',
 			type: ClientEventType.ExtractionPdf,
 			assetName: '',
 			status: getStatus(event.data),
@@ -29,7 +32,8 @@ const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 			error: event.data.error
 		};
 		items.value.push(newItem);
-		// Update asset name asynchronously on the next tick to avoid blocking the event handler
+		// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
+		// Update the asset name asynchronously on the next tick to avoid blocking the event handler
 		getDocumentAsset(event.data.documentId).then((document) =>
 			Object.assign(newItem, { assetName: document?.name || '' })
 		);
@@ -46,26 +50,16 @@ const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 };
 
 export function useProcessManager() {
-	const activeProjectId = ref('');
-
-	const itemsByActiveProject = computed(() =>
-		items.value.filter((item) => item.projectId === activeProjectId.value)
-	);
+	const itemsForActiveProject = computed(() => items.value.filter((item) => !!findAsset(item.id)));
 
 	function init() {
 		// Initialize SSE event handlers for the process manager
 		subscribe(ClientEventType.ExtractionPdf, extractionEventHandler);
 	}
 
-	function setActiveProjectId(projectId: string) {
-		activeProjectId.value = projectId;
-	}
-
 	function clearFinishedItems() {
-		items.value = items.value.filter(
-			(item) => item.projectId === activeProjectId.value && item.status === 'Running'
-		);
+		items.value = items.value.filter((item) => !!findAsset(item.id) && item.status === 'Running');
 	}
 
-	return { init, itemsByActiveProject, setActiveProjectId, clearFinishedItems };
+	return { init, itemsForActiveProject, clearFinishedItems };
 }

@@ -202,7 +202,6 @@ export interface CompareModelsResponseType {
 
 export interface ProcessItem {
 	id: string;
-	projectId?: string;
 	type: ClientEventType;
 	assetName: string;
 	status: 'Completed' | 'Failed' | 'Running';
