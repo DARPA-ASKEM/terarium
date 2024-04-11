@@ -164,11 +164,20 @@ async function renderGraph() {
 	}
 
 	renderer.on('node-click', (_eventName, _event, selection) => {
-		const { id, type } = selection.datum();
-		if (type === NodeType.Transition) {
+		const { id, data } = selection.datum();
+		console.log(selection.datum());
+		if (data.type === NodeType.Transition) {
 			selectedTransitionId.value = id;
 			openValueConfig.value = true;
 		}
+	});
+
+	renderer.on('node-mouse-enter', (_eventName, _event, selection) => {
+		console.log(selection.datum());
+		// const { id, data } = selection.datum();
+		// if (data.type === NodeType.Transition) {
+		// 	renderer?.highlightTransition(id);
+		// }
 	});
 
 	// Render graph
@@ -192,8 +201,7 @@ async function toggleCollapsedView() {
 watch(
 	() => [props.model.model, props.model?.semantics, graphElement.value],
 	async () => {
-		if (modelType.value === AMRSchemaNames.DECAPODES) return;
-		if (graphElement.value === null) return;
+		if (modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) return;
 		// FIXME: inefficient, do not constant call API in watch
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;

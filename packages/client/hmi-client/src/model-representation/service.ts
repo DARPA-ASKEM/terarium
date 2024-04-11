@@ -19,6 +19,12 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 			value: miraModel.parameters[variableName].value
 		};
 	}
+	const template = miraModel.templates.find((t) => t.name === variableName);
+	if (template) {
+		return {
+			value: template.rate_law
+		};
+	}
 	throw new Error(`${variableName} not found`);
 };
 
