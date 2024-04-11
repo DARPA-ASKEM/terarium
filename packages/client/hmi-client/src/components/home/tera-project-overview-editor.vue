@@ -12,11 +12,14 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Editor from 'primevue/editor';
 import { update } from '@/services/project';
 import { useProjects } from '@/composables/project';
+import { b64DecodeUnicode } from '@/utils/binary';
 
 const AUTO_SAVE_DELAY = 3000;
 
 const { activeProject, refresh } = useProjects();
-const lastSavedContent = computed(() => atob(activeProject.value?.overviewContent ?? ''));
+const lastSavedContent = computed(() =>
+	b64DecodeUnicode(activeProject.value?.overviewContent ?? '')
+);
 const hasEditPermission = computed(() =>
 	['creator', 'writer'].includes(activeProject.value?.userPermission ?? '')
 );
