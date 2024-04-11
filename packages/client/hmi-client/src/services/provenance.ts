@@ -6,8 +6,6 @@ import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import {
 	AssetType,
-	DocumentAsset,
-	Model,
 	ProvenanceQueryParam,
 	ProvenanceSearchResult,
 	ProvenanceType,
@@ -56,37 +54,6 @@ async function getConnectedNodes(
 	);
 
 	return connectedNodesRaw?.data ?? null;
-}
-
-/**
- * Find all the document assets that are used by a given model
- * with an EXTRACTED_FROM relationship.
- */
-async function getDocumentAssetsUsedByModel(modelId: Model['id']): Promise<DocumentAsset[]> {
-	if (!modelId) return [];
-	const query: ProvenanceQueryParam = {
-		rootId: modelId,
-		rootType: ProvenanceType.Model,
-		types: [ProvenanceType.Document]
-	};
-
-	const documentAssets: DocumentAsset[] = [];
-
-	try {
-		const response = await API.post('/provenance/search/models-from-document', query);
-
-		// If we get an error returns an empty array
-		if (response.status !== 200) {
-			logger.info('No document assets found');
-			return documentAssets;
-		}
-
-		return await getBulkDocumentAssets(response.data?.result ?? []);
-	} catch (error) {
-		logger.error(`Error: ${error}`);
-	}
-
-	return documentAssets;
 }
 
 /**
@@ -215,11 +182,6 @@ async function createProvenance(payload: ProvenancePayload) {
 	return response?.data?.id ?? null;
 }
 
-async function getProvenance(id: string) {
-	const response = await API.get(`/provenance/${id}`);
-	return response?.data ?? null;
-}
-
 /**
  * Map an asset type to a provenance type
  * @param AssetType
@@ -249,4 +211,4 @@ export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceTy
 	}
 }
 
-export { getRelatedArtifacts, getDocumentAssetsUsedByModel, createProvenance, getProvenance };
+export { getRelatedArtifacts, createProvenance };

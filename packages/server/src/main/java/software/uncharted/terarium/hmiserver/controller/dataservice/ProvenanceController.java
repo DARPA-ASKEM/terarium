@@ -58,34 +58,6 @@ public class ProvenanceController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(provenance);
 	}
 
-	@PostMapping("/search/child-nodes")
-	@Secured(Roles.USER)
-	@Operation(summary = "Search child nodes")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
-			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
-	})
-	public ResponseEntity<ProvenanceSearchResult> searchChildNodes(
-			@RequestBody final ProvenanceQueryParam body) {
-
-		return ResponseEntity.ok(provenanceSearchService.childNodes(body));
-	}
-
-	@PostMapping("/search/parent-nodes")
-	@Secured(Roles.USER)
-	@Operation(summary = "Search parent nodes")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Provenance results found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class))),
-			@ApiResponse(responseCode = "204", description = "There are no results found and no errors occurred", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving results from the data store", content = @Content)
-	})
-	public ResponseEntity<ProvenanceSearchResult> searchParentNodes(
-			@RequestBody final ProvenanceQueryParam body) {
-
-		return ResponseEntity.ok(provenanceSearchService.parentNodes(body));
-	}
-
 	@PostMapping("/search/connected-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Search connected nodes")
