@@ -72,11 +72,13 @@ public class DataMigrationESToPG {
 		void migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
 			// check if there is a target index to migrate from
 			if (!elasticService.indexExists(index)) {
-				throw new RuntimeException("Index " + index + " does not exist");
+				log.warn("Index " + index + " does not exist");
+				return;
 			}
 
 			if (elasticService.count(index) == 0) {
-				throw new RuntimeException("Index " + index + " has no documents");
+				log.warn("Index " + index + " has no documents");
+				return;
 			}
 
 			// check if the data has already been migrated
