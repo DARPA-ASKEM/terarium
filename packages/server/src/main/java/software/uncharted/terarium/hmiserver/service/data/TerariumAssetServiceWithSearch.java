@@ -75,12 +75,12 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	 */
 	public void setupIndexAndAliasAndEnsureEmpty() throws IOException {
 		log.info("Setting up index {} and alias {}", getAssetIndex(), getAssetAlias());
-		String index = getAssetIndex();
+		final String index = getAssetIndex();
 		try {
-			index = getCurrentAssetIndex();
+			final String currentIndex = getCurrentAssetIndex();
 			// if another index exists, delete it.
-			if (!index.equals(getAssetIndex())) {
-				elasticService.deleteIndex(index);
+			if (!currentIndex.equals(index)) {
+				elasticService.deleteIndex(currentIndex);
 			}
 		} catch (final Exception e) {
 		}
