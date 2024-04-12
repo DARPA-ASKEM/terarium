@@ -1,5 +1,8 @@
 <template>
-	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="showTooltip">
+	<tera-tooltip
+		:custom-position="hoveredTransitionPosition"
+		:show-tooltip="!isEmpty(hoveredTransitionId)"
+	>
 		<main>
 			<TeraResizablePanel
 				v-if="!isPreview"
@@ -94,16 +97,21 @@
 			</Teleport>
 		</main>
 		<template v-if="isStratified && !isEmpty(hoveredTransitionId)" #tooltip-content>
-			<tera-stratified-matrix
+			<tera-stratified-matrix-preview
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				:id="hoveredTransitionId"
 				:stratified-matrix-type="StratifiedMatrix.Rates"
-				:should-eval="true"
 			/>
-			<Button label="Click to open" size="small" text />
 		</template>
 	</tera-tooltip>
+	<tera-stratified-matrix-preview
+		v-if="isStratified && !isEmpty(hoveredTransitionId)"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
+		:id="hoveredTransitionId"
+		:stratified-matrix-type="StratifiedMatrix.Rates"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -132,7 +140,7 @@ import {
 import { getModelRenderer } from '@/model-representation/service';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
-import TeraStratifiedMatrix from '../model-configurations/tera-stratified-matrix.vue';
+import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -156,7 +164,6 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const hoveredTransitionId = ref('');
 const hoveredTransitionPosition = ref({ x: 0, y: 0 });
-const showTooltip = ref(false);
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -201,17 +208,15 @@ async function renderGraph() {
 			console.log(selection.datum());
 			// console.log(_event);
 
-			// const { id, data } = selection.datum();
 			if (data.type === NodeType.Transition) {
 				hoveredTransitionId.value = id;
 				hoveredTransitionPosition.value = { x: _event.offsetX, y: _event.offsetY };
-				showTooltip.value = true;
 			}
 		});
 
-		// renderer.on('node-mouse-leave', () => {
-		// 	showTooltip.value = false;
-		// });
+		renderer.on('node-mouse-leave', () => {
+			// hoveredTransitionId.value = '';
+		});
 	}
 
 	// Render graph
