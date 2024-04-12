@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.IOException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,17 +12,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
-import java.io.IOException;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class WorkflowControllerTests extends TerariumApplicationTests {
 
@@ -28,20 +28,14 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private WorkflowService workflowService;
 
-	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
-
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getWorkflowIndex());
+		workflowService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getWorkflowIndex());
+		workflowService.teardownIndexAndAlias();
 	}
 
 	final Workflow workflow = new Workflow()

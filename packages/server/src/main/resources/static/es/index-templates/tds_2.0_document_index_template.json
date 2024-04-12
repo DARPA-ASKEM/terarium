@@ -1,183 +1,188 @@
 {
-  "version": 1,
-  "priority": 500,
-  "composed_of": ["tds_2.0_terarium_asset_component", "tds_2.0_name_description_component", "tds_2.0_embedding_component"],
-  "index_patterns": [
-    "*_document_tera_2.0"
-  ],
-  "_meta": {
-    "description": "This index template is the standard template for all Terarium DOCUMENT indices"
-  },
-  "template": {
-    "settings": {
-      "index": {
-        "number_of_shards": 1,
-        "number_of_replicas": 1,
-        "refresh_interval": "1s"
-      }
+    "version": 1,
+    "priority": 501,
+    "composed_of": [
+        "tds_2.0_terarium_asset_component",
+        "tds_2.0_name_description_component",
+        "tds_2.0_embedding_component"
+    ],
+    "index_patterns": [
+        "tds_document_tera_2.*",
+        "tds_test_document_tera_2.*"
+    ],
+    "_meta": {
+        "description": "This index template is the standard template for all Terarium DOCUMENT indices"
     },
-    "mappings": {
-      "properties": {
-        "userId": {
-          "type": "keyword",
-          "ignore_above": 512
-        },
-        "fileNames": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 512
+    "template": {
+        "settings": {
+            "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 1,
+                "refresh_interval": "1s"
             }
-          }
         },
-        "documentUrl": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 512
-            }
-          }
-        },
-        "metadata": {
-          "type": "object",
-          "enabled": false
-        },
-        "source": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 512
-            }
-          }
-        },
-        "text": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 512
-            }
-          }
-        },
-        "grounding": {
-          "type": "nested",
-          "properties": {
-            "identifiers": {
-              "type": "object",
-              "enabled": false
-            },
-            "context": {
-              "type": "object",
-              "enabled": false
-            }
-          }
-        },
-        "concepts": {
-          "type": "nested",
-          "properties": {
-            "id": {
-              "type": "keyword",
-              "ignore_above": 512
-            },
-            "createdOn": {
-              "type": "date",
-              "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
-            },
-            "updatedOn": {
-              "type": "date",
-              "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
-            },
-            "deletedOn": {
-              "type": "date",
-              "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
-            },
-            "curie": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 512
-                }
-              }
-            },
-            "activeConcept": {
-              "type": "nested",
-              "properties": {
-                "curie": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 512
-                    }
-                  }
+        "mappings": {
+            "properties": {
+                "userId": {
+                    "type": "keyword",
+                    "ignore_above": 512
                 },
-                "name": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 512
+                "fileNames": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
                     }
-                  }
+                },
+                "documentUrl": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "metadata": {
+                    "type": "object",
+                    "enabled": false
+                },
+                "source": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "text": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "grounding": {
+                    "type": "nested",
+                    "properties": {
+                        "identifiers": {
+                            "type": "object",
+                            "enabled": false
+                        },
+                        "context": {
+                            "type": "object",
+                            "enabled": false
+                        }
+                    }
+                },
+                "concepts": {
+                    "type": "nested",
+                    "properties": {
+                        "id": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        },
+                        "createdOn": {
+                            "type": "date",
+                            "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+                        },
+                        "updatedOn": {
+                            "type": "date",
+                            "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+                        },
+                        "deletedOn": {
+                            "type": "date",
+                            "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+                        },
+                        "curie": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "activeConcept": {
+                            "type": "nested",
+                            "properties": {
+                                "curie": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 512
+                                        }
+                                    }
+                                },
+                                "name": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 512
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "type": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "objectId": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        },
+                        "status": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        }
+                    }
+                },
+                "assets": {
+                    "type": "nested",
+                    "properties": {
+                        "fileName": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "assetType": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "metadata": {
+                            "type": "object",
+                            "enabled": false
+                        }
+                    }
                 }
-              }
-            },
-            "type": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 512
-                }
-              }
-            },
-            "objectId": {
-              "type": "keyword",
-              "ignore_above": 512
-            },
-            "status": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 512
-                }
-              }
             }
-          }
-        },
-        "assets": {
-          "type": "nested",
-          "properties": {
-            "fileName": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 512
-                }
-              }
-            },
-            "assetType": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 512
-                }
-              }
-            },
-            "metadata": {
-              "type": "object",
-              "enabled": false
-            }
-          }
         }
-      }
     }
-  }
 }

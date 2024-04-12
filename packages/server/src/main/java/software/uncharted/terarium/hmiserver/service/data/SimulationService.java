@@ -1,8 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -12,16 +20,11 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 /**
- * Service class for handling simulations.  Note that this does not extend TerariumAssetService, as Simulations
- * do not extend TerariumAsset. This is because simulations have special considerations around their date/time fields
+ * Service class for handling simulations. Note that this does not extend
+ * TerariumAssetService, as Simulations
+ * do not extend TerariumAsset. This is because simulations have special
+ * considerations around their date/time fields
  * when it comes to formatting.
  */
 @Service
@@ -42,8 +45,8 @@ public class SimulationService {
 				.from(page)
 				.size(pageSize)
 				.query(q -> q.bool(b -> b
-					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
+						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.build();
 		return elasticService.search(req, Simulation.class);
 	}
@@ -73,7 +76,7 @@ public class SimulationService {
 	}
 
 	public Optional<Simulation> updateSimulation(final Simulation simulation) throws IOException {
-		if (!elasticService.contains(elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
+		if (!elasticService.documentExists(elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
 			return Optional.empty();
 		}
 		simulation.setUpdatedOn(Timestamp.from(Instant.now()));
