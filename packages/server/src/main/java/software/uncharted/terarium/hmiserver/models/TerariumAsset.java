@@ -66,11 +66,20 @@ public abstract class TerariumAsset implements Serializable {
 	@TSOptional
 	private Boolean publicAsset = false;
 
+	// This is here just to satisfy the service interface.
 	public TerariumAsset clone() {
-		try {
-			return (TerariumAsset) super.clone();
-		} catch (final CloneNotSupportedException e) {
-			throw new RuntimeException("Error cloning TerariumAsset", e);
-		}
+		throw new RuntimeException(
+				"This should not be called. Use explicitly override this method on the derived class and call cloneSuperFields instead.");
+	}
+
+	protected TerariumAsset cloneSuperFields(final TerariumAsset asset) {
+		asset.id = UUID.randomUUID(); // ensure we create a new id
+		asset.name = name;
+		asset.createdOn = this.createdOn != null ? new Timestamp(this.createdOn.getTime()) : null;
+		asset.updatedOn = this.updatedOn != null ? new Timestamp(this.updatedOn.getTime()) : null;
+		asset.deletedOn = this.deletedOn != null ? new Timestamp(this.deletedOn.getTime()) : null;
+		asset.temporary = temporary;
+		asset.publicAsset = publicAsset;
+		return asset;
 	}
 }
