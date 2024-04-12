@@ -13,8 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.ToString;
@@ -33,15 +33,15 @@ public class NotificationGroup {
 	@NotNull
 	private UUID id;
 
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp createdOn;
+	@NotNull
+	private String userId;
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp updatedOn;
+	private Timestamp timestamp;
 
 	@OneToMany(mappedBy = "notification_event")
+	@OrderBy("timestamp DESC")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
@@ -49,11 +49,6 @@ public class NotificationGroup {
 
 	@PrePersist
 	protected void onCreate() {
-		this.createdOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		this.updatedOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.timestamp = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 }

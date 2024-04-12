@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.repository.notification;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,5 +13,8 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 @Repository
 public interface NotificationGroupRepository extends PSCrudRepository<NotificationGroup, UUID> {
 
-	List<NotificationGroup> findAllByUserIdOrderByCreatedOn(@NotNull String userId);
+	List<NotificationGroup> findAllByUserIdOrderByTimestampDesc(@NotNull String userId);
+
+	List<NotificationGroup> findAllByUserIdAndTimestampGreaterThanOrderByTimestampDesc(@NotNull String userId,
+			@NotNull Timestamp since);
 }

@@ -6,13 +6,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -31,15 +27,6 @@ public class NotificationEvent {
 
 	@NotNull
 	private UUID id;
-
-	@NotNull
-	private String userId;
-
-	@ManyToOne
-	@JoinColumn(name = "group_id", nullable = false)
-	@JsonBackReference
-	@NotNull
-	private NotificationGroup group;
 
 	private String message;
 	private Double progress;
