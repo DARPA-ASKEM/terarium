@@ -69,6 +69,10 @@ public class ProvenanceController {
 	public ResponseEntity<ProvenanceSearchResult> searchConnectedNodes(
 			@RequestBody final ProvenanceQueryParam body) {
 
+		// TODO: This function should return the objects listed in the ProvenanceSearchResults and not simply the ids,
+		//  the client pulls these objects with a distinct request per object,
+		//  this would cut down on many inefficient network requests
+
 		return ResponseEntity.ok(provenanceSearchService.connectedNodes(body));
 	}
 }
