@@ -78,7 +78,10 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 		String index = getAssetIndex();
 		try {
 			index = getCurrentAssetIndex();
-			log.info("Found latest index version {}", index);
+			// if another index exists, delete it.
+			if (!index.equals(getAssetIndex())) {
+				elasticService.deleteIndex(index);
+			}
 		} catch (final Exception e) {
 		}
 		elasticService.createOrEnsureIndexIsEmpty(index);
