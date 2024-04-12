@@ -18,7 +18,16 @@ const toastTitle = {
 	}
 };
 
-const displayToast = (eventType: ClientEventType, status: string, msg: string, error: string) => {
+const displayToast = (
+	assetId: string,
+	eventType: ClientEventType,
+	status: string,
+	msg: string,
+	error: string
+) => {
+	if (!['Completed', 'Failed'].includes(status)) return;
+	if (!findAsset(assetId)) return; // Check if the asset is in the active project
+
 	if (status === 'Completed')
 		useToastService().success(toastTitle[eventType]?.success ?? 'Process Completed', msg);
 	if (status === 'Failed')
@@ -35,6 +44,7 @@ const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 	if (!event.data) return;
 
 	displayToast(
+		event.data.documentId,
 		ClientEventType.ExtractionPdf,
 		getStatus(event.data),
 		event.data.message,
