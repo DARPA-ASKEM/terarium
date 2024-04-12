@@ -3,14 +3,27 @@ import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Ty
 import { NotificationItem } from '@/types/common';
 import { ref, computed } from 'vue';
 import { getDocumentAsset } from '@/services/document-assets';
-// import { useToastService } from '@/services/toast';
+import { useToastService } from '@/services/toast';
 import { useProjects } from './project';
 
 const { findAsset } = useProjects();
-// const { toast } = useToastService();
 
 // Items stores the notifications for all projects
 const items = ref<NotificationItem[]>([]);
+
+const toastTitle = {
+	[ClientEventType.ExtractionPdf]: {
+		success: 'PDF Extraction Completed',
+		error: 'PDF Extraction Error'
+	}
+};
+
+const displayToast = (eventType: ClientEventType, status: string, msg: string, error: string) => {
+	if (status === 'Completed')
+		useToastService().success(toastTitle[eventType]?.success ?? 'Process Completed', msg);
+	if (status === 'Failed')
+		useToastService().error(toastTitle[eventType]?.error ?? 'Process Failed', error);
+};
 
 const getStatus = (data: { error: string; t: number }) => {
 	if (data.error) return 'Failed';
@@ -20,6 +33,14 @@ const getStatus = (data: { error: string; t: number }) => {
 
 const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 	if (!event.data) return;
+
+	displayToast(
+		ClientEventType.ExtractionPdf,
+		getStatus(event.data),
+		event.data.message,
+		event.data.error
+	);
+
 	const existingItem = items.value.find((item) => item.id === event.data.documentId);
 	if (!existingItem) {
 		// Create a new notification item

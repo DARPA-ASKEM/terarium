@@ -25,7 +25,8 @@
 		<ul class="notification-items-container" v-if="notificationItems.length > 0">
 			<li class="notification-item" v-for="item in notificationItems" :key="item.id">
 				<p class="heading">
-					{{ getTitleText(item) }} <span>{{ item.assetName }}</span>
+					{{ getTitleText(item) }}
+					<tera-asset-link text-only :label="item.assetName" :asset-route="getAssetRoute(item)" />
 				</p>
 				<p class="msg">{{ item.msg }}</p>
 				<div v-if="item.status === 'Running'" class="progressbar-container">
@@ -53,10 +54,11 @@
 import Button from 'primevue/button';
 import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
-import { ClientEventType } from '@/types/Types';
+import { AssetType, ClientEventType } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
+import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
 	itemsForActiveProject: notificationItems,
@@ -85,6 +87,15 @@ const getActionText = (item: NotificationItem) => {
 			return 'Extracting...';
 		default:
 			return 'Processing...';
+	}
+};
+
+const getAssetRoute = (item: NotificationItem) => {
+	switch (item.type) {
+		case ClientEventType.ExtractionPdf:
+			return { assetId: item.id, pageType: AssetType.Document };
+		default:
+			return { assetId: item.id, pageType: AssetType.Document };
 	}
 };
 
@@ -166,7 +177,7 @@ const getElapsedTimeText = (item: NotificationItem) => {
 	.heading {
 		font-size: var(--font-body-small);
 	}
-	.heading span {
+	.heading a {
 		color: var(--primary-color);
 	}
 	.msg {
