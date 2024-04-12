@@ -1,13 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -22,9 +22,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -33,10 +52,6 @@ import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 
 @RequestMapping("/code-asset")
 @RestController
@@ -161,7 +176,6 @@ public class TDSCodeController {
 			code.setId(codeId);
 			final Optional<Code> updated = codeService.updateAsset(code);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-
 		} catch (final IOException e) {
 			log.error("Unable to update code resource", e);
 			throw new ResponseStatusException(
@@ -239,41 +253,40 @@ public class TDSCodeController {
 
 	}
 
-
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to download the code file")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
-		@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
-	public ResponseEntity<PresignedURL> getDownloadURL(@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
+	public ResponseEntity<PresignedURL> getDownloadURL(@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
 		try {
 
 			final Optional<PresignedURL> url = codeService.getDownloadUrl(id, filename);
-      return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			return url.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
-
 
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to upload the code file")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
-		@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getUploadURL(
-		@PathVariable("id") final UUID id,
-		@RequestParam("filename") final String filename) {
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename) {
 
 		try {
 			return ResponseEntity.ok(codeService.getUploadUrl(id, filename));
@@ -281,11 +294,10 @@ public class TDSCodeController {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error);
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
 		}
 	}
-
 
 	/**
 	 * Uploads a file to the specified codeId.
@@ -336,10 +348,10 @@ public class TDSCodeController {
 
 		// download file from GitHub
 		final String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		if(fileString == null){
+		if (fileString == null) {
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to get file as string data");
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to get file as string data");
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadCodeHelper(codeId, filename, fileEntity);
@@ -397,7 +409,8 @@ public class TDSCodeController {
 	 * @param codeHttpEntity The entity containing the code to upload
 	 * @return A response containing the status of the upload
 	 */
-	private ResponseEntity<Integer> uploadCodeHelper(final UUID codeId, final String fileName, final HttpEntity codeHttpEntity) {
+	private ResponseEntity<Integer> uploadCodeHelper(final UUID codeId, final String fileName,
+			final HttpEntity codeHttpEntity) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
@@ -410,17 +423,17 @@ public class TDSCodeController {
 			final HttpResponse response = httpclient.execute(put);
 
 			final Optional<Code> code = codeService.getAsset(codeId);
-			if(code.isEmpty()){
+			if (code.isEmpty()) {
 				throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to get code");
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						"Unable to get code");
 			}
 			final CodeFile codeFile = new CodeFile();
 			codeFile.setProgrammingLanguageFromFileName(fileName);
 
 			Map<String, CodeFile> fileMap = code.get().getFiles();
 
-			if(fileMap == null){
+			if (fileMap == null) {
 				fileMap = new HashMap<>();
 			}
 			fileMap.put(fileName, codeFile);

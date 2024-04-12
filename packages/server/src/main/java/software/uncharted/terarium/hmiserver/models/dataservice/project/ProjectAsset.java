@@ -1,7 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
+import java.io.Serial;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -11,20 +19,15 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.UUID;
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class ProjectAsset extends TerariumAsset implements Serializable {
+public class ProjectAsset extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = -3382397588627700379L;
-
 
 	@ManyToOne
 	@JoinColumn(name = "project_id", nullable = false)

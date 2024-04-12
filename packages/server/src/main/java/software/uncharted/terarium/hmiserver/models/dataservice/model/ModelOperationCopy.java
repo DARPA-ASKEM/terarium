@@ -1,13 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
-
 import java.io.Serial;
 import java.io.Serializable;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 public class ModelOperationCopy extends SupportAdditionalProperties implements Serializable {
 	@Serial

@@ -1,15 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.petrinet;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TSModel
 public class PetriNetModel extends SupportAdditionalProperties implements Serializable {
