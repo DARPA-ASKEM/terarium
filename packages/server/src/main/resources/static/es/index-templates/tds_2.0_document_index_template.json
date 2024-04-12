@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "priority": 500,
+    "priority": 501,
     "composed_of": [
         "tds_2.0_terarium_asset_component",
         "tds_2.0_name_description_component",
