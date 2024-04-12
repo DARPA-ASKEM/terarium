@@ -40,7 +40,7 @@
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
-			<tera-process-manager v-if="isProjectPage" />
+			<tera-notification-manager v-if="isProjectPage" />
 
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
@@ -208,7 +208,7 @@ import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import TeraProcessManager from '@/components/navbar/tera-process-manager.vue';
+import TeraNotificationManager from '@/components/navbar/tera-notification-manager.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';

@@ -1,8 +1,8 @@
 <template>
-	<Button icon="pi pi-check" rounded aria-label="Process Manager" @click="togglePanel" />
-	<OverlayPanel class="process-manager-container" ref="panel">
+	<Button icon="pi pi-check" rounded aria-label="Notifications" @click="togglePanel" />
+	<OverlayPanel class="notification-container" ref="panel">
 		<div class="header">
-			<h1>Process Manager</h1>
+			<h1>Notifications</h1>
 			<Button
 				label="Clear notifications"
 				text
@@ -10,10 +10,10 @@
 				@click="clearFinishedItems"
 			/>
 		</div>
-		<ul class="process-items-container" v-if="processItems.length > 0">
-			<li class="process-item" v-for="item in processItems" :key="item.id">
+		<ul class="notification-items-container" v-if="notificationItems.length > 0">
+			<li class="notification-item" v-for="item in notificationItems" :key="item.id">
 				<p class="heading">
-					{{ getHeadingText(item) }} <span>{{ item.assetName }}</span>
+					{{ getTitleText(item) }} <span>{{ item.assetName }}</span>
 				</p>
 				<p class="msg">{{ item.msg }}</p>
 				<div v-if="item.status === 'Running'" class="progressbar-container">
@@ -32,7 +32,7 @@
 			</li>
 		</ul>
 		<div v-else>
-			<p class="text-body">There are no process notifications to display.</p>
+			<p class="text-body">There are no notifications to display.</p>
 		</div>
 	</OverlayPanel>
 </template>
@@ -40,18 +40,18 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import OverlayPanel from 'primevue/overlaypanel';
-import { ProcessItem } from '@/types/common';
-import { useProcessManager } from '@/composables/processManager';
+import { NotificationItem } from '@/types/common';
 import { ClientEventType } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
 import { ref, computed } from 'vue';
+import { useNotificationManager } from '@/composables/notificationManager';
 
-const { itemsForActiveProject: processItems, clearFinishedItems } = useProcessManager();
+const { itemsForActiveProject: notificationItems, clearFinishedItems } = useNotificationManager();
 
 const panel = ref();
 const hasFinishedItems = computed(() =>
-	processItems.value.some(
-		(item: ProcessItem) => item.status === 'Completed' || item.status === 'Failed'
+	notificationItems.value.some(
+		(item: NotificationItem) => item.status === 'Completed' || item.status === 'Failed'
 	)
 );
 
@@ -59,7 +59,7 @@ const togglePanel = (event) => {
 	panel.value.toggle(event);
 };
 
-const getHeadingText = (item: ProcessItem) => {
+const getTitleText = (item: NotificationItem) => {
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
 			return 'PDF extraction from';
@@ -68,7 +68,7 @@ const getHeadingText = (item: ProcessItem) => {
 	}
 };
 
-const getActionText = (item: ProcessItem) => {
+const getActionText = (item: NotificationItem) => {
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
 			return 'Extracting...';
@@ -77,7 +77,7 @@ const getActionText = (item: ProcessItem) => {
 	}
 };
 
-const getElapsedTimeText = (item: ProcessItem) => {
+const getElapsedTimeText = (item: NotificationItem) => {
 	const time = Date.now() - item.lastUpdated;
 	const minutes = Math.floor(time / (1000 * 60));
 	return minutes > 0 ? `${minutes} minutes ago` : 'Just now';
@@ -86,14 +86,14 @@ const getElapsedTimeText = (item: ProcessItem) => {
 
 <style>
 /* Reset default overlay component style */
-.process-manager-container.p-overlaypanel .p-overlaypanel-content {
+.notification-container.p-overlaypanel .p-overlaypanel-content {
 	padding: 0;
 }
-.process-manager-container.p-overlaypanel:after,
-.process-manager-container.p-overlaypanel:before {
+.notification-container.p-overlaypanel:after,
+.notification-container.p-overlaypanel:before {
 	content: none;
 }
-.process-manager-container.p-overlaypanel {
+.notification-container.p-overlaypanel {
 	top: 51px !important;
 	width: 540px;
 	box-shadow: 0px 4px 4px 0px #00000040;
@@ -121,13 +121,13 @@ const getElapsedTimeText = (item: ProcessItem) => {
 	color: var(--text-color-secondary);
 }
 
-.process-items-container {
+.notification-items-container {
 	max-height: 570px;
 	list-style: none;
 	overflow: auto;
 }
 
-.process-item {
+.notification-item {
 	padding: 1rem 0;
 	&:not(:first-child) {
 		border-top: 1px solid #dee2e6;

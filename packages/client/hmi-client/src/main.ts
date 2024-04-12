@@ -18,7 +18,7 @@ import router from '@/router';
 import '@node_modules/katex/dist/katex.min.css';
 import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
-import { useProcessManager } from '@/composables/processManager';
+import { useNotificationManager } from '@/composables/notificationManager';
 import '@/assets/css/style.scss';
 import Keycloak from 'keycloak-js';
 import { init } from '@/services/ClientEventService';
@@ -106,7 +106,7 @@ router.beforeEach(async (to, _from, next) => {
 	next();
 });
 
-useProcessManager().init();
+useNotificationManager().init();
 
 // Allow the use of CSS custom properties
 declare module '@vue/runtime-dom' {

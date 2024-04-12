@@ -75,6 +75,7 @@ public class ExtractionService {
 	final Double HALFTIME_SECONDS = 5.0;
 
 	// Allow up to 10 concurrent extraction tasks
+	// TODO: Move this to application properties or set the POOL_SIZE in a smarter way
 	private final int POOL_SIZE = 10;
 
 	@Value("${mit-openai-api-key:}")

@@ -200,7 +200,7 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
-export interface ProcessItem {
+export interface NotificationItem {
 	id: string;
 	type: ClientEventType;
 	assetName: string;
@@ -209,4 +209,5 @@ export interface ProcessItem {
 	error: string;
 	progress: number;
 	lastUpdated: number;
+	checked: boolean;
 }
