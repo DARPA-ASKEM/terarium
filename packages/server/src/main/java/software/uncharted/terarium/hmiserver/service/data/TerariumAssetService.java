@@ -1,21 +1,22 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 /**
  * Base class for services that manage TerariumAssets
@@ -25,7 +26,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public abstract class TerariumAssetService<T extends TerariumAsset> {
+public abstract class TerariumAssetService<T extends TerariumAsset> implements ITerariumAssetService<T> {
 
 	/** The configuration for the Elasticsearch service */
 	protected final ElasticsearchConfiguration elasticConfig;
@@ -115,14 +116,14 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
-	public void deleteAsset(final UUID id) throws IOException {
+	public Optional<T> deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
-			return;
+			return Optional.empty();
 		}
 		asset.get().setDeletedOn(Timestamp.from(Instant.now()));
 		updateAsset(asset.get());
-
+		return asset;
 	}
 
 	/**
@@ -133,11 +134,30 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 	 * @throws IOException If there is an error creating the asset
 	 */
 	public T createAsset(final T asset) throws IOException {
-		final UUID id = UUID.randomUUID();
-		asset.setId(id);
+		if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
+			throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
+		}
 		asset.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
 		return asset;
+	}
+
+	/**
+	 * Create new assets and saves to ES
+	 *
+	 * @param asset The asset to create
+	 * @return The created asset
+	 * @throws IOException If there is an error creating the asset
+	 */
+	public List<T> createAssets(final List<T> assets) throws IOException {
+		for (final T asset : assets) {
+			if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
+				throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
+			}
+			asset.setCreatedOn(Timestamp.from(Instant.now()));
+			elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
+		}
+		return assets;
 	}
 
 	/**
@@ -162,7 +182,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> {
 		}
 
 		asset.setUpdatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(getAssetIndex() , asset.getId().toString(), asset);
+		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
 
 		// Update the related ProjectAsset
 		projectAssetService.updateByAsset(asset);

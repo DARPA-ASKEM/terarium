@@ -1,10 +1,11 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium.elasticsearch")
@@ -74,20 +75,68 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.decapodesContextRoot, index.suffix);
 	}
 
+	public String getCodeAlias() {
+		return String.join("_", index.prefix, index.codeRoot);
+	}
+
+	public String getArtifactAlias() {
+		return String.join("_", index.prefix, index.artifactRoot);
+	}
+
+	public String getDatasetAlias() {
+		return String.join("_", index.prefix, index.datasetRoot);
+	}
+
+	public String getDocumentAlias() {
+		return String.join("_", index.prefix, index.documentRoot);
+	}
+
+	public String getEquationAlias() {
+		return String.join("_", index.prefix, index.equationRoot);
+	}
+
+	public String getModelAlias() {
+		return String.join("_", index.prefix, index.modelRoot);
+	}
+
+	public String getModelConfigurationAlias() {
+		return String.join("_", index.prefix, index.modelConfigurationRoot);
+	}
+
+	public String getNotebookSessionAlias() {
+		return String.join("_", index.prefix, index.notebookSessionRoot);
+	}
+
+	public String getSimulationAlias() {
+		return String.join("_", index.prefix, index.simulationRoot);
+	}
+
+	public String getWorkflowAlias() {
+		return String.join("_", index.prefix, index.workflowRoot);
+	}
+
+	public String getDecapodesConfigurationAlias() {
+		return String.join("_", index.prefix, index.decapodesConfigurationRoot);
+	}
+
+	public String getDecapodesContextAlias() {
+		return String.join("_", index.prefix, index.decapodesContextRoot);
+	}
+
 	public record Index(
-		String prefix,
-		String suffix,
-		String codeRoot,
-		String artifactRoot,
-		String datasetRoot,
-		String documentRoot,
-		String equationRoot,
-		String modelRoot,
-		String modelConfigurationRoot,
-		String notebookSessionRoot,
-		String simulationRoot,
-		String workflowRoot,
-		String decapodesConfigurationRoot,
-		String decapodesContextRoot) {
+			String prefix,
+			String suffix,
+			String codeRoot,
+			String artifactRoot,
+			String datasetRoot,
+			String documentRoot,
+			String equationRoot,
+			String modelRoot,
+			String modelConfigurationRoot,
+			String notebookSessionRoot,
+			String simulationRoot,
+			String workflowRoot,
+			String decapodesConfigurationRoot,
+			String decapodesContextRoot) {
 	}
 }

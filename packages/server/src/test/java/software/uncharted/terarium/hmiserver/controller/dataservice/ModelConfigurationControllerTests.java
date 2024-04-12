@@ -1,6 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,19 +14,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ModelConfigurationControllerTests extends TerariumApplicationTests {
 
@@ -66,12 +68,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService
-				.createAsset(new ModelConfiguration()
-						.setName("test-framework")
-						.setModelId(UUID.randomUUID())
-						.setDescription("test-desc")
-						.setConfiguration(Map.of("key", "value")));
+		final ModelConfiguration modelConfiguration = new ModelConfiguration()
+				.setName("test-framework")
+				.setModelId(UUID.randomUUID())
+				.setDescription("test-desc")
+				.setConfiguration(Map.of("key", "value"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
 				.with(csrf())

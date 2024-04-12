@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -41,25 +42,27 @@ public class ProvenanceService {
 	}
 
 	public Map<String, List<List<String>>> loadGraphValidations() throws Exception {
-		Resource resource = resourceLoader.getResource("classpath:graph_relations.json");
-		InputStream inputStream = resource.getInputStream();
-		Map<String, List<List<String>>> jsonMap = objectMapper.readValue(new InputStreamReader(inputStream), Map.class);
+		final Resource resource = resourceLoader.getResource("classpath:graph_relations.json");
+		final InputStream inputStream = resource.getInputStream();
+		final Map<String, List<List<String>>> jsonMap = objectMapper.readValue(new InputStreamReader(inputStream),
+				new TypeReference<Map<String, List<List<String>>>>() {
+				});
 		return jsonMap;
 	}
 
-	private boolean validateRelationship(ProvenanceType left, ProvenanceType right,
-			ProvenanceRelationType relationType) {
+	private boolean validateRelationship(final ProvenanceType left, final ProvenanceType right,
+			final ProvenanceRelationType relationType) {
 		if (left == null || right == null || relationType == null) {
 			return false;
 		}
-		List<List<String>> relationshipAllowedTypes = graphValidations.get(relationType.toString());
+		final List<List<String>> relationshipAllowedTypes = graphValidations.get(relationType.toString());
 		if (relationshipAllowedTypes == null) {
 			return false;
 		}
-		for (List<String> relation : relationshipAllowedTypes) {
+		for (final List<String> relation : relationshipAllowedTypes) {
 
-			ProvenanceType expectedLeft = ProvenanceType.findByType(relation.get(0));
-			ProvenanceType expectedRight = ProvenanceType.findByType(relation.get(1));
+			final ProvenanceType expectedLeft = ProvenanceType.findByType(relation.get(0));
+			final ProvenanceType expectedRight = ProvenanceType.findByType(relation.get(1));
 
 			if (left == expectedLeft && right == expectedRight) {
 				return true;
@@ -68,14 +71,14 @@ public class ProvenanceService {
 		return false;
 	}
 
-	public Provenance createProvenance(Provenance provenance) {
+	public Provenance createProvenance(final Provenance provenance) {
 		if (!validateRelationship(provenance.getLeftType(), provenance.getRightType(), provenance.getRelationType())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid relationship");
 		}
 
 		try (Session session = neo4jService.getSession()) {
 			// if node 1 is not created yet create node
-			String leftNodeQuery = String.format(
+			final String leftNodeQuery = String.format(
 					"MERGE (n:%s {id: '%s', concept: '%s'})",
 					provenance.getLeftType(),
 					provenance.getLeft().toString(),
@@ -83,14 +86,14 @@ public class ProvenanceService {
 			session.run(leftNodeQuery);
 
 			// if node 2 is not created yet create node
-			String rightNodeQuery = String.format(
+			final String rightNodeQuery = String.format(
 					"MERGE (n:%s {id: '%s', concept: '.'})",
 					provenance.getRightType(),
 					provenance.getRight().toString());
 			session.run(rightNodeQuery);
 
 			// create edge
-			String edgeQuery = String.format(
+			final String edgeQuery = String.format(
 					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MERGE (n1)-[:%s {user_id: $user_id, provenance_id: $provenance_id}]->(n2)",
 					provenance.getLeftType(),
 					provenance.getRightType(),
@@ -109,7 +112,7 @@ public class ProvenanceService {
 
 	public void deleteHangingNodes() {
 		try (Session session = neo4jService.getSession()) {
-			String query = "MATCH (n) WHERE NOT (n)--() DELETE n";
+			final String query = "MATCH (n) WHERE NOT (n)--() DELETE n";
 			session.run(query);
 		}
 	}

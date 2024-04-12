@@ -3,6 +3,7 @@ import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { CompareModelsResponseType } from '@/types/common';
 import { logger } from '@/utils/logger';
+import { b64DecodeUnicode } from '@/utils/binary';
 
 /**
  * Fetches model card data from the server and wait for task to finish.
@@ -116,7 +117,7 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 					closeConnection();
 
 					// data.output is a base64 encoded json object. We decode it and return the json object.
-					const str = atob(data.output);
+					const str = b64DecodeUnicode(data.output);
 					resolve(JSON.parse(str));
 				}
 			}

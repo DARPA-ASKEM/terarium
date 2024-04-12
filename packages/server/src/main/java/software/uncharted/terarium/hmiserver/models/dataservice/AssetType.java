@@ -1,12 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @RequiredArgsConstructor
@@ -44,7 +45,8 @@ public enum AssetType {
 	NOTEBOOK_SESSION,
 	;
 
-	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper) throws ResponseStatusException {
+	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper)
+			throws ResponseStatusException {
 		try {
 			return objectMapper.convertValue(assetTypeName, AssetType.class);
 		} catch (final IllegalArgumentException iae) {
