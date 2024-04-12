@@ -69,7 +69,7 @@ public abstract class TerariumAsset implements Serializable {
 	// This is here just to satisfy the service interface.
 	public TerariumAsset clone() {
 		throw new RuntimeException(
-				"This should not be called. Use explicitly override this method on the derived class and call cloneSuperFields instead.");
+				"This should not be called. Override this method on the derived class and call cloneSuperFields instead.");
 	}
 
 	protected TerariumAsset cloneSuperFields(final TerariumAsset asset) {
