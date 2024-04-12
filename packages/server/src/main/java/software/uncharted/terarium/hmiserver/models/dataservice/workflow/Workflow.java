@@ -57,10 +57,12 @@ public class Workflow extends TerariumAsset {
 
 		clone.name = this.name;
 		clone.description = this.description;
-		clone.transform = new Transform()
-				.setX(this.transform.getX())
-				.setY(this.transform.getY())
-				.setK(this.transform.getK());
+		if (this.transform != null) {
+			clone.transform = new Transform()
+					.setX(this.transform.getX())
+					.setY(this.transform.getY())
+					.setK(this.transform.getK());
+		}
 
 		final Map<UUID, UUID> oldToNew = new HashMap<>();
 
