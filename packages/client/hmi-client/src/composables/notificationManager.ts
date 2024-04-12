@@ -6,6 +6,8 @@ import { getDocumentAsset } from '@/services/document-assets';
 import { useToastService } from '@/services/toast';
 import { useProjects } from './project';
 
+let initialized = false;
+
 const { findAsset } = useProjects();
 
 // Items stores the notifications for all projects
@@ -98,8 +100,11 @@ export function useNotificationManager() {
 	);
 
 	function init() {
+		// Make sure this init function gets called only once for the lifetime of the app
+		if (initialized) return;
 		// Initialize SSE event handlers for the notification manager
 		subscribe(ClientEventType.ExtractionPdf, extractionEventHandler);
+		initialized = true;
 	}
 
 	function clearFinishedItems() {
