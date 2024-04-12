@@ -404,11 +404,11 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import {
 	updateVariable,
-	updateMetadata,
 	validateTimeSeries,
 	getTimeseries,
-	getMetadata,
-	getModelParameters
+	getParameterMetadata,
+	getParameters,
+	updateParameterMetadata
 } from '@/model-representation/service';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -443,7 +443,7 @@ const selectedValue = ref<SuggestedValue | null>(null);
 const suggestedValues = computed(() => {
 	const matchingParameters: SuggestedValue[] = [];
 	props.modelConfigurations?.forEach((configuration, i) => {
-		getModelParameters(configuration.configuration).forEach((parameter) => {
+		getParameters(configuration.configuration).forEach((parameter) => {
 			if (parameter.id === suggestedValuesModalContext.value.id) {
 				matchingParameters.push({
 					parameter,
@@ -505,10 +505,10 @@ const buildParameterTable = () => {
 	if (isStratified.value) {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const param = getModelParameters(model).find((i) => i.id === v);
+				const param = getParameters(model).find((i) => i.id === v);
 				const paramType = getParamType(param);
 				const timeseriesValue = getTimeseries(props.model, param!.id);
-				const parametersMetadata = getMetadata(props.model, 'parameters', param!.id);
+				const parametersMetadata = getParameterMetadata(props.model, param!.id);
 				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
@@ -537,12 +537,12 @@ const buildParameterTable = () => {
 		});
 	} else {
 		parameters.value.forEach((vals, init) => {
-			const param = getModelParameters(model).find((i) => i.id === vals[0]);
+			const param = getParameters(model).find((i) => i.id === vals[0]);
 			if (!param) return;
 			const paramType = getParamType(param);
 
 			const timeseriesValue = getTimeseries(props.model, param.id);
-			const parametersMetadata = getMetadata(props.model, 'parameters', param.id);
+			const parametersMetadata = getParameterMetadata(props.model, param.id);
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
@@ -645,7 +645,7 @@ const updateTimeseries = (id: string, value: string) => {
 
 const updateMetadataFromInput = (id: string, key: string, value: any) => {
 	const clonedModel = cloneDeep(props.model);
-	updateMetadata(clonedModel, id, 'parameters', key, value);
+	updateParameterMetadata(clonedModel, id, key, value);
 	emit('update-model', clonedModel);
 };
 
@@ -712,7 +712,7 @@ const applySelectedValue = () => {
 
 const countSuggestions = (id): number =>
 	props.modelConfigurations?.filter((configuration) =>
-		getModelParameters(configuration.configuration).find((p) => p.id === id)
+		getParameters(configuration.configuration).find((p) => p.id === id)
 	).length ?? 0;
 
 watch(

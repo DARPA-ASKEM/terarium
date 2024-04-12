@@ -153,7 +153,7 @@ export const getModelRenderer = (
  * @param {Model} model - The model object.
  * @returns {ModelParameter[]} - The model parameters.
  */
-export function getModelParameters(model: Model): ModelParameter[] {
+export function getParameters(model: Model): ModelParameter[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
@@ -171,7 +171,7 @@ export function getModelParameters(model: Model): ModelParameter[] {
  * @param {string} parameterId - The ID of the parameter.
  * @returns {ModelParameter | null} - The model parameter or null if not found.
  */
-export function getParameter(model: Model, parameterId: string): ModelParameter | null {
+export function getParameter(model: Model, parameterId: string): ModelParameter | undefined {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
@@ -179,19 +179,28 @@ export function getParameter(model: Model, parameterId: string): ModelParameter 
 		case AMRSchemaNames.PETRINET:
 		case AMRSchemaNames.STOCKFLOW:
 		default:
-			return model.semantics?.ode?.parameters?.find((p) => p.id === parameterId) ?? null;
+			return model.semantics?.ode?.parameters?.find((p) => p.id === parameterId);
 	}
 }
 
 /**
- * Returns the metadata for the specified semantic type and parameter ID.
+ * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.
- * @param {string} semanticType - The semantic type.
- * @param {string} parameterId - The parameter ID.
- * @returns {any} - The metadata.
+ * @param {string} initialId - The ID of the initial.
+ * @returns {any} - The metadata for the specified initial or undefined if not found.
  */
-export function getMetadata(model: Model, semanticType: string, parameterId: string) {
-	return model.metadata?.[semanticType]?.[parameterId];
+export function getInitialMetadata(model: Model, parameterId: string) {
+	return model.metadata?.initials?.[parameterId];
+}
+
+/**
+ * Retrieves the metadata for a specific parameter in the model.
+ * @param {Model} model - The model object.
+ * @param {string} parameterId - The ID of the parameter.
+ * @returns {any} - The metadata for the specified parameter or undefined if not found.
+ */
+export function getParameterMetadata(model: Model, parameterId: string) {
+	return model.metadata?.parameters?.[parameterId];
 }
 
 /**
@@ -199,7 +208,7 @@ export function getMetadata(model: Model, semanticType: string, parameterId: str
  * @param {Model} model - The model object.
  * @returns {Initial[]} - The model initials.
  */
-export function getModelInitials(model: Model): Initial[] {
+export function getInitials(model: Model): Initial[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
@@ -217,7 +226,7 @@ export function getModelInitials(model: Model): Initial[] {
  * @param {string} initialId - The ID of the initial.
  * @returns {Initial | null} - The model initial or null if not found.
  */
-export function getInitial(model: Model, initialId: string): Initial | null {
+export function getInitial(model: Model, initialId: string): Initial | undefined {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
@@ -225,7 +234,7 @@ export function getInitial(model: Model, initialId: string): Initial | null {
 		case AMRSchemaNames.PETRINET:
 		case AMRSchemaNames.STOCKFLOW:
 		default:
-			return model.semantics?.ode?.initials?.find((i) => i.target === initialId) ?? null;
+			return model.semantics?.ode?.initials?.find((i) => i.target === initialId);
 	}
 }
 
@@ -240,26 +249,45 @@ export function getTimeseries(model: Model, semanticId: string) {
 }
 
 /**
- * Updates the metadata for the specified semantic ID, semantic type, and metadata key.
+ * Updates the metadata for a specific parameter in the model.
  * @param {Model} model - The model object.
- * @param {string} semanticId - The semantic ID.
- * @param {string} semanticType - The semantic type.
- * @param {string} metadataKey - The metadata key.
- * @param {any} value - The new value.
+ * @param {string} parameterId - The ID of the parameter.
+ * @param {string} metadataKey - The key of the metadata to update.
+ * @param {any} value - The new value for the metadata.
  */
-export function updateMetadata(
+export function updateParameterMetadata(
 	model: Model,
-	semanticId: string,
-	semanticType: string,
+	parameterId: string,
 	metadataKey: string,
 	value: any
 ) {
-	if (!model.metadata?.[semanticType]?.[semanticId]) {
+	if (!model.metadata?.parameters?.[parameterId]) {
 		model.metadata ??= {};
-		model.metadata[semanticType] ??= {};
-		model.metadata[semanticType][semanticId] ??= {};
+		model.metadata.parameters ??= {};
+		model.metadata.parameters[parameterId] ??= {};
 	}
-	model.metadata[semanticType][semanticId][metadataKey] = value;
+	model.metadata.parameters[parameterId][metadataKey] = value;
+}
+
+/**
+ * Updates the metadata for a specific initial in the model.
+ * @param {Model} model - The model object.
+ * @param {string} initialId - The ID of the initial.
+ * @param {string} metadataKey - The key of the metadata to update.
+ * @param {any} value - The new value for the metadata.
+ */
+export function updateInitialMetadata(
+	model: Model,
+	initialId: string,
+	metadataKey: string,
+	value: any
+) {
+	if (!model.metadata?.initials?.[initialId]) {
+		model.metadata ??= {};
+		model.metadata.initials ??= {};
+		model.metadata.initials[initialId] ??= {};
+	}
+	model.metadata.initials[initialId][metadataKey] = value;
 }
 
 /**

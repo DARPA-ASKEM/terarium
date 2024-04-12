@@ -239,10 +239,10 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { isStratifiedModel } from '@/model-representation/mira/mira';
 import { matrixEffect } from '@/utils/easter-eggs';
 import {
-	getMetadata,
-	getModelInitials,
+	getInitials,
 	updateVariable,
-	updateMetadata
+	updateInitialMetadata,
+	getInitialMetadata
 } from '@/model-representation/service';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
@@ -298,8 +298,8 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 	if (isStratified.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = getModelInitials(model).find((i) => i.target === v);
-				const initialsMetadata = getMetadata(model, 'initials', initial!.target);
+				const initial = getInitials(model).find((i) => i.target === v);
+				const initialsMetadata = getInitialMetadata(model, initial!.target);
 				const sourceValue = initialsMetadata?.source;
 				const unitValue = initialsMetadata?.unit;
 				const nameValue = initialsMetadata?.name;
@@ -332,8 +332,8 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		initials.value.forEach((vals, init) => {
-			const initial = getModelInitials(model).find((i) => i.target === vals[0]);
-			const initialsMetadata = getMetadata(model, 'initials', initial!.target);
+			const initial = getInitials(model).find((i) => i.target === vals[0]);
+			const initialsMetadata = getInitialMetadata(model, initial!.target);
 			const sourceValue = initialsMetadata?.source;
 			const unitValue = initialsMetadata?.unit;
 			const nameValue = initialsMetadata?.name;
@@ -378,7 +378,7 @@ const updateCellValue = (v: any) => {
 
 const updateMetadataFromInput = (id: string, key: string, value: any) => {
 	const clone = cloneDeep(props.model);
-	updateMetadata(clone, id, 'initials', key, value);
+	updateInitialMetadata(clone, id, key, value);
 	emit('update-model', clone);
 };
 
