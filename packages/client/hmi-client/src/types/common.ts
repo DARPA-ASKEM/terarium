@@ -209,5 +209,5 @@ export interface NotificationItem {
 	error: string;
 	progress: number;
 	lastUpdated: number;
-	checked: boolean;
+	acknowledged: boolean;
 }

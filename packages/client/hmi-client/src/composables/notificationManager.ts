@@ -3,9 +3,11 @@ import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Ty
 import { NotificationItem } from '@/types/common';
 import { ref, computed } from 'vue';
 import { getDocumentAsset } from '@/services/document-assets';
+// import { useToastService } from '@/services/toast';
 import { useProjects } from './project';
 
 const { findAsset } = useProjects();
+// const { toast } = useToastService();
 
 // Items stores the notifications for all projects
 const items = ref<NotificationItem[]>([]);
@@ -30,7 +32,7 @@ const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 			progress: event.data.t,
 			lastUpdated: Date.now(),
 			error: event.data.error,
-			checked: false
+			acknowledged: false
 		};
 		items.value.push(newItem);
 		// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
@@ -52,6 +54,17 @@ const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 
 export function useNotificationManager() {
 	const itemsForActiveProject = computed(() => items.value.filter((item) => !!findAsset(item.id)));
+	const hasFinishedItems = computed(() =>
+		itemsForActiveProject.value.some(
+			(item: NotificationItem) => item.status === 'Completed' || item.status === 'Failed'
+		)
+	);
+	const unacknowledgedFinishedItems = computed(() =>
+		itemsForActiveProject.value.filter(
+			(item: NotificationItem) =>
+				(item.status === 'Completed' || item.status === 'Failed') && !item.acknowledged
+		)
+	);
 
 	function init() {
 		// Initialize SSE event handlers for the notification manager
@@ -62,13 +75,20 @@ export function useNotificationManager() {
 		items.value = items.value.filter((item) => !!findAsset(item.id) && item.status === 'Running');
 	}
 
-	function checkFinishedItems() {
+	function acknowledgeFinishedItems() {
 		items.value.forEach((item) => {
 			if (['Completed', 'Failed'].includes(item.status)) {
-				item.checked = true;
+				item.acknowledged = true;
 			}
 		});
 	}
 
-	return { init, itemsForActiveProject, clearFinishedItems, checkFinishedItems };
+	return {
+		init,
+		itemsForActiveProject,
+		clearFinishedItems,
+		acknowledgeFinishedItems,
+		hasFinishedItems,
+		unacknowledgedFinishedItems
+	};
 }

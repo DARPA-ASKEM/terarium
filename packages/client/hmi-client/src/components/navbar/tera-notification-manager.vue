@@ -1,6 +1,18 @@
 <template>
-	<Button icon="pi pi-check" rounded aria-label="Notifications" @click="togglePanel" />
-	<OverlayPanel class="notification-container" ref="panel">
+	<div class="notification-button">
+		<Button
+			icon="pi pi-bell"
+			severity="secondary"
+			rounded
+			text
+			aria-label="Notifications"
+			@click="togglePanel"
+		/>
+		<span class="badge" v-if="unacknowledgedFinishedItems.length > 0">
+			{{ unacknowledgedFinishedItems.length }}</span
+		>
+	</div>
+	<OverlayPanel class="notification-container" ref="panel" @hide="acknowledgeFinishedItems">
 		<div class="header">
 			<h1>Notifications</h1>
 			<Button
@@ -43,21 +55,20 @@ import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
 import { ClientEventType } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 
-const { itemsForActiveProject: notificationItems, clearFinishedItems } = useNotificationManager();
+const {
+	itemsForActiveProject: notificationItems,
+	clearFinishedItems,
+	acknowledgeFinishedItems,
+	hasFinishedItems,
+	unacknowledgedFinishedItems
+} = useNotificationManager();
 
 const panel = ref();
-const hasFinishedItems = computed(() =>
-	notificationItems.value.some(
-		(item: NotificationItem) => item.status === 'Completed' || item.status === 'Failed'
-	)
-);
 
-const togglePanel = (event) => {
-	panel.value.toggle(event);
-};
+const togglePanel = (event) => panel.value.toggle(event);
 
 const getTitleText = (item: NotificationItem) => {
 	switch (item.type) {
@@ -85,6 +96,26 @@ const getElapsedTimeText = (item: NotificationItem) => {
 </script>
 
 <style>
+.notification-button {
+	position: relative;
+	.p-button.p-button-secondary.p-button-text {
+		color: var(--text-color-subdued);
+	}
+	.p-button.p-button-secondary.p-button-text:enabled:focus,
+	.p-button.p-button-secondary.p-button-text:enabled:hover {
+		background-color: #e3efe4;
+	}
+	.badge {
+		position: absolute;
+		background-color: var(--error-color);
+		color: #fff;
+		top: -5px;
+		right: -5px;
+		font-size: var(--font-tiny);
+		border-radius: 10px;
+		padding: 2px 5px;
+	}
+}
 /* Reset default overlay component style */
 .notification-container.p-overlaypanel .p-overlaypanel-content {
 	padding: 0;
