@@ -3,7 +3,9 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Model } from '@/types/Types';
+import type { Initial, Model, ModelParameter } from '@/types/Types';
+import { getModelType } from '@/services/model';
+import { AMRSchemaNames } from '@/types/common';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -145,3 +147,128 @@ export const getModelRenderer = (
 		dragSelector: 'no-drag'
 	});
 };
+
+/**
+ * Returns the model parameters based on the model type.
+ * @param {Model} model - The model object.
+ * @returns {ModelParameter[]} - The model parameters.
+ */
+export function getModelParameters(model: Model): ModelParameter[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.parameters ?? [];
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.parameters ?? [];
+	}
+}
+
+/**
+ * Returns the model parameter with the specified ID.
+ * @param {Model} model - The model object.
+ * @param {string} parameterId - The ID of the parameter.
+ * @returns {ModelParameter | null} - The model parameter or null if not found.
+ */
+export function getParameter(model: Model, parameterId: string): ModelParameter | null {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.parameters.find((p) => p.id === parameterId);
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.parameters?.find((p) => p.id === parameterId) ?? null;
+	}
+}
+
+/**
+ * Returns the metadata for the specified semantic type and parameter ID.
+ * @param {Model} model - The model object.
+ * @param {string} semanticType - The semantic type.
+ * @param {string} parameterId - The parameter ID.
+ * @returns {any} - The metadata.
+ */
+export function getMetadata(model: Model, semanticType: string, parameterId: string) {
+	return model.metadata?.[semanticType]?.[parameterId];
+}
+
+/**
+ * Returns the model initials based on the model type.
+ * @param {Model} model - The model object.
+ * @returns {Initial[]} - The model initials.
+ */
+export function getModelInitials(model: Model): Initial[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.initials ?? [];
+	}
+}
+
+/**
+ * Returns the model initial with the specified ID.
+ * @param {Model} model - The model object.
+ * @param {string} initialId - The ID of the initial.
+ * @returns {Initial | null} - The model initial or null if not found.
+ */
+export function getInitial(model: Model, initialId: string): Initial | null {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices.find((i) => i.id === initialId);
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.initials?.find((i) => i.target === initialId) ?? null;
+	}
+}
+
+/**
+ * Returns the timeseries for the specified semantic ID.
+ * @param {Model} model - The model object.
+ * @param {string} semanticId - The semantic ID.
+ * @returns {any} - The timeseries.
+ */
+export function getTimeseries(model: Model, semanticId: string) {
+	return model.metadata?.timeseries?.[semanticId];
+}
+
+/**
+ * Updates the metadata for the specified semantic ID, semantic type, and metadata key.
+ * @param {Model} model - The model object.
+ * @param {string} semanticId - The semantic ID.
+ * @param {string} semanticType - The semantic type.
+ * @param {string} metadataKey - The metadata key.
+ * @param {any} value - The new value.
+ */
+export function updateMetadata(
+	model: Model,
+	semanticId: string,
+	semanticType: string,
+	metadataKey: string,
+	value: any
+) {
+	if (!model.metadata?.[semanticType]?.[semanticId]) {
+		model.metadata ??= {};
+		model.metadata[semanticType] ??= {};
+		model.metadata[semanticType][semanticId] ??= {};
+	}
+	model.metadata[semanticType][semanticId][metadataKey] = value;
+}
+
+/**
+ * Validates the time series values.
+ * @param {string} values - The time series values.
+ * @returns {boolean} - True if the values are valid, false otherwise.
+ */
+export function validateTimeSeries(values: string) {
+	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
+	const isValid = values.split(',').every(isPairValid);
+	return isValid;
+}

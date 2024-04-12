@@ -27,7 +27,7 @@
 				<InputText
 					v-model.lazy="data.name"
 					:disabled="configView || readonly || data.type === ParamType.MATRIX"
-					@update:model-value="updateMetadata(data.value.target, 'name', $event)"
+					@update:model-value="updateMetadataFromInput(data.value.target, 'name', $event)"
 				/>
 			</template>
 		</Column>
@@ -37,7 +37,9 @@
 				<InputText
 					v-model.lazy="slotProps.data.description"
 					:disabled="configView || readonly || slotProps.data.type === ParamType.MATRIX"
-					@update:model-value="updateMetadata(slotProps.data.value.target, 'description', $event)"
+					@update:model-value="
+						updateMetadataFromInput(slotProps.data.value.target, 'description', $event)
+					"
 				/>
 			</template>
 		</Column>
@@ -70,7 +72,7 @@
 					:suggestions="curies"
 					@complete="onSearch"
 					@item-select="
-						updateMetadata(data.value.target, 'concept', {
+						updateMetadataFromInput(data.value.target, 'concept', {
 							grounding: { identifiers: parseCurie($event.value.curie) }
 						})
 					"
@@ -88,7 +90,9 @@
 					class="w-full"
 					:disabled="readonly"
 					v-model.lazy="slotProps.data.unit"
-					@update:model-value="(val) => updateMetadata(slotProps.data.value.target, 'unit', val)"
+					@update:model-value="
+						(val) => updateMetadataFromInput(slotProps.data.value.target, 'unit', val)
+					"
 				/>
 				<template v-else>--</template>
 			</template>
@@ -170,7 +174,7 @@
 					class="w-full"
 					v-model.lazy="data.source"
 					:disabled="readonly"
-					@update:model-value="(val) => updateMetadata(data.value.target, 'source', val)"
+					@update:model-value="(val) => updateMetadataFromInput(data.value.target, 'source', val)"
 				/>
 			</template>
 		</Column>
@@ -234,7 +238,12 @@ import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-pe
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel } from '@/model-representation/mira/mira';
 import { matrixEffect } from '@/utils/easter-eggs';
-import { updateVariable } from '@/model-representation/service';
+import {
+	getMetadata,
+	getModelInitials,
+	updateVariable,
+	updateMetadata
+} from '@/model-representation/service';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 const typeOptions = [
@@ -289,9 +298,8 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 	if (isStratified.value) {
 		initials.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				const initial = model.semantics?.ode.initials?.find((i) => i.target === v);
-
-				const initialsMetadata = model.metadata?.initials?.[initial!.target];
+				const initial = getModelInitials(model).find((i) => i.target === v);
+				const initialsMetadata = getMetadata(model, 'initials', initial!.target);
 				const sourceValue = initialsMetadata?.source;
 				const unitValue = initialsMetadata?.unit;
 				const nameValue = initialsMetadata?.name;
@@ -324,8 +332,8 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 		});
 	} else {
 		initials.value.forEach((vals, init) => {
-			const initial = model.semantics?.ode.initials?.find((i) => i.target === vals[0]);
-			const initialsMetadata = model.metadata?.initials?.[initial!.target];
+			const initial = getModelInitials(model).find((i) => i.target === vals[0]);
+			const initialsMetadata = getMetadata(model, 'initials', initial!.target);
 			const sourceValue = initialsMetadata?.source;
 			const unitValue = initialsMetadata?.unit;
 			const nameValue = initialsMetadata?.name;
@@ -368,15 +376,10 @@ const updateCellValue = (v: any) => {
 	emit('update-model', clone);
 };
 
-const updateMetadata = (id: string, key: string, value: any) => {
-	const clonedModel = cloneDeep(props.model);
-	if (!clonedModel.metadata?.initials?.[id]) {
-		clonedModel.metadata ??= {};
-		clonedModel.metadata.initials ??= {};
-		clonedModel.metadata.initials[id] ??= {};
-	}
-	clonedModel.metadata.initials[id][key] = value;
-	emit('update-model', clonedModel);
+const updateMetadataFromInput = (id: string, key: string, value: any) => {
+	const clone = cloneDeep(props.model);
+	updateMetadata(clone, id, 'initials', key, value);
+	emit('update-model', clone);
 };
 
 const isStratified = computed(() => {

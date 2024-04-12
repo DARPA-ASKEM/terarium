@@ -342,6 +342,7 @@ import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
+import { getModelInitials, getModelParameters } from '@/model-representation/service';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -684,10 +685,10 @@ const updateConfigInitial = (inits: Initial[]) => {
 
 const updateConfigFromModel = (inputModel: Model) => {
 	if (isPetriNet.value || isStockFlow.value) {
-		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
-		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
+		knobs.value.initials = getModelInitials(inputModel) ?? [];
+		knobs.value.parameters = getModelParameters(inputModel) ?? [];
 	} else if (isRegNet.value) {
-		knobs.value.parameters = inputModel.model?.parameters ?? [];
+		knobs.value.parameters = getModelParameters(inputModel) ?? [];
 	}
 	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
 	knobs.value.initialsMetadata = inputModel.metadata?.initials ?? {};
