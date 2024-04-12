@@ -100,8 +100,8 @@ public class ProvenanceService {
 					Values.parameters(
 							"left_id", provenance.getLeft().toString(),
 							"right_id", provenance.getRight().toString(),
-							"user_id", provenance.getUserId() != null ? provenance.getUserId() : "",
-							"provenance_id", provenance.getId().toString()));
+							"user_id", provenance.getUserId() != null ? provenance.getUserId() : ""
+							));
 		}
 
 		return provenance;
