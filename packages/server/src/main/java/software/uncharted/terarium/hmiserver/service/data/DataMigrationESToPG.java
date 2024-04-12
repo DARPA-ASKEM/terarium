@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch._types.FieldSort;
@@ -39,6 +40,7 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
  * migration in pg so it doesn't do it multiple times.
  */
 @Service
+@Profile("!test") // don't run in test profile
 @RequiredArgsConstructor
 @Slf4j
 public class DataMigrationESToPG {
