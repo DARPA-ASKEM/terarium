@@ -1,97 +1,113 @@
 <template>
-	<main>
-		<TeraResizablePanel
-			v-if="!isPreview"
-			class="diagram-container"
-			:class="{ unlocked: !isLocked }"
-			:style="isLocked && { pointerEvents: 'none' }"
-		>
-			<section class="graph-element">
-				<Toolbar>
-					<template #start>
-						<span>
-							<Button
-								@click="resetZoom"
-								label="Reset zoom"
-								class="p-button-sm p-button-outlined"
-								style="background-color: var(--gray-50)"
-								onmouseover="this.style.backgroundColor='--gray-100';"
-								onmouseout="this.style.backgroundColor='(--gray-50)';"
-								severity="secondary"
-							/>
-							<Button
-								@click="isLocked = !isLocked"
-								:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
-								:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
-								class="p-button-sm p-button-outlined"
-								style="background-color: var(--gray-50)"
-								onmouseover="this.style.backgroundColor='--gray-100';"
-								onmouseout="this.style.backgroundColor='(--gray-50)';"
-								severity="secondary"
-							/>
-						</span>
-					</template>
-					<template #center> </template>
-					<template #end>
-						<span>
-							<SelectButton
-								v-if="model && isStratifiedModel(mmt)"
-								:model-value="stratifiedView"
-								@change="
-									if ($event.value) {
-										stratifiedView = $event.value;
-										toggleCollapsedView();
-									}
-								"
-								:options="stratifiedViewOptions"
-								option-value="value"
-							>
-								<template #option="slotProps">
-									<i :class="`${slotProps.option.icon} p-button-icon-left`" />
-									<span class="p-button-label">{{ slotProps.option.value }}</span>
-								</template>
-							</SelectButton>
-						</span>
-					</template>
-				</Toolbar>
-				<template v-if="model">
-					<tera-model-type-legend class="legend-anchor" :model="model" />
-					<div class="graph-container">
-						<div ref="graphElement" class="graph-element" />
-						<div class="legend">
-							<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
-								<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
-								{{ label }}
+	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="showTooltip">
+		<main>
+			<TeraResizablePanel
+				v-if="!isPreview"
+				class="diagram-container"
+				:class="{ unlocked: !isLocked }"
+				:style="isLocked && { pointerEvents: 'none' }"
+			>
+				<section class="graph-element">
+					<Toolbar>
+						<template #start>
+							<span>
+								<Button
+									@click="resetZoom"
+									label="Reset zoom"
+									class="p-button-sm p-button-outlined"
+									style="background-color: var(--gray-50)"
+									onmouseover="this.style.backgroundColor='--gray-100';"
+									onmouseout="this.style.backgroundColor='(--gray-50)';"
+									severity="secondary"
+								/>
+								<Button
+									@click="isLocked = !isLocked"
+									:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
+									:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
+									class="p-button-sm p-button-outlined"
+									style="background-color: var(--gray-50)"
+									onmouseover="this.style.backgroundColor='--gray-100';"
+									onmouseout="this.style.backgroundColor='(--gray-50)';"
+									severity="secondary"
+								/>
+							</span>
+						</template>
+						<template #center> </template>
+						<template #end>
+							<span>
+								<SelectButton
+									v-if="model && isStratified"
+									:model-value="stratifiedView"
+									@change="
+										if ($event.value) {
+											stratifiedView = $event.value;
+											toggleCollapsedView();
+										}
+									"
+									:options="stratifiedViewOptions"
+									option-value="value"
+								>
+									<template #option="slotProps">
+										<i :class="`${slotProps.option.icon} p-button-icon-left`" />
+										<span class="p-button-label">{{ slotProps.option.value }}</span>
+									</template>
+								</SelectButton>
+							</span>
+						</template>
+					</Toolbar>
+					<template v-if="model">
+						<tera-model-type-legend class="legend-anchor" :model="model" />
+						<div class="graph-container">
+							<div ref="graphElement" class="graph-element" />
+							<div class="legend">
+								<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
+									<div
+										class="legend-circle"
+										:style="`background: ${graphLegendColors[index]}`"
+									></div>
+									{{ label }}
+								</div>
 							</div>
 						</div>
-					</div>
-				</template>
-			</section>
-		</TeraResizablePanel>
-		<div
-			v-else-if="model"
-			ref="graphElement"
-			class="graph-element preview"
-			:style="!isEditable && { pointerEvents: 'none' }"
-		/>
-		<Teleport to="body">
-			<tera-stratified-matrix-modal
-				v-if="openValueConfig && modelConfiguration"
-				:id="selectedTransitionId"
+					</template>
+				</section>
+			</TeraResizablePanel>
+			<div
+				v-else-if="model"
+				ref="graphElement"
+				class="graph-element preview"
+				:style="!isEditable && { pointerEvents: 'none' }"
+			/>
+			<Teleport to="body">
+				<tera-stratified-matrix-modal
+					v-if="openValueConfig && modelConfiguration"
+					:id="selectedTransitionId"
+					:mmt="mmt"
+					:mmt-params="mmtParams"
+					:stratified-matrix-type="StratifiedMatrix.Rates"
+					:open-value-config="openValueConfig"
+					@close-modal="openValueConfig = false"
+					@update-configuration="
+						(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
+					"
+				/>
+			</Teleport>
+		</main>
+		<template v-if="isStratified && !isEmpty(hoveredTransitionId)" #tooltip-content>
+			<tera-stratified-matrix
 				:mmt="mmt"
 				:mmt-params="mmtParams"
+				:id="hoveredTransitionId"
 				:stratified-matrix-type="StratifiedMatrix.Rates"
-				:open-value-config="openValueConfig"
-				@close-modal="openValueConfig = false"
-				@update-configuration="
-					(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-				"
+				:should-eval="true"
 			/>
-		</Teleport>
-	</main>
+			<Button label="Click to open" size="small" text />
+		</template>
+	</tera-tooltip>
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { ref, watch, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -100,6 +116,7 @@ import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petr
 import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
+import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
@@ -115,6 +132,7 @@ import {
 import { getModelRenderer } from '@/model-representation/service';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
+import TeraStratifiedMatrix from '../model-configurations/tera-stratified-matrix.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -136,6 +154,10 @@ const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
+const hoveredTransitionId = ref('');
+const hoveredTransitionPosition = ref({ x: 0, y: 0 });
+const showTooltip = ref(false);
+
 enum StratifiedView {
 	Expanded = 'Expanded',
 	Collapsed = 'Collapsed'
@@ -146,6 +168,8 @@ const stratifiedViewOptions = ref([
 	{ value: StratifiedView.Expanded },
 	{ value: StratifiedView.Collapsed }
 ]);
+
+const isStratified = computed(() => isStratifiedModel(mmt.value));
 
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 
@@ -165,24 +189,34 @@ async function renderGraph() {
 
 	renderer.on('node-click', (_eventName, _event, selection) => {
 		const { id, data } = selection.datum();
-		console.log(selection.datum());
 		if (data.type === NodeType.Transition) {
 			selectedTransitionId.value = id;
 			openValueConfig.value = true;
 		}
 	});
 
-	renderer.on('node-mouse-enter', (_eventName, _event, selection) => {
-		console.log(selection.datum());
-		// const { id, data } = selection.datum();
-		// if (data.type === NodeType.Transition) {
-		// 	renderer?.highlightTransition(id);
-		// }
-	});
+	if (isStratified.value) {
+		renderer.on('node-mouse-enter', (_eventName, _event, selection) => {
+			const { id, data } = selection.datum();
+			console.log(selection.datum());
+			// console.log(_event);
+
+			// const { id, data } = selection.datum();
+			if (data.type === NodeType.Transition) {
+				hoveredTransitionId.value = id;
+				hoveredTransitionPosition.value = { x: _event.offsetX, y: _event.offsetY };
+				showTooltip.value = true;
+			}
+		});
+
+		// renderer.on('node-mouse-leave', () => {
+		// 	showTooltip.value = false;
+		// });
+	}
 
 	// Render graph
 	const graphData =
-		isCollapsed.value === true && isStratifiedModel(mmt.value)
+		isCollapsed.value === true && isStratified.value
 			? convertToIGraph(templatesSummary)
 			: convertToIGraph(rawTemplates);
 
