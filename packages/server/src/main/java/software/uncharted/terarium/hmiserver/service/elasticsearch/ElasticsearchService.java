@@ -106,8 +106,7 @@ public class ElasticsearchService {
 		if (causedBy != null) {
 			error += ", caused by: " + causedBy.reason();
 		}
-		log.error(error, e);
-		return new RuntimeException(error);
+		return new RuntimeException(error, e);
 	}
 
 	@PostConstruct
