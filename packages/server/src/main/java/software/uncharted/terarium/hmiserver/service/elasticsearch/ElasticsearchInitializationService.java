@@ -1,17 +1,21 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +72,7 @@ public class ElasticsearchInitializationService {
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
 						final boolean acknowledged = elasticsearchService.putComponentTemplate(componentTemplateName,
-							templateJson.toString());
+								templateJson.toString());
 						if (acknowledged) {
 							log.info("Added component template: {}", componentTemplateName);
 						} else {
@@ -141,25 +145,39 @@ public class ElasticsearchInitializationService {
 	 * doesn't exist
 	 */
 	private void pushMissingIndices() throws IOException {
-		final String[] indices = new String[] {
-			config.getCodeIndex(),
-			config.getDatasetIndex(),
-			config.getDecapodesConfigurationIndex(),
-			config.getDecapodesContextIndex(),
-			config.getDocumentIndex(),
-			config.getEquationIndex(),
-			config.getModelIndex(),
-			config.getModelConfigurationIndex(),
-			config.getNotebookSessionIndex(),
-			config.getSimulationIndex(),
-			config.getWorkflowIndex()
+
+		final Map<String, String> indices = new HashMap<>() {
+			{
+				put(config.getCodeIndex(), config.getCodeAlias());
+				put(config.getDatasetIndex(), config.getDatasetAlias());
+				put(config.getDecapodesConfigurationIndex(), config.getDecapodesConfigurationAlias());
+				put(config.getDecapodesContextIndex(), config.getDecapodesContextAlias());
+				put(config.getDocumentIndex(), config.getDocumentAlias());
+				put(config.getEquationIndex(), config.getEquationAlias());
+				put(config.getModelIndex(), config.getModelAlias());
+				put(config.getModelConfigurationIndex(), config.getModelConfigurationAlias());
+				put(config.getNotebookSessionIndex(), config.getNotebookSessionAlias());
+				put(config.getSimulationIndex(), config.getSimulationAlias());
+				put(config.getWorkflowIndex(), config.getWorkflowAlias());
+			}
 		};
-		for (final String index : indices) {
-			if (!elasticsearchService.containsIndex(index)) {
+
+		for (final Map.Entry<String, String> entry : indices.entrySet()) {
+			final String index = entry.getKey();
+			final String alias = entry.getValue();
+			if (!elasticsearchService.indexExists(index)) {
 				try {
 					elasticsearchService.createIndex(index);
 				} catch (final IOException e) {
 					log.error("Error creating index {}", index, e);
+				}
+			}
+
+			if (!elasticsearchService.aliasExists(alias)) {
+				try {
+					elasticsearchService.createAlias(index, alias);
+				} catch (final IOException e) {
+					log.error("Error creating alias {}", alias, e);
 				}
 			}
 		}
