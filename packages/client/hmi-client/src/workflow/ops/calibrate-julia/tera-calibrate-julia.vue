@@ -190,7 +190,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, ref, shallowRef, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -445,11 +445,40 @@ watch(
 	(id) => {
 		if (id === '') {
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+			const state = _.cloneDeep(props.node.state);
+			state.intermediateLoss = lossValues;
+			emit('update-state', state);
+			console.log(`Updating loss values with: ${lossValues}`);
 		} else {
 			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
 		}
 	}
 );
+
+onMounted(async () => {
+	console.log('On Mounted');
+	const node = props.node;
+	if (!node.active) return;
+
+	selectedOutputId.value = node.active;
+	selectedRunId.value = node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0];
+
+	if (!selectedRunId.value) return;
+	lazyLoadCalibrationData(selectedRunId.value as string);
+
+	const lossVals = node.state.intermediateLoss;
+
+	console.log(lossVals);
+	console.log(lossPlot);
+	if (lossVals && lossPlot) {
+		console.log('In if');
+		const width = lossPlot.value?.offsetWidth as number;
+		renderLossGraph(lossPlot.value as HTMLElement, lossVals, { width, height: 150 });
+	}
+
+	// Update Wizard form fields with current selected output state extras
+	extra.value = props.node.state.extra;
+});
 
 watch(
 	() => props.node.active,
@@ -464,15 +493,18 @@ watch(
 		lazyLoadCalibrationData(selectedRunId.value as string);
 
 		const lossVals = node.state.intermediateLoss;
+		console.log('node. activate');
+		console.log(lossVals);
+		console.log(lossPlot);
 		if (lossVals && lossPlot) {
+			console.log('In if');
 			const width = lossPlot.value?.offsetWidth as number;
 			renderLossGraph(lossPlot.value as HTMLElement, lossVals, { width, height: 150 });
 		}
 
 		// Update Wizard form fields with current selected output state extras
 		extra.value = props.node.state.extra;
-	},
-	{ immediate: true }
+	}
 );
 
 // Set up model config + dropdown names
