@@ -38,14 +38,14 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          git diff --exit-code || echo "Changes detected"
+          git diff --exit-code || echo "Files have been formated"
 
       # Commit changes, only if there are changes
       - name: Commit changes
-        if: steps.check_changes.outputs.stdout != ''
+        if: steps.check_changes.outputs.exit_code != 0
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add --all --verbose
-          git commit --message "chore: lint server codebase" --verbose
-          git push --verbose
+          git add --all
+          git commit --message "chore: lint server codebase"
+          git push
