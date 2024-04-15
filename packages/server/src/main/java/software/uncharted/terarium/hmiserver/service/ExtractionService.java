@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import jakarta.annotation.PostConstruct;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -77,12 +78,18 @@ public class ExtractionService {
 
 	// Allow up to 10 concurrent extraction tasks
 	// TODO: Move this to application properties or set the POOL_SIZE in a smarter way
-	private final int POOL_SIZE = 10;
+	@Value("${terarium.extractionService.poolSize:10}")
+	private int POOL_SIZE;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
 
-	private final ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
+	private ExecutorService executor;
+
+	@PostConstruct
+	void init() {
+		executor = Executors.newFixedThreadPool(POOL_SIZE);
+	}
 
 	private static class ClientEventInterface {
 
@@ -305,7 +312,7 @@ public class ExtractionService {
 						extraction.setFileName(assetFileName);
 						extraction.setAssetType(extractionType);
 						extraction.setMetadata(
-								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {
+								objectMapper.convertValue(record, new TypeReference<>() {
 								}));
 
 						document.getAssets().add(extraction);
@@ -498,7 +505,7 @@ public class ExtractionService {
 		clientInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			DocumentAsset doc = runVariableExtraction(clientInterface, documentId, modelIds, domain);
+			final DocumentAsset doc = runVariableExtraction(clientInterface, documentId, modelIds, domain);
 			clientInterface.sendFinalMessage("Extraction complete");
 			return doc;
 		});
