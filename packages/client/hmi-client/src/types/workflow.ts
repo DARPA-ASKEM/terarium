@@ -165,6 +165,17 @@ export interface Size {
 	height: number;
 }
 
+export interface WorkflowTransformations {
+	workflows: Transformations;
+}
+export interface Transformations {
+	[key: string]: {
+		x: number;
+		y: number;
+		k: number;
+	};
+}
+
 export enum ProgressState {
 	RETRIEVING = 'retrieving',
 	QUEUED = 'queued',

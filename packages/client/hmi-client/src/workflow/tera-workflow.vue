@@ -12,6 +12,7 @@
 		@drop="onDrop"
 		@dragover.prevent
 		@dragenter.prevent
+		:lastTransform="canvasTransform"
 	>
 		<!-- toolbar -->
 		<template #foreground>
@@ -206,7 +207,7 @@ import type {
 	WorkflowPort,
 	OperatorStatus
 } from '@/types/workflow';
-import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowDirection, WorkflowPortStatus, WorkflowTransformations } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -670,7 +671,30 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.x = newTransform.x;
 	t.y = newTransform.y;
 	t.k = newTransform.k;
-	workflowDirty = true;
+}
+
+function getLocalStorageTransform(id) {
+	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
+	if (!terariumWorkflowTransforms) {
+		return;
+	}
+
+	const workflowTransformations: WorkflowTransformations = JSON.parse(terariumWorkflowTransforms);
+	if (workflowTransformations.workflows[id]) {
+		canvasTransform = workflowTransformations.workflows[id];
+	}
+}
+
+function saveTransformToLocalStorage(id) {
+	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
+	if (!terariumWorkflowTransforms) {
+		const transformation: WorkflowTransformations = { workflows: { [id]: canvasTransform } };
+		localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(transformation));
+		return;
+	}
+	const workflowTransformations = JSON.parse(terariumWorkflowTransforms);
+	workflowTransformations.workflows[id] = canvasTransform;
+	localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(workflowTransformations));
 }
 
 const isCreatingNewEdge = computed(
@@ -890,6 +914,9 @@ watch(
 		if (!workflowId) return;
 		isWorkflowLoading.value = true;
 		wf.value = await workflowService.getWorkflow(workflowId);
+		if (wf.value.id) {
+			getLocalStorageTransform(wf.value.id);
+		}
 		isWorkflowLoading.value = false;
 
 		handleDrilldown();
@@ -923,6 +950,9 @@ onUnmounted(() => {
 	}
 	if (saveTimer) {
 		clearInterval(saveTimer);
+	}
+	if (canvasTransform) {
+		saveTransformToLocalStorage(wf.value.id);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);
