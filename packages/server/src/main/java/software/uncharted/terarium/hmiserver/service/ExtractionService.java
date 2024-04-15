@@ -76,8 +76,6 @@ public class ExtractionService {
 	// time the progress takes to reach each subsequent half
 	final Double HALFTIME_SECONDS = 5.0;
 
-	// Allow up to 10 concurrent extraction tasks
-	// TODO: Move this to application properties or set the POOL_SIZE in a smarter way
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
 
