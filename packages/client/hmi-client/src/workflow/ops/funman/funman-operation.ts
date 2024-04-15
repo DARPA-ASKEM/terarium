@@ -28,6 +28,7 @@ export interface FunmanOperationState extends BaseState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;
+	inProgressId: string;
 	useCompartmentalConstraint: boolean;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
@@ -48,7 +49,8 @@ export const FunmanOperation: Operation = {
 			tolerance: 0.2,
 			constraintGroups: [],
 			requestParameters: [],
-			useCompartmentalConstraint: true
+			useCompartmentalConstraint: true,
+			inProgressId: ''
 		};
 		return init;
 	}

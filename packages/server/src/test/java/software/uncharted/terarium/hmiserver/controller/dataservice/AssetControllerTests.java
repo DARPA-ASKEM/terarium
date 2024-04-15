@@ -1,13 +1,23 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.IOException;
+import java.util.UUID;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -15,11 +25,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-
-import java.util.UUID;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Transactional
 public class AssetControllerTests extends TerariumApplicationTests {
@@ -32,6 +38,22 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private DocumentAssetService documentAssetService;
+
+	@Autowired
+	private ElasticsearchService elasticService;
+
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
+
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+	}
+
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+	}
 
 	private static final String TEST_ASSET_NAME_1 = "test-asset-name-1";
 	private static final String TEST_ASSET_NAME_2 = "test-asset-name-2";

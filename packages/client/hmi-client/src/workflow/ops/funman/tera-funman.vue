@@ -164,7 +164,7 @@
 
 <script setup lang="ts">
 import _, { floor } from 'lodash';
-import { computed, ref, watch, onUnmounted } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -189,13 +189,12 @@ import type {
 	ModelConfiguration,
 	ModelParameter
 } from '@/types/Types';
-import { getQueries, makeQueries } from '@/services/models/funman-service';
+import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import { Poller, PollerState } from '@/api/api';
 import { pythonInstance } from '@/python/PyodideController';
-import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
+import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -314,8 +313,6 @@ const outputs = computed(() => {
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 
-const poller = new Poller();
-
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
@@ -373,46 +370,11 @@ const runMakeQuery = async () => {
 		}
 	}
 	const response = await makeQueries(request);
-	getStatus(response.id);
-};
 
-const getStatus = async (runId: string) => {
-	showSpinner.value = true;
-
-	poller
-		.setInterval(5000)
-		.setThreshold(100)
-		.setPollAction(async () => {
-			const response = await getQueries(runId);
-			if (response.done && response.done === true) {
-				return { data: response } as any;
-			}
-			return { data: null } as any;
-		});
-	const pollerResults = await poller.start();
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		console.error(`Funman: ${runId} has failed`);
-		throw Error('Failed Funman validation');
-	}
-	showSpinner.value = false;
-	addOutputPorts(runId);
-};
-
-const addOutputPorts = async (runId: string) => {
-	const portLabel = props.node.inputs[0].label;
-	emit('append-output', {
-		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
-		type: FunmanOperation.outputs[0].type,
-		value: runId,
-		state: _.cloneDeep(props.node.state)
-	});
+	// Setup the in-progress id
+	const state = _.cloneDeep(props.node.state);
+	state.inProgressId = response.id;
+	emit('update-state', state);
 };
 
 const addConstraintForm = () => {
@@ -555,6 +517,18 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+watch(
+	() => props.node.state.inProgressId,
+	(id) => {
+		if (!id || id === '') {
+			showSpinner.value = false;
+		} else {
+			showSpinner.value = true;
+		}
+	},
+	{ immediate: true }
+);
+
 /* Check for simple parameter changes */
 watch(
 	() => knobs.value,
@@ -593,10 +567,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onUnmounted(() => {
-	poller.stop();
-});
 </script>
 
 <style scoped>

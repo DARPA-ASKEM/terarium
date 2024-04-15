@@ -17,8 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -51,7 +49,6 @@ public class SearchByAssetTypeController {
 	final private ElasticsearchService esService;
 	final private ElasticsearchConfiguration esConfig;
 
-	static final private long CACHE_TTL_SECONDS = 60 * 60 * 2; // 2 hours
 	static final private long REQUEST_TIMEOUT_SECONDS = 30;
 	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
 
@@ -87,14 +84,14 @@ public class SearchByAssetTypeController {
 			@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates,
 			@RequestParam(value = "embedding-model", defaultValue = EMBEDDING_MODEL) final String embeddingModel,
 			@RequestParam(value = "index", defaultValue = "") String index) {
-		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 		try {
 
 			if (index.equals("")) {
 				index = esConfig.getIndex(assetType.toString().toLowerCase());
 			}
 
-			if (!esService.containsIndex(index)) {
+			if (!esService.indexExists(index)) {
 				log.error("Unsupported asset type: {}, index {} does not exist", assetType, index);
 				return ResponseEntity.badRequest().build();
 			}
@@ -160,16 +157,6 @@ public class SearchByAssetTypeController {
 
 			return ResponseEntity.ok(docs);
 
-		} catch (final ElasticsearchException e) {
-			String error = "Unable to get execute knn search: " + e.response().error().reason();
-			final ErrorCause causedBy = e.response().error().causedBy();
-			if (causedBy != null) {
-				error += ", caused by: " + causedBy.reason();
-			}
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
 		} catch (final Exception e) {
 
 			final String error = "Unable to get execute knn search";

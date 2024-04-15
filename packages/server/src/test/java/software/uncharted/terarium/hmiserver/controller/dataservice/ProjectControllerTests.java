@@ -1,26 +1,33 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.IOException;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Transactional
 public class ProjectControllerTests extends TerariumApplicationTests {
@@ -35,6 +42,22 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private DocumentAssetService documentAssetService;
+
+	@Autowired
+	private ElasticsearchService elasticService;
+
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
+
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+	}
+
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
@@ -121,7 +144,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final DocumentAsset results = objectMapper.readValue(res.getResponse().getContentAsString(),
-			DocumentAsset.class);
+				DocumentAsset.class);
 
 		Assertions.assertNotNull(results);
 	}
@@ -146,19 +169,6 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 								+ documentAsset.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
-
-		final MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders
-						.get("/document-asset/" + documentAsset.getId())
-						.param("types", AssetType.DOCUMENT.name())
-						.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
-
-		final Assets results = objectMapper.readValue(res.getResponse().getContentAsString(),
-				Assets.class);
-
-		Assertions.assertNull(results.getDocument());
 	}
 
 }

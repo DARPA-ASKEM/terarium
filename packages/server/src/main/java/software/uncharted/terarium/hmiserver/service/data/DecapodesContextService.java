@@ -25,7 +25,7 @@ public class DecapodesContextService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
-	public List<DecapodesContext> getDecapodesContexts(Integer page, Integer pageSize)
+	public List<DecapodesContext> getDecapodesContexts(final Integer page, final Integer pageSize)
 			throws IOException {
 
 		final SearchRequest req = new SearchRequest.Builder()
@@ -39,8 +39,8 @@ public class DecapodesContextService {
 		return elasticService.search(req, DecapodesContext.class);
 	}
 
-	public Optional<DecapodesContext> getDecapodesContext(UUID id) throws IOException {
-		DecapodesContext doc = elasticService.get(elasticConfig.getDecapodesContextIndex(), id.toString(),
+	public Optional<DecapodesContext> getDecapodesContext(final UUID id) throws IOException {
+		final DecapodesContext doc = elasticService.get(elasticConfig.getDecapodesContextIndex(), id.toString(),
 				DecapodesContext.class);
 		if (doc != null && doc.getDeletedOn() == null) {
 			return Optional.of(doc);
@@ -48,8 +48,8 @@ public class DecapodesContextService {
 		return Optional.empty();
 	}
 
-	public void deleteDecapodesContext(UUID id) throws IOException {
-		Optional<DecapodesContext> decapodesContext = getDecapodesContext(id);
+	public void deleteDecapodesContext(final UUID id) throws IOException {
+		final Optional<DecapodesContext> decapodesContext = getDecapodesContext(id);
 		if (decapodesContext.isEmpty()) {
 			return;
 		}
@@ -57,7 +57,7 @@ public class DecapodesContextService {
 		updateDecapodesContext(decapodesContext.get());
 	}
 
-	public DecapodesContext createDecapodesContext(DecapodesContext decapodesContext) throws IOException {
+	public DecapodesContext createDecapodesContext(final DecapodesContext decapodesContext) throws IOException {
 		decapodesContext.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(elasticConfig.getDecapodesContextIndex(),
 				decapodesContext.setId(UUID.randomUUID()).getId().toString(),
@@ -65,9 +65,9 @@ public class DecapodesContextService {
 		return decapodesContext;
 	}
 
-	public Optional<DecapodesContext> updateDecapodesContext(DecapodesContext decapodesContext)
+	public Optional<DecapodesContext> updateDecapodesContext(final DecapodesContext decapodesContext)
 			throws IOException {
-		if (!elasticService.contains(elasticConfig.getDecapodesContextIndex(),
+		if (!elasticService.documentExists(elasticConfig.getDecapodesContextIndex(),
 				decapodesContext.getId().toString())) {
 			return Optional.empty();
 		}
