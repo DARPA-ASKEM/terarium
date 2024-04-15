@@ -8,5 +8,5 @@ import software.uncharted.terarium.hmiserver.models.notification.NotificationEve
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
-public interface NotificationEventRepository extends PSCrudRepository<NotificationEvent<?>, UUID> {
+public interface NotificationEventRepository extends PSCrudRepository<NotificationEvent, UUID> {
 }

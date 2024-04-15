@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,10 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 
 	@Autowired
 	private NotificationService notificationService;
+
+	JsonNode getData() {
+		return mapper.createObjectNode().put("test", "test");
+	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
@@ -40,12 +45,9 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		final NotificationGroup group = notificationService
 				.createNotificationGroup(new NotificationGroup().setType("test"));
 
-		final NotificationEvent<String> event1 = notificationService
-				.createNotificationEvent(group, new NotificationEvent<String>().setData("test"));
-		final NotificationEvent<String> event2 = notificationService
-				.createNotificationEvent(group, new NotificationEvent<String>().setData("test"));
-		final NotificationEvent<String> event3 = notificationService
-				.createNotificationEvent(group.getId(), new NotificationEvent<String>().setData("test"));
+		notificationService.createNotificationEvent(group, new NotificationEvent().setData(getData()));
+		notificationService.createNotificationEvent(group, new NotificationEvent().setData(getData()));
+		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 
 		final NotificationGroup after = notificationService.getNotificationGroup(group.getId()).orElseThrow();
 

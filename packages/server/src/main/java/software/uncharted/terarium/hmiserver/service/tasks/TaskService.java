@@ -400,7 +400,7 @@ public class TaskService {
 			}
 
 			// create the notification event
-			final NotificationEvent<TaskResponse> event = new NotificationEvent<>();
+			final NotificationEvent event = new NotificationEvent();
 			event.setData(resp);
 			notificationService.createNotificationEvent(resp.getId(), event);
 

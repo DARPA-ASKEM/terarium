@@ -6,11 +6,15 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -20,13 +24,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class NotificationEvent<T> {
+public class NotificationEvent {
 
 	@Serial
 	private static final long serialVersionUID = -3382397588627700379L;
@@ -51,25 +56,17 @@ public class NotificationEvent<T> {
 				: Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 
-	@Column
-	private String data;
+	@Convert(converter = JsonConverter.class)
+	@JdbcTypeCode(SqlTypes.JSON)
+	private JsonNode data;
 
-	public T getData() {
-		try {
-			return new ObjectMapper().readValue(data, new TypeReference<T>() {
-			});
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+	public NotificationEvent setData(final JsonNode arg) {
+		data = arg;
+		return this;
 	}
 
-	public NotificationEvent<T> setData(final T data) {
-		try {
-			this.data = new ObjectMapper().writeValueAsString(data);
-			return this;
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+	public <T> NotificationEvent setData(final T arg) {
+		data = new ObjectMapper().valueToTree(arg);
+		return this;
 	}
-
 }

@@ -44,8 +44,8 @@ public class NotificationService {
 		return notificationGroupRepository.save(notificationGroup);
 	}
 
-	public <T> NotificationEvent<T> createNotificationEvent(final NotificationGroup group,
-			final NotificationEvent<T> notificationEvent) {
+	public NotificationEvent createNotificationEvent(final NotificationGroup group,
+			final NotificationEvent notificationEvent) {
 
 		// add the event to the group
 		if (group.getNotificationEvents() == null) {
@@ -60,8 +60,7 @@ public class NotificationService {
 		return notificationEventRepository.save(notificationEvent);
 	}
 
-	public <T> NotificationEvent<T> createNotificationEvent(final UUID groupId,
-			final NotificationEvent<T> notificationEvent) {
+	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
 		return createNotificationEvent(notificationGroupRepository.findById(groupId).orElseThrow(), notificationEvent);
 	}
 

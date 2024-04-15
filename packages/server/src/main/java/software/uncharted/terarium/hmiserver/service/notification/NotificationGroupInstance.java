@@ -55,11 +55,16 @@ public abstract class NotificationGroupInstance<T> {
 		final ClientEvent<T> event = produceClientEvent(t, message, error);
 
 		// generate the notification event
-		final NotificationEvent<T> notification = new NotificationEvent<>();
+		final NotificationEvent notification = new NotificationEvent();
 		notification.setId(event.getId());
-		notification.setData(event.getData());
 		notification.setProgress(t);
 		notification.setTimestamp(new Timestamp(event.getCreatedAtMs()));
+
+		try {
+			notification.setData(event.getData());
+		} catch (final Exception e) {
+			log.error("Failed to serialize notification data", e);
+		}
 
 		// save the notification event
 		notificationService.createNotificationEvent(notificationGroup.getId(), notification);

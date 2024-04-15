@@ -50,7 +50,7 @@ public class NotificationGroup {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
-	private List<NotificationEvent<?>> notificationEvents;
+	private List<NotificationEvent> notificationEvents;
 
 	@PrePersist
 	protected void onCreate() {
