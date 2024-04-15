@@ -207,7 +207,7 @@ import type {
 	WorkflowPort,
 	OperatorStatus
 } from '@/types/workflow';
-import { WorkflowDirection, WorkflowPortStatus, WorkflowTransformations } from '@/types/workflow';
+import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -220,6 +220,7 @@ import * as d3 from 'd3';
 import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
+import { getLocalStorageTransform, setLocalStorageTransform } from '@/utils/localStorage';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
@@ -673,30 +674,6 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.k = newTransform.k;
 }
 
-function getLocalStorageTransform(id) {
-	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
-	if (!terariumWorkflowTransforms) {
-		return;
-	}
-
-	const workflowTransformations: WorkflowTransformations = JSON.parse(terariumWorkflowTransforms);
-	if (workflowTransformations.workflows[id]) {
-		canvasTransform = workflowTransformations.workflows[id];
-	}
-}
-
-function saveTransformToLocalStorage(id) {
-	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
-	if (!terariumWorkflowTransforms) {
-		const transformation: WorkflowTransformations = { workflows: { [id]: canvasTransform } };
-		localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(transformation));
-		return;
-	}
-	const workflowTransformations = JSON.parse(terariumWorkflowTransforms);
-	workflowTransformations.workflows[id] = canvasTransform;
-	localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(workflowTransformations));
-}
-
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
@@ -914,7 +891,7 @@ watch(
 		if (!workflowId) return;
 		isWorkflowLoading.value = true;
 
-		getLocalStorageTransform(workflowId);
+		canvasTransform = getLocalStorageTransform(workflowId);
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
 
@@ -951,7 +928,7 @@ onUnmounted(() => {
 		clearInterval(saveTimer);
 	}
 	if (canvasTransform) {
-		saveTransformToLocalStorage(wf.value.id);
+		setLocalStorageTransform(wf.value.id, canvasTransform);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);
