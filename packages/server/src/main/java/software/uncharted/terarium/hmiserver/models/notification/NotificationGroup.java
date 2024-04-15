@@ -31,7 +31,7 @@ public class NotificationGroup {
 	private static final long serialVersionUID = -3382397588627700379L;
 
 	@NotNull
-	private UUID id;
+	private UUID id = UUID.randomUUID();
 
 	@NotNull
 	private String userId;
@@ -52,6 +52,7 @@ public class NotificationGroup {
 
 	@PrePersist
 	protected void onCreate() {
-		this.timestamp = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.timestamp = this.timestamp != null ? this.timestamp
+				: Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 }

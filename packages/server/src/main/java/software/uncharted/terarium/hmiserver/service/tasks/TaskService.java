@@ -42,10 +42,13 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
+import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 
 @Service
 @Slf4j
@@ -150,6 +153,7 @@ public class TaskService {
 	private final RabbitAdmin rabbitAdmin;
 	private final Config config;
 	private final ObjectMapper objectMapper;
+	private final NotificationService notificationService;
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	private final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
@@ -395,6 +399,11 @@ public class TaskService {
 				rLock.unlock();
 			}
 
+			// create the notification event
+			final NotificationEvent<TaskResponse> event = new NotificationEvent<>();
+			event.setData(resp);
+			notificationService.createNotificationEvent(resp.getId(), event);
+
 			// once the handler has executed and the response cache is up to date, we now
 			// will broadcast to all hmi-server instances to dispatch the clientside events
 			broadcastTaskResponseToAllInstances(resp);
@@ -489,6 +498,12 @@ public class TaskService {
 				taskIdCache.put(hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS,
 						TimeUnit.SECONDS);
 			}
+
+			// create the notification group for the task
+			final NotificationGroup group = new NotificationGroup();
+			group.setId(req.getId()); // use the task id
+			group.setType(req.getType().toString());
+			notificationService.createNotificationGroup(group);
 
 			// now send request
 			final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());

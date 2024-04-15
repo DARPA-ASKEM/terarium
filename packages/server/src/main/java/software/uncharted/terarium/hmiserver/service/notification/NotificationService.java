@@ -9,10 +9,12 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.repository.notification.NotificationEventRepository;
 import software.uncharted.terarium.hmiserver.repository.notification.NotificationGroupRepository;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
 @RequiredArgsConstructor
 @Service
@@ -21,6 +23,7 @@ public class NotificationService {
 
 	final NotificationGroupRepository notificationGroupRepository;
 	final NotificationEventRepository notificationEventRepository;
+	final CurrentUserService currentUserService;
 
 	public List<NotificationGroup> getNotificationGroupsForUser(final String userId) {
 		return notificationGroupRepository.findAllByUserIdOrderByTimestampDesc(userId);
@@ -35,20 +38,23 @@ public class NotificationService {
 	}
 
 	public NotificationGroup createNotificationGroup(final NotificationGroup notificationGroup) {
+		final User user = currentUserService.get();
+		notificationGroup.setUserId(user != null ? user.getId() : "anonymous");
 		return notificationGroupRepository.save(notificationGroup);
 	}
 
-	public NotificationEvent createNotificationEvent(final NotificationEvent notificationEvent) {
+	public <T> NotificationEvent<T> createNotificationEvent(final NotificationEvent<T> notificationEvent) {
+		if (notificationEvent.getNotificationGroup() == null) {
+			throw new IllegalArgumentException("NotificationEvent must have a NotificationGroup");
+		}
 		return notificationEventRepository.save(notificationEvent);
 	}
 
-	// public Optional<NotificationGroup> updateNotificationGroup(final
-	// NotificationGroup notificationGroup) {
-	// if (!notificationGroupRepository.existsById(notificationGroup.getId())) {
-	// return Optional.empty();
-	// }
-	// return Optional.of(notificationGroupRepository.save(notificationGroup));
-	// }
+	public NotificationEvent<?> createNotificationEvent(final UUID groupId,
+			final NotificationEvent<?> notificationEvent) {
+		notificationEvent.setNotificationGroup(notificationGroupRepository.findById(groupId).orElseThrow());
+		return notificationEventRepository.save(notificationEvent);
+	}
 
 	public Optional<NotificationGroup> delete(final UUID id) {
 		final Optional<NotificationGroup> notificationGroup = getNotificationGroup(id);

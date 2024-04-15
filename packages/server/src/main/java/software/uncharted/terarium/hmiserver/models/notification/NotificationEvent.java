@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -31,9 +33,13 @@ public class NotificationEvent<T> {
 	private static final long serialVersionUID = -3382397588627700379L;
 
 	@NotNull
-	private UUID id;
-	private Double progress;
-	private ProgressState state;
+	private UUID id = UUID.randomUUID();
+	private Double progress = 0.0;
+	private ProgressState state = null;
+
+	@ManyToOne
+	@JoinColumn(name = "notification_group_id", nullable = false)
+	private NotificationGroup notificationGroup;
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
@@ -42,7 +48,8 @@ public class NotificationEvent<T> {
 
 	@PrePersist
 	protected void onCreate() {
-		this.timestamp = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.timestamp = this.timestamp != null ? this.timestamp
+				: Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 
 	@Convert(converter = JsonConverter.class)
