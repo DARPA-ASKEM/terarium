@@ -621,13 +621,13 @@ export interface EntitySimilarityResult {
     similarity: number;
 }
 
-export interface NotificationEvent<T> {
+export interface NotificationEvent {
     id: string;
     progress: number;
     state: ProgressState;
     notificationGroup: NotificationGroup;
     timestamp: Date;
-    data: T;
+    data: any;
 }
 
 export interface NotificationGroup {
@@ -635,7 +635,7 @@ export interface NotificationGroup {
     userId: string;
     type: string;
     timestamp: Date;
-    notificationEvents: NotificationEvent<any>[];
+    notificationEvents: NotificationEvent[];
 }
 
 export interface PermissionGroup {
