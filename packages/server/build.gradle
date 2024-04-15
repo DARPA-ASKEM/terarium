@@ -152,9 +152,6 @@ dependencyLocking {
 }
 
 spotless {
-    // optional: limit format enforcement to just the files changed by this feature branch
-    ratchetFrom 'origin/main'
-
     java {
         importOrder('*,|,javax.**,java.**,|,$*')
         palantirJavaFormat('2.43.0').formatJavadoc(true)
