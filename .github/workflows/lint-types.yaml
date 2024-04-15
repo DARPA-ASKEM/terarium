@@ -36,6 +36,6 @@ jobs:
           ./gradlew generateTypeScript
 
       - name: Commit all changed files
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@4b8a201e31cadd9829df349894b28c54e6c19fe6
         with:
           commit_message: "chore: update generated types"
