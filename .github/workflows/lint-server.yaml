@@ -32,18 +32,13 @@ jobs:
         with:
           distribution: "temurin"
           java-version: 17
+          cache: gradle
 
       - name: Run Spotless
-        uses: gradle/gradle-build-action@bdf99f9dada2506e990bac6de8ec5e3de34a04f1
-        with:
-          gradle-version: wrapper
-          build-root-directory: packages/server
-          arguments: |
-            spotlessApply
+        run: |
+          ./gradlew spotlessApply
 
-      # Commit all changed files back to the repository
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Commit all changed files
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          # Optional. Commit message for the created commit.
-          # Defaults to "Apply automatic changes"
           commit_message: "chore: lint server codebase"
