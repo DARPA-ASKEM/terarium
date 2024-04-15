@@ -31,6 +31,10 @@ jobs:
   test-client:
     uses: ./.github/workflows/test-client.yaml
 
+  # Lint Server Code
+  lint-server:
+    uses: ./.github/workflows/lint-server.yaml
+
   # Run Server Tests
   test-server:
     uses: ./.github/workflows/test-server.yaml
@@ -45,7 +49,7 @@ jobs:
     steps:
       # 1.1 - checkout the files
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
 
@@ -80,6 +84,7 @@ jobs:
       - lint
       - lint-client
       - test-client
+      - lint-server
       - test-server
 
     # 2.0 - Build a matrix strategy from the retrieved target list
