@@ -5,6 +5,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @FeignClient(name = "example", url = "https://example.com")
 public interface ExampleProxy {
-	@GetMapping
-	String getExample();
+    @GetMapping
+    String getExample();
 }

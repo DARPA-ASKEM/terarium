@@ -16,9 +16,7 @@
  */
 package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 public class Header {
 
     private String name;
