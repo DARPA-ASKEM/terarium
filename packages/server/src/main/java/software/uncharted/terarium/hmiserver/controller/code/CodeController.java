@@ -106,26 +106,26 @@ public class CodeController {
                 @ApiResponse(responseCode = "200", description = "Github repository content retrieved"),
                 @ApiResponse(responseCode = "204", description = "No content"),
             })
-public ResponseEntity<GithubRepo> getGithubRepositoryContent(
-@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-@RequestParam("path") final String path) {
-final List<GithubFile> files;
-try {
-files = githubProxy
-.getGithubRepositoryContent(repoOwnerAndName, path)
-.getBody();
-} catch (final FeignException e) {
-final String error = "Error getting github repository content";
-final int status = e.status() >= 400 ? e.status() : 500;
-log.error(error, e);
-throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
-}
+    public ResponseEntity<GithubRepo> getGithubRepositoryContent(
+            @RequestParam("repo-owner-and-name") final String repoOwnerAndName,
+            @RequestParam("path") final String path) {
+        final List<GithubFile> files;
+        try {
+            files = githubProxy
+                    .getGithubRepositoryContent(repoOwnerAndName, path)
+                    .getBody();
+        } catch (final FeignException e) {
+            final String error = "Error getting github repository content";
+            final int status = e.status() >= 400 ? e.status() : 500;
+            log.error(error, e);
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+        }
 
-if (files == null || files.isEmpty()) {
-return ResponseEntity.noContent().build();
-}
+        if (files == null || files.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
 
-return ResponseEntity.ok(new GithubRepo(files));
+        return ResponseEntity.ok(new GithubRepo(files));
     }
 
     @GetMapping("/repo-file-content")
