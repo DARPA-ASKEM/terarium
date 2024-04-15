@@ -376,8 +376,8 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	tempConfigId: '',
 	transientModelConfig: {
-		id: '',
 		name: '',
+		description: '',
 		model_id: '',
 		configuration: {}
 	}
@@ -568,8 +568,8 @@ const handleModelPreview = (data: any) => {
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
 	knobs.value.transientModelConfig = {
-		id: '',
 		name: '',
+		description: '',
 		model_id: model.value.id ?? '',
 		configuration: model.value
 	};
