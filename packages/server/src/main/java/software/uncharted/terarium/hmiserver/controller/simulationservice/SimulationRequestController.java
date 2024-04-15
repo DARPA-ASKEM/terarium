@@ -210,6 +210,29 @@ public class SimulationRequestController implements SnakeCaseController {
 				.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
 	}
 
+	@GetMapping("ciemss/cancel/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JobResponse> cancelCiemssJob(
+		@PathVariable("id") final UUID id
+	){
+		try {
+			final Optional<Simulation> sim = simulationService.getSimulation(id);
+			if (sim.isPresent()){
+				final ResponseEntity<JobResponse> jobResp = simulationCiemssServiceProxy.cancelJob(id);
+				sim.get().setStatus(ProgressState.CANCELLED);
+				simulationService.updateSimulation(sim.get());
+				return ResponseEntity.ok(jobResp.getBody());
+			}
+			return ResponseEntity.noContent().build();
+		} catch (final Exception e) {
+			final String error = String.format("Failed to get result of simulation %s", id);
+			log.error(error, e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					error);
+		}
+	}
+
 	// Get modelConfigId
 	// Check if it has timeseries in its metadata
 	// If it does for each element convert it to type Intervention and add it to

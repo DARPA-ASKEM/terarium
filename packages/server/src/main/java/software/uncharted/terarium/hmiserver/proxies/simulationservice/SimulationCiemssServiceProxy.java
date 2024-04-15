@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationStatusMessage;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
+import java.util.UUID;
 
 
 @FeignClient(name = "ciemss-service", url = "${ciemss-service.url}")
@@ -41,5 +42,10 @@ public interface SimulationCiemssServiceProxy {
 	@GetMapping("/status/{runId}")
 	ResponseEntity<SimulationStatusMessage> getRunStatus(
 		@PathVariable("runId") String runId
+	);
+
+	@GetMapping("/cancel/{runId}")
+	ResponseEntity<JobResponse> cancelJob(
+		@PathVariable("runId") UUID runId
 	);
 }

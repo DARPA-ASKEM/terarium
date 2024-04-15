@@ -73,11 +73,13 @@ const pollResult = async (runId: string) => {
 		.setThreshold(300)
 		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
+	console.log(pollerResults);
 	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
 	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
+		console.log('Cancelled:');
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
@@ -127,13 +129,18 @@ const processResult = (runId: string) => {
 watch(
 	() => props.node.state.inProgressSimulationId,
 	async (id) => {
+		console.log('In Progress:');
+		console.log(id);
 		if (!id || id === '') return;
 
 		const response = await pollResult(id);
+		console.log(response);
 		if (response.state === PollerState.Done) {
 			processResult(id);
 		}
-
+		if (response.state === PollerState.Cancelled) {
+			console.log('Hi Tom');
+		}
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressSimulationId = '';
 		emit('update-state', state);

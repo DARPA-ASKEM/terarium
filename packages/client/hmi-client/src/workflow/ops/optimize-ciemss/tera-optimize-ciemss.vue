@@ -310,7 +310,7 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraInterventionPolicyGroupForm from '@/components/optimize/tera-intervention-policy-group-form.vue';
+import TeraInterventionPolicyGroupForm from '@/components/pyciemss/optimize/tera-intervention-policy-group-form.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 // Services:
 import {

@@ -20,6 +20,17 @@ import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
+export async function cancelCiemssJob(runId: String) {
+	try {
+		const resp = await API.post('ciemss/cancel', runId);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
 		const resp = await API.post('simulation-request/forecast', simulationParam);
@@ -262,6 +273,7 @@ export async function unsubscribeToUpdateMessages(
 
 export async function pollAction(id: string) {
 	const simResponse: Simulation | null = await getSimulation(id);
+	console.log(simResponse);
 	if (!simResponse) {
 		console.error(`Error occured with simulation ${id}`);
 		return { data: null, progress: null, error: `Failed running simulation ${id}` };
