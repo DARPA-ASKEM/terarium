@@ -144,7 +144,7 @@
 				</div>
 				<div class="form-section">
 					<h5>Loss function</h5>
-					<div v-if="inProgressSimulationId || selectedRunId" ref="lossPlot"></div>
+					<div ref="lossPlot"></div>
 				</div>
 				<div class="form-section">
 					<h5>Variables</h5>
@@ -440,23 +440,18 @@ async function getAutoMapping() {
 	emit('update-state', state);
 }
 
-watch(
-	() => props.node.state.inProgressSimulationId,
-	(id) => {
-		if (id === '') {
-			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
-			const state = _.cloneDeep(props.node.state);
-			state.intermediateLoss = lossValues;
-			emit('update-state', state);
-			console.log(`Updating loss values with: ${lossValues}`);
-		} else {
-			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
-		}
-	}
-);
+const initialize = async () => {
+	// Set up model config + dropdown names
+	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	modelConfig.value = modelConfiguration;
+	modelStateOptions.value = modelOptions;
 
-onMounted(async () => {
-	console.log('On Mounted');
+	// Set up csv + dropdown names
+	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
+	currentDatasetFileName.value = filename;
+	csvAsset.value = csv;
+	datasetColumns.value = datasetOptions;
+
 	const node = props.node;
 	if (!node.active) return;
 
@@ -466,68 +461,40 @@ onMounted(async () => {
 	if (!selectedRunId.value) return;
 	lazyLoadCalibrationData(selectedRunId.value as string);
 
-	const lossVals = node.state.intermediateLoss;
+	const lossVals = _.cloneDeep(node.state.intermediateLoss);
 
-	console.log(lossVals);
-	console.log(lossPlot);
-	if (lossVals && lossPlot) {
-		console.log('In if');
+	if (lossVals && lossPlot.value) {
 		const width = lossPlot.value?.offsetWidth as number;
-		renderLossGraph(lossPlot.value as HTMLElement, lossVals, { width, height: 150 });
+		renderLossGraph(lossPlot.value, lossVals, { width, height: 150 });
 	}
 
 	// Update Wizard form fields with current selected output state extras
 	extra.value = props.node.state.extra;
+};
+
+onMounted(() => {
+	initialize();
 });
+
+watch(
+	() => props.node.state.inProgressSimulationId,
+	(id) => {
+		if (id === '') {
+			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+			const state = _.cloneDeep(props.node.state);
+			state.intermediateLoss = lossValues;
+			emit('update-state', state);
+		} else {
+			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+		}
+	}
+);
 
 watch(
 	() => props.node.active,
 	() => {
-		const node = props.node;
-		if (!node.active) return;
-
-		selectedOutputId.value = node.active;
-		selectedRunId.value = node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0];
-
-		if (!selectedRunId.value) return;
-		lazyLoadCalibrationData(selectedRunId.value as string);
-
-		const lossVals = node.state.intermediateLoss;
-		console.log('node. activate');
-		console.log(lossVals);
-		console.log(lossPlot);
-		if (lossVals && lossPlot) {
-			console.log('In if');
-			const width = lossPlot.value?.offsetWidth as number;
-			renderLossGraph(lossPlot.value as HTMLElement, lossVals, { width, height: 150 });
-		}
-
-		// Update Wizard form fields with current selected output state extras
-		extra.value = props.node.state.extra;
+		initialize();
 	}
-);
-
-// Set up model config + dropdown names
-watch(
-	() => modelConfigId.value,
-	async () => {
-		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
-		modelConfig.value = modelConfiguration;
-		modelStateOptions.value = modelOptions;
-	},
-	{ immediate: true }
-);
-
-// Set up csv + dropdown names
-watch(
-	() => datasetId.value,
-	async () => {
-		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
-		datasetColumns.value = datasetOptions;
-	},
-	{ immediate: true }
 );
 </script>
 
