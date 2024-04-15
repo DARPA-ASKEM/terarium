@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -11,10 +10,9 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 public class AddDocumentAssetFromXDDResponse {
 
-	private UUID documentAssetId;
+    private UUID documentAssetId;
 
-	private boolean pdfUploadError;
+    private boolean pdfUploadError;
 
-	private String extractionJobId;
-
+    private String extractionJobId;
 }

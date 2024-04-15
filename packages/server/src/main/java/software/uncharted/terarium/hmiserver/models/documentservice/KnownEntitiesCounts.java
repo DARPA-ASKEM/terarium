@@ -13,6 +13,4 @@ public class KnownEntitiesCounts {
 
     @JsonAlias("url_extractions")
     private Integer urlExtractionCount;
-
-
 }

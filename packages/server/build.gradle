@@ -153,11 +153,11 @@ dependencyLocking {
 
 spotless {
     // optional: limit format enforcement to just the files changed by this feature branch
-    ratchetFrom 'origin/main'
+    // ratchetFrom 'origin/main'
 
     java {
         importOrder('*,|,javax.**,java.**,|,$*')
-        palantirJavaFormat().formatJavadoc(true)
+        palantirJavaFormat('2.43.0').formatJavadoc(true)
         formatAnnotations()
         removeUnusedImports()
         trimTrailingWhitespace()

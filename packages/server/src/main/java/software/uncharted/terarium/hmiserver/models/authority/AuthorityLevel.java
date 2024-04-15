@@ -7,29 +7,29 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Slf4j
 @TSModel
 public enum AuthorityLevel {
-	READ(0),
-	CREATE(1),
-	UPDATE(2),
-	DELETE(3);
+    READ(0),
+    CREATE(1),
+    UPDATE(2),
+    DELETE(3);
 
-	@Getter
-	private final int id;
+    @Getter
+    private final int id;
 
-	AuthorityLevel(final int id) {
-		this.id = id;
-	}
+    AuthorityLevel(final int id) {
+        this.id = id;
+    }
 
-	public static AuthorityLevel get(String level) {
-		try {
-			return valueOf(level);
+    public static AuthorityLevel get(String level) {
+        try {
+            return valueOf(level);
 
-		} catch (IllegalArgumentException e) {
-			log.error("AuthorityLevel {} not found", level);
-			return null;
-		}
-	}
+        } catch (IllegalArgumentException e) {
+            log.error("AuthorityLevel {} not found", level);
+            return null;
+        }
+    }
 
-	public byte getMask() {
-		return (byte) (0x0001 << id);
-	}
+    public byte getMask() {
+        return (byte) (0x0001 << id);
+    }
 }
