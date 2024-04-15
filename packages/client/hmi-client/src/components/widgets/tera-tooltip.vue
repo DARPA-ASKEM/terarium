@@ -1,7 +1,11 @@
 <template>
 	<div :class="!customPosition && position">
 		<slot />
-		<div class="tooltip-content" :style="customPositionStyle">
+		<div
+			class="tooltip-content"
+			:class="[{ 'has-arrow': hasArrow }, arrowClass]"
+			:style="customPositionStyle"
+		>
 			<slot name="tooltip-content" />
 		</div>
 	</div>
@@ -15,11 +19,21 @@ const props = defineProps({
 		type: String as PropType<'top' | 'left' | 'right' | 'bottom'>,
 		default: 'right'
 	},
+	hasArrow: {
+		type: Boolean,
+		default: true
+	},
 	// Custom configurations, useful if you want similar behavior to a context menu
 	// See it used like this in tera-model-diagram.vue
 	customPosition: {
 		type: Object as PropType<{ x: number; y: number }> | null,
 		default: null
+	},
+	// This assists the customPosition prop to determine where the arrow should be placed
+	// Ignore this prop of you're not using customPosition
+	customArrowPosition: {
+		type: String as PropType<'top' | 'left' | 'right' | 'bottom'>,
+		default: 'bottom'
 	},
 	showTooltip: {
 		type: Boolean,
@@ -37,12 +51,32 @@ const customPositionStyle = computed(() => {
 	}
 	return {};
 });
+
+const arrowClass = computed(() => {
+	if (props.customPosition) {
+		return `${props.customArrowPosition}-arrow`;
+	}
+	// Arrow should be on the opposite side of where the tooltip leans
+	switch (props.position) {
+		case 'top':
+			return 'bottom-arrow';
+		case 'bottom':
+			return 'top-arrow';
+		case 'left':
+			return 'right-arrow';
+		default:
+			return 'left-arrow';
+	}
+});
 </script>
 
 <style scoped>
 div {
 	position: relative;
-	z-index: 1;
+
+	&:hover > .tooltip-content {
+		display: block;
+	}
 
 	& > .tooltip-content {
 		display: none;
@@ -50,36 +84,80 @@ div {
 		background-color: var(--surface-section);
 		padding: var(--gap-small);
 		border-radius: var(--border-radius);
-		box-shadow: var(--box-shadow);
-		outline: 1px solid red;
+		box-shadow: var(--overlay-menu-shadow);
 	}
 
-	&:hover > .tooltip-content {
-		display: block;
-	}
-
+	/* Position of tooltip box */
 	&.top > .tooltip-content {
 		bottom: 100%;
 		left: 50%;
 		transform: translateX(-50%);
-	}
-
-	&.left > .tooltip-content {
-		right: 100%;
-		top: 50%;
-		transform: translateY(-50%);
-	}
-
-	&.right > .tooltip-content {
-		left: 100%;
-		top: 50%;
-		transform: translateY(-50%);
+		margin-bottom: 0.75rem;
 	}
 
 	&.bottom > .tooltip-content {
 		top: 100%;
 		left: 50%;
 		transform: translateX(-50%);
+		margin-top: 0.75rem;
+	}
+
+	&.left > .tooltip-content {
+		right: 100%;
+		top: 50%;
+		transform: translateY(-50%);
+		margin-right: 0.75rem;
+	}
+
+	&.right > .tooltip-content {
+		left: 100%;
+		top: 50%;
+		transform: translateY(-50%);
+		margin-left: 0.75rem;
+	}
+
+	/* Base rules for arrow */
+	& > .has-arrow::after {
+		content: '';
+		position: absolute;
+		width: 1.5rem;
+		height: 1.5rem;
+		rotate: 45deg;
+		background-color: var(--surface-section);
+	}
+
+	/* Top arrow */
+	&.tooltip-content.top-arrow::after {
+		top: -0.75rem;
+		left: 50%;
+		translate: -50%;
+		border-left: 1px solid var(--surface-border);
+		border-top: 1px solid var(--surface-border);
+	}
+
+	/* Bottom arrow */
+	&.tooltip-content.bottom-arrow::after {
+		bottom: -0.75rem;
+		left: 50%;
+		translate: -50%;
+		border-right: 1px solid var(--surface-border);
+		border-bottom: 1px solid var(--surface-border);
+	}
+
+	/* Left arrow */
+	&.tooltip-content.left-arrow::after {
+		left: -0.75rem;
+		bottom: 50%;
+		border-left: 1px solid var(--surface-border);
+		border-bottom: 1px solid var(--surface-border);
+	}
+
+	/* Right arrow */
+	&.tooltip-content.right-arrow::after {
+		right: -0.75rem;
+		bottom: 50%;
+		border-right: 1px solid var(--surface-border);
+		border-top: 1px solid var(--surface-border);
 	}
 }
 </style>

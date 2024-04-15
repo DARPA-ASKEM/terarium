@@ -105,6 +105,7 @@
 			/>
 		</template>
 	</tera-tooltip>
+	<!--Remove later-->
 	<tera-stratified-matrix-preview
 		v-if="isStratified && !isEmpty(hoveredTransitionId)"
 		:mmt="mmt"
@@ -112,11 +113,22 @@
 		:id="hoveredTransitionId"
 		:stratified-matrix-type="StratifiedMatrix.Rates"
 	/>
+	<tera-tooltip position="top">
+		<div class="test">ssss</div>
+		<template v-if="isStratified && !isEmpty(hoveredTransitionId)" #tooltip-content>
+			<tera-stratified-matrix-preview
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				:id="hoveredTransitionId"
+				:stratified-matrix-type="StratifiedMatrix.Rates"
+			/>
+		</template>
+	</tera-tooltip>
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch, onUnmounted, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -249,13 +261,16 @@ watch(
 	},
 	{ immediate: true, deep: true }
 );
-
-onUnmounted(() => {});
 </script>
 
 <style scoped>
 main {
 	overflow: auto;
+}
+
+.test {
+	background-color: red;
+	/* width: 10rem; */
 }
 
 .p-accordion {

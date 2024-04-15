@@ -142,12 +142,12 @@ main {
 	background-color: var(--surface-section);
 	outline: 1px solid var(--surface-border);
 	border-radius: var(--border-radius-medium);
-	box-shadow: var(--overlayMenuShadow);
+	box-shadow: var(--overlay-menu-shadow);
 	min-width: 15rem;
 	transition: box-shadow 80ms ease;
 
 	&:hover {
-		box-shadow: var(--overlayMenuShadowHover);
+		box-shadow: var(--overlay-menu-shadow-hover);
 		z-index: 2;
 	}
 

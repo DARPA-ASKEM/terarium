@@ -1,12 +1,18 @@
 <template>
 	<section>
 		<section class="matrix">
-			<ul>
-				<li v-for="(row, rowIdx) in matrix" :key="rowIdx">
+			<div></div>
+			<div class="col-labels">
+				<label v-for="(col, colIdx) in matrix[0]" :key="colIdx">
+					{{ col.colCriteria }}
+				</label>
+			</div>
+			<div class="row-labels">
+				<label v-for="(row, rowIdx) in matrix" :key="rowIdx">
 					{{ row[0].rowCriteria }}
-				</li>
-			</ul>
-			<div class="grid">
+				</label>
+			</div>
+			<div class="matrix-grid">
 				<template v-for="row in matrix">
 					<div
 						class="cell"
@@ -22,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
@@ -41,15 +47,19 @@ const matrix = ref<any>([]);
 const matrixColLen = computed(() => matrix.value[0]?.length ?? 0);
 
 // Currently only supports transition/rate matrices
-onMounted(() => {
-	const templatesMap = collapseTemplates(props.mmt).matrixMap;
-	const transitionMatrix = templatesMap.get(props.id);
-	if (!transitionMatrix) {
-		logger.error('Failed to generate transition matrix');
-		return;
-	}
-	matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
-});
+watch(
+	() => props.id,
+	() => {
+		const templatesMap = collapseTemplates(props.mmt).matrixMap;
+		const transitionMatrix = templatesMap.get(props.id);
+		if (!transitionMatrix) {
+			logger.error('Failed to generate transition matrix');
+			return;
+		}
+		matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -57,15 +67,18 @@ section {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	gap: var(--gap-small);
 
 	& > .matrix {
-		display: flex;
-		flex-direction: row;
+		display: grid;
+		grid-template-columns: auto auto;
+		gap: var(--gap-small);
 	}
 
-	& > .grid {
+	& > .matrix-grid {
 		display: grid;
 		grid-template-columns: repeat(v-bind(matrixColLen), 2rem);
+		border: 1px solid black;
 
 		& > .cell {
 			border: 1px solid black;
@@ -74,14 +87,40 @@ section {
 		}
 
 		& > .filled-cell {
-			background-color: var(--primary-color);
-			color: white;
+			background-color: rgb(134, 146, 164);
+			color: var(--surface-section);
 		}
 	}
 }
 
+.row-labels,
+.col-labels {
+	display: flex;
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	& > label {
+		display: flex;
+		align-items: center;
+	}
+}
+
+.row-labels {
+	flex-direction: column;
+	& > label {
+		justify-content: end;
+		height: 2rem;
+	}
+}
+
+.col-labels > label {
+	writing-mode: vertical-lr;
+	transform: scale(-1);
+	width: 2rem;
+}
+
 span {
+	font-size: var(--font-caption);
 	color: var(--primary-color);
-	padding-top: var(--gap-small);
+	padding: var(--gap-small) 0;
 }
 </style>
