@@ -621,6 +621,23 @@ export interface EntitySimilarityResult {
     similarity: number;
 }
 
+export interface NotificationEvent<T> {
+    id: string;
+    progress: number;
+    state: ProgressState;
+    notificationGroup: NotificationGroup;
+    timestamp: Date;
+    data: T;
+}
+
+export interface NotificationGroup {
+    id: string;
+    userId: string;
+    type: string;
+    timestamp: Date;
+    notificationEvents: NotificationEvent<any>[];
+}
+
 export interface PermissionGroup {
     id: string;
     name: string;
