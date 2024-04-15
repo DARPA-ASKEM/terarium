@@ -1,16 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Data
 @TSModel
 public class CiemssStatusUpdate {
-    private Number loss;
+	private Number loss;
 
-    private Number progress;
+	private Number progress;
 
-    @JsonAlias("job_id")
-    private String jobId;
+	@JsonAlias("job_id")
+	private String jobId;
 }

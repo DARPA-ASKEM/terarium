@@ -9,4 +9,5 @@ import org.springframework.data.repository.NoRepositoryBean;
  * a single interface
  */
 @NoRepositoryBean
-public interface PSCrudRepository<T, ID> extends ListPagingAndSortingRepository<T, ID>, ListCrudRepository<T, ID> {}
+public interface PSCrudRepository<T, ID> extends ListPagingAndSortingRepository<T, ID>, ListCrudRepository<T, ID> {
+}

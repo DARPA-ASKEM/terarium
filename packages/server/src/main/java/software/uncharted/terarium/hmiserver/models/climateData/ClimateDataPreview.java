@@ -3,9 +3,10 @@ package software.uncharted.terarium.hmiserver.models.climateData;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import java.util.UUID;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+
+import java.util.UUID;
 
 @Data
 @Entity

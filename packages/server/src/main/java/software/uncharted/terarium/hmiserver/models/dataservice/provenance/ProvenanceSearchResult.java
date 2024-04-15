@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
 import java.io.Serializable;
 import java.util.List;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -11,6 +12,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class ProvenanceSearchResult implements Serializable {
 
-    private List<ProvenanceNode> nodes;
-    private List<ProvenanceEdge> edges;
+	private List<ProvenanceNode> nodes;
+	private List<ProvenanceEdge> edges;
 }

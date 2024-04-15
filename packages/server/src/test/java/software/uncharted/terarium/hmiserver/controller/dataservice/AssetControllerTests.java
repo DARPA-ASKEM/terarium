@@ -3,16 +3,19 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -27,148 +30,164 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 @Transactional
 public class AssetControllerTests extends TerariumApplicationTests {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-    @Autowired
-    private ProjectService projectService;
+	@Autowired
+	private ProjectService projectService;
 
-    @Autowired
-    private DocumentAssetService documentAssetService;
+	@Autowired
+	private DocumentAssetService documentAssetService;
 
-    @Autowired
-    private ElasticsearchService elasticService;
+	@Autowired
+	private ElasticsearchService elasticService;
 
-    @Autowired
-    private ElasticsearchConfiguration elasticConfig;
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
 
-    @BeforeEach
-    public void setup() throws IOException {
-        elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
-    }
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+	}
 
-    @AfterEach
-    public void teardown() throws IOException {
-        elasticService.deleteIndex(elasticConfig.getDocumentIndex());
-    }
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+	}
 
-    private static final String TEST_ASSET_NAME_1 = "test-asset-name-1";
-    private static final String TEST_ASSET_NAME_2 = "test-asset-name-2";
-    private static final String TEST_ASSET_NAME_UNUSED = "test-asset-name-unused";
+	private static final String TEST_ASSET_NAME_1 = "test-asset-name-1";
+	private static final String TEST_ASSET_NAME_2 = "test-asset-name-2";
+	private static final String TEST_ASSET_NAME_UNUSED = "test-asset-name-unused";
 
-    Project project;
+	Project project;
 
-    Project project2;
+	Project project2;
 
-    @Test
-    @WithUserDetails(MockUser.ADAM)
-    public void testErrorConditions() throws Exception {
+	@Test
+	@WithUserDetails(MockUser.ADAM)
+	public void testErrorConditions() throws Exception {
 
-        // Test that we get a 404 if we provide a project id that doesn't exist
-        mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-                                + TEST_ASSET_NAME_UNUSED + "?project-id=" + UUID.randomUUID())
-                        .with(csrf()))
-                .andExpect(status().isNotFound());
-    }
+		// Test that we get a 404 if we provide a project id that doesn't exist
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_UNUSED
+						+ "?project-id=" + UUID.randomUUID())
+				.with(csrf()))
+				.andExpect(status().isNotFound());
 
-    @Test
-    @WithUserDetails(MockUser.ADAM)
-    public void testItCanVerifyAssetNameAvailabilityGenerally() throws Exception {
+	}
 
-        // Test that we get a 204 if the asset name is available
-        mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-                                + TEST_ASSET_NAME_UNUSED)
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+	@Test
+	@WithUserDetails(MockUser.ADAM)
+	public void testItCanVerifyAssetNameAvailabilityGenerally() throws Exception {
 
-        // Test that we get a 409 if the asset name is not available
-        mockMvc.perform(MockMvcRequestBuilders.get(
-                                "/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_1)
-                        .with(csrf()))
-                .andExpect(status().isConflict());
+		// Test that we get a 204 if the asset name is available
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_UNUSED)
+				.with(csrf()))
+				.andExpect(status().isNoContent());
 
-        // Test that we get a 409 if the asset name is not available
-        mockMvc.perform(MockMvcRequestBuilders.get(
-                                "/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_2)
-                        .with(csrf()))
-                .andExpect(status().isConflict());
+		// Test that we get a 409 if the asset name is not available
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_1)
+				.with(csrf()))
+				.andExpect(status().isConflict());
 
-        // Test that we get a 204 if the asset name is available because of different
-        // asset type
-        mockMvc.perform(MockMvcRequestBuilders.get(
-                                "/assets/asset-name-available/" + AssetType.CODE.name() + "/" + TEST_ASSET_NAME_1)
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
-    }
+		// Test that we get a 409 if the asset name is not available
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_2)
+				.with(csrf()))
+				.andExpect(status().isConflict());
 
-    @Test
-    @WithUserDetails(MockUser.ADAM)
-    public void testItCanVerifyAssetNameAvailabilityInProjects() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-                                + TEST_ASSET_NAME_UNUSED + "?project-id=" + project.getId())
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+		// Test that we get a 204 if the asset name is available because of different
+		// asset type
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.CODE.name() + "/" + TEST_ASSET_NAME_1)
+				.with(csrf()))
+				.andExpect(status().isNoContent());
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-                                + TEST_ASSET_NAME_1 + "?project-id=" + project.getId())
-                        .with(csrf()))
-                .andExpect(status().isConflict());
+	}
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-                                + TEST_ASSET_NAME_2 + "?project-id=" + project.getId())
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+	@Test
+	@WithUserDetails(MockUser.ADAM)
+	public void testItCanVerifyAssetNameAvailabilityInProjects() throws Exception {
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_UNUSED
+						+ "?project-id=" + project.getId())
+				.with(csrf()))
+				.andExpect(status().isNoContent());
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.CODE.name() + "/"
-                                + TEST_ASSET_NAME_1 + "?project-id=" + project.getId())
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_1
+						+ "?project-id=" + project.getId())
+				.with(csrf()))
+				.andExpect(status().isConflict());
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-                                + TEST_ASSET_NAME_2 + "?project-id=" + project2.getId())
-                        .with(csrf()))
-                .andExpect(status().isConflict());
-    }
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_2
+						+ "?project-id=" + project.getId())
+				.with(csrf()))
+				.andExpect(status().isNoContent());
 
-    /**
-     * Helper method to set up a scenario where we have two projects each with one document asset.
-     *
-     * @throws Exception
-     */
-    @BeforeEach
-    public void setUpScenario() throws Exception {
-        project = projectService.createProject(new Project().setName("test-proj-1"));
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.CODE.name() + "/" + TEST_ASSET_NAME_1 + "?project-id="
+						+ project.getId())
+				.with(csrf()))
+				.andExpect(status().isNoContent());
 
-        final DocumentAsset documentAsset = documentAssetService.createAsset(
-                new DocumentAsset().setName(TEST_ASSET_NAME_1).setDescription("my description"));
+		mockMvc.perform(MockMvcRequestBuilders
+				.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_2
+						+ "?project-id=" + project2.getId())
+				.with(csrf()))
+				.andExpect(status().isConflict());
+	}
 
-        final ProjectAsset projectAsset = new ProjectAsset()
-                .setAssetId(documentAsset.getId())
-                .setAssetName(documentAsset.getName())
-                .setAssetType(AssetType.DOCUMENT);
+	/**
+	 * Helper method to set up a scenario where we have two projects each with one
+	 * document asset.
+	 *
+	 * @throws Exception
+	 */
+	@BeforeEach
+	public void setUpScenario() throws Exception {
+		project = projectService.createProject(new Project()
+				.setName("test-proj-1"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/projects/" + project.getId() + "/assets/"
-                                + AssetType.DOCUMENT.name() + "/" + documentAsset.getId())
-                        .with(csrf())
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(projectAsset)))
-                .andExpect(status().isCreated());
+		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
+				.setName(TEST_ASSET_NAME_1)
+				.setDescription("my description"));
 
-        project2 = projectService.createProject(new Project().setName("test-proj-2"));
+		final ProjectAsset projectAsset = new ProjectAsset()
+				.setAssetId(documentAsset.getId())
+				.setAssetName(documentAsset.getName())
+				.setAssetType(AssetType.DOCUMENT);
 
-        final DocumentAsset documentAsset2 = documentAssetService.createAsset(
-                new DocumentAsset().setName(TEST_ASSET_NAME_2).setDescription("my description"));
+		mockMvc.perform(MockMvcRequestBuilders
+				.post("/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/"
+						+ documentAsset.getId())
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(projectAsset)))
+				.andExpect(status().isCreated());
 
-        final ProjectAsset projectAsset2 = new ProjectAsset()
-                .setAssetId(documentAsset.getId())
-                .setAssetName(documentAsset.getName())
-                .setAssetType(AssetType.DOCUMENT);
+		project2 = projectService.createProject(new Project()
+				.setName("test-proj-2"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/projects/" + project2.getId() + "/assets/"
-                                + AssetType.DOCUMENT.name() + "/" + documentAsset2.getId())
-                        .with(csrf())
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(projectAsset2)))
-                .andExpect(status().isCreated());
-    }
+		final DocumentAsset documentAsset2 = documentAssetService.createAsset(new DocumentAsset()
+				.setName(TEST_ASSET_NAME_2)
+				.setDescription("my description"));
+
+		final ProjectAsset projectAsset2 = new ProjectAsset()
+				.setAssetId(documentAsset.getId())
+				.setAssetName(documentAsset.getName())
+				.setAssetType(AssetType.DOCUMENT);
+
+		mockMvc.perform(MockMvcRequestBuilders
+				.post("/projects/" + project2.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/"
+						+ documentAsset2.getId())
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(projectAsset2)))
+				.andExpect(status().isCreated());
+	}
+
 }

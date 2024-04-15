@@ -10,12 +10,12 @@ import software.uncharted.terarium.hmiserver.models.CacheName;
 @Slf4j
 @Service
 public class CacheableTestService {
-    public static String LOG_MESSAGE = "In cached method";
-    public static String RETURN_VALUE = "Hello";
+	public static String LOG_MESSAGE = "In cached method";
+	public static String RETURN_VALUE = "Hello";
 
-    @Cacheable
-    public String cachedMethod() {
-        log.info(LOG_MESSAGE);
-        return RETURN_VALUE;
-    }
+	@Cacheable
+	public String cachedMethod() {
+		log.info(LOG_MESSAGE);
+		return RETURN_VALUE;
+	}
 }

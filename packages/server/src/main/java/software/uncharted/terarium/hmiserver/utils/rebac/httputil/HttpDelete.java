@@ -16,12 +16,15 @@
  */
 package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 
-import java.net.URI;
 import org.apache.http.annotation.Contract;
 import org.apache.http.annotation.ThreadingBehavior;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 
-/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
+import java.net.URI;
+
+/**
+ * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
+ */
 @Contract(threading = ThreadingBehavior.UNSAFE)
 public class HttpDelete extends HttpEntityEnclosingRequestBase {
 

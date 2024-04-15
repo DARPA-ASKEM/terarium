@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 import java.io.Serializable;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -8,7 +9,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Transform implements Serializable {
 
-    Number x;
-    Number y;
-    Number k;
+	Number x;
+	Number y;
+	Number k;
 }

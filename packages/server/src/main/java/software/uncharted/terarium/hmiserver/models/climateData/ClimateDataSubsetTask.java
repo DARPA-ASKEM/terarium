@@ -5,9 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.util.UUID;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+
+import java.util.UUID;
 
 @Data
 @Entity
@@ -24,8 +25,7 @@ public class ClimateDataSubsetTask {
     private String timestamps;
     private String thinFactor;
 
-    public ClimateDataSubsetTask(
-            String statusId, String esgfId, String envelope, String timestamps, String thinFactor) {
+    public ClimateDataSubsetTask(String statusId, String esgfId, String envelope, String timestamps, String thinFactor) {
         this.statusId = statusId;
         this.esgfId = esgfId;
         this.envelope = envelope;

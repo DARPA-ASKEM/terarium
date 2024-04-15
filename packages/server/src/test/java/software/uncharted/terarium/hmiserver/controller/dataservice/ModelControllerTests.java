@@ -1,10 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,126 +16,133 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
+import java.io.IOException;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 public class ModelControllerTests extends TerariumApplicationTests {
-    @Autowired
-    private ObjectMapper objectMapper;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-    @Autowired
-    private ModelService modelService;
+	@Autowired
+	private ModelService modelService;
 
-    @Autowired
-    private ElasticsearchService elasticService;
+	@Autowired
+	private ElasticsearchService elasticService;
 
-    @Autowired
-    private ElasticsearchConfiguration elasticConfig;
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
 
-    @BeforeEach
-    public void setup() throws IOException {
-        elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelIndex());
-    }
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelIndex());
+	}
 
-    @AfterEach
-    public void teardown() throws IOException {
-        elasticService.deleteIndex(elasticConfig.getModelIndex());
-    }
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getModelIndex());
+	}
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanCreateModel() throws Exception {
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCreateModel() throws Exception {
 
-        final Model model = new Model()
-                .setHeader(new ModelHeader()
-                        .setName("test-name")
-                        .setModelSchema("test-schema")
-                        .setModelVersion("0.1.2")
-                        .setDescription("test-description"));
+		final Model model = new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/models")
-                        .with(csrf())
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(model)))
-                .andExpect(status().isCreated());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.post("/models")
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(model)))
+				.andExpect(status().isCreated());
+	}
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanGetModel() throws Exception {
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetModel() throws Exception {
 
-        final Model model = modelService.createAsset(new Model()
-                .setHeader(new ModelHeader()
-                        .setName("test-name")
-                        .setModelSchema("test-schema")
-                        .setModelVersion("0.1.2")
-                        .setDescription("test-description")));
+		final Model model = modelService.createAsset(new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId()).with(csrf()))
-                .andExpect(status().isOk());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId())
+				.with(csrf()))
+				.andExpect(status().isOk());
+	}
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanUpdateModel() throws Exception {
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanUpdateModel() throws Exception {
 
-        final Model model = modelService.createAsset(new Model()
-                .setHeader(new ModelHeader()
-                        .setName("test-name")
-                        .setModelSchema("test-schema")
-                        .setModelVersion("0.1.2")
-                        .setDescription("test-description")));
+		final Model model = modelService.createAsset(new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")));
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/models/" + model.getId())
-                        .with(csrf())
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(model)))
-                .andExpect(status().isOk());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.put("/models/" + model.getId())
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(model)))
+				.andExpect(status().isOk());
+	}
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanDeleteModel() throws Exception {
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanDeleteModel() throws Exception {
 
-        final Model model = modelService.createAsset(new Model()
-                .setHeader(new ModelHeader()
-                        .setName("test-name")
-                        .setModelSchema("test-schema")
-                        .setModelVersion("0.1.2")
-                        .setDescription("test-description")));
+		final Model model = modelService.createAsset(new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")));
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
-                        .with(csrf()))
-                .andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
+				.with(csrf()))
+				.andExpect(status().isOk());
 
-        Assertions.assertTrue(modelService.getAsset(model.getId()).isEmpty());
-    }
+		Assertions.assertTrue(modelService.getAsset(model.getId()).isEmpty());
+	}
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanGetModelDescription() throws Exception {
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetModelDescription() throws Exception {
 
-        final Model model = modelService.createAsset(new Model()
-                .setHeader(new ModelHeader()
-                        .setName("test-name")
-                        .setModelSchema("test-schema")
-                        .setModelVersion("0.1.2")
-                        .setDescription("test-description")));
+		final Model model = modelService.createAsset(new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
-                        .with(csrf()))
-                .andExpect(status().isOk());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
+				.with(csrf()))
+				.andExpect(status().isOk());
+	}
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanGetModelDescriptions() throws Exception {
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetModelDescriptions() throws Exception {
 
-        modelService.createAsset(new Model()
-                .setHeader(new ModelHeader()
-                        .setName("test-name")
-                        .setModelSchema("test-schema")
-                        .setModelVersion("0.1.2")
-                        .setDescription("test-description")));
+		modelService.createAsset(new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf()))
-                .andExpect(status().isOk());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions")
+				.with(csrf()))
+				.andExpect(status().isOk());
+	}
 }

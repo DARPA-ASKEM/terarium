@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.regnet;
 
 import java.io.Serial;
 import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -14,17 +15,17 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Accessors(chain = true)
 @TSModel
 public class RegNetEdge extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -2875068447471585535L;
+	@Serial
+	private static final long serialVersionUID = -2875068447471585535L;
 
-    private String source;
+	private String source;
 
-    private String target;
+	private String target;
 
-    private String id;
+	private String id;
 
-    private Boolean sign;
+	private Boolean sign;
 
-    @TSOptional
-    private RegNetBaseProperties properties;
+	@TSOptional
+	private RegNetBaseProperties properties;
 }

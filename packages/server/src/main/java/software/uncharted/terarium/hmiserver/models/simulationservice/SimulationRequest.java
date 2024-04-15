@@ -1,9 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -15,18 +17,17 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @Accessors(chain = true)
 @TSModel
 public class SimulationRequest implements Serializable {
-    @JsonAlias("model_config_id")
-    private UUID modelConfigId;
+	@JsonAlias("model_config_id")
+	private UUID modelConfigId;
 
-    @JsonAlias("time_span")
-    private TimeSpan timespan;
+	@JsonAlias("time_span")
+	private TimeSpan timespan;
+	private Object extra;
 
-    private Object extra;
+	private String engine;
 
-    private String engine;
+	private UUID projectId;
 
-    private UUID projectId;
-
-    @TSOptional
-    private List<Intervention> interventions;
+	@TSOptional
+	private List<Intervention> interventions;
 }

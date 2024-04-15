@@ -14,46 +14,46 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @RequiredArgsConstructor
 @Slf4j
 public class MdlToStockflowResponseHandler extends TaskResponseHandler {
-    public static final String NAME = "mira_task:mdl_to_stockflow";
+	final static public String NAME = "mira_task:mdl_to_stockflow";
 
-    private final ObjectMapper objectMapper;
-    private final ModelService modelService;
+	final private ObjectMapper objectMapper;
+	final private ModelService modelService;
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
+	@Override
+	public String getName() {
+		return NAME;
+	}
 
-    @Data
-    public static class Response {
-        Model response;
-    }
+	@Data
+	public static class Response {
+		Model response;
+	}
 
-    @Override
-    public TaskResponse onSuccess(final TaskResponse resp) {
-        try {
-            final Response modelResp = objectMapper.readValue(resp.getOutput(), Response.class);
-            Model model = modelResp.getResponse();
-            final ConversionAdditionalProperties props =
-                    resp.getAdditionalProperties(ConversionAdditionalProperties.class);
+	@Override
+	public TaskResponse onSuccess(final TaskResponse resp) {
+		try {
+			final Response modelResp = objectMapper.readValue(resp.getOutput(), Response.class);
+			Model model = modelResp.getResponse();
+			final ConversionAdditionalProperties props = resp
+					.getAdditionalProperties(ConversionAdditionalProperties.class);
 
-            // override the default stockflow name / description
-            model.setName(props.getFileName());
-            model.getHeader().setName(props.getFileName());
-            model.getHeader().setDescription(props.getFileName());
+			// override the default stockflow name / description
+			model.setName(props.getFileName());
+			model.getHeader().setName(props.getFileName());
+			model.getHeader().setDescription(props.getFileName());
 
-            model.getSemantics().getOde().getParameters().forEach((param) -> {
-                if (param.getName() == null || param.getName().isEmpty()) {
-                    param.setName(param.getId());
-                }
-            });
+			model.getSemantics().getOde().getParameters().forEach((param) -> {
+				if (param.getName() == null || param.getName().isEmpty()) {
+					param.setName(param.getId());
+				}
+			});
 
-            model = modelService.createAsset(model);
-            resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
-        } catch (final Exception e) {
-            log.error("Failed to create model", e);
-            throw new RuntimeException(e);
-        }
-        return resp;
-    }
+			model = modelService.createAsset(model);
+			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
+		} catch (final Exception e) {
+			log.error("Failed to create model", e);
+			throw new RuntimeException(e);
+		}
+		return resp;
+	}
 }

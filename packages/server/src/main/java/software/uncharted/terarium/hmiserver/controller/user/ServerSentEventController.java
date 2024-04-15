@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.user;
 
 import javax.ws.rs.core.MediaType;
+
 import org.jboss.resteasy.annotations.SseElementType;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
@@ -16,17 +18,19 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RestController
 public class ServerSentEventController {
 
-    // @Autowired
-    // @Channel("user-event") Publisher<UserEvent> userEvents;
+	// @Autowired
+	// @Channel("user-event") Publisher<UserEvent> userEvents;
 
-    /** Gets all user events */
-    @GetMapping(name = "/server-sent-events", produces = MediaType.SERVER_SENT_EVENTS)
-    @Secured(Roles.USER)
-    @SseElementType(MediaType.APPLICATION_JSON)
-    public ResponseEntity<Publisher<UserEvent>> stream() {
+	/**
+	 * Gets all user events
+	 */
+	@GetMapping(name = "/server-sent-events", produces = MediaType.SERVER_SENT_EVENTS)
+	@Secured(Roles.USER)
+	@SseElementType(MediaType.APPLICATION_JSON)
+	public ResponseEntity<Publisher<UserEvent>> stream() {
 
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 
-        // return Multi.createFrom().publisher(userEvents);
-    }
+		// return Multi.createFrom().publisher(userEvents);
+	}
 }

@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import java.io.Serial;
 import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -13,12 +14,12 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class EquationVariable extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 7329915432714371645L;
+	@Serial
+	private static final long serialVersionUID = 7329915432714371645L;
 
-    private String id;
+	private String id;
 
-    private String text;
+	private String text;
 
-    private String image;
+	private String image;
 }

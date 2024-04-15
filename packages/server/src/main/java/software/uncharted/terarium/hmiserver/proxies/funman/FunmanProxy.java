@@ -1,15 +1,15 @@
 package software.uncharted.terarium.hmiserver.proxies.funman;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
 
-@FeignClient(name = "funman-api", url = "${funman-service.url}", path = "/api/queries")
+@FeignClient(name = "funman-api", url = "${funman-service.url}", path="/api/queries")
 public interface FunmanProxy {
 
     @GetMapping("/{queryId}/halt")

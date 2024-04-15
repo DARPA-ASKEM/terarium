@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.knowledge;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -12,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -26,6 +25,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -44,46 +47,45 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 @Slf4j
 public class KnowledgeControllerTests extends TerariumApplicationTests {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-    @Autowired
-    private DocumentAssetService documentAssetService;
+	@Autowired
+	private DocumentAssetService documentAssetService;
 
-    @Autowired
-    private ModelService modelService;
+	@Autowired
+	private ModelService modelService;
 
-    @Autowired
-    private DatasetService datasetService;
+	@Autowired
+	private DatasetService datasetService;
 
-    @Autowired
-    private CodeService codeService;
+	@Autowired
+	private CodeService codeService;
 
-    @Autowired
-    private ElasticsearchService elasticService;
+	@Autowired
+	private ElasticsearchService elasticService;
 
-    @Autowired
-    private ExtractionService extractionService;
+	@Autowired
+	private ExtractionService extractionService;
 
-    @Autowired
-    private ElasticsearchConfiguration elasticConfig;
+	@Autowired
+	private ElasticsearchConfiguration elasticConfig;
 
-    @BeforeEach
-    public void setup() throws IOException {
-        elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
-    }
+	@BeforeEach
+	public void setup() throws IOException {
+		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+	}
 
-    @AfterEach
-    public void teardown() throws IOException {
-        elasticService.deleteIndex(elasticConfig.getDocumentIndex());
-    }
+	@AfterEach
+	public void teardown() throws IOException {
+		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void equationsToModelRegNet() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void equationsToModelRegNet() throws Exception {
 
-        final String payload1 =
-                """
+		final String payload1 = """
 					{
 						"equations": [
 							"\\\\frac{dS}{dt} = -\\\\alpha S I -\\\\beta S D -\\\\gamma S A -\\\\delta S R",
@@ -99,19 +101,18 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 					}
 				""";
 
-        MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload1)
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(payload1)
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        String responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
-        UUID regnetModelId = UUID.fromString(responseContent);
-        log.info(regnetModelId.toString());
+		String responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
+		UUID regnetModelId = UUID.fromString(responseContent);
+		log.info(regnetModelId.toString());
 
-        final String payload2 =
-                """
+		final String payload2 = """
 					{
 						"equations": [
 						  "\\\\frac{d S}{d t} = -\\\\beta S I",
@@ -121,24 +122,23 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 					}
 				""";
 
-        res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload2)
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(payload2)
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
-        regnetModelId = UUID.fromString(responseContent);
-        log.info(regnetModelId.toString());
-    }
+		responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
+		regnetModelId = UUID.fromString(responseContent);
+		log.info(regnetModelId.toString());
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void equationsToModelPetrinet() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void equationsToModelPetrinet() throws Exception {
 
-        final String payload1 =
-                """
+		final String payload1 = """
 					{
 						"equations": [
 							"\\\\frac{dS}{dt} = -\\\\alpha S I -\\\\beta S D -\\\\gamma S A -\\\\delta S R",
@@ -154,19 +154,18 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 					}
 				""";
 
-        MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload1)
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(payload1)
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        String responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
-        UUID petrinetModelId = UUID.fromString(responseContent);
-        log.info(petrinetModelId.toString());
+		String responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
+		UUID petrinetModelId = UUID.fromString(responseContent);
+		log.info(petrinetModelId.toString());
 
-        final String payload2 =
-                """
+		final String payload2 = """
 					{
 						"equations": [
 						  	"\\\\frac{d S}{d t} = -\\\\beta S I",
@@ -176,196 +175,195 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 					}
 				""";
 
-        res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload2)
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/equations-to-model")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(payload2)
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
-        petrinetModelId = UUID.fromString(responseContent);
-        log.info(petrinetModelId.toString());
-    }
+		responseContent = res.getResponse().getContentAsString().replaceAll("^\"|\"$", "");
+		petrinetModelId = UUID.fromString(responseContent);
+		log.info(petrinetModelId.toString());
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void base64EquationsToAMRTests() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void base64EquationsToAMRTests() throws Exception {
 
-        final ClassPathResource resource1 = new ClassPathResource("knowledge/equation1.png");
-        final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
-        final String encodedString1 = Base64.getEncoder().encodeToString(content1);
+		final ClassPathResource resource1 = new ClassPathResource("knowledge/equation1.png");
+		final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
+		final String encodedString1 = Base64.getEncoder().encodeToString(content1);
 
-        final ClassPathResource resource2 = new ClassPathResource("knowledge/equation2.png");
-        final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
-        final String encodedString2 = Base64.getEncoder().encodeToString(content2);
+		final ClassPathResource resource2 = new ClassPathResource("knowledge/equation2.png");
+		final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
+		final String encodedString2 = Base64.getEncoder().encodeToString(content2);
 
-        final ClassPathResource resource3 = new ClassPathResource("knowledge/equation3.png");
-        final byte[] content3 = Files.readAllBytes(resource3.getFile().toPath());
-        final String encodedString3 = Base64.getEncoder().encodeToString(content3);
+		final ClassPathResource resource3 = new ClassPathResource("knowledge/equation3.png");
+		final byte[] content3 = Files.readAllBytes(resource3.getFile().toPath());
+		final String encodedString3 = Base64.getEncoder().encodeToString(content3);
 
-        final String payload = "{\"images\": [" + "\""
-                + encodedString1 + "\"," + "\""
-                + encodedString2 + "\"," + "\""
-                + encodedString3 + "\"],\"model\": \"regnet\"}";
+		final String payload = "{\"images\": [" +
+				"\"" + encodedString1 + "\"," +
+				"\"" + encodedString2 + "\"," +
+				"\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
 
-        final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/base64-equations-to-model")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload)
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/base64-equations-to-model")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(payload)
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        final Model amr = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-        log.info(amr.toString());
-    }
+		final Model amr = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
+		log.info(amr.toString());
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void base64EquationsToLatexTests() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void base64EquationsToLatexTests() throws Exception {
 
-        final ClassPathResource resource1 = new ClassPathResource("knowledge/equation1.png");
-        final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
-        final String encodedString1 = Base64.getEncoder().encodeToString(content1);
+		final ClassPathResource resource1 = new ClassPathResource("knowledge/equation1.png");
+		final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
+		final String encodedString1 = Base64.getEncoder().encodeToString(content1);
 
-        final ClassPathResource resource2 = new ClassPathResource("knowledge/equation2.png");
-        final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
-        final String encodedString2 = Base64.getEncoder().encodeToString(content2);
+		final ClassPathResource resource2 = new ClassPathResource("knowledge/equation2.png");
+		final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
+		final String encodedString2 = Base64.getEncoder().encodeToString(content2);
 
-        final ClassPathResource resource3 = new ClassPathResource("knowledge/equation3.png");
-        final byte[] content3 = Files.readAllBytes(resource3.getFile().toPath());
-        final String encodedString3 = Base64.getEncoder().encodeToString(content3);
+		final ClassPathResource resource3 = new ClassPathResource("knowledge/equation3.png");
+		final byte[] content3 = Files.readAllBytes(resource3.getFile().toPath());
+		final String encodedString3 = Base64.getEncoder().encodeToString(content3);
 
-        final String payload = "{\"images\": [" + "\""
-                + encodedString1 + "\"," + "\""
-                + encodedString2 + "\"," + "\""
-                + encodedString3 + "\"],\"model\": \"regnet\"}";
+		final String payload = "{\"images\": [" +
+				"\"" + encodedString1 + "\"," +
+				"\"" + encodedString2 + "\"," +
+				"\"" + encodedString3 + "\"],\"model\": \"regnet\"}";
 
-        final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/base64-equations-to-latex")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload)
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/base64-equations-to-latex")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(payload)
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        final String latex = res.getResponse().getContentAsString();
-        log.info(latex);
-    }
+		final String latex = res.getResponse().getContentAsString();
+		log.info(latex);
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void variableExtractionTests() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void variableExtractionTests() throws Exception {
 
-        DocumentAsset documentAsset = new DocumentAsset()
-                .setName("test-document-name")
-                .setDescription("my description")
-                .setText("x = 0. y = 1. I = Infected population.");
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setText("x = 0. y = 1. I = Infected population.");
 
-        documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("document-id", documentAsset.getId().toString())
-                        .param("domain", "epi")
-                        .with(csrf()))
-                .andExpect(status().isAccepted());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.param("domain", "epi")
+				.with(csrf()))
+				.andExpect(status().isAccepted());
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void variableExtractionWithModelTests() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void variableExtractionWithModelTests() throws Exception {
 
-        DocumentAsset documentAsset = new DocumentAsset()
-                .setName("test-document-name")
-                .setDescription("my description")
-                .setText("x = 0. y = 1. I = Infected population.");
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setText("x = 0. y = 1. I = Infected population.");
 
-        documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset);
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-        Model model = objectMapper.readValue(content, Model.class);
+		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		Model model = objectMapper.readValue(content, Model.class);
 
-        model = modelService.createAsset(model);
+		model = modelService.createAsset(model);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("document-id", documentAsset.getId().toString())
-                        .param("model-ids", model.getId().toString())
-                        .param("domain", "epi")
-                        .with(csrf()))
-                .andExpect(status().isAccepted());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.param("model-ids", model.getId().toString())
+				.param("domain", "epi")
+				.with(csrf()))
+				.andExpect(status().isAccepted());
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void linkAmrTests() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void linkAmrTests() throws Exception {
 
-        DocumentAsset documentAsset = new DocumentAsset()
-                .setName("test-document-name")
-                .setDescription("my description")
-                .setText("x = 0. y = 1. I = Infected population.");
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setText("x = 0. y = 1. I = Infected population.");
 
-        documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset);
 
-        documentAsset = extractionService
-                .extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
-                .get();
+		documentAsset = extractionService.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi").get();
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-        Model model = objectMapper.readValue(content, Model.class);
+		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		Model model = objectMapper.readValue(content, Model.class);
 
-        model = modelService.createAsset(model);
+		model = modelService.createAsset(model);
 
-        final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/align-model")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("document-id", documentAsset.getId().toString())
-                        .param("model-id", model.getId().toString())
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/align-model")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.param("model-id", model.getId().toString())
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
+		model = objectMapper.readValue(res.getResponse().getContentAsString(),
+				Model.class);
 
-        Assertions.assertTrue(model != null);
-    }
+		Assertions.assertTrue(model != null);
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void cosmosPdfExtraction() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void cosmosPdfExtraction() throws Exception {
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-        final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
+		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
-        DocumentAsset documentAsset = new DocumentAsset()
-                .setName("test-pdf-name")
-                .setDescription("my description")
-                .setFileNames(List.of("paper.pdf"));
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-pdf-name")
+				.setDescription("my description")
+				.setFileNames(List.of("paper.pdf"));
 
-        documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset);
 
-        documentAssetService.uploadFile(
-                documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
+		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity,
+				ContentType.create("application/pdf"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("document-id", documentAsset.getId().toString())
-                        .with(csrf()))
-                .andExpect(status().isAccepted());
-    }
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.with(csrf()))
+				.andExpect(status().isAccepted());
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void profileModel() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void profileModel() throws Exception {
 
-        DocumentAsset documentAsset = new DocumentAsset()
-                .setName("test-pdf-name")
-                .setDescription("my description")
-                .setText(
-                        """
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-pdf-name")
+				.setDescription("my description")
+				.setText(
+						"""
 								In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
 								of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
 								theoretical framework to investigate its spread within a community. Here, the model is based upon the
@@ -386,60 +384,62 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 								implemented to control the infection rates early from the spread of the disease.
 								""");
 
-        documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset);
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-        Model model = objectMapper.readValue(content, Model.class);
+		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		Model model = objectMapper.readValue(content, Model.class);
 
-        model = modelService.createAsset(model);
+		model = modelService.createAsset(model);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-model/" + model.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("document-id", documentAsset.getId().toString())
-                        .with(csrf()))
-                .andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-model/" + model.getId())
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.with(csrf()))
+				.andExpect(status().isOk());
 
-        model = modelService.getAsset(model.getId()).orElseThrow();
+		model = modelService.getAsset(model.getId()).orElseThrow();
 
-        Assertions.assertTrue(model.getMetadata().getCard() != null);
-    }
+		Assertions.assertTrue(model.getMetadata().getCard() != null);
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void profileDataset() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void profileDataset() throws Exception {
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/dataset.csv");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		final ClassPathResource resource = new ClassPathResource("knowledge/dataset.csv");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-        Dataset dataset = datasetService.createAsset(
-                new Dataset().setName("test-dataset-name").setDescription("my description"));
+		Dataset dataset = datasetService.createAsset(new Dataset()
+				.setName("test-dataset-name")
+				.setDescription("my description"));
 
-        // Create a MockMultipartFile object
-        final MockMultipartFile file = new MockMultipartFile(
-                "file", // name of the file as expected in the request
-                "filename.csv", // original filename
-                "text/csv", // content type
-                content // content of the file
-                );
+		// Create a MockMultipartFile object
+		final MockMultipartFile file = new MockMultipartFile(
+				"file", // name of the file as expected in the request
+				"filename.csv", // original filename
+				"text/csv", // content type
+				content // content of the file
+		);
 
-        // Perform the multipart file upload request
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
-                        .file(file)
-                        .queryParam("filename", "filename.csv")
-                        .with(csrf())
-                        .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .with(request -> {
-                            request.setMethod("PUT");
-                            return request;
-                        }))
-                .andExpect(status().isOk());
+		// Perform the multipart file upload request
+		mockMvc.perform(
+				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
+						.file(file)
+						.queryParam("filename", "filename.csv")
+						.with(csrf())
+						.contentType(MediaType.MULTIPART_FORM_DATA)
+						.with(request -> {
+							request.setMethod("PUT");
+							return request;
+						}))
+				.andExpect(status().isOk());
 
-        DocumentAsset documentAsset = new DocumentAsset()
-                .setName("test-pdf-name")
-                .setDescription("my description")
-                .setText(
-                        """
+		DocumentAsset documentAsset = new DocumentAsset()
+				.setName("test-pdf-name")
+				.setDescription("my description")
+				.setText(
+						"""
 								In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
 								of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
 								theoretical framework to investigate its spread within a community. Here, the model is based upon the
@@ -460,120 +460,120 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 								implemented to control the infection rates early from the spread of the disease.
 								""");
 
-        documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-dataset/" + dataset.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("document-id", documentAsset.getId().toString())
-                        .with(csrf()))
-                .andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-dataset/" + dataset.getId())
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("document-id", documentAsset.getId().toString())
+				.with(csrf()))
+				.andExpect(status().isOk());
 
-        dataset = datasetService.getAsset(dataset.getId()).orElseThrow();
+		dataset = datasetService.getAsset(dataset.getId()).orElseThrow();
 
-        Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
-    }
+		Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void codeToAmrTest() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void codeToAmrTest() throws Exception {
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-        final String filename = "code.py";
+		final String filename = "code.py";
 
-        final CodeFile codeFile = new CodeFile();
-        codeFile.setProgrammingLanguageFromFileName(filename);
+		final CodeFile codeFile = new CodeFile();
+		codeFile.setProgrammingLanguageFromFileName(filename);
 
-        final Map<String, CodeFile> files = new HashMap<>();
-        files.put(filename, codeFile);
+		final Map<String, CodeFile> files = new HashMap<>();
+		files.put(filename, codeFile);
 
-        final Code code = codeService.createAsset(new Code()
-                .setName("test-code-name")
-                .setDescription("my description")
-                .setFiles(files));
+		final Code code = codeService.createAsset(new Code()
+				.setName("test-code-name")
+				.setDescription("my description")
+				.setFiles(files));
 
-        final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-        codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
+		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
-        final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("code-id", code.getId().toString())
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("code-id", code.getId().toString())
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-        Assertions.assertTrue(model != null);
-    }
+		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
+		Assertions.assertTrue(model != null);
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void codeToAmrTestLLM() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void codeToAmrTestLLM() throws Exception {
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-        final String filename = "code.py";
+		final String filename = "code.py";
 
-        final CodeFile codeFile = new CodeFile();
-        codeFile.setProgrammingLanguageFromFileName(filename);
+		final CodeFile codeFile = new CodeFile();
+		codeFile.setProgrammingLanguageFromFileName(filename);
 
-        final Map<String, CodeFile> files = new HashMap<>();
-        files.put(filename, codeFile);
+		final Map<String, CodeFile> files = new HashMap<>();
+		files.put(filename, codeFile);
 
-        final Code code = codeService.createAsset(new Code()
-                .setName("test-code-name")
-                .setDescription("my description")
-                .setFiles(files));
+		final Code code = codeService.createAsset(new Code()
+				.setName("test-code-name")
+				.setDescription("my description")
+				.setFiles(files));
 
-        final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-        codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
+		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
-        final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("code-id", code.getId().toString())
-                        .param("llm-assisted", "true")
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("code-id", code.getId().toString())
+				.param("llm-assisted", "true")
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-        Assertions.assertTrue(model != null);
-    }
+		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
+		Assertions.assertTrue(model != null);
+	}
 
-    // @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void codeToAmrTestDynamicsOnly() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void codeToAmrTestDynamicsOnly() throws Exception {
 
-        final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
-        final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+		final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-        final String filename = "code.py";
+		final String filename = "code.py";
 
-        final CodeFile codeFile = new CodeFile();
-        codeFile.setProgrammingLanguageFromFileName(filename);
+		final CodeFile codeFile = new CodeFile();
+		codeFile.setProgrammingLanguageFromFileName(filename);
 
-        final Map<String, CodeFile> files = new HashMap<>();
-        files.put(filename, codeFile);
+		final Map<String, CodeFile> files = new HashMap<>();
+		files.put(filename, codeFile);
 
-        final Code code = codeService.createAsset(new Code()
-                .setName("test-code-name")
-                .setDescription("my description")
-                .setFiles(files));
+		final Code code = codeService.createAsset(new Code()
+				.setName("test-code-name")
+				.setDescription("my description")
+				.setFiles(files));
 
-        final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-        codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
+		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
 
-        final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("code-id", code.getId().toString())
-                        .param("dynamics-only", "true")
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("code-id", code.getId().toString())
+				.param("dynamics-only", "true")
+				.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-        Assertions.assertTrue(model != null);
-    }
+		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
+		Assertions.assertTrue(model != null);
+	}
 }

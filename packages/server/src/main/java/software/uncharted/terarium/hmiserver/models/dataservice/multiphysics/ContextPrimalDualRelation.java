@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serializable;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -10,7 +12,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ContextPrimalDualRelation implements Serializable {
-    private String primal;
-    private String dual;
-    private JsonNode method;
+	private String primal;
+	private String dual;
+	private JsonNode method;
 }

@@ -22,11 +22,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
+/**
+ * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
+ */
 public class HeadersBody {
 
     private Headers headers;
     private InputStream body;
+
 
     public HeadersBody(Headers headers) {
         this.headers = headers;
@@ -46,7 +49,7 @@ public class HeadersBody {
     }
 
     public String readBodyString() {
-        byte[] buffer = readBodyBytes();
+        byte [] buffer = readBodyBytes();
         return new String(buffer, Charset.forName(getContentCharset()));
     }
 

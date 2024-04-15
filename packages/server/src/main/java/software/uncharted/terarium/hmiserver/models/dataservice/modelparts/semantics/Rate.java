@@ -1,8 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -15,14 +17,14 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Rate extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -5200389942863765459L;
+	@Serial
+	private static final long serialVersionUID = -5200389942863765459L;
 
-    private String target;
+	private String target;
 
-    private String expression;
+	private String expression;
 
-    @TSOptional
-    @JsonProperty("expression_mathml")
-    private String expressionMathml;
+	@TSOptional
+	@JsonProperty("expression_mathml")
+	private String expressionMathml;
 }

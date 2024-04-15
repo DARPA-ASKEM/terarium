@@ -10,22 +10,19 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 @Service
 public class DocumentAssetService extends S3BackedAssetService<DocumentAsset> {
 
-    public DocumentAssetService(
-            final ElasticsearchConfiguration elasticConfig,
-            final Config config,
-            final ElasticsearchService elasticService,
-            final ProjectAssetService projectAssetService,
-            final S3ClientService s3ClientService) {
-        super(elasticConfig, config, elasticService, projectAssetService, s3ClientService, DocumentAsset.class);
-    }
 
-    @Override
-    protected String getAssetPath() {
-        return config.getDocumentPath();
-    }
+	public DocumentAssetService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService, final S3ClientService s3ClientService) {
+		super(elasticConfig, config, elasticService, projectAssetService, s3ClientService, DocumentAsset.class);
+	}
 
-    @Override
-    protected String getAssetIndex() {
-        return elasticConfig.getDocumentIndex();
-    }
+	@Override
+	protected String getAssetPath() {
+		return config.getDocumentPath();
+	}
+
+	@Override
+	protected String getAssetIndex() {
+		return elasticConfig.getDocumentIndex();
+	}
+
 }

@@ -16,91 +16,99 @@ import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 @Component
 public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 
-    private static final String PRE_REQUEST_PREFIX = "REQUEST STARTED";
-    private static final String POST_REQUEST_PREFIX = "REQUEST COMPLETED";
-    private static final String PROPERTY_SEPARATOR = " | ";
+	private static final String PRE_REQUEST_PREFIX = "REQUEST STARTED";
+	private static final String POST_REQUEST_PREFIX = "REQUEST COMPLETED";
+	private static final String PROPERTY_SEPARATOR = " | ";
 
-    private static final Logger logger = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
+	private static final Logger logger = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
 
-    @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (handler instanceof HandlerMethod) {
-            if (skipLogging((HandlerMethod) handler)) {
-                return true;
-            }
+	@Override
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+		if (handler instanceof HandlerMethod) {
+			if (skipLogging((HandlerMethod) handler)) {
+				return true;
+			}
 
-            long startTime = System.nanoTime();
-            request.setAttribute("startTime", startTime);
 
-            String methodName = getMethodName((HandlerMethod) handler).toString();
-            String requestMsg =
-                    PRE_REQUEST_PREFIX + PROPERTY_SEPARATOR + methodName + PROPERTY_SEPARATOR + getRequestInfo(request);
+			long startTime = System.nanoTime();
+			request.setAttribute("startTime", startTime);
 
-            MDC.put("method", methodName);
-            logger.info(requestMsg);
+			String methodName = getMethodName((HandlerMethod) handler).toString();
+			String requestMsg = PRE_REQUEST_PREFIX +
+				PROPERTY_SEPARATOR +
+				methodName +
+				PROPERTY_SEPARATOR +
+				getRequestInfo(request);
 
-            return true;
-        } else if (handler instanceof ResourceHttpRequestHandler resourceHandler) {
-            // Find the resource path of this handler and print it to the log
-            // logger.info(resourceHandler.toString());
-            return true;
-        }
+			MDC.put("method", methodName);
+			logger.info(requestMsg);
 
-        return false;
-    }
+			return true;
+		} else if (handler instanceof ResourceHttpRequestHandler resourceHandler) {
+			// Find the resource path of this handler and print it to the log
+			//logger.info(resourceHandler.toString());
+			return true;
+		}
 
-    @Override
-    public void postHandle(
-            HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) {
-        if (handler instanceof HandlerMethod) {
-            if (skipLogging((HandlerMethod) handler)) {
-                return;
-            }
-            long startTime = (long) request.getAttribute("startTime");
-            long elapsedTime = System.nanoTime() - startTime;
-            long millis = elapsedTime / 1000000;
+		return false;
+	}
 
-            String requestMsg = POST_REQUEST_PREFIX + PROPERTY_SEPARATOR
-                    + getMethodName((HandlerMethod) handler)
-                    + PROPERTY_SEPARATOR
-                    + millis
-                    + " ms"
-                    + PROPERTY_SEPARATOR
-                    + getRequestInfo(request);
+	@Override
+	public void postHandle(HttpServletRequest request, HttpServletResponse response,
+												 Object handler, ModelAndView modelAndView) {
+		if (handler instanceof HandlerMethod) {
+			if (skipLogging((HandlerMethod) handler)) {
+				return;
+			}
+			long startTime = (long) request.getAttribute("startTime");
+			long elapsedTime = System.nanoTime() - startTime;
+			long millis = elapsedTime / 1000000;
 
-            MDC.put("response_time_ms", Long.toString(millis));
-            logger.info(requestMsg);
-        }
-    }
+			String requestMsg = POST_REQUEST_PREFIX +
+				PROPERTY_SEPARATOR +
+				getMethodName((HandlerMethod) handler) +
+				PROPERTY_SEPARATOR +
+				millis +
+				" ms" +
+				PROPERTY_SEPARATOR +
+				getRequestInfo(request);
 
-    private boolean skipLogging(HandlerMethod handler) {
-        return handler.getMethod().getAnnotation(IgnoreRequestLogging.class) != null;
-    }
+			MDC.put("response_time_ms", Long.toString(millis));
+			logger.info(requestMsg);
+		}
+	}
 
-    private StringBuilder getMethodName(HandlerMethod handlerMethod) {
-        StringBuilder methodNameBuilder = new StringBuilder();
+	private boolean skipLogging(HandlerMethod handler) {
+		return handler.getMethod().getAnnotation(IgnoreRequestLogging.class) != null;
+	}
 
-        String controllerName = handlerMethod.getBeanType().getSimpleName();
-        String methodName = handlerMethod.getMethod().getName();
-        methodNameBuilder.append(controllerName).append('.').append(methodName);
-        return methodNameBuilder;
-    }
+	private StringBuilder getMethodName(HandlerMethod handlerMethod) {
+		StringBuilder methodNameBuilder = new StringBuilder();
 
-    private StringBuilder getRequestInfo(HttpServletRequest request) {
-        final String REQUEST_INFO_SEPARATOR = "; ";
-        StringBuilder requestInfoBuilder = new StringBuilder();
+		String controllerName = handlerMethod.getBeanType().getSimpleName();
+		String methodName = handlerMethod.getMethod().getName();
+		methodNameBuilder
+			.append(controllerName)
+			.append('.')
+			.append(methodName);
+		return methodNameBuilder;
+	}
 
-        if (request.getMethod() != null) {
-            requestInfoBuilder.append("method=").append(request.getMethod()).append(REQUEST_INFO_SEPARATOR);
-        }
+	private StringBuilder getRequestInfo(HttpServletRequest request) {
+		final String REQUEST_INFO_SEPARATOR = "; ";
+		StringBuilder requestInfoBuilder = new StringBuilder();
 
-        requestInfoBuilder.append("uri=").append(request.getRequestURI());
-        if (request.getQueryString() != null) {
-            String queryStr = request.getQueryString();
-            requestInfoBuilder.append('?').append(queryStr);
-        }
-        requestInfoBuilder.append(REQUEST_INFO_SEPARATOR);
+		if (request.getMethod() != null) {
+			requestInfoBuilder.append("method=").append(request.getMethod()).append(REQUEST_INFO_SEPARATOR);
+		}
 
-        return requestInfoBuilder;
-    }
+		requestInfoBuilder.append("uri=").append(request.getRequestURI());
+		if (request.getQueryString() != null) {
+			String queryStr = request.getQueryString();
+			requestInfoBuilder.append('?').append(queryStr);
+		}
+		requestInfoBuilder.append(REQUEST_INFO_SEPARATOR);
+
+		return requestInfoBuilder;
+	}
 }

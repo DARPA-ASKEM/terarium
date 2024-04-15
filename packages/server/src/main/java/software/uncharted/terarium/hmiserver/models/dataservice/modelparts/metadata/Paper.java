@@ -1,8 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -14,13 +16,13 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Paper extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -2218015536823471410L;
+	@Serial
+	private static final long serialVersionUID = -2218015536823471410L;
 
-    private String id;
+	private String id;
 
-    @JsonProperty("file_directory")
-    private String fileDirectory;
+	@JsonProperty("file_directory")
+	private String fileDirectory;
 
-    private String doi;
+	private String doi;
 }

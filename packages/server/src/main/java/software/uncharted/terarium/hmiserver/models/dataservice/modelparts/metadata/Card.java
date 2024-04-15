@@ -1,8 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serial;
 import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -15,58 +17,58 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Card extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -4904702264253191366L;
+	@Serial
+	private static final long serialVersionUID = -4904702264253191366L;
 
-    @JsonAlias("DESCRIPTION")
-    @TSOptional
-    private String description;
+	@JsonAlias("DESCRIPTION")
+	@TSOptional
+	private String description;
 
-    @JsonAlias("AUTHOR_INST")
-    @TSOptional
-    private String authorInst;
+	@JsonAlias("AUTHOR_INST")
+	@TSOptional
+	private String authorInst;
 
-    @JsonAlias("AUTHOR_AUTHOR")
-    @TSOptional
-    private String authorAuthor;
+	@JsonAlias("AUTHOR_AUTHOR")
+	@TSOptional
+	private String authorAuthor;
 
-    @JsonAlias("AUTHOR_EMAIL")
-    @TSOptional
-    private String authorEmail;
+	@JsonAlias("AUTHOR_EMAIL")
+	@TSOptional
+	private String authorEmail;
 
-    @JsonAlias("DATE")
-    @TSOptional
-    private String date;
+	@JsonAlias("DATE")
+	@TSOptional
+	private String date;
 
-    @JsonAlias("SCHEMA")
-    @TSOptional
-    private String schema;
+	@JsonAlias("SCHEMA")
+	@TSOptional
+	private String schema;
 
-    @JsonAlias("PROVENANCE")
-    @TSOptional
-    private String provenance;
+	@JsonAlias("PROVENANCE")
+	@TSOptional
+	private String provenance;
 
-    @JsonAlias("DATASET")
-    @TSOptional
-    private String dataset;
+	@JsonAlias("DATASET")
+	@TSOptional
+	private String dataset;
 
-    @JsonAlias("COMPLEXITY")
-    @TSOptional
-    private String complexity;
+	@JsonAlias("COMPLEXITY")
+	@TSOptional
+	private String complexity;
 
-    @JsonAlias("USAGE")
-    @TSOptional
-    private String usage;
+	@JsonAlias("USAGE")
+	@TSOptional
+	private String usage;
 
-    @JsonAlias("LICENSE")
-    @TSOptional
-    private String license;
+	@JsonAlias("LICENSE")
+	@TSOptional
+	private String license;
 
-    @JsonAlias("ASSUMPTIONS")
-    @TSOptional
-    private String assumptions;
+	@JsonAlias("ASSUMPTIONS")
+	@TSOptional
+	private String assumptions;
 
-    @JsonAlias("STRENGTHS")
-    @TSOptional
-    private String strengths;
+	@JsonAlias("STRENGTHS")
+	@TSOptional
+	private String strengths;
 }

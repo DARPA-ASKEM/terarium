@@ -1,7 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 
@@ -9,32 +10,33 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 @RequiredArgsConstructor
 public class TerariumAssetServices {
 
-    private final ArtifactService artifactService;
-    private final CodeService codeService;
-    private final DatasetService datasetService;
-    private final DocumentAssetService documentAssetService;
-    private final ModelConfigurationService modelConfigurationService;
-    private final ModelService modelService;
-    private final NotebookSessionService notebookSessionService;
-    private final WorkflowService workflowService;
+	private final ArtifactService artifactService;
+	private final CodeService codeService;
+	private final DatasetService datasetService;
+	private final DocumentAssetService documentAssetService;
+	private final ModelConfigurationService modelConfigurationService;
+	private final ModelService modelService;
+	private final NotebookSessionService notebookSessionService;
+	private final WorkflowService workflowService;
 
-    /**
-     * Get the service for a given asset type
-     *
-     * @param type The type of asset to get the service for
-     * @return The service for the given asset type
-     */
-    public ITerariumAssetService<? extends TerariumAsset> getServiceByType(final AssetType type) {
-        return switch (type) {
-            case ARTIFACT -> artifactService;
-            case CODE -> codeService;
-            case DATASET -> datasetService;
-            case DOCUMENT -> documentAssetService;
-            case MODEL_CONFIGURATION -> modelConfigurationService;
-            case MODEL -> modelService;
-            case NOTEBOOK_SESSION -> notebookSessionService;
-            case WORKFLOW -> workflowService;
-            default -> throw new IllegalArgumentException("Invalid asset type: " + type);
-        };
-    }
+	/**
+	 * Get the service for a given asset type
+	 *
+	 * @param type The type of asset to get the service for
+	 * @return The service for the given asset type
+	 */
+	public ITerariumAssetService<? extends TerariumAsset> getServiceByType(final AssetType type) {
+		return switch (type) {
+			case ARTIFACT -> artifactService;
+			case CODE -> codeService;
+			case DATASET -> datasetService;
+			case DOCUMENT -> documentAssetService;
+			case MODEL_CONFIGURATION -> modelConfigurationService;
+			case MODEL -> modelService;
+			case NOTEBOOK_SESSION -> notebookSessionService;
+			case WORKFLOW -> workflowService;
+			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
+		};
+	}
+
 }

@@ -1,7 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.climateData;
 
-import java.util.List;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class ClimateDataResultPreviews {

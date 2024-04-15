@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 
 import java.io.Serial;
 import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -18,20 +19,20 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Accessors(chain = true)
 @TSModel
 public class State extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -3188538135192357970L;
+	@Serial
+	private static final long serialVersionUID = -3188538135192357970L;
 
-    private String id;
+	private String id;
 
-    @TSOptional
-    private String name;
+	@TSOptional
+	private String name;
 
-    @TSOptional
-    private String description;
+	@TSOptional
+	private String description;
 
-    @TSOptional
-    private ModelGrounding grounding;
+	@TSOptional
+	private ModelGrounding grounding;
 
-    @TSOptional
-    private ModelUnit units;
+	@TSOptional
+	private ModelUnit units;
 }
