@@ -96,39 +96,22 @@
 				/>
 			</Teleport>
 		</main>
-		<template v-if="isStratified && !isEmpty(hoveredTransitionId)" #tooltip-content>
-			<tera-stratified-matrix-preview
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				:id="hoveredTransitionId"
-				:stratified-matrix-type="StratifiedMatrix.Rates"
-			/>
-		</template>
-	</tera-tooltip>
-	<!--Remove later-->
-	<tera-stratified-matrix-preview
-		v-if="isStratified && !isEmpty(hoveredTransitionId)"
-		:mmt="mmt"
-		:mmt-params="mmtParams"
-		:id="hoveredTransitionId"
-		:stratified-matrix-type="StratifiedMatrix.Rates"
-	/>
-	<tera-tooltip position="top">
-		<div class="test">ssss</div>
-		<template v-if="isStratified && !isEmpty(hoveredTransitionId)" #tooltip-content>
-			<tera-stratified-matrix-preview
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				:id="hoveredTransitionId"
-				:stratified-matrix-type="StratifiedMatrix.Rates"
-			/>
+		<template #tooltip-content v-if="isStratified && !isEmpty(hoveredTransitionId)">
+			<div ref="tooltipContentRef">
+				<tera-stratified-matrix-preview
+					:mmt="mmt"
+					:mmt-params="mmtParams"
+					:id="hoveredTransitionId"
+					:stratified-matrix-type="StratifiedMatrix.Rates"
+				/>
+			</div>
 		</template>
 	</tera-tooltip>
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -176,6 +159,7 @@ const mmtParams = ref<MiraTemplateParams>({});
 
 const hoveredTransitionId = ref('');
 const hoveredTransitionPosition = ref({ x: 0, y: 0 });
+const tooltipContentRef = ref();
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -215,19 +199,33 @@ async function renderGraph() {
 	});
 
 	if (isStratified.value) {
-		renderer.on('node-mouse-enter', (_eventName, _event, selection) => {
+		renderer.on('node-mouse-enter', async (_eventName, _event, selection) => {
 			const { id, data } = selection.datum();
-			console.log(selection.datum());
-			// console.log(_event);
 
 			if (data.type === NodeType.Transition) {
 				hoveredTransitionId.value = id;
-				hoveredTransitionPosition.value = { x: _event.offsetX, y: _event.offsetY };
+
+				const diagramBounds = renderer?.svgEl?.getBoundingClientRect();
+				const transitionMatrixBounds = selection.node().getBoundingClientRect();
+
+				await nextTick(); // Wait for tooltip to render to get its dimensions
+				const tooltipHeight = tooltipContentRef.value.parentElement.clientHeight;
+				const tooltipWidth = tooltipContentRef.value.parentElement.clientWidth;
+
+				if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
+					const relativeX = transitionMatrixBounds.left - diagramBounds.left - tooltipWidth / 2;
+					const relativeY =
+						transitionMatrixBounds.top -
+						diagramBounds.top -
+						tooltipHeight -
+						transitionMatrixBounds.height;
+					hoveredTransitionPosition.value = { x: relativeX, y: relativeY };
+				}
 			}
 		});
 
 		renderer.on('node-mouse-leave', () => {
-			// hoveredTransitionId.value = '';
+			hoveredTransitionId.value = '';
 		});
 	}
 
@@ -266,11 +264,6 @@ watch(
 <style scoped>
 main {
 	overflow: auto;
-}
-
-.test {
-	background-color: red;
-	/* width: 10rem; */
 }
 
 .p-accordion {

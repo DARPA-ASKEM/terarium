@@ -85,6 +85,7 @@ div {
 		padding: var(--gap-small);
 		border-radius: var(--border-radius);
 		box-shadow: var(--overlay-menu-shadow);
+		margin: var(--gap);
 	}
 
 	/* Position of tooltip box */
@@ -92,28 +93,24 @@ div {
 		bottom: 100%;
 		left: 50%;
 		transform: translateX(-50%);
-		margin-bottom: 0.75rem;
 	}
 
 	&.bottom > .tooltip-content {
 		top: 100%;
 		left: 50%;
 		transform: translateX(-50%);
-		margin-top: 0.75rem;
 	}
 
 	&.left > .tooltip-content {
 		right: 100%;
 		top: 50%;
 		transform: translateY(-50%);
-		margin-right: 0.75rem;
 	}
 
 	&.right > .tooltip-content {
 		left: 100%;
 		top: 50%;
 		transform: translateY(-50%);
-		margin-left: 0.75rem;
 	}
 
 	/* Base rules for arrow */
