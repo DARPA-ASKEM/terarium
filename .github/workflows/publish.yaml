@@ -82,10 +82,10 @@ jobs:
     needs:
       - targets
       - lint
-      - lint-client
-      - test-client
       - lint-server
       - test-server
+      - lint-client
+      - test-client
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
