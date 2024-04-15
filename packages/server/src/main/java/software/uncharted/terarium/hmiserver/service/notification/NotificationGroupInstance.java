@@ -1,8 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.notification;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
@@ -62,17 +60,9 @@ public abstract class NotificationGroupInstance<T> {
 		notification.setData(event.getData());
 		notification.setProgress(t);
 		notification.setTimestamp(new Timestamp(event.getCreatedAtMs()));
-		notification.setNotificationGroup(notificationGroup);
-
-		// add the event to the group
-		if (notificationGroup.getEvents() == null) {
-			notificationGroup.setEvents(new ArrayList<>(List.of(notification)));
-		} else {
-			notificationGroup.getEvents().add(notification);
-		}
 
 		// save the notification event
-		notificationService.createNotificationEvent(notification);
+		notificationService.createNotificationEvent(notificationGroup.getId(), notification);
 
 		// send the update to the user
 		clientEventService.sendToUser(event, notificationGroup.getUserId());

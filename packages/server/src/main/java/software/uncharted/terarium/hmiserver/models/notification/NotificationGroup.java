@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
@@ -30,7 +32,7 @@ public class NotificationGroup {
 	@Serial
 	private static final long serialVersionUID = -3382397588627700379L;
 
-	@NotNull
+	@Id
 	private UUID id = UUID.randomUUID();
 
 	@NotNull
@@ -43,12 +45,12 @@ public class NotificationGroup {
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp timestamp;
 
-	@OneToMany(mappedBy = "notification_event")
+	@OneToMany(mappedBy = "notificationGroup", fetch = FetchType.EAGER)
 	@OrderBy("timestamp DESC")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
-	private List<NotificationEvent<?>> events;
+	private List<NotificationEvent<?>> notificationEvents;
 
 	@PrePersist
 	protected void onCreate() {

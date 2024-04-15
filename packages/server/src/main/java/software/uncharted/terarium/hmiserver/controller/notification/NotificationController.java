@@ -37,7 +37,7 @@ public class NotificationController {
 	private final CurrentUserService currentUserService;
 	private final NotificationService notificationService;
 
-	@GetMapping()
+	@GetMapping("/user")
 	@Secured(Roles.USER)
 	@Operation(summary = "Return all recent notification groups for a user")
 	@ApiResponses(value = {

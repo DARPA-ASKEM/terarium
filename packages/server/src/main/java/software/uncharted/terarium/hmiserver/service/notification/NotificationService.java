@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.notification;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,17 +44,25 @@ public class NotificationService {
 		return notificationGroupRepository.save(notificationGroup);
 	}
 
-	public <T> NotificationEvent<T> createNotificationEvent(final NotificationEvent<T> notificationEvent) {
-		if (notificationEvent.getNotificationGroup() == null) {
-			throw new IllegalArgumentException("NotificationEvent must have a NotificationGroup");
+	public <T> NotificationEvent<T> createNotificationEvent(final NotificationGroup group,
+			final NotificationEvent<T> notificationEvent) {
+
+		// add the event to the group
+		if (group.getNotificationEvents() == null) {
+			group.setNotificationEvents(new ArrayList<>(List.of(notificationEvent)));
+		} else {
+			group.getNotificationEvents().add(notificationEvent);
 		}
+
+		// add group to event
+		notificationEvent.setNotificationGroup(group);
+
 		return notificationEventRepository.save(notificationEvent);
 	}
 
-	public NotificationEvent<?> createNotificationEvent(final UUID groupId,
-			final NotificationEvent<?> notificationEvent) {
-		notificationEvent.setNotificationGroup(notificationGroupRepository.findById(groupId).orElseThrow());
-		return notificationEventRepository.save(notificationEvent);
+	public <T> NotificationEvent<T> createNotificationEvent(final UUID groupId,
+			final NotificationEvent<T> notificationEvent) {
+		return createNotificationEvent(notificationGroupRepository.findById(groupId).orElseThrow(), notificationEvent);
 	}
 
 	public Optional<NotificationGroup> delete(final UUID id) {

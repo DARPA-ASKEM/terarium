@@ -41,18 +41,18 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 				.createNotificationGroup(new NotificationGroup().setType("test"));
 
 		final NotificationEvent<String> event1 = notificationService
-				.createNotificationEvent(new NotificationEvent<String>().setNotificationGroup(group).setData("test"));
+				.createNotificationEvent(group, new NotificationEvent<String>().setData("test"));
 		final NotificationEvent<String> event2 = notificationService
-				.createNotificationEvent(new NotificationEvent<String>().setNotificationGroup(group).setData("test"));
+				.createNotificationEvent(group, new NotificationEvent<String>().setData("test"));
 		final NotificationEvent<String> event3 = notificationService
-				.createNotificationEvent(new NotificationEvent<String>().setNotificationGroup(group).setData("test"));
+				.createNotificationEvent(group.getId(), new NotificationEvent<String>().setData("test"));
 
 		final NotificationGroup after = notificationService.getNotificationGroup(group.getId()).orElseThrow();
 
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getTimestamp());
-		Assertions.assertNotNull(after.getEvents());
-		Assertions.assertEquals(3, after.getEvents().size());
+		Assertions.assertNotNull(after.getNotificationEvents());
+		Assertions.assertEquals(3, after.getNotificationEvents().size());
 	}
 
 }
