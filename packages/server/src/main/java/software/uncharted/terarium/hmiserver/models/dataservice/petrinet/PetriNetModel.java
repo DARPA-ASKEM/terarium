@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.petrinet;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -15,10 +14,10 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Accessors(chain = true)
 @TSModel
 public class PetriNetModel extends SupportAdditionalProperties implements Serializable {
-	@Serial
-	private static final long serialVersionUID = -6590800889694442630L;
+    @Serial
+    private static final long serialVersionUID = -6590800889694442630L;
 
-	private List<PetriNetState> states;
+    private List<PetriNetState> states;
 
-	private List<PetriNetTransition> transitions;
+    private List<PetriNetTransition> transitions;
 }

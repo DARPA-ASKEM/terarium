@@ -14,17 +14,17 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @Slf4j
 public class AdobeController {
 
-	@Value("${adobe.api-key}")
-	String key;
+    @Value("${adobe.api-key}")
+    String key;
 
-	@GetMapping
-	@Secured(Roles.USER)
-	public ResponseEntity<String> getKey() {
-		if (key != null) {
-			return ResponseEntity.ok(key);
-		} else {
-			log.error("No Adobe API key is configured");
-			return ResponseEntity.internalServerError().build();
-		}
-	}
+    @GetMapping
+    @Secured(Roles.USER)
+    public ResponseEntity<String> getKey() {
+        if (key != null) {
+            return ResponseEntity.ok(key);
+        } else {
+            log.error("No Adobe API key is configured");
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

@@ -16,15 +16,12 @@
  */
 package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 
+import java.io.InputStream;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.util.JsonSerialization;
 
-import java.io.InputStream;
-import java.util.Map;
-
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 @Slf4j
 public class HeadersBodyStatus extends HeadersBody {
 
@@ -48,7 +45,9 @@ public class HeadersBodyStatus extends HeadersBody {
         log.info("status code ", code);
         if (code < 200 || code >= 300) {
             String content = readBodyString();
-            if (content == null) { log.info("Content is null"); }
+            if (content == null) {
+                log.info("Content is null");
+            }
             Map<String, String> error = null;
             try {
                 error = JsonSerialization.readValue(content, Map.class);
@@ -60,7 +59,7 @@ public class HeadersBodyStatus extends HeadersBody {
                 String description = error.get("error_description");
                 String err = error.get("error");
                 String msg = error.get("errorMessage");
-                message = msg != null ? msg : err != null ? (description + " ["+ error.get("error") + "]") : null;
+                message = msg != null ? msg : err != null ? (description + " [" + error.get("error") + "]") : null;
             }
             throw new HttpResponseException(getStatusCodeAndReason(), message, new RuntimeException(content));
         }
