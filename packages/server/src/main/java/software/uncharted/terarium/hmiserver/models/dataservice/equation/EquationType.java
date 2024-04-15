@@ -1,16 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.equation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-
 import java.util.Arrays;
 
 public enum EquationType {
     mathml("mathml"),
     latex("latex");
 
-
     public final String type;
-
 
     private EquationType(final String type) {
         this.type = type.toLowerCase();
