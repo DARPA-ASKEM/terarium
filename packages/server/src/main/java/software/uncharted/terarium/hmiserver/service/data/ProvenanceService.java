@@ -94,7 +94,7 @@ public class ProvenanceService {
 
 			// create edge
 			final String edgeQuery = String.format(
-					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MERGE (n1)-[:%s {user_id: $user_id, provenance_id: $provenance_id}]->(n2)",
+					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MERGE (n1)-[:%s {user_id: $user_id}]->(n2)",
 					provenance.getLeftType(),
 					provenance.getRightType(),
 					provenance.getRelationType());

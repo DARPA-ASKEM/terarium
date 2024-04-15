@@ -369,7 +369,6 @@ public class ProvenanceSearchService {
 
 				final ProvenanceEdge edge = new ProvenanceEdge();
 				edge.setRelationType(ProvenanceRelationType.findByType(relationship.type()));
-				edge.setId(UUID.fromString(relationship.get("provenance_id").asString()));
 				edge.setLeft(left);
 				edge.setRight(right);
 
