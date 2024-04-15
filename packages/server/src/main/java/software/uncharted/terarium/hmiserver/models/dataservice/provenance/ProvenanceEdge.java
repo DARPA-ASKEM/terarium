@@ -12,9 +12,6 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class ProvenanceEdge implements Serializable {
 
-	@Id
-	private UUID id;
-
 	private ProvenanceRelationType relationType;
 
 	private ProvenanceNode left;

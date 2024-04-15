@@ -14,12 +14,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 @EqualsAndHashCode(callSuper = true)
-@Entity
 @Data
 @Accessors(chain = true)
 @TSModel
 public class Provenance extends TerariumAsset {
-
 	@Serial
 	private static final long serialVersionUID = 8443258388173011137L;
 
