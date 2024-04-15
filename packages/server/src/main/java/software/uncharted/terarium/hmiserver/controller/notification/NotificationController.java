@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -41,9 +41,8 @@ public class NotificationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Return all recent notification groups for a user")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "404", description = "The provided model arguments are not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+			@ApiResponse(responseCode = "200", description = "Returned recent notifications successfully", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotificationGroup.class)))),
+			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications", content = @Content)
 	})
 	public ResponseEntity<List<NotificationGroup>> getNotificationGroups(
 			@RequestParam(value = "since", required = false, defaultValue = "2") final long sinceInHours) {
@@ -54,7 +53,6 @@ public class NotificationController {
 		final String userId = currentUserService.get().getId().toString();
 
 		return ResponseEntity.ok(notificationService.getNotificationGroupsCreatedSince(userId, since));
-
 	}
 
 	@GetMapping

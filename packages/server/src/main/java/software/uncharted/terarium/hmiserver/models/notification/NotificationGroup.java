@@ -36,6 +36,9 @@ public class NotificationGroup {
 	@NotNull
 	private String userId;
 
+	@NotNull
+	private String type;
+
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp timestamp;
@@ -45,7 +48,7 @@ public class NotificationGroup {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
-	private List<NotificationEvent> events;
+	private List<NotificationEvent<?>> events;
 
 	@PrePersist
 	protected void onCreate() {
