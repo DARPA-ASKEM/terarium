@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -16,14 +15,14 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @AMRSchemaType
 @Accessors(chain = true)
 public class Properties extends SupportAdditionalProperties implements Serializable {
-	@Serial
-	private static final long serialVersionUID = 3598901970449574610L;
+    @Serial
+    private static final long serialVersionUID = 3598901970449574610L;
 
-	private String name;
+    private String name;
 
-	@TSOptional
-	private ModelGrounding grounding;
+    @TSOptional
+    private ModelGrounding grounding;
 
-	@TSOptional
-	private String description;
+    @TSOptional
+    private String description;
 }

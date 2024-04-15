@@ -9,9 +9,9 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 public class ResponseSuccess {
 
-	public ResponseSuccess(Boolean success) {
-		this.success = success;
-	}
+    public ResponseSuccess(Boolean success) {
+        this.success = success;
+    }
 
-	private Boolean success;
+    private Boolean success;
 }
