@@ -1,17 +1,16 @@
-import { WorkflowTransformations } from '@/types/workflow';
+import { WorkflowTransformations, Transform } from '@/types/workflow';
 
-export function getLocalStorageTransform(id: string): object | null {
+export function getLocalStorageTransform(id: string): Transform | null {
 	const terariumWorkflowTransforms = localStorage.getItem('terariumWorkflowTransforms');
 	if (!terariumWorkflowTransforms) {
 		return null;
 	}
 
 	const workflowTransformations: WorkflowTransformations = JSON.parse(terariumWorkflowTransforms);
-	let canvasTransform;
-	if (workflowTransformations.workflows[id]) {
-		canvasTransform = workflowTransformations.workflows[id];
+	if (!workflowTransformations.workflows[id]) {
+		return null;
 	}
-	return canvasTransform;
+	return workflowTransformations.workflows[id];
 }
 
 export function setLocalStorageTransform(id: string, canvasTransform) {

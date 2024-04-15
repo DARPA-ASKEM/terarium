@@ -891,7 +891,10 @@ watch(
 		if (!workflowId) return;
 		isWorkflowLoading.value = true;
 
-		canvasTransform = getLocalStorageTransform(workflowId);
+		const transform = getLocalStorageTransform(workflowId);
+		if (transform) {
+			canvasTransform = transform;
+		}
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
 
