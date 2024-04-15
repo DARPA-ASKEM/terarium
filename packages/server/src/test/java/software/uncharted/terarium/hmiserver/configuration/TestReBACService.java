@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExist
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
 @Service
-@Profile("test")
+@Primary
 public class TestReBACService extends ReBACService {
 
 	@JsonResource("classpath*:/mock-users/*.json")
