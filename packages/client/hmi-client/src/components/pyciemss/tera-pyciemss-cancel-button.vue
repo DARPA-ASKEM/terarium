@@ -21,9 +21,10 @@ const props = defineProps<{
 }>();
 
 const cancelSimulation = async () => {
-	console.log('Cancelling job:');
-	console.log(props.simulationRunId);
-	await cancelCiemssJob(props.simulationRunId);
+	if (!props.simulationRunId) return;
+
+	const result = await cancelCiemssJob(props.simulationRunId);
+	console.log(result);
 	logger.success(`Simulation ${props.simulationRunId} has been cancelled.`);
 };
 </script>
