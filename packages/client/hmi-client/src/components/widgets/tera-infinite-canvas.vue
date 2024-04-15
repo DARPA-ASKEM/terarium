@@ -188,8 +188,9 @@ onMounted(() => {
 
 	// Initialize starting position
 	if (props.lastTransform) {
-		zoom.scaleTo(svg as any, props.lastTransform.k);
-		zoom.translateTo(svg as any, props.lastTransform.x, props.lastTransform.y);
+		const tr = props.lastTransform;
+		zoom.scaleTo(svg as any, tr.k);
+		zoom.translateTo(svg as any, -tr.x / tr.k, -tr.y / tr.k);
 	} else {
 		// Default position - triggers handleZoom which in turn sets currentTransform
 		svg.transition().call(zoom.transform as any, d3.zoomIdentity);

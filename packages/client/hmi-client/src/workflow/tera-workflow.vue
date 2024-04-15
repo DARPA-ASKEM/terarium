@@ -913,10 +913,9 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		isWorkflowLoading.value = true;
+
+		getLocalStorageTransform(workflowId);
 		wf.value = await workflowService.getWorkflow(workflowId);
-		if (wf.value.id) {
-			getLocalStorageTransform(wf.value.id);
-		}
 		isWorkflowLoading.value = false;
 
 		handleDrilldown();
