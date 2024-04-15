@@ -17,6 +17,12 @@ jobs:
   lintServer:
     name: Lint Server
     runs-on: ubuntu-22.04
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -35,17 +41,9 @@ jobs:
           arguments: |
             spotlessApply
 
-      - name: Check for changes
-        id: check_changes
-        run: |
-          git diff --exit-code || echo "Files have been formated"
-
-      # Commit changes, only if there are changes
-      - name: Commit changes
-        if: steps.check_changes.outputs.exit_code != 0
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add --all
-          git commit --message "chore: lint server codebase"
-          git push
+      # Commit all changed files back to the repository
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # Optional. Commit message for the created commit.
+          # Defaults to "Apply automatic changes"
+          commit_message: "chore: lint server codebase"
