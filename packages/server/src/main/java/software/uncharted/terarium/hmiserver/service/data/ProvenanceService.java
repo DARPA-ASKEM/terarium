@@ -2,12 +2,8 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 
@@ -26,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
-import software.uncharted.terarium.hmiserver.repository.data.ProvenanceRepository;
 import software.uncharted.terarium.hmiserver.service.neo4j.Neo4jService;
 
 @Service
@@ -38,8 +33,6 @@ public class ProvenanceService {
 	final private ObjectMapper objectMapper;
 
 	final private Neo4jService neo4jService;
-
-	final ProvenanceRepository provenanceRepository;
 
 	private Map<String, List<List<String>>> graphValidations;
 
@@ -83,8 +76,6 @@ public class ProvenanceService {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid relationship");
 		}
 
-		provenanceRepository.save(provenance);
-
 		try (Session session = neo4jService.getSession()) {
 			// if node 1 is not created yet create node
 			final String leftNodeQuery = String.format(
@@ -103,7 +94,7 @@ public class ProvenanceService {
 
 			// create edge
 			final String edgeQuery = String.format(
-					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MERGE (n1)-[:%s {user_id: $user_id, provenance_id: $provenance_id}]->(n2)",
+					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MERGE (n1)-[:%s {user_id: $user_id}]->(n2)",
 					provenance.getLeftType(),
 					provenance.getRightType(),
 					provenance.getRelationType());
@@ -112,39 +103,11 @@ public class ProvenanceService {
 					Values.parameters(
 							"left_id", provenance.getLeft().toString(),
 							"right_id", provenance.getRight().toString(),
-							"user_id", provenance.getUserId() != null ? provenance.getUserId() : "",
-							"provenance_id", provenance.getId().toString()));
+							"user_id", provenance.getUserId() != null ? provenance.getUserId() : ""
+							));
 		}
 
 		return provenance;
-	}
-
-	public void deleteProvenance(final UUID id) {
-
-		final Optional<Provenance> provenance = getProvenance(id);
-		if (provenance.isEmpty()) {
-			return;
-		}
-
-		provenance.get().setDeletedOn(Timestamp.from(Instant.now()));
-		provenanceRepository.save(provenance.get());
-
-		try (Session session = neo4jService.getSession()) {
-			final String query = String.format(
-					"MATCH (n1:%s {id: $left_id}) MATCH (n2:%s {id: $right_id}) MATCH (n1)-[r:%s]->(n2) DELETE r",
-					provenance.get().getLeftType(),
-					provenance.get().getRightType(),
-					provenance.get().getRelationType());
-			session.run(
-					query,
-					Values.parameters(
-							"left_id", provenance.get().getLeft().toString(),
-							"right_id", provenance.get().getRight().toString()));
-		}
-	}
-
-	public Optional<Provenance> getProvenance(final UUID id) {
-		return provenanceRepository.getByIdAndDeletedOnIsNull(id);
 	}
 
 	public void deleteHangingNodes() {

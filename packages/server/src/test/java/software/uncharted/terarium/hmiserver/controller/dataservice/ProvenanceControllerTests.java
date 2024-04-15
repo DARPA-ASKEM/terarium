@@ -51,22 +51,6 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetProvenance() throws Exception {
-
-		final Provenance provenance = provenanceService.createProvenance(new Provenance()
-				.setLeft(UUID.randomUUID())
-				.setLeftType(ProvenanceType.MODEL)
-				.setRight(UUID.randomUUID())
-				.setRightType(ProvenanceType.EQUATION)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/provenance/" + provenance.getId())
-				.with(csrf()))
-				.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSearchProvenanceConnectedNodes() throws Exception {
 
 		UUID modelId = UUID.randomUUID();
@@ -196,23 +180,4 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 		Assertions.assertEquals(3, resultsB.getNodes().size());
 		Assertions.assertEquals(2, resultsB.getEdges().size());
 	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanDeleteProvenance() throws Exception {
-
-		final Provenance provenance = provenanceService.createProvenance(new Provenance()
-				.setLeft(UUID.randomUUID())
-				.setLeftType(ProvenanceType.MODEL)
-				.setRight(UUID.randomUUID())
-				.setRightType(ProvenanceType.EQUATION)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-
-		mockMvc.perform(MockMvcRequestBuilders.delete("/provenance/" + provenance.getId())
-				.with(csrf()))
-				.andExpect(status().isOk());
-
-		Assertions.assertTrue(provenanceService.getProvenance(provenance.getId()).isEmpty());
-	}
-
 }
