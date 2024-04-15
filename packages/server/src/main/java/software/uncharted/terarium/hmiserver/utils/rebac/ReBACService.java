@@ -161,6 +161,18 @@ public class ReBACService {
 		} else {
 			PUBLIC_GROUP_ID = getGroupId(PUBLIC_GROUP_NAME);
 			ASKEM_ADMIN_GROUP_ID = getGroupId(ASKEM_ADMIN_GROUP_NAME);
+
+			// Ensure ASKEM_ADMIN_GROUP can write to all Projects
+			SchemaObject askemAdminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
+			ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
+			List<UUID> projectIds = rebac.lookupResources(Schema.Type.PROJECT, getCurrentConsistency());
+			for (UUID projectId : projectIds) {
+				SchemaObject project = new SchemaObject(Schema.Type.PROJECT, projectId.toString());
+				try {
+					createRelationship(askemAdminGroup, project, Schema.Relationship.WRITER);
+				} catch (RelationshipAlreadyExistsException ignore) {
+				}
+			}
 		}
 	}
 
@@ -221,7 +233,8 @@ public class ReBACService {
 	public List<PermissionUser> getUsers() {
 		List<PermissionUser> response = new ArrayList<>();
 		UsersResource usersResource = keycloak.realm(REALM_NAME).users();
-		List<UserRepresentation> users = usersResource.list();
+		Integer maxUsers = usersResource.count();
+		List<UserRepresentation> users = usersResource.list(0, maxUsers + 1);
 		for (UserRepresentation userRepresentation : users) {
 			if (userRepresentation.getEmail() == null || userRepresentation.getEmail().isBlank()) {
 				continue;

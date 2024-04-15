@@ -1,0 +1,509 @@
+{
+  "scenarios": [
+    {
+      "name": "EPI S1: White-tailed Deer",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Model Extraction",
+          "description": ""
+        },
+        {
+          "task": "Q2: Model Comparison",
+          "description": ""
+        },
+        {
+          "task": "Q3: Structural Model Comparison",
+          "description": ""
+        },
+        {
+          "task": "Q4: Gap Analysis",
+          "description": ""
+        },
+        {
+          "task": "Q5: Select a Starting Model",
+          "description": ""
+        },
+        {
+          "task": "Q6: Find Parameters",
+          "description": ""
+        },
+        {
+          "task": "Q7: Model Forecast",
+          "description": ""
+        },
+        {
+          "task": "Q8: Model Modification (Stratification)",
+          "description": ""
+        },
+        {
+          "task": "Q9a: Interventions - brainstorm",
+          "description": ""
+        },
+        {
+          "task": "Q9b: Interventions - Implement and re-forecast",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "EPI S2: Model Updates",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Model Calibration",
+          "description": ""
+        },
+        {
+          "task": "Q2a: Single Model - Forecast",
+          "description": ""
+        },
+        {
+          "task": "Q2b: Single Model - Plot against observational data",
+          "description": ""
+        },
+        {
+          "task": "Q2c: Single Model - Assess Absolute Error",
+          "description": ""
+        },
+        {
+          "task": "Q3a: Ensemble - Create & Combine configurations",
+          "description": ""
+        },
+        {
+          "task": "Q3b: Ensemble - Perform Forecast",
+          "description": ""
+        },
+        {
+          "task": "Q3c: Ensemble - Plot against observational data",
+          "description": ""
+        },
+        {
+          "task": "Q3d: Ensemble - Assess Absolute Error",
+          "description": ""
+        },
+        {
+          "task": "Q3e: Ensemble - Compare to Single model forecast",
+          "description": ""
+        },
+        {
+          "task": "Q4: Model Update (Vaccination)",
+          "description": ""
+        },
+        {
+          "task": "Q5: Find Parameters",
+          "description": ""
+        },
+        {
+          "task": "Q6a: Model Checks - Population is Conserved",
+          "description": ""
+        },
+        {
+          "task": "Q6b: Model Checks - Unvaxxed never increases",
+          "description": ""
+        },
+        {
+          "task": "Q6c: Model Checks - Other Checks",
+          "description": ""
+        },
+        {
+          "task": "Q7a: Updated Single Model  - Forecast and plot against observational data",
+          "description": ""
+        },
+        {
+          "task": "Q7b: Updated Single Model - Assess Absolute Error",
+          "description": ""
+        },
+        {
+          "task": "Q7c: Updated Single Model - Compare to original Single model",
+          "description": ""
+        },
+        {
+          "task": "Q8: Model Update (testing)",
+          "description": ""
+        },
+        {
+          "task": "Q9: Stratification",
+          "description": ""
+        },
+        {
+          "task": "Q10a: Model Checks - Population is Conserved",
+          "description": ""
+        },
+        {
+          "task": "Q10b: Model Checks - Unvaxxed never increases",
+          "description": ""
+        },
+        {
+          "task": "Q10c: Model Checks - Other Checks",
+          "description": ""
+        },
+        {
+          "task": "Q11a: Stratified Model - forecast, plot, compute Absolute Error",
+          "description": ""
+        },
+        {
+          "task": "Q11b: Stratified Model - assess Absolute Error",
+          "description": ""
+        },
+        {
+          "task": "Q11c: Stratified Model - Compare to original Single Model",
+          "description": ""
+        },
+        {
+          "task": "Q12a: Interventions - Choose a group to target",
+          "description": ""
+        },
+        {
+          "task": "Q12b: Interventions - Implement a testing-related intervention",
+          "description": ""
+        },
+        {
+          "task": "Q12c: Interventions - Implement a vaccine-related intervention",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "EPI S3: Causal Anaysis",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Model Extraction",
+          "description": ""
+        },
+        {
+          "task": "Q2: Model Calibration ",
+          "description": ""
+        },
+        {
+          "task": "Q3: Causal Effects",
+          "description": ""
+        },
+        {
+          "task": "Q4: Interventions",
+          "description": ""
+        },
+        {
+          "task": "Q5a: Intervention Optimization - efficacy - calculate beta",
+          "description": ""
+        },
+        {
+          "task": "Q5b: Intervention Optimization - efficacy - minimum mask efficacy",
+          "description": ""
+        },
+        {
+          "task": "Q6: Intervention Optimization  - time",
+          "description": ""
+        },
+        {
+          "task": "Q7a: Time-varying Beta - Ensemble",
+          "description": ""
+        },
+        {
+          "task": "Q7b: Time-varying Beta - Single Model",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "EPI S4: Stock and Flow",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Model Ingestion",
+          "description": ""
+        },
+        {
+          "task": "Q2: Visual Inspection ",
+          "description": ""
+        },
+        {
+          "task": "Q3: Factors impacting Transmission Rate",
+          "description": ""
+        },
+        {
+          "task": "Q4: Factors impacting S --> E",
+          "description": ""
+        },
+        {
+          "task": "Q5: Fatality Rate Equation",
+          "description": ""
+        },
+        {
+          "task": "Q6: Isolation Efectiveness Equation",
+          "description": ""
+        },
+        {
+          "task": "Q7: Model Modification - Symptomatic / Asymptomatic",
+          "description": ""
+        },
+        {
+          "task": "Q8: Model Modification - Testing",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "EPI S5: Lac Operon",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1a: Implement Simulate with No Lactose",
+          "description": ""
+        },
+        {
+          "task": "Q1b: Simulate with initial Lactose = 500",
+          "description": ""
+        },
+        {
+          "task": "Q1c: Compare Z trajectories",
+          "description": ""
+        },
+        {
+          "task": "Q2: Simulate with Lactose added at T=500",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "CLIMATE S1 - Aircraft Performance",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Search for Historical Data and Climate Model Output",
+          "description": ""
+        },
+        {
+          "task": "Q2: Downscale Data if needed",
+          "description": ""
+        },
+        {
+          "task": "Q3a: Plot Historical Data",
+          "description": ""
+        },
+        {
+          "task": "Q3b: Plot Historical Model Output & Compare",
+          "description": ""
+        },
+        {
+          "task": "Q3c: Plot 2020-2049 Model Forecasts",
+          "description": ""
+        },
+        {
+          "task": "Q3d: Plot 2040-2069 Model Forecasts",
+          "description": ""
+        },
+        {
+          "task": "Q3e: Plot 2060-2099 Model Forecasts",
+          "description": ""
+        },
+        {
+          "task": "Q4a: Plot Landing Distance vs Temp.",
+          "description": ""
+        },
+        {
+          "task": "Q4b: Plot Landing Distance vs Altitude",
+          "description": ""
+        },
+        {
+          "task": "Q4c: Plot Landing Distance vs Mass",
+          "description": ""
+        },
+        {
+          "task": "Q5a: Project Landing Distance vs Altitude",
+          "description": ""
+        },
+        {
+          "task": "Q5b: Project Landing Distance vs Mass",
+          "description": ""
+        },
+        {
+          "task": "Q6: Factors affecting Landing Distance",
+          "description": ""
+        },
+        {
+          "task": "Q7a: Landing Distance of 3 Aircraft",
+          "description": ""
+        },
+        {
+          "task": "Q7b: Acceptable Airfields",
+          "description": ""
+        },
+        {
+          "task": "Q8: Number of Sorties",
+          "description": ""
+        },
+        {
+          "task": "Q9: Site Arrival Windows",
+          "description": ""
+        },
+        {
+          "task": "Q10a: Repeat for forecasted temperatures",
+          "description": ""
+        },
+        {
+          "task": "Q10b: Explain Changes and implications",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "CLIMATE S2 - Ice and Ocean",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Halfar Equations, Variables, and Parameters",
+          "description": ""
+        },
+        {
+          "task": "Q2: Halfar Unit Test",
+          "description": ""
+        },
+        {
+          "task": "Q3: Represent Greenland",
+          "description": ""
+        },
+        {
+          "task": "Q4: Simulate Evolution of Greenland",
+          "description": ""
+        },
+        {
+          "task": "Q5: Oceananigans Unit Test",
+          "description": ""
+        },
+        {
+          "task": "Q6: Simulate Greenland Ice + Ocean - Ice Obstructs",
+          "description": ""
+        },
+        {
+          "task": "Q7: Simulate Greenland Ice + Ocean - Ice Floats",
+          "description": ""
+        },
+        {
+          "task": "Q8: Incompressible Navier-Stokes",
+          "description": ""
+        },
+        {
+          "task": "Q9: Couple Halfar Ice + Incompressible N-S Ocean",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "CLIMATE S3 - FUND",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Access the FUND model",
+          "description": ""
+        },
+        {
+          "task": "Q2: Climate and Emissions Model Info",
+          "description": ""
+        },
+        {
+          "task": "Q3: Model Flow Diagram",
+          "description": ""
+        },
+        {
+          "task": "Q4: Run FUND using defaults",
+          "description": ""
+        },
+        {
+          "task": "Q5a: Add Regional Carbon Tax",
+          "description": ""
+        },
+        {
+          "task": "Q5b: Compare with/without Carbon Tax",
+          "description": ""
+        },
+        {
+          "task": "Q5c: Mitigation Costs with Regional CT",
+          "description": ""
+        },
+        {
+          "task": "Q5d: Add Broad Carbon Tax",
+          "description": ""
+        },
+        {
+          "task": "Q5e: Broad Carbon Tax Impacts",
+          "description": ""
+        },
+        {
+          "task": "Q6: Optimize Carbon Tax Policy",
+          "description": ""
+        },
+        {
+          "task": "Q7a: Implement Climate Module outside MimiFUND",
+          "description": ""
+        },
+        {
+          "task": "Q7b: Run Climate Model",
+          "description": ""
+        },
+        {
+          "task": "Q7c: Sensitivity Analysis",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "CLIMATE S4 - Photosynthesis",
+      "questions": [
+        {
+          "task": "Q0: General Planning",
+          "description": ""
+        },
+        {
+          "task": "Q1: Extract Photosynthesis Model",
+          "description": ""
+        },
+        {
+          "task": "Q2: Parameters and Values",
+          "description": ""
+        },
+        {
+          "task": "Q3: Simulate Constant Light Source",
+          "description": ""
+        },
+        {
+          "task": "Q4: Recreate NPQ plots",
+          "description": ""
+        },
+        {
+          "task": "Q5: Simulate Varying Light Source",
+          "description": ""
+        },
+        {
+          "task": "Q6: Vary Light Fluctuation Frequency",
+          "description": ""
+        }
+      ]
+    }
+  ]
+}

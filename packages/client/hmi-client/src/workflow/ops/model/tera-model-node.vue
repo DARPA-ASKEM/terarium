@@ -8,7 +8,7 @@
 				@change="if ($event.value) view = $event.value;"
 				:options="viewOptions"
 			/>
-			<div class="container">
+			<div class="container" v-if="model">
 				<tera-model-diagram
 					v-if="view === ModelNodeView.Diagram"
 					:model="model"
@@ -41,16 +41,16 @@ import _ from 'lodash';
 import { onMounted, ref } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
+import SelectButton from 'primevue/selectbutton';
+import Button from 'primevue/button';
 import { AssetType } from '@/types/Types';
 import type { Model, ProjectAsset } from '@/types/Types';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { WorkflowNode } from '@/types/workflow';
-import SelectButton from 'primevue/selectbutton';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import Button from 'primevue/button';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{

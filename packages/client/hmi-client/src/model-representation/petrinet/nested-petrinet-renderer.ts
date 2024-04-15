@@ -9,6 +9,20 @@ import { NodeData } from '@/model-representation/petrinet/petrinet-service';
 import CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS from '@/model-representation/petrinet/circle-packing-vectors.json';
 import CIRCLE_PACKING_CHILD_NORMALIZED_RADII from '@/model-representation/petrinet/circle-packing-radii.json';
 
+const FONT_SIZE_SMALL = 18;
+const FONT_SIZE_REGULAR = 24;
+const FONT_SIZE_LARGE = 36;
+
+function setFontSize(label: string) {
+	if (label.length < 3) {
+		return FONT_SIZE_LARGE;
+	}
+	if (label.length < 10) {
+		return FONT_SIZE_REGULAR;
+	}
+	return FONT_SIZE_SMALL;
+}
+
 export interface NestedPetrinetOptions extends Options {
 	nestedMap?: { [baseNodeId: string]: any };
 	transitionMatrices?: { [baseTransitionId: string]: any[] };
@@ -50,16 +64,49 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				strataTypes.push(strataType as string);
 			}
 		});
+
+		// Calculate aspect ratio for each node based on the transition matrix
+		selection.each((d) => {
+			const BASE_SIZE = 50;
+
+			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
+			const matrixRowLen = transitionMatrix?.length ?? 0;
+			const matrixColLen = transitionMatrix[0]?.length ?? 0;
+
+			d.matrixRows = matrixRowLen;
+			d.matrixCols = matrixColLen;
+
+			// Initialize aspectRatio to 1 in case the matrix is square or empty
+			d.aspectRatio = 1;
+
+			// Check and set the aspect ratio based on the dimensions of the matrix
+			if (matrixRowLen > matrixColLen) {
+				d.aspectRatio = matrixColLen / matrixRowLen;
+				d.width = BASE_SIZE * d.aspectRatio;
+				d.height = BASE_SIZE;
+			} else if (matrixRowLen < matrixColLen) {
+				d.aspectRatio = matrixColLen / matrixRowLen;
+				d.width = BASE_SIZE;
+				d.height = BASE_SIZE / d.aspectRatio;
+			}
+
+			// If either dimension is 0, it could mean that the matrix is not properly formed
+			if (matrixRowLen === 0 || matrixColLen === 0 || d.aspectRatio === 1) {
+				d.width = BASE_SIZE;
+				d.height = BASE_SIZE;
+			}
+		});
+
 		// transitions
 		transitions
 			.append('rect')
 			.classed('shape selectableNode', true)
-			.attr('width', (d) => d.width)
-			.attr('height', (d) => d.height)
+			.attr('width', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.width : d.width))
+			.attr('height', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.height : d.height))
+			.attr('x', (d) => ((d.aspectRatio ?? 1) >= 1 ? -d.width * 0.5 : -d.width * 0.5))
 			.attr('y', (d) => -d.height * 0.5)
-			.attr('x', (d) => -d.width * 0.5)
-			.attr('rx', 6)
-			.attr('ry', 6)
+			// .attr('rx', 6)
+			// .attr('ry', 6)
 			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#ffffff'))
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
@@ -127,50 +174,53 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 		transitions.each((d, idx, g) => {
 			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
-			const transitionMatrixLen = transitionMatrix.length;
+
+			const matrixRowLen = transitionMatrix.length;
+			const matrixColLen = transitionMatrix[0].length;
 			const transitionNode = select(g[idx]);
 
-			for (let i = 1; i < transitionMatrixLen; i++) {
-				const position = (d.width / transitionMatrixLen) * i;
-
-				transitionNode
-					.append('line')
-					.attr('class', 'gridline')
-					.attr('x1', -d.width * 0.5)
-					.attr('y1', -d.width * 0.5 + position)
-					.attr('x2', d.width * 0.5)
-					.attr('y2', -d.width * 0.5 + position)
-					.attr('stroke', '#ffffffcf');
-				transitionNode
-					.append('line')
-					.attr('class', 'gridline')
-					.attr('y1', -d.width * 0.5)
-					.attr('x1', -d.width * 0.5 + position)
-					.attr('y2', d.width * 0.5)
-					.attr('x2', -d.width * 0.5 + position)
-					.attr('stroke', '#ffffffcf');
-			}
-
-			transitionMatrix.forEach((row) => {
-				row.forEach((col) => {
-					if (col.content) {
+			transitionMatrix.forEach((row, ridx) => {
+				const rowIdx = ridx;
+				row.forEach((col, cidx) => {
+					const colIdx = cidx;
+					if (col.content && col.content.value) {
 						transitionNode
 							.append('rect')
-							.attr('width', d.width / transitionMatrixLen)
-							.attr('height', d.width / transitionMatrixLen)
-							.attr('x', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.col)
-							.attr('y', -d.width * 0.5 + (d.width / transitionMatrixLen) * col.row)
-							.attr('rx', 2)
-							.attr('ry', 2)
+							.attr('width', d.width / matrixColLen)
+							.attr('height', d.height / matrixRowLen)
+							.attr('x', -d.width * 0.5 + (d.width / matrixColLen) * colIdx)
+							.attr('y', -d.height * 0.5 + (d.height / matrixRowLen) * rowIdx)
+							// .attr('rx', 2)
+							// .attr('ry', 2)
 							.style('fill', d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#8692a4')
 							.style('cursor', 'pointer')
 							.attr('stroke', '#ffffff')
 							.attr('stroke-width', 1);
 					}
+					// Draw label for number of columns
+					// transitionNode
+					// 	.append('text')
+					// 	.attr('x', 0)
+					// 	.attr('y', -d.height * 0.6)
+					// 	.attr('text-anchor', 'middle') // This will center-align the text horizontally
+					// 	.text(matrixColLen)
+					// 	.style('fill', '#cccccc')
+					// 	.style('font-size', '7px');
+
+					// Draw label for number of rows
+					// transitionNode
+					// 	.append('text')
+					// 	.attr('x', (-d.width * d.aspectRatio!) / 2 - 8)
+					// 	.attr('y', (-d.height * d.aspectRatio!) / 2 + 12)
+					// 	.attr('text-anchor', 'right') // This will center-align the text horizontally
+					// 	.text(matrixRowLen)
+					// 	.style('fill', '#cccccc')
+					// 	.style('font-size', '7px');
 				});
 			});
 		});
 
+		/* Don't show transition labels because we're showing matrices here */
 		// transitions label text
 		// transitions
 		// 	.append('text')
@@ -184,7 +234,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		// transitions expression text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height / 2 - 5)
+			.attr('y', (d) => -d.height / 2 - 8)
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('stroke', '#FFF')
@@ -193,6 +246,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
+				if (!this.graph.amr) return '';
 				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
 				if (rate) {
 					return rate.expression;
@@ -203,8 +257,12 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		// species text
 		species
 			.append('text')
-			.attr('y', () => 8)
-			.style('font-size', '24px')
+			.attr('y', (d) => setFontSize(d.id) / 4)
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.attr('stroke-width', '0.5px')
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary)')

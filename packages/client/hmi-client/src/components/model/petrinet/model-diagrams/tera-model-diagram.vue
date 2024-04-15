@@ -1,18 +1,41 @@
 <template>
 	<main>
-		<TeraResizablePanel v-if="!isPreview" class="diagram-container">
+		<TeraResizablePanel
+			v-if="!isPreview"
+			class="diagram-container"
+			:class="{ unlocked: !isLocked }"
+			:style="isLocked && { pointerEvents: 'none' }"
+		>
 			<section class="graph-element">
 				<Toolbar>
 					<template #start>
 						<span>
-							<Button @click="resetZoom" label="Reset zoom" class="p-button-sm p-button-outlined" />
+							<Button
+								@click="resetZoom"
+								label="Reset zoom"
+								class="p-button-sm p-button-outlined"
+								style="background-color: var(--gray-50)"
+								onmouseover="this.style.backgroundColor='--gray-100';"
+								onmouseout="this.style.backgroundColor='(--gray-50)';"
+								severity="secondary"
+							/>
+							<Button
+								@click="isLocked = !isLocked"
+								:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
+								:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
+								class="p-button-sm p-button-outlined"
+								style="background-color: var(--gray-50)"
+								onmouseover="this.style.backgroundColor='--gray-100';"
+								onmouseout="this.style.backgroundColor='(--gray-50)';"
+								severity="secondary"
+							/>
 						</span>
 					</template>
 					<template #center> </template>
 					<template #end>
 						<span>
 							<SelectButton
-								v-if="model && getStratificationType(model)"
+								v-if="model && isStratifiedModel(mmt)"
 								:model-value="stratifiedView"
 								@change="
 									if ($event.value) {
@@ -31,16 +54,18 @@
 						</span>
 					</template>
 				</Toolbar>
-				<tera-model-type-legend v-if="model" class="legend-anchor" :model="model" />
-				<div v-if="model" class="graph-container">
-					<div ref="graphElement" class="graph-element" />
-					<div class="legend">
-						<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
-							<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
-							{{ label }}
+				<template v-if="model">
+					<tera-model-type-legend class="legend-anchor" :model="model" />
+					<div class="graph-container">
+						<div ref="graphElement" class="graph-element" />
+						<div class="legend">
+							<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
+								<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`"></div>
+								{{ label }}
+							</div>
 						</div>
 					</div>
-				</div>
+				</template>
 			</section>
 		</TeraResizablePanel>
 		<div
@@ -53,8 +78,8 @@
 			<tera-stratified-matrix-modal
 				v-if="openValueConfig && modelConfiguration"
 				:id="selectedTransitionId"
-				:model-configuration="modelConfiguration"
-				:stratified-model-type="StratifiedModel.Mira"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				:stratified-matrix-type="StratifiedMatrix.Rates"
 				:open-value-config="openValueConfig"
 				@close-modal="openValueConfig = false"
@@ -67,26 +92,27 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
-import {
-	getStratificationType,
-	StratifiedModel
-} from '@/model-representation/petrinet/petrinet-service';
-import { IGraph } from '@graph-scaffolder/index';
-import {
-	PetrinetRenderer,
-	NodeData,
-	EdgeData,
-	NodeType
-} from '@/model-representation/petrinet/petrinet-renderer';
-import { getGraphData, getPetrinetRenderer } from '@/model-representation/petrinet/petri-util';
+import SelectButton from 'primevue/selectbutton';
+import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
+
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
-import SelectButton from 'primevue/selectbutton';
+import { AMRSchemaNames } from '@/types/common';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import {
+	isStratifiedModel,
+	emptyMiraModel,
+	convertToIGraph,
+	collapseTemplates,
+	rawTemplatesSummary
+} from '@/model-representation/mira/mira';
+import { getModelRenderer } from '@/model-representation/service';
 import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -97,17 +123,18 @@ const props = defineProps<{
 	isPreview?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-configuration']);
+const emit = defineEmits(['update-configuration']);
 
+const isLocked = ref(true);
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
-const splitterContainer = ref<HTMLElement | null>(null);
-const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
-const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
+const modelType = computed(() => getModelType(props.model));
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 
 enum StratifiedView {
 	Expanded = 'Expanded',
@@ -120,89 +147,63 @@ const stratifiedViewOptions = ref([
 	{ value: StratifiedView.Collapsed }
 ]);
 
-// Is this going to consistently have an option to switch from diagram to equation if not the toggle should be somewherlse
-// enum
-
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
-async function renderGraph(updatedModel: Model | null = null) {
-	const modelToRender = updatedModel ?? props.model;
+async function renderGraph() {
+	const { templatesSummary } = collapseTemplates(mmt.value);
+	const rawTemplates = rawTemplatesSummary(mmt.value);
 
-	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = getGraphData(modelToRender, isCollapsed.value);
+	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
+		graphLegendLabels.value = renderer.dims;
+		graphLegendColors.value = renderer.depthColorList;
+	}
+
+	renderer.on('node-click', (_eventName, _event, selection) => {
+		const { id, type } = selection.datum();
+		if (type === NodeType.Transition) {
+			selectedTransitionId.value = id;
+			openValueConfig.value = true;
+		}
+	});
 
 	// Render graph
+	const graphData =
+		isCollapsed.value === true && isStratifiedModel(mmt.value)
+			? convertToIGraph(templatesSummary)
+			: convertToIGraph(rawTemplates);
+
 	if (renderer) {
 		renderer.isGraphDirty = true;
 		await renderer.setData(graphData);
 		await renderer.render();
-
-		if (updatedModel) {
-			emit('update-model', renderer.graph.amr);
-		}
 	}
 }
-defineExpose({ renderGraph });
 
 async function toggleCollapsedView() {
 	isCollapsed.value = !isCollapsed.value;
 	renderGraph();
 }
 
-// Render graph whenever a new model is fetched or whenever the HTML element
-// that we render the graph to changes.
-// Consider just watching the model
 watch(
-	[() => props.model, graphElement],
+	() => [props.model.model, props.model?.semantics, graphElement.value],
 	async () => {
+		if (modelType.value === AMRSchemaNames.DECAPODES) return;
 		if (graphElement.value === null) return;
-		const graphData: IGraph<NodeData, EdgeData> = getGraphData(props.model, isCollapsed.value);
-
-		// Create renderer
-		renderer = getPetrinetRenderer(props.model, graphElement.value as HTMLDivElement);
-		if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
-			graphLegendLabels.value = renderer.dims;
-			graphLegendColors.value = renderer.depthColorList;
-		}
-
-		renderer.on('node-click', (_eventName, _event, selection) => {
-			const { id, type } = selection.datum();
-			if (type === NodeType.Transition) {
-				selectedTransitionId.value = id;
-				openValueConfig.value = true;
-			}
-		});
-
-		// Render graph
-		await renderer?.setData(graphData);
-		await renderer?.render();
+		// FIXME: inefficient, do not constant call API in watch
+		const response: any = await getMMT(props.model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+		await renderGraph();
 	},
-	{ deep: true }
+	{ immediate: true, deep: true }
 );
 
-const updateLayout = () => {
-	if (splitterContainer.value) {
-		layout.value =
-			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
-			window.innerWidth < 800
-				? 'vertical'
-				: 'horizontal';
-	}
-};
-const handleResize = () => updateLayout();
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
+onUnmounted(() => {});
 </script>
 
 <style scoped>
@@ -222,7 +223,9 @@ main {
 	display: flex;
 	flex-direction: column;
 }
-
+.unlocked {
+	border: 1px solid var(--primary-color);
+}
 .preview {
 	/* Having both min and max heights prevents height from resizing itself while being dragged on templating canvas
 	This resizes on template canvas but not when its in a workflow node?? (tera-model-node)
@@ -243,11 +246,13 @@ main {
 	isolation: isolate;
 	background: transparent;
 	padding: 0.5rem;
+	pointer-events: none;
 }
 
 .p-toolbar:deep(> div > span) {
 	gap: 0.25rem;
 	display: flex;
+	pointer-events: all;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
@@ -306,9 +311,11 @@ main {
 	margin-left: 1rem;
 	display: flex;
 	gap: 1rem;
-	background-color: var(--surface-section);
+	background-color: var(--surface-glass);
+	backdrop-filter: blur(5px);
 	border-radius: 0.5rem;
 	padding: 0.5rem;
+	max-width: 95%;
 }
 
 .modal-input-container {

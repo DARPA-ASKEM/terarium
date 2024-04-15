@@ -24,6 +24,7 @@ export interface ClientLog {
 
 export interface TerariumAsset {
     id?: string;
+    name?: string;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
@@ -68,8 +69,8 @@ export interface GithubRepo {
 }
 
 export interface Artifact extends TerariumAsset {
-    userId: string;
     name: string;
+    userId: string;
     description?: string;
     fileNames: string[];
     metadata?: any;
@@ -96,6 +97,11 @@ export interface CsvColumnStats {
 export interface Grounding {
     identifiers: { [index: string]: string };
     context?: { [index: string]: any };
+}
+
+export interface PresignedURL {
+    url: string;
+    method: string;
 }
 
 export interface ResponseDeleted {
@@ -130,8 +136,8 @@ export interface Dynamics {
 }
 
 export interface ActiveConcept extends TerariumAsset {
-    curie: string;
     name: string;
+    curie: string;
 }
 
 export interface OntologyConcept {
@@ -147,12 +153,14 @@ export interface OntologyConcept {
 }
 
 export interface Dataset extends TerariumAsset {
-    userId?: string;
     name: string;
+    userId?: string;
+    esgfId?: string;
     description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
     datasetUrl?: string;
+    datasetUrls?: string[];
     columns?: DatasetColumn[];
     metadata?: any;
     source?: string;
@@ -172,6 +180,7 @@ export interface DatasetColumn {
 export interface AddDocumentAssetFromXDDRequest {
     document: Document;
     projectId: string;
+    domain: string;
 }
 
 export interface AddDocumentAssetFromXDDResponse {
@@ -181,7 +190,6 @@ export interface AddDocumentAssetFromXDDResponse {
 }
 
 export interface DocumentAsset extends TerariumAsset {
-    name?: string;
     description?: string;
     userId?: string;
     fileNames?: string[];
@@ -196,7 +204,6 @@ export interface DocumentAsset extends TerariumAsset {
 
 export interface Equation extends TerariumAsset {
     userId?: string;
-    name?: string;
     equationType: EquationType;
     content: string;
     metadata?: { [index: string]: any };
@@ -405,25 +412,13 @@ export interface PetriNetModel {
     transitions: PetriNetTransition[];
 }
 
-/**
- * @deprecated
- */
-export interface Assets {
-    dataset: Dataset[];
-    extraction: Extraction[];
-    model: Model[];
-    publication: ExternalPublication[];
-    workflow: Workflow[];
-    artifact: Artifact[];
-    code: Code[];
-    document: DocumentAsset[];
-}
-
 export interface Project extends TerariumAsset {
     name: string;
     userId: string;
     userName?: string;
+    authors?: string[];
     description?: string;
+    overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -510,6 +505,7 @@ export interface Simulation {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
@@ -519,69 +515,6 @@ export interface Simulation {
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
-}
-
-export interface Position {
-    x: number;
-    y: number;
-}
-
-export interface Transform {
-    x: number;
-    y: number;
-    k: number;
-}
-
-export interface Workflow extends TerariumAsset {
-    name: string;
-    description: string;
-    transform: Transform;
-    nodes: any;
-    edges: any;
-}
-
-export interface WorkflowEdge {
-    id: string;
-    workflowId: string;
-    points: Position[];
-    source: WorkflowNode<any>;
-    sourcePortId: string;
-    target: WorkflowNode<any>;
-    targetPortId: string;
-    direction: WorkflowDirection;
-}
-
-export interface WorkflowNode<S> {
-    id: string;
-    displayName: string;
-    workflowId: string;
-    operationType: WorkflowOperationTypes;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    state: S;
-    active?: WorkflowOutput<S>;
-    inputs: WorkflowPort[];
-    outputs: WorkflowOutput<S>[];
-    status: OperatorStatus;
-}
-
-export interface WorkflowOutput<S> extends WorkflowPort {
-    operatorStatus?: OperatorStatus;
-    state: S;
-    timestamp?: Date;
-    selected: boolean;
-}
-
-export interface WorkflowPort {
-    id: string;
-    type: string;
-    status: WorkflowPortStatus;
-    label?: string;
-    value?: any[];
-    acceptMultiple?: boolean;
-    optional: boolean;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -598,6 +531,7 @@ export interface EvaluationScenarioSummary {
     task: string;
     description: string;
     notes: string;
+    multipleUsers: boolean;
     timestampMillis: number;
 }
 
@@ -613,6 +547,13 @@ export interface ExtractionResponseResult {
     started_at: Date;
     job_error: string;
     job_result: any;
+}
+
+export interface ExtractionStatusUpdate {
+    documentId: string;
+    t: number;
+    message: string;
+    error: string;
 }
 
 export interface FunmanPostQueriesRequest {
@@ -761,6 +702,20 @@ export interface EnsembleSimulationCiemssRequest {
     engine: string;
 }
 
+export interface OptimizeRequestCiemss {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    interventions?: OptimizedIntervention;
+    stepSize?: number;
+    qoi: OptimizeQoi;
+    riskBound: number;
+    initialGuessInterventions: number[];
+    boundsInterventions: number[][];
+    extra: OptimizeExtra;
+    engine: string;
+    userId: string;
+}
+
 export interface ScimlStatusUpdate {
     loss: number;
     iter: number;
@@ -797,6 +752,28 @@ export interface Intervention {
     value: number;
 }
 
+export interface OptimizeExtra {
+    numSamples: number;
+    inferredParameters?: string;
+    maxiter?: number;
+    maxfeval?: number;
+    isMinimized?: boolean;
+    alpha?: number;
+    solverMethod?: string;
+}
+
+export interface OptimizeQoi {
+    contexts: string[];
+    method: string;
+}
+
+export interface OptimizedIntervention {
+    selection: string;
+    paramNames: string[];
+    paramValues?: number[];
+    startTime?: number[];
+}
+
 export interface TimeSpan {
     start: number;
     end: number;
@@ -808,6 +785,8 @@ export interface TaskResponse {
     status: TaskStatus;
     output: any;
     additionalProperties: any;
+    stdout: string;
+    stderr: string;
 }
 
 export interface Annotation {
@@ -901,14 +880,17 @@ export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
     timeseries?: { [index: string]: any };
-    sources?: { [index: string]: any };
+    initials?: { [index: string]: any };
+    parameters?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
+    gollmExtractions?: any;
     templateCard?: any;
+    code_id?: string;
 }
 
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
@@ -944,16 +926,6 @@ export interface PetriNetTransition {
     output: string[];
     grounding?: ModelGrounding;
     properties: PetriNetTransitionProperties;
-}
-
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
 }
 
 export interface ProvenanceNode {
@@ -1002,10 +974,20 @@ export interface AuthorityInstance {
     authority: Authority;
 }
 
+export interface Extraction {
+    id: number;
+    askemClass: string;
+    properties: ExtractionProperties;
+    askemId: string;
+    xddCreated: Date;
+    xddRegistrant: number;
+    highlight: string[];
+}
+
 export interface KnownEntities {
     urlExtractions: XDDUrlExtraction[];
     askemObjects: Extraction[];
-    summaries: string[];
+    summaries: any[];
 }
 
 export interface KnownEntitiesCounts {
@@ -1047,6 +1029,8 @@ export interface Card {
     complexity?: string;
     usage?: string;
     license?: string;
+    assumptions?: string;
+    strengths?: string;
 }
 
 export interface VariableStatement {
@@ -1068,6 +1052,17 @@ export interface PetriNetTransitionProperties {
     grounding?: ModelGrounding;
 }
 
+export interface XDDFacetBucket {
+    key: string;
+    docCount: string;
+}
+
+export interface Authority {
+    id: number;
+    name: string;
+    description: string;
+}
+
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
@@ -1085,17 +1080,6 @@ export interface ExtractionProperties {
     caption: string;
     documentBibjson: Document;
     doi: string;
-}
-
-export interface XDDFacetBucket {
-    key: string;
-    docCount: string;
-}
-
-export interface Authority {
-    id: number;
-    name: string;
-    description: string;
 }
 
 export interface XDDUrlExtraction {
@@ -1208,6 +1192,7 @@ export enum EventType {
     RunSimulation = "RUN_SIMULATION",
     RunCalibrate = "RUN_CALIBRATE",
     GithubImport = "GITHUB_IMPORT",
+    OperatorDrilldownTiming = "OPERATOR_DRILLDOWN_TIMING",
     TestType = "TEST_TYPE",
 }
 
@@ -1233,21 +1218,20 @@ export enum RoleType {
 }
 
 export enum AssetType {
-    Dataset = "DATASET",
-    ModelConfiguration = "MODEL_CONFIGURATION",
-    Model = "MODEL",
-    Publication = "PUBLICATION",
-    Simulation = "SIMULATION",
-    Workflow = "WORKFLOW",
-    Artifact = "ARTIFACT",
-    Code = "CODE",
-    Document = "DOCUMENT",
+    Workflow = "workflow",
+    Model = "model",
+    Dataset = "dataset",
+    Simulation = "simulation",
+    Document = "document",
+    Code = "code",
+    ModelConfiguration = "model-configuration",
+    Artifact = "artifact",
+    Publication = "publication",
+    NotebookSession = "notebook-session",
 }
 
 export enum EvaluationScenarioStatus {
     Started = "STARTED",
-    Paused = "PAUSED",
-    Resumed = "RESUMED",
     Stopped = "STOPPED",
 }
 
@@ -1266,6 +1250,7 @@ export enum ClientEventType {
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
+    Extraction = "EXTRACTION",
 }
 
 export enum FileType {
@@ -1387,52 +1372,6 @@ export enum ProgressState {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
-}
-
-export enum WorkflowDirection {
-    FromInput = "FROM_INPUT",
-    FromOutput = "FROM_OUTPUT",
-}
-
-export enum WorkflowOperationTypes {
-    Add = "ADD",
-    Test = "TEST",
-    CalibrationJulia = "CALIBRATION_JULIA",
-    CalibrationCiemss = "CALIBRATION_CIEMSS",
-    Dataset = "DATASET",
-    Model = "MODEL",
-    SimulateJulia = "SIMULATE_JULIA",
-    SimulateCiemss = "SIMULATE_CIEMSS",
-    StratifyJulia = "STRATIFY_JULIA",
-    StratifyMira = "STRATIFY_MIRA",
-    SimulateEnsembleCiemss = "SIMULATE_ENSEMBLE_CIEMSS",
-    CalibrateEnsembleCiemss = "CALIBRATE_ENSEMBLE_CIEMSS",
-    DatasetTransformer = "DATASET_TRANSFORMER",
-    ModelTransformer = "MODEL_TRANSFORMER",
-    ModelFromCode = "MODEL_FROM_CODE",
-    Funman = "FUNMAN",
-    Code = "CODE",
-    ModelConfig = "MODEL_CONFIG",
-    ModelOptimize = "MODEL_OPTIMIZE",
-    ModelCoupling = "MODEL_COUPLING",
-    ModelEdit = "MODEL_EDIT",
-    Document = "DOCUMENT",
-}
-
-export enum OperatorStatus {
-    Default = "DEFAULT",
-    InProgress = "IN_PROGRESS",
-    Success = "SUCCESS",
-    Invalid = "INVALID",
-    Warning = "WARNING",
-    Failed = "FAILED",
-    Error = "ERROR",
-    Disabled = "DISABLED",
-}
-
-export enum WorkflowPortStatus {
-    Connected = "CONNECTED",
-    NotConnected = "NOT_CONNECTED",
 }
 
 export enum ExtractionAssetType {

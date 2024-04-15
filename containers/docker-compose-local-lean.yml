@@ -1,6 +1,3 @@
 ---
-version: '3.8'
-
 include:
-  - scripts/docker-compose-base.yml
   - scripts/docker-compose-common.yml

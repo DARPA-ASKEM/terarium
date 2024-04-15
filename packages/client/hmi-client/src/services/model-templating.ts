@@ -1,11 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
+import { nextTick } from 'vue';
 import { cloneDeep, uniq, isEmpty, snakeCase, isEqual } from 'lodash';
 import type { Position } from '@/types/common';
 import type {
 	ModelTemplateCard,
 	ModelTemplateEdge,
 	ModelTemplateJunction,
-	ModelTemplates
+	ModelTemplateCanvas
 } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -45,39 +46,39 @@ export const modelTemplateOptions = [
 	controlledProductionTemplate,
 	controlledDegredationTemplate,
 	observableTemplate
-].map((modelTemplate: any) => {
+].map((model: any) => {
 	// TODO: Add templateCard attribute to Model later
-	modelTemplate.metadata = {
+	model.metadata = {
 		templateCard: {
-			id: modelTemplate.header.name,
-			name: modelTemplate.header.name,
-			templateType: modelTemplate.header.name,
+			id: model.header.name,
+			name: model.header.name,
+			templateType: model.header.name,
 			x: 0,
 			y: 0
 		} as ModelTemplateCard
 	};
-	return modelTemplate;
+	return model;
 });
 
-function findCardIndexById(modelTemplates: ModelTemplates, id: string) {
-	return modelTemplates.models.findIndex(({ metadata }) => metadata?.templateCard?.id === id);
+function findCardIndexById(canvas: ModelTemplateCanvas, id: string) {
+	return canvas.models.findIndex(({ metadata }) => metadata?.templateCard?.id === id);
 }
 
-export function initializeModelTemplates() {
-	const modelTemplates: ModelTemplates = {
+export function initializeCanvas() {
+	const canvas: ModelTemplateCanvas = {
 		id: uuidv4(),
 		transform: { x: 0, y: 0, k: 1 },
 		models: [],
 		junctions: []
 	};
-	return modelTemplates;
+	return canvas;
 }
 
 /**
  * Add junction (exclusive to UI)
  */
-export function addJunction(modelTemplates: ModelTemplates, portPosition: Position) {
-	modelTemplates.junctions.push({
+export function addJunction(canvas: ModelTemplateCanvas, portPosition: Position) {
+	canvas.junctions.push({
 		id: uuidv4(),
 		x: portPosition.x + 500,
 		y: portPosition.y - 10,
@@ -85,9 +86,9 @@ export function addJunction(modelTemplates: ModelTemplates, portPosition: Positi
 	});
 }
 
-export function junctionCleanUp(modelTemplates: ModelTemplates) {
+export function junctionCleanUp(canvas: ModelTemplateCanvas) {
 	// If a junction ends up having one edge coming out of it, remove it
-	modelTemplates.junctions = modelTemplates.junctions.filter(({ edges }) => edges.length > 1);
+	canvas.junctions = canvas.junctions.filter(({ edges }) => edges.length > 1);
 }
 
 /**
@@ -149,8 +150,8 @@ function determineNumberToAppend(models: Model[]) {
 	return number;
 }
 
-function appendNumberToModelVariables(modelTemplate: Model, number: number) {
-	const templateWithNumber = cloneDeep(modelTemplate);
+function appendNumberToModelVariables(model: Model, number: number) {
+	const templateWithNumber = cloneDeep(model);
 
 	const { states, transitions } = templateWithNumber.model;
 
@@ -183,7 +184,7 @@ function appendNumberToModelVariables(modelTemplate: Model, number: number) {
 			rate.target += number;
 			// Within the expression attributes update the targets to match the new ones
 			rate.expression = rate.expression.replace(/([a-zA-Z])/g, (match) => match + number);
-			if (rate.expression_mathml) {
+			if (rate.expression_mathml && !isEmpty(rate.expression_mathml)) {
 				rate.expression_mathml = rate.expression_mathml.replace(
 					/<ci>([a-zA-Z])<\/ci>/g,
 					(_, letter: string) => `<ci>${letter + number}</ci>`
@@ -199,43 +200,40 @@ function appendNumberToModelVariables(modelTemplate: Model, number: number) {
 	return templateWithNumber;
 }
 
-export function prepareDecomposedTemplateAddition(
-	modelTemplates: ModelTemplates,
-	modelTemplate: Model
-) {
+export function prepareDecomposedTemplateAddition(canvas: ModelTemplateCanvas, model: Model) {
 	// Confirm a decomposed card is being added
-	if (!modelTemplate.metadata?.templateCard) return null;
-	const { templateType } = modelTemplate.metadata.templateCard;
+	if (!model.metadata?.templateCard) return null;
+	const { templateType } = model.metadata.templateCard;
 
 	if (!Object.values(DecomposedModelTemplateTypes).includes(templateType)) return null;
 
 	// Append a number to the model variables to avoid conflicts
 	const decomposedTemplateToAdd = appendNumberToModelVariables(
-		modelTemplate,
-		determineNumberToAppend(modelTemplates.models)
+		model,
+		determineNumberToAppend(canvas.models)
 	);
 	return decomposedTemplateToAdd;
 }
 
-export function addTemplateInView(modelTemplates: ModelTemplates, modelTemplate: Model) {
-	if (modelTemplate.metadata) modelTemplate.metadata.templateCard.id = uuidv4();
-	modelTemplates.models.push(modelTemplate);
+export function addTemplateInView(canvas: ModelTemplateCanvas, model: Model) {
+	if (model.metadata) model.metadata.templateCard.id = uuidv4();
+	canvas.models.push(model);
 }
 
 export function addDecomposedTemplateInKernel(
 	kernelManager: KernelSessionManager,
-	modelTemplates: ModelTemplates,
-	modelTemplate: Model,
+	canvas: ModelTemplateCanvas,
+	model: Model,
 	outputCode: Function,
 	syncWithMiraModel: Function,
 	isTemplatePrepared = false // True when decomposed template in flattened view is being added
 ) {
-	if (!modelTemplate.metadata?.templateCard) return;
-	const { templateType } = modelTemplate.metadata.templateCard;
+	if (!model.metadata?.templateCard) return;
+	const { templateType } = model.metadata.templateCard;
 
 	const decomposedTemplateToAdd = isTemplatePrepared
-		? modelTemplate
-		: prepareDecomposedTemplateAddition(modelTemplates, modelTemplate);
+		? model
+		: prepareDecomposedTemplateAddition(canvas, model);
 	if (!decomposedTemplateToAdd) return;
 
 	const addTemplateArguments: AddTemplateArguments = {};
@@ -321,31 +319,31 @@ export function addDecomposedTemplateInKernel(
 			syncWithMiraModel(d);
 		});
 
-	addTemplateInView(modelTemplates, decomposedTemplateToAdd);
+	addTemplateInView(canvas, decomposedTemplateToAdd);
 }
 
 /**
  * Remove template card
  */
-export function removeTemplateInView(modelTemplates: ModelTemplates, id: string) {
-	const index = findCardIndexById(modelTemplates, id);
+export function removeTemplateInView(canvas: ModelTemplateCanvas, id: string) {
+	const index = findCardIndexById(canvas, id);
 	// Remove edges connected to the card
-	modelTemplates.junctions.forEach((junction) => {
+	canvas.junctions.forEach((junction) => {
 		junction.edges = junction.edges.filter((edge) => edge.target.cardId !== id);
 	});
-	junctionCleanUp(modelTemplates);
-	modelTemplates.models.splice(index, 1); // Remove card
+	junctionCleanUp(canvas);
+	canvas.models.splice(index, 1); // Remove card
 }
 
 export function removeTemplateInKernel(
 	kernelManager: KernelSessionManager,
-	modelTemplates: ModelTemplates,
+	canvas: ModelTemplateCanvas,
 	id: string,
 	outputCode: Function,
 	syncWithMiraModel: Function
 ) {
-	const index = findCardIndexById(modelTemplates, id);
-	const templateName = modelTemplates.models[index]?.metadata?.templateCard?.name;
+	const index = findCardIndexById(canvas, id);
+	const templateName = canvas.models[index]?.metadata?.templateCard?.name;
 
 	if (!templateName) {
 		logger.error('Template name not found.');
@@ -357,7 +355,7 @@ export function removeTemplateInKernel(
 			template_name: templateName
 		})
 		.register('remove_template_response', (d) => {
-			removeTemplateInView(modelTemplates, id);
+			removeTemplateInView(canvas, id);
 			outputCode(d);
 		})
 		.register('model_preview', (d) => {
@@ -423,13 +421,13 @@ export function updateDecomposedTemplateNameInKernel(
  * Add edge to model template
  */
 export function addEdgeInView(
-	modelTemplates: ModelTemplates,
+	canvas: ModelTemplateCanvas,
 	junctionId: string,
 	target: { cardId: string; portId: string },
 	portPosition: Position,
 	interpolatePointsFn?: Function
 ) {
-	const junctionToDrawFrom = modelTemplates.junctions.find(({ id }) => id === junctionId);
+	const junctionToDrawFrom = canvas.junctions.find(({ id }) => id === junctionId);
 
 	if (junctionToDrawFrom) {
 		const points: Position[] = [
@@ -447,7 +445,7 @@ export function addEdgeInView(
 
 export function addEdgeInKernel(
 	kernelManager: KernelSessionManager,
-	modelTemplates: ModelTemplates,
+	canvas: ModelTemplateCanvas,
 	junctionId: string,
 	target: { cardId: string; portId: string },
 	altTarget: { cardId: string; portId: string },
@@ -456,7 +454,7 @@ export function addEdgeInKernel(
 	syncWithMiraModel: Function,
 	interpolatePointsFn?: Function
 ) {
-	const templateName = modelTemplates.models.find(
+	const templateName = canvas.models.find(
 		(model) => model?.metadata?.templateCard?.id === target.cardId
 	)?.metadata?.templateCard?.name;
 
@@ -464,14 +462,14 @@ export function addEdgeInKernel(
 	// Junction ID to draw from can be changed if the latter chosen port is already connected to a junction
 	// TODO: The altPortPosition needs to be determined (by the altTarget?) so this case is still WIP
 	let altJunctionId: string | null = null;
-	modelTemplates.junctions.some(({ edges, id }: ModelTemplateJunction) => {
+	canvas.junctions.some(({ edges, id }: ModelTemplateJunction) => {
 		const hasMatchingTarget = edges.some((edge: ModelTemplateEdge) => isEqual(edge.target, target));
 		if (hasMatchingTarget) altJunctionId = id;
 		return hasMatchingTarget;
 	});
 	if (altJunctionId) junctionId = altJunctionId;
 
-	const junctionToDrawFrom = modelTemplates.junctions.find(({ id }) => id === junctionId);
+	const junctionToDrawFrom = canvas.junctions.find(({ id }) => id === junctionId);
 
 	// Once ports are connected they share the same state name in the flattened model
 	if (junctionToDrawFrom && junctionToDrawFrom.edges.length >= 1 && outputCode) {
@@ -489,7 +487,7 @@ export function addEdgeInKernel(
 			});
 
 		addEdgeInView(
-			modelTemplates,
+			canvas,
 			junctionId,
 			altJunctionId ? altTarget : target,
 			portPosition, // TODO: altPortPosition case needs to be handled
@@ -499,12 +497,12 @@ export function addEdgeInKernel(
 }
 
 // TODO: There isn't a way to remove edges in the UI yet
-// export function removeEdge(modelTemplates: ModelTemplates) {}
+// export function removeEdge(canvas: ModelTemplateCanvas) {}
 
 /**
  * Update/refresh flattened template
  */
-export function updateFlattenedTemplateInView(model: Model, flattenedTemplates: ModelTemplates) {
+export function updateFlattenedTemplateInView(flattenedCanvas: ModelTemplateCanvas, model: Model) {
 	const flattenedModel = cloneDeep(model);
 	flattenedModel.metadata = {
 		templateCard: {
@@ -514,14 +512,30 @@ export function updateFlattenedTemplateInView(model: Model, flattenedTemplates: 
 			y: 100
 		}
 	};
-	addTemplateInView(flattenedTemplates, flattenedModel);
+	addTemplateInView(flattenedCanvas, flattenedModel);
+}
+
+// Helper function for finding port position when auto drawing junctions and edges
+function getPortPosition(templateCard: ModelTemplateCard, portId: string) {
+	const cardWidth = 168;
+
+	// Default to fallback values for port position (top right of the card)
+	let x = templateCard.x + cardWidth;
+	let y = templateCard.y;
+	// Get the position of the port element
+	const portElement = document.getElementById(`${templateCard.id}-${portId}`);
+	if (portElement) {
+		x = templateCard.x + portElement.offsetLeft + portElement.offsetWidth - 10;
+		y = templateCard.y + portElement.offsetTop + portElement.offsetHeight / 2;
+	}
+	return { x, y };
 }
 
 /**
  * Flattened to decomposed
  */
-export function flattenedToDecomposedInView(
-	decomposedTemplates: ModelTemplates,
+export async function flattenedToDecomposedInView(
+	decomposedCanvas: ModelTemplateCanvas,
 	templatesToAdd: Model[],
 	interpolatePointsFn?: Function
 ) {
@@ -529,26 +543,28 @@ export function flattenedToDecomposedInView(
 	let yPos = 100;
 	const allInitals: Initial[] = [];
 
-	templatesToAdd.forEach((modelTemplate: Model) => {
-		if (modelTemplate.semantics?.ode?.initials) {
-			modelTemplate.metadata = {
+	templatesToAdd.forEach((model: Model) => {
+		if (model.semantics?.ode?.initials) {
+			model.metadata = {
 				templateCard: {
-					id: modelTemplate.header.name,
-					name: modelTemplate.header.name,
+					id: model.header.name,
+					name: model.header.name,
 					x: 100,
 					y: yPos
 				} as ModelTemplateCard
 			};
 			yPos += 200;
 
-			addTemplateInView(decomposedTemplates, modelTemplate);
-			allInitals.push(...modelTemplate.semantics.ode.initials);
+			addTemplateInView(decomposedCanvas, model);
+			allInitals.push(...model.semantics.ode.initials);
 		}
 	});
 
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await nextTick();
+
 	// Add junctions and edges based on initials
 	// If an initial is repeated create a junction and two edges to connect them
-	yPos = 100;
 	const repeatedInitialTargets = uniq(
 		allInitals
 			// Remove initials that are not repeated
@@ -559,43 +575,58 @@ export function flattenedToDecomposedInView(
 			.map((initial) => initial.target)
 	);
 
-	for (let i = 0; i < repeatedInitialTargets.length; i++) {
-		const junctionPosition = { x: 100, y: yPos };
-		addJunction(decomposedTemplates, junctionPosition);
-		yPos += 200;
-
+	repeatedInitialTargets.forEach((repeatedInitialTarget) => {
 		// Find cards that have the repeated initial and add edges to its junction
-		const templatesWithRepeatedInitial = decomposedTemplates.models.filter(
+		const templatesWithRepeatedInitial = decomposedCanvas.models.filter(
 			(model) =>
-				model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTargets[i])
+				model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTarget)
 		);
 
-		templatesWithRepeatedInitial.forEach((modelTemplate: Model) => {
-			if (modelTemplate.metadata?.templateCard) {
-				const templateCard = modelTemplate.metadata.templateCard;
-				const junctionId =
-					decomposedTemplates.junctions[decomposedTemplates.junctions.length - 1].id;
-				const target = {
-					cardId: templateCard.id,
-					portId: repeatedInitialTargets[i]
-				};
-
-				// Port position is now card position + 168 (width of the card)
-				const portPosition = { x: templateCard.x + 168, y: templateCard.y }; // FIXME: True port positions should be determined, for now this points to the top of the card
-				addEdgeInView(decomposedTemplates, junctionId, target, portPosition, interpolatePointsFn);
-			}
+		// Collect port positions that the junction will be connected to
+		const portPositions: Position[] = [];
+		templatesWithRepeatedInitial.forEach((model: Model) => {
+			if (!model.metadata?.templateCard) return;
+			const templateCard = model.metadata.templateCard;
+			portPositions.push(getPortPosition(templateCard, repeatedInitialTarget));
 		});
-	}
+
+		// Add junction, Y position is the center of the highest and lowest port
+		const portPositionsY = portPositions.map(({ y }) => y);
+		const lowestPortY = Math.min(...portPositionsY);
+		const highestPortY = Math.max(...portPositionsY);
+		const junctionPosition = {
+			x: 200,
+			y: lowestPortY + (highestPortY - lowestPortY) / 2
+		};
+		addJunction(decomposedCanvas, junctionPosition);
+		const junctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;
+
+		// Once junction is added, add edges
+		templatesWithRepeatedInitial.forEach((model: Model, index: number) => {
+			if (!model.metadata?.templateCard) return;
+			const target = {
+				cardId: model.metadata.templateCard.id,
+				portId: repeatedInitialTarget
+			};
+			addEdgeInView(
+				decomposedCanvas,
+				junctionId,
+				target,
+				portPositions[index],
+				interpolatePointsFn
+			);
+		});
+	});
 }
 
 export function flattenedToDecomposedInKernel(
 	kernelManager: KernelSessionManager,
-	decomposedTemplates: ModelTemplates,
+	decomposedCanvas: ModelTemplateCanvas,
 	interpolatePointsFn?: Function
 ) {
 	kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
 		flattenedToDecomposedInView(
-			decomposedTemplates,
+			decomposedCanvas,
 			d.content.templates as Model[],
 			interpolatePointsFn
 		);
@@ -608,30 +639,24 @@ export function flattenedToDecomposedInKernel(
 
 // Helper returns template card and value of decomposed port that matches what's in the flattened view
 function findTemplateCardForNewEdge(
-	decomposedModelTemplates: Model[],
+	decomposedModels: Model[],
 	portIdToMatch: string
 ): ModelTemplateCard | null {
 	let templateCard: ModelTemplateCard | null = null;
-	decomposedModelTemplates.forEach((modelTemplate: Model) => {
-		if (
-			modelTemplate.semantics?.ode?.initials &&
-			modelTemplate.metadata?.templateCard &&
-			!templateCard
-		) {
-			const initial = modelTemplate.semantics.ode.initials.find(
-				({ target }) => target === portIdToMatch
-			);
+	decomposedModels.forEach((model: Model) => {
+		if (model.semantics?.ode?.initials && model.metadata?.templateCard && !templateCard) {
+			const initial = model.semantics.ode.initials.find(({ target }) => target === portIdToMatch);
 			if (!initial) return;
-			templateCard = modelTemplate.metadata.templateCard;
+			templateCard = model.metadata.templateCard;
 		}
 	});
 	return templateCard;
 }
 
-export function reflectFlattenedEditInDecomposedView(
+export async function reflectFlattenedEditInDecomposedView(
 	kernelManager: KernelSessionManager,
-	flattenedTemplates: ModelTemplates,
-	decomposedTemplates: ModelTemplates,
+	flattenedCanvas: ModelTemplateCanvas,
+	decomposedCanvas: ModelTemplateCanvas,
 	outputCode: Function,
 	syncWithMiraModel: Function,
 	interpolatePointsFn?: Function
@@ -639,8 +664,8 @@ export function reflectFlattenedEditInDecomposedView(
 	// Terminate if junctions in flat view are not connected to any ports of the flattened model
 	let isReadyToReflect = false;
 	const flattenedInitialTargets =
-		flattenedTemplates.models[0].semantics?.ode?.initials?.map(({ target }) => target) ?? [];
-	flattenedTemplates.junctions.forEach((flatJunction) => {
+		flattenedCanvas.models[0].semantics?.ode?.initials?.map(({ target }) => target) ?? [];
+	flattenedCanvas.junctions.forEach((flatJunction) => {
 		isReadyToReflect = flatJunction.edges.some((edge) =>
 			flattenedInitialTargets.includes(edge.target.portId)
 		);
@@ -648,46 +673,51 @@ export function reflectFlattenedEditInDecomposedView(
 	if (!isReadyToReflect) return;
 
 	// Add decomposed templates from flattened view to decomposed view
-	flattenedTemplates.models
+	flattenedCanvas.models
 		.slice(1) // Ignore the first one since it's the previous flattened one, the rest are decomposed
-		.forEach((modelTemplate: Model) => {
-			if (modelTemplate.metadata?.templateCard) {
+		.forEach((model: Model) => {
+			if (model.metadata?.templateCard) {
 				// Specify position of card for decomposed view (good enough for now)
-				modelTemplate.metadata.templateCard.x = 100;
-				modelTemplate.metadata.templateCard.y = 100 + decomposedTemplates.models.length * 200;
+				model.metadata.templateCard.x = 100;
+				model.metadata.templateCard.y = 100 + decomposedCanvas.models.length * 200;
 			}
 			addDecomposedTemplateInKernel(
 				kernelManager,
-				decomposedTemplates,
-				modelTemplate,
+				decomposedCanvas,
+				model,
 				outputCode,
 				syncWithMiraModel,
 				true
 			);
 		});
 
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await nextTick();
+
 	// Add edges and potential junctions from flattened view to decomposed view
-	flattenedTemplates.junctions.forEach((flatJunction: ModelTemplateJunction) => {
+	flattenedCanvas.junctions.forEach((flatJunction: ModelTemplateJunction) => {
 		const sharedPortId = flatJunction.edges[0].target.portId; // The state id shared by all ports is always the first port id
 
 		// Find the junction in the decomposed view that corresponds to the flattened junction
-		let decompJunctionId = decomposedTemplates.junctions.find(
+		let decompJunctionId = decomposedCanvas.junctions.find(
 			({ edges }) => edges[0].target.portId === sharedPortId
 		)?.id;
 		// If junction isn't found a new one must be created along with the edge that would be drawn to the junction by default
 		if (!decompJunctionId) {
 			// Finds the decomposed template that has the port used in the flattened view
-			const templateCard = findTemplateCardForNewEdge(decomposedTemplates.models, sharedPortId);
+			const templateCard = findTemplateCardForNewEdge(decomposedCanvas.models, sharedPortId);
 			if (!templateCard) return;
 
-			addJunction(decomposedTemplates, { x: templateCard.x, y: templateCard.y });
-			decompJunctionId = decomposedTemplates.junctions[decomposedTemplates.junctions.length - 1].id;
+			const portPosition = getPortPosition(templateCard, sharedPortId); // FIXME: Decomposed ports can't be referenced at this stage since we are in the flattened view
+
+			addJunction(decomposedCanvas, portPosition);
+			decompJunctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;
 
 			addEdgeInView(
-				decomposedTemplates,
+				decomposedCanvas,
 				decompJunctionId,
 				{ cardId: templateCard.id, portId: sharedPortId },
-				{ x: templateCard.x + 168, y: templateCard.y }, // FIXME: True port positions should be determined, for now this points to the top of the card
+				portPosition,
 				interpolatePointsFn
 			);
 		}
@@ -698,18 +728,19 @@ export function reflectFlattenedEditInDecomposedView(
 
 			// If flat edge port matches an initial in the decomposed template, add an edge to the junction
 			const templateCard = findTemplateCardForNewEdge(
-				decomposedTemplates.models,
+				decomposedCanvas.models,
 				flatEdge.target.portId
 			);
 			if (!templateCard) return;
+			const portPosition = getPortPosition(templateCard, flatEdge.target.portId); // This works since the card will exist in both views and the offset values for the ports are the same
 
 			addEdgeInKernel(
 				kernelManager,
-				decomposedTemplates,
+				decomposedCanvas,
 				decompJunctionId,
 				{ cardId: templateCard.id, portId: flatEdge.target.portId },
 				{ cardId: '', portId: '' },
-				{ x: templateCard.x + 168, y: templateCard.y }, // FIXME: True port positions should be determined, for now this points to the top of the card
+				portPosition,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsFn

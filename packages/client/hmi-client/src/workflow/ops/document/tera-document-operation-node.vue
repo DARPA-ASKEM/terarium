@@ -1,8 +1,9 @@
 <template>
-	<main v-if="!fetchingDocument">
+	<tera-progress-spinner v-if="fetchingDocument" is-centered :font-size="2" />
+	<main v-else>
 		<template v-if="document">
 			<h6>
-				<span class="truncate-after-three-lines">{{ document?.name }}</span>
+				<span class="truncate-after-three-lines">{{ documentName }}</span>
 			</h6>
 			<tera-operator-placeholder :operation-type="node.operationType" />
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
@@ -18,21 +19,20 @@
 			<tera-operator-placeholder :operation-type="node.operationType" />
 		</template>
 	</main>
-	<tera-progress-spinner v-else is-centered :font-size="2" />
 </template>
 
 <script setup lang="ts">
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import { onMounted, ref, watch } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
 import { AssetType, ExtractionAssetType } from '@/types/Types';
-import { onMounted, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { cloneDeep, isEmpty } from 'lodash';
 import { getDocumentAsset } from '@/services/document-assets';
-import teraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
@@ -43,13 +43,27 @@ const props = defineProps<{
 const documents = useProjects().getActiveProjectAssets(AssetType.Document);
 const document = ref<DocumentAsset | null>(null);
 const fetchingDocument = ref(false);
+const documentName = ref<DocumentAsset['name']>('');
 
 onMounted(async () => {
 	if (props.node.state.documentId) {
+		// Quick get the name from the project
+		documentName.value = useProjects().getAssetName(props.node.state.documentId) || '';
+
+		// Fetch the document
 		fetchingDocument.value = true;
 		document.value = await getDocumentAsset(props.node.state.documentId);
-		fetchingDocument.value = false;
+
+		// If the name is different, update the name
+		if (
+			document.value &&
+			documentName.value !== document.value.name &&
+			!isEmpty(document.value.name)
+		) {
+			documentName.value = document.value.name;
+		}
 	}
+	fetchingDocument.value = false;
 });
 
 async function onDocumentChange(chosenProjectDocument: ProjectAsset) {
@@ -85,7 +99,7 @@ watch(
 					?.filter((asset) => asset.assetType === ExtractionAssetType.Equation)
 					.map((asset, i) => ({
 						name: `Equation ${i + 1}`,
-						includeInProcess: true,
+						includeInProcess: false,
 						asset
 					})) || [];
 
@@ -99,8 +113,15 @@ watch(
 			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
 				emit('append-output', {
 					type: 'documentId',
-					label: `document`,
-					value: [document.value.id]
+					label: documentName.value,
+					value: [
+						{
+							documentId: document.value.id,
+							figures,
+							tables,
+							equations
+						}
+					]
 				});
 			}
 

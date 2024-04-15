@@ -1,10 +1,11 @@
 import {
-	XDDFacetsItemResponse,
-	Document,
-	Dataset,
-	Model,
 	AssetType,
-	DocumentAsset
+	Dataset,
+	Document,
+	DocumentAsset,
+	Model,
+	ModelGrounding,
+	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
@@ -28,6 +29,9 @@ export interface ModelConfigTableData {
 	id: string;
 	name: string;
 	type: ParamType;
+	description: string;
+	concept: ModelGrounding;
+	unit?: string;
 	value: any;
 	source: string;
 	visibility: boolean;
@@ -189,4 +193,8 @@ export interface Position {
 export enum ModelServiceType {
 	TA1 = 'SKEMA-MIT',
 	TA4 = 'GoLLM'
+}
+
+export interface CompareModelsResponseType {
+	response: string;
 }

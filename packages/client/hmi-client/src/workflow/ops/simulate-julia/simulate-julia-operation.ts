@@ -1,18 +1,20 @@
 import type { TimeSpan } from '@/types/Types';
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export interface SimulateJuliaOperationState {
+export interface SimulateJuliaOperationState extends BaseState {
 	// state shared across all runs
 	chartConfigs: string[][];
 
 	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
-	simulationsInProgress: string[];
+
+	// In progress
+	inProgressSimulationId: string;
 }
 
 export const SimulateJuliaOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_JULIA,
-	displayName: 'Simulate (deterministic)',
+	displayName: 'Simulate with SciML',
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'simulationId' }],
@@ -22,7 +24,7 @@ export const SimulateJuliaOperation: Operation = {
 		const init: SimulateJuliaOperationState = {
 			chartConfigs: [],
 			currentTimespan: { start: 1, end: 100 },
-			simulationsInProgress: []
+			inProgressSimulationId: ''
 		};
 		return init;
 	},

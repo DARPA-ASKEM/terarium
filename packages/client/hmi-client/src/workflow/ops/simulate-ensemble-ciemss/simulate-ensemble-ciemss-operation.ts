@@ -1,21 +1,20 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import { ChartConfig } from '@/types/SimulateConfig';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
-export interface SimulateEnsembleCiemssOperationState {
-	modelConfigIds: string[];
-	chartConfigs: ChartConfig[];
+export interface SimulateEnsembleCiemssOperationState extends BaseState {
+	chartConfigs: string[][];
 	mapping: EnsembleModelConfigs[];
 	timeSpan: TimeSpan;
 	numSamples: number;
-	simulationsInProgress: string[];
+	inProgressSimulationId: string;
+	errorMessage: { name: string; value: string; traceback: string };
 }
 
 export const SimulateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS,
-	displayName: 'Simulate ensemble (probabilistic)',
+	displayName: 'Simulate ensemble',
 	description: '',
-	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: true }],
+	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
@@ -27,12 +26,12 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: SimulateEnsembleCiemssOperationState = {
-			modelConfigIds: [],
 			chartConfigs: [],
 			mapping: [],
 			timeSpan: { start: 0, end: 40 },
 			numSamples: 40,
-			simulationsInProgress: []
+			inProgressSimulationId: '',
+			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	}

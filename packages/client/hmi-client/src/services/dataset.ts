@@ -4,7 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import type { CsvAsset, CsvColumnStats, Dataset } from '@/types/Types';
+import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
@@ -21,15 +21,77 @@ async function getAll(): Promise<Dataset[] | null> {
 	return response?.data ?? null;
 }
 
+async function searchClimateDatasets(query: string): Promise<Dataset[] | null> {
+	const response = await API.get(`/climatedata/queries/search-esgf?query=${query}`).catch(
+		(error) => {
+			logger.error(`Error: ${error}`);
+		}
+	);
+	return response?.data ?? null;
+}
+
 /**
  * Get Dataset from the data service
  * @return Dataset|null - the dataset, or null if none returned by API
  */
 async function getDataset(datasetId: string): Promise<Dataset | null> {
 	const response = await API.get(`/datasets/${datasetId}`).catch((error) => {
-		logger.error(`Error: data-service was not able to retreive the dataset ${datasetId} ${error}`);
+		logger.error(`Error: data-service was not able to retrieve the dataset ${datasetId} ${error}`);
 	});
 	return response?.data ?? null;
+}
+
+async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
+	const response = await API.get(`/climatedata/queries/fetch-esgf/${datasetId}`).catch((error) => {
+		logger.error(
+			`Error: climate data service was not able to retrieve the dataset ${datasetId} ${error}`
+		);
+	});
+	return response?.data ?? null;
+}
+
+async function getClimateSubsetId(
+	esgfId: string,
+	parentDatasetId: string,
+	envelope: string,
+	options: {
+		timestamps?: string;
+		thinFactor?: string;
+	}
+): Promise<string | null> {
+	const { timestamps, thinFactor } = options;
+	const url = `/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}&envelope=${envelope}`;
+	if (timestamps) url.concat(`&timestamps=${timestamps}`);
+	if (thinFactor) url.concat(`&thin-factor=${thinFactor}`);
+
+	let response = await API.get(url);
+
+	// FIXME: Temporary polling solution
+	if (response.status === 202) {
+		return new Promise((resolve) => {
+			const poller = setInterval(async () => {
+				response = await API.get(url);
+				if (response.status === 200) {
+					clearInterval(poller);
+					resolve(response?.data ?? null);
+				}
+			}, 30000);
+		});
+	}
+	if (response.status === 200) {
+		return response.data;
+	}
+	logger.error(`Climate-data service was not able to retrieve the subset of the dataset ${esgfId}`);
+	return null;
+}
+
+async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
+	const response = await API.get(`/climatedata/queries/preview-esgf/${esgfId}`).catch((error) => {
+		logger.error(
+			`Error: climate data service was not able to preview the dataset ${esgfId} ${error}`
+		);
+	});
+	return response?.data ?? undefined;
 }
 
 /**
@@ -74,6 +136,21 @@ async function downloadRawFile(
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
 	return response?.data ?? null;
+}
+
+/**
+ * Get the download URL for a given dataset asset
+ * @param datasetId the dataset ID
+ * @param filename the filename of the asset
+ */
+async function getDownloadURL(datasetId: string, filename: string): Promise<PresignedURL | null> {
+	const response: AxiosResponse<PresignedURL> = await API.get(
+		`/datasets/${datasetId}/download-url?filename=${filename}`
+	);
+	if (response.data && response.status === 200) {
+		return response.data;
+	}
+	return null;
 }
 
 /**
@@ -127,7 +204,7 @@ async function createNewDatasetFromGithubFile(
 	const urlResponse = await API.put(
 		`/datasets/${newDataset.id}/upload-csv-from-github?filename=${fileName}&path=${path}&repo-owner-and-name=${repoOwnerAndName}`,
 		{
-			timeout: 30000
+			timeout: 3600000
 		}
 	);
 
@@ -184,7 +261,7 @@ async function createNewDatasetFromFile(
 				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
 			);
 		},
-		timeout: 30000
+		timeout: 3600000
 	});
 
 	if (!urlResponse || urlResponse.status >= 400) {
@@ -206,9 +283,6 @@ async function createDatasetFromSimulationResult(
 		if (response && response.status === 201) {
 			return true;
 		}
-		logger.error(`Unable to create dataset from simulation result ${response.status}`, {
-			toastTitle: 'TDS - Simulation'
-		});
 		return false;
 	} catch (error) {
 		logger.error(
@@ -321,13 +395,19 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 
 export {
 	getAll,
+	searchClimateDatasets,
 	getDataset,
+	getClimateDataset,
+	getClimateSubsetId,
+	getClimateDatasetPreview,
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
+	getDownloadURL,
 	createNewDatasetFromFile,
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
 	saveDataset,
-	createCsvAssetFromRunResults
+	createCsvAssetFromRunResults,
+	createDataset
 };

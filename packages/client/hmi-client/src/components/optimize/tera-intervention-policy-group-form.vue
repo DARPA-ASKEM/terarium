@@ -8,7 +8,7 @@
 					placeholder="Policy bounds"
 					@focusout="emit('update-self', config)"
 				/>
-				<h4 v-else>{{ props.config.name }}</h4>
+				<h6 v-else>{{ props.config.name }}</h6>
 				<i
 					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
 					:style="'cursor: pointer'"
@@ -32,37 +32,49 @@
 				<label for="parameter">Parameter</label>
 				<Dropdown
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.parameters"
+					:options="props.parameterOptions"
 					v-model="config.parameter"
 					placeholder="Select"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
 			<div class="label-and-input">
-				<label for="goal">Goal</label>
-				<Dropdown
+				<label for="initial-guess">Initial guess</label>
+				<tera-input-number
 					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.goals"
-					v-model="config.goal"
-					placeholder="Select"
+					:min-fraction-digits="1"
+					:max-fraction-digits="10"
+					v-model="config.initialGuess"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
-			<div class="label-and-input">
-				<label for="cost-benefit">Cost/Benefit function</label>
-				<Dropdown
-					class="p-inputtext-sm"
-					:options="props.modelNodeOptions.costBenefitFns"
-					v-model="config.costBenefitFn"
-					placeholder="Select"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
+			<div class="label-and-input"></div>
 		</div>
 		<div class="input-row">
 			<div class="label-and-input">
+				<label for="lower-bound">Lower bound</label>
+				<tera-input-number
+					class="p-inputtext-sm"
+					:min-fraction-digits="1"
+					:max-fraction-digits="10"
+					v-model="config.lowerBound"
+					@update:model-value="emit('update-self', config)"
+				/>
+			</div>
+			<div class="label-and-input">
+				<label for="upper-bound">Upper bound</label>
+				<tera-input-number
+					class="p-inputtext-sm"
+					:min-fraction-digits="1"
+					:max-fraction-digits="10"
+					v-model="config.upperBound"
+					@update:model-value="emit('update-self', config)"
+				/>
+			</div>
+			<div class="label-and-input">
 				<label for="start-time">Start time</label>
 				<InputNumber
+					:disabled="props.interventionType == InterventionTypes.startTime"
 					class="p-inputtext-sm"
 					inputId="integeronly"
 					v-model="config.startTime"
@@ -70,26 +82,13 @@
 				/>
 			</div>
 			<div class="label-and-input">
-				<label for="lower-bound">Lower bound</label>
+				<label for="start-time">Param value</label>
 				<InputNumber
+					:disabled="props.interventionType == InterventionTypes.paramValue"
 					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
 					:min-fraction-digits="1"
-					:max-fraction-digits="3"
-					v-model="config.lowerBound"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="upper-bound">Upper bound</label>
-				<InputNumber
-					class="p-inputtext-sm"
-					inputId="numericInput"
-					mode="decimal"
-					:min-fraction-digits="1"
-					:max-fraction-digits="3"
-					v-model="config.upperBound"
+					:max-fraction-digits="10"
+					v-model="config.paramValue"
 					@update:model-value="emit('update-self', config)"
 				/>
 			</div>
@@ -103,12 +102,17 @@ import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputSwitch from 'primevue/inputswitch';
-import { InterventionPolicyGroup } from '@/workflow/ops/model-optimize/model-optimize-operation';
+import {
+	InterventionPolicyGroup,
+	InterventionTypes
+} from '@/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
-	modelNodeOptions: Record<string, string[]>;
+	parameterOptions: string[];
 	config: InterventionPolicyGroup;
+	interventionType?: InterventionTypes;
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);

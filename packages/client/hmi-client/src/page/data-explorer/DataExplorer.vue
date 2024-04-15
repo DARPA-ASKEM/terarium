@@ -22,15 +22,19 @@
 					<nav>
 						<SelectButton
 							:model-value="assetType"
-							@change="if ($event.value) assetType = $event.value;"
+							@change="if ($event.value) changeAssetType($event.value);"
 							:options="assetOptions"
 							option-value="value"
 							option-label="label"
 						/>
-						<div class="toggles">
+						<div class="toggles" v-if="assetType !== AssetType.Model">
 							<span>
-								<label>Source</label>
-								<Dropdown v-model="chosenSource" :options="sourceOptions" />
+								<label class="mr-2">Source</label>
+								<Dropdown
+									v-model="chosenSource"
+									:options="sourceOptions"
+									@change="if (assetType === AssetType.Dataset) executeNewQuery();"
+								/>
 							</span>
 							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
 						</div>
@@ -88,25 +92,29 @@ import {
 	SearchResults,
 	ViewType
 } from '@/types/common';
+import { DocumentSource, DatasetSource } from '@/types/search';
+import type { Source } from '@/types/search';
 import { getFacets } from '@/utils/facets';
 import {
 	FACET_FIELDS as XDD_FACET_FIELDS,
 	GITHUB_URL,
 	XDD_RESULT_DEFAULT_PAGE_SIZE,
+	XDDSearchParams,
 	YEAR
 } from '@/types/XDD';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils/data-util';
+import { getResourceID, isDataset, isDocument, isModel, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
-import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
-// import Chip from 'primevue/chip';
+import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
+import { DatasetSearchParams } from '@/types/Dataset';
+import { ModelSearchParams } from '@/types/Model';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
 
@@ -169,8 +177,8 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
-const sourceOptions = ref(['XDD', 'Terarium']);
-const chosenSource = ref('XDD');
+const sourceOptions = ref<Source[]>(Object.values(DocumentSource));
+const chosenSource = ref<Source>(DocumentSource.XDD);
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
@@ -179,7 +187,7 @@ const sliderWidth = computed(() =>
 // Chooses source for search
 const resultsToShow = computed(() => {
 	if (
-		(assetType.value === AssetType.Document && chosenSource.value === 'Terarium') ||
+		(assetType.value === AssetType.Document && chosenSource.value === DocumentSource.TERARIUM) ||
 		assetType.value === AssetType.Model
 	) {
 		return searchResults.value;
@@ -193,6 +201,18 @@ watch(isSliderResourcesOpen, () => {
 		previewItem.value = null;
 	}
 });
+
+function changeAssetType(type: AssetType) {
+	assetType.value = type;
+
+	if (assetType.value === AssetType.Document) {
+		sourceOptions.value = Object.values(DocumentSource);
+		chosenSource.value = DocumentSource.XDD;
+	} else if (assetType.value === AssetType.Dataset) {
+		sourceOptions.value = Object.values(DatasetSource);
+		chosenSource.value = DatasetSource.TERARIUM;
+	}
+}
 
 const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
 	// retrieves filtered & unfiltered facet data
@@ -262,7 +282,10 @@ const executeSearch = async () => {
 			known_entities: 'url_extractions,askem_object'
 		},
 		model: {},
-		dataset: {}
+		[ResourceType.DATASET]: {
+			source: chosenSource.value as DatasetSource,
+			topic: 'covid-19'
+		}
 	};
 
 	// handle the search-by-example for finding related documents, models, and/or datasets
@@ -299,12 +322,12 @@ const executeSearch = async () => {
 			assetType.value = AssetType.Dataset;
 		}
 	}
-	const searchParamsWithFacetFilters = cloneDeep(searchParams);
+	const searchParamsWithFacetFilters: SearchParameters = cloneDeep(searchParams);
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
+	const xddSearchParams: XDDSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -335,17 +358,21 @@ const executeSearch = async () => {
 		}
 	});
 
-	let modelSearchParams;
+	let modelSearchParams: ModelSearchParams;
 	if (searchParamsWithFacetFilters?.[ResourceType.MODEL]?.filters) {
 		modelSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
 	} else {
 		modelSearchParams = { filters: clientFilters.value };
 	}
-	let datasetSearchParams;
+	let datasetSearchParams: DatasetSearchParams;
 	if (searchParamsWithFacetFilters?.[ResourceType.DATASET]?.filters) {
-		datasetSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+		datasetSearchParams = searchParamsWithFacetFilters[ResourceType.DATASET];
 	} else {
-		datasetSearchParams = { filters: clientFilters.value };
+		datasetSearchParams = {
+			filters: clientFilters.value,
+			source: chosenSource.value as DatasetSource,
+			topic: 'covid-19' // TODO - this should be dynamic
+		};
 	}
 
 	// update search parameters object
@@ -615,14 +642,9 @@ main {
 }
 
 .toggles {
+	align-items: center;
 	display: flex;
-	gap: 1rem;
-
-	& > span {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
+	gap: var(--gap);
 
 	& .p-dropdown {
 		min-width: 8rem;

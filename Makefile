@@ -56,6 +56,14 @@ image-gollm-taskrunner: clean-gollm-taskrunner
 	./gradlew :packages:taskrunner:build -x test
 	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
 
+TARGETS += mira-taskrunner
+clean-mira-taskrunner: clean-mira-taskrunner-base
+	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
+
+image-mira-taskrunner: clean-mira-taskrunner
+	./gradlew :packages:taskrunner:build -x test
+	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
+
 
 ## Clean
 .PHONY: clean
@@ -72,6 +80,10 @@ clean-db-migration-base:
 
 .PHONY: clean-gollm-taskrunner-base
 clean-gollm-taskrunner-base:
+	./gradlew :packages:taskrunner:clean
+
+.PHONY: clean-mira-taskrunner-base
+clean-mira-taskrunner-base:
 	./gradlew :packages:taskrunner:clean
 
 

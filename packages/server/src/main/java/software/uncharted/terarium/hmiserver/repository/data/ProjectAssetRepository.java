@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.repository.data;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
@@ -29,4 +30,5 @@ public interface ProjectAssetRepository extends PSCrudRepository<ProjectAsset, U
 	ProjectAsset findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(@NotNull UUID projectId,
 			@NotNull String assetName, @NotNull AssetType type);
 
+	Optional<List<ProjectAsset>> findByAssetId(UUID assetId);
 }

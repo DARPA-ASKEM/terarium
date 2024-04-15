@@ -6,7 +6,7 @@
 		header="Share project"
 		@hide="$emit('update:modelValue', false)"
 		@after-hide="onAfterHide"
-		:style="{ width: '30rem' }"
+		:style="{ width: '35rem' }"
 	>
 		<section class="container">
 			<Dropdown
@@ -56,8 +56,7 @@
 			</section>
 		</section>
 		<template #footer>
-			<Button label="Cancel" class="p-button-secondary xsm" @click="visible = false" />
-			<Button label="Done" class="xsm" @click="setPermissions" />
+			<Button label="Done" @click="setPermissions" size="large" />
 		</template>
 	</Dialog>
 </template>
@@ -83,7 +82,9 @@ const visible = ref(props.modelValue);
 const permissions = ref<PermissionRelationships | null>(null);
 const users = ref<PermissionUser[]>([]);
 const usersMenu = computed(() =>
-	users.value.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+	users.value
+		.map((u) => ({ id: u.id, name: u.firstName.concat(' ').concat(u.lastName) }))
+		.sort((a, b) => a.name.localeCompare(b.name))
 );
 const selectedUser = ref(null);
 const existingUsers = ref<Set<PermissionUser>>(new Set());
@@ -99,7 +100,7 @@ const isUpdatingAccessibility = ref(false);
 const generalAccess = computed(() => {
 	if (isUpdatingAccessibility.value) return { label: 'Loading...' };
 
-	return props.project.publicProject
+	return useProjects().activeProject.value?.publicProject
 		? generalAccessOptions.value[1]
 		: generalAccessOptions.value[0];
 });
@@ -132,6 +133,9 @@ function addNewSelectedUser(id: string) {
 		newSelectedUsers.value.add(user);
 		newSelectedUserPermissions.set(id, 'writer');
 	}
+
+	// Clear the selected user to allow for re-selection
+	selectedUser.value = null;
 }
 
 function onAfterHide() {
@@ -157,23 +161,62 @@ function selectNewPermissionForUser(permission: string, userId: string) {
 
 async function setPermissions() {
 	visible.value = false;
-	selectedUsers.value.forEach(async ({ id }) => {
+	await selectedUsers.value.forEach(async ({ id }) => {
 		const permission = newSelectedUserPermissions.get(id);
 		if (permission) {
 			const currentPermission = permissions.value?.permissionUsers.find((u) => u.id === id)
 				?.relationship;
 			if (permission === 'remove') {
 				if (currentPermission) {
-					await useProjects().removePermissions(props.project.id, id, currentPermission);
+					if (await useProjects().removePermissions(props.project.id, id, currentPermission)) {
+						removeUser(id);
+					} else {
+						addUser(id);
+					}
 				}
 			} else if (currentPermission) {
-				await useProjects().updatePermissions(props.project.id, id, currentPermission, permission);
-			} else {
-				await useProjects().setPermissions(props.project.id, id, permission);
+				if (
+					await useProjects().updatePermissions(props.project.id, id, currentPermission, permission)
+				) {
+					if (permission === 'reader') {
+						removeUser(id);
+					} else {
+						addUser(id);
+					}
+				}
+			} else if (await useProjects().setPermissions(props.project.id, id, permission)) {
+				if (permission === 'writer') {
+					addUser(id);
+				}
 			}
 		}
 	});
 	newSelectedUserPermissions.clear();
+}
+
+async function removeUser(id) {
+	const user = users.value.find((u) => u.id === id);
+	const name = `${user?.firstName} ${user?.lastName}`;
+	const updatedProject = structuredClone(props.project);
+	if (updatedProject.authors) {
+		const index = updatedProject.authors.indexOf(name);
+		if (index !== undefined && index > -1) {
+			updatedProject.authors.splice(index, 1);
+		}
+		await useProjects().update(updatedProject);
+	}
+}
+
+async function addUser(id) {
+	const user = users.value.find((u) => u.id === id);
+	const name = `${user?.firstName} ${user?.lastName}`;
+	const updatedProject = structuredClone(props.project);
+	if (updatedProject.authors) {
+		updatedProject.authors.push(name);
+	} else {
+		updatedProject.authors = [name];
+	}
+	await useProjects().update(updatedProject);
 }
 
 async function getPermissions() {
@@ -235,6 +278,7 @@ h6 {
 .selected-users {
 	display: flex;
 	flex-direction: column;
+	padding-bottom: var(--gap-small);
 }
 
 li {

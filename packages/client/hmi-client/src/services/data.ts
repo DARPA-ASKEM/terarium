@@ -7,6 +7,7 @@ import {
 	SearchParameters,
 	SearchResults
 } from '@/types/common';
+import { DatasetSource } from '@/types/search';
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isDocument, isModel } from '@/utils/data-util';
@@ -17,6 +18,7 @@ import {
 	AssetType,
 	Dataset,
 	Document,
+	DocumentAsset,
 	DocumentsResponseOK,
 	Extraction,
 	Model,
@@ -112,7 +114,7 @@ const searchXDDDocuments = async (
 	if (xddSearchParam?.fields) {
 		searchParams += `&fields=${xddSearchParam.fields}`;
 	}
-	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
+	if (xddSearchParam?.dict && !isEmpty(xddSearchParam.dict)) {
 		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
 	}
 	if (xddSearchParam?.min_published) {
@@ -133,12 +135,7 @@ const searchXDDDocuments = async (
 	if (xddSearchParam?.inclusive) {
 		searchParams += '&inclusive=true';
 	}
-	if (enablePagination) {
-		searchParams += '&full_results';
-	} else {
-		// request results to be ranked
-		searchParams += '&include_score=true';
-	}
+
 	if (xddSearchParam?.facets) {
 		searchParams += '&facets=true';
 	}
@@ -164,7 +161,12 @@ const searchXDDDocuments = async (
 	if (xddSearchParam?.similar_to) {
 		searchParams += `&similar_to=${xddSearchParam?.similar_to}`;
 	}
-
+	if (enablePagination) {
+		searchParams += '&full_results';
+	} else {
+		// request results to be ranked
+		searchParams += '&include_score=true';
+	}
 	//
 	// "max": "Maximum number of documents to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
@@ -184,14 +186,11 @@ const searchXDDDocuments = async (
 
 	const res = await API.get(url + searchParams);
 
-	if (res.data && res.data.success) {
-		return res.data.success;
-	}
-	return undefined;
+	return res?.data?.success ?? null;
 };
 
-const filterAssets = <T extends Model | Dataset>(
-	allAssets: T[],
+const filterAssets = (
+	allAssets: ResultType[],
 	resourceType: ResourceType,
 	conceptFacets: ConceptFacets | null,
 	term: string
@@ -201,7 +200,7 @@ const filterAssets = <T extends Model | Dataset>(
 		const AssetFilterAttributes: string[] =
 			resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
 
-		let finalAssets: T[] = [];
+		let finalAssets: ResultType[] = [];
 
 		AssetFilterAttributes.forEach((attribute) => {
 			finalAssets = allAssets.filter((d) => {
@@ -265,7 +264,10 @@ const getAssets = async (params: GetAssetsParams) => {
 			projectAssetType = AssetType.Model;
 			break;
 		case ResourceType.DATASET:
-			assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
+			if (searchParam.source === DatasetSource.TERARIUM)
+				assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
+			else if (searchParam.source === DatasetSource.ESGF)
+				assetList = (await DatasetService.searchClimateDatasets(term)) ?? ([] as Dataset[]);
 			projectAssetType = AssetType.Dataset;
 			break;
 		case ResourceType.XDD:
@@ -280,27 +282,24 @@ const getAssets = async (params: GetAssetsParams) => {
 			return results; // error or make new resource type compatible
 	}
 
-	// TEMP: add "type" field because it is needed to mark these resources as models or datasets
-	// FIXME: dependency on type model should be removed and another "sub-system" or "result-type"
-	//        should be added for datasets and other resource types
-	const allAssets = assetList.map((a) => ({
-		...a,
-		temporalResolution: a?.temporalResolution, // Dataset attribute
-		geospatialResolution: a?.geospatialResolution, // Dataset attribute
-		simulationRun: a?.simulationRun, // Dataset attribute
-		type: resourceType
-	}));
+	// needed?
+	const allAssets: ResultType[] = assetList.map(
+		(a: Model | Dataset | Document | DocumentAsset) => ({
+			...a
+		})
+	);
 
 	// first get un-filtered concept facets
-	let conceptFacets = await getConceptFacets([projectAssetType]);
+	let conceptFacets: ConceptFacets | null = await getConceptFacets(projectAssetType);
 
 	// FIXME: this client-side computation of facets from "models" data should be done
 	//        at the HMI server
 	//
 	// This is going to calculate facets aggregations from the list of results
 
-	let assetResults =
-		resourceType === ResourceType.XDD
+	const assetResults: ResultType[] =
+		resourceType === ResourceType.XDD ||
+		(resourceType === ResourceType.DATASET && searchParam.source === DatasetSource.ESGF)
 			? allAssets
 			: filterAssets(allAssets, resourceType, conceptFacets, term);
 
@@ -308,15 +307,12 @@ const getAssets = async (params: GetAssetsParams) => {
 	let assetFacets: { [index: string]: XDDFacetsItemResponse } | Facets;
 	switch (resourceType) {
 		case ResourceType.MODEL:
-			assetResults = assetResults as Model[];
-			assetFacets = getModelFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			assetFacets = getModelFacets(assetResults as Model[], conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		case ResourceType.DATASET:
-			assetResults = assetResults as Dataset[];
-			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			assetFacets = getDatasetFacets(assetResults as Dataset[], conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		case ResourceType.XDD:
-			assetResults = assetResults as Document[];
 			assetFacets = xddResults?.facets ?? {};
 			break;
 		default:
@@ -388,9 +384,12 @@ const getAssets = async (params: GetAssetsParams) => {
 				// FIXME:
 				// This step won't be needed if the concept facets API is able to receive filters as well
 				// to only provide concept aggregations based on a filtered set of models rather than the full list of models
-				const finalAssetIDs = assetResults.map((m) => m.id);
+				const finalAssetIDs = assetResults.map((m) => {
+					const modelOrDataset: Model | Dataset = m as Model | Dataset;
+					return modelOrDataset.id;
+				});
 				conceptFacets.results.forEach((conceptFacetResult) => {
-					if (finalAssetIDs.includes(conceptFacetResult.id)) {
+					if (finalAssetIDs.includes(`${conceptFacetResult.id}`)) {
 						curies.push(conceptFacetResult.curie);
 					}
 				});
@@ -399,7 +398,7 @@ const getAssets = async (params: GetAssetsParams) => {
 			// re-create the concept facets if the user has applyied any concept filters
 			const uniqueCuries = uniq(curies);
 			if (!isEmpty(uniqueCuries)) {
-				conceptFacets = await getConceptFacets([projectAssetType], uniqueCuries);
+				conceptFacets = await getConceptFacets(projectAssetType, uniqueCuries);
 			}
 
 			// FIXME: this client-side computation of facets from "models" data should be done
@@ -454,10 +453,6 @@ const getRelatedDocuments = async (docid: string): Promise<Document[]> => {
 		}
 		if (status === 204) {
 			logger.error('Request received successfully, but there are no documents');
-		} else if (status === 400) {
-			logger.error('Query must contain a docid');
-		} else if (status === 500) {
-			logger.error('An error occurred retrieving documents');
 		}
 	}
 	return [] as Document[];

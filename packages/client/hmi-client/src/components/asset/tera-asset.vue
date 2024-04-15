@@ -3,7 +3,7 @@
 		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
-			<aside class="spread-out">
+			<aside class="flex align-items-center">
 				<slot name="edit-buttons" />
 				<Button
 					v-if="featureConfig.isPreview"
@@ -205,23 +205,20 @@ header {
 	height: fit-content;
 	grid-column-start: 2;
 	color: var(--text-color-subdued);
-	padding: var(--gap-small) var(--gap);
+	padding: var(--gap-small) var(--gap-medium);
 	display: flex;
 	gap: var(--gap);
 	align-items: center;
-	border-bottom: 1px solid var(--surface-border-light);
 	background: var(--surface-ground);
 }
 
 header.shrinked {
-	height: 3rem;
 	position: sticky;
 	top: 0px;
 	z-index: 100;
 	isolation: isolate;
 	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
-	padding: var(--gap-small) var(--gap);
 	border-bottom: 1px solid var(--surface-border-light);
 }
 
@@ -231,7 +228,7 @@ header.shrinked h4 {
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	max-width: var(--constrain-width);
+	max-width: fit-content;
 }
 
 h4,
@@ -244,7 +241,6 @@ header aside {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
-	max-width: var(--constrain-width);
 }
 
 header aside {
@@ -327,7 +323,6 @@ main:deep(.p-accordion-content) {
 main:deep(.p-accordion-content > p),
 main:deep(.p-accordion-content > ul),
 main:deep(.data-row) {
-	max-width: var(--constrain-width);
 }
 
 main:deep(.p-accordion-content ul) {
@@ -370,7 +365,6 @@ main:deep(.p-button.p-button-outlined) {
 
 .spread-out {
 	align-items: center;
-	justify-content: space-between;
 	flex-grow: 1;
 }
 
@@ -384,5 +378,9 @@ main:deep(.p-button.p-button-outlined) {
 
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
+}
+
+:deep(.p-tabview .p-tabview-nav) {
+	background-color: transparent;
 }
 </style>

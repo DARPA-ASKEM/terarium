@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr && isKernelReady"
@@ -10,7 +14,7 @@
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
-			<tera-drilldown-section id="notebook-section">
+			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar-right-side">
 					<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
 					<Button
@@ -22,18 +26,17 @@
 						@click="runFromCodeWrapper"
 					/>
 				</div>
-
 				<Suspense>
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
+						:default-options="sampleAgentQuestions"
+						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
-						class="ai-assistant-container"
 					/>
 				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
-					@init="initialize"
+					@init="initializeAceEditor"
 					lang="python"
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
@@ -43,17 +46,22 @@
 			</tera-drilldown-section>
 			<div class="preview-container">
 				<tera-drilldown-preview
-					title="Model Preview"
+					title="Preview"
 					v-model:output="selectedOutputId"
 					@update:selection="onSelection"
 					:options="outputs"
 					is-selectable
 					class="h-full"
 				>
-					<tera-model-diagram v-if="amr" :model="amr" :is-editable="true" />
+					<tera-notebook-error
+						v-if="executeResponse.status === OperatorStatus.ERROR"
+						:name="executeResponse.name"
+						:value="executeResponse.value"
+						:traceback="executeResponse.traceback"
+					/>
+					<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
 					</div>
 					<template #footer>
 						<InputText
@@ -86,25 +94,28 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onUnmounted, ref, watch, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import type { Model } from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import { createModel, getModel } from '@/services/model';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { useProjects } from '@/composables/project';
-import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
+import type { Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
+import { createModel, getModel } from '@/services/model';
+import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
+import { useProjects } from '@/composables/project';
+import { logger } from '@/utils/logger';
+import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { KernelSessionManager } from '@/services/jupyter';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+
+import { KernelSessionManager } from '@/services/jupyter';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -143,23 +154,40 @@ const modelId = props.node.inputs[0].value?.[0];
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
-	'Add a new transition from S to R with the name vaccine with the rate of v.',
-	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u',
-	'Add a new transition (from nowhere) to S with a rate constant of f.',
-	'Add a new transition (from nowhere) to S with a rate constant of f. The rate depends on R.',
-	'Add a new transition from S (to nowhere) with a rate constant of v',
-	'Add a new transition from S (to nowhere) with a rate constant of v. The Rate depends on R',
+	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days.',
+	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u with unit Days',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days.',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days. The rate depends on R.',
+	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days',
+	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
 	'Add an observable titled sample with the expression A * B  * p.',
 	'Rename the state S to Susceptible in the infection transition.',
 	'Rename the transition infection to inf.'
 ];
 
-const codeText = ref(
-	'# This environment contains the variable "model" \n# which is displayed on the right'
-);
+const contextLanguage = ref<string>('python3');
+
+const defaultCodeText =
+	'# This environment contains the variable "model" \n# which is displayed on the right';
+const codeText = ref(defaultCodeText);
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 
 const appendCode = (data: any, property: string) => {
-	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
+	const code = data.content[property] as string;
+	if (code) {
+		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+
+		if (property === 'executed_code') {
+			saveCodeToState(code, true);
+		}
+	} else {
+		logger.error('No code to append');
+	}
 };
 
 const syncWithMiraModel = (data: any) => {
@@ -168,19 +196,13 @@ const syncWithMiraModel = (data: any) => {
 
 // Reset model, then execute the code
 const runFromCodeWrapper = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
-		runFromCode();
+		runFromCode(editor?.getValue() as string);
 	});
 };
 
-const runFromCode = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
+const runFromCode = (code: string) => {
 	const messageContent = {
 		silent: false,
 		store_history: false,
@@ -200,18 +222,24 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			console.log('stream', data);
 		})
-		.register('error', (data) => {
-			logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			console.log('error', data.content);
-		})
 		.register('model_preview', (data) => {
 			if (!data.content) return;
-
 			syncWithMiraModel(data);
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
 			}
+		})
+		.register('any_execute_reply', (data) => {
+			let status = OperatorStatus.DEFAULT;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+			executeResponse.value = {
+				status,
+				name: data.msg.content.ename ? data.msg.content.ename : '',
+				value: data.msg.content.evalue ? data.msg.content.evalue : '',
+				traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+			};
 		});
 };
 
@@ -228,7 +256,7 @@ const handleResetResponse = (data: any) => {
 	if (data.content.success) {
 		// updateStratifyGroupForm(blankStratifyGroup);
 
-		codeText.value = '';
+		codeText.value = defaultCodeText;
 		saveCodeToState('', false);
 
 		logger.info('Model reset');
@@ -258,16 +286,22 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
+	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
+
 	// Create a new session and context based on model
 	try {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
 				// when coming from output dropdown change we should shutdown first
-				await kernelManager.shutdown();
+				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
+		}
+
+		if (codeText.value && codeText.value.length > 0) {
+			runFromCodeWrapper();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -293,13 +327,14 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 			id: uuidv4(),
 			label: modelName,
 			type: 'modelId',
+			state: _.cloneDeep(props.node.state),
 			value: [modelData.id]
 		});
 		emit('close');
 	}
 };
 
-const initialize = (editorInstance: any) => {
+const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
@@ -331,20 +366,16 @@ watch(
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
+
 			await inputChangeHandler();
 		}
 	},
 	{ immediate: true }
 );
 
-// Set model, modelConfiguration, modelNodeOptions
-watch(
-	() => props.node.inputs[0],
-	async () => {
-		await inputChangeHandler();
-	},
-	{ immediate: true }
-);
+onMounted(async () => {
+	await inputChangeHandler();
+});
 
 onUnmounted(() => {
 	kernelManager.shutdown();
@@ -352,7 +383,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* The wizard of this operator is atypical and needs the outside margins to be removed */
+/* The wizard of this operator is atypical and needs the outside margins to be removed
+	TODO: This case should be handled in the tera-drilldown component or something as it messes with the padding in the notebook tab */
 .overlay-container:deep(main) {
 	padding: 0 0 0 0;
 }
@@ -366,11 +398,15 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-#notebook-section:deep(main) {
+.notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
 }
 
+.notebook-section:deep(main .notebook-toolbar),
+.notebook-section:deep(main .ai-assistant) {
+	padding-left: var(--gap-medium);
+}
 .toolbar-right-side {
 	position: absolute;
 	top: var(--gap);
@@ -380,16 +416,18 @@ onUnmounted(() => {
 	align-items: center;
 }
 
-.ai-assistant-container {
-	margin-left: var(--gap);
-}
-
 .preview-container {
 	display: flex;
 	flex-direction: column;
 	padding: 1rem;
 }
 
+:deep(.diagram-container) {
+	height: calc(100vh - 270px) !important;
+}
+:deep(.resize-handle) {
+	display: none;
+}
 .input-small {
 	padding: 0.5rem;
 	width: 100%;

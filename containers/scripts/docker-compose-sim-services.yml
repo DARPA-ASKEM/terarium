@@ -1,6 +1,4 @@
 ---
-version: "3.9"
-
 services:
   sciml-service:
     container_name: sciml-service
@@ -35,13 +33,18 @@ services:
     ports:
       - "3040:8000"
     environment:
-      TDS_URL: "http://${local_host_name}:3000"
-      TDS_USER: "${secret_service_account_username}"
-      TDS_PASSWORD: "${secret_service_account_password}"
-      STANDALONE_MODE: "False"
       PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PASSWORD: "terarium123"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_SSL: "False"
+      RABBITMQ_USERNAME: "terarium"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+      STANDALONE_MODE: "False"
+      TDS_PASSWORD: "${secret_service_account_password}"
+      TDS_URL: "http://${local_host_name}:3000"
+      TDS_USER: "${secret_service_account_username}"
     depends_on:
       redis:
         condition: service_started
@@ -54,13 +57,18 @@ services:
     networks:
       - terarium
     environment:
-      TDS_URL: "http://${local_host_name}:3000"
-      TDS_USER: "${secret_service_account_username}"
-      TDS_PASSWORD: "${secret_service_account_password}"
-      STANDALONE_MODE: "False"
       PYCIEMSS_OUTPUT_FILEPATH: "result.csv"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PASSWORD: "terarium123"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_SSL: "False"
+      RABBITMQ_USERNAME: "terarium"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+      STANDALONE_MODE: "False"
+      TDS_PASSWORD: "${secret_service_account_password}"
+      TDS_URL: "http://${local_host_name}:3000"
+      TDS_USER: "${secret_service_account_username}"
     depends_on:
       redis:
         condition: service_started

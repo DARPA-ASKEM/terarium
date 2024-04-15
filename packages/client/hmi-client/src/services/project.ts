@@ -4,6 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
+import { b64EncodeUnicode } from '@/utils/binary';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
@@ -46,11 +47,12 @@ async function create(
 
 async function update(project: Project): Promise<Project | null> {
 	try {
-		const { id, name, description } = project;
+		const { id, name, description, overviewContent } = project;
 		const response = await API.put(`/projects/${id}`, {
 			id,
 			name,
-			description
+			description,
+			overviewContent: b64EncodeUnicode(overviewContent)
 		});
 		const { status, data } = response;
 		if (status !== 200) {
@@ -82,15 +84,15 @@ async function remove(projectId: Project['id']): Promise<boolean> {
  * Get all projects
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
-async function getAll(): Promise<Project[] | null> {
+async function getAll(): Promise<Project[]> {
 	try {
 		const response = await API.get(`/projects`);
 		const { status, data } = response;
-		if (status !== 200 || !data) return null;
+		if (status !== 200 || !data) return [];
 		return (data as Project[]).reverse();
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return [];
 	}
 }
 
@@ -178,33 +180,41 @@ async function getPermissions(projectId: Project['id']): Promise<PermissionRelat
 	}
 }
 
-async function setPermissions(projectId: Project['id'], userId: string, relationship: string) {
+async function setPermissions(
+	projectId: Project['id'],
+	userId: string,
+	relationship: string
+): Promise<boolean> {
 	try {
-		const { status, data } = await API.post(
+		const { status } = await API.post(
 			`projects/${projectId}/permissions/user/${userId}/${relationship}`
 		);
 		if (status !== 200) {
-			return null;
+			return false;
 		}
-		return data ?? null;
+		return true;
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return false;
 	}
 }
 
-async function removePermissions(projectId: Project['id'], userId: string, relationship: string) {
+async function removePermissions(
+	projectId: Project['id'],
+	userId: string,
+	relationship: string
+): Promise<boolean> {
 	try {
-		const { status, data } = await API.delete(
+		const { status } = await API.delete(
 			`projects/${projectId}/permissions/user/${userId}/${relationship}`
 		);
 		if (status !== 200) {
-			return null;
+			return false;
 		}
-		return data ?? null;
+		return true;
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return false;
 	}
 }
 
@@ -213,18 +223,18 @@ async function updatePermissions(
 	userId: string,
 	oldRelationship: string,
 	to: string
-): Promise<PermissionRelationships | null> {
+): Promise<boolean> {
 	try {
-		const { status, data } = await API.put(
+		const { status } = await API.put(
 			`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`
 		);
 		if (status !== 200) {
-			return null;
+			return false;
 		}
-		return data ?? null;
+		return true;
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return false;
 	}
 }
 

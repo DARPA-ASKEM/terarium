@@ -1,24 +1,27 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div>
 			<tera-drilldown-section :is-loading="isFetchingPDF">
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<tera-text-editor v-else-if="docText" :initial-text="docText" />
 			</tera-drilldown-section>
-			<tera-drilldown-preview hide-header>
+			<tera-drilldown-preview hide-header class="pt-3 pl-2 pr-4 pb-3">
 				<h5>{{ document?.name }}</h5>
-
-				<p class="clamp-text">{{ document?.text }}</p>
 				<Accordion multiple :active-index="[0, 1, 2]">
 					<AccordionTab v-if="!isEmpty(clonedState.equations)">
 						<template #header>
-							<header>Equation Images</header>
+							<header>Equation images</header>
 						</template>
 						<tera-asset-block
 							v-for="(equation, i) in clonedState.equations"
 							:key="i"
 							:is-included="equation.includeInProcess"
 							@update:is-included="onUpdateInclude(equation)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ equation.name }}</h5>
@@ -28,13 +31,14 @@
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.figures)">
 						<template #header>
-							<header>Figure Images</header>
+							<header>Figure images</header>
 						</template>
 						<tera-asset-block
 							v-for="(figure, i) in clonedState.figures"
 							:key="i"
 							:is-included="figure.includeInProcess"
 							@update:is-included="onUpdateInclude(figure)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ figure.name }}</h5>
@@ -44,19 +48,23 @@
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(clonedState.tables)">
 						<template #header>
-							<header>Table Images</header>
+							<header>Table images</header>
 						</template>
 						<tera-asset-block
 							v-for="(table, i) in clonedState.tables"
 							:key="i"
 							:is-included="table.includeInProcess"
 							@update:is-included="onUpdateInclude(table)"
+							class="mb-2"
 						>
 							<template #header>
 								<h5>{{ table.name }}</h5>
 							</template>
 							<Image id="img" :src="getAssetUrl(table)" :alt="''" preview />
 						</tera-asset-block>
+					</AccordionTab>
+					<AccordionTab v-if="!isEmpty(document?.text)" header="Text">
+						<tera-show-more-text :text="document?.text ?? ''" :lines="5" />
 					</AccordionTab>
 				</Accordion>
 				<template #footer?>
@@ -88,6 +96,8 @@ import Image from 'primevue/image';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['close', 'update-state', 'update-output-port']);
@@ -127,13 +137,11 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 	const portType = assetTypeToPortType(asset.asset.assetType);
 	if (!portType) return;
 
-	outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === portType)) || null;
+	outputPort = cloneDeep(props.node.outputs?.find((port) => port.type === 'documentId')) || null;
 	if (!outputPort) return;
-	const selected = clonedState.value[portType]?.filter((a) => a.includeInProcess) ?? [];
-	outputPort.label = `${portType} (${selected?.length}/${clonedState.value[portType]?.length})`;
 	outputPort.value = [
 		{
-			documentId: outputPort.value?.[0]?.documentId,
+			...outputPort.value?.[0],
 			[portType]: clonedState.value[portType]
 		}
 	];
@@ -168,15 +176,3 @@ watch(
 	{ deep: true }
 );
 </script>
-
-<style scoped>
-.clamp-text {
-	font-size: var(--font-caption);
-	font-weight: var(--font-weight-semibold);
-	max-height: 2em;
-	color: var(--gray-700);
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
-}
-</style>

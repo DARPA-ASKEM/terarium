@@ -92,7 +92,7 @@ export const addNode = (
 			value: null
 		})),
 	  */
-		status: OperatorStatus.INVALID,
+		status: OperatorStatus.DEFAULT,
 
 		width: nodeSize.width,
 		height: nodeSize.height
@@ -218,6 +218,12 @@ export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	node.state = state;
 };
 
+export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorStatus) => {
+	const node = wf.nodes.find((d) => d.id === nodeId);
+	if (!node) return;
+	node.status = status;
+};
+
 // Get port label for frontend
 const defaultPortLabels = {
 	modelId: 'Model',
@@ -331,6 +337,17 @@ export class WorkflowRegistry {
 	}
 }
 
+export function cascadeInvalidateDownstream(
+	sourceNode: WorkflowNode<any>,
+	nodeCache: Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>
+) {
+	const downstreamNodes = nodeCache.get(sourceNode.id);
+	downstreamNodes?.forEach((node) => {
+		node.status = OperatorStatus.INVALID;
+		cascadeInvalidateDownstream(node, nodeCache); // Recurse
+	});
+}
+
 ///
 // Operator
 ///
@@ -345,25 +362,61 @@ export class WorkflowRegistry {
  */
 
 export function selectOutput(
+	wf: Workflow,
 	operator: WorkflowNode<any>,
 	selectedWorkflowOutputId: WorkflowOutput<any>['id']
 ) {
 	operator.outputs.forEach((output) => {
 		output.isSelected = false;
+		output.status = WorkflowPortStatus.NOT_CONNECTED;
 	});
 
 	// Update the Operator state with the selected one
 	const selected = operator.outputs.find((output) => output.id === selectedWorkflowOutputId);
-	if (selected) {
-		selected.isSelected = true;
-		operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
-		operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
-		operator.active = selected.id;
-	} else {
+	if (!selected) {
 		logger.warn(
 			`Operator Output Id ${selectedWorkflowOutputId} does not exist within ${operator.displayName} Operator ${operator.id}.`
 		);
+		return;
 	}
+
+	selected.isSelected = true;
+	operator.state = Object.assign(operator.state, _.cloneDeep(selected.state));
+	operator.status = selected.operatorStatus ?? OperatorStatus.DEFAULT;
+	operator.active = selected.id;
+
+	// If this output is connected to input port(s), update the input port(s)
+	const hasOutgoingEdges = wf.edges.some((edge) => edge.source === operator.id);
+	if (!hasOutgoingEdges) return;
+
+	selected.status = WorkflowPortStatus.CONNECTED;
+
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
+		wf.nodes.map((node) => [node.id, node])
+	);
+	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
+	nodeCache.set(operator.id, []);
+
+	wf.edges.forEach((edge) => {
+		// Update the input port of the direct target node
+		if (edge.source === operator.id) {
+			const targetNode = wf.nodes.find((node) => node.id === edge.target);
+			if (!targetNode) return;
+			// Update the input port of the target node
+			const targetPort = targetNode.inputs.find((port) => port.id === edge.targetPortId);
+			if (!targetPort) return;
+			edge.sourcePortId = selected.id; // Sync edge source port to selected output
+			targetPort.label = selected.label;
+			targetPort.value = selected.value;
+		}
+
+		// Collect node cache
+		if (!edge.source || !edge.target) return;
+		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
+		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
+	});
+
+	cascadeInvalidateDownstream(operator, nodeCache);
 }
 
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {

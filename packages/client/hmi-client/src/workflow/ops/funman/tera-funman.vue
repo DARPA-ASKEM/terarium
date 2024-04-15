@@ -1,13 +1,17 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<div :tabName="FunmanTabs.Wizard">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
+		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
 				<main>
-					<h4 class="primary-text">
+					<h5>
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
-					</h4>
-					<p class="secondary-text">
+					</h5>
+					<p class="secondary-text mt-1">
 						The validator will use these parameters to execute the sanity checks.
 					</p>
 					<div class="section-row timespan">
@@ -26,69 +30,89 @@
 					</div>
 					<InputText
 						:disabled="true"
-						class="p-inputtext-sm timespan-list"
+						class="p-inputtext-sm timespan-list mb-2"
 						v-model="requestStepListString"
 					/>
-					<h4
-						class="primary-text green-text"
-						v-if="!showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					>
-						<i class="pi pi-angle-right" /> Show additional options
-					</h4>
-					<h4
-						class="primary-text green-text"
-						v-if="showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					>
-						<i class="pi pi-angle-down" /> Hide additional options
-					</h4>
-					<div v-if="showAdditionalOptions">
-						<div class="button-column">
-							<label>Compartmental constraints</label>
-							<InputSwitch v-model="knobs.useCompartmentalConstraint" />
-						</div>
+					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
-							<InputNumber
-								mode="decimal"
-								:min="0"
-								:max="1"
-								:min-fraction-digits="0"
-								:max-fraction-digits="7"
-								v-model="knobs.tolerance"
-							/>
+							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
+								<tera-input-number
+									class="w-2"
+									:min="0"
+									:max="1"
+									:min-fraction-digits="0"
+									:max-fraction-digits="7"
+									v-model="knobs.tolerance"
+								/>
+								<Slider
+									v-model="knobs.tolerance"
+									:min="0"
+									:max="1"
+									:step="0.01"
+									class="w-full mr-2"
+								/>
+							</div>
 						</div>
-						<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" />
-						<div class="section-row">
+						<div class="section-row fadein animation-duration-600">
 							<!-- This will definitely require a proper tool tip. -->
-							<label>Select parameters of interest<i class="pi pi-info-circle" /></label>
+							<label class="w-auto mr-2"
+								>Select parameters of interest <i class="pi pi-info-circle"
+							/></label>
 							<MultiSelect
 								ref="columnSelect"
 								:modelValue="variablesOfInterest"
 								:options="requestParameters.map((d: any) => d.name)"
 								:show-toggle-all="false"
+								class="w-auto"
 								@update:modelValue="onToggleVariableOfInterest"
 								:maxSelectedLabels="1"
 								placeholder="Select variables"
 							/>
 						</div>
-					</div>
+					</template>
+					<Button
+						text
+						icon="pi pi-eye"
+						label="Show additional options"
+						size="small"
+						v-if="!showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					/>
+					<Button
+						text
+						icon="pi pi-eye-slash"
+						label="Hide additional options"
+						size="small"
+						v-if="showAdditionalOptions"
+						@click="toggleAdditonalOptions"
+					/>
+
 					<div class="spacer">
-						<h4>Add sanity checks</h4>
-						<p>Model configurations will be tested against these constraints</p>
+						<h5>Add sanity checks</h5>
+						<p class="secondary-text mt-1">
+							Model configurations will be tested against these constraints.
+						</p>
 					</div>
+					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index"
+						:key="index + Date.now()"
 						:config="cfg"
 						:index="index"
-						:model-node-options="modelNodeOptions"
+						:model-states="modelStates"
+						:model-parameters="modelParameters"
 						@delete-self="deleteConstraintGroupForm"
 						@update-self="updateConstraintGroupForm"
 					/>
-
-					<Button label="Add another constraint" size="small" @click="addConstraintForm" />
+					<Button
+						class="add-constraint-spacer"
+						text
+						icon="pi pi-plus"
+						label="Add another constraint"
+						size="small"
+						@click="addConstraintForm"
+					/>
 				</main>
 			</tera-drilldown-section>
 		</div>
@@ -108,12 +132,17 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
+				class="pt-3 pb-3 pl-2 pr-4"
 			>
-				<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
-				<div v-else>
-					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					<h4>No Output</h4>
-				</div>
+				<template v-if="showSpinner">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+				</template>
+				<template v-else>
+					<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
+					<div v-else class="flex flex-column h-full justify-content-center">
+						<tera-operator-placeholder :operation-type="node.operationType" />
+					</div>
+				</template>
 			</tera-drilldown-preview>
 		</template>
 
@@ -125,28 +154,34 @@
 				label="Run"
 				icon="pi pi-play"
 				@click="runMakeQuery"
+				size="large"
 			/>
-			<Button outlined label="Save as a new model" />
-			<Button label="Close" @click="emit('close')" />
+			<Button outlined label="Save as a new model" size="large" />
+			<Button label="Close" @click="emit('close')" size="large" />
 		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
 import _, { floor } from 'lodash';
-import { computed, ref, watch, onUnmounted } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
-import InputSwitch from 'primevue/inputswitch';
 
 import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
+import TeraCompartmentConstraint from '@/components/funman/tera-compartment-constraint.vue';
+
 import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import type {
 	FunmanPostQueriesRequest,
@@ -154,13 +189,12 @@ import type {
 	ModelConfiguration,
 	ModelParameter
 } from '@/types/Types';
-import { getQueries, makeQueries } from '@/services/models/funman-service';
+import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import { Poller, PollerState } from '@/api/api';
 import { pythonInstance } from '@/python/PyodideController';
-import { FunmanOperationState, ConstraintGroup, FunmanOperation } from './funman-operation';
+import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
@@ -196,24 +230,54 @@ const knobs = ref<BasicKnobs>({
 	useCompartmentalConstraint: false
 });
 
+const mass = ref('0');
+
 const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
+const MAX = 99999999999;
 const requestConstraints = computed(
 	() =>
 		// Same as node state's except typing for state vs linear constraint
 		props.node.state.constraintGroups?.map((ele) => {
+			if (ele.constraintType === 'monotonicityConstraint') {
+				const weights = ele.weights ? ele.weights : [1.0];
+				const constraint: any = {
+					soft: true,
+					name: ele.name,
+					timepoints: null,
+					additive_bounds: {
+						lb: 0.0,
+						// ub: 0.0,
+						// closed_upper_bound: true,
+						original_width: MAX
+					},
+					variables: ele.variables,
+					weights: weights.map((d) => -Math.abs(d)), // should be all negative
+					derivative: true
+				};
+
+				if (ele.derivativeType === 'increasing') {
+					// delete constraint.additive_bounds.closed_upper_bound;
+					// delete constraint.additive_bounds.ub;
+					// constraint.additive_bounds.lb = 0;
+					constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
+				}
+				return constraint;
+			}
+
 			if (ele.timepoints) {
 				ele.timepoints.closed_upper_bound = true;
 			}
 			if (ele.variables.length === 1) {
 				// State Variable Constraint
-				return {
+				const singleVarConstraint = {
 					name: ele.name,
 					variable: ele.variables[0],
 					interval: ele.interval,
 					timepoints: ele.timepoints
 				};
+				return singleVarConstraint;
 			}
 
 			return {
@@ -230,7 +294,10 @@ const requestConstraints = computed(
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
 const modelConfiguration = ref<ModelConfiguration>();
-const modelNodeOptions = ref<string[]>([]); // Used for form's multiselect.
+
+const modelStates = ref<string[]>([]); // Used for form's multiselect.
+const modelParameters = ref<string[]>([]);
+
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -245,8 +312,6 @@ const outputs = computed(() => {
 });
 
 const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
-
-const poller = new Poller();
 
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
@@ -290,7 +355,6 @@ const runMakeQuery = async () => {
 				}
 			],
 			config: {
-				// use_compartmental_constraints: true,
 				use_compartmental_constraints: knobs.value.useCompartmentalConstraint,
 				normalization_constant: 1,
 				tolerance: knobs.value.tolerance
@@ -301,68 +365,16 @@ const runMakeQuery = async () => {
 	// Calculate the normalization mass of the model = Sum(initials)
 	const semantics = model.value.semantics;
 	if (knobs.value.useCompartmentalConstraint && semantics) {
-		const modelInitials = semantics.ode.initials;
-		const modelMassExpression = modelInitials?.map((d) => d.expression).join(' + ');
-
-		const parametersMap = {};
-		semantics.ode.parameters?.forEach((d) => {
-			parametersMap[d.id] = d.value;
-		});
-
-		const mass = await pythonInstance.evaluateExpression(
-			modelMassExpression as string,
-			parametersMap
-		);
-
 		if (request.request.config) {
-			request.request.config.normalization_constant = parseFloat(mass);
+			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
 	const response = await makeQueries(request);
-	getStatus(response.id);
-};
 
-const getStatus = async (runId: string) => {
-	showSpinner.value = true;
-
-	poller
-		.setInterval(3000)
-		.setThreshold(100)
-		.setPollAction(async () => {
-			const response = await getQueries(runId);
-			if (response.done && response.done === true) {
-				return { data: response } as any;
-			}
-			return { data: null } as any;
-		});
-	const pollerResults = await poller.start();
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		console.error(`Funman: ${runId} has failed`);
-		throw Error('Failed Funman validation');
-	}
-	showSpinner.value = false;
-	addOutputPorts(runId);
-};
-
-const addOutputPorts = async (runId: string) => {
-	const portLabel = props.node.inputs[0].label;
-	emit('append-output', {
-		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
-		type: FunmanOperation.outputs[0].type,
-		value: runId,
-		state: _.cloneDeep(props.node.state)
-	});
-	if (props.node.outputs.length === 1) {
-		const portId = props.node.outputs[0].id;
-		emit('select-output', portId);
-	}
+	// Setup the in-progress id
+	const state = _.cloneDeep(props.node.state);
+	state.inProgressId = response.id;
+	emit('update-state', state);
 };
 
 const addConstraintForm = () => {
@@ -371,7 +383,9 @@ const addConstraintForm = () => {
 		borderColour: '#00c387',
 		name: '',
 		timepoints: { lb: 0, ub: 100 },
-		variables: []
+		variables: [],
+		constraintType: '',
+		derivativeType: ''
 	};
 	state.constraintGroups.push(newGroup);
 	emit('update-state', state);
@@ -385,6 +399,7 @@ const deleteConstraintGroupForm = (data) => {
 
 const updateConstraintGroupForm = (data) => {
 	const state = _.cloneDeep(props.node.state);
+
 	state.constraintGroups[data.index] = data.updatedConfig;
 	emit('update-state', state);
 };
@@ -415,21 +430,44 @@ const initialize = async () => {
 const setModelOptions = async () => {
 	if (!model.value) return;
 
-	const initialVars = model.value.semantics?.ode.initials?.map((d) => d.expression);
-	const modelColumnNameOptions: string[] = model.value.model.states.map((state: any) => state.id);
+	const renameReserved = (v: string) => {
+		const reserved = ['lambda'];
+		if (reserved.includes(v)) return `${v}_`;
+		return v;
+	};
 
-	model.value.semantics?.ode.parameters?.forEach((param) => {
-		if (initialVars?.includes(param.id)) return;
-		modelColumnNameOptions.push(param.id);
+	// Calculate mass
+	const semantics = model.value.semantics;
+	const modelInitials = semantics?.ode.initials;
+	const modelMassExpression = modelInitials?.map((d) => renameReserved(d.expression)).join(' + ');
+
+	const parametersMap = {};
+	semantics?.ode.parameters?.forEach((d) => {
+		parametersMap[renameReserved(d.id)] = d.value;
 	});
 
+	const massValue = await pythonInstance.evaluateExpression(
+		modelMassExpression as string,
+		parametersMap
+	);
+	mass.value = massValue;
+
+	if (model.value.model.states) {
+		modelStates.value = model.value.model.states.map((s) => s.id);
+	}
+
+	if (model.value.semantics?.ode.parameters) {
+		modelParameters.value = model.value.semantics?.ode.parameters.map((d) => d.id);
+	}
+
+	// FIXME
 	// observables are not currently supported
 	// if (modelConfiguration.value.configuration.semantics?.ode?.observables) {
 	// 	modelConfiguration.value.configuration.semantics.ode.observables.forEach((o) => {
 	// 		modelColumnNameOptions.push(o.id);
 	// 	});
 	// }
-	modelNodeOptions.value = modelColumnNameOptions;
+	// modelStates.value = modelColumnNameOptions;
 
 	const state = _.cloneDeep(props.node.state);
 	knobs.value.numberOfSteps = state.numSteps;
@@ -451,6 +489,7 @@ const setModelOptions = async () => {
 	emit('update-state', state);
 };
 
+// eslint-disable-next-line
 const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	const previous = props.node.state.requestParameters;
 	if (previous && previous.length > 0) {
@@ -478,6 +517,18 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+watch(
+	() => props.node.state.inProgressId,
+	(id) => {
+		if (!id || id === '') {
+			showSpinner.value = false;
+		} else {
+			showSpinner.value = true;
+		}
+	},
+	{ immediate: true }
+);
+
 /* Check for simple parameter changes */
 watch(
 	() => knobs.value,
@@ -497,7 +548,7 @@ watch(
 watch(
 	() => props.node.inputs[0],
 	async () => {
-		// Set model, modelConfiguration, modelNodeOptions
+		// Set model, modelConfiguration, modelStates
 		await initialize();
 		setModelOptions();
 	},
@@ -516,20 +567,19 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onUnmounted(() => {
-	poller.stop();
-});
 </script>
 
 <style scoped>
 .primary-text {
+	display: flex;
+	align-items: center;
 	color: var(--Text-Primary, #020203);
 	/* Body Medium/Semibold */
-	font-size: 1rem;
+	font-size: var(--font-body-medium);
 	font-style: normal;
 	font-weight: 600;
 	line-height: 1.5rem;
+	padding: 0.25rem 0rem 0rem 0rem;
 	/* 150% */
 	letter-spacing: 0.03125rem;
 }
@@ -537,7 +587,7 @@ onUnmounted(() => {
 .secondary-text {
 	color: var(--Text-Secondary, #667085);
 	/* Body Small/Regular */
-	font-size: 0.875rem;
+	font-size: var(--font-body-small);
 	font-style: normal;
 	font-weight: 400;
 	line-height: 1.3125rem;
@@ -548,7 +598,7 @@ onUnmounted(() => {
 .button-column {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem 0rem 0.5rem 0rem;
+	padding: var(--gap-small) 0 var(--gap-small) 0;
 	align-items: flex-start;
 	align-self: stretch;
 }
@@ -559,6 +609,16 @@ onUnmounted(() => {
 	align-items: center;
 	gap: 0.8125rem;
 	align-self: stretch;
+}
+
+.input-tolerance {
+	display: flex;
+	padding: var(--gap-small) 0 var(--gap-small) 0;
+	width: 100%;
+	align-items: center;
+	gap: 0.8125rem;
+	align-self: stretch;
+	gap: 1.5rem;
 }
 
 .timespan > .button-column {
@@ -576,6 +636,11 @@ div.section-row.timespan > div > span {
 .spacer {
 	margin-top: 1rem;
 	margin-bottom: 1rem;
+}
+
+.add-constraint-spacer {
+	margin-top: 0.5rem;
+	margin-bottom: 2rem;
 }
 
 .green-text {

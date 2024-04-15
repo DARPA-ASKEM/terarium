@@ -1,36 +1,59 @@
 <template>
-	<div>
-		<section class="jupyter-response">
-			<div class="menu-container">
+	<section class="jupyter-response">
+		<section>
+			<section class="menu-container">
 				<!-- Button to show chat window menu -->
 				<Button
-					v-if="msg.query"
+					v-if="query && !isEditingQuery"
 					icon="pi pi-ellipsis-v tool"
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click.stop="showChatWindowMenu"
 				/>
 				<Menu ref="chatWindowMenu" :model="chatWindowMenuItems" :popup="true" />
-			</div>
-			<div ref="resp" class="resp">
-				<section class="query-title">
-					<div class="query">{{ msg.query }}</div>
-					<div class="date">
-						<!-- Show eye icon if the message has a related query -->
-						<span class="show-hide-thought" v-if="msg.query" @click="showHideThought">
-							<i class="pi pi-eye thought-icon"></i>
-							Show/Hide Thought
-						</span>
-						{{ msg.timestamp }}
-					</div>
-					<div v-if="props.isExecutingCode">Executing....</div>
-				</section>
-				<div v-for="m in msg.messages" :key="m.header.msg_id">
-					<!-- Handle llm_response type -->
-					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
-						<div style="padding-top: 1rem">
-							<h5>Agent's response:</h5>
-							<div class="llm-response">{{ m.content['text'] }}</div>
+			</section>
+			<section ref="resp" class="resp">
+				<section>
+					<section>
+						<div class="query edit-query-box" v-if="isEditingQuery">
+							<Textarea
+								v-focus
+								v-model="query"
+								autoResize
+								rows="1"
+								@click.stop
+								@keydown.enter.prevent="saveEditingQuery"
+								@keydown.esc.prevent="cancelEditingQuery"
+							/>
+							<div class="btn-group">
+								<Button icon="pi pi-times" rounded text @click="cancelEditingQuery" />
+								<Button icon="pi pi-play" rounded text @click="saveEditingQuery" />
+							</div>
 						</div>
+						<div v-else-if="!isEmpty(query)" class="query">{{ query }}</div>
+					</section>
+					<!-- TODO: This processing notification was applied to all messages, not just the one that is processing. Need to add id check. -->
+					<div v-if="props.isExecutingCode" class="executing-message">
+						<span class="pi pi-spinner pi-spin" />Processing
+					</div>
+				</section>
+
+				<!-- Loop through the messages and display them -->
+				<div v-for="m in msg.messages" :key="m.header.msg_id">
+					<!-- Handle llm_thought type -->
+					<div v-if="m.header.msg_type === 'llm_thought'">
+						<tera-jupyter-response-thought
+							class="llm-thought"
+							:thought="formattedLlmThought(m.content)"
+							:show-thought="showThought || props.showChatThoughts"
+						/>
+					</div>
+					<!-- Handle llm_response type -->
+					<div
+						v-else-if="
+							m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'
+						"
+					>
+						<div class="llm-response">{{ m.content['text'] }}</div>
 					</div>
 					<!-- Handle stream type for stderr -->
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stderr'">
@@ -53,66 +76,37 @@
 							:autorun="true"
 							:notebook-item-id="msg.query_id"
 							context="dataset"
-							:context_info="{ id: props.assetId }"
+							:context_info="{ id: props.assetId, query: msg.query }"
+							@deleteRequested="onDeleteRequested(m.header.msg_id)"
 						/>
 					</div>
-
-					<!-- Show dataset preview if available -->
-					<Accordion
-						:active-index="props.autoExpandPreview ? 0 : -1"
-						v-if="
-							m.header.msg_type === 'dataset' ||
-							(m.header.msg_type === 'model_preview' && m.content.data['image/png'])
-						"
-					>
-						<AccordionTab header="Preview (click to collapse/expand)">
-							<div>
-								Dataset to preview:
-								<Dropdown
-									v-model="selectedPreviewDataset"
-									:options="Object.keys(m.content).map(String)"
-									@change="previewSelected"
-								/>
-							</div>
-							<tera-dataset-datatable
-								v-if="m.header.msg_type === 'dataset'"
-								class="tera-dataset-datatable"
-								paginatorPosition="bottom"
-								:rows="10"
-								:raw-content="m.content[selectedPreviewDataset || 'df'] as CsvAsset"
-								:preview-mode="true"
-								:showGridlines="true"
-								table-style="width: 100%; font-size: small;"
-							/>
-							<!-- Show preview image if available -->
-							<img
-								v-else-if="m.header.msg_type === 'model_preview' && m.content.data['image/png']"
-								:src="`data:image/png;base64,${m.content.data['image/png']}`"
-								alt="Preview of model network graph"
-							/>
-						</AccordionTab>
-					</Accordion>
 				</div>
-			</div>
+			</section>
 		</section>
-	</div>
+	</section>
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
-import Dropdown from 'primevue/dropdown';
 import TeraBeakerCodeCell from '@/components/llm/tera-beaker-response-code-cell.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-beaker-response-thought.vue';
 import Button from 'primevue/button';
+import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
-import { ref, computed, onMounted, watch } from 'vue';
+import { defineEmits, ref, computed, onMounted, watch } from 'vue';
 import type { CsvAsset } from '@/types/Types';
-import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
-const emit = defineEmits(['cell-updated', 'preview-selected', 'update-kernel-state']);
+const emit = defineEmits([
+	'cell-updated',
+	'preview-selected',
+	'update-kernel-state',
+	'edit-prompt',
+	're-run-prompt',
+	'delete-prompt',
+	'delete-message'
+]);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
@@ -128,29 +122,33 @@ const props = defineProps<{
 	assetId?: string;
 	autoExpandPreview?: boolean;
 	defaultPreview?: string;
+	index: Number; // Index of the cell in the notebookItems list
 }>();
 
 const codeCell = ref(null);
 const resp = ref(<HTMLElement | null>null);
-const selectedPreviewDataset = ref(props.defaultPreview);
 // Reference for showThought, initially set to false
 const showThought = ref(false);
 
+const query = ref('');
+const isEditingQuery = ref(false);
+
 // Computed values for the labels and icons
-const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show Reasoning'));
+const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show reasoning'));
 const showHideIcon = computed(() =>
 	showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'
 );
 
-const showHideThought = () => {
-	showThought.value = !showThought.value;
-};
-
 // Reference for the chat window menu and its items
 const chatWindowMenu = ref();
 const chatWindowMenuItems = ref([
-	{ label: 'Edit prompt', command: () => console.log('Edit prompt') },
-	{ label: 'Re-run answer', command: () => console.log('Re-run prompt') },
+	{
+		label: 'Edit prompt',
+		command: () => {
+			isEditingQuery.value = true;
+		}
+	},
+	{ label: 'Re-run answer', command: () => emit('re-run-prompt', props.msg.query_id) },
 	{
 		label: showThoughtLabel,
 		icon: showHideIcon,
@@ -158,11 +156,21 @@ const chatWindowMenuItems = ref([
 			showThought.value = !showThought.value;
 		}
 	},
-	{ label: 'Delete', icon: 'pi pi-fw pi-trash', command: () => console.log('Delete prompt') }
+	{
+		label: 'Delete',
+		icon: 'pi pi-fw pi-trash',
+		command: () => emit('delete-prompt', props.msg.query_id)
+	}
 ]);
 
-const previewSelected = () => {
-	emit('preview-selected', selectedPreviewDataset.value);
+const saveEditingQuery = () => {
+	emit('edit-prompt', props.msg.query_id, query.value);
+	isEditingQuery.value = false;
+};
+
+const cancelEditingQuery = () => {
+	query.value = props.msg.query ?? '';
+	isEditingQuery.value = false;
 };
 
 // show the chat window menu
@@ -184,6 +192,15 @@ const formattedThought = (input: string) => {
 	return formattedLines.join('\n\n'); // Combine the formatted lines into a single string with an extra newline between each
 };
 
+const formattedLlmThought = (input: { [key: string]: string }) => {
+	// make pretty text for the thought
+	const formattedLines = Object.keys(input).map((key) => {
+		const category = toTitleCase(key);
+		return `${category}\n${input[key]}`;
+	});
+	return formattedLines.join('\n\n');
+};
+
 // Function to convert a string to Title Case
 function toTitleCase(str: string): string {
 	return str
@@ -195,26 +212,64 @@ function toTitleCase(str: string): string {
 }
 
 onMounted(() => {
+	query.value = props.msg.query ?? '';
 	emit('cell-updated', resp.value, props.msg);
 });
 
 watch(
 	() => props.msg.messages,
 	() => {
-		emit('cell-updated', resp.value, props.msg);
+		emit('cell-updated', resp.value, props.msg, 'delete-cell');
 	}
 );
 
 defineExpose({
 	codeCell
 });
+
+function onDeleteRequested(msgId: string) {
+	// Emit an event to request the deletion of a message with the specified msgId
+	emit('delete-message', msgId);
+}
+
+// // This computed value filters the messages to only include the ones we want to display
+// const filteredMessages = computed(() => props.msg.messages.filter(m =>
+//   (m.header.msg_type === 'llm_response' && m.content.name === 'response_text') ||
+//   (m.header.msg_type === 'stream' && m.content.name === 'stderr') ||
+//   (m.header.msg_type === 'stream' && m.content.name === 'stdout') ||
+//   (m.header.msg_type === 'code_cell')
+// ));
 </script>
 
 <style scoped>
 .query {
-	font-size: 24px;
+	font-size: var(--font-body-medium);
+	font-weight: 600;
 	font-family: var(--font-family);
-	padding-bottom: 5px;
+	padding-bottom: var(--gap);
+	padding-left: 60px;
+	/* Add ai-assistant icon */
+	background-image: url('@assets/svg/icons/message.svg');
+	background-repeat: no-repeat;
+	background-position: 4px 3px;
+}
+.edit-query-box {
+	display: flex;
+	flex-direction: row;
+	padding-bottom: 2px;
+	textarea {
+		flex-grow: 1;
+	}
+}
+
+.executing-message {
+	display: none;
+	color: var(--text-color-subdued);
+	font-size: var(--font-body-small);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: var(--gap-small);
 }
 
 .error {
@@ -225,13 +280,14 @@ defineExpose({
 
 .jupyter-response {
 	position: relative;
-	padding: 5px;
+	margin: var(--gap);
+	padding: var(--gap-small);
 	display: flex;
 	flex-direction: column;
-	background-color: var(--gray-100);
 	font-family: var(--font-family);
-	border-radius: 3px;
+	border-radius: var(--border-radius);
 	margin-top: 10px;
+	background-color: var(--surface-0);
 	transition:
 		background-color 0.3s,
 		border 0.3s;
@@ -239,8 +295,8 @@ defineExpose({
 }
 
 .jupyter-response:hover {
-	background-color: var(--gray-300);
-	border: 1px solid var(--gray-800);
+	background-color: var(--surface-50);
+	border: 1px solid var(--surface-border-light);
 }
 
 .jupyter-response .menu-container {
@@ -257,22 +313,23 @@ defineExpose({
 	right: 10px;
 }
 
-.llm-response {
-	padding-top: 0.7rem;
+.llm-thought {
+	padding-left: 60px;
+	padding-right: 2rem;
+	padding-bottom: var(--gap-small);
 	white-space: pre-wrap;
-	color: black;
+	color: var(--text-color-subdued);
 }
 
-.date {
-	font-family: var(--font-family);
-}
-
-.show-hide-thought {
-	font-size: small;
-	color: gray;
-}
-
-.thought-icon {
-	padding: 5px;
+.llm-response {
+	padding-left: 60px;
+	padding-right: 2rem;
+	padding-bottom: var(--gap-small);
+	white-space: pre-wrap;
+	color: var(--text-color);
+	/* Add ai-assistant magic icon */
+	background-image: url('@assets/svg/icons/magic.svg');
+	background-repeat: no-repeat;
+	background-position: 4px 2px;
 }
 </style>

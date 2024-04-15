@@ -1,6 +1,7 @@
 <template>
 	<section :class="{ center: isCentered }">
 		<i class="pi pi-spin pi-spinner" :style="{ fontSize: fontSize + 'rem' }"></i>
+		<p :class="{ inline: isInline }"><slot /></p>
 	</section>
 </template>
 
@@ -13,16 +14,25 @@ defineProps({
 	isCentered: {
 		type: Boolean,
 		default: false
+	},
+	isInline: {
+		type: Boolean,
+		default: false
 	}
 });
 </script>
 
 <style scoped>
+p.inline {
+	display: inline;
+}
+
 .center {
 	display: flex;
 	flex: 1;
 	justify-content: center;
 	align-items: center;
+	flex-direction: column;
 }
 
 i {

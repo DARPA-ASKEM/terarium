@@ -1,16 +1,19 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 @Data
+@EqualsAndHashCode(callSuper = true)
 @AMRSchemaType
 @Accessors(chain = true)
 public class Card extends SupportAdditionalProperties implements Serializable {
@@ -60,4 +63,12 @@ public class Card extends SupportAdditionalProperties implements Serializable {
 	@JsonAlias("LICENSE")
 	@TSOptional
 	private String license;
+
+	@JsonAlias("ASSUMPTIONS")
+	@TSOptional
+	private String assumptions;
+
+	@JsonAlias("STRENGTHS")
+	@TSOptional
+	private String strengths;
 }

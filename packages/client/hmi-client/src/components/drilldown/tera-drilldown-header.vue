@@ -2,8 +2,8 @@
 	<header>
 		<div class="title-row">
 			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
-
-			<a :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<slot name="inputs" />
+			<!-- <a :href="documentationUrl" rel="noopener noreferrer">Documentation</a> -->
 			<Button
 				class="close-mask"
 				icon="pi pi-times"
@@ -14,16 +14,12 @@
 			/>
 		</div>
 		<div class="tabs-row">
-			<TabView
-				v-if="views.length > 1"
-				:active-index="activeIndex"
-				@tab-change="onTabChange"
-				class="mr-auto"
-			>
+			<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">
 				<TabPanel v-for="(view, index) in views" :key="index" :header="view" />
 			</TabView>
-
-			<slot name="action-row" />
+			<div class="actions">
+				<slot name="actions" />
+			</div>
 		</div>
 	</header>
 </template>
@@ -50,7 +46,7 @@ const onTabChange = (event: TabViewChangeEvent) => {
 header {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--gap-small);
 	background-color: var(--surface-highlight);
 	padding-top: 1rem;
 	padding-left: 1.5rem;
@@ -60,6 +56,7 @@ header {
 header > * {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 }
 
 .title-row > h4 > i {
@@ -76,6 +73,12 @@ header > * {
 	color: var(--text-color-primary);
 }
 
+header .tabs-row {
+	justify-content: space-between;
+	align-items: end;
+	gap: var(--gap);
+}
+
 header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 	padding: 0;
 }
@@ -84,9 +87,9 @@ a {
 	height: 3rem;
 	display: flex;
 	align-items: center;
-	padding-right: 1.5rem;
 	color: var(--primary-color);
 	margin-left: auto;
+	margin-right: var(--gap);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {
@@ -95,6 +98,14 @@ a {
 
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
 	background-color: var(--surface-section);
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--gap-small);
+	padding-bottom: var(--gap-small);
+	flex: 1;
 }
 
 .close-mask {

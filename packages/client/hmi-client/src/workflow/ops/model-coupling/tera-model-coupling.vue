@@ -1,7 +1,13 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="ModelCouplingTabgs.Wizard">
-			<tera-drilldown-section> </tera-drilldown-section>
+			<tera-drilldown-section class="ml-4 mr-2 mt-3"
+				>Coming soon. Use the notebook tab for now.</tera-drilldown-section
+			>
 		</div>
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
@@ -45,7 +51,7 @@
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview>
+			<tera-drilldown-preview class="mt-3 ml-2 mr-4 mb-2">
 				<div>
 					<div v-if="modelCouplingResult">
 						{{ modelCouplingResult }}
@@ -56,28 +62,30 @@
 					</div>
 				</div>
 				<template #footer>
-					<InputText
-						v-model="newModelName"
-						placeholder="model name"
-						type="text"
-						class="input-small white-space-nowrap"
-					/>
-					<div class="w-full flex gap-2 justify-content-end">
-						<Button
-							:disabled="!modelCouplingResult"
-							outlined
-							class="white-space-nowrap"
-							size="large"
-							label="Save as new model"
-							@click="
-								() =>
-									saveNewModel(newModelName, {
-										addToProject: true,
-										appendOutputPort: true
-									})
-							"
+					<div class="footer">
+						<InputText
+							v-model="newModelName"
+							placeholder="model name"
+							type="text"
+							class="input-small white-space-nowrap"
 						/>
-						<Button label="Close" size="large" @click="emit('close')" />
+						<div class="w-full flex gap-2 justify-content-end">
+							<Button
+								:disabled="!modelCouplingResult"
+								outlined
+								class="white-space-nowrap"
+								size="large"
+								label="Save as new model"
+								@click="
+									() =>
+										saveNewModel(newModelName, {
+											addToProject: true,
+											appendOutputPort: true
+										})
+								"
+							/>
+							<Button label="Close" size="large" @click="emit('close')" />
+						</div>
 					</div>
 				</template>
 			</tera-drilldown-preview>
@@ -96,6 +104,7 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -308,6 +317,18 @@ const languages = ref([{ name: 'Julia' }, { name: 'Python' }]);
 	display: flex;
 	flex-direction: row;
 	gap: 1rem;
+	padding: var(--gap);
+	padding-bottom: 0;
 	justify-content: space-between;
+}
+
+.footer {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+	padding-bottom: var(--gap-small);
+	padding-top: 0;
+	justify-content: space-between;
+	width: 100%;
 }
 </style>

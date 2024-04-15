@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,7 +23,6 @@ import java.util.List;
 @TSModel
 public class Dataset extends TerariumAsset {
 
-
 	@Serial
 	private static final long serialVersionUID = 6927286281160755696L;
 	/**
@@ -30,6 +30,12 @@ public class Dataset extends TerariumAsset {
 	 **/
 	@TSOptional
 	private String userId;
+
+	/**
+	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
+	 **/
+	@TSOptional
+	private String esgfId;
 
 	/**
 	 * Name of the dataset
@@ -58,10 +64,17 @@ public class Dataset extends TerariumAsset {
 
 	/**
 	 * (Optional) Url from which the dataset can be downloaded/fetched
+	 * TODO: IS THIS NEEDED? IS THIS FROM OLD TDS? https://github.com/DARPA-ASKEM/terarium/issues/3194
 	 **/
 	@TSOptional
 	@JsonAlias("dataset_url")
 	private String datasetUrl;
+
+	/**
+	 *  (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets
+	 */
+	@TSOptional
+	private List<String> datasetUrls;
 
 	/**
 	 * Information regarding the columns that make up the dataset
@@ -73,7 +86,8 @@ public class Dataset extends TerariumAsset {
 	 * (Optional) Unformatted metadata about the dataset
 	 **/
 	@TSOptional
-	private Object metadata;
+	private JsonNode metadata;
+
 
 	/**
 	 * (Optional) Source of dataset

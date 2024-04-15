@@ -12,7 +12,7 @@
 					class="asset-filters"
 					v-if="
 						resourceType === ResourceType.XDD &&
-						source === 'XDD' &&
+						source === DocumentSource.XDD &&
 						(asset as Document).knownEntities?.askemObjects
 					"
 				>
@@ -77,7 +77,11 @@
 		</main>
 		<aside>
 			<tera-carousel
-				v-if="resourceType === ResourceType.XDD && source === 'XDD' && !isEmpty(extractions)"
+				v-if="
+					resourceType === ResourceType.XDD &&
+					source === DocumentSource.XDD &&
+					!isEmpty(extractions)
+				"
 				is-numeric
 				height="6rem"
 				width="8rem"
@@ -137,6 +141,7 @@ import type {
 	Document
 } from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
+import { DocumentSource } from '@/types/search';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
@@ -217,7 +222,7 @@ const title = computed(() => {
 	let value = '';
 	if (props.resourceType === ResourceType.XDD) {
 		value =
-			props.source === 'XDD'
+			props.source === DocumentSource.XDD
 				? (props.asset as Document).title
 				: (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
@@ -259,7 +264,7 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // Return formatted author, year, journal
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
-	if (props.resourceType === ResourceType.XDD && props.source === 'XDD') {
+	if (props.resourceType === ResourceType.XDD && props.source === DocumentSource.XDD) {
 		const details = `${(props.asset as Document).author.map((a) => a.name).join(', ')} (${
 			(props.asset as Document).year
 		}) ${(props.asset as Document).journal}`;

@@ -1,22 +1,25 @@
-import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflow';
-// import type { CalibrationRequest } from '@/types/Types';
-// import { makeCalibrateJob } from '@/services/models/simulation-service';
-import { getModel } from '@/services/model';
-import { ChartConfig } from '@/types/SimulateConfig';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 
-export interface CalibrationOperationStateCiemss {
-	chartConfigs: ChartConfig[];
+export interface CalibrationOperationStateCiemss extends BaseState {
+	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
 
+	inProgressCalibrationId: string;
+	inProgressForecastId: string;
+	errorMessage: { name: string; value: string; traceback: string };
+
 	calibrationId: string;
-	simulationId: string;
+	forecastId: string;
+	numIterations: number;
+	numSamples: number;
+	endTime: number;
 }
 
 export const CalibrationOperationCiemss: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION_CIEMSS,
-	displayName: 'Calibrate & Simulate (probabilistic)',
+	displayName: 'Calibrate with PyCIEMSS',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [
@@ -26,36 +29,21 @@ export const CalibrationOperationCiemss: Operation = {
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (v: WorkflowPort[]) => {
-		// TODO Add more safety checks.
-		if (v.length) {
-			// TODO: The mapping is not 0 -> modelId as i am assuming here for testing
-			const modelId = v[0].value?.[0];
-			// let datasetId = v[1].value;
-			// let configuration = v[2].value; //TODO Not sure if this is a required input
-
-			// Get the model:
-			const model = await getModel(modelId);
-			if (model) {
-				// Make calibration job.
-				// const calibrationParam: CalibrationRequest = calibrationParamExample;
-				// const result = makeCalibrateJob(calibrationParam);
-				// return [{ type: 'number', result }];
-				return [{ type: null, value: null }];
-			}
-		}
-		return [{ type: null, value: null }];
-	},
+	action: async () => {},
 
 	initState: () => {
 		const init: CalibrationOperationStateCiemss = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
+			inProgressCalibrationId: '',
+			inProgressForecastId: '',
 			calibrationId: '',
-			simulationId: ''
+			forecastId: '',
+			errorMessage: { name: '', value: '', traceback: '' },
+			numIterations: 100,
+			numSamples: 100,
+			endTime: 100
 		};
 		return init;
 	}

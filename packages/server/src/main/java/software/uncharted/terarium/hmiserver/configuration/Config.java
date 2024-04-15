@@ -10,10 +10,12 @@ import org.springframework.context.annotation.Configuration;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium")
+@EnableScheduling
 @Data
 @Accessors(chain = true)
 @NoArgsConstructor
@@ -94,6 +96,7 @@ public class Config {
 	String artifactPath;
 	String documentPath;
 	String codePath;
+	String imagePath;
 
 	@Data
 	@Accessors(chain = true)

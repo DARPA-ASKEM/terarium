@@ -6,16 +6,32 @@ import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 
 export interface NodeData {
 	type: string;
+	expression?: string;
 	strataType?: string;
 }
 
 export interface EdgeData {
 	numEdges: number;
+	isController?: boolean;
 }
 
 export enum NodeType {
 	State = 'state',
 	Transition = 'transition'
+}
+
+const FONT_SIZE_SMALL = 18;
+const FONT_SIZE_REGULAR = 24;
+const FONT_SIZE_LARGE = 36;
+
+function setFontSize(label: string) {
+	if (label.length < 3) {
+		return FONT_SIZE_LARGE;
+	}
+	if (label.length < 10) {
+		return FONT_SIZE_REGULAR;
+	}
+	return FONT_SIZE_SMALL;
 }
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
@@ -77,13 +93,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		const species = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
 
-		const strataTypes: string[] = [];
-		selection.each((d) => {
-			const strataType = d.data.strataType;
-			if (strataType && !strataTypes.includes(strataType)) {
-				strataTypes.push(strataType as string);
-			}
-		});
 		// transitions
 		transitions
 			.append('rect')
@@ -104,8 +113,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions label text
 		transitions
 			.append('text')
-			.attr('y', () => 5)
+			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
@@ -114,7 +127,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions expression text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height / 2 - 5)
+			.attr('y', (d) => -d.height / 2 - 8)
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
 			.style('stroke', '#FFF')
@@ -123,10 +139,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
 			.html((d) => {
-				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
-				if (rate) {
-					return rate.expression;
-				}
+				if (d.data.expression) return d.data.expression;
 				return '';
 			});
 
@@ -145,8 +158,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// species text
 		species
 			.append('text')
-			.attr('y', () => 5)
+			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
+			.style('font-family', 'STIX Two Text, serif')
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
@@ -161,7 +178,16 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke', EDGE_COLOR)
 			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 3)
-			.attr('marker-end', 'url(#arrowhead)');
+			.style('stroke-dasharray', (d) => {
+				if (d.data && d.data.isController === true) {
+					return 4;
+				}
+				return null;
+			})
+			.attr('marker-end', (d) => {
+				if (d.data && d.data.isController) return null;
+				return 'url(#arrowhead)';
+			});
 
 		this.updateMultiEdgeLabels();
 	}
@@ -179,7 +205,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.classed('multi-edge-label', true)
 				.attr('x', point.x)
 				.attr('y', point.y + 6)
-				.style('font-size', 18)
+				.style('font-family', 'STIX Two Text, serif')
+				.style('font-style', 'italic')
+				.style('font-size', FONT_SIZE_REGULAR)
 				.style('paint-order', 'stroke')
 				.style('stroke', 'var(--gray-50)')
 				.style('stroke-width', '6px')

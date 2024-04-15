@@ -1,7 +1,7 @@
 import type { TimeSpan } from '@/types/Types';
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export interface SimulateCiemssOperationState {
+export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
 	chartConfigs: string[][];
 
@@ -9,16 +9,20 @@ export interface SimulateCiemssOperationState {
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	method: string;
-	simulationsInProgress: string[];
+
+	// In progress
+	inProgressSimulationId: string;
+
+	errorMessage: { name: string; value: string; traceback: string };
 }
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
-	displayName: 'Simulate (probabilistic)',
+	displayName: 'Simulate with PyCIEMSS',
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false }
+		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
@@ -26,10 +30,11 @@ export const SimulateCiemssOperation: Operation = {
 	initState: () => {
 		const init: SimulateCiemssOperationState = {
 			chartConfigs: [],
-			currentTimespan: { start: 1, end: 100 },
+			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			method: 'dopri5',
-			simulationsInProgress: []
+			inProgressSimulationId: '',
+			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
 	},

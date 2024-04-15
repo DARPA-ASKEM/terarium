@@ -15,13 +15,14 @@
 			/>
 		</template>
 		<template #edit-buttons>
+			<span v-if="model" class="ml-auto">{{ model.header.schema_name }}</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
 					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="toggleOptionsMenu"
 				/>
-				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</template>
 		</template>
 		<tera-model-description
@@ -35,23 +36,25 @@
 			@update-model="updateModelContent"
 			@update-configuration="updateConfiguration"
 			@fetch-model="fetchModel"
+			class="pl-1 pr-1"
 		/>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { watch, PropType, ref, computed } from 'vue';
-import { isEmpty, cloneDeep } from 'lodash';
+import { computed, PropType, ref, watch } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import Menu from 'primevue/menu';
-import { updateModelConfiguration, addDefaultConfiguration } from '@/services/model-configurations';
-import { getModel, updateModel, getModelConfigurations, isModelEmpty } from '@/services/model';
+import ContextMenu from 'primevue/contextmenu';
+import { addDefaultConfiguration, updateModelConfiguration } from '@/services/model-configurations';
+import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import { logger } from '@/utils/logger';
 
 const props = defineProps({
 	assetId: {
@@ -88,7 +91,7 @@ const toggleOptionsMenu = (event) => {
 
 // User menu
 const optionsMenu = ref();
-const optionsMenuItems = ref([
+const optionsMenuItems = computed(() => [
 	{
 		icon: 'pi pi-pencil',
 		label: 'Rename',
@@ -96,16 +99,37 @@ const optionsMenuItems = ref([
 			isRenaming.value = true;
 			newName.value = model.value?.header.name ?? '';
 		}
+	},
+	{
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items:
+			useProjects()
+				.allProjects.value?.filter(
+					(project) => project.id !== useProjects().activeProject.value?.id
+				)
+				.map((project) => ({
+					label: project.name,
+					command: async () => {
+						const response = await useProjects().addAsset(
+							AssetType.Model,
+							props.assetId,
+							project.id
+						);
+						if (response) logger.info(`Added asset to ${project.name}`);
+					}
+				})) ?? []
 	}
+
 	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
 	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
 async function updateModelContent(updatedModel: Model) {
 	await updateModel(updatedModel);
+	await useProjects().refresh();
 	setTimeout(async () => {
 		await getModelWithConfigurations(); // elastic search might still not update in time
-		useProjects().refresh();
 	}, 800);
 }
 

@@ -1,14 +1,16 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -24,35 +26,54 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.*;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDRequest;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.AddDocumentAssetFromXDDResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
+import software.uncharted.terarium.hmiserver.models.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.models.documentservice.responses.XDDResponse;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
-import software.uncharted.terarium.hmiserver.proxies.knowledge.KnowledgeMiddlewareProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 
 @RequestMapping("/document-asset")
 @RestController
@@ -67,10 +88,9 @@ public class DocumentController {
 	final SkemaRustProxy skemaRustProxy;
 
 	final JsDelivrProxy gitHubProxy;
+	final DocumentProxy documentProxy;
 
 	final DownloadService downloadService;
-
-	final KnowledgeMiddlewareProxy knowledgeMiddlewareProxy;
 
 	private final ProjectService projectService;
 	private final ProjectAssetService projectAssetService;
@@ -78,22 +98,24 @@ public class DocumentController {
 	final DocumentAssetService documentAssetService;
 
 	final ObjectMapper objectMapper;
+	final ExtractionService extractionService;
 
 	@Value("${xdd.api-key}")
 	String apikey;
+
+	@Value("${xdd.api-es-key}")
+	String api_es_key;
 
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all documents")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Documents found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no documents found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving documents from the data store", content = @Content)
 	})
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
-	) {
+			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(documentAssetService.getAssets(page, pageSize));
 		} catch (final IOException e) {
@@ -113,8 +135,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> createDocument(
-			@RequestBody DocumentAsset document
-	) {
+			@RequestBody DocumentAsset document) {
 
 		try {
 			document = documentAssetService.createAsset(document);
@@ -137,9 +158,8 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the document", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> updateDocument(
-		@PathVariable("id") final UUID id,
-		@RequestBody final DocumentAsset document
-	) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final DocumentAsset document) {
 
 		// if the document asset does not have an id, set it to the id in the path
 		if (document.getId() == null) {
@@ -148,14 +168,15 @@ public class DocumentController {
 
 		try {
 			final Optional<DocumentAsset> originalDocument = documentAssetService.getAsset(id);
-			if(originalDocument.isEmpty()) {
+			if (originalDocument.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			// Preserve ownership. This may be coming from KM which doesn't have an awareness of who owned this document.
+			// Preserve ownership. This may be coming from KM which doesn't have an
+			// awareness of who owned this document.
 			document.setUserId(originalDocument.get().getUserId());
 
-			final Optional<DocumentAsset> updatedDoc = documentAssetService.updateAsset(document);
-			return updatedDoc.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -170,12 +191,11 @@ public class DocumentController {
 	@Operation(summary = "Gets document by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Document found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class))),
-			@ApiResponse(responseCode = "204", description = "There was no document found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no document found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the document from the data store", content = @Content)
 	})
 	public ResponseEntity<DocumentAsset> getDocument(
-			@PathVariable("id") final UUID id
-	) {
+			@PathVariable("id") final UUID id) {
 
 		try {
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(id);
@@ -226,8 +246,7 @@ public class DocumentController {
 	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final UUID id,
-			@RequestParam("filename") final String filename
-	) {
+			@RequestParam("filename") final String filename) {
 
 		try {
 			return ResponseEntity.ok(documentAssetService.getUploadUrl(id, filename));
@@ -250,8 +269,7 @@ public class DocumentController {
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id,
-			@RequestParam("filename") final String filename
-	) {
+			@RequestParam("filename") final String filename) {
 
 		try {
 			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
@@ -271,12 +289,10 @@ public class DocumentController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Delete document", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
-			@PathVariable("id") final UUID id
-	) {
+			@PathVariable("id") final UUID id) {
 
 		try {
 			documentAssetService.deleteAsset(id);
@@ -346,8 +362,7 @@ public class DocumentController {
 	public ResponseEntity<Void> uploadDocument(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") final MultipartFile file
-	) {
+			@RequestPart("file") final MultipartFile file) {
 
 		try {
 			final byte[] fileAsBytes = file.getBytes();
@@ -377,14 +392,13 @@ public class DocumentController {
 			@PathVariable("documentId") final UUID documentId,
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-			@RequestParam("filename") final String filename
-	) {
+			@RequestParam("filename") final String filename) {
 
 		log.debug("Uploading Document file from github to dataset {}", documentId);
 
 		// download file from GitHub
 		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		if(fileString == null) {
+		if (fileString == null) {
 			final String error = "Unable to download document from github";
 			log.error(error);
 			throw new ResponseStatusException(
@@ -402,23 +416,16 @@ public class DocumentController {
 			@ApiResponse(responseCode = "201", description = "Uploaded the document.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AddDocumentAssetFromXDDResponse.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 	})
-	public ResponseEntity<AddDocumentAssetFromXDDResponse> createDocumentFromXDD(
-			@RequestBody final AddDocumentAssetFromXDDRequest body
-	) {
+	public ResponseEntity<Void> createDocumentFromXDD(
+			@RequestBody final AddDocumentAssetFromXDDRequest body) {
 
 		try {
-			// build initial response
-			final AddDocumentAssetFromXDDResponse response = new AddDocumentAssetFromXDDResponse();
-			response.setExtractionJobId(null);
-			response.setPdfUploadError(false);
-			response.setDocumentAssetId(null);
-
 			// get preliminary info to build document asset
 			final Document document = body.getDocument();
 			final UUID projectId = body.getProjectId();
 			final String doi = DocumentAsset.getDocumentDoi(document);
 			final Optional<Project> project = projectService.getProject(projectId);
-			if(project.isEmpty()) {
+			if (project.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 			final String userId = project.get().getUserId();
@@ -432,40 +439,54 @@ public class DocumentController {
 					null,
 					null, apikey);
 
-			// create a new document asset from the metadata in the xdd document
-			final DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
-					extractionResponse.getSuccess().getData());
-			if (filename != null)
+			final String summaries = getSummaries(doi);
+
+			// create a new document asset from the metadata in the xdd document and write
+			// it to the db
+			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(document, userId,
+					extractionResponse.getSuccess().getData(), summaries);
+			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
-
-			// Upload the document to TDS in order to get a new ID to pair our files we want
-			// to upload with.
-			final UUID newDocumentAssetId = documentAssetService.createAsset(documentAsset).getId();
-			response.setDocumentAssetId(newDocumentAssetId);
-
-			// Upload the PDF from unpaywall
-			final String extractionJobId = uploadPDFFileToDocumentThenExtract(doi, filename, newDocumentAssetId);
-			if (extractionJobId == null)
-				response.setPdfUploadError(true);
-			else
-				response.setExtractionJobId(extractionJobId);
-
-			// Now upload additional extraction files
-			uploadXDDExtractions(newDocumentAssetId, extractionResponse.getSuccess().getData());
+				documentAsset = documentAssetService.updateAsset(documentAsset).orElseThrow();
+			}
 
 			// add asset to project
-			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, newDocumentAssetId);
+			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
 
+			// Upload the PDF from unpaywall
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId(), body.getDomain());
 
-			return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
+			return ResponseEntity.accepted().build();
 		} catch (final IOException | URISyntaxException e) {
-			final String error = "Unable to upload document from github";
+			final String error = "Unable to upload document from xdd";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
 					error);
 		}
+	}
+
+	private String getSummaries(final String doi) {
+		final String known_entities = "askem_object,url_extractions,summaries";
+		final XDDResponse<DocumentsResponseOK> xddSummaries = documentProxy.getDocuments(api_es_key,
+				null, doi, null, null, null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null, known_entities, null, null, null);
+
+		if (xddSummaries.getErrorMessage() != null) {
+			return null;
+
+		}
+
+		if (xddSummaries.getSuccess() == null || xddSummaries.getSuccess().getData().isEmpty()) {
+			return null;
+		}
+
+		if (xddSummaries.getSuccess().getData().size() > 0) {
+			if (xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().size() > 0) {
+				return xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().get(0).toString();
+			}
+		}
+		return null;
 	}
 
 	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -477,8 +498,7 @@ public class DocumentController {
 	})
 	public ResponseEntity<byte[]> downloadDocument(
 			@PathVariable("id") final UUID id,
-			@RequestParam("filename") final String filename
-	) {
+			@RequestParam("filename") final String filename) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
@@ -513,8 +533,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue downloading the document", content = @Content)
 	})
 	public ResponseEntity<String> getDocumentFileAsText(@PathVariable("id") final UUID documentId,
-			@RequestParam("filename") final String filename
-	) {
+			@RequestParam("filename") final String filename) {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);
 
@@ -558,8 +577,7 @@ public class DocumentController {
 			@ApiResponse(responseCode = "500", description = "There was an issue creating equation", content = @Content)
 	})
 	public ResponseEntity<String> postImageToEquation(@PathVariable("id") final UUID documentId,
-			@RequestParam("filename") final String filename
-	) {
+			@RequestParam("filename") final String filename) {
 		try {
 			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
 			if (url.isEmpty()) {
@@ -575,7 +593,12 @@ public class DocumentController {
 
 			// mathML -> LaTeX
 			final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
-			return ResponseEntity.ok(latex);
+
+			// Add spaces before and after "*"
+			String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
+			latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
+
+			return ResponseEntity.ok(latexWithSpaces);
 		} catch (final Exception e) {
 			final String error = "Unable to convert image to equation";
 			log.error(error, e);
@@ -593,17 +616,17 @@ public class DocumentController {
 	 * @param extractions list of extractions associated with the document
 	 * @return document asset
 	 */
-	private static DocumentAsset createDocumentAssetFromXDDDocument(
+	private DocumentAsset createDocumentAssetFromXDDDocument(
 			final Document document,
 			final String userId,
-			final List<Extraction> extractions
-	) {
+			final List<Extraction> extractions,
+			final String summary) throws IOException {
 		final String name = document.getTitle();
 
 		// create document asset
 		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName(name);
-		documentAsset.setDescription(name);
+		documentAsset.setDescription(summary);
 		documentAsset.setUserId(userId);
 		documentAsset.setFileNames(new ArrayList<>());
 
@@ -631,47 +654,7 @@ public class DocumentController {
 			documentAsset.getMetadata().put("github_urls", document.getGithubUrls());
 		}
 
-		return documentAsset;
-	}
-
-	/**
-	 * Uploads the extractions associated with an XDD document
-	 *
-	 * @param docId       document id
-	 * @param extractions list of extractions associated with the document
-	 */
-	private void uploadXDDExtractions(final UUID docId, final List<Extraction> extractions) {
-
-		if (extractions != null) {
-			for (int i = 0; i < extractions.size(); i++) {
-				final Extraction extraction = extractions.get(i);
-				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
-						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
-						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
-					final String filename = "extraction_" + i + ".png";
-
-					try (final CloseableHttpClient httpclient = HttpClients.custom()
-							.disableRedirectHandling()
-							.build()) {
-						final String image = extraction.getProperties().getImage();
-						if (image != null) {
-							final byte[] imageAsBytes = Base64.getDecoder()
-									.decode(image.getBytes(StandardCharsets.UTF_8));
-							final HttpEntity fileEntity = new ByteArrayEntity(imageAsBytes,
-									ContentType.APPLICATION_OCTET_STREAM);
-							final PresignedURL presignedURL = documentAssetService.getUploadUrl(docId, filename);
-
-							final HttpPut put = new HttpPut(presignedURL.getUrl());
-							put.setEntity(fileEntity);
-
-							httpclient.execute(put);
-						}
-					} catch (final Exception e) {
-						throw new RuntimeException(e);
-					}
-				}
-			}
-		}
+		return documentAssetService.createAsset(documentAsset);
 	}
 
 	/**
@@ -683,16 +666,17 @@ public class DocumentController {
 	 * @param docId    document id
 	 * @return extraction job id
 	 */
-	private String uploadPDFFileToDocumentThenExtract(final String doi, final String filename, final UUID docId) {
+	private void uploadPDFFileToDocumentThenExtract(final String doi, final String filename,
+			final UUID docId, final String domain) {
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build()) {
-
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
 			// if this service fails, return ok with errors
 			if (fileAsBytes == null || fileAsBytes.length == 0) {
-				return null;
+				log.debug("Document has not data, empty bytes, exit early.");
+				return;
 			}
 
 			// upload pdf to document asset
@@ -703,24 +687,21 @@ public class DocumentController {
 			final HttpResponse pdfUploadResponse = httpclient.execute(put);
 
 			if (pdfUploadResponse.getStatusLine().getStatusCode() >= HttpStatus.BAD_REQUEST.value()) {
-				return null;
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+						"Unable to upload document");
 			}
 
 			// fire and forgot pdf extractions
-			final JsonNode res = knowledgeMiddlewareProxy.postPDFToCosmos(docId.toString()).getBody();
-
-			if(res == null || res.get("id") == null) {
-				final String error = "Returned response from knowledge middleware is null";
-				log.error(error);
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						error);
-			}
-			return res.get("id").asText();
-
+			extractionService.extractPDF(docId, domain);
+		} catch (final ResponseStatusException e) {
+			log.error("Unable to upload PDF document then extract", e);
+			throw e;
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
-			return null;
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to upload document");
 		}
 	}
 }

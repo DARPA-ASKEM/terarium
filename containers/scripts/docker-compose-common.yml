@@ -1,9 +1,23 @@
 ---
-version: "3.9"
-
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - terarium
+    ports:
+      - "6379:6379"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   minio:
-    image: quay.io/minio/minio:RELEASE.2023-11-15T20-43-25Z
+    image: minio/minio:RELEASE.2024-03-15T01-07-19Z
     container_name: minio
     command: [ "server", "/data", "--console-address", ":9090" ]
     healthcheck:
@@ -108,7 +122,7 @@ services:
 
   spicedb:
     container_name: spicedb
-    image: authzed/spicedb:v1.28.0
+    image: authzed/spicedb:v1.30.0
     networks:
       - terarium
     ports:
@@ -132,7 +146,7 @@ services:
 
   migrate-spicedb:
     container_name: migrate-spicedb
-    image: authzed/spicedb:v1.28.0
+    image: authzed/spicedb:v1.30.0
     networks:
       - terarium
     command: [ "migrate", "head" ]
@@ -175,3 +189,7 @@ volumes:
   minio-data:
   terarium-db:
     driver: local
+
+networks:
+  terarium:
+    name: terarium

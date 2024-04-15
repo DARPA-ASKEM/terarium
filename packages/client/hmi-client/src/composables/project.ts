@@ -2,7 +2,7 @@
 	Use `activeProject` to get the active project in your component. It is read only and should not be directly modified.
 	`activeProject` can be refreshed by calling `getProject`
 	Use the functions in this composable to make modifications to the project and to add/remove assets from it.
-	Using these functions guarantees that such changes propogate to all components using `activeProject`.
+	Using these functions guarantees that such changes propagate to all components using `activeProject`.
 	Using the resource store for project data is no longer needed.
 */
 
@@ -92,6 +92,18 @@ export function useProjects() {
 			}, TIMEOUT_MS);
 		}
 		return newAssetId;
+	}
+
+	/**
+	 * Get the name of an asset from the active project.
+	 * @param {ProjectAsset['assetId]} assetId
+	 * @returns {ProjectAsset['assetName']}
+	 */
+	function getAssetName(assetId: ProjectAsset['assetId']): ProjectAsset['assetName'] {
+		const asset = activeProject.value?.projectAssets.find(
+			(projectAsset) => projectAsset.assetId === assetId
+		);
+		return asset?.assetName ?? '';
 	}
 
 	/**
@@ -248,6 +260,7 @@ export function useProjects() {
 		getAll,
 		getActiveProjectAssets,
 		addAsset,
+		getAssetName,
 		deleteAsset,
 		create,
 		update,

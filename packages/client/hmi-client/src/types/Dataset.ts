@@ -1,10 +1,13 @@
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
+import { DatasetSource } from './search';
 import { Filters } from './Filter';
 
 export type DatasetSearchParams = {
 	filters?: Filters;
 	related_search_id?: string;
 	related_search_enabled?: boolean; // if true, then perform a search by example by finding related datasets
+	source: DatasetSource;
+	topic: string;
 };
 
 //

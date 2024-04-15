@@ -56,15 +56,17 @@
 				</template>
 				<p v-html="formattedAbstract" />
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(doc?.knownEntities?.summaries)">
+			<AccordionTab v-if="!isEmpty(sectionSummaries)">
 				<template #header>
-					<header id="Section-Summaries">Section Summaries</header>
+					<header id="Section-Summaries">Section summaries</header>
 				</template>
 				<ul>
-					<li v-for="(section, index) of doc.knownEntities.summaries" :key="index">
-						<h6>{{ index }}</h6>
-						<p v-html="highlightSearchTerms(section[index])" />
-					</li>
+					<template v-for="section in sectionSummaries">
+						<li v-for="(entries, index) in Object.entries(section)" :key="index">
+							<h6>{{ entries[0] }}</h6>
+							<p v-html="highlightSearchTerms(entries[1] as string)" />
+						</li>
+					</template>
 				</ul>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(figures)">
@@ -241,12 +243,12 @@ import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ResultType, FeatureConfig, CodeRequest } from '@/types/common';
-import { getRelatedArtifacts } from '@/services/provenance';
+// import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import type { Model, Extraction, Document, Dataset } from '@/types/Types';
-import { ProvenanceType } from '@/types/Types';
+// import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
@@ -337,6 +339,9 @@ const otherUrls = computed(() =>
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
+const sectionSummaries = computed(
+	() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []
+);
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 const otherExtractions = computed(() => {
 	const exclusion = [
@@ -390,12 +395,13 @@ const fetchDocumentArtifacts = async () => {
 };
 
 const fetchAssociatedResources = async () => {
-	if (doc.value) {
-		const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
-		associatedResources.value = results;
-	} else {
-		associatedResources.value = [];
-	}
+	// if (doc.value) {
+	// TODO: getRelatedArtifacts and down the chain are expecting a UUID not an xddUri as the first parameter, (how) do we fix this?
+	// const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
+	// associatedResources.value = results;
+	// } else {
+	associatedResources.value = [];
+	// }
 };
 
 /*
@@ -455,7 +461,10 @@ watch(
 			pdfLink.value = null;
 			pdfIsLoading.value = true;
 			pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
-			if (!pdfLink.value && !linkIsPDF()) viewOptions.value[1] = notFoundOption;
+			if (!pdfLink.value && !linkIsPDF()) {
+				// TODO: the document cannot be added to a project
+				viewOptions.value[1] = notFoundOption;
+			}
 			pdfIsLoading.value = false;
 		}
 	},

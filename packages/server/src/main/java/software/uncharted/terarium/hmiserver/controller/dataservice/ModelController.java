@@ -1,5 +1,27 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,25 +34,20 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
-
-import java.io.IOException;
-import java.util.*;
 
 @RequestMapping("/models")
 @RestController
@@ -46,12 +63,13 @@ public class ModelController {
 
 	final ObjectMapper objectMapper;
 
+	final DatasetService datasetService;
+
 	@GetMapping("/descriptions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model descriptions")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model descriptions found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no descriptions found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving descriptions from the data store", content = @Content)
 	})
 	public ResponseEntity<List<ModelDescription>> listModels(
@@ -74,7 +92,7 @@ public class ModelController {
 	@Operation(summary = "Gets a model description by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model description found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class))),
-			@ApiResponse(responseCode = "204", description = "There was no description found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the description from the data store", content = @Content)
 	})
 	ResponseEntity<ModelDescription> getDescription(
@@ -82,7 +100,7 @@ public class ModelController {
 
 		try {
 			final Optional<ModelDescription> model = modelService.getDescription(id);
-			return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get model description";
 			log.error(error, e);
@@ -97,7 +115,6 @@ public class ModelController {
 	@Operation(summary = "Gets a model by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))),
-			@ApiResponse(responseCode = "204", description = "There was no model found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the model from the data store", content = @Content)
 	})
 	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
@@ -117,9 +134,14 @@ public class ModelController {
 			body.setTypes(List.of(ProvenanceType.DOCUMENT));
 			final Set<String> documentIds = provenanceSearchService.modelsFromDocument(body);
 			if (!documentIds.isEmpty()) {
+				// Make sure we have a metadata object
+				if (model.get().getMetadata() == null) {
+					model.get().setMetadata(new ModelMetadata());
+				}
 				// Make sure we have an attributes list
-				if (model.get().getMetadata().getAttributes() == null)
+				if (model.get().getMetadata().getAttributes() == null) {
 					model.get().getMetadata().setAttributes(new ArrayList<>());
+				}
 
 				documentIds.forEach(documentId -> {
 					try {
@@ -127,13 +149,22 @@ public class ModelController {
 						final Optional<DocumentAsset> document = documentAssetService
 								.getAsset(UUID.fromString(documentId));
 						if (document.isPresent()) {
+							if (document.get().getMetadata() == null) {
+								document.get().setMetadata(new HashMap<>());
+							}
 							final List<JsonNode> extractions = objectMapper.convertValue(
-								document.get().getMetadata().get("attributes"), new TypeReference<>() {});
+									document.get().getMetadata().get("attributes"), new TypeReference<>() {
+									});
 
 							// Append the Document extractions to the Model extractions, just for the
 							// front-end.
 							// Those are NOT to be saved back to the data-service.
-							model.get().getMetadata().getAttributes().addAll(extractions);
+							if (extractions != null) {
+								model.get().getMetadata().getAttributes().addAll(extractions);
+							} else {
+								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.",
+										documentId);
+							}
 						}
 					} catch (final Exception e) {
 						log.error("Unable to get the document " + documentId, e);
@@ -159,7 +190,6 @@ public class ModelController {
 	@Operation(summary = "Search models with a query")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Models found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no models found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving models from the data store", content = @Content)
 	})
 	public ResponseEntity<List<Model>> searchModels(
@@ -192,6 +222,9 @@ public class ModelController {
 
 		try {
 			model.setId(id);
+			// Set the model name from the AMR header name.
+			// TerariumAsset have a name field, but it's not used for the model name outside
+			// the front-end.
 			final Optional<Model> updated = modelService.updateAsset(model);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -209,7 +242,6 @@ public class ModelController {
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Deleted model", content = {
 					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
 	ResponseEntity<ResponseDeleted> deleteModel(
@@ -238,6 +270,10 @@ public class ModelController {
 			@RequestBody Model model) {
 
 		try {
+			// Set the model name from the AMR header name.
+			// TerariumAsset have a name field, but it's not used for the model name outside
+			// the front-end.
+			model.setName(model.getHeader().getName());
 			model = modelService.createAsset(model);
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (final IOException e) {
@@ -254,7 +290,6 @@ public class ModelController {
 	@Operation(summary = "Gets all model configurations for a model")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Model configurations found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)))),
-			@ApiResponse(responseCode = "204", description = "There are no configurations found and no errors occurred", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving configurations from the data store", content = @Content)
 	})
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
@@ -263,25 +298,26 @@ public class ModelController {
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize) {
 
 		try {
-			final List<ModelConfiguration> modelConfigurations = modelService.getModelConfigurationsByModelId(id, page, pageSize);
+			final List<ModelConfiguration> modelConfigurations = modelService.getModelConfigurationsByModelId(id, page,
+					pageSize);
 
 			modelConfigurations.forEach(config -> {
 				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
-				
-				// check if configuration has a metadata field, if it doesnt make it an empty object
+
+				// check if configuration has a metadata field, if it doesnt make it an empty
+				// object
 				if (configuration.get("metadata") == null) {
 					((ObjectNode) configuration).putObject("metadata");
 				}
 
-
 				// Find the Document Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam body = new ProvenanceQueryParam();
-				body.setRootId(config.getId());
-				body.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				body.setTypes(List.of(ProvenanceType.DOCUMENT));
-				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(body);
+				final ProvenanceQueryParam documentQueryParams = new ProvenanceQueryParam();
+				documentQueryParams.setRootId(config.getId());
+				documentQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+				documentQueryParams.setTypes(List.of(ProvenanceType.DOCUMENT));
+				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(documentQueryParams);
 
-				List<String> documentSourceNames = new ArrayList<String>();
+				final List<String> documentSourceNames = new ArrayList<>();
 				documentIds.forEach(documentId -> {
 					try {
 						// Fetch the Document extractions
@@ -295,9 +331,36 @@ public class ModelController {
 						log.error("Unable to get the document " + documentId, e);
 					}
 				});
+
+				// Find the Dataset Assets linked via provenance to the model configuration
+				final ProvenanceQueryParam datasetQueryParams = new ProvenanceQueryParam();
+				datasetQueryParams.setRootId(config.getId());
+				datasetQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
+				datasetQueryParams.setTypes(List.of(ProvenanceType.DATASET));
+				final Set<String> datasetIds = provenanceSearchService.modelConfigFromDataset(datasetQueryParams);
+
+				final List<String> datasetSourceNames = new ArrayList<>();
+				datasetIds.forEach(datasetId -> {
+					try {
+						// Fetch the Document extractions
+						final Optional<Dataset> dataset = datasetService
+								.getAsset(UUID.fromString(datasetId));
+						if (dataset.isPresent()) {
+							final String name = dataset.get().getName();
+							documentSourceNames.add(name);
+						}
+					} catch (final Exception e) {
+						log.error("Unable to get the document " + datasetId, e);
+					}
+				});
+
+				final List<String> sourceNames = new ArrayList<>();
+				sourceNames.addAll(documentSourceNames);
+				sourceNames.addAll(datasetSourceNames);
+
 				final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
 
-				metadata.set("source", objectMapper.valueToTree(documentSourceNames));
+				metadata.set("source", objectMapper.valueToTree(sourceNames));
 
 				((ObjectNode) configuration).set("metadata", metadata);
 
@@ -305,7 +368,7 @@ public class ModelController {
 			});
 
 			return ResponseEntity.ok(modelConfigurations);
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
 			throw new ResponseStatusException(

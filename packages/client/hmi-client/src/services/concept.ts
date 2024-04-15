@@ -5,7 +5,14 @@
 import API from '@/api/api';
 import { ConceptFacets } from '@/types/Concept';
 import { ClauseValue } from '@/types/Filter';
-import type { Curies, DKG, EntitySimilarityResult, State, DatasetColumn } from '@/types/Types';
+import type {
+	AssetType,
+	Curies,
+	DatasetColumn,
+	DKG,
+	EntitySimilarityResult,
+	State
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
@@ -26,14 +33,9 @@ interface EntityMap {
  *        Available values : datasets, features, intermediates, model_parameters, models, projects, publications, qualifiers, simulation_parameters, simulation_plans, simulation_runs
  * @return ConceptFacets|null - the concept facets, or null if none returned by API
  */
-async function getFacets(types: string[], curies?: ClauseValue[]): Promise<ConceptFacets | null> {
+async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<ConceptFacets | null> {
 	try {
-		let url = '/concepts/facets';
-		if (types) {
-			types.forEach((type, indx) => {
-				url += `${indx === 0 ? '?' : '&'}types=${type}`;
-			});
-		}
+		let url = `/concepts/facets?types=${type}`;
 		if (curies) {
 			curies.forEach((curie) => {
 				url += `&curies=${curie}`;
@@ -53,14 +55,10 @@ async function getFacets(types: string[], curies?: ClauseValue[]): Promise<Conce
  * Get DKG entities, either single ones or multiple at a time
  */
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
-	try {
-		const response = await API.get(`/mira/${curies.toString()}`);
-		if (response?.status !== 200) return null;
-		return response?.data ?? null;
-	} catch (error) {
-		logger.error(error, { showToast: false });
-		return null;
-	}
+	const response = await API.get(`/mira/currie/${curies.toString()}`);
+	if (response?.status === 200 && response?.data) return response.data;
+	if (response?.status === 204) console.warn('No DKG entities found for curies:', curies);
+	return null;
 }
 
 async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
@@ -109,7 +107,7 @@ async function getEntitySimilarity(
 	targets: string[]
 ): Promise<Array<EntitySimilarityResult> | null> {
 	try {
-		const response = await API.post('/mira/entity_similarity', { sources, targets } as Curies);
+		const response = await API.post('/mira/entity-similarity', { sources, targets } as Curies);
 		if (response?.status !== 200) return null;
 		return response?.data ?? null;
 	} catch (error) {
@@ -156,6 +154,7 @@ const autoEntityMapping = async (
 	// Take out any duplicates
 	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
 	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
+
 	const allSimilarity = await getEntitySimilarity(
 		distinctSourceGroundings,
 		distinctTargetGroundings
@@ -193,8 +192,8 @@ const autoEntityMapping = async (
 	});
 
 	// for each distinct source, find its highest matching target:
-	const distinctSource = [...new Set(validSources.map((ele) => ele.sourceId))];
-	distinctSource.forEach((distinctSourceId) => {
+	const distinctSources = [...new Set(validSources.map((ele) => ele.sourceId))];
+	distinctSources.forEach((distinctSourceId) => {
 		let currentDistance = -Infinity;
 		let currentTargetId = '';
 		validSources.forEach((source) => {
@@ -212,7 +211,31 @@ const autoEntityMapping = async (
 				});
 			}
 		});
+
+		// Match by string if no target is found
+		if (isEmpty(currentTargetId)) {
+			targetEntities.some((target) => {
+				if (target.id.startsWith(distinctSourceId) || distinctSourceId.startsWith(target.id)) {
+					currentTargetId = target.id;
+					return true; // stops the loop
+				}
+				return false; // continues the loop
+			});
+		}
+
 		result.push({ source: distinctSourceId, target: currentTargetId });
+	});
+
+	// Match id strings for the remainder if source entities that aren't mapped
+	sourceEntities.forEach((source) => {
+		targetEntities.forEach((target) => {
+			if (
+				!distinctSources.includes(source.id) &&
+				(target.id.startsWith(source.id) || source.id.startsWith(target.id))
+			) {
+				result.push({ source: source.id, target: target.id });
+			}
+		});
 	});
 
 	return result;

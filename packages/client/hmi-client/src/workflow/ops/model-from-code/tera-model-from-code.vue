@@ -1,7 +1,14 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-action-row>
-			<label>Output</label>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
+		<template #header-actions>
+			<tera-operator-annotation
+				:state="node.state"
+				@update-state="(state: any) => emit('update-state', state)"
+			/>
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -10,25 +17,43 @@
 				is-selectable
 			/>
 		</template>
-		<div tabName="Wizard">
+		<div tabName="Wizard" class="p-3">
 			<tera-drilldown-section :isLoading="fetchingInputBlocks">
 				<header>
-					<h5>Code</h5>
-					<Dropdown
-						class="w-full md:w-14rem"
-						v-model="clonedState.codeLanguage"
-						:options="programmingLanguages"
-						@change="setKernelContext"
-					/>
-					<Button
-						label="Add code block"
-						icon="pi pi-plus"
-						text
-						@click="addCodeBlock"
-						:disabled="
-							clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
-						"
-					/>
+					<section class="flex items-center gap-3">
+						<Dropdown
+							class="w-full md:w-14rem"
+							v-model="clonedState.codeLanguage"
+							:options="programmingLanguages"
+							@change="setKernelContext"
+						/>
+						<span
+							><label>Model framework</label
+							><Dropdown
+								size="small"
+								v-model="clonedState.modelFramework"
+								:options="modelFrameworks"
+								@change="setKernelContext"
+						/></span>
+						<span class="mr-auto">
+							<label>Service</label>
+							<Dropdown
+								size="small"
+								v-model="clonedState.modelService"
+								:options="modelServices"
+								@change="emit('update-state', clonedState)"
+							/>
+						</span>
+						<Button
+							label="Add code block"
+							icon="pi pi-plus"
+							text
+							@click="addCodeBlock"
+							:disabled="
+								clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
+							"
+						/>
+					</section>
 				</header>
 				<tera-operator-placeholder
 					v-if="allCodeBlocks.length === 0"
@@ -58,30 +83,12 @@
 							@update:value="emit('update-state', clonedState)"
 							:lang="asset.codeLanguage"
 							theme="chrome"
-							style="height: 10rem; width: 100%"
+							style="height: calc(100vh - 25rem); width: 100%"
 							class="ace-editor"
 							:readonly="asset.type === CodeBlockType.INPUT"
+							:options="{ showPrintMargin: false }"
 						/>
 					</tera-asset-block>
-				</template>
-				<template #footer>
-					<span
-						><label>Model framework</label
-						><Dropdown
-							size="small"
-							v-model="clonedState.modelFramework"
-							:options="modelFrameworks"
-							@change="setKernelContext"
-					/></span>
-					<span class="mr-auto">
-						<label>Service</label>
-						<Dropdown
-							size="small"
-							v-model="clonedState.modelService"
-							:options="modelServices"
-							@change="emit('update-state', clonedState)"
-						/>
-					</span>
 				</template>
 			</tera-drilldown-section>
 		</div>
@@ -89,7 +96,7 @@
 			<!--Notebook section if we decide we need one-->
 		</div>
 		<template #preview>
-			<tera-drilldown-preview :is-loading="isProcessing">
+			<tera-drilldown-preview :is-loading="isProcessing" class="pt-3 pb-2 pl-2 pr-4">
 				<section v-if="selectedModel">
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
 						<tera-model-description
@@ -97,6 +104,7 @@
 							:feature-config="{
 								isPreview: true
 							}"
+							:is-generating-card="isGeneratingCard"
 						/>
 					</template>
 					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
@@ -138,35 +146,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, isEmpty } from 'lodash';
-import Dropdown from 'primevue/dropdown';
-import Button from 'primevue/button';
-import { VAceEditor } from 'vue3-ace-editor';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-julia';
-import 'ace-builds/src-noconflict/mode-r';
-import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import type { Card, Code, DocumentAsset, Model } from '@/types/Types';
-import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { KernelSessionManager } from '@/services/jupyter';
-import { logger } from '@/utils/logger';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import '@/ace-config';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { createModel, generateModelCard, getModel, updateModel } from '@/services/model';
-import { useProjects } from '@/composables/project';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { getCodeAsset } from '@/services/code';
-import { codeBlocksToAmr } from '@/services/knowledge';
-import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
-import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
-import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-import { ModelServiceType } from '@/types/common';
-import { extensionFromProgrammingLanguage } from '@/utils/data-util';
-import { getDocumentAsset } from '@/services/document-assets';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
+import { useProjects } from '@/composables/project';
+import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import { getCodeAsset } from '@/services/code';
+import { getDocumentAsset } from '@/services/document-assets';
+import { KernelSessionManager } from '@/services/jupyter';
+import { codeBlocksToAmr } from '@/services/knowledge';
+import { createModel, generateModelCard, getModel, updateModel } from '@/services/model';
+import type { Card, Code, DocumentAsset, Model } from '@/types/Types';
+import { AssetType, ProgrammingLanguage } from '@/types/Types';
+import { ModelServiceType } from '@/types/common';
+import { AssetBlock, WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { CodeBlock, CodeBlockType, getCodeBlocks } from '@/utils/code-asset';
+import { extensionFromProgrammingLanguage } from '@/utils/data-util';
+import { logger } from '@/utils/logger';
+import { cloneDeep, isEmpty } from 'lodash';
+import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
@@ -196,7 +203,7 @@ const decapodesModelValid = ref(false);
 const kernelManager = new KernelSessionManager();
 
 const selectedModel = ref<Model | null>(null);
-const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]);
+const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 
 const document = ref<DocumentAsset | null>(null);
 
@@ -222,6 +229,7 @@ const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => {
 });
 
 const savingAsset = ref(false);
+const isGeneratingCard = ref(false);
 
 const clonedState = ref<ModelFromCodeState>({
 	codeLanguage: ProgrammingLanguage.Python,
@@ -352,16 +360,16 @@ async function handleCode() {
 			}
 		};
 
-		const modelId = await codeBlocksToAmr(newCode, file);
+		const model: Model | null = await codeBlocksToAmr(newCode, file);
 
-		if (!modelId) {
+		if (!model || !model.id) {
 			isProcessing.value = false;
 			return;
 		}
 
-		generateCard(documentId.value, modelId);
+		generateCard(documentId.value, model.id);
 
-		clonedState.value.modelId = modelId;
+		clonedState.value.modelId = model.id;
 
 		emit('append-output', {
 			label: `Output - ${props.node.outputs.length + 1}`,
@@ -452,7 +460,7 @@ async function getInputCodeBlocks() {
 function addCodeBlock() {
 	const codeBlock: AssetBlock<CodeBlock> = {
 		includeInProcess: false,
-		name: 'Code Block',
+		name: 'Code block',
 		asset: {
 			codeContent: '',
 			codeLanguage: clonedState.value.codeLanguage
@@ -515,7 +523,9 @@ async function generateCard(docId, modelId) {
 		return;
 	}
 
+	isGeneratingCard.value = true;
 	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	isGeneratingCard.value = false;
 	fetchModel();
 }
 

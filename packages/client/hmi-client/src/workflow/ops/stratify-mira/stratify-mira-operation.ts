@@ -1,4 +1,5 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import type { Operation, BaseState } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/workflow';
 
 export interface StratifyGroup {
 	borderColour: string;
@@ -18,7 +19,7 @@ export interface StratifyCode {
 	timestamp: number;
 }
 
-export interface StratifyOperationStateMira {
+export interface StratifyOperationStateMira extends BaseState {
 	strataGroup: StratifyGroup;
 	strataCodeHistory: StratifyCode[];
 	hasCodeBeenRun: boolean;
@@ -50,7 +51,7 @@ export const blankStratifyGroup: StratifyGroup = {
 
 export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
-	displayName: 'Stratify MIRA',
+	displayName: 'Stratify model',
 	description: 'Stratify a model',
 	inputs: [{ type: 'modelId', label: 'Model', acceptMultiple: false }],
 	outputs: [{ type: 'model' }],

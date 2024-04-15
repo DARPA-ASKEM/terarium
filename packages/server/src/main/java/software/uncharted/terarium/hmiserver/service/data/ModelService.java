@@ -24,11 +24,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class ModelService extends TerariumAssetService<Model >{
+public class ModelService extends TerariumAssetService<Model> {
 
-	public ModelService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService) {
-		super(elasticConfig, config, elasticService, Model.class);
+	public ModelService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService) {
+		super(elasticConfig, config, elasticService, projectAssetService, Model.class);
 	}
+
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	public List<ModelDescription> getDescriptions(final Integer page, final Integer pageSize) throws IOException {
@@ -42,9 +43,9 @@ public class ModelService extends TerariumAssetService<Model >{
 				.from(page)
 				.size(pageSize)
 				.query(q -> q.bool(b -> b
-					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
-				  .mustNot(mn -> mn.term(t -> t.field("isPublic").value(false)))))
+						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
+						.mustNot(mn -> mn.term(t -> t.field("isPublic").value(false)))))
 				.source(source)
 				.build();
 
@@ -58,11 +59,8 @@ public class ModelService extends TerariumAssetService<Model >{
 		return Optional.of(md);
 	}
 
-	public List<Model> searchModels(final Integer page, final Integer pageSize, final JsonNode queryJson) throws IOException {
-
-
-
-
+	public List<Model> searchModels(final Integer page, final Integer pageSize, final JsonNode queryJson)
+			throws IOException {
 		Query query = null;
 		if (queryJson != null) {
 			// if query is provided deserialize it, append the soft delete filter
@@ -97,7 +95,8 @@ public class ModelService extends TerariumAssetService<Model >{
 		return elasticService.search(req, Model.class);
 	}
 
-	public List<ModelConfiguration> getModelConfigurationsByModelId(final UUID id, final Integer page, final Integer pageSize)
+	public List<ModelConfiguration> getModelConfigurationsByModelId(final UUID id, final Integer page,
+			final Integer pageSize)
 			throws IOException {
 
 		final SearchRequest req = new SearchRequest.Builder()
@@ -126,6 +125,16 @@ public class ModelService extends TerariumAssetService<Model >{
 		throw new UnsupportedOperationException("Not implemented. Use ModelService.searchModels instead");
 	}
 
-
-
+	@Override
+	public Model createAsset(final Model asset) throws IOException {
+		// Set default value for model parameters (0.0)
+		if (asset.getSemantics() != null && asset.getSemantics().getOde() != null && asset.getSemantics().getOde().getParameters() != null) {
+			asset.getSemantics().getOde().getParameters().forEach(param -> {
+				if (param.getValue() == null) {
+					param.setValue(1.0);
+				}
+			});
+		}
+		return super.createAsset(asset);
+	}
 }

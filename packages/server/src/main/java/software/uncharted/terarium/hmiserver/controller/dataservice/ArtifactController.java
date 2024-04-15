@@ -1,12 +1,11 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -21,21 +20,33 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/artifacts")
 @RestController
@@ -62,7 +73,7 @@ public class ArtifactController {
 		try {
 			return ResponseEntity.ok(artifactService.getAssets(page, pageSize));
 		} catch (final Exception e) {
-			final String error = "Unable to get artifacts";
+			final String error = "An error occurred while retrieving artifacts";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -82,7 +93,7 @@ public class ArtifactController {
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact));
 		} catch (final Exception e) {
-			final String error = "Unable to create artifact";
+			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -96,15 +107,15 @@ public class ArtifactController {
 	@Operation(summary = "Gets an artifact by ID")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Artifact retrieved.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
-			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
 	})
 	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId) {
 		try {
 			final Optional<Artifact> artifact = artifactService.getAsset(artifactId);
-			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
-			final String error = "Unable to get artifact";
+			final String error = "An error occurred while retrieving artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -117,7 +128,6 @@ public class ArtifactController {
 	@Operation(summary = "Updates an artifact")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Artifact updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
-			@ApiResponse(responseCode = "204", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the artifact", content = @Content)
 	})
@@ -130,7 +140,7 @@ public class ArtifactController {
 			final Optional<Artifact> updated = artifactService.updateAsset(artifact);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
-			final String error = "Unable to update artifact";
+			final String error = "An error occurred while updating artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -319,7 +329,7 @@ public class ArtifactController {
 
 		// download file from GitHub
 		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		if(fileString == null) {
+		if (fileString == null) {
 			return ResponseEntity.notFound().build();
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
@@ -336,7 +346,7 @@ public class ArtifactController {
 	 * @return A response containing the status of the upload
 	 */
 	private ResponseEntity<Integer> uploadArtifactHelper(final UUID artifactId, final String fileName,
-                                                         final HttpEntity artifactHttpEntity) {
+			final HttpEntity artifactHttpEntity) {
 
 		try (final CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
@@ -348,11 +358,13 @@ public class ArtifactController {
 			put.setEntity(artifactHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
 
-            return ResponseEntity.ok(response.getStatusLine().getStatusCode());
+			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 
 		} catch (final Exception e) {
 			log.error("Unable to PUT artifact data", e);
-			return ResponseEntity.internalServerError().build();
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to PUT artifact data");
 		}
 	}
 

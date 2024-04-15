@@ -62,12 +62,22 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
-import { computed, PropType, ref } from 'vue';
-import type { DocumentAsset, XDDFacetsItemResponse, Document } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import { useProjects } from '@/composables/project';
+import {
+	AssetType,
+	Dataset,
+	Document,
+	DocumentAsset,
+	Model,
+	ProjectAsset,
+	XDDFacetsItemResponse
+} from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
+import { DocumentSource } from '@/types/search';
+import type { Source } from '@/types/search';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
@@ -75,13 +85,13 @@ import {
 	getSearchByExampleOptionsString,
 	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
-import { useProjects } from '@/composables/project';
 import { createDocumentFromXDD } from '@/services/document-assets';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
+import { isEmpty } from 'lodash';
+import { computed, PropType, Ref, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import { createDataset, getClimateDataset } from '@/services/dataset';
 import TeraSearchItem from './tera-search-item.vue';
 
 const { searchByExampleItem } = useSearchByExampleOptions();
@@ -114,12 +124,12 @@ const props = defineProps({
 		default: 0
 	},
 	source: {
-		type: String,
-		default: 'XDD'
+		type: String as PropType<Source>,
+		default: DocumentSource.XDD
 	}
 });
 
-const selectedAsset = ref();
+const selectedAsset: Ref<ResultType> = ref({} as ResultType);
 const isAdding = ref(false);
 
 const projectOptions = computed(() => [
@@ -129,57 +139,55 @@ const projectOptions = computed(() => [
 			useProjects().allProjects.value?.map((project) => ({
 				label: project.name,
 				command: async () => {
-					let response: any = null;
-					let assetName = '';
+					let response: ProjectAsset['id'] | null = null;
+					let assetName: string = '';
 					isAdding.value = true;
 
 					if (isModel(selectedAsset.value)) {
-						// FIXME: handle cases where assets is already added to the project
-						const modelId = selectedAsset.value.id;
-						// then, link and store in the project assets
-						const assetType = AssetType.Model;
-						response = await useProjects().addAsset(assetType, modelId, project.id);
-						assetName = selectedAsset.value.header.name;
+						const modelAsset: Model = selectedAsset.value as Model;
+
+						const modelId = modelAsset.id;
+						response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
+						assetName = modelAsset.header.name;
 					} else if (isDataset(selectedAsset.value)) {
-						// FIXME: handle cases where assets is already added to the project
-						const datasetId = selectedAsset.value.id;
+						let datasetId = selectedAsset.value.id;
+
+						if (!datasetId && selectedAsset.value.esgfId) {
+							// The selectedAsset is a light asset for front end and we need the whole thing.
+							const climateDataset: Dataset | null = await getClimateDataset(
+								selectedAsset.value.esgfId
+							);
+							if (climateDataset) {
+								const dataset: Dataset | null = await createDataset(climateDataset);
+								if (dataset) {
+									datasetId = dataset.id;
+								}
+							}
+						}
+
 						// then, link and store in the project assets
-						const assetType = AssetType.Dataset;
 						if (datasetId) {
-							response = await useProjects().addAsset(assetType, datasetId, project.id);
+							response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
 							assetName = selectedAsset.value.name;
 						}
-					} else if (isDocument(selectedAsset.value) && props.source === 'XDD') {
+					} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
 						const document = selectedAsset.value as Document;
 						await createDocumentFromXDD(document, project.id as string);
-						// finally add asset to project
-						response = await useProjects().get(project.id);
 						assetName = selectedAsset.value.title;
-					} else if (props.source === 'Terarium') {
+					} else if (props.source === DocumentSource.TERARIUM) {
 						const document = selectedAsset.value as DocumentAsset;
 						const assetType = AssetType.Document;
 						response = await useProjects().addAsset(assetType, document.id, project.id);
-						assetName = selectedAsset.value.name;
+						assetName = document.name ?? '';
 					}
 
 					if (response) logger.info(`Added ${assetName} to ${project.name}`);
-					else logger.error(`Failed adding ${assetName} to ${project.name}`);
 
 					isAdding.value = false;
 				}
 			})) ?? []
 	}
 ]);
-
-// onMounted(() => {
-// 	// To preview if the asset is already in a project we need to grab the assets of all projects...
-// 	const projs =
-// 		useProjects().allProjects.value?.forEach(async (project) => {
-// 			const assets = await useProjects().get(project.id);
-// 		    console.log(project, props.resourceType, assets);
-// 		}) ?? [];
-// 	console.log(projs);
-// });
 
 const previewedAsset = ref<ResultType | null>(null);
 
@@ -209,24 +217,9 @@ const togglePreview = (asset: ResultType) => {
 // });
 
 const filteredAssets = computed(() => {
-	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType);
-
-	if (searchResults) {
-		if (props.resourceType === ResourceType.XDD) {
-			if (props.source === 'XDD') {
-				const documentSearchResults = searchResults.results as Document[];
-				return [...documentSearchResults];
-			}
-			if (props.source === 'Terarium') {
-				const documentSearchResults = searchResults.results as DocumentAsset[];
-				return [...documentSearchResults];
-			}
-		}
-		if (props.resourceType === ResourceType.MODEL || props.resourceType === ResourceType.DATASET) {
-			return searchResults.results;
-		}
-	}
-	return [];
+	const searchResults =
+		props.dataItems.find((res) => res.searchSubsystem === props.resourceType)?.results ?? [];
+	return searchResults;
 });
 
 const resultsCount = computed(() => {

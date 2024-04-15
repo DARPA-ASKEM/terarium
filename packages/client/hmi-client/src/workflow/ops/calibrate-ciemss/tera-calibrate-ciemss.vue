@@ -1,13 +1,17 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<section :tabName="CalibrateTabs.Wizard">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
+		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<div class="form-section">
-					<h4>Mapping</h4>
+					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
 						<Button
 							class="p-button-sm p-button-text"
-							label="Delete All Mapping"
+							label="Delete all mapping"
 							@click="deleteMapping"
 						/>
 						<Column field="modelVariable">
@@ -17,7 +21,7 @@
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
-									placeholder="Select a variable"
+									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
 									:options="modelStateOptions?.map((ele) => ele.id)"
 								/>
@@ -30,7 +34,7 @@
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
-									placeholder="Select a variable"
+									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
 									:options="datasetColumns?.map((ele) => ele.name)"
 								/>
@@ -64,34 +68,36 @@
 						/>
 					</div>
 				</div>
-				<!--
+
 				<div class="form-section">
 					<h4>Calibration settings</h4>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of samples</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numSamples" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numSamples"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="numIterations" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.numIterations"
+							/>
 						</div>
 						<div class="label-and-input">
-							<label for="method">Solver method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								:options="ciemssMethodOptions"
-								v-model="method"
-								placeholder="Select"
-							/>
+							<label for="num-samples">End time for forecast</label>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 					</div>
 				</div>
-				-->
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="CalibrateTabs.Notebook">
-			<h4>Notebook</h4>
+			<h5>Notebook</h5>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -100,28 +106,37 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
+				class="mr-4 ml-2 mt-3 mb-3"
 			>
-				<h4>Loss</h4>
+				<h5>Loss</h5>
 				<div ref="drilldownLossPlot"></div>
 				<div v-if="!showSpinner" class="form-section">
-					<h4>Variables</h4>
-					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset">
+					<h5>Variables</h5>
+					<section
+						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
+						ref="outputPanel"
+					>
 						<tera-simulate-chart
-							v-for="(cfg, index) of node.state.chartConfigs"
-							:key="cfg.selectedRun"
+							v-for="(config, index) of node.state.chartConfigs"
+							:key="index"
 							:run-results="runResults"
-							:chartConfig="cfg"
+							:chartConfig="{
+								selectedRun: props.node.state.forecastId,
+								selectedVariable: config
+							}"
 							:initial-data="csvAsset"
 							:mapping="mapping"
 							has-mean-line
-							@configuration-change="chartConfigurationChange(index, $event)"
-							:size="{ width: previewChartWidth, height: 140 }"
+							@configuration-change="chartProxy.configurationChange(index, $event)"
+							@remove="chartProxy.removeChart(index)"
+							show-remove-button
+							:size="chartSize"
 						/>
 						<Button
 							class="add-chart"
 							text
 							:outlined="true"
-							@click="addChart"
+							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
 						></Button>
@@ -132,8 +147,12 @@
 					</section>
 				</div>
 				<section v-else>
-					<tera-progress-bar :value="progress.value" :status="progress.status" />
+					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</section>
+				<tera-notebook-error
+					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
+					v-bind="node.state.errorMessage"
+				/>
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
@@ -152,21 +171,25 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
+import InputNumber from 'primevue/inputnumber';
 import {
-	getRunResultCiemss,
-	makeCalibrateJobCiemss,
-	simulationPollAction,
-	querySimulationInProgress,
-	getCalibrateBlobURL,
-	makeForecastJobCiemss,
-	subscribeToUpdateMessages,
-	unsubscribeToUpdateMessages
-} from '@/services/models/simulation-service';
+	CalibrateMap,
+	renderLossGraph,
+	setupDatasetInput,
+	setupModelInput
+} from '@/services/calibrate-workflow';
+import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -174,29 +197,21 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	ProgressState,
 	State
 } from '@/types/Types';
-// import InputNumber from 'primevue/inputnumber';
-import {
-	CalibrateMap,
-	renderLossGraph,
-	setupDatasetInput,
-	setupModelInput
-} from '@/services/calibrate-workflow';
-import { autoCalibrationMapping } from '@/services/concept';
-import { ChartConfig, RunResults } from '@/types/SimulateConfig';
-import { WorkflowNode } from '@/types/workflow';
-import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
-import TeraProgressBar from '@/workflow/tera-progress-bar.vue';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import { Poller, PollerState } from '@/api/api';
-import { getTimespan } from '@/workflow/util';
-import { logger } from '@/utils/logger';
+import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/workflow/util';
 import { useToastService } from '@/services/toast';
-import { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { autoCalibrationMapping } from '@/services/concept';
+import {
+	getRunResultCiemss,
+	makeCalibrateJobCiemss,
+	subscribeToUpdateMessages,
+	unsubscribeToUpdateMessages
+} from '@/services/models/simulation-service';
+
+import type { RunResults } from '@/types/SimulateConfig';
+import type { WorkflowNode } from '@/types/workflow';
+import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -227,28 +242,37 @@ const runResults = ref<RunResults>({});
 const previewChartWidth = ref(120);
 
 const showSpinner = ref(false);
-const progress = ref({ status: ProgressState.Retrieving, value: 0 });
-let lossValues: { [key: string]: number }[] = [];
+const lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
+
+const mappingDropdownPlaceholder = computed(() => {
+	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value))
+		return 'Select variable';
+	return 'Please wait...';
+});
+
+interface BasicKnobs {
+	numIterations: number;
+	numSamples: number;
+	endTime: number;
+}
+
+const knobs = ref<BasicKnobs>({
+	numIterations: props.node.state.numIterations ?? 1000,
+	numSamples: props.node.state.numSamples ?? 100,
+	endTime: props.node.state.endTime ?? 100
+});
 
 // EXTRA section: Unused, comment out for now Feb 2023
 /*
 const numSamples = ref(100);
-const numIterations = ref(100);
 const method = ref('dopri5');
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 */
 
-const poller = new Poller();
-
 const disableRunButton = computed(
-	() =>
-		!currentDatasetFileName.value ||
-		!modelConfig.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value
+	() => !currentDatasetFileName.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
 );
 
 const selectedOutputId = ref<string>();
@@ -264,14 +288,15 @@ const outputs = computed(() => {
 	return [];
 });
 
+const outputPanel = ref(null);
+const chartSize = computed(() => drilldownChartSize(outputPanel.value));
+
+const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
+	emit('update-state', state);
+});
+
 const runCalibrate = async () => {
-	if (
-		!modelConfigId.value ||
-		!datasetId.value ||
-		!currentDatasetFileName.value ||
-		!modelConfig.value
-	)
-		return;
+	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
 	const formattedMap: { [index: string]: string } = {};
 	// If the user has done any mapping populate formattedMap
@@ -289,25 +314,23 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			num_samples: 100,
-			num_iterations: 200
-			/*
-			num_samples: numSamples.value,
-			num_iterations: numIterations.value,
-			method: method.value
-			*/
+			num_iterations: knobs.value.numIterations
 		},
-		timespan: getTimespan(csvAsset.value, mapping.value),
+		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);
 
 	if (response?.simulationId) {
-		getCalibrateStatus(response.simulationId);
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressCalibrationId = response?.simulationId;
+		state.inProgressForecastId = '';
+
+		emit('update-state', state);
 	}
 };
 
-const getMessageHandler = (event: ClientEvent<any>) => {
+const messageHandler = (event: ClientEvent<any>) => {
 	console.log('msg', event.data);
 	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
 
@@ -317,142 +340,6 @@ const getMessageHandler = (event: ClientEvent<any>) => {
 			height: 120
 		});
 	}
-};
-
-/**
- * This is a two step process
- * - Polling loop for calibration to finish, plot the loss values
- * - Polling loop for a sampmle simulation, plot the result against input dataset
- * */
-const getCalibrateStatus = async (simulationId: string) => {
-	showSpinner.value = true;
-	if (!simulationId) {
-		console.log('No sim id');
-		return;
-	}
-	const runIds = [simulationId];
-	lossValues = [];
-
-	// open a connection for each run id and handle the messages
-	await subscribeToUpdateMessages(
-		[simulationId],
-		ClientEventType.SimulationPyciemss,
-		getMessageHandler
-	);
-
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => simulationPollAction(runIds, props.node, progress, emit));
-
-	const pollerResults = await poller.start();
-
-	// closing event source connections
-	await unsubscribeToUpdateMessages(
-		[simulationId],
-		ClientEventType.SimulationPyciemss,
-		getMessageHandler
-	);
-
-	if (pollerResults.state === PollerState.Cancelled) {
-		return;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		logger.error(`Calibrate: ${simulationId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		throw Error('Failed Runs');
-	}
-
-	// Start 2nd simulation to get sample simulation from dill
-	const dillURL = await getCalibrateBlobURL(simulationId);
-	console.log('dill URL is', dillURL);
-
-	const resp = await makeForecastJobCiemss({
-		projectId: '',
-		modelConfigId: modelConfigId.value as string,
-		timespan: {
-			start: 0,
-			end: 100
-			// start: state.currentTimespan.start,
-			// end: state.currentTimespan.end
-		},
-		extra: {
-			num_samples: 5,
-			method: 'dopri5',
-			inferred_parameters: simulationId
-		},
-		engine: 'ciemss'
-	});
-
-	const sampleSimulateId = resp.id;
-
-	poller.stop();
-	poller
-		.setInterval(3000)
-		.setThreshold(500)
-		.setPollAction(async () =>
-			simulationPollAction([sampleSimulateId], props.node, progress, emit)
-		);
-	const sampleSimulateResults = await poller.start();
-
-	if (sampleSimulateResults.state === PollerState.Cancelled) {
-		showSpinner.value = false;
-		return;
-	}
-	if (sampleSimulateResults.state !== PollerState.Done || !sampleSimulateResults.data) {
-		// throw if there are any failed runs for now
-		showSpinner.value = false;
-		logger.error(`Simulation: ${sampleSimulateId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		throw Error('Failed Runs');
-	}
-
-	const output = await getRunResultCiemss(sampleSimulateId, 'result.csv');
-	runResults.value = output.runResults;
-
-	appendOutput(simulationId, sampleSimulateId);
-	showSpinner.value = false;
-};
-
-const appendOutput = async (calibrationId: string, simulationId: string) => {
-	const portLabel = props.node.inputs[0].label;
-	const state = _.cloneDeep(props.node.state);
-
-	state.chartConfigs = [
-		{
-			selectedRun: simulationId,
-			selectedVariable: []
-		}
-	];
-
-	state.calibrationId = calibrationId;
-	state.simulationId = simulationId;
-
-	emit('update-state', state);
-
-	emit('append-output', {
-		type: 'calibrateSimulationId',
-		label: `${portLabel} Result`,
-		value: [calibrationId]
-	});
-};
-
-const chartConfigurationChange = (index: number, config: ChartConfig) => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs[index] = config;
-
-	emit('update-state', state);
-};
-
-const addChart = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
-
-	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {
@@ -508,8 +395,6 @@ async function getAutoMapping() {
 }
 
 onMounted(async () => {
-	const runIds = querySimulationInProgress(props.node);
-
 	// Get sizing
 	if (drilldownLossPlot.value) {
 		previewChartWidth.value = drilldownLossPlot.value.offsetWidth;
@@ -525,16 +410,32 @@ onMounted(async () => {
 	currentDatasetFileName.value = filename;
 	csvAsset.value = csv;
 	datasetColumns.value = datasetOptions;
-
-	// currently in progress
-	if (runIds.length > 0) {
-		getCalibrateStatus(runIds[0]);
-	}
 });
 
-onUnmounted(() => {
-	poller.stop();
-});
+watch(
+	() => knobs.value,
+	async () => {
+		const state = _.cloneDeep(props.node.state);
+		state.numIterations = knobs.value.numIterations;
+		state.numSamples = knobs.value.numSamples;
+		state.endTime = knobs.value.endTime;
+		emit('update-state', state);
+	},
+	{ deep: true }
+);
+watch(
+	() => props.node.state.inProgressCalibrationId,
+	(id) => {
+		if (id === '') {
+			showSpinner.value = false;
+			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
+		} else {
+			showSpinner.value = true;
+			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
+		}
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.node.active,
@@ -543,9 +444,8 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 
-			// FIXME: could still be running
 			const state = props.node.state;
-			const output = await getRunResultCiemss(state.simulationId, 'result.csv');
+			const output = await getRunResultCiemss(state.forecastId, 'result.csv');
 			runResults.value = output.runResults;
 		}
 	},

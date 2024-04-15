@@ -50,6 +50,7 @@
 					v-if="pageType === AssetType.Document"
 					:assetId="assetId"
 					:previewLineLimit="10"
+					@remove="removeAsset({ assetId, pageType })"
 				/>
 				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
@@ -156,10 +157,8 @@ async function removeAsset(assetRoute: AssetRoute) {
 				openAsset({ assetId: '', pageType: ProjectPages.OVERVIEW });
 			}
 			logger.info(`${assetRoute.assetId} was removed.`, { showToast: true });
-			return;
 		}
 	}
-	logger.error(`Failed to remove ${assetRoute.assetId}`, { showToast: true });
 }
 
 const openWorkflow = async () => {

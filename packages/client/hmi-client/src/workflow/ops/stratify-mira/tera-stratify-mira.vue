@@ -1,28 +1,48 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section>
+			<tera-drilldown-section class="pl-4 pt-3">
 				<div class="form-section">
-					<h4>Stratify Model <i class="pi pi-info-circle" /></h4>
+					<h5>Stratify model</h5>
 					<p>The model will be stratified with the following settings.</p>
 					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 						Note: Code has been executed which may not be reflected here.
 					</p>
 					<tera-stratification-group-form
-						:modelNodeOptions="modelNodeOptions"
+						class="mt-2"
+						:model-node-options="modelNodeOptions"
 						:config="node.state.strataGroup"
 						@update-self="updateStratifyGroupForm"
 					/>
 				</div>
 				<template #footer>
-					<Button outlined label="Stratify" icon="pi pi-play" @click="stratifyModel" />
-					<Button style="margin-right: auto" label="Reset" @click="resetModel" />
+					<div class="flex flex-row gap-2 w-full mb-2">
+						<Button
+							outlined
+							label="Stratify"
+							size="large"
+							icon="pi pi-play"
+							@click="stratifyModel"
+						/>
+						<Button
+							style="margin-right: auto"
+							size="large"
+							severity="secondary"
+							outlined
+							label="Reset"
+							@click="resetModel"
+						/>
+					</div>
 				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section>
-				<h4>Code Editor - Python</h4>
+				<p class="mt-3 ml-4">Code Editor - Python</p>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -30,6 +50,7 @@
 					theme="chrome"
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
+					:options="{ showPrintMargin: false }"
 				/>
 
 				<template #footer>
@@ -37,48 +58,58 @@
 						outlined
 						style="margin-right: auto"
 						label="Run"
+						size="large"
 						icon="pi pi-play"
 						@click="runCodeStratify"
+						class="ml-4 mb-2"
 					/>
 				</template>
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
 			<tera-drilldown-preview
-				title="Stratify output"
+				title="Preview"
 				:options="outputs"
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
+				class="mr-4 mt-3 mb-2"
 			>
-				<div>
-					<template v-if="stratifiedAmr">
+				<div class="h-full">
+					<tera-notebook-error
+						v-if="executeResponse.status === OperatorStatus.ERROR"
+						:name="executeResponse.name"
+						:value="executeResponse.value"
+						:traceback="executeResponse.traceback"
+					/>
+					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
 						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
 					</template>
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-						<h4>No Model Provided</h4>
+					<div v-else class="flex flex-column h-full justify-content-center">
+						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
 				</div>
 				<template #footer>
 					<Button
 						:disabled="!amr"
 						outlined
-						label="Save as new Model"
+						severity="secondary"
+						size="large"
+						label="Save as new model"
 						@click="isNewModelModalVisible = true"
 					/>
-					<Button label="Close" @click="emit('close')" />
+					<Button label="Close" size="large" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible">
+	<tera-modal v-if="isNewModelModalVisible" class="save-as-dialog">
 		<template #header>
 			<h4>Save as a new model</h4>
 		</template>
-		<form @submit.prevent>
-			<label for="new-model">Model name</label>
+		<form @submit.prevent class="mt-3">
+			<label for="new-model">What would you like to call it?</label>
 			<InputText
 				id="new-model"
 				type="text"
@@ -87,34 +118,44 @@
 			/>
 		</form>
 		<template #footer>
-			<Button label="Save" @click="() => saveNewModel(newModelName)" />
-			<Button class="p-button-secondary" label="Cancel" @click="isNewModelModalVisible = false" />
+			<Button label="Save" size="large" @click="() => saveNewModel(newModelName)" />
+			<Button
+				class="p-button-secondary"
+				size="large"
+				label="Cancel"
+				@click="isNewModelModalVisible = false"
+			/>
 		</template>
 	</tera-modal>
 </template>
 
 <script setup lang="ts">
-import type { Model } from '@/types/Types';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import _ from 'lodash';
 import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/petrinet/tera-model-semantic-tables.vue';
-import teraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
+
+import TeraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
 import { createModel, getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import _ from 'lodash';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { v4 as uuidv4 } from 'uuid';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { useToastService } from '@/services/toast';
+import '@/ace-config';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import type { Model } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -142,10 +183,13 @@ enum StratifyTabs {
 
 const amr = ref<Model | null>(null);
 const stratifiedAmr = ref<Model | null>(null);
-
+const executeResponse = ref({
+	status: OperatorStatus.DEFAULT,
+	name: '',
+	value: '',
+	traceback: ''
+});
 const modelNodeOptions = ref<string[]>([]);
-let modelStates: string[] = [];
-let modelParameters: string[] = [];
 
 const isNewModelModalVisible = ref(false);
 const newModelName = ref('');
@@ -206,6 +250,7 @@ const stratifyRequest = () => {
 	const conceptsToStratify: string[] = [];
 	const parametersToStratify: string[] = [];
 	const strataOption = props.node.state.strataGroup;
+	const { modelStates, modelParameters } = getStatesAndParameters(amr.value);
 
 	strataOption.selectedVariables.forEach((v) => {
 		if (modelStates.includes(v)) conceptsToStratify.push(v);
@@ -275,6 +320,43 @@ const buildJupyterContext = () => {
 	};
 };
 
+const getStatesAndParameters = (amrModel: Model) => {
+	const modelFramework = amrModel.header.schema_name;
+	const modelStates: string[] = [];
+	const modelParameters: string[] = [];
+
+	const model = amrModel.model;
+	const semantics = amrModel.semantics;
+
+	if (
+		(modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) &&
+		semantics?.ode
+	) {
+		const { initials, parameters, observables } = semantics.ode;
+
+		initials?.forEach((i) => {
+			modelStates.push(i.target);
+		});
+		parameters?.forEach((p) => {
+			modelParameters.push(p.id);
+		});
+		observables?.forEach((o) => {
+			modelStates.push(o.id);
+		});
+	} else if (modelFramework === AMRSchemaNames.REGNET) {
+		model.vertices.forEach((v) => {
+			modelStates.push(v.id);
+		});
+		model.parameters.forEach((p) => {
+			modelParameters.push(p.id);
+		});
+	} else {
+		console.error(`Unknown framework ${modelFramework}`);
+		throw new Error(`Unknown framework ${modelFramework}`);
+	}
+	return { modelStates, modelParameters };
+};
+
 const inputChangeHandler = async () => {
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
@@ -282,29 +364,8 @@ const inputChangeHandler = async () => {
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
-	modelStates = [];
-	modelParameters = [];
-
-	const modelColumnNameOptions: string[] = amr.value.model.states.map((state: any) => state.id);
-	modelStates = _.cloneDeep(modelColumnNameOptions);
-
-	// add observables
-	if (amr.value.model.semantics?.ode?.observables) {
-		amr.value.model.semantics.ode.observables.forEach((o) => {
-			modelColumnNameOptions.push(o.id);
-			modelStates.push(o.id);
-		});
-	}
-
-	// add parameters
-	if (amr.value.semantics?.ode?.parameters) {
-		amr.value.semantics.ode.parameters.forEach((p) => {
-			modelColumnNameOptions.push(p.id);
-			modelParameters.push(p.id);
-		});
-	}
-
-	modelNodeOptions.value = modelColumnNameOptions;
+	const { modelStates, modelParameters } = getStatesAndParameters(amr.value);
+	modelNodeOptions.value = [...modelStates, ...modelParameters];
 
 	// Create a new session and context based on model
 	try {
@@ -360,9 +421,6 @@ const runCodeStratify = () => {
 			.register('stream', (data) => {
 				console.log('stream', data);
 			})
-			.register('error', (data) => {
-				logger.error(`${data.content.ename}: ${data.content.evalue}`);
-			})
 			.register('model_preview', (data) => {
 				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
 				// currently no matter what kind of code is run we always get a `model_preview` response.
@@ -373,6 +431,17 @@ const runCodeStratify = () => {
 				if (executedCode) {
 					saveCodeToState(executedCode, true);
 				}
+			})
+			.register('any_execute_reply', (data) => {
+				let status = OperatorStatus.DEFAULT;
+				if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+				if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
+				executeResponse.value = {
+					status,
+					name: data.msg.content.ename ? data.msg.content.ename : '',
+					value: data.msg.content.evalue ? data.msg.content.evalue : '',
+					traceback: data.msg.content.traceback ? data.msg.content.traceback : ''
+				};
 			});
 	});
 };
@@ -450,5 +519,9 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
+}
+
+.save-as-dialog:deep(section) {
+	width: 40rem;
 }
 </style>

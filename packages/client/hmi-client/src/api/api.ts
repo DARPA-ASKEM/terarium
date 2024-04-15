@@ -1,11 +1,8 @@
-import { ToastSummaries } from '@/services/toast';
 import { logger } from '@/utils/logger';
-import axios, { AxiosHeaders } from 'axios';
-import {
-	EventSourceMessage,
-	FetchEventSourceInit,
-	fetchEventSource
-} from '@microsoft/fetch-event-source';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
+import { EventSource } from 'extended-eventsource';
+import { ServerError } from '@/types/ServerError';
+import { Ref, ref } from 'vue';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
@@ -31,27 +28,38 @@ API.interceptors.request.use(
 
 API.interceptors.response.use(
 	(response) => response,
-	(error) => {
-		const msg = error.response.data;
-		const status = error.response.status;
-		switch (status) {
-			case 500:
-				logger.error(msg.toString(), {
-					showToast: false,
-					toastTitle: `${ToastSummaries.SERVICE_UNAVAILABLE} (${status})`
-				});
-				break;
-			default:
-				logger.error(msg.toString(), {
-					showToast: false,
-					toastTitle: `${ToastSummaries.NETWORK_ERROR} (${status})`
-				});
-		}
-		if (status === 401) {
+	(error: AxiosError) => {
+		if (error.status === 401) {
 			// redirect to login
 			const auth = useAuthStore();
 			auth.keycloak?.login({
 				redirectUri: window.location.href
+			});
+		} else {
+			let message = error.message;
+			let title = `${error.response?.statusText} (${error.response?.status})`;
+			if (error?.response?.data) {
+				const responseError: ServerError = error.response.data as ServerError;
+
+				// check to see if the 'message' property is set. If it is, set message to that value.
+				// If not, check the 'trace' property and extract the error from that.
+				// It will be the substring between the first set of quotations marks.
+				if (responseError.message) {
+					message = `${responseError.message}`;
+				} else if (responseError.trace) {
+					// extract the substring between the first set of quotation marks and use that
+					const start = responseError.trace.indexOf('"');
+					const end = responseError.trace.indexOf('"', start + 1);
+					message = responseError.trace.substring(start + 1, end);
+				}
+
+				message = message ?? 'An Error occurred';
+				title = `${responseError.error} (${responseError.status})`;
+			}
+
+			logger.error(message, {
+				showToast: true,
+				toastTitle: title
 			});
 		}
 		return null;
@@ -221,29 +229,29 @@ export class TaskHandler {
 
 	private handlers: TaskEventHandlers;
 
-	private options?: FetchEventSourceInit;
+	private eventSource: EventSource | null;
 
-	private controller: AbortController;
+	public isRunning: Ref<boolean>;
 
 	/**
 	 * Create a TaskHandler.
 	 * @param {string} url - The URL to connect to.
 	 * @param {TaskHandlers} handlers - The handlers for the SSE events.
-	 * @param {FetchEventSourceInit} options - The options for the fetchEventSource function.
 	 */
-	constructor(url: string, handlers: TaskEventHandlers, options?: FetchEventSourceInit) {
+	constructor(url: string, handlers: TaskEventHandlers) {
 		this.url = url;
 		this.handlers = handlers;
-		this.options = options;
-		this.controller = new AbortController();
+		this.isRunning = ref(false);
+		this.eventSource = null;
 	}
 
 	/**
 	 * Close the SSE connection.
 	 */
 	public closeConnection() {
-		this.controller.abort();
+		if (this.eventSource) this.eventSource.close();
 		if (this.handlers.onclose) this.handlers.onclose();
+		this.isRunning.value = false;
 		logger.info('Connection closed', { showToast: false });
 	}
 
@@ -251,38 +259,36 @@ export class TaskHandler {
 	 * Start the task.
 	 */
 	async start(): Promise<void> {
+		this.isRunning.value = true;
 		const handlers = this.handlers;
 		const authStore = useAuthStore();
-		const fetchEventSourceOptions: FetchEventSourceInit = {
-			...this.options,
-			headers: {
-				...this.options?.headers,
-				Authorization: `Bearer ${authStore.token}`
-			},
-			onmessage: (message: EventSourceMessage) => {
+
+		try {
+			this.eventSource = new EventSource(API.defaults.baseURL + this.url, {
+				headers: {
+					Authorization: `Bearer ${authStore.token}`
+				},
+				retry: 3000
+			});
+			this.eventSource.onmessage = (message: MessageEvent) => {
 				const data = message?.data;
 				const parsedData = JSON.parse(data);
 				const closeConnection = this.closeConnection.bind(this);
 				this.handlers.ondata(parsedData, closeConnection);
-			},
-			onerror: (error: Error) => {
+			};
+			this.eventSource.onerror = (error: any) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
 				if (error instanceof FatalError) {
 					// closes the connection on fatal error otherwise it will keep retrying
 					throw error;
 				}
-			},
-			async onopen(response: Response) {
+			};
+			this.eventSource.onopen = async (response: any) => {
 				logger.info('Connection opened', { showToast: false });
 				if (handlers.onopen) handlers.onopen(response);
-			},
-			signal: this.controller.signal,
-			openWhenHidden: true
-		};
-
-		try {
-			await fetchEventSource(API.defaults.baseURL + this.url, fetchEventSourceOptions);
+			};
 		} catch (error: unknown) {
+			this.isRunning.value = false;
 			logger.error(error);
 		}
 	}

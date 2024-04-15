@@ -1,8 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -10,15 +18,13 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.*;
+import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
 /**
- * Service class for handling simulations.  Note that this does not extend TerariumAssetService, as Simulations
- * do not extend TerariumAsset. This is because simulations have special considerations around their date/time fields
+ * Service class for handling simulations. Note that this does not extend
+ * TerariumAssetService, as Simulations
+ * do not extend TerariumAsset. This is because simulations have special
+ * considerations around their date/time fields
  * when it comes to formatting.
  */
 @Service
@@ -39,8 +45,8 @@ public class SimulationService {
 				.from(page)
 				.size(pageSize)
 				.query(q -> q.bool(b -> b
-					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
+						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.build();
 		return elasticService.search(req, Simulation.class);
 	}
@@ -70,7 +76,7 @@ public class SimulationService {
 	}
 
 	public Optional<Simulation> updateSimulation(final Simulation simulation) throws IOException {
-		if (!elasticService.contains(elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
+		if (!elasticService.documentExists(elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
 			return Optional.empty();
 		}
 		simulation.setUpdatedOn(Timestamp.from(Instant.now()));
@@ -117,34 +123,17 @@ public class SimulationService {
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public Dataset copySimulationResultToDataset(final Simulation simulation) {
+	public void copySimulationResultToDataset(final Simulation simulation, final Dataset dataset) {
 		final UUID simId = simulation.getId();
-		final String simName = simulation.getName();
-
-		final Dataset dataset = new Dataset();
-		dataset.setName(simName + " Result Dataset");
-		dataset.setDescription(simulation.getDescription());
-		dataset.setMetadata(Map.of("simulationId", simId));
-		dataset.setFileNames(simulation.getResultFiles());
-		dataset.setDataSourceDate(simulation.getCompletedTime());
-		dataset.setColumns(new ArrayList<>());
-
-		// Attach the user to the dataset
-		if (simulation.getUserId() != null) {
-			dataset.setUserId(simulation.getUserId());
-		}
-
 		if (simulation.getResultFiles() != null) {
 			for (final String resultFile : simulation.getResultFiles()) {
-				final String filename = s3ClientService.getS3Service().parseFilename(resultFile);
+				final String filename = S3Service.parseFilename(resultFile);
 				final String srcPath = getResultsPath(simId, filename);
 				final String destPath = getDatasetPath(dataset.getId(), filename);
-
 				s3ClientService.getS3Service().copyObject(config.getFileStorageS3BucketName(), srcPath,
 						config.getFileStorageS3BucketName(), destPath);
+
 			}
 		}
-
-		return dataset;
 	}
 }
