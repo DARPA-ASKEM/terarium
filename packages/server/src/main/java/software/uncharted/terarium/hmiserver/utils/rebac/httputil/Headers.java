@@ -19,9 +19,7 @@ package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 public class Headers implements Iterable<Header> {
 
     private LinkedHashMap<String, Header> headers = new LinkedHashMap<>();

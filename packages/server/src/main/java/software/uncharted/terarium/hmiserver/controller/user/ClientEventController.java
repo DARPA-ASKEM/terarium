@@ -10,20 +10,17 @@ import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
-
 @RestController
 @Slf4j
 @RequestMapping("/client-event")
 @RequiredArgsConstructor
 public class ClientEventController {
-  private final ClientEventService clientEventService;
-  private final CurrentUserService currentUserService;
+    private final ClientEventService clientEventService;
+    private final CurrentUserService currentUserService;
 
-  @GetMapping
-  @IgnoreRequestLogging
-  public SseEmitter subscribe() {
-    return clientEventService.connect(currentUserService.get());
-  }
-
-
+    @GetMapping
+    @IgnoreRequestLogging
+    public SseEmitter subscribe() {
+        return clientEventService.connect(currentUserService.get());
+    }
 }

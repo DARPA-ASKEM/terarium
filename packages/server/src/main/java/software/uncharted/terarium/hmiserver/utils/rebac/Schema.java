@@ -1,7 +1,8 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
 public class Schema {
-	public static String schema = """
+    public static String schema =
+            """
 		definition user {}
 
 		definition group {
@@ -25,57 +26,57 @@ public class Schema {
 		}
 		""";
 
-	public enum Type {
-		USER("user"),
-		GROUP("group"),
-		PROJECT("project");
+    public enum Type {
+        USER("user"),
+        GROUP("group"),
+        PROJECT("project");
 
-		private final String text;
+        private final String text;
 
-		Type(String text) {
-			this.text = text;
-		}
+        Type(String text) {
+            this.text = text;
+        }
 
-		@Override
-		public String toString() {
-			return text;
-		}
-	}
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
 
-	public enum Relationship {
-		CREATOR("creator"),
-		ADMIN("admin"),
-		MEMBER("member"),
-		WRITER("writer"),
-		READER("reader");
+    public enum Relationship {
+        CREATOR("creator"),
+        ADMIN("admin"),
+        MEMBER("member"),
+        WRITER("writer"),
+        READER("reader");
 
-		private final String text;
+        private final String text;
 
-		Relationship(String text) {
-			this.text = text;
-		}
+        Relationship(String text) {
+            this.text = text;
+        }
 
-		@Override
-		public String toString() {
-			return text;
-		}
-	}
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
 
-	public enum Permission {
-		READ("read"),
-		WRITE("write"),
-		MEMBERSHIP("membership"),
-		ADMINISTRATE("administrate");
+    public enum Permission {
+        READ("read"),
+        WRITE("write"),
+        MEMBERSHIP("membership"),
+        ADMINISTRATE("administrate");
 
-		private final String text;
+        private final String text;
 
-		Permission(String text) {
-			this.text = text;
-		}
+        Permission(String text) {
+            this.text = text;
+        }
 
-		@Override
-		public String toString() {
-			return text;
-		}
-	}
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
 }
