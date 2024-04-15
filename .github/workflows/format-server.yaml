@@ -38,10 +38,6 @@ jobs:
           distribution: "temurin"
           java-version: 17
 
-      # Start containers
-      - name: Start containers
-        run: cd containers && docker compose --file docker-compose-actions.yml up --detach --wait
-
       # Run the formatter
       - name: Run Spotless
         uses: gradle/gradle-build-action@bdf99f9dada2506e990bac6de8ec5e3de34a04f1
@@ -51,16 +47,12 @@ jobs:
           arguments: |
             spotlessApply
 
-      # Commit changes
+      # Commit changes, only if there are changes
       - name: Commit changes
+        if: steps.formatServer.outputs.exitCode == 0
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "chore: format server codebase"
           git push
-
-      # Stop containers
-      - name: Stop containers
-        if: always()
-        run: cd containers && docker compose --file docker-compose-actions.yml down
