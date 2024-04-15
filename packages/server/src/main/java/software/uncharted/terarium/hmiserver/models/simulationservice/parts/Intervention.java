@@ -9,12 +9,12 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 // Used to specify any interventions provided by the AMR and given to the simulation-service.
 public class Intervention {
-	private String name;
-	private Integer timestep;
-	private Double value;
+    private String name;
+    private Integer timestep;
+    private Double value;
 
-	@Override
-	public String toString() {
-		return " { name: " + this.name + " timestep: " + timestep.toString() + " value: " + value.toString() + " } ";
-	}
+    @Override
+    public String toString() {
+        return " { name: " + this.name + " timestep: " + timestep.toString() + " value: " + value.toString() + " } ";
+    }
 }

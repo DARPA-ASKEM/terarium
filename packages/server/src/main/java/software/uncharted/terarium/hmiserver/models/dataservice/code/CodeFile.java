@@ -19,13 +19,14 @@ public class CodeFile {
         final String[] parts = fileName.split("\\.");
         final String fileExtension = parts.length > 0 ? parts[parts.length - 1] : "";
 
-        final ProgrammingLanguage language = switch (fileExtension) {
-            case "py" -> ProgrammingLanguage.PYTHON;
-            case "jl" -> ProgrammingLanguage.Julia;
-            case "r" -> ProgrammingLanguage.R;
-            case "zip" -> ProgrammingLanguage.ZIP;
-            default -> null; // TODO: Do we need an "unknown" language?
-        };
+        final ProgrammingLanguage language =
+                switch (fileExtension) {
+                    case "py" -> ProgrammingLanguage.PYTHON;
+                    case "jl" -> ProgrammingLanguage.Julia;
+                    case "r" -> ProgrammingLanguage.R;
+                    case "zip" -> ProgrammingLanguage.ZIP;
+                    default -> null; // TODO: Do we need an "unknown" language?
+                };
 
         this.setLanguage(language);
     }
