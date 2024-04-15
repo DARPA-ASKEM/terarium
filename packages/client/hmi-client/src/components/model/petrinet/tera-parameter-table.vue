@@ -237,7 +237,7 @@
 					class="w-full"
 					v-model.lazy="data.source"
 					:disabled="readonly"
-					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
+					@update:model-value="(val) => updateMetadataFromInput(data.value.id, 'source', val)"
 				/>
 			</template>
 		</Column>
@@ -402,7 +402,14 @@ import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
-import { updateVariable } from '@/model-representation/service';
+import {
+	updateVariable,
+	validateTimeSeries,
+	getTimeseries,
+	getParameterMetadata,
+	getParameters,
+	updateParameterMetadata
+} from '@/model-representation/service';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
@@ -436,27 +443,15 @@ const selectedValue = ref<SuggestedValue | null>(null);
 const suggestedValues = computed(() => {
 	const matchingParameters: SuggestedValue[] = [];
 	props.modelConfigurations?.forEach((configuration, i) => {
-		if (modelType.value !== AMRSchemaNames.REGNET) {
-			configuration.configuration?.semantics?.ode.parameters?.forEach((parameter) => {
-				if (parameter.id === suggestedValuesModalContext.value.id) {
-					matchingParameters.push({
-						parameter,
-						configuration,
-						index: i
-					});
-				}
-			});
-		} else {
-			configuration.configuration?.model?.parameters?.forEach((parameter) => {
-				if (parameter.id === suggestedValuesModalContext.value.id) {
-					matchingParameters.push({
-						parameter,
-						configuration,
-						index: i
-					});
-				}
-			});
-		}
+		getParameters(configuration.configuration).forEach((parameter) => {
+			if (parameter.id === suggestedValuesModalContext.value.id) {
+				matchingParameters.push({
+					parameter,
+					configuration,
+					index: i
+				});
+			}
+		});
 	});
 
 	return matchingParameters;
@@ -510,23 +505,18 @@ const buildParameterTable = () => {
 	if (isStratified.value) {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				let param;
-				if (modelType.value === AMRSchemaNames.REGNET) {
-					param = model.model.parameters.find((i) => i.id === v);
-				} else {
-					param = model.semantics?.ode?.parameters?.find((i) => i.id === v);
-				}
+				const param = getParameters(model).find((i) => i.id === v);
 				const paramType = getParamType(param);
-				const timeseriesValue = model.metadata?.timeseries?.[param!.id];
-				const parametersMetadata = model.metadata?.parameters?.[param!.id];
+				const timeseriesValue = getTimeseries(props.model, param!.id);
+				const parametersMetadata = getParameterMetadata(props.model, param!.id);
 				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
-					name: param.name,
+					name: param?.name ?? '',
 					type: paramType,
-					description: param.description,
-					concept: param.grounding,
-					unit: param.unit?.expression,
+					description: param?.description ?? '',
+					concept: param?.grounding ?? { identifiers: {} },
+					unit: param?.unit?.expression ?? '',
 					value: param,
 					source: sourceValue,
 					visibility: false,
@@ -547,24 +537,19 @@ const buildParameterTable = () => {
 		});
 	} else {
 		parameters.value.forEach((vals, init) => {
-			let param;
-			if (modelType.value === AMRSchemaNames.REGNET) {
-				param = model.model.parameters.find((i) => i.id === vals[0]);
-			} else {
-				param = model.semantics?.ode.parameters?.find((i) => i.id === vals[0]);
-			}
-
+			const param = getParameters(model).find((i) => i.id === vals[0]);
+			if (!param) return;
 			const paramType = getParamType(param);
 
-			const timeseriesValue = model.metadata?.timeseries?.[param!.id];
-			const parametersMetadata = model.metadata?.parameters?.[param!.id];
+			const timeseriesValue = getTimeseries(props.model, param.id);
+			const parametersMetadata = getParameterMetadata(props.model, param.id);
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
-				name: param.name,
+				name: param.name ?? '',
 				type: paramType,
-				description: param.description,
-				concept: param.grounding,
+				description: param.description ?? '',
+				concept: param.grounding ?? { identifiers: {} },
 				unit: param.unit?.expression,
 				value: param,
 				source: sourceValue,
@@ -658,28 +643,10 @@ const updateTimeseries = (id: string, value: string) => {
 	emit('update-model', clonedModel);
 };
 
-const updateSource = (id: string, value: string) => {
+const updateMetadataFromInput = (id: string, key: string, value: any) => {
 	const clonedModel = cloneDeep(props.model);
-	if (!clonedModel.metadata?.parameters?.[id]) {
-		clonedModel.metadata ??= {};
-		clonedModel.metadata.parameters ??= {};
-		clonedModel.metadata.parameters[id] = {};
-	}
-	clonedModel.metadata.parameters[id].source = value;
+	updateParameterMetadata(clonedModel, id, key, value);
 	emit('update-model', clonedModel);
-};
-
-const validateTimeSeries = (values: string) => {
-	const message = 'Incorrect format (e.g., 0:500)';
-	if (typeof values !== 'string') {
-		errorMessage.value = message;
-		return false;
-	}
-
-	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
-	const isValid = values.split(',').every(isPairValid);
-	errorMessage.value = isValid ? '' : message;
-	return isValid;
 };
 
 async function onSearch(event: AutoCompleteCompleteEvent) {
@@ -744,13 +711,9 @@ const applySelectedValue = () => {
 };
 
 const countSuggestions = (id): number =>
-	props.modelConfigurations?.filter((configuration) => {
-		if (modelType.value !== AMRSchemaNames.REGNET) {
-			return configuration.configuration?.semantics?.ode.parameters?.find((p) => p.id === id);
-		}
-
-		return configuration.configuration?.model?.parameters?.find((p) => p.id === id);
-	}).length ?? 0;
+	props.modelConfigurations?.filter((configuration) =>
+		getParameters(configuration.configuration).find((p) => p.id === id)
+	).length ?? 0;
 
 watch(
 	() => parameters.value,
