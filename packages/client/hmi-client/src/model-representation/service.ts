@@ -300,3 +300,17 @@ export function validateTimeSeries(values: string) {
 	const isValid = values.split(',').every(isPairValid);
 	return isValid;
 }
+
+export function setParameters(model: Model, parameters: ModelParameter[]) {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			model.model.parameters = parameters;
+			break;
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			if (model.semantics) model.semantics.ode.parameters = parameters;
+			break;
+	}
+}
