@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import feign.FeignException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
