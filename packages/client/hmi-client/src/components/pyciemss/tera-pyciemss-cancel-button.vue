@@ -22,9 +22,7 @@ const props = defineProps<{
 
 const cancelSimulation = async () => {
 	if (!props.simulationRunId) return;
-
-	const result = await cancelCiemssJob(props.simulationRunId);
-	console.log(result);
+	await cancelCiemssJob(props.simulationRunId);
 	logger.success(`Simulation ${props.simulationRunId} has been cancelled.`);
 };
 </script>
