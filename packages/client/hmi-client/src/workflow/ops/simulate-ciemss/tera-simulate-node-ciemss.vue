@@ -133,7 +133,6 @@ watch(
 		if (!id || id === '') return;
 
 		const response = await pollResult(id);
-		console.log(response);
 		if (response.state === PollerState.Done) {
 			processResult(id);
 		}
