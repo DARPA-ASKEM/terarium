@@ -14,21 +14,21 @@ import software.uncharted.terarium.hmiserver.service.CacheService;
 @RequestMapping("/cache")
 @RequiredArgsConstructor
 public class CacheController {
-	private final CacheService cacheService;
+    private final CacheService cacheService;
 
-	/**
-	 * Clear caches
-	 *
-	 * @param cacheName if present, the name of the cache to clear.  if absent, clear all
-	 */
-	@DeleteMapping
-	@Secured(Roles.TEST)
-	public ResponseEntity<String> clear(@RequestParam(required = false) final String cacheName) {
-		if (cacheName != null) {
-			cacheService.clear(cacheName);
-		} else {
-			cacheService.clear();
-		}
-		return ResponseEntity.ok("ok");
-	}
+    /**
+     * Clear caches
+     *
+     * @param cacheName if present, the name of the cache to clear. if absent, clear all
+     */
+    @DeleteMapping
+    @Secured(Roles.TEST)
+    public ResponseEntity<String> clear(@RequestParam(required = false) final String cacheName) {
+        if (cacheName != null) {
+            cacheService.clear(cacheName);
+        } else {
+            cacheService.clear();
+        }
+        return ResponseEntity.ok("ok");
+    }
 }

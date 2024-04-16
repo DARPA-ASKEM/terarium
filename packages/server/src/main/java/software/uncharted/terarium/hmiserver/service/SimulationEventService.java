@@ -2,6 +2,12 @@ package software.uncharted.terarium.hmiserver.service;
 
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -14,15 +20,8 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.User;
-import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CiemssStatusUpdate;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatusUpdate;
 
 @Service
 @Slf4j
@@ -35,16 +34,14 @@ public class SimulationEventService {
 
     private final Map<String, Set<String>> simulationIdToUserIds = new ConcurrentHashMap<>();
 
-		@Value("${terarium.sciml-queue}")
-		private String SCIML_QUEUE;
+    @Value("${terarium.sciml-queue}")
+    private String SCIML_QUEUE;
 
-		@Value("${terarium.simulation-status}")
-		private String PYCIEMSS_QUEUE;
-
+    @Value("${terarium.simulation-status}")
+    private String PYCIEMSS_QUEUE;
 
     Queue scimlQueue;
     Queue pyciemssQueue;
-
 
     @PostConstruct
     void init() {
@@ -53,7 +50,6 @@ public class SimulationEventService {
 
         pyciemssQueue = new Queue(PYCIEMSS_QUEUE, config.getDurableQueues(), false, false);
         rabbitAdmin.declareQueue(pyciemssQueue);
-
     }
 
     public void subscribe(final List<String> simulationIds, final User user) {
@@ -63,14 +59,12 @@ public class SimulationEventService {
             }
             simulationIdToUserIds.get(simulationId).add(user.getId());
         }
-
     }
 
     public void unsubscribe(final List<String> simulationIds, final User user) {
         for (final String simulationId : simulationIds)
             simulationIdToUserIds.get(simulationId).remove(user.getId());
     }
-
 
     /**
      * Listens for messages to send to a user and if we have the SSE connection, send it
@@ -79,24 +73,24 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-		//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
-		@RabbitListener(
-            queues = "${terarium.sciml-queue}",
-            concurrency = "1")
+    // TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+    @RabbitListener(queues = "${terarium.sciml-queue}", concurrency = "1")
     private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
 
         final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
-				if(update == null)
-					return;
-        final ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder().type(ClientEventType.SIMULATION_SCIML).data(update).build();
+        if (update == null) return;
+        final ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder()
+                .type(ClientEventType.SIMULATION_SCIML)
+                .data(update)
+                .build();
 
-				final String id = update.getId();
+        final String id = update.getId();
 
-				if (simulationIdToUserIds.containsKey(id)) {
-					simulationIdToUserIds.get(id).forEach(userId -> {
-							clientEventService.sendToUser(status, userId);
-					});
-				}
+        if (simulationIdToUserIds.containsKey(id)) {
+            simulationIdToUserIds.get(id).forEach(userId -> {
+                clientEventService.sendToUser(status, userId);
+            });
+        }
     }
 
     /**
@@ -106,22 +100,21 @@ public class SimulationEventService {
      * @param channel the channel to send the message on
      * @throws IOException if there was an error sending the message
      */
-		//TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
-		@RabbitListener(
-            queues = "${terarium.simulation-status}",
-            concurrency = "1")
+    // TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+    @RabbitListener(queues = "${terarium.simulation-status}", concurrency = "1")
     private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
-				final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
-				if(update == null)
-					return;
-        final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder().type(ClientEventType.SIMULATION_PYCIEMSS).data(update).build();
-				final String id = update.getJobId();
+        final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
+        if (update == null) return;
+        final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder()
+                .type(ClientEventType.SIMULATION_PYCIEMSS)
+                .data(update)
+                .build();
+        final String id = update.getJobId();
 
-				if (simulationIdToUserIds.containsKey(id)) {
-					simulationIdToUserIds.get(id).forEach(userId -> {
-							clientEventService.sendToUser(status, userId);
-					});
-				}
+        if (simulationIdToUserIds.containsKey(id)) {
+            simulationIdToUserIds.get(id).forEach(userId -> {
+                clientEventService.sendToUser(status, userId);
+            });
+        }
     }
-
 }
