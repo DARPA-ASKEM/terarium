@@ -128,8 +128,8 @@
 				:disabled="showSpinner"
 			/>
 			<tera-pyciemss-cancel-button
-				:disabled="isCancelDisabled"
-				:simulation-run-id="props.node.state.inProgressSimulationId"
+				:disabled="cancelRunId === ''"
+				:simulation-run-id="cancelRunId"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
 			<Button label="Close" @click="emit('close')" />
@@ -215,7 +215,11 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const isCancelDisabled = computed(() => props.node.state.inProgressSimulationId === '');
+const cancelRunId = computed(() => {
+	if (props.node.state.inProgressSimulationId !== '')
+		return props.node.state.inProgressSimulationId;
+	return '';
+});
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
