@@ -508,7 +508,7 @@ const extractConfigurationsFromInputs = async () => {
 					}
 					if (data?.status === TaskStatus.Success) {
 						logger.success('Model configured from document(s)');
-						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						const outputJSON = JSON.parse(atob(data.output));
 						console.debug('Task success', outputJSON);
 						closeConnection();
 					}
