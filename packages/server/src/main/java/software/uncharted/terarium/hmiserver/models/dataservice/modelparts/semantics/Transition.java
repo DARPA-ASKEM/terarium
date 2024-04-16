@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -19,18 +18,18 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Accessors(chain = true)
 @TSModel
 public class Transition extends SupportAdditionalProperties implements Serializable {
-	@Serial
-	private static final long serialVersionUID = -7703055318779858671L;
+    @Serial
+    private static final long serialVersionUID = -7703055318779858671L;
 
-	private String id;
+    private String id;
 
-	private List<String> input;
+    private List<String> input;
 
-	private List<String> output;
+    private List<String> output;
 
-	@TSOptional
-	private ModelGrounding grounding;
+    @TSOptional
+    private ModelGrounding grounding;
 
-	@TSOptional
-	private Properties properties;
+    @TSOptional
+    private Properties properties;
 }
